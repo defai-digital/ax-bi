@@ -17,13 +17,13 @@
  * under the License.
  */
 
-import { SupersetClient } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import rison from 'rison';
 import { SelectOption } from './types';
 
 export const createRole = async (name: string) =>
-  SupersetClient.post({
+  AxBIClient.post({
     endpoint: '/api/v1/security/roles/',
     jsonPayload: { name },
   });
@@ -32,25 +32,25 @@ export const updateRolePermissions = async (
   roleId: number,
   permissionIds: number[],
 ) =>
-  SupersetClient.post({
+  AxBIClient.post({
     endpoint: `/api/v1/security/roles/${roleId}/permissions`,
     jsonPayload: { permission_view_menu_ids: permissionIds },
   });
 
 export const updateRoleUsers = async (roleId: number, userIds: number[]) =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: `/api/v1/security/roles/${roleId}/users`,
     jsonPayload: { user_ids: userIds },
   });
 
 export const updateRoleGroups = async (roleId: number, groupIds: number[]) =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: `/api/v1/security/roles/${roleId}/groups`,
     jsonPayload: { group_ids: groupIds },
   });
 
 export const updateRoleName = async (roleId: number, name: string) =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: `/api/v1/security/roles/${roleId}`,
     jsonPayload: { name },
   });
@@ -82,7 +82,7 @@ export const clearPermissionSearchCache = () => {
 };
 
 const fetchPermissionPageRaw = async (queryParams: Record<string, unknown>) => {
-  const response = await SupersetClient.get({
+  const response = await AxBIClient.get({
     endpoint: `/api/v1/security/permissions-resources/?q=${rison.encode(queryParams)}`,
   });
   return {
@@ -205,7 +205,7 @@ export const fetchGroupOptions = async (
   });
 
   try {
-    const response = await SupersetClient.get({
+    const response = await AxBIClient.get({
       endpoint: `/api/v1/security/groups/?q=${query}`,
     });
 

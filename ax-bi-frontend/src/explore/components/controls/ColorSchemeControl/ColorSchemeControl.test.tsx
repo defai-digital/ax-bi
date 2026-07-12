@@ -22,7 +22,7 @@ import {
   CategoricalScheme,
   ColorSchemeGroup,
   getCategoricalSchemeRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   render,
   screen,
@@ -55,7 +55,7 @@ const defaultProps = () => ({
   sharedLabelsColors: [],
   label: 'Color scheme',
   name: 'color',
-  value: 'supersetDefault',
+  value: 'axbiDefault',
   clearable: true,
   choices: getCategoricalSchemeRegistry()
     .keys()
@@ -278,8 +278,8 @@ test('should support search functionality for color schemes', async () => {
     ...CategoricalD3,
     lyftColors,
     {
-      id: 'supersetDefault',
-      label: 'Superset Colors',
+      id: 'axbiDefault',
+      label: 'AxBI Colors',
       group: ColorSchemeGroup.Featured,
       colors: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728'],
     } as CategoricalScheme,

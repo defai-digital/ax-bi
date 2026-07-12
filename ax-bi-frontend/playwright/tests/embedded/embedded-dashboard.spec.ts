@@ -31,23 +31,23 @@ import { getDashboardBySlug } from '../../helpers/api/dashboard';
 import { EmbeddedPage } from '../../pages/EmbeddedPage';
 
 /**
- * Superset domain (Flask server) — set by CI or defaults to local dev
+ * AxBI domain (Flask server) — set by CI or defaults to local dev
  */
-const SUPERSET_DOMAIN = (() => {
+const AXBI_DOMAIN = (() => {
   const url = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8088';
   return url.replace(/\/+$/, '');
 })();
 
-const SUPERSET_BASE_URL = SUPERSET_DOMAIN.endsWith('/')
-  ? SUPERSET_DOMAIN
-  : `${SUPERSET_DOMAIN}/`;
+const AXBI_BASE_URL = AXBI_DOMAIN.endsWith('/')
+  ? AXBI_DOMAIN
+  : `${AXBI_DOMAIN}/`;
 
 /**
- * Path to the SDK bundle built from superset-embedded-sdk/
+ * Path to the SDK bundle built from ax-bi-embedded-sdk/
  */
 const SDK_BUNDLE_PATH = join(
   __dirname,
-  '../../../../superset-embedded-sdk/bundle/index.js',
+  '../../../../ax-bi-embedded-sdk/bundle/index.js',
 );
 
 /**
@@ -82,7 +82,7 @@ async function startEmbedAppServer(): Promise<EmbedAppServer> {
       if (!existsSync(SDK_BUNDLE_PATH)) {
         res.writeHead(404);
         res.end(
-          'SDK bundle not found. Run: cd superset-embedded-sdk && npm ci && npm run build',
+          'SDK bundle not found. Run: cd ax-bi-embedded-sdk && npm ci && npm run build',
         );
         return;
       }
@@ -136,7 +136,7 @@ async function startEmbedAppServer(): Promise<EmbedAppServer> {
 function createAdminContext(browser: Browser): Promise<BrowserContext> {
   return browser.newContext({
     storageState: 'playwright/.auth/user.json',
-    baseURL: SUPERSET_BASE_URL,
+    baseURL: AXBI_BASE_URL,
   });
 }
 
@@ -168,7 +168,7 @@ test.describe('Embedded Dashboard E2E', () => {
     await embeddedPage.goto({
       appUrl: appServer.url,
       uuid: embedUuid,
-      supersetDomain: SUPERSET_DOMAIN,
+      axbiDomain: AXBI_DOMAIN,
     });
     await embeddedPage.waitForIframe();
     await embeddedPage.waitForDashboardContent();
@@ -179,7 +179,7 @@ test.describe('Embedded Dashboard E2E', () => {
     // Skip all tests if the SDK bundle hasn't been built
     test.skip(
       !existsSync(SDK_BUNDLE_PATH),
-      'Embedded SDK bundle not found. Build it with: cd superset-embedded-sdk && npm ci && npm run build',
+      'Embedded SDK bundle not found. Build it with: cd ax-bi-embedded-sdk && npm ci && npm run build',
     );
 
     appServer = await startEmbedAppServer();
@@ -229,7 +229,7 @@ test.describe('Embedded Dashboard E2E', () => {
   test('dashboard renders in embedded iframe', async ({ page }) => {
     const embeddedPage = await setupEmbeddedPage(page);
 
-    // Verify the iframe src points to Superset's /embedded/ endpoint
+    // Verify the iframe src points to AxBI's /embedded/ endpoint
     await expect(
       page.locator('iframe[title="Embedded Dashboard"]'),
     ).toHaveAttribute('src', new RegExp(`/embedded/${embedUuid}`));
@@ -254,7 +254,7 @@ test.describe('Embedded Dashboard E2E', () => {
     await embeddedPage.goto({
       appUrl: appServer.url,
       uuid: embedUuid,
-      supersetDomain: SUPERSET_DOMAIN,
+      axbiDomain: AXBI_DOMAIN,
       hideTitle: true,
     });
     await embeddedPage.waitForIframe();
@@ -314,7 +314,7 @@ test.describe('Embedded Dashboard E2E', () => {
       await embeddedPage.goto({
         appUrl: appServer.url,
         uuid: restrictedEmbed.uuid,
-        supersetDomain: SUPERSET_DOMAIN,
+        axbiDomain: AXBI_DOMAIN,
       });
 
       const response = await embeddedResponsePromise;
@@ -343,7 +343,7 @@ test.describe('Embedded Dashboard E2E', () => {
     await embeddedPage.goto({
       appUrl: appServer.url,
       uuid: embedUuid,
-      supersetDomain: SUPERSET_DOMAIN,
+      axbiDomain: AXBI_DOMAIN,
     });
     await embeddedPage.waitForIframe();
     await embeddedPage.waitForDashboardContent();

@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   BinaryQueryObjectFilterClause,
   BaseFormData,
@@ -28,9 +28,9 @@ import {
   isDefined,
   ContextMenuFilters,
   AdhocFilter,
-} from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { css, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { css, useTheme } from '@ax-bi/core/theme';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import {
@@ -39,7 +39,7 @@ import {
   Loading,
   Breadcrumb,
   Flex,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { RootState } from 'src/dashboard/types';
 import { DashboardPageIdContext } from 'src/dashboard/containers/DashboardPage';
 import { postFormData } from 'src/explore/exploreUtils/formData';
@@ -88,7 +88,7 @@ const ModalFooter = ({ formData, closeModal }: ModalFooterProps) => {
     );
   }, [dispatch, formData.slice_id]);
   const canExplore = useSelector((state: RootState) =>
-    findPermission('can_explore', 'Superset', state.user?.roles),
+    findPermission('can_explore', 'AxBI', state.user?.roles),
   );
 
   const [datasource_id, datasource_type] = formData.datasource.split('__');

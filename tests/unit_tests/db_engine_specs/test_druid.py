@@ -21,8 +21,8 @@ import pandas as pd
 import pytest
 from sqlalchemy import column
 
-from superset.db_engine_specs.base import BaseEngineSpec
-from superset.result_set import SupersetResultSet
+from axbi.db_engine_specs.base import BaseEngineSpec
+from axbi.result_set import AxBIResultSet
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -41,7 +41,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.druid import DruidEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.druid import DruidEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -65,7 +65,7 @@ def test_timegrain_expressions(time_grain: str, expected_result: str) -> None:
     """
     DB Eng Specs (druid): Test time grain expressions
     """
-    from superset.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
 
     assert str(
         DruidEngineSpec.get_timestamp_expr(
@@ -75,7 +75,7 @@ def test_timegrain_expressions(time_grain: str, expected_result: str) -> None:
 
 
 def test_extras_without_ssl() -> None:
-    from superset.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
     from tests.integration_tests.fixtures.database import default_db_extra
 
     database = mock.Mock()
@@ -86,7 +86,7 @@ def test_extras_without_ssl() -> None:
 
 
 def test_extras_with_ssl() -> None:
-    from superset.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
     from tests.integration_tests.fixtures.certificates import ssl_certificate
     from tests.integration_tests.fixtures.database import default_db_extra
 
@@ -100,7 +100,7 @@ def test_extras_with_ssl() -> None:
 
 
 def test_extras_with_ssl_ignores_non_object_extra() -> None:
-    from superset.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
     from tests.integration_tests.fixtures.certificates import ssl_certificate
 
     database = mock.Mock()
@@ -114,14 +114,14 @@ def test_extras_with_ssl_ignores_non_object_extra() -> None:
 
 
 def test_extras_rejects_non_string_extra() -> None:
-    from superset.db_engine_specs.druid import DruidEngineSpec
-    from superset.exceptions import SupersetException
+    from axbi.db_engine_specs.druid import DruidEngineSpec
+    from axbi.exceptions import AxBIException
 
     database = mock.Mock()
     database.extra = ["not-json"]
     database.server_cert = None
 
-    with pytest.raises(SupersetException, match="Unable to parse database extras"):
+    with pytest.raises(AxBIException, match="Unable to parse database extras"):
         DruidEngineSpec.get_extra_params(database)
 
 
@@ -153,11 +153,11 @@ def test_druid_ieee_special_floats_preserved_as_numeric() -> None:
     Case 1, DruidEngineSpec: columns that mix IEEE special-float strings with
     real numbers must keep their numeric type (specials become null).
     """
-    from superset.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
 
     data = [("NaN",), (1.5,), ("Infinity",), (2.3,), ("-Infinity",), (None,)]
     description = [("metric", "STRING", None, None, None, None, None)]
-    result_set = SupersetResultSet(data, description, DruidEngineSpec)  # type: ignore
+    result_set = AxBIResultSet(data, description, DruidEngineSpec)  # type: ignore
 
     col = result_set.columns[0]
     assert col["type"] == "FLOAT"
@@ -178,7 +178,7 @@ def test_base_spec_ieee_special_floats_stringified() -> None:
     """
     data = [("NaN",), (1.5,), ("Infinity",)]
     description = [("metric", "STRING", None, None, None, None, None)]
-    result_set = SupersetResultSet(data, description, BaseEngineSpec)  # type: ignore
+    result_set = AxBIResultSet(data, description, BaseEngineSpec)  # type: ignore
 
     col = result_set.columns[0]
     assert col["type"] == "STRING"
@@ -195,11 +195,11 @@ def test_druid_none_first_value_reports_numeric_type() -> None:
     first-row None inference) but PyArrow correctly infers float64, the column
     must be reported as FLOAT, not STRING.
     """
-    from superset.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
 
     data = [(None,), (1.5,), (2.3,), (None,), (4.7,)]
     description = [("metric", "STRING", None, None, None, None, None)]
-    result_set = SupersetResultSet(data, description, DruidEngineSpec)  # type: ignore
+    result_set = AxBIResultSet(data, description, DruidEngineSpec)  # type: ignore
 
     col = result_set.columns[0]
     assert col["type"] == "FLOAT"
@@ -217,7 +217,7 @@ def test_base_spec_none_first_value_reports_string_type() -> None:
     """
     data = [(None,), (1.5,), (2.3,)]
     description = [("metric", "STRING", None, None, None, None, None)]
-    result_set = SupersetResultSet(data, description, BaseEngineSpec)  # type: ignore
+    result_set = AxBIResultSet(data, description, BaseEngineSpec)  # type: ignore
 
     col = result_set.columns[0]
     assert col["type"] == "STRING"
@@ -228,11 +228,11 @@ def test_non_string_cursor_type_unaffected_by_druid_spec() -> None:
     Columns with a non-STRING cursor description type must not be affected by
     DruidEngineSpec's resolve_column_type override.
     """
-    from superset.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
 
     data = [(1,), (2,), (3,)]
     description = [("count", "INT", None, None, None, None, None)]
-    result_set = SupersetResultSet(data, description, DruidEngineSpec)  # type: ignore
+    result_set = AxBIResultSet(data, description, DruidEngineSpec)  # type: ignore
 
     col = result_set.columns[0]
     assert col["type"] == "INT"

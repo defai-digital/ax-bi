@@ -41,7 +41,7 @@ const drillToDetailModalState = {
   ...store.getState(),
   user: {
     ...store.getState().user,
-    roles: { Admin: [['can_explore', 'Superset']] },
+    roles: { Admin: [['can_explore', 'AxBI']] },
   },
 };
 
@@ -109,7 +109,7 @@ test('should render "Edit chart" as disabled without can_explore permission', as
   await renderModal({
     user: {
       ...drillToDetailModalState.user,
-      roles: { Admin: [['invalid_permission', 'Superset']] },
+      roles: { Admin: [['invalid_permission', 'AxBI']] },
     },
   });
   expect(screen.getByRole('button', { name: 'Edit chart' })).toBeDisabled();

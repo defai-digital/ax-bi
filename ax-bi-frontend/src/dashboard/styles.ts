@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 
-export const headerStyles = (theme: SupersetTheme) => css`
+export const headerStyles = (theme: AxBITheme) => css`
   body {
     h1 {
       font-weight: ${theme.fontWeightStrong};
@@ -52,7 +52,7 @@ export const headerStyles = (theme: SupersetTheme) => css`
 `;
 
 // adds enough margin and padding so that the focus outline styles will fit
-export const chartHeaderStyles = (theme: SupersetTheme) => css`
+export const chartHeaderStyles = (theme: AxBITheme) => css`
   .header-title a {
     margin: ${theme.sizeUnit / 2}px;
     padding: ${theme.sizeUnit / 2}px;
@@ -76,7 +76,7 @@ export const filterCardPopoverStyle = () => css`
   }
 `;
 
-export const chartContextMenuStyles = (theme: SupersetTheme) => css`
+export const chartContextMenuStyles = (theme: AxBITheme) => css`
   .ant-dropdown-menu.chart-context-menu {
     min-width: ${theme.sizeUnit * 43}px;
   }
@@ -86,12 +86,12 @@ export const chartContextMenuStyles = (theme: SupersetTheme) => css`
   }
 `;
 
-export const focusStyle = (theme: SupersetTheme) => css`
+export const focusStyle = (theme: AxBITheme) => css`
   a,
   .ant-tabs-content,
   .ant-tabs-tab-btn,
-  .superset-button,
-  .superset-button.ant-dropdown-trigger,
+  .axbi-button,
+  .axbi-button.ant-dropdown-trigger,
   .header-controls span {
     &:focus-visible {
       box-shadow: 0 0 0 2px ${theme.colorPrimaryText};
@@ -100,7 +100,7 @@ export const focusStyle = (theme: SupersetTheme) => css`
       text-decoration: none;
     }
     &:not(
-      .superset-button,
+      .axbi-button,
       .ant-menu-item,
       a,
       .fave-unfave-icon,

@@ -27,14 +27,14 @@ from unittest.mock import patch
 
 import pytest
 
-from superset.commands.report.base import (
+from axbi.commands.report.base import (
     _get_dashboard_native_filter_ids,
     _get_dashboard_state_invalid_tab_ids,
     BaseReportScheduleCommand,
 )
-from superset.commands.report.exceptions import ReportScheduleFrequencyNotAllowed
-from superset.reports.models import ReportScheduleType
-from superset.utils import json
+from axbi.commands.report.exceptions import ReportScheduleFrequencyNotAllowed
+from axbi.reports.models import ReportScheduleType
+from axbi.utils import json
 
 REPORT_TYPES = {
     ReportScheduleType.ALERT,

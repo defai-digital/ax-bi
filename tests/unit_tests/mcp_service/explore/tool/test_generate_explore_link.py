@@ -26,8 +26,8 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.schemas import (
     AxisConfig,
     ColumnRef,
     FilterConfig,
@@ -36,23 +36,23 @@ from superset.mcp_service.chart.schemas import (
     TableChartConfig,
     XYChartConfig,
 )
-from superset.mcp_service.common.error_schemas import DatasetContext
+from axbi.mcp_service.common.error_schemas import DatasetContext
 
 # The package ``__init__.py`` re-exports the ``generate_explore_link`` tool
 # function under the same dotted path as the module, so mock.patch's string
 # lookup of ``...generate_explore_link.<attr>`` can resolve to the function
 # on some Python versions. Hold a direct module reference for ``patch.object``.
 generate_explore_link_module = importlib.import_module(
-    "superset.mcp_service.explore.tool.generate_explore_link"
+    "axbi.mcp_service.explore.tool.generate_explore_link"
 )
 
 logger = logging.getLogger(__name__)
 
 _PERMALINK_PATCH = (
-    "superset.commands.explore.permalink.create.CreateExplorePermalinkCommand.run"
+    "axbi.commands.explore.permalink.create.CreateExplorePermalinkCommand.run"
 )
 _FORM_DATA_PATCH = (
-    "superset.mcp_service.commands.create_form_data.MCPCreateFormDataCommand.run"
+    "axbi.mcp_service.commands.create_form_data.MCPCreateFormDataCommand.run"
 )
 
 
@@ -64,7 +64,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -76,7 +76,7 @@ def mock_auth():
 def mock_event_logger():
     """Skip event-logger DB writes so a bad logs FK doesn't poison the
     session for FastMCP's response serialization on the success path."""
-    with patch("superset.utils.log.DBEventLogger.log", return_value=None):
+    with patch("axbi.utils.log.DBEventLogger.log", return_value=None):
         yield
 
 
@@ -93,7 +93,7 @@ def mock_dataset_access_granted():
 def mock_validation_passes():
     """Skip Tier-1 dataset validation by default so Mock datasets don't trip the
     real validator. Individual tests that exercise validation override this."""
-    from superset.mcp_service.chart.compile import CompileResult
+    from axbi.mcp_service.chart.compile import CompileResult
 
     with patch.object(
         generate_explore_link_module,
@@ -127,7 +127,7 @@ def mock_permalink_creation():
 
 def _mock_dataset(id: int = 1) -> Mock:
     """Create a mock dataset object with columns and db_engine_spec."""
-    from superset.utils.core import ColumnSpec, GenericDataType
+    from axbi.utils.core import ColumnSpec, GenericDataType
 
     # Create mock column that appears temporal
     mock_column = Mock()
@@ -156,7 +156,7 @@ def _mock_dataset(id: int = 1) -> Mock:
 class TestGenerateExploreLink:
     """Comprehensive tests for generate_explore_link MCP tool."""
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_table_explore_link_minimal(
         self, mock_find_dataset, mcp_server
@@ -185,7 +185,7 @@ class TestGenerateExploreLink:
             assert result.structured_content["form_data_key"] is None
             assert result.structured_content["chart_type_label"] == "table chart"
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_table_explore_link_with_features(
         self, mock_find_dataset, mcp_server
@@ -224,7 +224,7 @@ class TestGenerateExploreLink:
             assert result.structured_content["form_data_key"] is None
             assert result.structured_content["chart_type_label"] == "table chart"
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_ag_grid_table_explore_link_label(
         self, mock_find_dataset, mcp_server
@@ -252,7 +252,7 @@ class TestGenerateExploreLink:
                 == "interactive table chart"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_line_chart_explore_link(
         self, mock_find_dataset, mcp_server
@@ -289,7 +289,7 @@ class TestGenerateExploreLink:
             )
             assert result.structured_content["chart_type_label"] is None
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_bar_chart_explore_link(self, mock_find_dataset, mcp_server):
         """Test generating explore link for bar chart."""
@@ -318,7 +318,7 @@ class TestGenerateExploreLink:
                 == "http://localhost:9001/explore/p/test_permalink_key/"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_area_chart_explore_link(
         self, mock_find_dataset, mcp_server
@@ -352,7 +352,7 @@ class TestGenerateExploreLink:
                 == "http://localhost:9001/explore/p/test_permalink_key/"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_scatter_chart_explore_link(
         self, mock_find_dataset, mcp_server
@@ -385,7 +385,7 @@ class TestGenerateExploreLink:
             )
 
     @patch(_PERMALINK_PATCH)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch(_FORM_DATA_PATCH)
     @pytest.mark.asyncio
     async def test_generate_explore_link_permalink_fails_fallback_to_form_data_key(
@@ -396,7 +396,7 @@ class TestGenerateExploreLink:
         mcp_server,
     ):
         """When permalink creation fails, fall back to ephemeral form_data_key URL."""
-        from superset.explore.permalink.exceptions import (
+        from axbi.explore.permalink.exceptions import (
             ExplorePermalinkCreateFailedError,
         )
 
@@ -428,7 +428,7 @@ class TestGenerateExploreLink:
             mock_create_form_data.assert_called_once()
 
     @patch(_PERMALINK_PATCH)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch(_FORM_DATA_PATCH)
     @pytest.mark.asyncio
     async def test_generate_explore_link_both_fail_fallback_to_basic_url(
@@ -439,8 +439,8 @@ class TestGenerateExploreLink:
         mcp_server,
     ):
         """When both permalink and form_data_key fail, fall back to basic URL."""
-        from superset.commands.exceptions import CommandException
-        from superset.explore.permalink.exceptions import (
+        from axbi.commands.exceptions import CommandException
+        from axbi.explore.permalink.exceptions import (
             ExplorePermalinkCreateFailedError,
         )
 
@@ -468,7 +468,7 @@ class TestGenerateExploreLink:
             )
 
     @patch(_PERMALINK_PATCH)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch(_FORM_DATA_PATCH)
     @pytest.mark.asyncio
     async def test_generate_explore_link_database_lock_fallback(
@@ -507,7 +507,7 @@ class TestGenerateExploreLink:
                 == "http://localhost:9001/explore/?form_data_key=lock_fallback_key"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_with_many_columns(
         self, mock_find_dataset, mcp_server
@@ -541,7 +541,7 @@ class TestGenerateExploreLink:
                 == "http://localhost:9001/explore/p/test_permalink_key/"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_with_many_filters(
         self, mock_find_dataset, mcp_server
@@ -581,7 +581,7 @@ class TestGenerateExploreLink:
                 == "http://localhost:9001/explore/p/test_permalink_key/"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_explore_link_url_format_consistency(
         self, mock_find_dataset, mcp_server
@@ -633,7 +633,7 @@ class TestGenerateExploreLink:
                 assert result.structured_content["error"] is None
                 assert result.structured_content["success"] is True
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_dataset_id_types(
         self, mock_find_dataset, mcp_server
@@ -661,7 +661,7 @@ class TestGenerateExploreLink:
                     == "http://localhost:9001/explore/p/test_permalink_key/"
                 )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_complex_configuration(
         self, mock_find_dataset, mcp_server
@@ -704,7 +704,7 @@ class TestGenerateExploreLink:
             )
 
     @patch(_PERMALINK_PATCH)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch(_FORM_DATA_PATCH)
     @pytest.mark.asyncio
     async def test_fallback_url_different_datasets(
@@ -715,8 +715,8 @@ class TestGenerateExploreLink:
         mcp_server,
     ):
         """When both fallbacks fail, basic URL uses the correct dataset_id."""
-        from superset.commands.exceptions import CommandException
-        from superset.explore.permalink.exceptions import (
+        from axbi.commands.exceptions import CommandException
+        from axbi.explore.permalink.exceptions import (
             ExplorePermalinkCreateFailedError,
         )
 
@@ -748,7 +748,7 @@ class TestGenerateExploreLink:
                 assert result.structured_content["success"] is True
                 assert result.structured_content["url"] == expected_url
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_tool_exception_handling(
         self, mock_find_dataset, mcp_server
@@ -760,7 +760,7 @@ class TestGenerateExploreLink:
         # Get the actual module object from sys.modules (not via __init__.py which
         # returns the function)
         explore_module = sys.modules[
-            "superset.mcp_service.explore.tool.generate_explore_link"
+            "axbi.mcp_service.explore.tool.generate_explore_link"
         ]
 
         original_func = explore_module.map_config_to_form_data
@@ -799,7 +799,7 @@ class TestGenerateExploreLink:
             explore_module.map_config_to_form_data = original_func
 
     @patch(_PERMALINK_PATCH)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_returns_permalink_key(
         self, mock_find_dataset, mock_create_permalink, mcp_server
@@ -829,7 +829,7 @@ class TestGenerateExploreLink:
                 "http://localhost:9001/explore/p/extracted_permalink_xyz/"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_returns_form_data(
         self, mock_find_dataset, mcp_server
@@ -865,7 +865,7 @@ class TestGenerateExploreLink:
                 result.structured_content["form_data"].get("datasource") == "1__table"
             )
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_nonexistent_dataset(
         self, mock_find_dataset, mcp_server
@@ -894,7 +894,7 @@ class TestGenerateExploreLink:
             assert "Dataset not found: 99999" in error["message"]
             assert "list_datasets" in error["details"]
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_without_config(
         self, mock_find_dataset, mcp_server
@@ -924,7 +924,7 @@ class TestGenerateExploreLink:
             assert result.structured_content["permalink_key"] is None
             assert result.structured_content["chart_type_label"] is None
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_without_config_missing_dataset(
         self, mock_find_dataset, mcp_server
@@ -951,7 +951,7 @@ class TestGenerateExploreLink:
             assert error["error_type"] == "dataset_not_found"
             assert "Dataset not found: 99999" in error["message"]
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_generate_explore_link_nonexistent_uuid_dataset(
         self, mock_find_dataset, mcp_server
@@ -991,9 +991,9 @@ class TestGenerateExploreLinkColumnNormalization:
     """
 
     @patch(
-        "superset.mcp_service.chart.validation.dataset_validator.DatasetValidator._get_dataset_context"
+        "axbi.mcp_service.chart.validation.dataset_validator.DatasetValidator._get_dataset_context"
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_xy_chart_x_axis_normalized_in_form_data(
         self,
@@ -1035,9 +1035,9 @@ class TestGenerateExploreLinkColumnNormalization:
             assert result.structured_content["form_data"]["x_axis"] == "OrderDate"
 
     @patch(
-        "superset.mcp_service.chart.validation.dataset_validator.DatasetValidator._get_dataset_context"
+        "axbi.mcp_service.chart.validation.dataset_validator.DatasetValidator._get_dataset_context"
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_filter_column_normalized_in_form_data(
         self,
@@ -1091,9 +1091,9 @@ class TestGenerateExploreLinkColumnNormalization:
             assert adhoc_filters[1]["subject"] == "OrderDate"
 
     @patch(
-        "superset.mcp_service.chart.validation.dataset_validator.DatasetValidator._get_dataset_context"
+        "axbi.mcp_service.chart.validation.dataset_validator.DatasetValidator._get_dataset_context"
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_normalization_fallback_when_dataset_not_found(
         self,
@@ -1138,7 +1138,7 @@ class TestGenerateExploreLinkValidation:
 
     @patch(_PERMALINK_PATCH)
     @patch.object(generate_explore_link_module, "validate_and_compile")
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_validation_failure_returns_structured_error(
         self,
@@ -1149,8 +1149,8 @@ class TestGenerateExploreLinkValidation:
     ):
         """Non-existent column → structured ChartGenerationError with suggestions,
         and CreateExplorePermalinkCommand must NOT be called (no cache write)."""
-        from superset.mcp_service.chart.compile import CompileResult
-        from superset.mcp_service.common.error_schemas import ChartGenerationError
+        from axbi.mcp_service.chart.compile import CompileResult
+        from axbi.mcp_service.common.error_schemas import ChartGenerationError
 
         mock_find_dataset.return_value = _mock_dataset(id=3)
         mock_validate.return_value = CompileResult(
@@ -1195,7 +1195,7 @@ class TestGenerateExploreLinkValidation:
     @patch.object(
         generate_explore_link_module, "has_dataset_access", return_value=False
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_dataset_access_denied_short_circuits(
         self,

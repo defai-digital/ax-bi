@@ -19,15 +19,15 @@
 /* eslint-env browser */
 import cx from 'classnames';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { addAlpha, JsonObject, useElementOnScreen } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { addAlpha, JsonObject, useElementOnScreen } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import { useDispatch, useSelector } from 'react-redux';
-import { EmptyState, Loading } from '@superset-ui/core/components';
+import { EmptyState, Loading } from '@ax-bi/ui-core/components';
 import { ErrorBoundary, BasicErrorAlert } from 'src/components';
 import BuilderComponentPane from 'src/dashboard/components/BuilderComponentPane';
 import DashboardHeader from 'src/dashboard/components/Header';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import IconButton from 'src/dashboard/components/IconButton';
 import { Droppable } from 'src/dashboard/components/dnd/DragDroppable';
 import DashboardComponent from 'src/dashboard/containers/DashboardComponent';
@@ -147,8 +147,9 @@ const DashboardContentWrapper = styled.div`
       & .dashboard-component-tabs {
         box-shadow: 0 ${theme.sizeUnit}px ${theme.sizeUnit}px 0
           ${addAlpha(theme.colorBorderSecondary, 0.1)};
-        padding-left: ${theme.sizeUnit *
-        2}px; /* note this is added to tab-level padding, to match header */
+        padding-left: ${
+          theme.sizeUnit * 2
+        }px; /* note this is added to tab-level padding, to match header */
       }
 
       .dropdown-toggle.btn.btn-primary .caret {
@@ -305,13 +306,15 @@ const StyledDashboardContent = styled.div<{
       min-height: max-content;
       min-width: 0;
 
-      ${editMode &&
-      `
+      ${
+        editMode &&
+        `
       min-width: min(100%, ${theme.sizeUnit * 80}px);
       max-width: calc(100% - ${
         BUILDER_SIDEPANEL_WIDTH + theme.sizeUnit * 16
       }px);
-    `}
+    `
+      }
 
       /* this is the ParentSize wrapper */
       & > div:first-of-type,

@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from contextlib import contextmanager
 from datetime import datetime, timedelta
@@ -25,25 +25,25 @@ import rison
 from flask import current_app
 from sqlalchemy import text
 
-from superset import db, security_manager as sm
-from superset.commands.dataset.exceptions import DatasetNotFoundError
-from superset.common.utils.query_cache_manager import QueryCacheManager
-from superset.connectors.sqla.models import (  # noqa: F401
+from axbi import db, security_manager as sm
+from axbi.commands.dataset.exceptions import DatasetNotFoundError
+from axbi.common.utils.query_cache_manager import QueryCacheManager
+from axbi.connectors.sqla.models import (  # noqa: F401
     SqlaTable,
     SqlMetric,
     TableColumn,
 )
-from superset.constants import CacheRegion
-from superset.daos.exceptions import DatasourceNotFound, DatasourceTypeNotSupportedError
-from superset.exceptions import SupersetGenericDBErrorException
-from superset.models.core import Database
-from superset.utils import json
-from superset.utils.core import backend, get_example_default_schema  # noqa: F401
-from superset.utils.database import (  # noqa: F401
+from axbi.constants import CacheRegion
+from axbi.daos.exceptions import DatasourceNotFound, DatasourceTypeNotSupportedError
+from axbi.exceptions import AxBIGenericDBErrorException
+from axbi.models.core import Database
+from axbi.utils import json
+from axbi.utils.core import backend, get_example_default_schema  # noqa: F401
+from axbi.utils.database import (  # noqa: F401
     get_example_database,
     get_main_database,
 )
-from tests.integration_tests.base_tests import db_insert_temp_object, SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase, db_insert_temp_object
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -106,7 +106,7 @@ def create_and_cleanup_table(table=None):
         db.session.commit()
 
 
-class TestDatasource(SupersetTestCase):
+class TestDatasource(AxBITestCase):
     def setUp(self):
         db.session.rollback()
         db.session.begin()
@@ -358,16 +358,16 @@ class TestDatasource(SupersetTestCase):
             assert resp["error"] == "Only single queries supported"
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.connectors.sqla.models.SqlaTable.external_metadata")
+    @mock.patch("axbi.connectors.sqla.models.SqlaTable.external_metadata")
     def test_external_metadata_error_return_400(self, mock_get_datasource):
         self.login(ADMIN_USERNAME)
         tbl = self.get_table(name="birth_names")
         url = f"/datasource/external_metadata/table/{tbl.id}/"
 
-        mock_get_datasource.side_effect = SupersetGenericDBErrorException("oops")
+        mock_get_datasource.side_effect = AxBIGenericDBErrorException("oops")
 
         pytest.raises(
-            SupersetGenericDBErrorException,
+            AxBIGenericDBErrorException,
             lambda: db.session.query(SqlaTable)
             .filter_by(id=tbl.id)
             .one_or_none()
@@ -413,7 +413,7 @@ class TestDatasource(SupersetTestCase):
         datasource_post = get_datasource_post()
         datasource_post["id"] = tbl_id
         datasource_post["owners"] = [1]
-        datasource_post["default_endpoint"] = "http://localhost/superset/1"
+        datasource_post["default_endpoint"] = "http://localhost/ax-bi/1"
         data = dict(data=json.dumps(datasource_post))  # noqa: C408
         resp = self.client.post("/datasource/save/", data=data)
         assert resp.status_code == 200
@@ -512,7 +512,7 @@ class TestDatasource(SupersetTestCase):
         current_app.config["DATASET_HEALTH_CHECK"] = None
 
     def test_get_datasource_failed(self):
-        from superset.daos.datasource import DatasourceDAO
+        from axbi.daos.datasource import DatasourceDAO
 
         pytest.raises(
             DatasourceNotFound,
@@ -524,7 +524,7 @@ class TestDatasource(SupersetTestCase):
         assert resp.get("error") == "Datasource does not exist"
 
     def test_get_datasource_invalid_datasource_failed(self):
-        from superset.daos.datasource import DatasourceDAO
+        from axbi.daos.datasource import DatasourceDAO
 
         pytest.raises(
             DatasourceTypeNotSupportedError,
@@ -536,12 +536,10 @@ class TestDatasource(SupersetTestCase):
         assert resp.get("error") == "'druid' is not a valid DatasourceType"
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch(
-        "superset.security.manager.SupersetSecurityManager.get_guest_rls_filters"
-    )
-    @mock.patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @mock.patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @mock.patch("axbi.security.manager.AxBISecurityManager.get_guest_rls_filters")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_get_samples_embedded_user(
         self, mock_has_guest_access, mock_is_guest_user, mock_rls
     ):
@@ -568,11 +566,9 @@ class TestDatasource(SupersetTestCase):
             sm.del_permission_role(gamma_role, perm_view)
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch(
-        "superset.security.manager.SupersetSecurityManager.get_guest_rls_filters"
-    )
-    @mock.patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @mock.patch("axbi.security.manager.AxBISecurityManager.get_guest_rls_filters")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_get_samples_embedded_user_without_dash_id(
         self, mock_is_guest_user, mock_rls
     ):
@@ -589,11 +585,9 @@ class TestDatasource(SupersetTestCase):
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @mock.patch(
-        "superset.security.manager.SupersetSecurityManager.get_guest_rls_filters"
-    )
-    @mock.patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @mock.patch("axbi.security.manager.AxBISecurityManager.get_guest_rls_filters")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_get_samples_embedded_user_dashboard_without_dataset(
         self, mock_is_guest_user, mock_rls
     ):

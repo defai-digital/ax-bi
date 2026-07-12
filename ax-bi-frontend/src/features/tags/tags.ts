@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject, SupersetClient } from '@superset-ui/core';
+import { JsonObject, AxBIClient } from '@ax-bi/ui-core';
 import rison from 'rison';
 import { TagType } from 'src/components';
 import { TagTypeEnum } from 'src/components/Tag/TagType';
@@ -52,7 +52,7 @@ export function fetchAllTags(
   callback: (json: JsonObject) => void,
   error: (response: Response) => void,
 ) {
-  SupersetClient.get({
+  AxBIClient.get({
     endpoint: `/api/v1/tag/?q=${rison.encode({
       filters: [{ col: 'type', opr: 'custom_tag', value: true }],
     })}`,
@@ -66,7 +66,7 @@ export function fetchSingleTag(
   callback: (json: JsonObject) => void,
   error: (response: Response) => void,
 ) {
-  SupersetClient.get({ endpoint: `/api/v1/tag/${id}` })
+  AxBIClient.get({ endpoint: `/api/v1/tag/${id}` })
     .then(({ json }) => callback(json.result))
     .catch(response => error(response));
 }
@@ -90,7 +90,7 @@ export function fetchTags(
     const msg = `objectType ${objectType} is invalid`;
     throw new Error(msg);
   }
-  SupersetClient.get({
+  AxBIClient.get({
     endpoint: `/api/v1/${objectType}/${objectId}`,
   })
     .then(({ json }) =>
@@ -115,7 +115,7 @@ export function deleteTaggedObjects(
     const msg = `objectType ${objectType} is invalid`;
     throw new Error(msg);
   }
-  SupersetClient.delete({
+  AxBIClient.delete({
     endpoint: `/api/v1/tag/${map_object_type_to_id(objectType)}/${objectId}/${
       tag.name
     }`,
@@ -137,7 +137,7 @@ export function deleteTags(
   error: (response: string) => void,
 ) {
   const tag_names = tags.map(tag => tag.name) as string[];
-  SupersetClient.delete({
+  AxBIClient.delete({
     endpoint: `/api/v1/tag/?q=${rison.encode(tag_names)}`,
   })
     .then(({ json }) =>
@@ -168,7 +168,7 @@ export function addTag(
     throw new Error('Need to specify objectType and objectId');
   }
   const objectTypeId = map_object_type_to_id(objectType);
-  SupersetClient.post({
+  AxBIClient.post({
     endpoint: `/api/v1/tag/${objectTypeId}/${objectId}/`,
     body: JSON.stringify({
       properties: {
@@ -191,7 +191,7 @@ export function fetchObjectsByTagIds(
   if (types) {
     url += `&types=${types}`;
   }
-  SupersetClient.get({ endpoint: url })
+  AxBIClient.get({ endpoint: url })
     .then(({ json }) => callback(json.result))
     .catch(response => error(response));
 }

@@ -38,15 +38,15 @@ from sqlalchemy import Column, DateTime, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm.session import Session
 
-from superset.daos.base import BaseDAO, ColumnOperator, ColumnOperatorEnum
-from superset.daos.chart import ChartDAO
-from superset.daos.dashboard import DashboardDAO
-from superset.daos.database import DatabaseDAO
-from superset.daos.user import UserDAO
-from superset.extensions import db
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
+from axbi.daos.base import BaseDAO, ColumnOperator, ColumnOperatorEnum
+from axbi.daos.chart import ChartDAO
+from axbi.daos.dashboard import DashboardDAO
+from axbi.daos.database import DatabaseDAO
+from axbi.daos.user import UserDAO
+from axbi.extensions import db
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
 
 # Create a test model for comprehensive testing
 Base = declarative_base()
@@ -1407,7 +1407,7 @@ def test_base_dao_list_with_one_to_many_relationship(app_context: Session) -> No
 
     # Test with relationship loading (skip_base_filter since ChartDAO may have filters)
     # We'll use a simpler approach - directly test the BaseDAO.list method
-    from superset.daos.base import BaseDAO
+    from axbi.daos.base import BaseDAO
 
     class TestChartDAO(BaseDAO[Slice]):
         model_cls = Slice

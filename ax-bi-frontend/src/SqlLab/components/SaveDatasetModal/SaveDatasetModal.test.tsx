@@ -29,7 +29,7 @@ import fetchMock from 'fetch-mock';
 import { SaveDatasetModal } from 'src/SqlLab/components/SaveDatasetModal';
 import { createDatasource } from 'src/SqlLab/actions/sqlLab';
 import { user, testQuery, mockdatasets } from 'src/SqlLab/fixtures';
-import { FeatureFlag, SupersetClient } from '@superset-ui/core';
+import { FeatureFlag, AxBIClient } from '@ax-bi/ui-core';
 
 const mockedProps = {
   visible: true,
@@ -74,8 +74,8 @@ jest.mock('src/SqlLab/actions/sqlLab', () => ({
 jest.mock('src/explore/exploreUtils/formData', () => ({
   postFormData: jest.fn(),
 }));
-jest.mock('src/utils/cachedSupersetGet', () => ({
-  ...jest.requireActual('src/utils/cachedSupersetGet'),
+jest.mock('src/utils/cachedAxBIGet', () => ({
+  ...jest.requireActual('src/utils/cachedAxBIGet'),
   clearDatasetCache: jest.fn(),
 }));
 
@@ -380,7 +380,7 @@ describe('SaveDatasetModal', () => {
     };
 
     const putSpy = jest
-      .spyOn(SupersetClient, 'put')
+      .spyOn(AxBIClient, 'put')
       .mockResolvedValue({ json: { result: { id: 0 } } } as any);
 
     renderModal({
@@ -422,7 +422,7 @@ describe('SaveDatasetModal', () => {
     };
 
     const putSpy = jest
-      .spyOn(SupersetClient, 'put')
+      .spyOn(AxBIClient, 'put')
       .mockResolvedValue({ json: { result: { id: 0 } } } as any);
 
     renderModal({
@@ -455,7 +455,7 @@ describe('SaveDatasetModal', () => {
 
   test('clears dataset cache when creating new dataset', async () => {
     const clearDatasetCache = jest.spyOn(
-      require('src/utils/cachedSupersetGet'),
+      require('src/utils/cachedAxBIGet'),
       'clearDatasetCache',
     );
     const postFormData = jest.spyOn(
@@ -481,7 +481,7 @@ describe('SaveDatasetModal', () => {
   });
 
   test('clearDatasetCache is imported and available', () => {
-    const { clearDatasetCache } = require('src/utils/cachedSupersetGet');
+    const { clearDatasetCache } = require('src/utils/cachedAxBIGet');
 
     expect(clearDatasetCache).toBeDefined();
     expect(typeof clearDatasetCache).toBe('function');

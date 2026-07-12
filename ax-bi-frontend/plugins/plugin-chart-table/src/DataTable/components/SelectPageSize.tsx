@@ -17,10 +17,10 @@
  * under the License.
  */
 import { memo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css } from '@apache-superset/core/theme';
-import { formatSelectOptions } from '@superset-ui/chart-controls';
-import { RawAntdSelect } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { css } from '@ax-bi/core/theme';
+import { formatSelectOptions } from '@ax-bi/chart-controls';
+import { RawAntdSelect } from '@ax-bi/ui-core/components';
 
 export type SizeOption = [number, string];
 

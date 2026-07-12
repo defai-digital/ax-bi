@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled, css } from '@apache-superset/core/theme';
-import { IconTooltip } from '@superset-ui/core/components';
+import { styled, css } from '@ax-bi/core/theme';
+import { IconTooltip } from '@ax-bi/ui-core/components';
 
 export const StaticPosition = css`
   position: static;

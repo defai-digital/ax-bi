@@ -17,7 +17,7 @@
  * under the License.
  */
 /* eslint-disable camelcase */
-import { DataMaskStateWithId, JsonObject } from '@superset-ui/core';
+import { DataMaskStateWithId, JsonObject } from '@ax-bi/ui-core';
 import type { AnyAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -339,23 +339,11 @@ export const hydrateDashboard =
           userId: user.userId ? String(user.userId) : null, // legacy, please use state.user instead
           dash_edit_perm: canEdit,
           dash_save_perm: canUserSaveAsDashboard(dashboard, user),
-          dash_share_perm: findPermission(
-            'can_share_dashboard',
-            'Superset',
-            roles,
-          ),
+          dash_share_perm: findPermission('can_share_dashboard', 'AxBI', roles),
           dash_export_perm: findPermission('can_export', 'Dashboard', roles),
-          superset_can_explore: findPermission(
-            'can_explore',
-            'Superset',
-            roles,
-          ),
-          superset_can_share: findPermission(
-            'can_share_chart',
-            'Superset',
-            roles,
-          ),
-          superset_can_csv: findPermission('can_csv', 'Superset', roles),
+          axbi_can_explore: findPermission('can_explore', 'AxBI', roles),
+          axbi_can_share: findPermission('can_share_chart', 'AxBI', roles),
+          axbi_can_csv: findPermission('can_csv', 'AxBI', roles),
           common: {
             // legacy, please use state.common instead
             conf: common?.conf,

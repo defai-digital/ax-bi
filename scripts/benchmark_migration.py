@@ -147,7 +147,7 @@ def main(  # noqa: C901
         benchmark_migration(filepath, limit, force, no_auto_cleanup)
         return
 
-    from superset.app import create_app
+    from axbi.app import create_app
 
     app = create_app()
     with app.app_context():
@@ -161,8 +161,8 @@ def benchmark_migration(  # noqa: C901
     from progress.bar import ChargingBar
     from sqlalchemy import text
 
-    from superset import db
-    from superset.utils.mock_data import add_sample_rows
+    from axbi import db
+    from axbi.utils.mock_data import add_sample_rows
 
     auto_cleanup = not no_auto_cleanup
     print(f"Importing migration script: {filepath}")
@@ -184,7 +184,7 @@ def benchmark_migration(  # noqa: C901
     if current_revision != down_revision:
         if not force:
             click.confirm(
-                "\nRunning benchmark will downgrade the Superset DB to "
+                "\nRunning benchmark will downgrade the AxBI DB to "
                 f"{down_revision} and upgrade to {revision} again. There may "
                 "be data loss in downgrades. Continue?",
                 abort=True,

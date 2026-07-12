@@ -22,7 +22,7 @@ from unittest.mock import MagicMock, patch
 
 import redis
 
-from superset.tasks.manager import AbortListener, TaskManager
+from axbi.tasks.manager import AbortListener, TaskManager
 
 
 class TestAbortListener:
@@ -120,13 +120,13 @@ class TestTaskManagerPubSub:
         TaskManager._channel_prefix = "gtf:abort:"
         TaskManager._completion_channel_prefix = "gtf:complete:"
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_is_pubsub_available_no_redis(self, mock_cache_manager):
         """Test is_pubsub_available returns False when Redis not configured"""
         mock_cache_manager.distributed_coordination = None
         assert TaskManager.is_pubsub_available() is False
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_is_pubsub_available_with_redis(self, mock_cache_manager):
         """Test is_pubsub_available returns True when Redis is configured"""
         mock_cache_manager.distributed_coordination = MagicMock()
@@ -145,14 +145,14 @@ class TestTaskManagerPubSub:
         channel = TaskManager.get_abort_channel(task_uuid)
         assert channel == "custom:prefix:test-uuid"
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_publish_abort_no_redis(self, mock_cache_manager):
         """Test publish_abort returns False when Redis not available"""
         mock_cache_manager.distributed_coordination = None
         result = TaskManager.publish_abort("test-uuid")
         assert result is False
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_publish_abort_success(self, mock_cache_manager):
         """Test publish_abort publishes message successfully"""
         mock_redis = MagicMock()
@@ -164,7 +164,7 @@ class TestTaskManagerPubSub:
         assert result is True
         mock_redis.publish.assert_called_once_with("gtf:abort:test-uuid", "abort")
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_publish_abort_redis_error(self, mock_cache_manager):
         """Test publish_abort handles Redis errors gracefully"""
         mock_redis = MagicMock()
@@ -191,7 +191,7 @@ class TestTaskManagerListenForAbort:
         TaskManager._channel_prefix = "gtf:abort:"
         TaskManager._completion_channel_prefix = "gtf:complete:"
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_listen_for_abort_no_redis_uses_polling(self, mock_cache_manager):
         """Test listen_for_abort falls back to polling when Redis unavailable"""
         mock_cache_manager.distributed_coordination = None
@@ -212,7 +212,7 @@ class TestTaskManagerListenForAbort:
             # Should use polling since no Redis
             assert listener._pubsub is None
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_listen_for_abort_with_redis_uses_pubsub(self, mock_cache_manager):
         """Test listen_for_abort uses pub/sub when Redis available"""
         mock_redis = MagicMock()
@@ -237,7 +237,7 @@ class TestTaskManagerListenForAbort:
             # Should subscribe to channel
             mock_pubsub.subscribe.assert_called_once_with("gtf:abort:test-uuid")
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_listen_for_abort_redis_subscribe_failure_raises(self, mock_cache_manager):
         """Test listen_for_abort raises exception on subscribe failure
         when Redis configured"""
@@ -287,14 +287,14 @@ class TestTaskManagerCompletion:
         channel = TaskManager.get_completion_channel(task_uuid)
         assert channel == "custom:complete:test-uuid"
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_publish_completion_no_redis(self, mock_cache_manager):
         """Test publish_completion returns False when Redis not available"""
         mock_cache_manager.distributed_coordination = None
         result = TaskManager.publish_completion("test-uuid", "success")
         assert result is False
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_publish_completion_success(self, mock_cache_manager):
         """Test publish_completion publishes message successfully"""
         mock_redis = MagicMock()
@@ -306,7 +306,7 @@ class TestTaskManagerCompletion:
         assert result is True
         mock_redis.publish.assert_called_once_with("gtf:complete:test-uuid", "success")
 
-    @patch("superset.tasks.manager.cache_manager")
+    @patch("axbi.tasks.manager.cache_manager")
     def test_publish_completion_redis_error(self, mock_cache_manager):
         """Test publish_completion handles Redis errors gracefully"""
         mock_redis = MagicMock()
@@ -317,8 +317,8 @@ class TestTaskManagerCompletion:
 
         assert result is False
 
-    @patch("superset.tasks.manager.cache_manager")
-    @patch("superset.daos.tasks.TaskDAO")
+    @patch("axbi.tasks.manager.cache_manager")
+    @patch("axbi.daos.tasks.TaskDAO")
     def test_wait_for_completion_task_not_found(self, mock_dao, mock_cache_manager):
         """Test wait_for_completion raises ValueError for missing task"""
         import pytest
@@ -329,8 +329,8 @@ class TestTaskManagerCompletion:
         with pytest.raises(ValueError, match="not found"):
             TaskManager.wait_for_completion("nonexistent-uuid")
 
-    @patch("superset.tasks.manager.cache_manager")
-    @patch("superset.daos.tasks.TaskDAO")
+    @patch("axbi.tasks.manager.cache_manager")
+    @patch("axbi.daos.tasks.TaskDAO")
     def test_wait_for_completion_already_complete(self, mock_dao, mock_cache_manager):
         """Test wait_for_completion returns immediately for terminal state"""
         mock_cache_manager.distributed_coordination = None
@@ -345,8 +345,8 @@ class TestTaskManagerCompletion:
         # Should only call find_one_or_none once (initial check)
         mock_dao.find_one_or_none.assert_called_once()
 
-    @patch("superset.tasks.manager.cache_manager")
-    @patch("superset.daos.tasks.TaskDAO")
+    @patch("axbi.tasks.manager.cache_manager")
+    @patch("axbi.daos.tasks.TaskDAO")
     def test_wait_for_completion_timeout(self, mock_dao, mock_cache_manager):
         """Test wait_for_completion raises TimeoutError when timeout expires"""
         import pytest
@@ -360,8 +360,8 @@ class TestTaskManagerCompletion:
         with pytest.raises(TimeoutError, match="Timeout waiting"):
             TaskManager.wait_for_completion("test-uuid", timeout=0.1)
 
-    @patch("superset.tasks.manager.cache_manager")
-    @patch("superset.daos.tasks.TaskDAO")
+    @patch("axbi.tasks.manager.cache_manager")
+    @patch("axbi.daos.tasks.TaskDAO")
     def test_wait_for_completion_polling_success(self, mock_dao, mock_cache_manager):
         """Test wait_for_completion returns when task completes via polling"""
         mock_cache_manager.distributed_coordination = None
@@ -387,8 +387,8 @@ class TestTaskManagerCompletion:
 
         assert result.status == "success"
 
-    @patch("superset.tasks.manager.cache_manager")
-    @patch("superset.daos.tasks.TaskDAO")
+    @patch("axbi.tasks.manager.cache_manager")
+    @patch("axbi.daos.tasks.TaskDAO")
     def test_wait_for_completion_with_pubsub(self, mock_dao, mock_cache_manager):
         """Test wait_for_completion uses pub/sub when Redis available"""
         mock_task_pending = MagicMock()
@@ -428,8 +428,8 @@ class TestTaskManagerCompletion:
         mock_pubsub.unsubscribe.assert_called_once()
         mock_pubsub.close.assert_called_once()
 
-    @patch("superset.tasks.manager.cache_manager")
-    @patch("superset.daos.tasks.TaskDAO")
+    @patch("axbi.tasks.manager.cache_manager")
+    @patch("axbi.daos.tasks.TaskDAO")
     def test_wait_for_completion_pubsub_error_raises(
         self, mock_dao, mock_cache_manager
     ):

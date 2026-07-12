@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 
 import yaml
 
-from superset.utils import json
+from axbi.utils import json
 
 
 def _make_mock_dashboard(json_metadata: dict[str, Any]) -> MagicMock:
@@ -60,7 +60,7 @@ def test_file_content_replaces_dataset_id_with_uuid_in_display_controls():
     _file_content must replace datasetId with datasetUuid in chart_customization_config
     targets, mirroring what it already does for native_filter_configuration.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     dataset_uuid = str(uuid.uuid4())
 
@@ -87,11 +87,11 @@ def test_file_content_replaces_dataset_id_with_uuid_in_display_controls():
 
     with (
         patch(
-            "superset.commands.dashboard.export.DatasetDAO.find_by_id",
+            "axbi.commands.dashboard.export.DatasetDAO.find_by_id",
             return_value=mock_dataset,
         ),
         patch(
-            "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+            "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
             return_value=False,
         ),
     ):
@@ -118,7 +118,7 @@ def test_export_yields_dataset_files_for_display_controls():
     Without this, the round-trip fails: the UUID is in the dashboard YAML but
     the dataset file is absent from the ZIP.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     dataset_id = 42
     mock_dashboard = _make_mock_dashboard(
@@ -140,18 +140,16 @@ def test_export_yields_dataset_files_for_display_controls():
 
     with (
         patch(
-            "superset.commands.dashboard.export.DatasetDAO.find_by_id",
+            "axbi.commands.dashboard.export.DatasetDAO.find_by_id",
             return_value=mock_dataset,
         ),
         patch(
-            "superset.commands.dashboard.export.ExportDatasetsCommand",
+            "axbi.commands.dashboard.export.ExportDatasetsCommand",
             return_value=mock_datasets_cmd,
         ) as mock_datasets_cls,
+        patch("axbi.commands.dashboard.export.ExportChartsCommand") as mock_charts_cls,
         patch(
-            "superset.commands.dashboard.export.ExportChartsCommand"
-        ) as mock_charts_cls,
-        patch(
-            "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+            "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
             return_value=False,
         ),
     ):
@@ -168,7 +166,7 @@ def test_export_skips_malformed_dataset_reference_entries() -> None:
     """
     Dashboard export should ignore malformed metadata entries when resolving datasets.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     dataset_uuid = str(uuid.uuid4())
     native_dataset_id = 42
@@ -211,18 +209,16 @@ def test_export_skips_malformed_dataset_reference_entries() -> None:
 
     with (
         patch(
-            "superset.commands.dashboard.export.DatasetDAO.find_by_id",
+            "axbi.commands.dashboard.export.DatasetDAO.find_by_id",
             return_value=mock_dataset,
         ),
         patch(
-            "superset.commands.dashboard.export.ExportDatasetsCommand",
+            "axbi.commands.dashboard.export.ExportDatasetsCommand",
             return_value=mock_datasets_cmd,
         ) as mock_datasets_cls,
+        patch("axbi.commands.dashboard.export.ExportChartsCommand") as mock_charts_cls,
         patch(
-            "superset.commands.dashboard.export.ExportChartsCommand"
-        ) as mock_charts_cls,
-        patch(
-            "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+            "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
             return_value=False,
         ),
     ):
@@ -247,7 +243,7 @@ def test_file_content_null_chart_customization_config_does_not_raise():
     When chart_customization_config is explicitly null in metadata,
     _file_content must not raise — the `or []` guard handles it.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     mock_dashboard = _make_mock_dashboard(
         {
@@ -257,7 +253,7 @@ def test_file_content_null_chart_customization_config_does_not_raise():
     )
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         content = ExportDashboardsCommand._file_content(mock_dashboard)
@@ -284,7 +280,7 @@ def test_file_content_includes_roles_for_dashboard_with_role_restrictions():
     environment-local; the import side resolves names back to the destination
     environment's roles.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     role_alpha = MagicMock()
     role_alpha.name = "Finance"
@@ -295,7 +291,7 @@ def test_file_content_includes_roles_for_dashboard_with_role_restrictions():
     mock_dashboard.roles = [role_alpha, role_beta]
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         content = ExportDashboardsCommand._file_content(mock_dashboard)
@@ -316,13 +312,13 @@ def test_file_content_omits_roles_field_when_dashboard_has_no_roles():
     the import side treats "missing" as "no restriction"; emitting an empty
     list could trip importers that distinguish the two states.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     mock_dashboard = _make_mock_dashboard({"native_filter_configuration": []})
     mock_dashboard.roles = []
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         content = ExportDashboardsCommand._file_content(mock_dashboard)
@@ -352,7 +348,7 @@ def test_position_json_chart_id_is_stable_across_environments() -> None:
     agree on ``chartId`` even when the underlying chart has a different integer
     primary key in each environment.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
 
@@ -400,7 +396,7 @@ def test_position_json_chart_id_is_stable_across_environments() -> None:
     }
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         first_export_content = ExportDashboardsCommand._file_content(src_dashboard)
@@ -454,7 +450,7 @@ def test_position_json_chart_id_is_stable_across_environments() -> None:
     }
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         second_export_content = ExportDashboardsCommand._file_content(dest_dashboard)
@@ -502,7 +498,7 @@ def _export_with_chart(
     json_metadata: dict[str, Any],
 ) -> dict[str, Any]:
     """Export a single-chart dashboard and return the parsed YAML payload."""
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     position = {
         "DASHBOARD_VERSION_KEY": "v2",
@@ -540,7 +536,7 @@ def _export_with_chart(
     }
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         content = ExportDashboardsCommand._file_content(dashboard)
@@ -555,7 +551,7 @@ def test_orphan_chart_gets_uuid_derived_chart_id() -> None:
     ``_stabilize_chart_ids`` runs afterwards, so the appended node must end up
     with a UUID-derived ``chartId`` rather than the env-local integer.
     """
-    from superset.commands.dashboard.export import (
+    from axbi.commands.dashboard.export import (
         ExportDashboardsCommand,
         stable_chart_id,
     )
@@ -573,7 +569,7 @@ def test_orphan_chart_gets_uuid_derived_chart_id() -> None:
     mock_dashboard.slices = [orphan]
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         content = ExportDashboardsCommand._file_content(mock_dashboard)
@@ -594,7 +590,7 @@ def test_orphan_chart_gets_uuid_derived_chart_id() -> None:
 
 def test_orphan_chart_export_tolerates_malformed_grid_layout() -> None:
     """Malformed ROOT_ID/GRID_ID nodes must not abort dashboard export."""
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
     orphan = MagicMock()
@@ -620,7 +616,7 @@ def test_orphan_chart_export_tolerates_malformed_grid_layout() -> None:
     }
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         content = ExportDashboardsCommand._file_content(dashboard)
@@ -652,7 +648,7 @@ def test_stabilize_chart_ids_skips_invalid_uuid() -> None:
 
 def test_stabilize_chart_ids_remaps_native_filter_scope() -> None:
     """Native filter scope.excluded / chartsInScope must track the stabilized id."""
-    from superset.commands.dashboard.export import stable_chart_id
+    from axbi.commands.dashboard.export import stable_chart_id
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
     new_id = stable_chart_id(chart_uuid)
@@ -678,7 +674,7 @@ def test_stabilize_chart_ids_remaps_native_filter_scope() -> None:
 
 def test_stabilize_chart_ids_remaps_cross_filter_configuration() -> None:
     """global_chart_configuration and chart_configuration must be remapped."""
-    from superset.commands.dashboard.export import stable_chart_id
+    from axbi.commands.dashboard.export import stable_chart_id
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
     new_id = stable_chart_id(chart_uuid)
@@ -723,7 +719,7 @@ def test_stable_chart_id_is_deterministic_and_in_range() -> None:
     the positive signed 32-bit range so it can stand in for a database
     auto-increment primary key without colliding with the sign bit.
     """
-    from superset.commands.dashboard.export import (
+    from axbi.commands.dashboard.export import (
         _STABLE_CHART_ID_MODULO,
         stable_chart_id,
     )
@@ -752,7 +748,7 @@ def test_stabilize_chart_ids_remaps_default_filters() -> None:
     must parse it, remap the top-level keys to the stabilized ids, and re-emit it
     as a JSON string so the bundle never leaks the source-env integer.
     """
-    from superset.commands.dashboard.export import stable_chart_id
+    from axbi.commands.dashboard.export import stable_chart_id
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
     new_id = stable_chart_id(chart_uuid)
@@ -779,7 +775,7 @@ def test_stabilize_chart_ids_remaps_timed_refresh_immune_slices() -> None:
     must be remapped to the stabilized id so the immune list keeps pointing at the
     same logical charts after a cross-environment round-trip.
     """
-    from superset.commands.dashboard.export import stable_chart_id
+    from axbi.commands.dashboard.export import stable_chart_id
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
     new_id = stable_chart_id(chart_uuid)
@@ -802,7 +798,7 @@ def test_stabilize_chart_ids_remaps_filter_scopes_keys_and_immune() -> None:
     per-column ``immune`` lists of chart ids. The exporter must remap BOTH the
     top-level keys AND the nested immune arrays to the stabilized ids.
     """
-    from superset.commands.dashboard.export import stable_chart_id
+    from axbi.commands.dashboard.export import stable_chart_id
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
     new_id = stable_chart_id(chart_uuid)
@@ -836,7 +832,7 @@ def test_stabilize_chart_ids_remaps_expanded_slices() -> None:
     expanded_slices is a dict keyed by env-local chart id. The exporter must
     re-key it to the stabilized ids while preserving the values.
     """
-    from superset.commands.dashboard.export import stable_chart_id
+    from axbi.commands.dashboard.export import stable_chart_id
 
     chart_uuid = "812bc377-ac09-475a-8d34-a63f7f087bd7"
     new_id = stable_chart_id(chart_uuid)
@@ -862,7 +858,7 @@ def test_file_content_missing_dataset_preserves_dataset_id() -> None:
     datasetId is preserved (dual-write: it was never popped) and no
     datasetUuid is added — the target is not silently emptied.
     """
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     mock_dashboard = _make_mock_dashboard(
         {
@@ -878,11 +874,11 @@ def test_file_content_missing_dataset_preserves_dataset_id() -> None:
 
     with (
         patch(
-            "superset.commands.dashboard.export.DatasetDAO.find_by_id",
+            "axbi.commands.dashboard.export.DatasetDAO.find_by_id",
             return_value=None,
         ),
         patch(
-            "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+            "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
             return_value=False,
         ),
     ):
@@ -896,7 +892,7 @@ def test_file_content_missing_dataset_preserves_dataset_id() -> None:
 
 def test_file_content_ignores_non_object_metadata_and_position() -> None:
     """Persisted non-object JSON should not break dashboard export."""
-    from superset.commands.dashboard.export import ExportDashboardsCommand
+    from axbi.commands.dashboard.export import ExportDashboardsCommand
 
     dashboard = MagicMock()
     dashboard.dashboard_title = "Test Dashboard"
@@ -910,7 +906,7 @@ def test_file_content_ignores_non_object_metadata_and_position() -> None:
     }
 
     with patch(
-        "superset.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
+        "axbi.commands.dashboard.export.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         content = ExportDashboardsCommand._file_content(dashboard)
@@ -928,7 +924,7 @@ def test_stabilize_chart_ids_resolves_id_collisions() -> None:
     chart_configuration, …) never silently overwrite one another. The forced
     collision is simulated by stubbing ``stable_chart_id`` to a constant.
     """
-    from superset.commands.dashboard.export import _stabilize_chart_ids
+    from axbi.commands.dashboard.export import _stabilize_chart_ids
 
     uuid_a = "00000000-0000-4000-8000-00000000000a"
     uuid_b = "00000000-0000-4000-8000-00000000000b"
@@ -949,7 +945,7 @@ def test_stabilize_chart_ids_resolves_id_collisions() -> None:
     }
 
     with patch(
-        "superset.commands.dashboard.export.stable_chart_id",
+        "axbi.commands.dashboard.export.stable_chart_id",
         return_value=100,
     ):
         _stabilize_chart_ids(payload)

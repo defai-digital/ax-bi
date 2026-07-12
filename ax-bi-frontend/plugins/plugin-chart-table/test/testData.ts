@@ -23,9 +23,9 @@ import {
   QueryMode,
   ComparisonType,
   VizType,
-} from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
 import { TableChartProps, TableChartFormData } from '../src/types';
 
 const basicFormData: TableChartFormData = {
@@ -67,7 +67,7 @@ const basicChartProps = {
     },
   ],
   formData: basicFormData,
-  theme: supersetTheme,
+  theme: axbiTheme,
 };
 
 const basicQueryResult: ChartDataResponseResult = {

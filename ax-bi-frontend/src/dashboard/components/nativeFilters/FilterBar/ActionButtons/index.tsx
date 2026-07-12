@@ -17,16 +17,16 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DataMaskState,
   DataMaskStateWithId,
   isDefined,
   ChartCustomization,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
-import { css, SupersetTheme, styled } from '@apache-superset/core/theme';
-import { Button, Tooltip, Icons, Flex } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { css, AxBITheme, styled } from '@ax-bi/core/theme';
+import { Button, Tooltip, Icons, Flex } from '@ax-bi/ui-core/components';
 import tinycolor from 'tinycolor2';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { getFilterBarTestId } from '../utils';
@@ -46,35 +46,39 @@ const ButtonsContainer = styled.div<{ isVertical: boolean }>`
   ${({ theme, isVertical }) => css`
     display: flex;
 
-    ${isVertical
-      ? css`
-          flex-direction: column;
-          align-items: center;
-          position: sticky;
-          z-index: 100;
-          bottom: 0;
-          padding: ${theme.sizeUnit * 4}px;
-          padding-top: ${theme.sizeUnit * 6}px;
-          background: linear-gradient(
-            ${tinycolor(theme.colorBgLayout).setAlpha(0).toRgbString()},
-            ${theme.colorBgContainer} 20%
-          );
-        `
-      : css`
-          align-items: center;
-          margin-left: auto;
-        `}
+    ${
+      isVertical
+        ? css`
+            flex-direction: column;
+            align-items: center;
+            position: sticky;
+            z-index: 100;
+            bottom: 0;
+            padding: ${theme.sizeUnit * 4}px;
+            padding-top: ${theme.sizeUnit * 6}px;
+            background: linear-gradient(
+              ${tinycolor(theme.colorBgLayout).setAlpha(0).toRgbString()},
+              ${theme.colorBgContainer} 20%
+            );
+          `
+        : css`
+            align-items: center;
+            margin-left: auto;
+          `
+    }
   `}
 `;
 
-const applyButtonStyle = (theme: SupersetTheme, isVertical: boolean) => css`
-  ${isVertical &&
-  css`
-    margin-bottom: ${theme.sizeUnit * 3}px;
-  `}
+const applyButtonStyle = (theme: AxBITheme, isVertical: boolean) => css`
+  ${
+    isVertical &&
+    css`
+      margin-bottom: ${theme.sizeUnit * 3}px;
+    `
+  }
 `;
 
-const clearAllButtonStyle = (theme: SupersetTheme, isVertical: boolean) => css`
+const clearAllButtonStyle = (theme: AxBITheme, isVertical: boolean) => css`
   && {
     color: ${theme.colorTextSecondary};
     margin-left: 0;
@@ -88,11 +92,13 @@ const clearAllButtonStyle = (theme: SupersetTheme, isVertical: boolean) => css`
       color: ${theme.colorTextDisabled};
     }
 
-    ${!isVertical &&
-    css`
-      text-transform: capitalize;
-      font-weight: ${theme.fontWeightNormal};
-    `}
+    ${
+      !isVertical &&
+      css`
+        text-transform: capitalize;
+        font-weight: ${theme.fontWeightNormal};
+      `
+    }
   }
 `;
 
@@ -145,7 +151,7 @@ const ActionButtons = ({
         disabled={isApplyDisabled}
         buttonStyle="primary"
         htmlType="submit"
-        css={(theme: SupersetTheme) => applyButtonStyle(theme, isVertical)}
+        css={(theme: AxBITheme) => applyButtonStyle(theme, isVertical)}
         onClick={onApply}
         {...getFilterBarTestId('apply-button')}
       >
@@ -155,7 +161,7 @@ const ActionButtons = ({
         <Button
           disabled={!isClearAllEnabled}
           buttonStyle="link"
-          css={(theme: SupersetTheme) => clearAllButtonStyle(theme, isVertical)}
+          css={(theme: AxBITheme) => clearAllButtonStyle(theme, isVertical)}
           onClick={onClearAll}
           {...getFilterBarTestId('clear-button')}
         >
@@ -169,7 +175,7 @@ const ActionButtons = ({
           >
             <Icons.InfoCircleOutlined
               iconSize="s"
-              css={(theme: SupersetTheme) => css`
+              css={(theme: AxBITheme) => css`
                 margin-left: ${theme.sizeUnit}px;
               `}
             />

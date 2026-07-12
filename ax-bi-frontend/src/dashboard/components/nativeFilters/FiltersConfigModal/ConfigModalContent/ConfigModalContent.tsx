@@ -22,11 +22,11 @@ import {
   Divider,
   ChartCustomization,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
-import type { FormInstance } from '@superset-ui/core/components';
-import { styled } from '@apache-superset/core/theme';
-import { EmptyState, Flex } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core';
+import type { FormInstance } from '@ax-bi/ui-core/components';
+import { styled } from '@ax-bi/core/theme';
+import { EmptyState, Flex } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 import FilterContentRenderer from './FilterContentRenderer';
 import CustomizationContentRenderer from './CustomizationContentRenderer';
 import { FiltersConfigFormHandle } from '../FiltersConfigForm/FiltersConfigForm';

@@ -33,10 +33,10 @@ import {
   OPERATOR_ENUM_TO_OPERATOR_TYPE,
 } from 'src/explore/constants';
 import AdhocMetric from 'src/explore/components/controls/MetricControl/AdhocMetric';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
 import fetchMock from 'fetch-mock';
 
-import { TestDataset, Dataset } from '@superset-ui/chart-controls';
+import { TestDataset, Dataset } from '@ax-bi/chart-controls';
 import AdhocFilterEditPopoverSimpleTabContent, {
   useSimpleTabFilterProps,
   Props,
@@ -145,8 +145,8 @@ function setup(overrides?: Record<string, unknown>) {
   return props;
 }
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

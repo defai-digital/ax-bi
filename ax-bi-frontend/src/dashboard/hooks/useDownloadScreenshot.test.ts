@@ -17,19 +17,19 @@
  * under the License.
  */
 import { renderHook, act } from '@testing-library/react';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { useDownloadScreenshot } from './useDownloadScreenshot';
 import { DownloadScreenshotFormat } from '../components/menu/DownloadMenuItems/types';
 
-jest.mock('@superset-ui/core', () => ({
+jest.mock('@ax-bi/ui-core', () => ({
   // keep the real module surface: transitively imported modules read many
   // other exports (initFeatureFlags, formatters, registries) at module scope
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     post: jest.fn(),
     get: jest.fn(),
   },
-  SupersetApiError: class SupersetApiError extends Error {
+  AxBIApiError: class AxBIApiError extends Error {
     status: number;
     constructor(message: string, status: number) {
       super(message);
@@ -63,7 +63,7 @@ const DASHBOARD_ID = 123;
 const CACHE_KEY = 'test-cache-key';
 
 const mockPostSuccess = () =>
-  (SupersetClient.post as jest.Mock).mockResolvedValue({
+  (AxBIClient.post as jest.Mock).mockResolvedValue({
     json: { cache_key: CACHE_KEY },
   });
 
@@ -97,7 +97,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   // Default: GET hangs so microtask chains don't throw on undefined in tests
   // that only care about POST behavior.
-  (SupersetClient.get as jest.Mock).mockReturnValue(new Promise(() => {}));
+  (AxBIClient.get as jest.Mock).mockReturnValue(new Promise(() => {}));
 });
 
 test('downloadScreenshot calls API with force=true to ensure fresh screenshots', async () => {
@@ -109,8 +109,8 @@ test('downloadScreenshot calls API with force=true to ensure fresh screenshots',
     result.current(DownloadScreenshotFormat.PNG);
   });
 
-  expect(SupersetClient.post).toHaveBeenCalledTimes(1);
-  const callArgs = (SupersetClient.post as jest.Mock).mock.calls[0][0];
+  expect(AxBIClient.post).toHaveBeenCalledTimes(1);
+  const callArgs = (AxBIClient.post as jest.Mock).mock.calls[0][0];
 
   // Verify that force=true is included in the endpoint URL
   // This prevents regression where stale cached screenshots are returned
@@ -123,14 +123,12 @@ test('does not issue overlapping GETs while a previous GET is in-flight', async 
   mockPostSuccess();
 
   // GET never resolves within the test — simulates a slow screenshot request.
-  (SupersetClient.get as jest.Mock).mockImplementation(
-    () => new Promise(() => {}),
-  );
+  (AxBIClient.get as jest.Mock).mockImplementation(() => new Promise(() => {}));
 
   await triggerDownload();
 
   // First (immediate) GET fires right after POST resolves.
-  expect(SupersetClient.get).toHaveBeenCalledTimes(1);
+  expect(AxBIClient.get).toHaveBeenCalledTimes(1);
 
   // Advance past several retry intervals while the first GET is still pending.
   await act(async () => {
@@ -139,7 +137,7 @@ test('does not issue overlapping GETs while a previous GET is in-flight', async 
   });
 
   // isFetching guard must prevent the interval from stacking new requests.
-  expect(SupersetClient.get).toHaveBeenCalledTimes(1);
+  expect(AxBIClient.get).toHaveBeenCalledTimes(1);
 
   jest.clearAllTimers();
   jest.useRealTimers();
@@ -151,7 +149,7 @@ test('triggers only one download when multiple successful responses race', async
 
   // First GET returns 404 (not ready), then resolves 200 for every subsequent call.
   // Without the isDownloaded guard any late-arriving 200 would trigger a second click.
-  (SupersetClient.get as jest.Mock)
+  (AxBIClient.get as jest.Mock)
     .mockRejectedValueOnce(notReadyError())
     .mockResolvedValue(createResponse());
 

@@ -19,7 +19,7 @@
 
 from sqlglot import Dialects
 
-from superset.sql.parse import SQLGLOT_DIALECTS
+from axbi.sql.parse import SQLGLOT_DIALECTS
 
 
 def test_impala_dialect_mapped() -> None:

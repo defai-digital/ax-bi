@@ -23,8 +23,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from superset.exceptions import ScreenshotImageNotAvailableException
-from superset.utils.screenshots import ScreenshotCachePayload
+from axbi.exceptions import ScreenshotImageNotAvailableException
+from axbi.utils.screenshots import ScreenshotCachePayload
 
 
 class TestScreenshotAPIExceptionHandling:
@@ -32,7 +32,7 @@ class TestScreenshotAPIExceptionHandling:
 
     def test_dashboard_screenshot_api_handles_exception(self):
         """Test dashboard screenshot API returns 404 when get_image raises exception"""
-        from superset.dashboards.api import DashboardRestApi
+        from axbi.dashboards.api import DashboardRestApi
 
         # Create mock API instance
         api = DashboardRestApi()
@@ -54,7 +54,7 @@ class TestScreenshotAPIExceptionHandling:
 
     def test_chart_screenshot_api_handles_exception(self):
         """Test that chart screenshot API returns 404 when get_image raises exception"""
-        from superset.charts.api import ChartRestApi
+        from axbi.charts.api import ChartRestApi
 
         # Create mock API instance
         api = ChartRestApi()

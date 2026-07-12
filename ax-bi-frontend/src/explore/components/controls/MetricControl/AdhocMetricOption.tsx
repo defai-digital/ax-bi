@@ -17,7 +17,7 @@
  * under the License.
  */
 import { PureComponent } from 'react';
-import { Metric } from '@superset-ui/core';
+import { Metric } from '@ax-bi/ui-core';
 import { OptionControlLabel } from 'src/explore/components/controls/OptionControls';
 import { DndItemType } from 'src/explore/components/DndItemType';
 import { Datasource } from 'src/explore/types';

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { type AnyThemeConfig } from '@apache-superset/core/theme';
+import { type AnyThemeConfig } from '@ax-bi/core/theme';
 import { isValidTokenName } from './antdTokenNames';
 
 /**

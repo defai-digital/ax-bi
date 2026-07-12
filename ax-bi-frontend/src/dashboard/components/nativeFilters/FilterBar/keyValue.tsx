@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { DashboardPermalinkValue } from 'src/dashboard/types';
 
 const assembleEndpoint = (
@@ -41,7 +41,7 @@ export const updateFilterKey = (
   key: string,
   tabId?: string,
 ) =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: assembleEndpoint(dashId, key, tabId),
     jsonPayload: { value },
   })
@@ -56,7 +56,7 @@ export const createFilterKey = (
   value: string,
   tabId?: string,
 ) =>
-  SupersetClient.post({
+  AxBIClient.post({
     endpoint: assembleEndpoint(dashId, undefined, tabId),
     jsonPayload: { value },
   })
@@ -67,7 +67,7 @@ export const createFilterKey = (
     });
 
 export const getFilterValue = (dashId: string | number, key?: string | null) =>
-  SupersetClient.get({
+  AxBIClient.get({
     endpoint: assembleEndpoint(dashId, key),
   })
     .then(({ json }) => JSON.parse(json.value))
@@ -77,7 +77,7 @@ export const getFilterValue = (dashId: string | number, key?: string | null) =>
     });
 
 export const getPermalinkValue = (key: string) =>
-  SupersetClient.get({
+  AxBIClient.get({
     endpoint: `/api/v1/dashboard/permalink/${key}`,
   })
     .then(({ json }) => json as DashboardPermalinkValue)

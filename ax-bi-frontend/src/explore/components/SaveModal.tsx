@@ -16,7 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { withRouter, type RouteComponentProps } from 'src/components/withRouter';
+import {
+  withRouter,
+  type RouteComponentProps,
+} from 'src/components/withRouter';
 /* eslint camelcase: 0 */
 import { ChangeEvent, FormEvent, Component } from 'react';
 import { Dispatch } from 'redux';
@@ -36,18 +39,13 @@ import {
   Flex,
   Typography,
   TreeSelect,
-} from '@superset-ui/core/components';
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
-import { DatasourceType, isDefined, SupersetClient } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import {
-  css,
-  styled,
-  withTheme,
-  type SupersetTheme,
-} from '@apache-superset/core/theme';
-import { Radio } from '@superset-ui/core/components/Radio';
+} from '@ax-bi/ui-core/components';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { DatasourceType, isDefined, AxBIClient } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, withTheme, type AxBITheme } from '@ax-bi/core/theme';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
 import { GRID_COLUMN_COUNT } from 'src/dashboard/util/constants';
 import {
   canUserEditDashboard,
@@ -84,7 +82,7 @@ interface SaveModalProps extends RouteComponentProps {
   dashboardId: '' | number | null;
   isVisible: boolean;
   dispatch: Dispatch;
-  theme: SupersetTheme;
+  theme: AxBITheme;
   metadata?: ExplorePageInitialData['metadata'];
 }
 
@@ -405,7 +403,7 @@ class SaveModal extends Component<SaveModalProps, SaveModalState> {
     sliceName: string | undefined,
   ) => {
     try {
-      const dashboardResponse = await SupersetClient.get({
+      const dashboardResponse = await AxBIClient.get({
         endpoint: `/api/v1/dashboard/${dashboardId}`,
       });
 
@@ -486,7 +484,7 @@ class SaveModal extends Component<SaveModalProps, SaveModalState> {
         ],
       };
 
-      const response = await SupersetClient.put({
+      const response = await AxBIClient.put({
         endpoint: `/api/v1/dashboard/${dashboardId}`,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -501,7 +499,7 @@ class SaveModal extends Component<SaveModalProps, SaveModalState> {
   };
 
   loadDashboard = async (id: number) => {
-    const response = await SupersetClient.get({
+    const response = await AxBIClient.get({
       endpoint: `/api/v1/dashboard/${id}`,
     });
     return response.json.result;
@@ -527,7 +525,7 @@ class SaveModal extends Component<SaveModalProps, SaveModalState> {
       order_column: 'dashboard_title',
     });
 
-    const { json } = await SupersetClient.get({
+    const { json } = await AxBIClient.get({
       endpoint: `/api/v1/dashboard/?q=${queryParams}`,
     });
     const { result, count } = json;
@@ -544,7 +542,7 @@ class SaveModal extends Component<SaveModalProps, SaveModalState> {
   // Loads dashboard tabs and returns the tab hierarchy for display.
   loadTabs = async (dashboardId: number) => {
     try {
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: `/api/v1/dashboard/${dashboardId}/tabs`,
       });
 
@@ -657,7 +655,7 @@ class SaveModal extends Component<SaveModalProps, SaveModalState> {
               <Typography.Text type="secondary">
                 {this.props.slice.is_managed_externally
                   ? t(
-                      "This chart is managed externally and can't be overwritten in Superset.",
+                      "This chart is managed externally and can't be overwritten in AxBI.",
                     )
                   : t(
                       'Must be a chart owner to overwrite this chart. Save as a new chart instead.',

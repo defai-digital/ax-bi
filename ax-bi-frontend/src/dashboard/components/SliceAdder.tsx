@@ -22,8 +22,8 @@ import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { FixedSizeList as List } from 'react-window';
 // @ts-expect-error
 import { createFilter } from 'react-search-input';
-import { t } from '@apache-superset/core/translation';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
 import {
   Button,
   Checkbox,
@@ -31,8 +31,8 @@ import {
   Input,
   Loading,
   Select,
-} from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   LocalStorageKeys,
   getItem,

@@ -17,10 +17,10 @@
  * under the License.
  */
 import { memo } from 'react';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Popover } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { ColumnTypeLabel } from '@superset-ui/chart-controls';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Popover } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { ColumnTypeLabel } from '@ax-bi/chart-controls';
 import ColumnConfigPopover, {
   ColumnConfigPopoverProps,
 } from './ColumnConfigPopover';

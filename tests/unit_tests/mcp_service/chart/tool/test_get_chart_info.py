@@ -29,29 +29,29 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.commands.dashboard.exceptions import DashboardNotFoundError
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.chart_helpers import (
+from axbi.commands.dashboard.exceptions import DashboardNotFoundError
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.chart_helpers import (
     _resolve_filter_operator_and_value,
     build_applied_dashboard_filters,
     ChartNotOnDashboardError,
 )
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     ChartError,
     ChartInfo,
     extract_filters_from_form_data,
     GetChartInfoRequest,
     sanitize_chart_info_for_llm_context,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
-from superset.utils import json
+from axbi.utils import json
 
 get_chart_info_module = importlib.import_module(
-    "superset.mcp_service.chart.tool.get_chart_info"
+    "axbi.mcp_service.chart.tool.get_chart_info"
 )
 
 
@@ -67,7 +67,7 @@ def mcp_server():
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -168,8 +168,8 @@ class TestBuildAppliedDashboardFilters:
     def test_chart_not_on_dashboard_raises(self):
         dashboard = self._make_dashboard(slice_ids=[2, 3])
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             with pytest.raises(ChartNotOnDashboardError, match="not on dashboard"):
@@ -177,8 +177,8 @@ class TestBuildAppliedDashboardFilters:
 
     def test_dashboard_not_found_raises(self):
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = None  # noqa: E501
             with pytest.raises(DashboardNotFoundError):
@@ -212,8 +212,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -250,8 +250,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -276,8 +276,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -299,8 +299,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -314,8 +314,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -329,8 +329,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -344,8 +344,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -380,8 +380,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -408,8 +408,8 @@ class TestBuildAppliedDashboardFilters:
         )
 
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager"),
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager"),
         ):
             mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
@@ -422,7 +422,7 @@ class TestBuildAppliedDashboardFilters:
 def _json(native_filter_list):
     """Serialize a native_filter list as JSON string for embedding in
     json_metadata fixtures without escaping issues."""
-    from superset.utils import json
+    from axbi.utils import json
 
     return json.dumps(native_filter_list)
 
@@ -456,8 +456,8 @@ class TestGetChartInfoPrivacy:
                 "validate_chart_dataset",
                 return_value=SimpleNamespace(is_valid=True, warnings=[]),
             ),
-            patch("superset.daos.chart.ChartDAO.find_by_id", return_value=Mock()),
-            patch("superset.mcp_service.auth.check_tool_permission", return_value=True),
+            patch("axbi.daos.chart.ChartDAO.find_by_id", return_value=Mock()),
+            patch("axbi.mcp_service.auth.check_tool_permission", return_value=True),
         ):
             async with Client(mcp_server) as client:
                 response = await client.call_tool(
@@ -620,7 +620,7 @@ class TestGetChartInfoPrivacy:
                 "get_cached_form_data",
                 return_value=cached_form_data,
             ),
-            patch("superset.mcp_service.auth.check_tool_permission", return_value=True),
+            patch("axbi.mcp_service.auth.check_tool_permission", return_value=True),
         ):
             async with Client(mcp_server) as client:
                 response = await client.call_tool(
@@ -668,7 +668,7 @@ class TestGetChartInfoPrivacy:
                 "get_cached_form_data",
                 return_value=cached_form_data,
             ),
-            patch("superset.mcp_service.auth.check_tool_permission", return_value=True),
+            patch("axbi.mcp_service.auth.check_tool_permission", return_value=True),
         ):
             async with Client(mcp_server) as client:
                 # Explicit select_columns: only id and slice_name

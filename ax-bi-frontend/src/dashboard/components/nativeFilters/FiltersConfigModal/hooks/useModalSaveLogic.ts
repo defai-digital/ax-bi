@@ -18,14 +18,14 @@
  */
 import { useCallback, useMemo } from 'react';
 import { isEqual, sortBy } from 'lodash';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   Filter,
   Divider,
   ChartCustomization,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
-import type { FormInstance } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import type { FormInstance } from '@ax-bi/ui-core/components';
 import { useDispatch } from 'react-redux';
 import { updateCascadeParentIds } from 'src/dashboard/actions/nativeFilters';
 import type { FiltersConfigFormHandle } from '../FiltersConfigForm/FiltersConfigForm';
@@ -329,8 +329,7 @@ export function useModalSaveLogic({
             ),
           )
           .filter(Boolean) as (
-          | ChartCustomization
-          | ChartCustomizationDivider
+          ChartCustomization | ChartCustomizationDivider
         )[];
 
         saveChanges.customizationChanges = {

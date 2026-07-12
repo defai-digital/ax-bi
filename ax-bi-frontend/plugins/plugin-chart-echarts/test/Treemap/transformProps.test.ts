@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { OpacityEnum } from '../../src/constants';
 import { EchartsTreemapChartProps } from '../../src/Treemap/types';
 import transformProps from '../../src/Treemap/transformProps';
@@ -42,7 +42,7 @@ describe('Treemap transformProps', () => {
         ],
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   test('should transform chart props for viz', () => {

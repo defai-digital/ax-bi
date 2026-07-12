@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { t } from '@apache-superset/core/translation';
-import { getClientErrorObject } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { getClientErrorObject } from '@ax-bi/ui-core';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useBeforeUnload } from 'src/hooks/useBeforeUnload';
 import type { Location, Action } from 'history';

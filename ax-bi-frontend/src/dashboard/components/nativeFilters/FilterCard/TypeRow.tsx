@@ -17,11 +17,8 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  getChartMetadataRegistry,
-  isChartCustomization,
-} from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { getChartMetadataRegistry, isChartCustomization } from '@ax-bi/ui-core';
 import { Row, RowLabel, RowValue } from './Styles';
 import { FilterCardRowProps } from './types';
 

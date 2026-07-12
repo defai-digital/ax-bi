@@ -37,11 +37,11 @@ import {
   JsonValue,
   QueryFormData,
   QueryObjectFilterClause,
-  SupersetClient,
+  AxBIClient,
   getMapProviderMapStyle,
   usePrevious,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { Layer } from '@deck.gl/core';
 
 import {
@@ -299,7 +299,7 @@ const DeckMulti = (props: DeckMultiProps) => {
       const url = getExploreLongUrl(subsliceCopy.form_data, 'json');
 
       if (url) {
-        SupersetClient.get({ endpoint: url })
+        AxBIClient.get({ endpoint: url })
           .then(({ json }) => {
             const layer = createLayerFromData(subsliceCopy, json);
             setSubSlicesLayers(subSlicesLayers => ({

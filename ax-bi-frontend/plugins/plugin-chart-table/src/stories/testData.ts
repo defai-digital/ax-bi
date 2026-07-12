@@ -16,12 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartDataResponseResult, VizType } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import {
-  TableChartFormData,
-  TableChartProps,
-} from '@superset-ui/plugin-chart-table';
+import { ChartDataResponseResult, VizType } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { TableChartFormData, TableChartProps } from '@ax-bi/plugin-chart-table';
 // eslint-disable-next-line import/extensions
 // @ts-ignore -- TS6307: this file is outside the tsconfig project scope, @ts-expect-error does not suppress project-level errors
 import birthNamesJson from './birthNames.json';

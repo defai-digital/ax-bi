@@ -33,7 +33,7 @@ import {
   columns,
   metrics,
 } from 'src/explore/components/DatasourcePanel/fixtures';
-import { DatasourceType } from '@superset-ui/core';
+import { DatasourceType } from '@ax-bi/ui-core';
 import DatasourceControl from 'src/explore/components/controls/DatasourceControl';
 import ExploreContainer from '../ExploreContainer';
 import {

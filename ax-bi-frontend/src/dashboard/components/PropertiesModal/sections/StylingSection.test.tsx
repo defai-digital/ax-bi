@@ -22,19 +22,19 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { SupersetClient, isFeatureEnabled } from '@superset-ui/core';
+import { AxBIClient, isFeatureEnabled } from '@ax-bi/ui-core';
 import StylingSection from './StylingSection';
 
-// Mock SupersetClient
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+// Mock AxBIClient
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     get: jest.fn(),
   },
   isFeatureEnabled: jest.fn(),
 }));
 
-const mockSupersetClient = SupersetClient as jest.Mocked<typeof SupersetClient>;
+const mockAxBIClient = AxBIClient as jest.Mocked<typeof AxBIClient>;
 const mockIsFeatureEnabled = isFeatureEnabled as jest.MockedFunction<
   typeof isFeatureEnabled
 >;
@@ -67,7 +67,7 @@ const defaultProps = {
     { id: 2, theme_name: 'Light Theme' },
   ],
   selectedThemeId: null,
-  colorScheme: 'supersetColors',
+  colorScheme: 'axbiColors',
   customCss: '',
   hasCustomLabelsColor: false,
   showChartTimestamps: false,
@@ -82,7 +82,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   // Reset mocks
   mockIsFeatureEnabled.mockReturnValue(false);
-  mockSupersetClient.get.mockResolvedValue({
+  mockAxBIClient.get.mockResolvedValue({
     json: { result: mockCssTemplates },
     response: {} as Response,
   });
@@ -218,7 +218,7 @@ describe('CSS Template functionality', () => {
     render(<StylingSection {...defaultProps} />);
 
     await waitFor(() => {
-      expect(mockSupersetClient.get).toHaveBeenCalledWith({
+      expect(mockAxBIClient.get).toHaveBeenCalledWith({
         endpoint: expect.stringContaining('/api/v1/css_template/'),
       });
     });
@@ -242,7 +242,7 @@ describe('CSS Template functionality', () => {
   test('shows error toast when template fetch fails', async () => {
     mockIsFeatureEnabled.mockImplementation(flag => flag === 'CSS_TEMPLATES');
     const addDangerToast = jest.fn();
-    mockSupersetClient.get.mockRejectedValueOnce(new Error('API Error'));
+    mockAxBIClient.get.mockRejectedValueOnce(new Error('API Error'));
 
     render(
       <StylingSection {...defaultProps} addDangerToast={addDangerToast} />,
@@ -257,7 +257,7 @@ describe('CSS Template functionality', () => {
 
   test('does not show CSS template select when no templates available', async () => {
     mockIsFeatureEnabled.mockImplementation(flag => flag === 'CSS_TEMPLATES');
-    mockSupersetClient.get.mockResolvedValueOnce({
+    mockAxBIClient.get.mockResolvedValueOnce({
       json: { result: [] },
       response: {} as Response,
     });
@@ -266,7 +266,7 @@ describe('CSS Template functionality', () => {
 
     // Wait for fetch to complete
     await waitFor(() => {
-      expect(mockSupersetClient.get).toHaveBeenCalled();
+      expect(mockAxBIClient.get).toHaveBeenCalled();
     });
 
     expect(

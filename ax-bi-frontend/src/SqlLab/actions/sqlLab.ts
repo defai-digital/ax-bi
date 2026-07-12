@@ -20,18 +20,18 @@ import { nanoid } from 'nanoid';
 import rison from 'rison';
 import type { AnyAction } from 'redux';
 import type { ThunkAction, ThunkDispatch } from 'redux-thunk';
-import type { QueryColumn, SupersetError } from '@superset-ui/core';
+import type { QueryColumn, AxBIError } from '@ax-bi/ui-core';
 import {
   FeatureFlag,
-  SupersetClient,
+  AxBIClient,
   isFeatureEnabled,
   COMMON_ERR_MESSAGES,
   getClientErrorObject,
-} from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import { invert, mapKeys } from 'lodash';
 
-import { now } from '@superset-ui/core/utils/dates';
+import { now } from '@ax-bi/ui-core/utils/dates';
 import {
   addDangerToast as addDangerToastAction,
   addInfoToast as addInfoToastAction,
@@ -215,7 +215,7 @@ export interface SqlLabAction {
   hideLeftBar?: boolean;
   // Results and errors
   results?: SqlExecuteResponse;
-  errors?: SupersetError[];
+  errors?: AxBIError[];
   error?: string;
   msg?: string;
   link?: string;
@@ -329,7 +329,7 @@ export function scheduleQuery(
   query: Record<string, unknown>,
 ): SqlLabThunkAction<Promise<unknown>> {
   return (dispatch: AppDispatch) =>
-    SupersetClient.post({
+    AxBIClient.post({
       endpoint: '/api/v1/saved_query/',
       jsonPayload: query,
       stringify: false,
@@ -380,7 +380,7 @@ export function estimateQueryCost(
 
     return Promise.all([
       dispatch({ type: COST_ESTIMATE_STARTED, query: queryEditor }),
-      SupersetClient.post({
+      AxBIClient.post({
         endpoint: '/api/v1/sqllab/estimate/',
         body: JSON.stringify(postPayload),
         headers: { 'Content-Type': 'application/json' },
@@ -426,7 +426,7 @@ export function querySuccess(query: Query, results: SqlExecuteResponse) {
 
 export function logFailedQuery(
   query: Query,
-  errors?: SupersetError[],
+  errors?: AxBIError[],
 ): SqlLabThunkAction<void> {
   return function (dispatch) {
     const eventData = {
@@ -454,7 +454,7 @@ export function createQueryFailedAction(
   query: Query,
   msg: string,
   link?: string,
-  errors?: SupersetError[],
+  errors?: AxBIError[],
 ) {
   return { type: QUERY_FAILED, query, msg, link, errors } as const;
 }
@@ -463,7 +463,7 @@ export function queryFailed(
   query: Query,
   msg: string,
   link?: string,
-  errors?: SupersetError[],
+  errors?: AxBIError[],
 ): SqlLabThunkAction<void> {
   return function (dispatch) {
     dispatch(logFailedQuery(query, errors));
@@ -502,7 +502,7 @@ export function fetchQueryResults(
     });
     const timeout = timeoutInMs ?? SQLLAB_QUERY_RESULT_TIMEOUT;
     const controller = new AbortController();
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/sqllab/results/?q=${queryParams}`,
       parseMethod: 'json-bigint',
       ...(timeout && { timeout, signal: controller.signal }),
@@ -550,7 +550,7 @@ export function runQuery(
     };
 
     const search = window.location.search || '';
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: `/api/v1/sqllab/execute/${search}`,
       body: JSON.stringify(postPayload),
       headers: { 'Content-Type': 'application/json' },
@@ -619,7 +619,7 @@ export function postStopQuery(
   query: Query,
 ): SqlLabThunkAction<Promise<unknown>> {
   return function (dispatch: AppDispatch) {
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: '/api/v1/query/stop',
       body: JSON.stringify({ client_id: query.id }),
       headers: { 'Content-Type': 'application/json' },
@@ -639,7 +639,7 @@ function migrateTable(
   queryEditorId: string,
   dispatch: AppDispatch,
 ): Promise<unknown> {
-  return SupersetClient.post({
+  return AxBIClient.post({
     endpoint: encodeURI('/tableschemaview/'),
     postPayload: { table: { ...table, queryEditorId } },
   })
@@ -655,7 +655,7 @@ function migrateTable(
       dispatch(
         addWarningToast(
           t(
-            'Unable to migrate table schema state to backend. Superset will retry ' +
+            'Unable to migrate table schema state to backend. AxBI will retry ' +
               'later. Please contact your administrator if this problem persists.',
           ),
         ),
@@ -668,7 +668,7 @@ function migrateQuery(
   queryEditorId: string,
   dispatch: AppDispatch,
 ): Promise<unknown> {
-  return SupersetClient.post({
+  return AxBIClient.post({
     endpoint: encodeURI(`/tabstateview/${queryEditorId}/migrate_query`),
     postPayload: { queryId },
   })
@@ -677,7 +677,7 @@ function migrateQuery(
       dispatch(
         addWarningToast(
           t(
-            'Unable to migrate query state to backend. Superset will retry later. ' +
+            'Unable to migrate query state to backend. AxBI will retry later. ' +
               'Please contact your administrator if this problem persists.',
           ),
         ),
@@ -706,7 +706,7 @@ export function syncQueryEditor(
     const localStorageQueries = Object.values(queries).filter(
       query => query.inLocalStorage && query.sqlEditorId === queryEditor.id,
     );
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: '/tabstateview/',
       postPayload: { queryEditor },
     })
@@ -735,7 +735,7 @@ export function syncQueryEditor(
         dispatch(
           addWarningToast(
             t(
-              'Unable to migrate query editor state to backend. Superset will retry ' +
+              'Unable to migrate query editor state to backend. AxBI will retry ' +
                 'later. Please contact your administrator if this problem persists.',
             ),
           ),
@@ -927,7 +927,7 @@ export function fetchQueryEditor(
 ): SqlLabThunkAction {
   return function (dispatch: AppDispatch) {
     const queryEditorId = queryEditor.tabViewId ?? queryEditor.id;
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: encodeURI(`/tabstateview/${queryEditorId}`),
     })
       .then(({ json }) => {
@@ -1002,7 +1002,7 @@ export function removeQuery(query: Query): SqlLabThunkAction<Promise<unknown>> {
   return function (dispatch: AppDispatch) {
     const queryEditorId = query.sqlEditorId ?? query.id;
     const sync = isFeatureEnabled(FeatureFlag.SqllabBackendPersistence)
-      ? SupersetClient.delete({
+      ? AxBIClient.delete({
           endpoint: encodeURI(
             `/tabstateview/${queryEditorId}/query/${query.id}`,
           ),
@@ -1080,7 +1080,7 @@ export function saveQuery(
   );
 
   return (dispatch: AppDispatch) =>
-    SupersetClient.post({
+    AxBIClient.post({
       endpoint: '/api/v1/saved_query/',
       jsonPayload: convertQueryToServer(payload as Record<string, unknown>),
     })
@@ -1111,7 +1111,7 @@ export const addSavedQueryToTabState =
   (dispatch: AppDispatch) => {
     const queryEditorId = queryEditor.tabViewId ?? queryEditor.id;
     const sync = isFeatureEnabled(FeatureFlag.SqllabBackendPersistence)
-      ? SupersetClient.put({
+      ? AxBIClient.put({
           endpoint: `/tabstateview/${queryEditorId}`,
           postPayload: { saved_query_id: savedQuery.remoteId },
         })
@@ -1135,7 +1135,7 @@ export function updateSavedQuery(
   );
 
   return (dispatch: AppDispatch) =>
-    SupersetClient.put({
+    AxBIClient.put({
       endpoint: `/api/v1/saved_query/${query.remoteId}`,
       jsonPayload: convertQueryToServer(payload as Record<string, unknown>),
     })
@@ -1180,7 +1180,7 @@ export function queryEditorSetAndSaveSql(
     dispatch(queryEditorSetSql(queryEditor, sql, queryId));
     const queryEditorId = queryEditor.tabViewId ?? queryEditor.id;
     if (isFeatureEnabled(FeatureFlag.SqllabBackendPersistence)) {
-      return SupersetClient.put({
+      return AxBIClient.put({
         endpoint: encodeURI(`/tabstateview/${queryEditorId}`),
         postPayload: { sql, latest_query_id: queryId },
       }).catch(() =>
@@ -1225,7 +1225,7 @@ export function formatQuery(
           : JSON.stringify(templateParams);
     }
 
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: `/api/v1/sqllab/format_sql/`,
       body: JSON.stringify(body),
       headers: { 'Content-Type': 'application/json' },
@@ -1391,7 +1391,7 @@ export function expandTable(table: Table): SqlLabThunkAction<Promise<unknown>> {
     const sync =
       isFeatureEnabled(FeatureFlag.SqllabBackendPersistence) &&
       table.initialized
-        ? SupersetClient.post({
+        ? AxBIClient.post({
             endpoint: encodeURI(`/tableschemaview/${table.id}/expanded`),
             postPayload: { expanded: true },
           })
@@ -1419,7 +1419,7 @@ export function collapseTable(
     const sync =
       isFeatureEnabled(FeatureFlag.SqllabBackendPersistence) &&
       table.initialized
-        ? SupersetClient.post({
+        ? AxBIClient.post({
             endpoint: encodeURI(`/tableschemaview/${table.id}/expanded`),
             postPayload: { expanded: false },
           })
@@ -1449,7 +1449,7 @@ export function removeTables(
       ? Promise.all(
           tablesToRemove.map((table: Table) =>
             table.initialized
-              ? SupersetClient.delete({
+              ? AxBIClient.delete({
                   endpoint: encodeURI(`/tableschemaview/${table.id}`),
                 })
               : Promise.resolve(),
@@ -1497,7 +1497,7 @@ export function persistEditorHeight(
 
 export function popPermalink(key: string): SqlLabThunkAction<Promise<unknown>> {
   return function (dispatch: AppDispatch) {
-    return SupersetClient.get({ endpoint: `/api/v1/sqllab/permalink/${key}` })
+    return AxBIClient.get({ endpoint: `/api/v1/sqllab/permalink/${key}` })
       .then(({ json }) =>
         dispatch(
           addQueryEditor({
@@ -1519,7 +1519,7 @@ export function popStoredQuery(
   urlId: string,
 ): SqlLabThunkAction<Promise<unknown>> {
   return function (dispatch: AppDispatch) {
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/sqllab/permalink/kv:${urlId}`,
     })
       .then(({ json }) =>
@@ -1542,7 +1542,7 @@ export function popSavedQuery(
   saveQueryId: string,
 ): SqlLabThunkAction<Promise<unknown>> {
   return function (dispatch: AppDispatch) {
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/saved_query/${saveQueryId}`,
     })
       .then(({ json }) => {
@@ -1567,7 +1567,7 @@ export function popSavedQuery(
 }
 export function popQuery(queryId: string): SqlLabThunkAction<Promise<unknown>> {
   return function (dispatch: AppDispatch) {
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/query/${queryId}`,
     })
       .then(({ json }) => {
@@ -1598,7 +1598,7 @@ export function popDatasourceQuery(
       columns: ['name', 'schema', 'database.id', 'select_star'],
     });
 
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/dataset/${datasetId}?q=${queryParams}`,
     })
       .then(({ json }) =>
@@ -1644,7 +1644,7 @@ export function createDatasource(
     dispatch(createDatasourceStarted());
     const { dbId, catalog, schema, datasourceName, sql, templateParams } =
       vizOptions;
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: '/api/v1/dataset/',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -1684,7 +1684,7 @@ export function createCtasDatasource(
 ): SqlLabThunkAction<Promise<{ table_id: number }>> {
   return (dispatch: AppDispatch) => {
     dispatch(createDatasourceStarted());
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: '/api/v1/dataset/get_or_create/',
       jsonPayload: vizOptions,
     })

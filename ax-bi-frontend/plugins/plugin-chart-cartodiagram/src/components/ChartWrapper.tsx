@@ -17,8 +17,8 @@
  * under the License.
  */
 import { configureStore } from '@reduxjs/toolkit';
-import { getChartComponentRegistry } from '@superset-ui/core';
-import { ThemeProvider } from '@apache-superset/core/theme';
+import { getChartComponentRegistry } from '@ax-bi/ui-core';
+import { ThemeProvider } from '@ax-bi/core/theme';
 import { FC, useEffect, useState } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { ChartWrapperProps } from '../types';

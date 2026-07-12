@@ -20,7 +20,7 @@ import {
   DataMaskStateWithId,
   NativeFiltersState,
   NativeFilterType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export const mockDataMaskInfo: DataMaskStateWithId = {
   DefaultsID: {

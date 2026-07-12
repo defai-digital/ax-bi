@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { GenericDataType } from '@apache-superset/core/common';
-import { QueryFormData } from '@superset-ui/core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { QueryFormData } from '@ax-bi/ui-core';
 import {
   ColumnMeta,
   Dataset,
@@ -27,7 +27,7 @@ import {
   ControlState,
   ColorSchemeEnum,
   ObjectFormattingEnum,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import config from '../src/controlPanel';
 
 const findConditionalFormattingControl = (): ControlConfig | null => {
@@ -48,8 +48,7 @@ const findConditionalFormattingControl = (): ControlConfig | null => {
 };
 
 const findMetricsMapStateToProps = ():
-  | ControlConfig['mapStateToProps']
-  | null => {
+  ControlConfig['mapStateToProps'] | null => {
   for (const section of config.controlPanelSections) {
     if (!section) continue;
     for (const row of section.controlSetRows) {

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { ChartProps, QueryFormData } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps, QueryFormData } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import transformProps from '../../src/plugin/transformProps';
 import { MetricsLayoutEnum } from '../../src/types';
 
@@ -61,7 +61,7 @@ const chartProps = new ChartProps<QueryFormData>({
   hooks: { setDataMask },
   filterState: { selectedFilters: {} },
   datasource: { verboseMap: {}, columnFormats: {} },
-  theme: supersetTheme,
+  theme: axbiTheme,
 });
 
 test('should transform chart props for viz', () => {
@@ -123,7 +123,7 @@ test('should pass AUTO mode through for per-cell detection (single currency data
       columnFormats: {},
       currencyCodeColumn: 'currency',
     },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const result = transformProps(autoChartProps);
@@ -163,7 +163,7 @@ test('should pass AUTO mode through for per-cell detection (mixed currency data)
       columnFormats: {},
       currencyCodeColumn: 'currency',
     },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const result = transformProps(autoChartProps);
@@ -201,7 +201,7 @@ test('should pass AUTO mode through when no currency column is defined', () => {
       columnFormats: {},
       // No currencyCodeColumn defined
     },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const result = transformProps(autoChartProps);
@@ -236,7 +236,7 @@ test('should handle empty data gracefully in AUTO mode', () => {
       columnFormats: {},
       currencyCodeColumn: 'currency',
     },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const result = transformProps(autoChartProps);
@@ -273,7 +273,7 @@ test('should preserve static currency format when not using AUTO mode', () => {
       columnFormats: {},
       currencyCodeColumn: 'currency',
     },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const result = transformProps(staticChartProps);
@@ -322,7 +322,7 @@ test('should map conditional formatting rules to metricColorFormatters with corr
       columnFormats: {},
       currencyCodeColumn: 'currency',
     },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const result = transformProps(formattingChartProps);

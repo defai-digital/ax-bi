@@ -20,13 +20,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ErrorInfo } from 'react';
 import { connect } from 'react-redux';
 import cx from 'classnames';
-import type { JsonObject } from '@superset-ui/core';
+import type { JsonObject } from '@ax-bi/ui-core';
 import type { ResizeStartCallback, ResizeCallback } from 're-resizable';
 import { ErrorBoundary } from 'src/components';
 
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
-import { SafeMarkdown } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
+import { SafeMarkdown } from '@ax-bi/ui-core/components';
 import { EditorHost } from 'src/core/editors';
 import { Logger, LOG_ACTIONS_RENDER_CHART } from 'src/logger/LogUtils';
 

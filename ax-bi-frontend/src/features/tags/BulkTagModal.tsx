@@ -18,15 +18,15 @@
  */
 import { useState, useEffect, FC } from 'react';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import {
   FormLabel,
   AsyncSelect,
   Button,
   Modal,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { loadTags } from 'src/components/Tag/utils';
 import { TaggableResourceOption } from 'src/features/tags/TagModal';
 
@@ -59,7 +59,7 @@ const BulkTagModal: FC<BulkTagModalProps> = ({
   const [tags, setTags] = useState<TaggableResourceOption[]>([]);
 
   const onSave = async () => {
-    await SupersetClient.post({
+    await AxBIClient.post({
       endpoint: `/api/v1/tag/bulk_create`,
       jsonPayload: {
         tags: tags.map(tag => ({

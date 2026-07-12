@@ -17,9 +17,9 @@
 from unittest.mock import MagicMock, patch
 
 
-@patch("superset.reports.filters.security_manager", new_callable=MagicMock)
+@patch("axbi.reports.filters.security_manager", new_callable=MagicMock)
 def test_report_schedule_filter_admin_sees_all(mock_sm: MagicMock) -> None:
-    from superset.reports.filters import ReportScheduleFilter
+    from axbi.reports.filters import ReportScheduleFilter
 
     mock_sm.can_access_all_datasources.return_value = True
     query = MagicMock()
@@ -29,12 +29,12 @@ def test_report_schedule_filter_admin_sees_all(mock_sm: MagicMock) -> None:
     query.filter.assert_not_called()
 
 
-@patch("superset.reports.filters.security_manager", new_callable=MagicMock)
-@patch("superset.reports.filters.db")
+@patch("axbi.reports.filters.security_manager", new_callable=MagicMock)
+@patch("axbi.reports.filters.db")
 def test_report_schedule_filter_non_admin_filtered(
     mock_db: MagicMock, mock_sm: MagicMock
 ) -> None:
-    from superset.reports.filters import ReportScheduleFilter
+    from axbi.reports.filters import ReportScheduleFilter
 
     mock_sm.can_access_all_datasources.return_value = False
     mock_sm.user_model.get_user_id.return_value = 1
@@ -46,7 +46,7 @@ def test_report_schedule_filter_non_admin_filtered(
 
 
 def test_report_schedule_all_text_filter_empty_noop() -> None:
-    from superset.reports.filters import ReportScheduleAllTextFilter
+    from axbi.reports.filters import ReportScheduleAllTextFilter
 
     query = MagicMock()
     f = ReportScheduleAllTextFilter("name", MagicMock())
@@ -56,7 +56,7 @@ def test_report_schedule_all_text_filter_empty_noop() -> None:
 
 
 def test_report_schedule_all_text_filter_applies_ilike() -> None:
-    from superset.reports.filters import ReportScheduleAllTextFilter
+    from axbi.reports.filters import ReportScheduleAllTextFilter
 
     query = MagicMock()
     f = ReportScheduleAllTextFilter("name", MagicMock())
@@ -64,13 +64,13 @@ def test_report_schedule_all_text_filter_applies_ilike() -> None:
     query.filter.assert_called_once()
 
 
-@patch("superset.reports.filters.or_")
-@patch("superset.reports.filters.ReportSchedule")
+@patch("axbi.reports.filters.or_")
+@patch("axbi.reports.filters.ReportSchedule")
 def test_report_schedule_all_text_filter_escapes_wildcards(
     mock_report_schedule: MagicMock, mock_or: MagicMock
 ) -> None:
     """User-supplied wildcards must be escaped so they match literally."""
-    from superset.reports.filters import ReportScheduleAllTextFilter
+    from axbi.reports.filters import ReportScheduleAllTextFilter
 
     query = MagicMock()
     f = ReportScheduleAllTextFilter("name", MagicMock())
@@ -87,13 +87,13 @@ def test_report_schedule_all_text_filter_escapes_wildcards(
         column.ilike.assert_called_once_with(expected, escape="\\")
 
 
-@patch("superset.reports.filters.or_")
-@patch("superset.reports.filters.ReportSchedule")
+@patch("axbi.reports.filters.or_")
+@patch("axbi.reports.filters.ReportSchedule")
 def test_report_schedule_all_text_filter_coerces_non_string(
     mock_report_schedule: MagicMock, mock_or: MagicMock
 ) -> None:
     """A non-string value (e.g. an int) must not raise when escaping."""
-    from superset.reports.filters import ReportScheduleAllTextFilter
+    from axbi.reports.filters import ReportScheduleAllTextFilter
 
     query = MagicMock()
     f = ReportScheduleAllTextFilter("name", MagicMock())

@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getCategoricalSchemeRegistry } from '@superset-ui/core';
+import { getCategoricalSchemeRegistry } from '@ax-bi/ui-core';
 import {
   ColorPicker,
   type RGBColor,
   type ColorValue,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import ControlHeader from '../ControlHeader';
 
 export interface ColorPickerControlProps {

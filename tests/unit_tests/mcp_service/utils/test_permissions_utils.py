@@ -21,7 +21,7 @@ from unittest.mock import Mock, patch
 
 from flask import current_app
 
-from superset.mcp_service.utils.permissions_utils import (
+from axbi.mcp_service.utils.permissions_utils import (
     apply_field_permissions_to_columns,
     current_user_can_access,
     current_user_can_access_database,
@@ -56,7 +56,7 @@ def test_user_has_permission_admin_uses_configured_role_name():
         not_admin.roles = [_role("Admin")]
         not_admin.groups = []
         with patch(
-            "superset.security_manager.has_access", return_value=False
+            "axbi.security_manager.has_access", return_value=False
         ) as has_access:
             assert user_has_permission(not_admin, "can_read", "Chart") is False
         has_access.assert_called_once_with("can_read", "Chart", not_admin)
@@ -65,16 +65,14 @@ def test_user_has_permission_admin_uses_configured_role_name():
 
 
 def test_user_can_access_dataset_permission_uses_dataset_resource():
-    with patch("superset.security_manager.can_access", return_value=True) as can_access:
+    with patch("axbi.security_manager.can_access", return_value=True) as can_access:
         assert user_can_access_dataset_permission("can_write") is True
 
     can_access.assert_called_once_with("can_write", "Dataset")
 
 
 def test_current_user_can_access_delegates_to_security_manager():
-    with patch(
-        "superset.security_manager.can_access", return_value=False
-    ) as can_access:
+    with patch("axbi.security_manager.can_access", return_value=False) as can_access:
         assert current_user_can_access("can_read", "Dashboard") is False
 
     can_access.assert_called_once_with("can_read", "Dashboard")
@@ -83,7 +81,7 @@ def test_current_user_can_access_delegates_to_security_manager():
 def test_current_user_can_access_database_delegates_to_security_manager():
     database = Mock()
     with patch(
-        "superset.security_manager.can_access_database", return_value=True
+        "axbi.security_manager.can_access_database", return_value=True
     ) as can_access_database:
         assert current_user_can_access_database(database) is True
 

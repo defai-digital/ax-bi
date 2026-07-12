@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormColumn, QueryFormData } from '@superset-ui/core';
+import { QueryFormColumn, QueryFormData } from '@ax-bi/ui-core';
 import {
   BaseChartProps,
   BaseTransformedProps,

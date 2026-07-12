@@ -17,9 +17,9 @@
  * under the License.
  */
 import { ReactElement } from 'react';
-import { VizType } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { VizType } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { VizMeta } from './types';
 
 // Custom icons for non-featured charts

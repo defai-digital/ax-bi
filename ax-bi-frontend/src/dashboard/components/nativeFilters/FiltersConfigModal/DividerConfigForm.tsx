@@ -17,10 +17,10 @@
  * under the License.
  */
 import { FC } from 'react';
-import { FormItem, Input } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { NativeFilterType, ChartCustomizationType } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { FormItem, Input } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { NativeFilterType, ChartCustomizationType } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { CHART_CUSTOMIZATION_DIVIDER_PREFIX } from './utils';
 
 interface Props {

@@ -17,10 +17,10 @@
  * under the License.
  */
 import { memo, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { useTruncation } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
-import { List } from '@superset-ui/core/components/List';
+import { t } from '@ax-bi/core/translation';
+import { useTruncation } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
+import { List } from '@ax-bi/ui-core/components/List';
 import { useFilterScope } from './useFilterScope';
 import { Row, RowLabel, RowTruncationCount, RowValue } from './Styles';
 import { FilterCardRowProps } from './types';

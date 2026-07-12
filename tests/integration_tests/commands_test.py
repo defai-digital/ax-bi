@@ -20,14 +20,14 @@ from unittest.mock import patch
 import yaml
 from flask import g
 
-from superset import db
-from superset.commands.exceptions import CommandInvalidError
-from superset.commands.importers.v1.assets import ImportAssetsCommand
-from superset.commands.importers.v1.utils import is_valid_config
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.commands.exceptions import CommandInvalidError
+from axbi.commands.importers.v1.assets import ImportAssetsCommand
+from axbi.commands.importers.v1.utils import is_valid_config
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.importexport import (
     chart_config,
     dashboard_config,
@@ -42,13 +42,13 @@ metadata_config = {
 }
 
 
-class TestCommandsExceptions(SupersetTestCase):
+class TestCommandsExceptions(AxBITestCase):
     def test_command_invalid_error(self):
         exception = CommandInvalidError("A test")
         assert str(exception) == "A test"
 
 
-class TestImportersV1Utils(SupersetTestCase):
+class TestImportersV1Utils(AxBITestCase):
     def test_is_valid_config(self):
         assert is_valid_config("metadata.yaml")
         assert is_valid_config("databases/examples.yaml")
@@ -58,13 +58,13 @@ class TestImportersV1Utils(SupersetTestCase):
         )
 
 
-class TestImportAssetsCommand(SupersetTestCase):
+class TestImportAssetsCommand(AxBITestCase):
     def setUp(self):
         user = self.get_user("admin")
         self.user = user
         g.user = user
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_assets(self, mock_add_permissions):
         """Test that we can import multiple assets"""
 
@@ -177,7 +177,7 @@ class TestImportAssetsCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_dashboard_overwrite(self, mock_add_permissions):
         """Test that assets can be overwritten"""
         contents = {

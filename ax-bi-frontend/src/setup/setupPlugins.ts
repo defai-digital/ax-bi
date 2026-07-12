@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getChartControlPanelRegistry } from '@superset-ui/core';
-import { convertAgGridStateToOwnState } from '@superset-ui/plugin-chart-ag-grid-table';
+import { getChartControlPanelRegistry } from '@ax-bi/ui-core';
+import { convertAgGridStateToOwnState } from '@ax-bi/plugin-chart-ag-grid-table';
 import MainPreset from '../visualizations/presets/MainPreset';
 import setupPluginsExtra from './setupPluginsExtra';
 import { registerChartStateConverter } from '../dashboard/util/chartStateConverter';

@@ -25,7 +25,7 @@ import {
   QueryObject,
   isXAxisSet,
   getXAxisColumn,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   pivotOperator,
   renameOperator,
@@ -35,7 +35,7 @@ import {
   rollingWindowOperator,
   timeCompareOperator,
   resampleOperator,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   retainFormDataSuffix,
   removeFormDataSuffix,

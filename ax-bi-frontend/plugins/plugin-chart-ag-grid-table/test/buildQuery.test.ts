@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { AdhocColumn, QueryMode, VizType } from '@superset-ui/core';
+import { AdhocColumn, QueryMode, VizType } from '@ax-bi/ui-core';
 import buildQuery from '../src/buildQuery';
 import { TableChartFormData } from '../src/types';
 

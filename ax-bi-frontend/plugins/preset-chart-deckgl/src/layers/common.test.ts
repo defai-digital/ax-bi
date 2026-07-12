@@ -18,7 +18,7 @@
  */
 
 import { PickingInfo } from '@deck.gl/core';
-import { JsonObject, QueryFormData } from '@superset-ui/core';
+import { JsonObject, QueryFormData } from '@ax-bi/ui-core';
 import {
   getAggFunc,
   commonLayerProps,

@@ -21,7 +21,7 @@ import {
   TimeseriesDataRecord,
   Metric,
   SimpleAdhocFilter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export type FontSizeOptions = 'xs' | 's' | 'm' | 'l' | 'xl' | 'xxl';
 

@@ -18,14 +18,14 @@
  */
 
 /**
- * @fileoverview Implementation of the editors API for Superset.
+ * @fileoverview Implementation of the editors API for AxBI.
  *
  * This module provides the runtime implementation of the editor registration
  * and resolution functions declared in the API types.
  */
 
 import { useSyncExternalStore } from 'react';
-import { editors as editorsApi } from '@apache-superset/core';
+import { editors as editorsApi } from '@ax-bi/core';
 import { Disposable } from '../models';
 import EditorProviders from './EditorProviders';
 

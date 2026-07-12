@@ -18,8 +18,8 @@
  */
 
 import { useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import RoleListAddModal from 'src/features/roles/RoleListAddModal';
@@ -27,7 +27,7 @@ import RoleListEditModal from 'src/features/roles/RoleListEditModal';
 import RoleListDuplicateModal from 'src/features/roles/RoleListDuplicateModal';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
-import { ConfirmStatusChange, DeleteModal } from '@superset-ui/core/components';
+import { ConfirmStatusChange, DeleteModal } from '@ax-bi/ui-core/components';
 import {
   ListView,
   ListViewFilterOperator as FilterOperator,
@@ -38,7 +38,7 @@ import {
 } from 'src/components';
 import { UserObject } from 'src/features/roles/types';
 import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { fetchUserOptions } from 'src/features/groups/utils';
 import {
   fetchGroupOptions,
@@ -109,7 +109,7 @@ function RolesList({ addDangerToast, addSuccessToast, user }: RolesListProps) {
 
   const handleRoleDelete = async ({ id, name }: RoleObject) => {
     try {
-      await SupersetClient.delete({
+      await AxBIClient.delete({
         endpoint: `/api/v1/security/roles/${id}`,
       });
 
@@ -127,7 +127,7 @@ function RolesList({ addDangerToast, addSuccessToast, user }: RolesListProps) {
     await Promise.all(
       rolesToDelete.map(async role => {
         try {
-          await SupersetClient.delete({
+          await AxBIClient.delete({
             endpoint: `api/v1/security/roles/${role.id}`,
           });
 

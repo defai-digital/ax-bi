@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled, css, SupersetTheme } from '@apache-superset/core/theme';
+import { styled, css, AxBITheme } from '@ax-bi/core/theme';
 
 export const StyledLayoutWrapper = styled.div`
   flex-grow: 1;
@@ -134,7 +134,7 @@ export const HeaderComponentStyles = styled.div`
   }
 `;
 
-export const disabledSaveBtnStyles = (theme: SupersetTheme) => css`
+export const disabledSaveBtnStyles = (theme: AxBITheme) => css`
   width: ${theme.sizeUnit * 21.5}px;
 
   &:disabled {

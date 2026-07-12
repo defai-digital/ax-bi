@@ -25,8 +25,8 @@ import {
   getColumnLabel,
   getMetricLabel,
   getXAxisColumn,
-} from '@superset-ui/core';
-import { rankOperator } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { rankOperator } from '@ax-bi/chart-controls';
 
 export default function buildQuery(formData: QueryFormData) {
   const { groupby, normalize_across, sort_x_axis, sort_y_axis, x_axis } =

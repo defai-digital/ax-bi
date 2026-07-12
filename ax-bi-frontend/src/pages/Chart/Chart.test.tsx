@@ -29,7 +29,7 @@ import { getDashboardFormData } from 'spec/fixtures/mockDashboardFormData';
 import { LocalStorageKeys } from 'src/utils/localStorageHelpers';
 import getFormDataWithExtraFilters from 'src/dashboard/util/charts/getFormDataWithExtraFilters';
 import { URL_PARAMS } from 'src/constants';
-import { JsonObject, VizType } from '@superset-ui/core';
+import { JsonObject, VizType } from '@ax-bi/ui-core';
 import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
 import { getParsedExploreURLParams } from 'src/explore/exploreUtils/getParsedExploreURLParams';
 import * as messageToastActions from 'src/components/MessageToasts/actions';
@@ -108,12 +108,12 @@ describe('ChartPage', () => {
 
         datasource_name = expectedDatasourceName;
       }
-      class SupersetSecurityError {
+      class AxBISecurityError {
         message = 'You do not have a permission to the table';
 
         extra = new Extra();
       }
-      throw new SupersetSecurityError();
+      throw new AxBISecurityError();
     });
     fetchMock.get(chartApiRoute, 200);
     const { getByTestId } = render(<ChartPage />, {
@@ -152,12 +152,12 @@ describe('ChartPage', () => {
       class Extra {
         datasource = 123;
       }
-      class SupersetSecurityError {
+      class AxBISecurityError {
         message = 'You do not have a permission to the table';
 
         extra = new Extra();
       }
-      throw new SupersetSecurityError();
+      throw new AxBISecurityError();
     });
     fetchMock.get(chartApiRoute, {
       result: {

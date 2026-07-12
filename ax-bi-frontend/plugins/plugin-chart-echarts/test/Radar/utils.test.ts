@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getNumberFormatter } from '@superset-ui/core';
+import { getNumberFormatter } from '@ax-bi/ui-core';
 import { renderNormalizedTooltip } from '../../src/Radar/utils';
 
 describe('renderNormalizedTooltip', () => {

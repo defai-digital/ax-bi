@@ -20,8 +20,8 @@ from pytest_mock import MockerFixture
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from superset.databases.filters import can_access_databases, DatabaseFilter
-from superset.extensions import security_manager
+from axbi.databases.filters import can_access_databases, DatabaseFilter
+from axbi.extensions import security_manager
 
 
 def test_can_access_databases(mocker: MockerFixture) -> None:
@@ -58,7 +58,7 @@ def test_database_filter_full_db_access(mocker: MockerFixture) -> None:
 
     In this case the query should be returned unmodified.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     mocker.patch("flask.current_app.config", {"EXTRA_DYNAMIC_QUERY_FILTERS": False})
     mocker.patch.object(security_manager, "can_access_all_databases", return_value=True)
@@ -78,7 +78,7 @@ def test_database_filter(mocker: MockerFixture) -> None:
     """
     Test the `DatabaseFilter` class with specific permissions.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     mocker.patch("flask.current_app.config", {"EXTRA_DYNAMIC_QUERY_FILTERS": False})
     mocker.patch.object(

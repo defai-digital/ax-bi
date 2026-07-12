@@ -22,9 +22,9 @@ import pandas as pd
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.report.alert import AlertCommand
-from superset.commands.report.exceptions import AlertValidatorConfigError
-from superset.reports.models import ReportScheduleValidatorType, ReportState
+from axbi.commands.report.alert import AlertCommand
+from axbi.commands.report.exceptions import AlertValidatorConfigError
+from axbi.reports.models import ReportScheduleValidatorType, ReportState
 
 
 def test_empty_query_result_with_operator_validator_returns_false_with_message(
@@ -32,11 +32,11 @@ def test_empty_query_result_with_operator_validator_returns_false_with_message(
 ) -> None:
     """Test that empty results with operator validator returns (False, message)"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame(),
     )
 
@@ -76,11 +76,11 @@ def test_empty_result_prevents_false_alerts_for_all_operators(
 ) -> None:
     """Test that empty results return (False, message) for any operator type"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame(),
     )
 
@@ -106,14 +106,14 @@ def test_empty_result_prevents_false_alerts_for_all_operators(
 
 def test_empty_result_flow_sets_noop_state(mocker: MockerFixture) -> None:
     """Test that empty results lead to NOOP state with info message"""
-    from superset.commands.report.execute import ReportNotTriggeredErrorState
+    from axbi.commands.report.execute import ReportNotTriggeredErrorState
 
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame(),
     )
 
@@ -146,11 +146,11 @@ def test_malformed_config_raises_error_with_valid_result(
 ) -> None:
     """Test that malformed config is detected when result is valid"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [0.5]}),
     )
 
@@ -173,11 +173,11 @@ def test_non_object_config_raises_error_with_valid_result(
 ) -> None:
     """Test that non-object config is detected when result is valid"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [0.5]}),
     )
 
@@ -200,11 +200,11 @@ def test_query_returning_null_value_returns_false_with_message(
 ) -> None:
     """Test that query returning NULL value returns (False, message)"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [None]}),
     )
 
@@ -230,11 +230,11 @@ def test_query_returning_zero_value_sets_result_to_zero(
 ) -> None:
     """Test that query returning 0 value sets result to 0.0 (not None)"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [0]}),
     )
 
@@ -261,11 +261,11 @@ def test_query_returning_nan_value_returns_false_with_message(
 ) -> None:
     """Test that query returning NaN value returns (False, message)"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [np.nan]}),
     )
 
@@ -305,11 +305,11 @@ def test_value_handling_with_valid_numbers(
 ) -> None:
     """Test proper handling of valid numeric values including 0"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [value]}),
     )
 
@@ -354,11 +354,11 @@ def test_value_handling_with_null_and_nan(
 ) -> None:
     """Test that NULL and NaN values return (False, message)"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [value]}),
     )
 
@@ -384,11 +384,11 @@ def test_not_null_validator_with_valid_value_triggers_alert(
 ) -> None:
     """Test NOT_NULL validator triggers with valid non-null value"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [42]}),
     )
 
@@ -414,11 +414,11 @@ def test_not_null_validator_with_null_value_does_not_trigger(
 ) -> None:
     """Test NOT_NULL validator normalizes NULL to None and doesn't trigger"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [None]}),
     )
 
@@ -443,11 +443,11 @@ def test_not_null_validator_with_nan_value_does_not_trigger(
 ) -> None:
     """Test NOT_NULL validator normalizes NaN to None and doesn't trigger"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [np.nan]}),
     )
 
@@ -472,11 +472,11 @@ def test_not_null_validator_with_zero_value_does_not_trigger(
 ) -> None:
     """Test NOT_NULL validator with 0 value does not trigger (0 is falsy)"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame({"value": [0]}),
     )
 
@@ -500,11 +500,11 @@ def test_not_null_validator_with_empty_result_does_not_trigger(
 ) -> None:
     """Test NOT_NULL validator with empty result does not trigger"""
     mocker.patch(
-        "superset.commands.report.alert.retry_call",
+        "axbi.commands.report.alert.retry_call",
         side_effect=lambda func, *args, **kwargs: func(*args, **kwargs),
     )
     mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         return_value=pd.DataFrame(),
     )
 

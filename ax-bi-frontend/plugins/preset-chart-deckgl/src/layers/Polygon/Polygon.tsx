@@ -22,7 +22,7 @@
 /* eslint no-underscore-dangle: ["error", { "allow": ["", "__timestamp"] }] */
 
 import { memo, useCallback, useEffect, useRef, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ContextMenuFilters,
   FilterState,
@@ -32,7 +32,7 @@ import {
   QueryFormData,
   SetDataMaskHook,
   getMapProviderMapStyle,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 import { PolygonLayer } from '@deck.gl/layers';
 
@@ -69,7 +69,7 @@ function getElevation(
   d: JsonObject,
   colorScaler: (d: JsonObject) => [number, number, number, number],
 ) {
-  /* in deck.gl 5.3.4 (used in Superset as of 2018-10-24), if a polygon has
+  /* in deck.gl 5.3.4 (used in AxBI as of 2018-10-24), if a polygon has
    * opacity zero it will make everything behind it have opacity zero,
    * effectively showing the map layer no matter what other polygons are
    * behind it.

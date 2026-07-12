@@ -21,8 +21,8 @@ import {
   ChartCustomization,
   ChartCustomizationType,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
-import type { FormInstance } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import type { FormInstance } from '@ax-bi/ui-core/components';
 import FiltersConfigForm from '../FiltersConfigForm/FiltersConfigForm';
 import DividerConfigForm from '../DividerConfigForm';
 import { NativeFiltersForm, FilterRemoval } from '../types';

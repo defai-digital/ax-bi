@@ -19,8 +19,8 @@
 import {
   ControlPanelConfig,
   getStandardizedControls,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import timeGrainSqlaAnimationOverrides from '../../utilities/controls';
 import { COLOR_SCHEME_TYPES, formatSelectOptions } from '../../utilities/utils';
 import {

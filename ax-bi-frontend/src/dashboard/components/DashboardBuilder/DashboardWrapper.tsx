@@ -27,8 +27,8 @@ import {
   useState,
 } from 'react';
 
-import { css, styled } from '@apache-superset/core/theme';
-import { Constants } from '@superset-ui/core/components';
+import { css, styled } from '@ax-bi/core/theme';
+import { Constants } from '@ax-bi/ui-core/components';
 import { RootState } from 'src/dashboard/types';
 import { useSelector } from 'react-redux';
 import { useDragDropManager } from 'react-dnd';

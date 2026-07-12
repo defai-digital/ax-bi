@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import {
   EchartsTreemapChartPlugin,
   TreemapTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import data from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 
@@ -58,7 +58,7 @@ export const Treemap = ({
     height={height}
     queriesData={[{ data }]}
     formData={{
-      colorScheme: 'supersetColors',
+      colorScheme: 'axbiColors',
       groupby: ['genre'],
       metric: 'count',
       showLabels,

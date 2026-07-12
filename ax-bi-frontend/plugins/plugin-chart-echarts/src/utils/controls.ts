@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { validateNumber } from '@superset-ui/core';
+import { validateNumber } from '@ax-bi/ui-core';
 
 export function parseAxisBound(
   bound?: string | number | null,

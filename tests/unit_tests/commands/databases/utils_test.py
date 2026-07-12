@@ -29,7 +29,7 @@ from flask_appbuilder.security.sqla.models import (
 from pytest_mock import MockerFixture
 from sqlalchemy.orm import Session
 
-from superset.commands.database.utils import (
+from axbi.commands.database.utils import (
     add_perm,
     add_pvm,
     add_vm,
@@ -86,7 +86,7 @@ def test_ping_runtime_exception(mocker: MockerFixture, mock_engine: MockerFixtur
     Test the ``ping`` method when a RuntimeError is raised.
     """
     mock_engine, mock_connection, mock_dialect = mock_engine
-    mock_timeout = mocker.patch("superset.commands.database.utils.timeout")
+    mock_timeout = mocker.patch("axbi.commands.database.utils.timeout")
     mock_timeout.side_effect = RuntimeError("timeout")
     mock_dialect.do_ping.return_value = True
 
@@ -171,9 +171,9 @@ def test_add_pvm(db_session: Session, mocker: MockerFixture):
 
     mock_vm = mocker.MagicMock()
     mock_perm = mocker.MagicMock()
-    mock_add_vm = mocker.patch("superset.commands.database.utils.add_vm")
+    mock_add_vm = mocker.patch("axbi.commands.database.utils.add_vm")
     mock_add_vm.return_value = mock_vm
-    mock_add_perm = mocker.patch("superset.commands.database.utils.add_perm")
+    mock_add_perm = mocker.patch("axbi.commands.database.utils.add_perm")
     mock_add_perm.return_value = mock_perm
 
     result = add_pvm(db_session, sm, "new_perm", "new_view_menu")

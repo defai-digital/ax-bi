@@ -19,7 +19,7 @@
 import pytest
 from marshmallow import ValidationError
 
-from superset.datasets.schemas import validate_python_date_format
+from axbi.datasets.schemas import validate_python_date_format
 
 
 # pylint: disable=too-few-public-methods
@@ -57,7 +57,7 @@ def test_dataset_post_schema_has_all_put_scalar_fields() -> None:
     This prevents the class of bug where a new column is added to the update
     schema but forgotten in the create schema.
     """
-    from superset.datasets.schemas import DatasetPostSchema, DatasetPutSchema
+    from axbi.datasets.schemas import DatasetPostSchema, DatasetPutSchema
 
     # Fields that are intentionally only on Put: they require an existing dataset
     # or are populated server-side during creation.
@@ -90,7 +90,7 @@ def test_dataset_post_schema_has_all_put_scalar_fields() -> None:
 
 def test_dataset_post_schema_includes_currency_code_column() -> None:
     """Test that DatasetPostSchema accepts currency_code_column."""
-    from superset.datasets.schemas import DatasetPostSchema
+    from axbi.datasets.schemas import DatasetPostSchema
 
     schema = DatasetPostSchema()
     data = {
@@ -104,7 +104,7 @@ def test_dataset_post_schema_includes_currency_code_column() -> None:
 
 def test_dataset_metrics_put_schema_parses_currency_string() -> None:
     """Test that DatasetMetricsPutSchema parses string currency payloads."""
-    from superset.datasets.schemas import DatasetMetricsPutSchema
+    from axbi.datasets.schemas import DatasetMetricsPutSchema
 
     schema = DatasetMetricsPutSchema()
     data = {
@@ -118,7 +118,7 @@ def test_dataset_metrics_put_schema_parses_currency_string() -> None:
 
 def test_dataset_metrics_put_schema_parses_python_dict_string() -> None:
     """Test that DatasetMetricsPutSchema parses Python dict currency strings."""
-    from superset.datasets.schemas import DatasetMetricsPutSchema
+    from axbi.datasets.schemas import DatasetMetricsPutSchema
 
     schema = DatasetMetricsPutSchema()
     data = {
@@ -132,7 +132,7 @@ def test_dataset_metrics_put_schema_parses_python_dict_string() -> None:
 
 def test_dataset_metrics_put_schema_handles_malformed_currency() -> None:
     """Test that DatasetMetricsPutSchema normalizes malformed currency strings."""
-    from superset.datasets.schemas import DatasetMetricsPutSchema
+    from axbi.datasets.schemas import DatasetMetricsPutSchema
 
     schema = DatasetMetricsPutSchema()
     data = {
@@ -146,7 +146,7 @@ def test_dataset_metrics_put_schema_handles_malformed_currency() -> None:
 
 def test_import_v1_metric_schema_parses_currency_string() -> None:
     """Test that ImportV1MetricSchema parses string currency payloads."""
-    from superset.datasets.schemas import ImportV1MetricSchema
+    from axbi.datasets.schemas import ImportV1MetricSchema
 
     schema = ImportV1MetricSchema()
     data = {
@@ -160,7 +160,7 @@ def test_import_v1_metric_schema_parses_currency_string() -> None:
 
 @pytest.mark.parametrize("extra", ["{malformed", "[]", "1", " "])
 def test_import_v1_column_schema_ignores_malformed_extra(extra: str) -> None:
-    from superset.datasets.schemas import ImportV1ColumnSchema
+    from axbi.datasets.schemas import ImportV1ColumnSchema
 
     schema = ImportV1ColumnSchema()
     result = schema.load({"column_name": "profit", "extra": extra})
@@ -170,7 +170,7 @@ def test_import_v1_column_schema_ignores_malformed_extra(extra: str) -> None:
 
 @pytest.mark.parametrize("extra", ["{malformed", "[]", "1", " "])
 def test_import_v1_metric_schema_ignores_malformed_extra(extra: str) -> None:
-    from superset.datasets.schemas import ImportV1MetricSchema
+    from axbi.datasets.schemas import ImportV1MetricSchema
 
     schema = ImportV1MetricSchema()
     result = schema.load(

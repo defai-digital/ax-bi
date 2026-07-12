@@ -17,7 +17,7 @@
 from os import environ
 from typing import TYPE_CHECKING
 
-from superset.app import create_app
+from axbi.app import create_app
 
 if TYPE_CHECKING:
     from typing import Any
@@ -26,10 +26,10 @@ if TYPE_CHECKING:
 
 
 # DEPRECATED: Creating global app instance - use app fixture from conftest.py instead
-superset_config_module = environ.get(
-    "SUPERSET_CONFIG", "tests.integration_tests.superset_test_config"
+axbi_config_module = environ.get(
+    "AXBI_CONFIG", "tests.integration_tests.axbi_test_config"
 )
-app = create_app(superset_config_module=superset_config_module)
+app = create_app(axbi_config_module=axbi_config_module)
 
 
 def login(

@@ -1,21 +1,21 @@
 {
-  "name": "@superset-ui/plugin-chart-point-cluster-map",
+  "name": "@ax-bi/plugin-chart-point-cluster-map",
   "version": "1.0.0",
-  "description": "Superset Chart Plugin - Point Cluster Map",
+  "description": "AxBI Chart Plugin - Point Cluster Map",
   "keywords": [
-    "superset"
+    "axbi"
   ],
-  "homepage": "https://superset.apache.org/",
+  "homepage": "https://github.com/defai-digital/ax-bi/",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/plugin-chart-point-cluster-map"
   },
   "license": "Apache-2.0",
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "sideEffects": [
     "*.css"
   ],
@@ -33,9 +33,9 @@
     "supercluster": "^8.0.1"
   },
   "peerDependencies": {
-    "@apache-superset/core": "*",
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
     "react": "^18.3.0 || ^19.0.0",
     "react-dom": "^18.3.0 || ^19.0.0"
   },

@@ -24,7 +24,7 @@ import {
   fireEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
 import { URL_PARAMS } from 'src/constants';
 import UploadData from '.';
 
@@ -63,16 +63,16 @@ jest.mock('src/components/MessageToasts/withToasts', () => ({
     },
 }));
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
-    ...jest.requireActual('@superset-ui/core').SupersetClient,
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
+    ...jest.requireActual('@ax-bi/ui-core').AxBIClient,
     post: jest.fn(),
   },
   getClientErrorObject: jest.fn(),
 }));
 
-const mockedPost = SupersetClient.post as jest.Mock;
+const mockedPost = AxBIClient.post as jest.Mock;
 const mockedGetClientErrorObject = getClientErrorObject as jest.Mock;
 
 beforeEach(() => {

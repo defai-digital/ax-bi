@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
 import { Link } from 'react-router-dom';
 import {
   ConfirmStatusChange,
@@ -30,7 +30,7 @@ import {
   ListViewCard,
   Icons,
   MenuItem,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import Chart from 'src/types/Chart';
 import { FacePile } from 'src/components';
 import { handleChartDelete, CardStyles } from 'src/views/CRUD/utils';

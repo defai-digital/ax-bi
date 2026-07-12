@@ -18,10 +18,10 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { AdhocColumn, QueryFormColumn, isAdhocColumn } from '@superset-ui/core';
-import { tn } from '@apache-superset/core/translation';
-import { ColumnMeta, isColumnMeta } from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { AdhocColumn, QueryFormColumn, isAdhocColumn } from '@ax-bi/ui-core';
+import { tn } from '@ax-bi/core/translation';
+import { ColumnMeta, isColumnMeta } from '@ax-bi/chart-controls';
 import { isEmpty } from 'lodash';
 import DndSelectLabel from 'src/explore/components/controls/DndColumnSelectControl/DndSelectLabel';
 import OptionWrapper from 'src/explore/components/controls/DndColumnSelectControl/OptionWrapper';

@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { getMetricLabel } from '@superset-ui/core';
+import { getMetricLabel } from '@ax-bi/ui-core';
 import { getMetricLabelFromFormData, parseMetricValue } from './transformUtils';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getMetricLabel: jest.fn((metric: string) => metric),
 }));
 

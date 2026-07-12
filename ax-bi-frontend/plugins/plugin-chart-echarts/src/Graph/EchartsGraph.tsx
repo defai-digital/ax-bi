@@ -20,7 +20,7 @@ import {
   getColumnLabel,
   getNumberFormatter,
   getTimeFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { EventHandlers } from '../types';
 import Echart from '../components/Echart';
 import { GraphChartTransformedProps } from './types';

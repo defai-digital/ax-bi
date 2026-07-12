@@ -33,7 +33,7 @@ jobs:
         uses: ./.github/actions/latest-tag
         if: steps.latest-tag.outputs.SKIP_TAG != 'true'
         with:
-          description: Superset latest release
+          description: AxBI latest release
           tag-name: latest
         env:
           GITHUB_TOKEN: ${{ github.token }}

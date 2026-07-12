@@ -21,24 +21,24 @@ import pytest
 import yaml  # noqa: F401
 from werkzeug.utils import secure_filename  # noqa: F401
 
-from superset import db, security_manager  # noqa: F401
-from superset.commands.dashboard.exceptions import DashboardNotFoundError  # noqa: F401
-from superset.commands.dashboard.export import (
+from axbi import db, security_manager  # noqa: F401
+from axbi.commands.dashboard.exceptions import DashboardNotFoundError  # noqa: F401
+from axbi.commands.dashboard.export import (
     append_charts,  # noqa: F401
     ExportDashboardsCommand,  # noqa: F401
     get_default_position,  # noqa: F401
 )
-from superset.commands.dashboard.importers import v0, v1  # noqa: F401
-from superset.commands.exceptions import CommandInvalidError  # noqa: F401
-from superset.commands.importers.exceptions import IncorrectVersionError  # noqa: F401
-from superset.commands.tag.create import CreateCustomTagCommand
-from superset.commands.tag.delete import DeleteTaggedObjectCommand, DeleteTagsCommand
-from superset.connectors.sqla.models import SqlaTable  # noqa: F401
-from superset.models.core import Database  # noqa: F401
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice  # noqa: F401
-from superset.tags.models import ObjectType, Tag, TaggedObject, TagType
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.dashboard.importers import v0, v1  # noqa: F401
+from axbi.commands.exceptions import CommandInvalidError  # noqa: F401
+from axbi.commands.importers.exceptions import IncorrectVersionError  # noqa: F401
+from axbi.commands.tag.create import CreateCustomTagCommand
+from axbi.commands.tag.delete import DeleteTaggedObjectCommand, DeleteTagsCommand
+from axbi.connectors.sqla.models import SqlaTable  # noqa: F401
+from axbi.models.core import Database  # noqa: F401
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice  # noqa: F401
+from axbi.tags.models import ObjectType, Tag, TaggedObject, TagType
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.importexport import (
     chart_config,  # noqa: F401
@@ -59,7 +59,7 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 
 
 # test create command
-class TestCreateCustomTagCommand(SupersetTestCase):
+class TestCreateCustomTagCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     @pytest.mark.usefixtures("with_tagging_system_feature")
     def test_create_custom_tag_command(self):
@@ -94,7 +94,7 @@ class TestCreateCustomTagCommand(SupersetTestCase):
 
 
 # test delete tags command
-class TestDeleteTagsCommand(SupersetTestCase):
+class TestDeleteTagsCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     @pytest.mark.usefixtures("with_tagging_system_feature")
     def test_delete_tags_command(self):
@@ -129,7 +129,7 @@ class TestDeleteTagsCommand(SupersetTestCase):
 
 
 # test delete tagged objects command
-class TestDeleteTaggedObjectCommand(SupersetTestCase):
+class TestDeleteTaggedObjectCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     @pytest.mark.usefixtures("with_tagging_system_feature")
     def test_delete_tags_command(self):

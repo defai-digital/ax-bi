@@ -17,7 +17,7 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import {
@@ -27,7 +27,7 @@ import {
   Input,
   FormItem,
   FormInstance,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { Group, Role, UserObject } from 'src/pages/UsersList/types';
 import { Actions } from 'src/constants';
 import { BaseUserListModalProps, FormValues } from './types';

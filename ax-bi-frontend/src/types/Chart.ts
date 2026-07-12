@@ -21,7 +21,7 @@
  * The Chart model as returned from the API
  */
 
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 import { TagType } from 'src/components';
 import Owner from './Owner';
 

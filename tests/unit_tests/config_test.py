@@ -23,11 +23,11 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import db
+from axbi import db
 from tests.conftest import with_config
 
 if TYPE_CHECKING:
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
 FULL_DTTM_DEFAULTS_EXAMPLE = {
     "main_dttm_col": "id",
@@ -81,8 +81,8 @@ def test_table(session: Session) -> "SqlaTable":
     """
     Fixture that generates an in-memory table.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -120,7 +120,7 @@ def test_main_dttm_col(mocker: MockerFixture, test_table: "SqlaTable") -> None:
     Test the ``SQLA_TABLE_MUTATOR`` config.
     """
     mocker.patch(
-        "superset.connectors.sqla.models.get_physical_table_metadata",
+        "axbi.connectors.sqla.models.get_physical_table_metadata",
         return_value=[
             {"column_name": "ds", "type": "TIMESTAMP", "is_dttm": True},
             {"column_name": "event_time", "type": "TIMESTAMP", "is_dttm": True},
@@ -151,7 +151,7 @@ def test_main_dttm_col_nonexistent(
     Test the ``SQLA_TABLE_MUTATOR`` config when main datetime column doesn't exist.
     """
     mocker.patch(
-        "superset.connectors.sqla.models.get_physical_table_metadata",
+        "axbi.connectors.sqla.models.get_physical_table_metadata",
         return_value=[
             {"column_name": "ds", "type": "TIMESTAMP", "is_dttm": True},
             {"column_name": "event_time", "type": "TIMESTAMP", "is_dttm": True},
@@ -183,7 +183,7 @@ def test_main_dttm_col_nondttm(
     Test the ``SQLA_TABLE_MUTATOR`` config when main datetime column has wrong type.
     """
     mocker.patch(
-        "superset.connectors.sqla.models.get_physical_table_metadata",
+        "axbi.connectors.sqla.models.get_physical_table_metadata",
         return_value=[
             {"column_name": "ds", "type": "TIMESTAMP", "is_dttm": True},
             {"column_name": "event_time", "type": "TIMESTAMP", "is_dttm": True},
@@ -218,7 +218,7 @@ def test_python_date_format_by_column_name(
     Test the ``SQLA_TABLE_MUTATOR`` setting for "python_date_format".
     """
     mocker.patch(
-        "superset.connectors.sqla.models.get_physical_table_metadata",
+        "axbi.connectors.sqla.models.get_physical_table_metadata",
         return_value=[
             {"column_name": "id", "type": "INTEGER", "is_dttm": False},
             {"column_name": "dttm", "type": "INTEGER", "is_dttm": False},
@@ -257,7 +257,7 @@ def test_expression_by_column_name(
     Test the ``SQLA_TABLE_MUTATOR`` setting for expression.
     """
     mocker.patch(
-        "superset.connectors.sqla.models.get_physical_table_metadata",
+        "axbi.connectors.sqla.models.get_physical_table_metadata",
         return_value=[
             {"column_name": "dttm", "type": "INTEGER", "is_dttm": False},
             {"column_name": "duration_ms", "type": "INTEGER", "is_dttm": False},
@@ -293,7 +293,7 @@ def test_full_setting(
     Test the ``SQLA_TABLE_MUTATOR`` with full settings.
     """
     mocker.patch(
-        "superset.connectors.sqla.models.get_physical_table_metadata",
+        "axbi.connectors.sqla.models.get_physical_table_metadata",
         return_value=[
             {"column_name": "id", "type": "INTEGER", "is_dttm": False},
             {"column_name": "dttm", "type": "INTEGER", "is_dttm": False},
@@ -318,13 +318,13 @@ def test_sync_theme_logo_href() -> None:
     """
     Verify LOGO_TARGET_PATH is wired into a theme's brandLogoHref.
 
-    THEME_DEFAULT is built before superset_config.py overrides load, so the link
+    THEME_DEFAULT is built before axbi_config.py overrides load, so the link
     is re-synced afterwards via sync_theme_logo_href. A provided LOGO_TARGET_PATH
     must update brandLogoHref; None must leave the existing value untouched.
     """
     from copy import deepcopy
 
-    from superset.config import sync_theme_logo_href, THEME_DEFAULT
+    from axbi.config import sync_theme_logo_href, THEME_DEFAULT
 
     # A user-provided LOGO_TARGET_PATH propagates to the logo link.
     theme = deepcopy(THEME_DEFAULT)
@@ -344,7 +344,7 @@ def test_sync_theme_logo_href() -> None:
 
 def test_theme_default_logo_defaults() -> None:
     """With the shipped defaults, brandLogoHref is "/" and brandLogoUrl is APP_ICON."""
-    from superset import config
+    from axbi import config
 
     assert config.LOGO_TARGET_PATH is None
     assert config.THEME_DEFAULT["token"]["brandLogoHref"] == "/"

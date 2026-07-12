@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useState, useEffect, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 
 const useGetDatasetRelatedCounts = (id: string) => {
@@ -27,7 +27,7 @@ const useGetDatasetRelatedCounts = (id: string) => {
 
   const getDatasetRelatedObjects = useCallback(
     () =>
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/dataset/${id}/related_objects`,
       })
         .then(({ json }) => {

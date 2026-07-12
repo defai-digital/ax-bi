@@ -23,7 +23,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy import JSON, types
 from sqlalchemy.engine.url import make_url
 
-from superset.db_engine_specs.doris import (
+from axbi.db_engine_specs.doris import (
     AggState,
     ARRAY,
     BITMAP,
@@ -35,7 +35,7 @@ from superset.db_engine_specs.doris import (
     STRUCT,
     TINYINT,
 )
-from superset.utils.core import GenericDataType
+from axbi.utils.core import GenericDataType
 from tests.common.assert_utils import assert_called_once_with_text
 from tests.unit_tests.db_engine_specs.utils import assert_column_spec
 
@@ -77,7 +77,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.doris import DorisEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.doris import DorisEngineSpec as spec  # noqa: N813
 
     assert_column_spec(spec, native_type, sqla_type, attrs, generic_type, is_dttm)
 
@@ -151,7 +151,7 @@ def test_adjust_engine_params(
     return_schema: str,
     return_connect_args: dict[str, Any],
 ) -> None:
-    from superset.db_engine_specs.doris import DorisEngineSpec
+    from axbi.db_engine_specs.doris import DorisEngineSpec
 
     url = make_url(sqlalchemy_uri)
     returned_url, returned_connect_args = DorisEngineSpec.adjust_engine_params(
@@ -169,7 +169,7 @@ def test_adjust_engine_params_no_database() -> None:
     """
     Test that we raise an exception when the database is not specified.
     """
-    from superset.db_engine_specs.doris import DorisEngineSpec
+    from axbi.db_engine_specs.doris import DorisEngineSpec
 
     url = make_url("doris://user:password@host")
     with pytest.raises(
@@ -191,7 +191,7 @@ def test_get_schema_from_engine_params(url: str, expected_schema: str | None) ->
     """
     Test the ``get_schema_from_engine_params`` method.
     """
-    from superset.db_engine_specs.doris import DorisEngineSpec
+    from axbi.db_engine_specs.doris import DorisEngineSpec
 
     assert (
         DorisEngineSpec.get_schema_from_engine_params(
@@ -218,8 +218,8 @@ def test_get_default_catalog(
     """
     Test the ``get_default_catalog`` method.
     """
-    from superset.db_engine_specs.doris import DorisEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.doris import DorisEngineSpec
+    from axbi.models.core import Database
 
     database = mocker.MagicMock(spec=Database)
     database.url_object.database = database_value
@@ -261,8 +261,8 @@ def test_get_catalog_names(
     """
     Test the ``get_catalog_names`` method.
     """
-    from superset.db_engine_specs.doris import DorisEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.doris import DorisEngineSpec
+    from axbi.models.core import Database
 
     database = Mock(spec=Database)
     inspector = Mock()

@@ -20,7 +20,7 @@ import Layer from 'ol/layer/Layer';
 import { FrameState } from 'ol/Map';
 import { apply as applyTransform } from 'ol/transform';
 import { createRoot, Root } from 'react-dom/client';
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { AxBITheme } from '@ax-bi/core/theme';
 import { ChartConfig, ChartLayerOptions, ChartSizeValues } from '../types';
 import { createChartComponent } from '../util/chartUtil';
 import { getProjectedCoordinateFromPointGeoJson } from '../util/geometryUtil';
@@ -57,7 +57,7 @@ export class ChartLayer extends Layer {
 
   chartBackgroundBorderRadius = 0;
 
-  theme: SupersetTheme;
+  theme: AxBITheme;
 
   locale: string;
 
@@ -73,7 +73,7 @@ export class ChartLayer extends Layer {
    * @param {Number} options.chartBackgroundBorderRadius The border radius in percent of the additionally added chart background
    * @param {Function} options.onMouseOver The handler function to execute when the mouse entering a HTML element
    * @param {Function} options.onMouseOut The handler function to execute when the mouse leaves a HTML element
-   * @param {SupersetTheme} options.theme The superset theme
+   * @param {AxBITheme} options.theme The axbi theme
    */
   constructor(options: ChartLayerOptions) {
     super(options);

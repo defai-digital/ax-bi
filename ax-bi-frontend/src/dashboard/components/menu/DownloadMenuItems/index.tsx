@@ -17,14 +17,10 @@
  * under the License.
  */
 import { SyntheticEvent } from 'react';
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
-import {
-  FeatureFlag,
-  isFeatureEnabled,
-  SupersetClient,
-} from '@superset-ui/core';
-import { MenuItem } from '@superset-ui/core/components/Menu';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { FeatureFlag, isFeatureEnabled, AxBIClient } from '@ax-bi/ui-core';
+import { MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { parse as parseContentDisposition } from 'content-disposition';
 import { useDownloadScreenshot } from 'src/dashboard/hooks/useDownloadScreenshot';
 import { MenuKeys } from 'src/dashboard/types';
@@ -108,7 +104,7 @@ export const useDownloadMenuItems = (
 
   const onExportAsExample = async () => {
     try {
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: `/api/v1/dashboard/${dashboardId}/export_as_example/`,
         headers: {
           Accept: 'application/zip',

@@ -44,7 +44,7 @@ test.beforeEach(async ({ page }) => {
 test('should redirect to login with incorrect username and password', async ({
   page,
 }) => {
-  // The form submission is async (SupersetClient.postForm uses ensureAuth)
+  // The form submission is async (AxBIClient.postForm uses ensureAuth)
   // so listen for the page reload before triggering the login
   await Promise.all([
     page.waitForEvent('load', { timeout: TIMEOUT.PAGE_LOAD }),

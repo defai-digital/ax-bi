@@ -19,8 +19,8 @@
 import {
   ControlPanelConfig,
   getStandardizedControls,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import { allColumnsControlSetItem } from './controls/columns';
 import { groupByControlSetItem } from './controls/groupBy';
 import { handlebarsTemplateControlSetItem } from './controls/handlebarTemplate';

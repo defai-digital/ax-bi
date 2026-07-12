@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ChartProps, SMART_DATE_ID } from '@superset-ui/core';
+import { ChartProps, SMART_DATE_ID } from '@ax-bi/ui-core';
 import transformProps from '../../../src/Timeseries/transformProps';
 import { DEFAULT_FORM_DATA } from '../../../src/Timeseries/constants';
 import {
@@ -25,17 +25,17 @@ import {
   EchartsTimeseriesFormData,
   EchartsTimeseriesChartProps,
 } from '../../../src/Timeseries/types';
-import { GenericDataType } from '@apache-superset/core/common';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   D3_FORMAT_OPTIONS,
   D3_TIME_FORMAT_OPTIONS,
-} from '@superset-ui/chart-controls';
-import { supersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/chart-controls';
+import { axbiTheme } from '@ax-bi/core/theme';
 
 describe('Scatter Chart X-axis Time Formatting', () => {
   const baseFormData: EchartsTimeseriesFormData = {
     ...DEFAULT_FORM_DATA,
-    colorScheme: 'supersetColors',
+    colorScheme: 'axbiColors',
     datasource: '1__table',
     granularity_sqla: '__timestamp',
     metric: ['column 1'],
@@ -60,7 +60,7 @@ describe('Scatter Chart X-axis Time Formatting', () => {
     width: 800,
     height: 600,
     queriesData: timeseriesData,
-    theme: supersetTheme,
+    theme: axbiTheme,
   };
 
   test('xAxisTimeFormat has no default formatter', () => {
@@ -107,7 +107,7 @@ describe('Scatter Chart X-axis Time Formatting', () => {
 describe('Scatter Chart X-axis Number Formatting', () => {
   const baseFormData: EchartsTimeseriesFormData = {
     ...DEFAULT_FORM_DATA,
-    colorScheme: 'supersetColors',
+    colorScheme: 'axbiColors',
     datasource: '1__table',
     metric: ['column_1'],
     x_axis: 'column_2',
@@ -132,7 +132,7 @@ describe('Scatter Chart X-axis Number Formatting', () => {
     width: 800,
     height: 600,
     queriesData: timeseriesData,
-    theme: supersetTheme,
+    theme: axbiTheme,
   };
 
   test('should use SMART_NUMBER as default xAxisNumberFormat', () => {

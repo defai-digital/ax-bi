@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { authentication as authenticationApi } from '@apache-superset/core';
-import { SupersetClient } from '@superset-ui/core';
+import { authentication as authenticationApi } from '@ax-bi/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 
 const getCSRFToken: typeof authenticationApi.getCSRFToken = () =>
-  SupersetClient.getCSRFToken();
+  AxBIClient.getCSRFToken();
 
 export const authentication: typeof authenticationApi = {
   getCSRFToken,

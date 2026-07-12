@@ -24,15 +24,15 @@ import pytest
 from pandas import DataFrame
 from sqlalchemy import DateTime, String, text
 
-from superset import db
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.reports.models import ReportSchedule
-from superset.utils import json
-from superset.utils.core import get_example_default_schema
-from superset.utils.database import get_example_database
+from axbi import db
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.reports.models import ReportSchedule
+from axbi.utils import json
+from axbi.utils.core import get_example_default_schema
+from axbi.utils.database import get_example_database
 from tests.integration_tests.dashboard_utils import (
     create_dashboard,
     create_table_metadata,
@@ -106,7 +106,7 @@ def create_dashboard_for_loaded_data():
 
 
 def _create_world_bank_slices(table: SqlaTable) -> list[Slice]:
-    from superset.examples.world_bank import create_slices
+    from axbi.examples.world_bank import create_slices
 
     slices = create_slices(table)
     _commit_slices(slices)
@@ -123,8 +123,8 @@ def _commit_slices(slices: list[Slice]):
 
 
 def _create_world_bank_dashboard(table: SqlaTable) -> Dashboard:
-    from superset.examples.helpers import update_slice_ids
-    from superset.examples.world_bank import dashboard_positions
+    from axbi.examples.helpers import update_slice_ids
+    from axbi.examples.world_bank import dashboard_positions
 
     pos = dashboard_positions
     slices = update_slice_ids(pos)

@@ -22,7 +22,7 @@ from typing import Any, cast
 
 import pytest
 
-from superset.semantic_index.repository import _embedding_literals
+from axbi.semantic_index.repository import _embedding_literals
 
 
 def test_embedding_literals_validates_batch_count() -> None:

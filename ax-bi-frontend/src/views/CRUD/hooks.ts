@@ -18,13 +18,13 @@
  */
 import rison from 'rison';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   makeApi,
-  SupersetClient,
+  AxBIClient,
   JsonObject,
   getClientErrorObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 import {
   createErrorHandler,
@@ -43,7 +43,7 @@ import type {
 import Chart, { Slice } from 'src/types/Chart';
 import copyTextToClipboard from 'src/utils/copy';
 import { ensureAppRoot } from 'src/utils/pathUtils';
-import SupersetText from 'src/utils/textUtils';
+import AxBIText from 'src/utils/textUtils';
 import { DatabaseObject } from 'src/features/databases/types';
 import {
   FavoriteStatus,
@@ -114,7 +114,7 @@ export function useListViewResource<D extends object = any>(
 
   useEffect(() => {
     if (!infoEnable) return;
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/${resource}/_info?q=${rison.encode({
         keys: ['permissions'],
       })}`,
@@ -191,7 +191,7 @@ export function useListViewResource<D extends object = any>(
         ...(selectColumns?.length ? { select_columns: selectColumns } : {}),
       });
 
-      return SupersetClient.get({
+      return AxBIClient.get({
         endpoint: `/api/v1/${resource}/?q=${queryParams}`,
       })
         .then(
@@ -294,7 +294,7 @@ export function useSingleViewResource<D extends object = any>(
       const baseEndpoint = `/api/v1/${resourceName}/${resourceID}`;
       const endpoint =
         pathSuffix !== '' ? `${baseEndpoint}/${pathSuffix}` : baseEndpoint;
-      return SupersetClient.get({
+      return AxBIClient.get({
         endpoint,
       })
         .then(
@@ -333,7 +333,7 @@ export function useSingleViewResource<D extends object = any>(
         loading: true,
       });
 
-      return SupersetClient.post({
+      return AxBIClient.post({
         endpoint: `/api/v1/${resourceName}/`,
         body: JSON.stringify(resource),
         headers: { 'Content-Type': 'application/json' },
@@ -379,7 +379,7 @@ export function useSingleViewResource<D extends object = any>(
         });
       }
 
-      return SupersetClient.put({
+      return AxBIClient.put({
         endpoint: `/api/v1/${resourceName}/${resourceID}`,
         body: JSON.stringify(resource),
         headers: { 'Content-Type': 'application/json' },
@@ -543,7 +543,7 @@ export function useImportResource(
         );
       }
 
-      return SupersetClient.post({
+      return AxBIClient.post({
         endpoint: `/api/v1/${resourceName}/import/`,
         body: formData,
         headers: { Accept: 'application/json' },
@@ -678,10 +678,10 @@ export function useFavoriteStatus(
     (id: number, isStarred: boolean) => {
       const endpoint = `/api/v1/${type}/${id}/favorites/`;
       const apiCall = isStarred
-        ? SupersetClient.delete({
+        ? AxBIClient.delete({
             endpoint,
           })
-        : SupersetClient.post({ endpoint });
+        : AxBIClient.post({ endpoint });
 
       apiCall.then(
         () => {
@@ -759,18 +759,18 @@ export const copyQueryLink = (
     });
 };
 
-export const getDatabaseImages = () => SupersetText.DB_IMAGES;
+export const getDatabaseImages = () => AxBIText.DB_IMAGES;
 
-export const getConnectionAlert = () => SupersetText.DB_CONNECTION_ALERTS;
+export const getConnectionAlert = () => AxBIText.DB_CONNECTION_ALERTS;
 export const getDatabaseDocumentationLinks = () =>
-  SupersetText.DB_CONNECTION_DOC_LINKS;
+  AxBIText.DB_CONNECTION_DOC_LINKS;
 
 export const testDatabaseConnection = (
   connection: Partial<DatabaseObject>,
   handleErrorMsg: (errorMsg: string) => void,
   addSuccessToast: (arg0: string) => void,
 ) => {
-  SupersetClient.post({
+  AxBIClient.post({
     endpoint: 'api/v1/database/test_connection/',
     body: JSON.stringify(connection),
     headers: { 'Content-Type': 'application/json' },
@@ -788,7 +788,7 @@ export function useAvailableDatabases() {
   const [availableDbs, setAvailableDbs] = useState<JsonObject | null>(null);
 
   const getAvailable = useCallback(() => {
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/database/available/`,
     }).then(({ json }) => {
       setAvailableDbs(json);
@@ -832,7 +832,7 @@ export function useDatabaseValidation() {
       setIsValidating(true);
 
       try {
-        await SupersetClient.post({
+        await AxBIClient.post({
           endpoint: '/api/v1/database/validate_parameters/',
           body: JSON.stringify(transformDB(database)),
           headers: { 'Content-Type': 'application/json' },

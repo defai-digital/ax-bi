@@ -16,17 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import {
   TableView,
   EmptyWrapperType,
-} from '@superset-ui/core/components/TableView';
-import { EmptyState } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components/TableView';
+import { EmptyState } from '@ax-bi/ui-core/components';
 import { FacePile, TagsList, type TagType } from 'src/components';
 import { TaggedObject, TaggedObjects } from 'src/types/TaggedObject';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 
 const MAX_TAGS_TO_SHOW = 3;
 const PAGE_SIZE = 10;

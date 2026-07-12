@@ -23,13 +23,13 @@ import {
   useState,
   MouseEvent as ReactMouseEvent,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { throttle } from 'lodash';
 import {
   POPOVER_INITIAL_HEIGHT,
   POPOVER_INITIAL_WIDTH,
 } from 'src/explore/constants';
-import { Icons } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components';
 
 const RESIZE_THROTTLE_MS = 50;
 

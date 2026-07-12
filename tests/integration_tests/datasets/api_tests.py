@@ -32,16 +32,16 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import func
 
-from superset.commands.dataset.exceptions import DatasetCreateFailedError
-from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-from superset.extensions import db, security_manager
-from superset.models.core import Database
-from superset.models.slice import Slice
-from superset.utils import json
-from superset.utils.core import backend, get_example_default_schema
-from superset.utils.database import get_example_database, get_main_database
-from superset.utils.dict_import_export import export_to_dict
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.dataset.exceptions import DatasetCreateFailedError
+from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+from axbi.extensions import db, security_manager
+from axbi.models.core import Database
+from axbi.models.slice import Slice
+from axbi.utils import json
+from axbi.utils.core import backend, get_example_default_schema
+from axbi.utils.database import get_example_database, get_main_database
+from axbi.utils.dict_import_export import export_to_dict
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import (  # noqa: F401
     CTAS_SCHEMA_NAME,
     with_feature_flags,
@@ -66,7 +66,7 @@ from tests.integration_tests.fixtures.importexport import (
 )
 
 
-class TestDatasetApi(SupersetTestCase):
+class TestDatasetApi(AxBITestCase):
     fixture_tables_names = ("ab_permission", "ab_permission_view", "ab_view_menu")
     fixture_virtual_table_names = ("sql_virtual_dataset_1", "sql_virtual_dataset_2")
     items_to_delete: list[SqlaTable | Database | TableColumn] = []
@@ -956,10 +956,10 @@ class TestDatasetApi(SupersetTestCase):
         rv = self.post_assert_metric(uri, table_data, "post")
         assert rv.status_code == 422
 
-    @patch("superset.models.core.Database.get_columns")
-    @patch("superset.models.core.Database.has_table")
-    @patch("superset.models.core.Database.has_view")
-    @patch("superset.models.core.Database.get_table")
+    @patch("axbi.models.core.Database.get_columns")
+    @patch("axbi.models.core.Database.has_table")
+    @patch("axbi.models.core.Database.has_view")
+    @patch("axbi.models.core.Database.get_table")
     def test_create_dataset_validate_view_exists(
         self,
         mock_get_table,
@@ -1010,7 +1010,7 @@ class TestDatasetApi(SupersetTestCase):
             rv = self.client.delete(uri)
             assert rv.status_code == 200
 
-    @patch("superset.daos.dataset.DatasetDAO.create")
+    @patch("axbi.daos.dataset.DatasetDAO.create")
     def test_create_dataset_sqlalchemy_error(self, mock_dao_create):
         """
         Dataset API: Test create dataset sqlalchemy error
@@ -1030,15 +1030,15 @@ class TestDatasetApi(SupersetTestCase):
         assert rv.status_code == 422
         assert data == {"message": "Dataset could not be created."}
 
-    @patch("superset.commands.dataset.create.security_manager.raise_for_access")
+    @patch("axbi.commands.dataset.create.security_manager.raise_for_access")
     def test_create_dataset_with_invalid_sql_validation(self, mock_raise_for_access):
         """
         Dataset API: Test create dataset with invalid SQL during validation returns 422
         """
-        from superset.exceptions import SupersetParseError
+        from axbi.exceptions import AxBIParseError
 
-        # Mock raise_for_access to throw SupersetParseError during validation
-        mock_raise_for_access.side_effect = SupersetParseError(
+        # Mock raise_for_access to throw AxBIParseError during validation
+        mock_raise_for_access.side_effect = AxBIParseError(
             sql="SELECT FROM WHERE AND",
             engine="postgresql",
             message="Invalid SQL syntax",
@@ -1638,7 +1638,7 @@ class TestDatasetApi(SupersetTestCase):
         assert rv.status_code == 422
         self.items_to_delete = [dataset]
 
-    @patch("superset.daos.dataset.DatasetDAO.update")
+    @patch("axbi.daos.dataset.DatasetDAO.update")
     def test_update_dataset_sqlalchemy_error(self, mock_dao_update):
         """
         Dataset API: Test update dataset sqlalchemy error
@@ -2002,7 +2002,7 @@ class TestDatasetApi(SupersetTestCase):
         assert rv.status_code == 403
         self.items_to_delete = [dataset]
 
-    @patch("superset.daos.dataset.DatasetDAO.delete")
+    @patch("axbi.daos.dataset.DatasetDAO.delete")
     def test_delete_dataset_sqlalchemy_error(self, mock_dao_delete):
         """
         Dataset API: Test delete dataset sqlalchemy error
@@ -2070,7 +2070,7 @@ class TestDatasetApi(SupersetTestCase):
         assert rv.status_code == 403
 
     @pytest.mark.usefixtures("create_datasets")
-    @patch("superset.daos.dataset.DatasetColumnDAO.delete")
+    @patch("axbi.daos.dataset.DatasetColumnDAO.delete")
     def test_delete_dataset_column_fail(self, mock_dao_delete):
         """
         Dataset API: Test delete dataset column
@@ -2142,7 +2142,7 @@ class TestDatasetApi(SupersetTestCase):
         assert rv.status_code == 403
 
     @pytest.mark.usefixtures("create_datasets")
-    @patch("superset.daos.dataset.DatasetMetricDAO.delete")
+    @patch("axbi.daos.dataset.DatasetMetricDAO.delete")
     def test_delete_dataset_metric_fail(self, mock_dao_delete):
         """
         Dataset API: Test delete dataset metric
@@ -2306,7 +2306,7 @@ class TestDatasetApi(SupersetTestCase):
 
         birth_names_dataset = self.get_birth_names_dataset()
         # TODO: fix test for presto
-        # debug with dump: https://github.com/apache/superset/runs/1092546855
+        # debug with dump: https://github.com/defai-digital/ax-bi/runs/1092546855
         if birth_names_dataset.database.backend in {"presto", "hive"}:
             return
 
@@ -2381,7 +2381,7 @@ class TestDatasetApi(SupersetTestCase):
 
         birth_names_dataset = self.get_birth_names_dataset()
         # TODO: fix test for presto
-        # debug with dump: https://github.com/apache/superset/runs/1092546855
+        # debug with dump: https://github.com/defai-digital/ax-bi/runs/1092546855
         if birth_names_dataset.database.backend in {"presto", "hive"}:
             return
 
@@ -2554,7 +2554,7 @@ class TestDatasetApi(SupersetTestCase):
         for table_name in self.fixture_tables_names:
             assert table_name in [ds["table_name"] for ds in data["result"]]
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_dataset(self, mock_add_permissions):
         """
         Dataset API: Test import dataset
@@ -2614,7 +2614,7 @@ class TestDatasetApi(SupersetTestCase):
         )
         self.items_to_delete = [dataset]
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_dataset_overwrite(self, mock_add_permissions):
         """
         Dataset API: Test import existing dataset
@@ -2700,7 +2700,7 @@ class TestDatasetApi(SupersetTestCase):
         }
         assert error["extra"]["issue_codes"][0]["code"] == 1010
         assert (
-            "Issue 1010 - Superset encountered an error while running a command."
+            "Issue 1010 - AxBI encountered an error while running a command."
         ) in error["extra"]["issue_codes"][0]["message"]
 
     def test_import_dataset_invalid_v0_validation(self):
@@ -2740,7 +2740,7 @@ class TestDatasetApi(SupersetTestCase):
                         "issue_codes": [
                             {
                                 "code": 1010,
-                                "message": "Issue 1010 - Superset encountered an error while running a command.",  # noqa: E501
+                                "message": "Issue 1010 - AxBI encountered an error while running a command.",  # noqa: E501
                             }
                         ]
                     },
@@ -2939,7 +2939,7 @@ class TestDatasetApi(SupersetTestCase):
         response = json.loads(rv.data.decode("utf-8"))
         assert response["message"] == {"database": ["Database does not exist"]}
 
-    @patch("superset.commands.dataset.create.CreateDatasetCommand.run")
+    @patch("axbi.commands.dataset.create.CreateDatasetCommand.run")
     def test_get_or_create_dataset_create_fails(self, command_run_mock):
         """
         Dataset API: Test get or create endpoint when create fails
@@ -3347,9 +3347,9 @@ class TestDatasetApi(SupersetTestCase):
 
         self.items_to_delete = [dataset]
 
-    @patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_get_drill_info_embedded_user_no_perm_to_drill(
         self, mock_is_guest_user, mock_has_guest_access
     ):
@@ -3396,9 +3396,9 @@ class TestDatasetApi(SupersetTestCase):
 
         self.items_to_delete = [dash, chart, dataset]
 
-    @patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_get_drill_info_embedded_user_with_dashboard_id(
         self, mock_is_guest_user, mock_has_guest_access
     ):
@@ -3452,9 +3452,9 @@ class TestDatasetApi(SupersetTestCase):
 
         self.items_to_delete = [dash, chart, dataset]
 
-    @patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_get_drill_info_embedded_user_without_dashboard_parameter(
         self, mock_is_guest_user, mock_has_guest_access
     ):
@@ -3499,9 +3499,9 @@ class TestDatasetApi(SupersetTestCase):
 
         self.items_to_delete = [dashboard, chart, dataset]
 
-    @patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_get_drill_info_embedded_user_dashboard_without_dataset(
         self, mock_is_guest_user, mock_has_guest_access
     ):

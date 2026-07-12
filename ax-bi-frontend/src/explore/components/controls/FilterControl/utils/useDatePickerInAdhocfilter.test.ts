@@ -17,7 +17,7 @@
  * under the License.
  */
 import { renderHook, cleanup } from '@testing-library/react';
-import { TestDataset } from '@superset-ui/chart-controls';
+import { TestDataset } from '@ax-bi/chart-controls';
 import { useDatePickerInAdhocFilter } from './useDatePickerInAdhocFilter';
 
 // Add cleanup after each test

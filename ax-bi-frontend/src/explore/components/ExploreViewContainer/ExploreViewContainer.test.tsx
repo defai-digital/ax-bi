@@ -24,9 +24,12 @@ import {
   getChartMetadataRegistry,
   ChartMetadata,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { QUERY_MODE_REQUISITES } from 'src/explore/constants';
-import { unstable_HistoryRouter as HistoryRouter, Route } from 'react-router-dom';
+import {
+  unstable_HistoryRouter as HistoryRouter,
+  Route,
+} from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import {
   render,
@@ -40,9 +43,9 @@ import reducerIndex from 'spec/helpers/reducerIndex';
 import * as exploreActions from 'src/explore/actions/exploreActions';
 import ExploreViewContainer from '.';
 
-jest.doMock('@superset-ui/core', () => ({
+jest.doMock('@ax-bi/ui-core', () => ({
   __esModule: true,
-  ...jest.requireActual('@superset-ui/core'),
+  ...jest.requireActual('@ax-bi/ui-core'),
   isMatrixifyEnabled: jest.fn(() => false),
 }));
 
@@ -82,7 +85,7 @@ const reduxState = {
   user: {
     userId: 1,
   },
-  common: { conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 } },
+  common: { conf: { AXBI_WEBSERVER_TIMEOUT: 60 } },
   datasources: {
     '1__table': {
       id: 1,

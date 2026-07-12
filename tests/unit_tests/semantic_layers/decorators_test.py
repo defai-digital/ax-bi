@@ -26,7 +26,7 @@ def test_semantic_layer_stub_raises() -> None:
     """The stub decorator raises NotImplementedError before initialization."""
     import importlib
 
-    import superset_core.semantic_layers.decorators as mod
+    import axbi_core.semantic_layers.decorators as mod
 
     # Reload to get the original stub (injection may have replaced it)
     importlib.reload(mod)
@@ -37,21 +37,21 @@ def test_semantic_layer_stub_raises() -> None:
 
 def test_inject_semantic_layer_host_context() -> None:
     """The injected decorator registers a class in host context."""
-    from superset.core.api.core_api_injection import (
+    from axbi.core.api.core_api_injection import (
         inject_semantic_layer_implementations,
     )
-    from superset.semantic_layers.registry import registry
+    from axbi.semantic_layers.registry import registry
 
     # Clear registry for test isolation
     registry.clear()
 
     inject_semantic_layer_implementations()
 
-    import superset_core.semantic_layers.decorators as mod
+    import axbi_core.semantic_layers.decorators as mod
 
     # Host context: no extension context active, so no prefix
     with patch(
-        "superset.extensions.context.get_current_extension_context",
+        "axbi.extensions.context.get_current_extension_context",
         return_value=None,
     ):
 
@@ -70,10 +70,10 @@ def test_inject_semantic_layer_host_context() -> None:
 
 def test_inject_semantic_layer_extension_context() -> None:
     """The injected decorator prefixes ID in extension context."""
-    from superset.core.api.core_api_injection import (
+    from axbi.core.api.core_api_injection import (
         inject_semantic_layer_implementations,
     )
-    from superset.semantic_layers.registry import registry
+    from axbi.semantic_layers.registry import registry
 
     registry.clear()
 
@@ -83,11 +83,11 @@ def test_inject_semantic_layer_extension_context() -> None:
 
     inject_semantic_layer_implementations()
 
-    import superset_core.semantic_layers.decorators as mod
+    import axbi_core.semantic_layers.decorators as mod
 
     # Extension context is checked at decorator call time via module lookup
     with patch(
-        "superset.extensions.context.get_current_extension_context",
+        "axbi.extensions.context.get_current_extension_context",
         return_value=mock_context,
     ):
 

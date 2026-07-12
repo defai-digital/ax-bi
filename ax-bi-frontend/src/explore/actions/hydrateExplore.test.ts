@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { VizType } from '@superset-ui/core';
+import { VizType } from '@ax-bi/ui-core';
 import { hydrateExplore, HYDRATE_EXPLORE } from './hydrateExplore';
 import { exploreInitialData } from '../fixtures';
 

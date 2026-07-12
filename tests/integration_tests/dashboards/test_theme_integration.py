@@ -22,17 +22,17 @@ from unittest.mock import patch
 import pytest
 import yaml
 
-from superset import db, security_manager
-from superset.commands.dashboard.export import ExportDashboardsCommand
-from superset.commands.dashboard.importers import v1
-from superset.models.core import Theme
-from superset.models.dashboard import Dashboard
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from axbi.commands.dashboard.export import ExportDashboardsCommand
+from axbi.commands.dashboard.importers import v1
+from axbi.models.core import Theme
+from axbi.models.dashboard import Dashboard
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 
-class TestDashboardThemeIntegration(SupersetTestCase):
+class TestDashboardThemeIntegration(AxBITestCase):
     """Test dashboard-theme integration functionality"""
 
     def setUp(self):
@@ -206,7 +206,7 @@ class TestDashboardThemeIntegration(SupersetTestCase):
 
     def test_theme_deletion_dissociates_dashboards(self):
         """Test that deleting a theme dissociates it from dashboards"""
-        from superset.commands.theme.delete import DeleteThemeCommand
+        from axbi.commands.theme.delete import DeleteThemeCommand
 
         # Assign theme to dashboard
         self.dashboard.theme_id = self.theme.id
@@ -233,7 +233,7 @@ class TestDashboardThemeIntegration(SupersetTestCase):
 
     def test_theme_deletion_dashboard_usage_detection(self):
         """Test that theme deletion detects dashboard usage"""
-        from superset.commands.theme.delete import DeleteThemeCommand
+        from axbi.commands.theme.delete import DeleteThemeCommand
 
         # Create another dashboard for testing
         dashboard2 = Dashboard(
@@ -272,7 +272,7 @@ class TestDashboardThemeIntegration(SupersetTestCase):
 
     def test_multiple_themes_deletion_with_dashboard_dissociation(self):
         """Test deletion of multiple themes with dashboard associations"""
-        from superset.commands.theme.delete import DeleteThemeCommand
+        from axbi.commands.theme.delete import DeleteThemeCommand
 
         # Create another theme
         theme2 = Theme(
@@ -334,8 +334,8 @@ class TestDashboardThemeIntegration(SupersetTestCase):
 
     def test_system_theme_deletion_protection(self):
         """Test that system themes cannot be deleted"""
-        from superset.commands.theme.delete import DeleteThemeCommand
-        from superset.commands.theme.exceptions import SystemThemeProtectedError
+        from axbi.commands.theme.delete import DeleteThemeCommand
+        from axbi.commands.theme.exceptions import SystemThemeProtectedError
 
         # Create a system theme
         system_theme = Theme(
@@ -364,8 +364,8 @@ class TestDashboardThemeIntegration(SupersetTestCase):
             db.session.delete(system_theme)
             db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_dashboard_export_includes_theme(self, mock_g1, mock_g2):
         """Test that dashboard export includes theme when dashboard has a theme"""
         mock_g1.user = security_manager.find_user("admin")
@@ -398,8 +398,8 @@ class TestDashboardThemeIntegration(SupersetTestCase):
         dashboard_content = yaml.safe_load(contents[dashboard_files[0]]())
         assert dashboard_content["theme_uuid"] == str(self.theme.uuid)
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     def test_dashboard_import_with_theme_uuid(self, sm_g, utils_g):
         """Test dashboard import with theme UUID resolution"""
         sm_g.user = utils_g.user = security_manager.find_user("admin")
@@ -456,8 +456,8 @@ class TestDashboardThemeIntegration(SupersetTestCase):
         db.session.delete(imported_theme)
         db.session.commit()
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     def test_dashboard_import_missing_theme_graceful_fallback(self, sm_g, utils_g):
         """Test dashboard import with missing theme falls back gracefully"""
         sm_g.user = utils_g.user = security_manager.find_user("admin")

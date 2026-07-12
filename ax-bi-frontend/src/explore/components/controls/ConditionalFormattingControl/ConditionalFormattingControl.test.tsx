@@ -17,8 +17,8 @@
  * under the License.
  */
 import { render, screen } from 'spec/helpers/testing-library';
-import { Comparator } from '@superset-ui/chart-controls';
-import { GenericDataType } from '@apache-superset/core/common';
+import { Comparator } from '@ax-bi/chart-controls';
+import { GenericDataType } from '@ax-bi/core/common';
 import ConditionalFormattingControl from './ConditionalFormattingControl';
 import { ConditionalFormattingConfig } from './types';
 

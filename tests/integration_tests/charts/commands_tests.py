@@ -22,28 +22,28 @@ import pytest
 import yaml
 from flask import g  # noqa: F401
 
-from superset import db, security_manager
-from superset.commands.chart.create import CreateChartCommand
-from superset.commands.chart.exceptions import (
+from axbi import db, security_manager
+from axbi.commands.chart.create import CreateChartCommand
+from axbi.commands.chart.exceptions import (
     ChartForbiddenError,
     ChartNotFoundError,
     WarmUpCacheChartNotFoundError,
 )
-from superset.commands.chart.export import ExportChartsCommand
-from superset.commands.chart.fave import AddFavoriteChartCommand
-from superset.commands.chart.importers.v1 import ImportChartsCommand
-from superset.commands.chart.unfave import DelFavoriteChartCommand
-from superset.commands.chart.update import UpdateChartCommand
-from superset.commands.chart.warm_up_cache import ChartWarmUpCacheCommand
-from superset.commands.exceptions import CommandInvalidError
-from superset.commands.importers.exceptions import IncorrectVersionError
-from superset.connectors.sqla.models import SqlaTable
-from superset.daos.chart import ChartDAO
-from superset.models.core import Database
-from superset.models.slice import Slice
-from superset.utils import json
-from superset.utils.core import override_user
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.chart.export import ExportChartsCommand
+from axbi.commands.chart.fave import AddFavoriteChartCommand
+from axbi.commands.chart.importers.v1 import ImportChartsCommand
+from axbi.commands.chart.unfave import DelFavoriteChartCommand
+from axbi.commands.chart.update import UpdateChartCommand
+from axbi.commands.chart.warm_up_cache import ChartWarmUpCacheCommand
+from axbi.commands.exceptions import CommandInvalidError
+from axbi.commands.importers.exceptions import IncorrectVersionError
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.daos.chart import ChartDAO
+from axbi.models.core import Database
+from axbi.models.slice import Slice
+from axbi.utils import json
+from axbi.utils.core import override_user
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -61,8 +61,8 @@ from tests.integration_tests.fixtures.importexport import (
 )
 
 
-class TestExportChartsCommand(SupersetTestCase):
-    @patch("superset.security.manager.g")
+class TestExportChartsCommand(AxBITestCase):
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_chart_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -106,8 +106,8 @@ class TestExportChartsCommand(SupersetTestCase):
             "query_context": None,
         }
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_chart_command_no_access(self, utils_mock_g, manager_mock_g):
         """Test that users can't export datasets they don't have access to"""
@@ -120,7 +120,7 @@ class TestExportChartsCommand(SupersetTestCase):
         with self.assertRaises(ChartNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_chart_command_invalid_dataset(self, mock_g):
         """Test that an error is raised when exporting an invalid dataset"""
         mock_g.user = security_manager.find_user("admin")
@@ -129,7 +129,7 @@ class TestExportChartsCommand(SupersetTestCase):
         with self.assertRaises(ChartNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_chart_command_key_order(self, mock_g):
         """Test that they keys in the YAML have the same order as export_fields"""
@@ -158,7 +158,7 @@ class TestExportChartsCommand(SupersetTestCase):
             "dataset_uuid",
         ]
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_chart_command_no_related(self, mock_g):
         """
@@ -178,7 +178,7 @@ class TestExportChartsCommand(SupersetTestCase):
         ]
         assert expected == list(contents.keys())
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_chart_command_unicode_chars(self, mock_g):
         """Test that unicode characters in a chart name are exported to the YAML"""
@@ -206,10 +206,10 @@ class TestExportChartsCommand(SupersetTestCase):
             )
 
 
-class TestImportChartsCommand(SupersetTestCase):
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+class TestImportChartsCommand(AxBITestCase):
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_chart(self, mock_add_permissions, sm_g, utils_g) -> None:
         """Test that we can import a chart"""
         admin = sm_g.user = utils_g.user = security_manager.find_user("admin")
@@ -282,8 +282,8 @@ class TestImportChartsCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_chart_multiple(self, mock_add_permissions, sm_g):
         """Test that a chart can be imported multiple times"""
         sm_g.user = security_manager.find_user("admin")
@@ -310,7 +310,7 @@ class TestImportChartsCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_chart_validation(self, mock_add_permissions):
         """Test different validations applied when importing a chart"""
         # metadata.yaml must be present
@@ -363,10 +363,10 @@ class TestImportChartsCommand(SupersetTestCase):
         }
 
 
-class TestChartsCreateCommand(SupersetTestCase):
-    @patch("superset.utils.core.g")
-    @patch("superset.commands.chart.create.g")
-    @patch("superset.security.manager.g")
+class TestChartsCreateCommand(AxBITestCase):
+    @patch("axbi.utils.core.g")
+    @patch("axbi.commands.chart.create.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_create_v1_response(self, mock_sm_g, mock_c_g, mock_u_g):
         """Test that the create chart command creates a chart"""
@@ -394,10 +394,10 @@ class TestChartsCreateCommand(SupersetTestCase):
         db.session.commit()
 
 
-class TestChartsUpdateCommand(SupersetTestCase):
-    @patch("superset.commands.chart.update.g")
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+class TestChartsUpdateCommand(AxBITestCase):
+    @patch("axbi.commands.chart.update.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_update_sets_last_saved_at(self, mock_sm_g, mock_c_g, mock_u_g):
         """Test that update sets last_saved_at when previously unset"""
@@ -420,9 +420,9 @@ class TestChartsUpdateCommand(SupersetTestCase):
         assert chart.last_saved_at is not None
         assert chart.last_saved_by == user
 
-    @patch("superset.commands.chart.update.g")
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.commands.chart.update.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_update_changes_last_saved_at(self, mock_sm_g, mock_c_g, mock_u_g):
         """Test that update changes last_saved_at when it already has a value"""
@@ -451,8 +451,8 @@ class TestChartsUpdateCommand(SupersetTestCase):
         )
         assert chart.last_saved_by == user
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     @pytest.mark.skip(reason="This test will be changed to use the api/v1/data")
     def test_query_context_update_command(self, mock_sm_g, mock_g):
@@ -480,10 +480,10 @@ class TestChartsUpdateCommand(SupersetTestCase):
         assert len(chart.owners) == 1
         assert chart.owners[0] == admin
 
-    @patch("superset.commands.chart.update.ChartDAO.find_by_id")
-    @patch("superset.commands.chart.update.g")
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.commands.chart.update.ChartDAO.find_by_id")
+    @patch("axbi.commands.chart.update.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_query_context_update_requires_chart_access(
         self, mock_sm_g, mock_core_g, mock_update_g, mock_find_by_id
@@ -517,16 +517,16 @@ class TestChartsUpdateCommand(SupersetTestCase):
         with pytest.raises(ChartForbiddenError):
             UpdateChartCommand(pk, json_obj).run()
 
-    @patch("superset.commands.chart.update.g")
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.commands.chart.update.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_update_chart_dashboard_security_existing_relationship(
         self, mock_sm_g, mock_u_g, mock_c_g
     ):
         """Test that chart owners can update charts linked to inaccessible
         dashboards (existing relationships)"""
-        from superset.models.dashboard import Dashboard
+        from axbi.models.dashboard import Dashboard
 
         # Create a chart owned by alpha
         admin = security_manager.find_user(username="admin")
@@ -572,16 +572,16 @@ class TestChartsUpdateCommand(SupersetTestCase):
         db.session.delete(admin_dashboard)
         db.session.commit()
 
-    @patch("superset.commands.chart.update.g")
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.commands.chart.update.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_update_chart_dashboard_security_new_unauthorized_relationship(
         self, mock_sm_g, mock_u_g, mock_c_g
     ):
         """Test that users cannot add charts to dashboards they don't have access to"""
-        from superset.commands.chart.exceptions import ChartInvalidError
-        from superset.models.dashboard import Dashboard
+        from axbi.commands.chart.exceptions import ChartInvalidError
+        from axbi.models.dashboard import Dashboard
 
         admin = security_manager.find_user(username="admin")
         alpha = security_manager.find_user(username="alpha")
@@ -620,15 +620,15 @@ class TestChartsUpdateCommand(SupersetTestCase):
         db.session.delete(admin_dashboard)
         db.session.commit()
 
-    @patch("superset.commands.chart.update.g")
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.commands.chart.update.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_update_chart_dashboard_security_admin_bypass(
         self, mock_sm_g, mock_u_g, mock_c_g
     ):
         """Test that admins can add charts to any dashboard"""
-        from superset.models.dashboard import Dashboard
+        from axbi.models.dashboard import Dashboard
 
         admin = security_manager.find_user(username="admin")
         alpha = security_manager.find_user(username="alpha")
@@ -669,7 +669,7 @@ class TestChartsUpdateCommand(SupersetTestCase):
         db.session.commit()
 
 
-class TestChartWarmUpCacheCommand(SupersetTestCase):
+class TestChartWarmUpCacheCommand(AxBITestCase):
     def test_warm_up_cache_command_chart_not_found(self):
         with self.assertRaises(WarmUpCacheChartNotFoundError):  # noqa: PT027
             ChartWarmUpCacheCommand(99999, None, None).run()
@@ -694,7 +694,7 @@ class TestChartWarmUpCacheCommand(SupersetTestCase):
         }
 
 
-class TestFavoriteChartCommand(SupersetTestCase):
+class TestFavoriteChartCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_fave_unfave_chart_command(self):
         """Test that a user can fave/unfave a chart"""
@@ -731,7 +731,7 @@ class TestFavoriteChartCommand(SupersetTestCase):
                     DelFavoriteChartCommand(example_chart_id).run()
 
     @pytest.mark.usefixtures("load_energy_table_with_slice")
-    @patch("superset.daos.base.BaseDAO.find_by_id")
+    @patch("axbi.daos.base.BaseDAO.find_by_id")
     def test_fave_unfave_chart_command_non_owner(self, mock_find_by_id):
         """Test that faving / unfaving a chart the user doesn't own works properly"""  # noqa: E501
         with self.client.application.test_request_context():

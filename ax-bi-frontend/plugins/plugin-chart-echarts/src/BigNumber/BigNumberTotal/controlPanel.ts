@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SMART_DATE_ID } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { t } from '@ax-bi/core/translation';
+import { SMART_DATE_ID } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ControlPanelConfig,
   D3_FORMAT_DOCS,
   D3_TIME_FORMAT_OPTIONS,
   Dataset,
   getStandardizedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   headerFontSize,
   subtitleFontSize,

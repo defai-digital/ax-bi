@@ -17,10 +17,10 @@
  * under the License.
  */
 import { PureComponent, type ReactNode } from 'react';
-import { isEqualArray } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { css } from '@apache-superset/core/theme';
-import { Select } from '@superset-ui/core/components';
+import { isEqualArray } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { css } from '@ax-bi/core/theme';
+import { Select } from '@ax-bi/ui-core/components';
 import ControlHeader from 'src/explore/components/ControlHeader';
 
 type SelectValue = string | number | (string | number)[] | null | undefined;
@@ -114,8 +114,7 @@ export const areAllValuesNumbers = (
 };
 
 type SortComparator =
-  | ((a: SelectOption, b: SelectOption) => number)
-  | undefined;
+  ((a: SelectOption, b: SelectOption) => number) | undefined;
 
 export const getSortComparator = (
   choices: unknown[] | undefined,

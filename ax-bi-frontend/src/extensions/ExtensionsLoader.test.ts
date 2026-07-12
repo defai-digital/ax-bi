@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
-import type { common as core } from '@apache-superset/core';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
+import type { common as core } from '@ax-bi/core';
 import ExtensionsLoader from './ExtensionsLoader';
 
 type Extension = core.Extension;
@@ -116,7 +116,7 @@ test('handles initialization errors gracefully', async () => {
 test('logs success after initializeExtensions completes', async () => {
   const loader = ExtensionsLoader.getInstance();
   const infoSpy = jest.spyOn(logging, 'info').mockImplementation();
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
   } as any);
 
@@ -131,7 +131,7 @@ test('logs error when initializeExtensions fails', async () => {
   const loader = ExtensionsLoader.getInstance();
   const errorSpy = jest.spyOn(logging, 'error').mockImplementation();
   const fetchError = new Error('Network error');
-  jest.spyOn(SupersetClient, 'get').mockRejectedValue(fetchError);
+  jest.spyOn(AxBIClient, 'get').mockRejectedValue(fetchError);
 
   await loader.initializeExtensions();
 

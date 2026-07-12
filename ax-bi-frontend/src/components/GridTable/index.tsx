@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useCallback, useMemo } from 'react';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { ThemedAgGridReact } from '@superset-ui/core/components';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { ThemedAgGridReact } from '@ax-bi/ui-core/components';
 import type { CellKeyDownEvent, Column, GridOptions } from 'ag-grid-community';
 import type { AgGridReactProps } from 'ag-grid-react';
 

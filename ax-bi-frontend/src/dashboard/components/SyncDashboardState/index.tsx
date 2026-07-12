@@ -31,7 +31,7 @@ import { RootState } from 'src/dashboard/types';
 import { getActiveFilters } from 'src/dashboard/util/activeDashboardFilters';
 import { getAllActiveFilters } from 'src/dashboard/util/activeAllDashboardFilters';
 import { enforceSharedLabelsColorsArray } from 'src/utils/colorScheme';
-import { Divider, Filter } from '@superset-ui/core';
+import { Divider, Filter } from '@ax-bi/ui-core';
 
 type Props = { dashboardPageId: string };
 

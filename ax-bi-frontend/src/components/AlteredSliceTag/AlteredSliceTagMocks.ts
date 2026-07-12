@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormData } from '@superset-ui/core';
-import { ControlPanelConfig } from '@superset-ui/chart-controls';
+import { QueryFormData } from '@ax-bi/ui-core';
+import { ControlPanelConfig } from '@ax-bi/chart-controls';
 import type { DiffType } from 'src/types/DiffType';
 import { getChartFormDiffs } from 'src/utils/getChartFormDiffs';
 import type { RowType } from './types';

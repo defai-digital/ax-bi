@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import { OVERWRITE_INSPECT_FIELDS } from 'src/dashboard/constants';
 
 const JSON_KEYS = new Set(['json_metadata', 'position_json']);

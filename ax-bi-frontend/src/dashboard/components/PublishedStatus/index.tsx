@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Tooltip, PublishedLabel } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Tooltip, PublishedLabel } from '@ax-bi/ui-core/components';
 import { HeaderProps, HeaderDropdownProps } from '../Header/types';
 
 export type DashboardPublishedStatusType = {

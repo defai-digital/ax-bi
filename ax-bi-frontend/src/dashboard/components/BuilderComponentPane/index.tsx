@@ -18,9 +18,9 @@
  */
 /* eslint-env browser */
 import tinycolor from 'tinycolor2';
-import Tabs from '@superset-ui/core/components/Tabs';
-import { t } from '@apache-superset/core/translation';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
+import { t } from '@ax-bi/core/translation';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 import SliceAdder from 'src/dashboard/containers/SliceAdder';
 import dashboardComponents from 'src/visualizations/presets/dashboardComponents';
 import NewColumn from '../gridComponents/new/NewColumn';
@@ -51,7 +51,7 @@ const BuilderComponentPane = ({ topOffset = 0 }) => (
     `}
   >
     <div
-      css={(theme: SupersetTheme) => css`
+      css={(theme: AxBITheme) => css`
         position: absolute;
         height: 100%;
         width: ${BUILDER_PANE_WIDTH}px;
@@ -63,7 +63,7 @@ const BuilderComponentPane = ({ topOffset = 0 }) => (
       <Tabs
         data-test="dashboard-builder-component-pane-tabs-navigation"
         id="tabs"
-        css={(theme: SupersetTheme) => css`
+        css={(theme: AxBITheme) => css`
           line-height: inherit;
           margin-top: ${theme.sizeUnit * 2}px;
           height: 100%;

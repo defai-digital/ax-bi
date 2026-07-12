@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for alerting in Superset"""
+"""Unit tests for alerting in AxBI"""
 
 import logging
 from contextlib import contextmanager
@@ -23,8 +23,8 @@ from unittest.mock import patch  # noqa: F401
 import pytest
 from flask_appbuilder.security.sqla.models import Role
 
-from superset.extensions import db, security_manager
-from superset.migrations.shared.security_converge import (
+from axbi.extensions import db, security_manager
+from axbi.migrations.shared.security_converge import (
     add_pvms,
     migrate_roles,
     Pvm,

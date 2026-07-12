@@ -353,7 +353,7 @@ test('readiness response schema is registered in runtime contracts', () => {
     enum: ['ready', 'not_ready'],
   });
   expect(
-    readinessResponseSchema.properties.dependencies.properties.superset
+    readinessResponseSchema.properties.dependencies.properties.axbi
       .properties.statusCode,
   ).toEqual({
     type: 'integer',
@@ -361,7 +361,7 @@ test('readiness response schema is registered in runtime contracts', () => {
     maximum: 599,
   });
   expect(
-    readinessResponseSchema.properties.dependencies.properties.superset
+    readinessResponseSchema.properties.dependencies.properties.axbi
       .properties.error,
   ).toEqual({
     type: 'string',
@@ -408,7 +408,7 @@ test('metadata response schema is registered in runtime contracts', () => {
     metadataResponseSchema,
   );
   expect(
-    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+    metadataResponseSchema.properties.dependencies.properties.axbiMetadata
       .properties.keys,
   ).toEqual({
     type: 'array',
@@ -421,7 +421,7 @@ test('metadata response schema is registered in runtime contracts', () => {
     },
   });
   expect(
-    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+    metadataResponseSchema.properties.dependencies.properties.axbiMetadata
       .properties.keyCount,
   ).toEqual({
     type: 'integer',
@@ -429,7 +429,7 @@ test('metadata response schema is registered in runtime contracts', () => {
     maximum: 100,
   });
   expect(
-    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+    metadataResponseSchema.properties.dependencies.properties.axbiMetadata
       .properties.statusCode,
   ).toEqual({
     type: 'integer',
@@ -437,7 +437,7 @@ test('metadata response schema is registered in runtime contracts', () => {
     maximum: 599,
   });
   expect(
-    metadataResponseSchema.properties.dependencies.properties.supersetMetadata
+    metadataResponseSchema.properties.dependencies.properties.axbiMetadata
       .properties.error,
   ).toEqual({
     type: 'string',

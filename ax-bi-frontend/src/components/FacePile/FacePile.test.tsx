@@ -25,13 +25,13 @@ import {
   cleanup,
 } from 'spec/helpers/testing-library';
 import { store } from 'src/views/store';
-import { isFeatureEnabled } from '@superset-ui/core';
+import { isFeatureEnabled } from '@ax-bi/ui-core';
 import { FacePile } from '.';
 import { getRandomColor } from './utils';
 
 // Mock the feature flag
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

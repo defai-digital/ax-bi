@@ -19,26 +19,26 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { QueryFormData, JsonObject } from '@superset-ui/core';
+import { QueryFormData, JsonObject } from '@ax-bi/ui-core';
 import {
   Tooltip,
   Button,
   DeleteModal,
   UnsavedChangesModal,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { AlteredSliceTag } from 'src/components';
 import {
-  SupersetClient,
+  AxBIClient,
   isMatrixifyEnabled,
   MatrixifyFormData,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
+import { css, AxBITheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import PropertiesModal from 'src/explore/components/PropertiesModal';
 import { sliceUpdated } from 'src/explore/actions/exploreActions';
-import { PageHeaderWithActions } from '@superset-ui/core/components/PageHeaderWithActions';
+import { PageHeaderWithActions } from '@ax-bi/ui-core/components/PageHeaderWithActions';
 import { setSaveChartModalVisibility } from 'src/explore/actions/saveModalActions';
 import { applyColors, resetColors } from 'src/utils/colorScheme';
 import ReportModal from 'src/features/reports/ReportModal';
@@ -84,14 +84,14 @@ export interface ExploreChartHeaderProps {
   isSaveModalVisible?: boolean;
 }
 
-const saveButtonStyles = (theme: SupersetTheme) => css`
+const saveButtonStyles = (theme: AxBITheme) => css`
   color: ${theme.colorPrimaryText};
   & > span[role='img'] {
     margin-right: 0;
   }
 `;
 
-const additionalItemsStyles = (theme: SupersetTheme) => css`
+const additionalItemsStyles = (theme: AxBITheme) => css`
   display: flex;
   align-items: center;
   margin-left: ${theme.sizeUnit}px;
@@ -140,7 +140,7 @@ const ExploreChartHeader: FC<ExploreChartHeaderProps> = ({
       try {
         // Dashboards from metadata don't contain the json_metadata field
         // to avoid unnecessary payload. Here we query for the dashboard json_metadata.
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint: `/api/v1/dashboard/${dashboard.id}`,
         });
         const result = response?.json?.result;

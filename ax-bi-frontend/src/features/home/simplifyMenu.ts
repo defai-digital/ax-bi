@@ -35,7 +35,7 @@ import {
 // Stable identifiers (FAB `name`/category and `category_label`) of the
 // top-level nav items that should be demoted in simplified mode. The SQL group
 // is registered with category="SQL Lab" / category_label="SQL"
-// (superset/initialization/__init__.py), so we match either to be resilient to
+// (axbi/initialization/__init__.py), so we match either to be resilient to
 // translation and to which field the bootstrap payload carries.
 export const DEMOTED_NAV_IDENTIFIERS: ReadonlySet<string> = new Set([
   'SQL Lab',

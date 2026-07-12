@@ -24,7 +24,7 @@ import {
   QueryFormColumn,
   QueryFormData,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { SunburstSeriesNodeItemOption } from 'echarts/types/src/chart/sunburst/SunburstSeries';
 import {
   BaseTransformedProps,

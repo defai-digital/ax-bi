@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useRef } from 'react';
-import { styled } from '@apache-superset/core/theme';
-import { InputNumber } from '@superset-ui/core/components/Input';
+import { styled } from '@ax-bi/core/theme';
+import { InputNumber } from '@ax-bi/ui-core/components/Input';
 import ControlHeader, { ControlHeaderProps } from '../../ControlHeader';
 
 type NumberValueType = number | undefined;

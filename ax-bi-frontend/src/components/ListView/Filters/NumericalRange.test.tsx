@@ -20,8 +20,8 @@ import { render, screen } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
 import NumericalRangeFilter from './NumericalRange';
 
-jest.mock('@superset-ui/core/components/Input', () => ({
-  ...jest.requireActual('@superset-ui/core/components/Input'),
+jest.mock('@ax-bi/ui-core/components/Input', () => ({
+  ...jest.requireActual('@ax-bi/ui-core/components/Input'),
   InputNumber: ({
     value,
     onChange,

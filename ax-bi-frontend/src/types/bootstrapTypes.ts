@@ -20,21 +20,15 @@ import { FormatLocaleDefinition } from 'd3-format';
 import { TimeLocaleDefinition } from 'd3-time-format';
 import { isPlainObject } from 'lodash';
 import { Languages } from 'src/features/home/LanguagePicker';
-import {
-  AnyThemeConfig,
-  SerializableThemeConfig,
-} from '@apache-superset/core/theme';
+import { AnyThemeConfig, SerializableThemeConfig } from '@ax-bi/core/theme';
 import type {
   ColorSchemeConfig,
   FeatureFlagMap,
   JsonObject,
   SequentialSchemeConfig,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
-import {
-  type LanguagePack,
-  type Locale,
-} from '@apache-superset/core/translation';
+import { type LanguagePack, type Locale } from '@ax-bi/core/translation';
 
 export type User = {
   createdOn?: string;

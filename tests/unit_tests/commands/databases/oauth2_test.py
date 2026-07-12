@@ -21,13 +21,13 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.database.exceptions import DatabaseNotFoundError
-from superset.commands.database.oauth2 import OAuth2StoreTokenCommand
-from superset.daos.database import DatabaseUserOAuth2TokensDAO
-from superset.databases.schemas import OAuth2ProviderResponseSchema
-from superset.exceptions import OAuth2Error
-from superset.models.core import Database
-from superset.utils.oauth2 import decode_oauth2_state, encode_oauth2_state
+from axbi.commands.database.exceptions import DatabaseNotFoundError
+from axbi.commands.database.oauth2 import OAuth2StoreTokenCommand
+from axbi.daos.database import DatabaseUserOAuth2TokensDAO
+from axbi.databases.schemas import OAuth2ProviderResponseSchema
+from axbi.exceptions import OAuth2Error
+from axbi.models.core import Database
+from axbi.utils.oauth2 import decode_oauth2_state, encode_oauth2_state
 
 
 @pytest.fixture
@@ -68,7 +68,7 @@ def test_validate_success(
     mock_state: str,
     mock_parameters: OAuth2ProviderResponseSchema,
 ) -> None:
-    mocker.patch("superset.utils.oauth2.decode_oauth2_state", return_value=mock_state)
+    mocker.patch("axbi.utils.oauth2.decode_oauth2_state", return_value=mock_state)
     mocker.patch.object(
         DatabaseUserOAuth2TokensDAO,
         "get_database",
@@ -87,7 +87,7 @@ def test_validate_database_not_found(
     mock_parameters: OAuth2ProviderResponseSchema,
 ) -> None:
     mocker.patch(
-        "superset.utils.oauth2.decode_oauth2_state",
+        "axbi.utils.oauth2.decode_oauth2_state",
         return_value={"database_id": 999},
     )
     mocker.patch.object(DatabaseUserOAuth2TokensDAO, "get_database", return_value=None)
@@ -126,7 +126,7 @@ def test_run_success(
         "create",
         return_value="new_token",
     )
-    mocker.patch("superset.utils.oauth2.decode_oauth2_state", return_value=mock_state)
+    mocker.patch("axbi.utils.oauth2.decode_oauth2_state", return_value=mock_state)
 
     command = OAuth2StoreTokenCommand(mock_parameters)
     result = command.run()
@@ -158,7 +158,7 @@ def test_run_existing_token(
         "create",
         return_value="new_token",
     )
-    mocker.patch("superset.utils.oauth2.decode_oauth2_state", return_value=mock_state)
+    mocker.patch("axbi.utils.oauth2.decode_oauth2_state", return_value=mock_state)
 
     command = OAuth2StoreTokenCommand(mock_parameters)
     result = command.run()

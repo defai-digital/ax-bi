@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { TimeGranularity } from '@superset-ui/core';
+import { TimeGranularity } from '@ax-bi/ui-core';
 import buildQuery from '../../src/plugin/buildQuery';
 import { PivotTableQueryFormData } from '../../src/types';
 

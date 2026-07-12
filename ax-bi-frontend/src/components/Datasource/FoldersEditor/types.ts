@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Metric, ColumnMeta } from '@superset-ui/chart-controls';
+import { Metric, ColumnMeta } from '@ax-bi/chart-controls';
 import { DatasourceFolder } from 'src/explore/components/DatasourcePanel/types';
 
 export interface FoldersEditorProps {

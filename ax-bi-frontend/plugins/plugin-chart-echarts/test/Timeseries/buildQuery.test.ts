@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SqlaFormData, VizType } from '@superset-ui/core';
+import { SqlaFormData, VizType } from '@ax-bi/ui-core';
 import buildQuery from '../../src/Timeseries/buildQuery';
 
 describe('Timeseries buildQuery', () => {

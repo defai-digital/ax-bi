@@ -32,8 +32,8 @@ from sqlalchemy.types import (
 )
 from urllib3.connection import HTTPConnection
 
-from superset.db_engine_specs.base import BasicParametersType
-from superset.utils.core import GenericDataType
+from axbi.db_engine_specs.base import BasicParametersType
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -54,7 +54,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.databend import (
+    from axbi.db_engine_specs.databend import (
         DatabendEngineSpec as spec,  # noqa: N813
     )
 
@@ -64,15 +64,15 @@ def test_convert_dttm(
 def test_execute_connection_error() -> None:
     from urllib3.exceptions import NewConnectionError
 
-    from superset.db_engine_specs.databend import DatabendEngineSpec
-    from superset.db_engine_specs.exceptions import SupersetDBAPIDatabaseError
+    from axbi.db_engine_specs.databend import DatabendEngineSpec
+    from axbi.db_engine_specs.exceptions import AxBIDBAPIDatabaseError
 
     database = Mock()
     cursor = Mock()
     cursor.execute.side_effect = NewConnectionError(
         HTTPConnection("Dummypool"), "Exception with sensitive data"
     )
-    with pytest.raises(SupersetDBAPIDatabaseError) as excinfo:
+    with pytest.raises(AxBIDBAPIDatabaseError) as excinfo:
         DatabendEngineSpec.execute(cursor, "SELECT col1 from table1", database)
     assert str(excinfo.value) == "Connection failed"
 
@@ -118,7 +118,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.databend import (
+    from axbi.db_engine_specs.databend import (
         DatabendConnectEngineSpec as spec,  # noqa: N813
     )
 
@@ -126,7 +126,7 @@ def test_get_column_spec(
 
 
 def test_connect_build_sqlalchemy_uri_ignores_malformed_query_params() -> None:
-    from superset.db_engine_specs.databend import DatabendConnectEngineSpec
+    from axbi.db_engine_specs.databend import DatabendConnectEngineSpec
 
     parameters = cast(
         BasicParametersType,
@@ -147,7 +147,7 @@ def test_connect_build_sqlalchemy_uri_ignores_malformed_query_params() -> None:
 def test_connect_build_sqlalchemy_uri_encryption_ignores_malformed_query_params() -> (
     None
 ):
-    from superset.db_engine_specs.databend import DatabendConnectEngineSpec
+    from axbi.db_engine_specs.databend import DatabendConnectEngineSpec
 
     parameters = cast(
         BasicParametersType,
@@ -175,7 +175,7 @@ def test_connect_build_sqlalchemy_uri_encryption_ignores_malformed_query_params(
     ],
 )
 def test_make_label_compatible(column_name: str, expected_result: str) -> None:
-    from superset.db_engine_specs.databend import (
+    from axbi.db_engine_specs.databend import (
         DatabendConnectEngineSpec as spec,  # noqa: N813
     )
 

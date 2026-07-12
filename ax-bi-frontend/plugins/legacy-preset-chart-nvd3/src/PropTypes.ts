@@ -18,7 +18,7 @@
  */
 /* eslint-disable react/sort-prop-types */
 import PropTypes from 'prop-types';
-import { ANNOTATION_TYPES } from './vendor/superset/AnnotationTypes';
+import { ANNOTATION_TYPES } from './vendor/axbi/AnnotationTypes';
 
 export const numberOrAutoType = PropTypes.oneOfType([
   PropTypes.number,

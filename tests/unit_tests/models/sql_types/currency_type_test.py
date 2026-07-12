@@ -20,7 +20,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from superset.models.sql_types.base import CurrencyType
+from axbi.models.sql_types.base import CurrencyType
 
 
 @pytest.fixture

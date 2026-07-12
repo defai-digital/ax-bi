@@ -18,8 +18,8 @@
  */
 
 /* eslint-disable no-magic-numbers, sort-keys */
-import { SuperChart } from '@superset-ui/core';
-import WorldMapChartPlugin from '@superset-ui/legacy-plugin-chart-world-map';
+import { SuperChart } from '@ax-bi/ui-core';
+import WorldMapChartPlugin from '@ax-bi/legacy-plugin-chart-world-map';
 import { withResizableChartDemo } from '@storybook-shared';
 import data from './data';
 

@@ -19,7 +19,7 @@
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import CollectionControl from '.';
 
-jest.mock('@superset-ui/chart-controls', () => ({
+jest.mock('@ax-bi/chart-controls', () => ({
   InfoTooltip: (props: any) => (
     <button
       onClick={props.onClick}

@@ -25,8 +25,8 @@ from zipfile import is_zipfile, ZipFile
 import pytest
 from pytest_mock import MockerFixture
 
-from superset import security_manager
-from superset.utils import json
+from axbi import security_manager
+from axbi.utils import json
 
 
 def test_export_assets(
@@ -37,7 +37,7 @@ def test_export_assets(
     """
     Test exporting assets.
     """
-    from superset.commands.importers.v1.utils import get_contents_from_bundle
+    from axbi.commands.importers.v1.utils import get_contents_from_bundle
 
     mocked_contents = [
         (
@@ -56,7 +56,7 @@ def test_export_assets(
         ("databases/example.yaml", lambda: "<DATABASE CONTENTS>"),
     ]
 
-    ExportAssetsCommand = mocker.patch("superset.importexport.api.ExportAssetsCommand")  # noqa: N806
+    ExportAssetsCommand = mocker.patch("axbi.importexport.api.ExportAssetsCommand")  # noqa: N806
     ExportAssetsCommand().run.return_value = mocked_export_result[:]
 
     response = client.get("/api/v1/assets/export/")
@@ -86,7 +86,7 @@ def test_import_assets(
         "databases/example.yaml": "<DATABASE CONTENTS>",
     }
 
-    ImportAssetsCommand = mocker.patch("superset.importexport.api.ImportAssetsCommand")  # noqa: N806
+    ImportAssetsCommand = mocker.patch("axbi.importexport.api.ImportAssetsCommand")  # noqa: N806
 
     root = Path("assets_export")
     buf = BytesIO()
@@ -136,7 +136,7 @@ def test_import_assets_with_encrypted_extra_secrets(
         "databases/example.yaml": "<DATABASE CONTENTS>",
     }
 
-    ImportAssetsCommand = mocker.patch("superset.importexport.api.ImportAssetsCommand")  # noqa: N806
+    ImportAssetsCommand = mocker.patch("axbi.importexport.api.ImportAssetsCommand")  # noqa: N806
 
     root = Path("assets_export")
     buf = BytesIO()
@@ -190,7 +190,7 @@ def test_import_assets_rejects_invalid_json_object_form_field(
         "databases/example.yaml": "<DATABASE CONTENTS>",
     }
 
-    ImportAssetsCommand = mocker.patch("superset.importexport.api.ImportAssetsCommand")  # noqa: N806
+    ImportAssetsCommand = mocker.patch("axbi.importexport.api.ImportAssetsCommand")  # noqa: N806
 
     root = Path("assets_export")
     buf = BytesIO()
@@ -229,7 +229,7 @@ def test_import_assets_overwrite_false(
         "databases/example.yaml": "<DATABASE CONTENTS>",
     }
 
-    ImportAssetsCommand = mocker.patch("superset.importexport.api.ImportAssetsCommand")  # noqa: N806
+    ImportAssetsCommand = mocker.patch("axbi.importexport.api.ImportAssetsCommand")  # noqa: N806
 
     root = Path("assets_export")
     buf = BytesIO()
@@ -287,7 +287,7 @@ def test_import_assets_not_zip(
                         {
                             "code": 1010,
                             "message": (
-                                "Issue 1010 - Superset encountered an error while "
+                                "Issue 1010 - AxBI encountered an error while "
                                 "running a command."
                             ),
                         }
@@ -392,7 +392,7 @@ def test_import_assets_no_contents(
                         {
                             "code": 1010,
                             "message": (
-                                "Issue 1010 - Superset encountered an error while "
+                                "Issue 1010 - AxBI encountered an error while "
                                 "running a command."
                             ),
                         }

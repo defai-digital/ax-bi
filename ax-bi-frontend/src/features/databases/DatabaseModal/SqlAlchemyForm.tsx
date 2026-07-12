@@ -18,10 +18,10 @@
  */
 import { sanitizeUrl } from '@braintree/sanitize-url';
 import { EventHandler, ChangeEvent, MouseEvent, ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetTheme } from '@apache-superset/core/theme';
-import SupersetText from 'src/utils/textUtils';
-import { Input, Button } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBITheme } from '@ax-bi/core/theme';
+import AxBIText from 'src/utils/textUtils';
+import { Input, Button } from '@ax-bi/ui-core/components';
 import { StyledInputContainer, wideButton, marginBottom } from './styles';
 import { DatabaseObject } from '../types';
 
@@ -41,10 +41,10 @@ const SqlAlchemyTab = ({
   children?: ReactNode;
 }) => {
   const fallbackDocsUrl =
-    SupersetText?.DB_MODAL_SQLALCHEMY_FORM?.SQLALCHEMY_DOCS_URL ||
+    AxBIText?.DB_MODAL_SQLALCHEMY_FORM?.SQLALCHEMY_DOCS_URL ||
     'https://docs.sqlalchemy.org/en/13/core/engines.html';
   const fallbackDisplayText =
-    SupersetText?.DB_MODAL_SQLALCHEMY_FORM?.SQLALCHEMY_DISPLAY_TEXT ||
+    AxBIText?.DB_MODAL_SQLALCHEMY_FORM?.SQLALCHEMY_DISPLAY_TEXT ||
     'SQLAlchemy docs';
 
   return (
@@ -105,7 +105,7 @@ const SqlAlchemyTab = ({
         loading={testInProgress}
         cta
         buttonStyle="link"
-        css={(theme: SupersetTheme) => [wideButton(theme), marginBottom(theme)]}
+        css={(theme: AxBITheme) => [wideButton(theme), marginBottom(theme)]}
       >
         {t('Test connection')}
       </Button>

@@ -19,8 +19,8 @@ import pytest
 from flask import current_app
 from sqlalchemy.engine.url import make_url
 
-from superset.exceptions import SupersetSecurityException
-from superset.security.analytics_db_safety import check_sqlalchemy_uri
+from axbi.exceptions import AxBISecurityException
+from axbi.security.analytics_db_safety import check_sqlalchemy_uri
 
 
 @pytest.mark.parametrize(
@@ -28,57 +28,57 @@ from superset.security.analytics_db_safety import check_sqlalchemy_uri
     [
         ("postgres://user:password@test.com", False, None),
         (
-            "sqlite:///home/superset/bad.db",
+            "sqlite:///home/ax-bi/bad.db",
             True,
             "SQLiteDialect_pysqlite cannot be used as a data source for security reasons.",  # noqa: E501
         ),
         (
-            "sqlite+pysqlite:///home/superset/bad.db",
+            "sqlite+pysqlite:///home/ax-bi/bad.db",
             True,
             "SQLiteDialect_pysqlite cannot be used as a data source for security reasons.",  # noqa: E501
         ),
         (
-            "sqlite+aiosqlite:///home/superset/bad.db",
+            "sqlite+aiosqlite:///home/ax-bi/bad.db",
             True,
             "SQLiteDialect_pysqlite cannot be used as a data source for security reasons.",  # noqa: E501
         ),
         (
-            "sqlite+pysqlcipher:///home/superset/bad.db",
+            "sqlite+pysqlcipher:///home/ax-bi/bad.db",
             True,
             "SQLiteDialect_pysqlite cannot be used as a data source for security reasons.",  # noqa: E501
         ),
         (
-            "sqlite+:///home/superset/bad.db",
+            "sqlite+:///home/ax-bi/bad.db",
             True,
             "SQLiteDialect_pysqlite cannot be used as a data source for security reasons.",  # noqa: E501
         ),
         (
-            "sqlite+new+driver:///home/superset/bad.db",
+            "sqlite+new+driver:///home/ax-bi/bad.db",
             True,
             "SQLiteDialect_pysqlite cannot be used as a data source for security reasons.",  # noqa: E501
         ),
         (
-            "sqlite+new+:///home/superset/bad.db",
+            "sqlite+new+:///home/ax-bi/bad.db",
             True,
             "SQLiteDialect_pysqlite cannot be used as a data source for security reasons.",  # noqa: E501
         ),
         (
-            "shillelagh:///home/superset/bad.db",
+            "shillelagh:///home/ax-bi/bad.db",
             True,
             "shillelagh cannot be used as a data source for security reasons.",
         ),
         (
-            "shillelagh+apsw:///home/superset/bad.db",
+            "shillelagh+apsw:///home/ax-bi/bad.db",
             True,
             "shillelagh cannot be used as a data source for security reasons.",
         ),
         (
-            "shillelagh+:///home/superset/bad.db",
+            "shillelagh+:///home/ax-bi/bad.db",
             True,
             "shillelagh cannot be used as a data source for security reasons.",
         ),
         (
-            "shillelagh+something:///home/superset/bad.db",
+            "shillelagh+something:///home/ax-bi/bad.db",
             True,
             "shillelagh cannot be used as a data source for security reasons.",
         ),
@@ -128,7 +128,7 @@ def test_check_sqlalchemy_uri(
 ):
     monkeypatch.setitem(current_app.config, "ALLOW_DUCKDB_CONNECTIONS", False)
     if error:
-        with pytest.raises(SupersetSecurityException) as excinfo:  # noqa: PT012
+        with pytest.raises(AxBISecurityException) as excinfo:  # noqa: PT012
             check_sqlalchemy_uri(make_url(sqlalchemy_uri))
             assert str(excinfo.value) == error_message
     else:

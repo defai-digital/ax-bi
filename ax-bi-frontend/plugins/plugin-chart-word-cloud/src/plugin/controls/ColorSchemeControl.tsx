@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getCategoricalSchemeRegistry } from '@superset-ui/core';
+import { getCategoricalSchemeRegistry } from '@ax-bi/ui-core';
 import InternalColorSchemeControl from './ColorSchemeControl/index';
 import { ColorSchemes } from './ColorSchemeControl/index';
 // NOTE: We copied the Explore ColorSchemeControl into this plugin to avoid
@@ -24,7 +24,7 @@ import { ColorSchemes } from './ColorSchemeControl/index';
 // from src/ was dragging in fixtures, tests, and other plugins). Keep this copy
 // in sync with upstream changes, and consider moving it into a shared package
 // once the control-panel refactor settles so all consumers can reuse it.
-import { ControlComponentProps } from '@superset-ui/chart-controls';
+import { ControlComponentProps } from '@ax-bi/chart-controls';
 
 type ColorSchemeControlWrapperProps = ControlComponentProps<string> & {
   clearable?: boolean;

@@ -36,13 +36,13 @@
  * under the License.
  */
 import { ReactElement } from 'react';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import {
   IconNameType,
   Icons,
   type TooltipPlacement,
   ActionButton,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 
 export type ActionProps = {
   label: string;

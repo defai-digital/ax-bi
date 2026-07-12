@@ -28,7 +28,7 @@ import {
   getTimeFormatter,
   CategoricalColorNamespace,
   sanitizeHtml,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 interface PartitionDataNode {
   name: string;
@@ -166,7 +166,7 @@ function Icicle(element: HTMLElement, props: IcicleProps): void {
   } = props;
 
   const div = d3.select(element);
-  div.classed('superset-legacy-chart-partition', true);
+  div.classed('axbi-legacy-chart-partition', true);
 
   // Chart options
   const chartType = timeSeriesOption;

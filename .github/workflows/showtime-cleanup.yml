@@ -27,8 +27,8 @@ jobs:
       pull-requests: write
 
     steps:
-      - name: Install Superset Showtime
-        run: pip install superset-showtime
+      - name: Install AxBI Showtime
+        run: pip install axbi-showtime
 
       - name: Cleanup expired environments
         run: |

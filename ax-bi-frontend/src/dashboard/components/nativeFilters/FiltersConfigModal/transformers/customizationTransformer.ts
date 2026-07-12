@@ -24,7 +24,7 @@ import {
   Filter,
   Divider,
   NativeFilterType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
 import {
   ChartCustomizationsFormItem,
@@ -42,16 +42,12 @@ type CustomizationFormInput =
   | Divider;
 
 type ChartCustomizationFormOrSaved =
-  | ChartCustomizationsFormItem
-  | ChartCustomization;
+  ChartCustomizationsFormItem | ChartCustomization;
 
 function isFilterType(
   formInputs: CustomizationFormInput,
 ): formInputs is
-  | NativeFiltersFormItem
-  | NativeFilterDivider
-  | Filter
-  | Divider {
+  NativeFiltersFormItem | NativeFilterDivider | Filter | Divider {
   return (
     'type' in formInputs &&
     (formInputs.type === NativeFilterType.NativeFilter ||

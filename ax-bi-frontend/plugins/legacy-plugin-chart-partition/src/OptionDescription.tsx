@@ -19,8 +19,8 @@
 
 import PropTypes from 'prop-types';
 
-import { ColumnMeta } from '@superset-ui/chart-controls';
-import { InfoTooltip } from '@superset-ui/core/components';
+import { ColumnMeta } from '@ax-bi/chart-controls';
+import { InfoTooltip } from '@ax-bi/ui-core/components';
 
 const propTypes = {
   option: PropTypes.object.isRequired,

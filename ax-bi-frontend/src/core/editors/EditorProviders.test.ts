@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { editors } from '@apache-superset/core';
+import type { editors } from '@ax-bi/core';
 import EditorProviders from './EditorProviders';
 
 type EditorLanguage = editors.EditorLanguage;

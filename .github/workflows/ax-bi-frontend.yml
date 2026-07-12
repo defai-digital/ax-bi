@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TAG: apache/superset:GHA-${{ github.run_id }}
+  TAG: ghcr.io/defai-digital/ax-bi:GHA-${{ github.run_id }}
 
 permissions:
   contents: read
@@ -53,8 +53,8 @@ jobs:
           git show -s --format=raw HEAD
           docker buildx build \
             -t $TAG \
-            --cache-from=type=registry,ref=apache/superset-cache:3.12-slim-trixie \
-            --target superset-node-ci \
+            --cache-from=type=registry,ref=ghcr.io/defai-digital/ax-bi-cache:3.12-slim-trixie \
+            --target axbi-node-ci \
             .
 
       - name: Save Docker Image as Artifact
@@ -143,7 +143,7 @@ jobs:
           verbose: true
           disable_search: true
           files: merged-output/coverage-summary.json
-          slug: apache/superset
+          slug: ghcr.io/defai-digital/ax-bi
 
   lint-frontend:
     needs: frontend-build

@@ -61,7 +61,7 @@ const TRACKED_ACTIONS: string[] = [
  * making undo/redo buttons not work when they should.
  *
  * AFFECTED VERSIONS:
- * - Beta versions (like 1.0.0-beta9-9-7 used by Superset)
+ * - Beta versions (like 1.0.0-beta9-9-7 used by AxBI)
  * - Stable versions up to 1.1.0
  * Both includeAction/excludeAction helpers AND custom filter functions fail.
  *

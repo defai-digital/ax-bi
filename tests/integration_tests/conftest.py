@@ -30,16 +30,16 @@ from flask_appbuilder.security.sqla import models as ab_models
 from sqlalchemy import text
 from sqlalchemy.engine import Engine
 
-from superset import db, security_manager
-from superset.extensions import feature_flag_manager
-from superset.utils.database import get_example_database
-from superset.utils.json import json_dumps_w_dates
+from axbi import db, security_manager
+from axbi.extensions import feature_flag_manager
+from axbi.utils.database import get_example_database
+from axbi.utils.json import json_dumps_w_dates
 from tests.integration_tests.test_app import app, login
 
 if TYPE_CHECKING:
     from flask.testing import FlaskClient
 
-    from superset.connectors.sqla.models import Database
+    from axbi.connectors.sqla.models import Database
 
 CTAS_SCHEMA_NAME = "sqllab_test_db"
 ADMIN_SCHEMA_NAME = "admin_database"
@@ -129,7 +129,7 @@ def setup_sample_data() -> Any:
         except Exception:  # noqa: S110
             pass
 
-        from superset.examples.css_templates import load_css_templates
+        from axbi.examples.css_templates import load_css_templates
 
         load_css_templates()
 
@@ -235,7 +235,7 @@ def with_feature_flags(**mock_feature_flags):
 
     Usage:
 
-        class TestYourFeature(SupersetTestCase):
+        class TestYourFeature(AxBITestCase):
 
             @with_feature_flags(YOUR_FEATURE=True)
             def test_your_feature_enabled(self):
@@ -266,7 +266,7 @@ def with_feature_flags(**mock_feature_flags):
 
 @pytest.fixture
 def virtual_dataset():
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
 
     dataset = SqlaTable(
         table_name="virtual_dataset",
@@ -315,7 +315,7 @@ def virtual_dataset():
 
 @pytest.fixture
 def virtual_dataset_with_comments():
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
 
     dataset = SqlaTable(
         table_name="virtual_dataset_with_comments",
@@ -355,8 +355,8 @@ def virtual_dataset_with_comments():
 
 @pytest.fixture
 def physical_dataset():
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-    from superset.connectors.sqla.utils import get_identifier_quoter
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.connectors.sqla.utils import get_identifier_quoter
 
     example_database = get_example_database()
 
@@ -431,7 +431,7 @@ def physical_dataset():
 
 @pytest.fixture
 def virtual_dataset_comma_in_column_value():
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
 
     dataset = SqlaTable(
         table_name="virtual_dataset",
@@ -458,16 +458,16 @@ def virtual_dataset_comma_in_column_value():
 
 
 only_postgresql = pytest.mark.skipif(
-    "postgresql" not in os.environ.get("SUPERSET__SQLALCHEMY_DATABASE_URI", ""),
+    "postgresql" not in os.environ.get("AXBI__SQLALCHEMY_DATABASE_URI", ""),
     reason="Only run test case in Postgresql",
 )
 
 only_sqlite = pytest.mark.skipif(
-    "sqlite" not in os.environ.get("SUPERSET__SQLALCHEMY_DATABASE_URI", ""),
+    "sqlite" not in os.environ.get("AXBI__SQLALCHEMY_DATABASE_URI", ""),
     reason="Only run test case in SQLite",
 )
 
 only_mysql = pytest.mark.skipif(
-    "mysql" not in os.environ.get("SUPERSET__SQLALCHEMY_DATABASE_URI", ""),
+    "mysql" not in os.environ.get("AXBI__SQLALCHEMY_DATABASE_URI", ""),
     reason="Only run test case in MySQL",
 )

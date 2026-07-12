@@ -18,16 +18,16 @@
  */
 import { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   FeatureFlag,
   isFeatureEnabled,
   getExtensionsRegistry,
   usePrevious,
-} from '@superset-ui/core';
-import { styled, css } from '@apache-superset/core/theme';
-import { MenuItem } from '@superset-ui/core/components/Menu';
-import { Checkbox } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { styled, css } from '@ax-bi/core/theme';
+import { MenuItem } from '@ax-bi/ui-core/components/Menu';
+import { Checkbox } from '@ax-bi/ui-core/components';
 import { noOp } from 'src/utils/common';
 import { ChartState } from 'src/explore/types';
 import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';

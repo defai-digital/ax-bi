@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import unittest
 
@@ -36,11 +36,11 @@ from tests.integration_tests.fixtures.energy_dashboard import (
     load_energy_table_with_slice,  # noqa: F401
     load_energy_table_data,  # noqa: F401
 )
-from superset import security_manager
-from superset.connectors.sqla.models import SqlaTable  # noqa: F401
-from superset.models import core as models  # noqa: F401
-from superset.utils.core import get_user_id, get_username, override_user
-from superset.utils.database import get_example_database  # noqa: F401
+from axbi import security_manager
+from axbi.connectors.sqla.models import SqlaTable  # noqa: F401
+from axbi.models import core as models  # noqa: F401
+from axbi.utils.core import get_user_id, get_username, override_user
+from axbi.utils.database import get_example_database  # noqa: F401
 
 
 ROLE_TABLES_PERM_DATA = {
@@ -66,12 +66,10 @@ ROLE_ALL_PERM_DATA = {
 }
 
 EXTEND_ROLE_REQUEST = (
-    "/ax-bi/approve?datasource_type={}&datasource_id={}&"
-    "created_by={}&role_to_extend={}"
+    "/ax-bi/approve?datasource_type={}&datasource_id={}&created_by={}&role_to_extend={}"
 )
 GRANT_ROLE_REQUEST = (
-    "/ax-bi/approve?datasource_type={}&datasource_id={}&"
-    "created_by={}&role_to_grant={}"
+    "/ax-bi/approve?datasource_type={}&datasource_id={}&created_by={}&role_to_grant={}"
 )
 TEST_ROLE_1 = "test_role1"
 TEST_ROLE_2 = "test_role2"
@@ -93,7 +91,7 @@ def test_get_user_id(
     username: str | None,
     user_id: int | None,
 ) -> None:
-    mock_g = mocker.patch("superset.utils.core.g", spec={})
+    mock_g = mocker.patch("axbi.utils.core.g", spec={})
     mock_g.user = security_manager.find_user(username)
     assert get_user_id() == user_id
 
@@ -111,7 +109,7 @@ def test_get_username(
     mocker: MockerFixture,
     username: str | None,
 ) -> None:
-    mock_g = mocker.patch("superset.utils.core.g", spec={})
+    mock_g = mocker.patch("axbi.utils.core.g", spec={})
     mock_g.user = security_manager.find_user(username)
     assert get_username() == username
 
@@ -124,7 +122,7 @@ def test_override_user(
     username: str,
     force: bool,
 ) -> None:
-    mock_g = mocker.patch("superset.utils.core.g", spec={})
+    mock_g = mocker.patch("axbi.utils.core.g", spec={})
     admin = security_manager.find_user(username="admin")
     user = security_manager.find_user(username)
 

@@ -20,11 +20,11 @@ import { useSelector } from 'react-redux';
 import {
   Button,
   EmptyState as EmptyStateComponent,
-} from '@superset-ui/core/components';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
+} from '@ax-bi/ui-core/components';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
 import { TableTab } from 'src/views/CRUD/types';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { navigateTo } from 'src/utils/navigationUtils';
 import { findPermission } from 'src/utils/findPermission';
 import type { RootState } from 'src/views/store';

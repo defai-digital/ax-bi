@@ -47,20 +47,21 @@
     "baseUrl": ".",
     "paths": {
       "@storybook-shared": ["./.storybook/shared"],
-      "@superset-ui/core": ["./packages/superset-ui-core/src"],
-      "@superset-ui/core/*": ["./packages/superset-ui-core/src/*"],
-      "@superset-ui/chart-controls": [
-        "./packages/superset-ui-chart-controls/src"
+      "@ax-bi/ui-core": ["./packages/ax-bi-ui-core/src"],
+      "@ax-bi/ui-core/*": ["./packages/ax-bi-ui-core/src/*"],
+      "@ax-bi/chart-controls": [
+        "./packages/ax-bi-chart-controls/src"
       ],
-      "@superset-ui/chart-controls/*": [
-        "./packages/superset-ui-chart-controls/src/*"
+      "@ax-bi/chart-controls/*": [
+        "./packages/ax-bi-chart-controls/src/*"
       ],
-      "@superset-ui/switchboard": ["./packages/superset-ui-switchboard/src"],
-      "@apache-superset/core": ["./packages/superset-core/src"],
-      "@apache-superset/core/*": ["./packages/superset-core/src/*"],
-      "@superset-ui/plugin-chart-*": ["./plugins/plugin-chart-*/src"],
-      "@superset-ui/legacy-plugin-chart-*": ["./plugins/legacy-plugin-chart-*/src"],
-      "@superset-ui/legacy-preset-chart-*": ["./plugins/legacy-preset-chart-*/src"],
+      "@ax-bi/switchboard": ["./packages/ax-bi-switchboard/src"],
+      "@ax-bi/core": ["./packages/ax-bi-core/src"],
+      "@ax-bi/core/*": ["./packages/ax-bi-core/src/*"],
+      "@ax-bi/plugin-chart-*": ["./plugins/plugin-chart-*/src"],
+      "@ax-bi/legacy-plugin-chart-*": ["./plugins/legacy-plugin-chart-*/src"],
+      "@ax-bi/legacy-preset-chart-*": ["./plugins/legacy-preset-chart-*/src"],
+      "@ax-bi/preset-chart-*": ["./plugins/preset-chart-*/src"],
       "echarts/types/src/*": ["./node_modules/echarts/types/src/*"]
     }
   },
@@ -76,10 +77,10 @@
     "./package.json"
   ],
   "references": [
-    { "path": "./packages/superset-core" },
-    { "path": "./packages/superset-ui-core" },
-    { "path": "./packages/superset-ui-chart-controls" },
-    { "path": "./packages/superset-ui-switchboard" },
+    { "path": "./packages/ax-bi-core" },
+    { "path": "./packages/ax-bi-ui-core" },
+    { "path": "./packages/ax-bi-chart-controls" },
+    { "path": "./packages/ax-bi-switchboard" },
     { "path": "./plugins/legacy-plugin-chart-calendar" },
     { "path": "./plugins/legacy-plugin-chart-chord" },
     { "path": "./plugins/legacy-plugin-chart-country-map" },

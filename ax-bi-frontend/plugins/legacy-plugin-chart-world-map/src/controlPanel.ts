@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ControlPanelConfig,
   formatSelectOptions,
   getStandardizedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { ColorBy } from './utils';
 
 const config: ControlPanelConfig = {
@@ -45,7 +45,7 @@ const config: ControlPanelConfig = {
                 ['cca3', t('code ISO 3166-1 alpha-3 (cca3)')],
               ],
               description: t(
-                'The country code standard that Superset should expect ' +
+                'The country code standard that AxBI should expect ' +
                   'to find in the [country] column',
               ),
             },

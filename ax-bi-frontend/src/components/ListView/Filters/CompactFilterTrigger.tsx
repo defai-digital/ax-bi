@@ -23,9 +23,9 @@ import {
   type ReactNode,
   type MouseEvent,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { useTheme, styled, css } from '@apache-superset/core/theme';
-import { Dropdown, Tooltip, Icons } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { useTheme, styled, css } from '@ax-bi/core/theme';
+import { Dropdown, Tooltip, Icons } from '@ax-bi/ui-core/components';
 
 export type FilterPanelRenderProps = {
   isOpen: boolean;

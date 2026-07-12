@@ -21,7 +21,7 @@ import { render, screen } from 'spec/helpers/testing-library';
 import ExploreResultsButton, {
   ExploreResultsButtonProps,
 } from 'src/SqlLab/components/ExploreResultsButton';
-import type { OnClickHandler } from '@superset-ui/core/components';
+import type { OnClickHandler } from '@ax-bi/ui-core/components';
 
 const setup = (
   onClickFn: OnClickHandler,

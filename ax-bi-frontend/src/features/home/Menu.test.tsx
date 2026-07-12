@@ -19,13 +19,13 @@
 import fetchMock from 'fetch-mock';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
-import { getExtensionsRegistry } from '@superset-ui/core';
-import * as CoreTheme from '@apache-superset/core/theme';
+import { getExtensionsRegistry } from '@ax-bi/ui-core';
+import * as CoreTheme from '@ax-bi/core/theme';
 import { Menu } from './Menu';
 import * as getBootstrapData from 'src/utils/getBootstrapData';
 
-jest.mock('@apache-superset/core/theme', () => ({
-  ...jest.requireActual('@apache-superset/core/theme'),
+jest.mock('@ax-bi/core/theme', () => ({
+  ...jest.requireActual('@ax-bi/core/theme'),
   useTheme: jest.fn(),
 }));
 
@@ -46,7 +46,7 @@ const user = {
   permissions: {},
   roles: {
     Admin: [
-      ['can_sqllab', 'Superset'],
+      ['can_sqllab', 'AxBI'],
       ['can_write', 'Dashboard'],
       ['can_write', 'Chart'],
     ],
@@ -126,8 +126,8 @@ const mockedProps = {
     ],
     brand: {
       path: '/ax-bi/welcome/',
-      icon: '/static/assets/images/superset-logo-horiz.png',
-      alt: 'Apache Superset',
+      icon: '/static/assets/images/ax-bi-logo-horiz.png',
+      alt: 'AX BI',
       width: '126',
       tooltip: '',
       text: '',
@@ -220,7 +220,7 @@ beforeEach(() => {
   staticAssetsPrefixMock.mockReturnValue('');
   applicationRootMock.mockReturnValue('');
   // By default useTheme returns the real default theme (brandLogoUrl is falsy)
-  useThemeMock.mockReturnValue(CoreTheme.supersetTheme);
+  useThemeMock.mockReturnValue(CoreTheme.axbiTheme);
 });
 
 test('should render', async () => {
@@ -443,19 +443,19 @@ test('should render the brand text if available', async () => {
       ...mockedProps.data,
       brand: {
         ...mockedProps.data.brand,
-        text: 'Welcome to Superset',
+        text: 'Welcome to AxBI',
       },
     },
   };
 
   render(<Menu {...modifiedProps} />, menuRenderOptions);
 
-  const brandText = await screen.findByText('Welcome to Superset');
+  const brandText = await screen.findByText('Welcome to AxBI');
   expect(brandText).toBeInTheDocument();
 });
 
 test('should not render the brand text if not available', async () => {
-  const text = 'Welcome to Superset';
+  const text = 'Welcome to AxBI';
   render(<Menu {...mockedProps} />, menuRenderOptions);
 
   const brandText = screen.queryByText(text);
@@ -463,9 +463,9 @@ test('should not render the brand text if not available', async () => {
 });
 
 test('brand logo href should not be prefixed with app root when brandLogoHref is an absolute URL', async () => {
-  applicationRootMock.mockReturnValue('/superset');
+  applicationRootMock.mockReturnValue('/ax-bi');
   useThemeMock.mockReturnValue({
-    ...CoreTheme.supersetTheme,
+    ...CoreTheme.axbiTheme,
     brandLogoUrl: '/static/assets/images/custom-logo.png',
     brandLogoHref: 'https://external.example.com',
     brandLogoAlt: 'Brand Home',
@@ -480,9 +480,9 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
 });
 
 test('brand logo href should not be prefixed with app root when brandLogoHref is protocol-relative', async () => {
-  applicationRootMock.mockReturnValue('/superset');
+  applicationRootMock.mockReturnValue('/ax-bi');
   useThemeMock.mockReturnValue({
-    ...CoreTheme.supersetTheme,
+    ...CoreTheme.axbiTheme,
     brandLogoUrl: '/static/assets/images/custom-logo.png',
     brandLogoHref: '//external.example.com',
     brandLogoAlt: 'Brand Home',
@@ -497,7 +497,7 @@ test('brand logo href should not be prefixed with app root when brandLogoHref is
 });
 
 test('brand path should be prefixed with app root in subdirectory deployment', async () => {
-  applicationRootMock.mockReturnValue('/superset');
+  applicationRootMock.mockReturnValue('/ax-bi');
 
   const propsWithSimplePath = {
     ...mockedProps,
@@ -516,12 +516,12 @@ test('brand path should be prefixed with app root in subdirectory deployment', a
     name: new RegExp(propsWithSimplePath.data.brand.alt, 'i'),
   });
   // ensureAppRoot prefixes the configured application root.
-  expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
+  expect(brandLink).toHaveAttribute('href', '/ax-bi/welcome/');
 });
 
 test('brand link falls back to brand.path when theme brandLogoUrl is absent', async () => {
-  // useThemeMock default returns supersetTheme with brandLogoUrl undefined (falsy)
-  applicationRootMock.mockReturnValue('/superset');
+  // useThemeMock default returns axbiTheme with brandLogoUrl undefined (falsy)
+  applicationRootMock.mockReturnValue('/ax-bi');
 
   const propsWithFallbackPath = {
     ...mockedProps,
@@ -539,6 +539,6 @@ test('brand link falls back to brand.path when theme brandLogoUrl is absent', as
   const brandLink = await screen.findByRole('link', {
     name: new RegExp(propsWithFallbackPath.data.brand.alt, 'i'),
   });
-  // ensureAppRoot prefixes the configured application root: /welcome/ → /superset/welcome/
-  expect(brandLink).toHaveAttribute('href', '/superset/welcome/');
+  // ensureAppRoot prefixes the configured application root: /welcome/ → /ax-bi/welcome/
+  expect(brandLink).toHaveAttribute('href', '/ax-bi/welcome/');
 });

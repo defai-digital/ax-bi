@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DEFAULT_D3_FORMAT, DEFAULT_D3_TIME_FORMAT } from '@superset-ui/core';
+import { DEFAULT_D3_FORMAT, DEFAULT_D3_TIME_FORMAT } from '@ax-bi/ui-core';
 import { BootstrapData, CommonBootstrapData } from './types/bootstrapTypes';
 
 export const DATETIME_WITH_TIME_ZONE = 'YYYY-MM-DD HH:mm:ssZ';
@@ -131,11 +131,11 @@ export const DEFAULT_COMMON_BOOTSTRAP_DATA: CommonBootstrapData = {
   locale: 'en',
   feature_flags: {},
   language_pack: {
-    domain: 'superset',
+    domain: 'axbi',
     locale_data: {
-      superset: {
+      axbi: {
         '': {
-          domain: 'superset',
+          domain: 'axbi',
           lang: 'en',
           plural_forms: '',
         },

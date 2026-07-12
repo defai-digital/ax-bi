@@ -17,7 +17,7 @@
 
 from sqlglot import parse_one
 
-from superset.sql.dialects.dremio import Dremio
+from axbi.sql.dialects.dremio import Dremio
 
 
 def test_regexp_split() -> None:

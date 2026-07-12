@@ -24,21 +24,21 @@ import {
 } from 'spec/helpers/testing-library';
 import fetchMock from 'fetch-mock';
 import * as ColorSchemeSelect from 'src/dashboard/components/ColorSchemeSelect';
-import * as SupersetCore from '@superset-ui/core';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import * as AxBICore from '@ax-bi/ui-core';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import PropertiesModal from '.';
 
 // Increase timeout for CI environment
 jest.setTimeout(60000);
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
   getCategoricalSchemeRegistry: jest.fn(() => ({
-    keys: () => ['supersetColors'],
+    keys: () => ['axbiColors'],
     get: () => ['#FFFFFF', '#000000'],
-    getDefaultKey: () => 'supersetColors',
+    getDefaultKey: () => 'axbiColors',
   })),
 }));
 
@@ -46,7 +46,7 @@ const mockedIsFeatureEnabled = isFeatureEnabled as jest.Mock;
 
 const spyColorSchemeSelect = jest.spyOn(ColorSchemeSelect, 'default');
 const mockedJsonMetadata =
-  '{"timed_refresh_immune_slices": [], "expanded_slices": {}, "refresh_frequency": 0, "default_filters": "{}", "color_scheme": "supersetColors", "label_colors": {"0": "#D3B3DA", "1": "#9EE5E5", "0. Pre-clinical": "#1FA8C9", "2. Phase II or Combined I/II": "#454E7C", "1. Phase I": "#5AC189", "3. Phase III": "#FF7F44", "4. Authorized": "#666666", "root": "#1FA8C9", "Protein subunit": "#454E7C", "Phase II": "#5AC189", "Pre-clinical": "#FF7F44", "Phase III": "#666666", "Phase I": "#E04355", "Phase I/II": "#FCC700", "Inactivated virus": "#A868B7", "Virus-like particle": "#3CCCCB", "Replicating bacterial vector": "#A38F79", "DNA-based": "#8FD3E4", "RNA-based vaccine": "#A1A6BD", "Authorized": "#ACE1C4", "Non-replicating viral vector": "#FEC0A1", "Replicating viral vector": "#B2B2B2", "Unknown": "#EFA1AA", "Live attenuated virus": "#FDE380", "COUNT(*)": "#D1C6BC"}, "filter_scopes": {"358": {"Country_Name": {"scope": ["ROOT_ID"], "immune": []}, "Product_Category": {"scope": ["ROOT_ID"], "immune": []}, "Clinical Stage": {"scope": ["ROOT_ID"], "immune": []}}}}';
+  '{"timed_refresh_immune_slices": [], "expanded_slices": {}, "refresh_frequency": 0, "default_filters": "{}", "color_scheme": "axbiColors", "label_colors": {"0": "#D3B3DA", "1": "#9EE5E5", "0. Pre-clinical": "#1FA8C9", "2. Phase II or Combined I/II": "#454E7C", "1. Phase I": "#5AC189", "3. Phase III": "#FF7F44", "4. Authorized": "#666666", "root": "#1FA8C9", "Protein subunit": "#454E7C", "Phase II": "#5AC189", "Pre-clinical": "#FF7F44", "Phase III": "#666666", "Phase I": "#E04355", "Phase I/II": "#FCC700", "Inactivated virus": "#A868B7", "Virus-like particle": "#3CCCCB", "Replicating bacterial vector": "#A38F79", "DNA-based": "#8FD3E4", "RNA-based vaccine": "#A1A6BD", "Authorized": "#ACE1C4", "Non-replicating viral vector": "#FEC0A1", "Replicating viral vector": "#B2B2B2", "Unknown": "#EFA1AA", "Live attenuated virus": "#FDE380", "COUNT(*)": "#D1C6BC"}, "filter_scopes": {"358": {"Country_Name": {"scope": ["ROOT_ID"], "immune": []}, "Product_Category": {"scope": ["ROOT_ID"], "immune": []}, "Clinical Stage": {"scope": ["ROOT_ID"], "immune": []}}}}';
 
 spyColorSchemeSelect.mockImplementation(
   () => (<div>ColorSchemeSelect</div>) as any,
@@ -95,7 +95,7 @@ fetchMock.get(
       count: 1,
       result: [
         {
-          text: 'Superset Admin',
+          text: 'AxBI Admin',
           value: 1,
           extra: { active: true },
         },
@@ -168,7 +168,7 @@ const createProps = () => ({
   certification_details: 'Sample certification',
   dashboardId: 26,
   show: true,
-  colorScheme: 'supersetColors',
+  colorScheme: 'axbiColors',
   onlyApply: false,
   onHide: jest.fn(),
   onSubmit: jest.fn(),
@@ -226,7 +226,7 @@ describe('PropertiesModal', () => {
     });
 
     expect(spyColorSchemeSelect).toHaveBeenCalledWith(
-      expect.objectContaining({ value: 'supersetColors' }),
+      expect.objectContaining({ value: 'axbiColors' }),
       {},
     );
   });
@@ -282,7 +282,7 @@ describe('PropertiesModal', () => {
 
     await waitFor(() => {
       expect(spyColorSchemeSelect).toHaveBeenCalledWith(
-        expect.objectContaining({ value: 'supersetColors' }),
+        expect.objectContaining({ value: 'axbiColors' }),
         {},
       );
     });
@@ -343,7 +343,7 @@ describe('PropertiesModal', () => {
   });
 
   test('submitting with onlyApply:false', async () => {
-    const put = jest.spyOn(SupersetCore.SupersetClient, 'put');
+    const put = jest.spyOn(AxBICore.AxBIClient, 'put');
     put.mockResolvedValue({
       json: {
         result: {
@@ -629,7 +629,7 @@ describe('PropertiesModal', () => {
     const options = await findAllSelectOptions();
 
     expect(options).toHaveLength(1);
-    expect(options[0]).toHaveTextContent('Superset Admin');
+    expect(options[0]).toHaveTextContent('AxBI Admin');
   }, 30000);
 
   test('should show active owners without dashboard rbac', async () => {
@@ -682,7 +682,7 @@ describe('PropertiesModal', () => {
     const options = await findAllSelectOptions();
 
     expect(options).toHaveLength(1);
-    expect(options[0]).toHaveTextContent('Superset Admin');
+    expect(options[0]).toHaveTextContent('AxBI Admin');
   }, 30000);
 
   test('should not run validation while data is loading', async () => {
@@ -694,7 +694,7 @@ describe('PropertiesModal', () => {
       useRedux: true,
     });
 
-    const getSpy = jest.spyOn(SupersetCore.SupersetClient, 'get');
+    const getSpy = jest.spyOn(AxBICore.AxBIClient, 'get');
     let resolveFetch: any;
     const fetchPromise = new Promise(resolve => {
       resolveFetch = resolve;
@@ -730,7 +730,7 @@ describe('PropertiesModal', () => {
   test('should render fetched dashboard when metadata JSON is malformed', async () => {
     mockedIsFeatureEnabled.mockReturnValue(false);
     const props = createProps();
-    const getSpy = jest.spyOn(SupersetCore.SupersetClient, 'get');
+    const getSpy = jest.spyOn(AxBICore.AxBIClient, 'get');
     getSpy.mockResolvedValue({
       json: {
         result: { ...dashboardInfo, json_metadata: '{malformed' },

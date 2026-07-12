@@ -18,9 +18,9 @@
  */
 import { ReactElement } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { getExtensionsRegistry } from '@superset-ui/core';
-import { Dataset, isTemporalColumn } from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { getExtensionsRegistry } from '@ax-bi/ui-core';
+import { Dataset, isTemporalColumn } from '@ax-bi/chart-controls';
 import DateFilterControl from 'src/explore/components/controls/DateFilterControl/DateFilterLabel';
 import ControlHeader from 'src/explore/components/ControlHeader';
 

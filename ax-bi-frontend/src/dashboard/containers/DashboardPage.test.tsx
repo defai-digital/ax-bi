@@ -30,7 +30,7 @@ import {
   useDashboardCharts,
   useDashboardDatasets,
 } from 'src/hooks/apiResources';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import CrudThemeProvider from 'src/components/CrudThemeProvider';
 import { hydrateDashboard } from 'src/dashboard/actions/hydrate';
 import {
@@ -188,7 +188,7 @@ beforeEach(() => {
 });
 
 test('passes full theme object from dashboard API response to CrudThemeProvider', async () => {
-  const clientGetSpy = jest.spyOn(SupersetClient, 'get');
+  const clientGetSpy = jest.spyOn(AxBIClient, 'get');
 
   render(
     <Suspense fallback="loading">

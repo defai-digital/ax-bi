@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { GenericDataType } from '@apache-superset/core/common';
+import { GenericDataType } from '@ax-bi/core/common';
 import config, {
   getOperatorTypeChoices,
   isStringOperatorColumn,

@@ -17,21 +17,21 @@
  * under the License.
  */
 import { useRef, useState } from 'react';
-import { FeatureFlag, VizType } from '@superset-ui/core';
+import { FeatureFlag, VizType } from '@ax-bi/ui-core';
 import { render, screen, waitFor } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
 import mockState from 'spec/fixtures/mockState';
 import { sliceId } from 'spec/fixtures/mockChartQueries';
-import { cachedSupersetGet } from 'src/utils/cachedSupersetGet';
+import { cachedAxBIGet } from 'src/utils/cachedAxBIGet';
 import ChartContextMenu, {
   ChartContextMenuRef,
   ContextMenuItem,
 } from './ChartContextMenu';
 
-jest.mock('src/utils/cachedSupersetGet');
+jest.mock('src/utils/cachedAxBIGet');
 
-const mockCachedSupersetGet = cachedSupersetGet as jest.MockedFunction<
-  typeof cachedSupersetGet
+const mockCachedAxBIGet = cachedAxBIGet as jest.MockedFunction<
+  typeof cachedAxBIGet
 >;
 
 const defaultFormData = {
@@ -80,7 +80,7 @@ const setup = () =>
         ...mockState.user,
         roles: {
           Admin: [
-            ['can_explore', 'Superset'],
+            ['can_explore', 'AxBI'],
             ['can_samples', 'Datasource'],
             ['can_write', 'ExploreFormDataRestApi'],
             ['can_get_drill_info', 'Dataset'],
@@ -97,8 +97,8 @@ beforeEach(() => {
     [FeatureFlag.DrillBy]: true,
   };
 
-  mockCachedSupersetGet.mockClear();
-  mockCachedSupersetGet.mockResolvedValue({
+  mockCachedAxBIGet.mockClear();
+  mockCachedAxBIGet.mockResolvedValue({
     response: {} as Response,
     json: {
       result: {

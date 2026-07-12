@@ -17,7 +17,7 @@
 
 from flask import Response
 
-from superset.models.dashboard import Dashboard
+from axbi.models.dashboard import Dashboard
 from tests.integration_tests.dashboards.base_case import DashboardTestCase
 
 

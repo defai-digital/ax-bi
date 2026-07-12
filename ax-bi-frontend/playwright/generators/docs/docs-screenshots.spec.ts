@@ -20,7 +20,7 @@
 /**
  * Documentation Screenshot Generator
  *
- * Captures screenshots for the Superset documentation site and README.
+ * Captures screenshots for the AxBI documentation site and README.
  * Depends on example data loaded via `ax-bi load_examples`.
  *
  * Run locally:
@@ -90,7 +90,7 @@ async function openSalesDashboard(page: Page): Promise<void> {
  * charts attached to them. Used by the save-flow test to clean up after
  * itself and to recover from prior failed runs (idempotent pre-cleanup).
  *
- * Only safe because the title is unique to the test ("Superset Duper
+ * Only safe because the title is unique to the test ("AxBI Duper
  * Sales Dashboard"); don't reuse this against titles that could match
  * example-data dashboards.
  */
@@ -477,12 +477,12 @@ test('save flow and first dashboard screenshots', async ({ page }) => {
   //   2. tutorial_first_dashboard.png — the freshly-created dashboard with
   //      the single saved chart (matches the tutorial narrative).
   //
-  // Creates and then deletes a "Superset Duper Sales Dashboard" dashboard
+  // Creates and then deletes a "AxBI Duper Sales Dashboard" dashboard
   // plus the duplicate chart it owns. Pre-cleans in case a prior run failed.
-  const NEW_DASHBOARD_NAME = 'Superset Duper Sales Dashboard';
+  const NEW_DASHBOARD_NAME = 'AxBI Duper Sales Dashboard';
   await deleteDashboardByTitle(page, NEW_DASHBOARD_NAME);
 
-  // 1100px is wide enough to show the full "Superset Duper Sales Dashboard"
+  // 1100px is wide enough to show the full "AxBI Duper Sales Dashboard"
   // title alongside the header actions without truncation.
   await page.setViewportSize({ width: 1100, height: 800 });
   await page.goto(URL.CHART_LIST);

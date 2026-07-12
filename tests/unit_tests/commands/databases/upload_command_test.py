@@ -21,8 +21,8 @@ import pytest
 from pytest_mock import MockerFixture
 from werkzeug.datastructures import FileStorage
 
-from superset.commands.database.exceptions import DatabaseUploadFileTooLarge
-from superset.commands.database.uploaders.base import UploadCommand
+from axbi.commands.database.exceptions import DatabaseUploadFileTooLarge
+from axbi.commands.database.uploaders.base import UploadCommand
 
 
 def _file(contents: bytes) -> FileStorage:
@@ -51,11 +51,11 @@ def _stub_passing_checks(mocker: MockerFixture) -> None:
     model = mocker.MagicMock()
     model.db_engine_spec.supports_file_upload = True
     mocker.patch(
-        "superset.commands.database.uploaders.base.DatabaseDAO.find_by_id",
+        "axbi.commands.database.uploaders.base.DatabaseDAO.find_by_id",
         return_value=model,
     )
     mocker.patch(
-        "superset.commands.database.uploaders.base.schema_allows_file_upload",
+        "axbi.commands.database.uploaders.base.schema_allows_file_upload",
         return_value=True,
     )
 
@@ -65,7 +65,7 @@ def test_validate_rejects_file_over_limit(
 ) -> None:
     _stub_passing_checks(mocker)
     mocker.patch.dict(
-        "superset.commands.database.uploaders.base.current_app.config",
+        "axbi.commands.database.uploaders.base.current_app.config",
         {"UPLOAD_MAX_FILE_SIZE_BYTES": 4},
     )
     command = _command(_file(b"too many bytes"))
@@ -78,7 +78,7 @@ def test_validate_allows_file_within_limit(
 ) -> None:
     _stub_passing_checks(mocker)
     mocker.patch.dict(
-        "superset.commands.database.uploaders.base.current_app.config",
+        "axbi.commands.database.uploaders.base.current_app.config",
         {"UPLOAD_MAX_FILE_SIZE_BYTES": 1024},
     )
     command = _command(_file(b"small"))
@@ -90,7 +90,7 @@ def test_validate_no_limit_when_disabled(
 ) -> None:
     _stub_passing_checks(mocker)
     mocker.patch.dict(
-        "superset.commands.database.uploaders.base.current_app.config",
+        "axbi.commands.database.uploaders.base.current_app.config",
         {"UPLOAD_MAX_FILE_SIZE_BYTES": None},
     )
     command = _command(_file(b"x" * 10_000))
@@ -102,7 +102,7 @@ def test_validate_file_size_rejects_over_limit(
 ) -> None:
     # the shared helper is used by both the upload and metadata paths
     mocker.patch.dict(
-        "superset.commands.database.uploaders.base.current_app.config",
+        "axbi.commands.database.uploaders.base.current_app.config",
         {"UPLOAD_MAX_FILE_SIZE_BYTES": 4},
     )
     with pytest.raises(DatabaseUploadFileTooLarge):
@@ -113,7 +113,7 @@ def test_validate_file_size_allows_within_limit(
     app_context: None, mocker: MockerFixture
 ) -> None:
     mocker.patch.dict(
-        "superset.commands.database.uploaders.base.current_app.config",
+        "axbi.commands.database.uploaders.base.current_app.config",
         {"UPLOAD_MAX_FILE_SIZE_BYTES": 1024},
     )
     UploadCommand.validate_file_size(_file(b"small"))  # should not raise
@@ -140,7 +140,7 @@ def test_validate_file_size_skips_when_not_seekable(
     app_context: None, mocker: MockerFixture
 ) -> None:
     mocker.patch.dict(
-        "superset.commands.database.uploaders.base.current_app.config",
+        "axbi.commands.database.uploaders.base.current_app.config",
         {"UPLOAD_MAX_FILE_SIZE_BYTES": 4},
     )
     # size can't be determined cheaply -> skip rather than raising a 500

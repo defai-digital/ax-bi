@@ -21,7 +21,7 @@ import type {
   Query,
   QueryResponse,
   QueryResults,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type {
   CursorPosition,
   QueryEditor,

@@ -19,7 +19,6 @@
 from datetime import datetime
 from typing import Any, Callable
 
-import numpy
 import pandas as pd
 import pytest
 from flask import current_app
@@ -36,12 +35,12 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import Select
 
-from superset.connectors.sqla.models import SqlaTable, TableColumn
-from superset.errors import SupersetErrorType
-from superset.exceptions import OAuth2Error, OAuth2RedirectError
-from superset.models.core import Database
-from superset.sql.parse import LimitMethod, Table
-from superset.utils import json
+from axbi.connectors.sqla.models import SqlaTable, TableColumn
+from axbi.errors import AxBIErrorType
+from axbi.exceptions import OAuth2Error, OAuth2RedirectError
+from axbi.models.core import Database
+from axbi.sql.parse import LimitMethod, Table
+from axbi.utils import json
 from tests.unit_tests.conftest import with_feature_flags
 
 # sample config for OAuth2 tests
@@ -83,9 +82,9 @@ def test_get_metrics(mocker: MockerFixture) -> None:
     """
     Tests for ``get_metrics``.
     """
-    from superset.db_engine_specs.base import MetricType
-    from superset.db_engine_specs.sqlite import SqliteEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.base import MetricType
+    from axbi.db_engine_specs.sqlite import SqliteEngineSpec
+    from axbi.models.core import Database
 
     database = Database(database_name="my_database", sqlalchemy_uri="sqlite://")
     assert database.get_metrics(Table("table")) == [
@@ -129,8 +128,8 @@ def test_get_db_engine_spec(mocker: MockerFixture) -> None:
     """
     Tests for ``get_db_engine_spec``.
     """
-    from superset.db_engine_specs import BaseEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs import BaseEngineSpec
+    from axbi.models.core import Database
 
     # pylint: disable=abstract-method
     class PostgresDBEngineSpec(BaseEngineSpec):
@@ -154,7 +153,7 @@ def test_get_db_engine_spec(mocker: MockerFixture) -> None:
 
         engine = "mysql"
 
-    load_engine_specs = mocker.patch("superset.db_engine_specs.load_engine_specs")
+    load_engine_specs = mocker.patch("axbi.db_engine_specs.load_engine_specs")
     load_engine_specs.return_value = [
         PostgresDBEngineSpec,
         OldDBEngineSpec,
@@ -403,13 +402,13 @@ def test_get_all_schema_names_needs_oauth2(mocker: MockerFixture) -> None:
     mocker.patch.object(database, "get_inspector")
     user = mocker.MagicMock()
     user.id = 42
-    mocker.patch("superset.db_engine_specs.base.g", user=user)
+    mocker.patch("axbi.db_engine_specs.base.g", user=user)
 
     with pytest.raises(OAuth2RedirectError) as excinfo:
         database.get_all_schema_names()
 
     assert excinfo.value.message == "You don't have permission to access the data."
-    assert excinfo.value.error.error_type == SupersetErrorType.OAUTH2_REDIRECT
+    assert excinfo.value.error.error_type == AxBIErrorType.OAUTH2_REDIRECT
 
 
 def test_get_all_catalog_names_needs_oauth2(mocker: MockerFixture) -> None:
@@ -440,13 +439,13 @@ def test_get_all_catalog_names_needs_oauth2(mocker: MockerFixture) -> None:
     mocker.patch.object(database, "get_inspector")
     user = mocker.MagicMock()
     user.id = 42
-    mocker.patch("superset.db_engine_specs.base.g", user=user)
+    mocker.patch("axbi.db_engine_specs.base.g", user=user)
 
     with pytest.raises(OAuth2RedirectError) as excinfo:
         database.get_all_catalog_names()
 
     assert excinfo.value.message == "You don't have permission to access the data."
-    assert excinfo.value.error.error_type == SupersetErrorType.OAUTH2_REDIRECT
+    assert excinfo.value.error.error_type == AxBIErrorType.OAUTH2_REDIRECT
 
 
 def test_get_all_table_names_in_schema_needs_oauth2(mocker: MockerFixture) -> None:
@@ -477,13 +476,13 @@ def test_get_all_table_names_in_schema_needs_oauth2(mocker: MockerFixture) -> No
     mocker.patch.object(database, "get_inspector")
     user = mocker.MagicMock()
     user.id = 42
-    mocker.patch("superset.db_engine_specs.base.g", user=user)
+    mocker.patch("axbi.db_engine_specs.base.g", user=user)
 
     with pytest.raises(OAuth2RedirectError) as excinfo:
         database.get_all_table_names_in_schema(catalog=None, schema="public")
 
     assert excinfo.value.message == "You don't have permission to access the data."
-    assert excinfo.value.error.error_type == SupersetErrorType.OAUTH2_REDIRECT
+    assert excinfo.value.error.error_type == AxBIErrorType.OAUTH2_REDIRECT
 
 
 def test_get_all_view_names_in_schema_needs_oauth2(mocker: MockerFixture) -> None:
@@ -514,13 +513,13 @@ def test_get_all_view_names_in_schema_needs_oauth2(mocker: MockerFixture) -> Non
     mocker.patch.object(database, "get_inspector")
     user = mocker.MagicMock()
     user.id = 42
-    mocker.patch("superset.db_engine_specs.base.g", user=user)
+    mocker.patch("axbi.db_engine_specs.base.g", user=user)
 
     with pytest.raises(OAuth2RedirectError) as excinfo:
         database.get_all_view_names_in_schema(catalog=None, schema="public")
 
     assert excinfo.value.message == "You don't have permission to access the data."
-    assert excinfo.value.error.error_type == SupersetErrorType.OAUTH2_REDIRECT
+    assert excinfo.value.error.error_type == AxBIErrorType.OAUTH2_REDIRECT
 
 
 def test_get_all_materialized_view_names_in_schema_needs_oauth2(
@@ -553,7 +552,7 @@ def test_get_all_materialized_view_names_in_schema_needs_oauth2(
     mocker.patch.object(database, "get_inspector")
     user = mocker.MagicMock()
     user.id = 42
-    mocker.patch("superset.db_engine_specs.base.g", user=user)
+    mocker.patch("axbi.db_engine_specs.base.g", user=user)
 
     with pytest.raises(OAuth2RedirectError) as excinfo:
         database.get_all_materialized_view_names_in_schema(
@@ -561,24 +560,24 @@ def test_get_all_materialized_view_names_in_schema_needs_oauth2(
         )
 
     assert excinfo.value.message == "You don't have permission to access the data."
-    assert excinfo.value.error.error_type == SupersetErrorType.OAUTH2_REDIRECT
+    assert excinfo.value.error.error_type == AxBIErrorType.OAUTH2_REDIRECT
 
 
 def test_get_sqla_engine(mocker: MockerFixture) -> None:
     """
     Test `_get_sqla_engine`.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     user = mocker.MagicMock()
     user.email = "alice.doe@example.org"
     mocker.patch(
-        "superset.models.core.security_manager.find_user",
+        "axbi.models.core.security_manager.find_user",
         return_value=user,
     )
-    mocker.patch("superset.models.core.get_username", return_value="alice")
+    mocker.patch("axbi.models.core.get_username", return_value="alice")
 
-    create_engine = mocker.patch("superset.models.core.create_engine")
+    create_engine = mocker.patch("axbi.models.core.create_engine")
 
     database = Database(database_name="my_db", sqlalchemy_uri="trino://")
     database._get_sqla_engine(nullpool=False)
@@ -592,13 +591,13 @@ def test_get_sqla_engine(mocker: MockerFixture) -> None:
 def test_get_sqla_engine_ignores_non_object_engine_params(
     mocker: MockerFixture,
 ) -> None:
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     mocker.patch(
-        "superset.models.core.security_manager.find_user",
+        "axbi.models.core.security_manager.find_user",
         return_value=None,
     )
-    create_engine = mocker.patch("superset.models.core.create_engine")
+    create_engine = mocker.patch("axbi.models.core.create_engine")
 
     database = Database(
         database_name="my_db",
@@ -628,16 +627,16 @@ def test_get_sqla_engine_caches_engine_per_url(mocker: MockerFixture) -> None:
     in-tree callsite uses it — so the assertion would have caught a fix
     that only engaged under ``nullpool=False``.
     """
-    from superset.models.core import _ENGINE_CACHE, Database
+    from axbi.models.core import _ENGINE_CACHE, Database
 
     # Clear the process-wide cache so prior tests don't poison this assertion.
     _ENGINE_CACHE.clear()
 
     mocker.patch(
-        "superset.models.core.security_manager.find_user",
+        "axbi.models.core.security_manager.find_user",
         return_value=None,
     )
-    create_engine = mocker.patch("superset.models.core.create_engine")
+    create_engine = mocker.patch("axbi.models.core.create_engine")
 
     database = Database(database_name="my_db", sqlalchemy_uri="trino://")
     database.id = 1  # Cache is keyed on id; skipped for unsaved instances.
@@ -658,14 +657,14 @@ def test_get_sqla_engine_does_not_cache_unsaved_instances(
     same URI must not share a cache entry — they're different in-memory
     objects and may have diverging config that isn't yet persisted.
     """
-    from superset.models.core import _ENGINE_CACHE, Database
+    from axbi.models.core import _ENGINE_CACHE, Database
 
     _ENGINE_CACHE.clear()
     mocker.patch(
-        "superset.models.core.security_manager.find_user",
+        "axbi.models.core.security_manager.find_user",
         return_value=None,
     )
-    create_engine = mocker.patch("superset.models.core.create_engine")
+    create_engine = mocker.patch("axbi.models.core.create_engine")
 
     Database(database_name="db_a", sqlalchemy_uri="trino://")._get_sqla_engine()
     Database(database_name="db_b", sqlalchemy_uri="trino://")._get_sqla_engine()
@@ -682,7 +681,7 @@ def test_engine_cache_evicted_on_update_and_delete(mocker: MockerFixture) -> Non
     """
     from unittest.mock import MagicMock
 
-    from superset.models.core import (
+    from axbi.models.core import (
         _ENGINE_CACHE,
         _ENGINE_CACHE_LOCK,
         _evict_engine_cache,
@@ -708,17 +707,17 @@ def test_get_sqla_engine_user_impersonation(mocker: MockerFixture) -> None:
     """
     Test user impersonation in `_get_sqla_engine`.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     user = mocker.MagicMock()
     user.email = "alice.doe@example.org"
     mocker.patch(
-        "superset.models.core.security_manager.find_user",
+        "axbi.models.core.security_manager.find_user",
         return_value=user,
     )
-    mocker.patch("superset.models.core.get_username", return_value="alice")
+    mocker.patch("axbi.models.core.get_username", return_value="alice")
 
-    create_engine = mocker.patch("superset.models.core.create_engine")
+    create_engine = mocker.patch("axbi.models.core.create_engine")
 
     database = Database(
         database_name="my_db",
@@ -763,17 +762,17 @@ def test_get_sqla_engine_user_impersonation_email(mocker: MockerFixture) -> None
     """
     Test user impersonation in `_get_sqla_engine` with `username_from_email`.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     user = mocker.MagicMock()
     user.email = "alice.doe@example.org"
     mocker.patch(
-        "superset.models.core.security_manager.find_user",
+        "axbi.models.core.security_manager.find_user",
         return_value=user,
     )
-    mocker.patch("superset.models.core.get_username", return_value="alice")
+    mocker.patch("axbi.models.core.get_username", return_value="alice")
 
-    create_engine = mocker.patch("superset.models.core.create_engine")
+    create_engine = mocker.patch("axbi.models.core.create_engine")
 
     database = Database(
         database_name="my_db",
@@ -804,8 +803,8 @@ def test_get_sqla_engine_registers_prequery_event_listener(
     mocker.patch.object(Database, "_get_sqla_engine", return_value=mock_engine)
     db_engine_spec = mocker.patch.object(Database, "db_engine_spec")
     db_engine_spec.get_prequeries.return_value = ['SET search_path = "my_schema"']
-    event_listen = mocker.patch("superset.models.core.sqla.event.listen")
-    mocker.patch("superset.models.core.sqla.event.remove")
+    event_listen = mocker.patch("axbi.models.core.sqla.event.listen")
+    mocker.patch("axbi.models.core.sqla.event.remove")
 
     database = Database(database_name="my_db", sqlalchemy_uri="postgresql://")
     with database.get_sqla_engine(catalog="my_catalog", schema="my_schema"):
@@ -839,8 +838,8 @@ def test_get_sqla_engine_prequery_cursor_closed_on_exception(
     mocker.patch.object(Database, "_get_sqla_engine", return_value=mock_engine)
     db_engine_spec = mocker.patch.object(Database, "db_engine_spec")
     db_engine_spec.get_prequeries.return_value = ['SET search_path = "bad_schema"']
-    event_listen = mocker.patch("superset.models.core.sqla.event.listen")
-    mocker.patch("superset.models.core.sqla.event.remove")
+    event_listen = mocker.patch("axbi.models.core.sqla.event.listen")
+    mocker.patch("axbi.models.core.sqla.event.remove")
 
     database = Database(database_name="my_db", sqlalchemy_uri="postgresql://")
     with database.get_sqla_engine(catalog=None, schema="bad_schema"):
@@ -870,7 +869,7 @@ def test_get_sqla_engine_no_prequeries_no_event_listener(
     mocker.patch.object(Database, "_get_sqla_engine", return_value=mock_engine)
     db_engine_spec = mocker.patch.object(Database, "db_engine_spec")
     db_engine_spec.get_prequeries.return_value = []
-    event_listen = mocker.patch("superset.models.core.sqla.event.listen")
+    event_listen = mocker.patch("axbi.models.core.sqla.event.listen")
 
     database = Database(database_name="my_db", sqlalchemy_uri="postgresql://")
     with database.get_sqla_engine(catalog=None, schema=None):
@@ -900,11 +899,11 @@ def test_get_raw_connection_executes_prequeries_exactly_once(
 
     # Capture the closure registered via sqla.event.listen.
     captured_listeners: list[Callable[..., None]] = []
-    original_listen = mocker.patch("superset.models.core.sqla.event.listen")
+    original_listen = mocker.patch("axbi.models.core.sqla.event.listen")
     original_listen.side_effect = lambda engine, event, fn: captured_listeners.append(
         fn
     )
-    mocker.patch("superset.models.core.sqla.event.remove")
+    mocker.patch("axbi.models.core.sqla.event.remove")
 
     # Simulate SQLAlchemy firing the "connect" event when raw_connection() is called.
     mock_dbapi_conn = mocker.MagicMock()
@@ -1066,7 +1065,7 @@ def test_get_oauth2_config_redirect_uri_from_config(
     """
     custom_redirect_uri = "https://custom.example.com/oauth/callback"
     mocker.patch.dict(
-        "superset.utils.oauth2.app.config",
+        "axbi.utils.oauth2.app.config",
         {"DATABASE_OAUTH2_REDIRECT_URI": custom_redirect_uri},
     )
     database = Database(
@@ -1092,7 +1091,7 @@ def test_raw_connection_oauth_engine(mocker: MockerFixture) -> None:
     This tests verifies that when calling `raw_connection()` the OAuth2 flow is
     triggered when the engine is created.
     """
-    g = mocker.patch("superset.db_engine_specs.base.g")
+    g = mocker.patch("axbi.db_engine_specs.base.g")
     g.user = mocker.MagicMock()
     g.user.id = 42
 
@@ -1123,7 +1122,7 @@ def test_raw_connection_oauth_connection(mocker: MockerFixture) -> None:
     This tests verifies that when calling `raw_connection()` the OAuth2 flow is
     triggered when the connection is created.
     """
-    g = mocker.patch("superset.db_engine_specs.base.g")
+    g = mocker.patch("axbi.db_engine_specs.base.g")
     g.user = mocker.MagicMock()
     g.user.id = 42
 
@@ -1156,7 +1155,7 @@ def test_raw_connection_oauth_execute(mocker: MockerFixture) -> None:
     This tests verifies that when calling `raw_connection()` the OAuth2 flow is
     triggered when the connection is created.
     """
-    g = mocker.patch("superset.db_engine_specs.base.g")
+    g = mocker.patch("axbi.db_engine_specs.base.g")
     g.user = mocker.MagicMock()
     g.user.id = 42
 
@@ -1263,7 +1262,7 @@ def test_purge_oauth2_tokens(session: Session) -> None:
     """
     from flask_appbuilder.security.sqla.models import Role, User  # noqa: F401
 
-    from superset.models.core import Database, DatabaseUserOAuth2Tokens
+    from axbi.models.core import Database, DatabaseUserOAuth2Tokens
 
     Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
 
@@ -1340,7 +1339,7 @@ def test_compile_sqla_query_no_optimization(query: Select) -> None:
     """
     Test the `compile_sqla_query` method.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     database = Database(
         database_name="db",
@@ -1363,7 +1362,7 @@ def test_compile_sqla_query(query: Select) -> None:
     """
     Test the `compile_sqla_query` method.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     database = Database(
         database_name="db",
@@ -1400,7 +1399,7 @@ def test_get_all_table_names_in_schema(mocker: MockerFixture) -> None:
 
     mocker.patch.object(database, "get_inspector")
     get_table_names = mocker.patch(
-        "superset.db_engine_specs.postgres.PostgresEngineSpec.get_table_names"
+        "axbi.db_engine_specs.postgres.PostgresEngineSpec.get_table_names"
     )
     get_table_names.return_value = {"first_table", "second_table", "third_table"}
 
@@ -1428,7 +1427,7 @@ def test_get_all_view_names_in_schema(mocker: MockerFixture) -> None:
 
     mocker.patch.object(database, "get_inspector")
     get_view_names = mocker.patch(
-        "superset.db_engine_specs.base.BaseEngineSpec.get_view_names"
+        "axbi.db_engine_specs.base.BaseEngineSpec.get_view_names"
     )
     get_view_names.return_value = {"first_view", "second_view", "third_view"}
 
@@ -1590,7 +1589,7 @@ def test_database_execute_delegates_to_sql_executor(mocker: MockerFixture) -> No
     """Test that Database.execute() delegates to SQLExecutor.execute()."""
     from unittest.mock import MagicMock
 
-    mock_executor_class = mocker.patch("superset.sql.execution.SQLExecutor")
+    mock_executor_class = mocker.patch("axbi.sql.execution.SQLExecutor")
     mock_executor = MagicMock()
     mock_executor_class.return_value = mock_executor
 
@@ -1611,7 +1610,7 @@ def test_database_execute_without_options(mocker: MockerFixture) -> None:
     """Test that Database.execute() works without options."""
     from unittest.mock import MagicMock
 
-    mock_executor_class = mocker.patch("superset.sql.execution.SQLExecutor")
+    mock_executor_class = mocker.patch("axbi.sql.execution.SQLExecutor")
     mock_executor = MagicMock()
     mock_executor_class.return_value = mock_executor
 
@@ -1633,7 +1632,7 @@ def test_database_execute_async_delegates_to_sql_executor(
     """Test that Database.execute_async() delegates to SQLExecutor.execute_async()."""
     from unittest.mock import MagicMock
 
-    mock_executor_class = mocker.patch("superset.sql.execution.SQLExecutor")
+    mock_executor_class = mocker.patch("axbi.sql.execution.SQLExecutor")
     mock_executor = MagicMock()
     mock_executor_class.return_value = mock_executor
 
@@ -1654,7 +1653,7 @@ def test_database_execute_async_without_options(mocker: MockerFixture) -> None:
     """Test that Database.execute_async() works without options."""
     from unittest.mock import MagicMock
 
-    mock_executor_class = mocker.patch("superset.sql.execution.SQLExecutor")
+    mock_executor_class = mocker.patch("axbi.sql.execution.SQLExecutor")
     mock_executor = MagicMock()
     mock_executor_class.return_value = mock_executor
 
@@ -1680,23 +1679,23 @@ def test_clear_bootstrap_cache_logs_warning_on_failure(
     Codecov registers it as covered.  The function must not re-raise the
     exception — callers (SQLAlchemy event dispatch) should be unaffected.
     """
-    from superset.models.core import clear_bootstrap_cache
+    from axbi.models.core import clear_bootstrap_cache
 
     # Patch cache_manager so delete_memoized raises
     mock_cache = mocker.MagicMock()
     mock_cache.delete_memoized.side_effect = RuntimeError("Redis unavailable")
 
-    mock_cache_manager = mocker.patch("superset.models.core.cache_manager")
+    mock_cache_manager = mocker.patch("axbi.models.core.cache_manager")
     mock_cache_manager.cache = mock_cache
 
     # Patch cached_common_bootstrap_data so the local import inside
     # clear_bootstrap_cache resolves to our mock.
     mocker.patch(
-        "superset.views.base.cached_common_bootstrap_data",
+        "axbi.views.base.cached_common_bootstrap_data",
         new=mocker.MagicMock(__name__="cached_common_bootstrap_data"),
     )
 
-    mock_logger = mocker.patch("superset.models.core.logger")
+    mock_logger = mocker.patch("axbi.models.core.logger")
 
     # Should not raise even though delete_memoized raises
     clear_bootstrap_cache(

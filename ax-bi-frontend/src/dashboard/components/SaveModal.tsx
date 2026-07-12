@@ -18,7 +18,7 @@
  */
 /* eslint-env browser */
 import { useRef, useState } from 'react';
-import { Radio, RadioChangeEvent } from '@superset-ui/core/components/Radio';
+import { Radio, RadioChangeEvent } from '@ax-bi/ui-core/components/Radio';
 import {
   Button,
   Checkbox,
@@ -26,14 +26,14 @@ import {
   Input,
   Divider,
   Flex,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
 
 import {
   ModalTrigger,
   ModalTriggerRef,
-} from '@superset-ui/core/components/ModalTrigger';
+} from '@ax-bi/ui-core/components/ModalTrigger';
 import {
   SAVE_TYPE_OVERWRITE,
   SAVE_TYPE_NEWDASHBOARD,

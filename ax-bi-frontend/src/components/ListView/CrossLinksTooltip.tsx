@@ -17,10 +17,10 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { Link } from 'react-router-dom';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 
 export type CrossLinksTooltipProps = {
   children: ReactNode;

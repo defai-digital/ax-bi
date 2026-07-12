@@ -20,8 +20,8 @@ import pandas as pd
 import pytest
 from pandas import DataFrame, to_datetime
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils.pandas_postprocessing import flatten, pivot
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils.pandas_postprocessing import flatten, pivot
 from tests.unit_tests.fixtures.dataframes import categories_df
 from tests.unit_tests.pandas_postprocessing.utils import AGGREGATES_SINGLE
 

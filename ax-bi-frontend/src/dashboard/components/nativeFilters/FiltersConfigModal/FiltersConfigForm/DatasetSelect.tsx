@@ -18,14 +18,14 @@
  */
 import { useCallback, useMemo, ReactNode } from 'react';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   JsonResponse,
   ClientErrorObject,
   getClientErrorObject,
-} from '@superset-ui/core';
-import { AsyncSelect } from '@superset-ui/core/components';
-import { cachedSupersetGet } from 'src/utils/cachedSupersetGet';
+} from '@ax-bi/ui-core';
+import { AsyncSelect } from '@ax-bi/ui-core/components';
+import { cachedAxBIGet } from 'src/utils/cachedAxBIGet';
 import {
   Dataset,
   DatasetSelectLabel,
@@ -64,7 +64,7 @@ export const loadDatasetOptions = async (
     order_column: 'table_name',
     order_direction: 'asc',
   });
-  return cachedSupersetGet({
+  return cachedAxBIGet({
     endpoint: `/api/v1/dataset/?q=${query}`,
   })
     .then((response: JsonResponse) => {

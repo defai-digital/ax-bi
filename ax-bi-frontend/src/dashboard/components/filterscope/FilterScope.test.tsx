@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { supersetTheme } from '@apache-superset/core/theme';
+import { axbiTheme } from '@ax-bi/core/theme';
 import {
   cleanup,
   render,
@@ -174,9 +174,9 @@ function getCheckboxState(name: string): CheckboxState {
   const element = screen.getByRole('link', { name });
   const svgPath = getCheckboxIcon(element).children[1].children[0].children[0];
   const fill = svgPath.getAttribute('fill');
-  return fill === supersetTheme.colorPrimary
+  return fill === axbiTheme.colorPrimary
     ? CHECKED
-    : fill === supersetTheme.colorTextSecondary
+    : fill === axbiTheme.colorTextSecondary
       ? INDETERMINATE
       : UNCHECKED;
 }

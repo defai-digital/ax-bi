@@ -25,11 +25,11 @@ from unittest.mock import patch
 import pytest
 from flask.ctx import AppContext
 
-from superset.extensions import db
-from superset.key_value.types import JsonKeyValueCodec, KeyValueResource
+from axbi.extensions import db
+from axbi.key_value.types import JsonKeyValueCodec, KeyValueResource
 
 if TYPE_CHECKING:
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.models import KeyValueEntry
 
 RESOURCE = KeyValueResource.METASTORE_CACHE
 CODEC = JsonKeyValueCodec()
@@ -40,7 +40,7 @@ VALUE = {"foo": "bar"}
 def clean_key_value_store(app_context: AppContext) -> Generator[None, None, None]:
     # The prune command commits, so a plain session rollback cannot undo its
     # effects. Explicitly empty the table around each test for isolation.
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.models import KeyValueEntry
 
     db.session.query(KeyValueEntry).delete()
     db.session.commit()  # pylint: disable=consider-using-transaction
@@ -50,7 +50,7 @@ def clean_key_value_store(app_context: AppContext) -> Generator[None, None, None
 
 
 def _add_entry(expires_on: datetime | None) -> KeyValueEntry:
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.models import KeyValueEntry
 
     entry = KeyValueEntry(
         resource=RESOURCE,
@@ -65,8 +65,8 @@ def _add_entry(expires_on: datetime | None) -> KeyValueEntry:
 def test_prune_deletes_expired_entries(
     clean_key_value_store: None,
 ) -> None:
-    from superset.key_value.commands.prune import KeyValuePruneCommand
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.commands.prune import KeyValuePruneCommand
+    from axbi.key_value.models import KeyValueEntry
 
     expired_a = _add_entry(datetime.now() - timedelta(days=1))
     expired_b = _add_entry(datetime.now() - timedelta(seconds=5))
@@ -82,8 +82,8 @@ def test_prune_deletes_expired_entries(
 def test_prune_retains_non_expired_and_no_expiry_entries(
     clean_key_value_store: None,
 ) -> None:
-    from superset.key_value.commands.prune import KeyValuePruneCommand
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.commands.prune import KeyValuePruneCommand
+    from axbi.key_value.models import KeyValueEntry
 
     future = _add_entry(datetime.now() + timedelta(days=1))
     no_expiry = _add_entry(None)
@@ -101,8 +101,8 @@ def test_prune_retains_non_expired_and_no_expiry_entries(
 def test_prune_empty_store_is_noop(
     clean_key_value_store: None,
 ) -> None:
-    from superset.key_value.commands.prune import KeyValuePruneCommand
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.commands.prune import KeyValuePruneCommand
+    from axbi.key_value.models import KeyValueEntry
 
     assert db.session.query(KeyValueEntry).count() == 0
 
@@ -115,8 +115,8 @@ def test_prune_empty_store_is_noop(
 def test_prune_skips_entry_refreshed_after_selection(
     clean_key_value_store: None,
 ) -> None:
-    from superset.key_value.commands.prune import KeyValuePruneCommand
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.commands.prune import KeyValuePruneCommand
+    from axbi.key_value.models import KeyValueEntry
 
     # Simulate the TOCTOU window: an entry is expired when prune selects it but
     # is refreshed (expires_on moved into the future) before the delete runs.
@@ -126,7 +126,7 @@ def test_prune_skips_entry_refreshed_after_selection(
     expired = _add_entry(datetime.now() - timedelta(days=1))
     db.session.commit()  # pylint: disable=consider-using-transaction
 
-    import superset.key_value.commands.prune as prune_module
+    import axbi.key_value.commands.prune as prune_module
 
     real_now = datetime.now
     state = {"refreshed": False}
@@ -151,8 +151,8 @@ def test_prune_skips_entry_refreshed_after_selection(
 def test_prune_respects_max_rows_per_run(
     clean_key_value_store: None,
 ) -> None:
-    from superset.key_value.commands.prune import KeyValuePruneCommand
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.commands.prune import KeyValuePruneCommand
+    from axbi.key_value.models import KeyValueEntry
 
     for _ in range(3):
         _add_entry(datetime.now() - timedelta(days=1))

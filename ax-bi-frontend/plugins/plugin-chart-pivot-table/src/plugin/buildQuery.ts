@@ -23,7 +23,7 @@ import {
   isPhysicalColumn,
   QueryFormColumn,
   QueryFormOrderBy,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { PivotTableQueryFormData } from '../types';
 
 export default function buildQuery(formData: PivotTableQueryFormData) {

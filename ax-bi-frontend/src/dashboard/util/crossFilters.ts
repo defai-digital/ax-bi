@@ -22,7 +22,7 @@ import {
   getChartMetadataRegistry,
   isDefined,
   NativeFilterScope,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { getChartIdsInFilterScope } from './getChartIdsInFilterScope';
 import {
   ChartConfiguration,

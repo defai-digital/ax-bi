@@ -39,9 +39,9 @@ import {
   LabelsColorMapSource,
   NativeFilterType,
   getLabelsColorMap,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { ParentSize } from '@visx/responsive';
-import Tabs from '@superset-ui/core/components/Tabs';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import DashboardGrid from 'src/dashboard/containers/DashboardGrid';
 import {
   DashboardInfo,

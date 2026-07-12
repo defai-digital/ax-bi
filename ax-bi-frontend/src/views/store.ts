@@ -62,7 +62,7 @@ import {
 import { AnyDatasourcesAction } from 'src/explore/actions/datasourcesActions';
 import { HydrateExplore } from 'src/explore/actions/hydrateExplore';
 import getBootstrapData from 'src/utils/getBootstrapData';
-import { Dataset } from '@superset-ui/chart-controls';
+import { Dataset } from '@ax-bi/chart-controls';
 import databaseReducer from 'src/database/reducers';
 
 // Some reducers don't do anything, and redux is just used to reference the initial "state".
@@ -178,9 +178,7 @@ export function setupStore({
     devTools: process.env.WEBPACK_MODE === 'development' && !disableDebugger,
     // RTK 2 requires a callback form for custom store enhancers.
     enhancers: getDefaultEnhancers =>
-      getDefaultEnhancers().concat(
-        persistSqlLabStateEnhancer as StoreEnhancer,
-      ),
+      getDefaultEnhancers().concat(persistSqlLabStateEnhancer as StoreEnhancer),
     ...overrides,
   });
 }
@@ -195,7 +193,7 @@ export type RootState = ReturnType<typeof store.getState>;
 // react-redux v8+ bump, which tightens dispatch typing — see #39927.
 //
 // AppDispatch is declared as ThunkDispatch & store.dispatch rather than
-// `typeof store.dispatch` because Superset annotates getMiddleware as
+// `typeof store.dispatch` because AxBI annotates getMiddleware as
 // ConfigureStoreOptions['middleware'], which erases the middleware tuple type
 // and leaves store.dispatch typed as Dispatch<AnyAction>. The intersection
 // restores thunk support without requiring a wider refactor of the middleware

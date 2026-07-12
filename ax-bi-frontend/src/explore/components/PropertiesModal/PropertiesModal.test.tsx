@@ -24,11 +24,11 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import fetchMock from 'fetch-mock';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import PropertiesModal, { PropertiesModalProps } from '.';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -65,7 +65,7 @@ fetchMock.get('glob:*/api/v1/chart/318*', {
     result: {
       owners: [
         {
-          first_name: 'Superset',
+          first_name: 'AxBI',
           id: 1,
           last_name: 'Admin',
         },
@@ -111,7 +111,7 @@ fetchMock.get('glob:*/api/v1/chart/related/owners?q=(filter:%27%27)', {
     count: 1,
     result: [
       {
-        text: 'Superset Admin',
+        text: 'AxBI Admin',
         value: 1,
       },
     ],

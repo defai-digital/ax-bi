@@ -24,8 +24,8 @@ import pandas as pd
 import pytest
 from werkzeug.datastructures import FileStorage
 
-from superset.commands.database.exceptions import DatabaseUploadFailed
-from superset.commands.database.uploaders.columnar_reader import (
+from axbi.commands.database.exceptions import DatabaseUploadFailed
+from axbi.commands.database.uploaders.columnar_reader import (
     ColumnarReader,
     ColumnarReaderOptions,
 )
@@ -162,8 +162,10 @@ def test_excel_reader_wrong_columns_to_read():
     # pyarrow reports string vs large_string depending on version/pandas
     msg = str(ex.value)
     assert "Parsing error: No match for FieldRef.Name(xpto)" in msg
-    assert "Name:" in msg and "Age: int64" in msg
-    assert "City:" in msg and "Birth:" in msg
+    assert "Name:" in msg
+    assert "Age: int64" in msg
+    assert "City:" in msg
+    assert "Birth:" in msg
 
 
 def test_columnar_reader_invalid_file():

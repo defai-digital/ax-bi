@@ -17,10 +17,10 @@
  * under the License.
  */
 import { Component, cloneElement, ReactElement } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 import copyTextToClipboard from 'src/utils/copy';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import withToasts from '../MessageToasts/withToasts';
 import type { CopyToClipboardProps } from './types';
 
@@ -120,7 +120,7 @@ class CopyToClip extends Component<CopyToClipboardProps> {
         {this.props.shouldShowText && this.props.text && (
           <span
             data-test="short-url"
-            css={(theme: SupersetTheme) => css`
+            css={(theme: AxBITheme) => css`
               margin-right: ${theme.sizeUnit}px;
             `}
           >

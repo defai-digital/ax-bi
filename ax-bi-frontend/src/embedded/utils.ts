@@ -17,12 +17,8 @@
  * under the License.
  */
 
-import {
-  DataMaskStateWithId,
-  JsonObject,
-  QueryFormData,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { DataMaskStateWithId, JsonObject, QueryFormData } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { isEmpty, isEqual } from 'lodash';
 import { NATIVE_FILTER_PREFIX } from 'src/dashboard/components/nativeFilters/FiltersConfigModal/utils';
 import {

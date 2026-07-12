@@ -26,8 +26,8 @@ from flask_login import AnonymousUserMixin
 from freezegun import freeze_time
 from werkzeug.local import LocalProxy
 
-from superset import security_manager
-from superset.utils.log import (
+from axbi import security_manager
+from axbi.utils.log import (
     AbstractEventLogger,
     DBEventLogger,
     get_event_logger_from_cfg_value,
@@ -84,8 +84,8 @@ class TestEventLogger(unittest.TestCase):
             ]
             assert payload["duration_ms"] >= 50
 
-    @patch("superset.db.session.add")
-    @patch("superset.utils.log.get_user_id")
+    @patch("axbi.db.session.add")
+    @patch("axbi.utils.log.get_user_id")
     @patch.object(DBEventLogger, "log")
     def test_log_with_context_resolves_local_proxy_user(
         self,
@@ -104,8 +104,8 @@ class TestEventLogger(unittest.TestCase):
         mock_session_add.assert_called_once_with(user)
         assert mock_log.call_args.args[0] == user.id
 
-    @patch("superset.db.session.add")
-    @patch("superset.utils.log.get_user_id")
+    @patch("axbi.db.session.add")
+    @patch("axbi.utils.log.get_user_id")
     @patch.object(DBEventLogger, "log")
     def test_log_with_context_ignores_unmapped_user(
         self,
@@ -147,7 +147,7 @@ class TestEventLogger(unittest.TestCase):
             ]
             assert payload["duration_ms"] >= 100
 
-    @patch("superset.utils.core.g", spec={})
+    @patch("axbi.utils.core.g", spec={})
     @freeze_time("Jan 14th, 2020", auto_tick_seconds=15)
     def test_context_manager_log(self, mock_g):
         class DummyEventLogger(AbstractEventLogger):
@@ -187,7 +187,7 @@ class TestEventLogger(unittest.TestCase):
             }
         ]
 
-    @patch("superset.utils.core.g", spec={})
+    @patch("axbi.utils.core.g", spec={})
     def test_context_manager_log_with_context(self, mock_g):
         class DummyEventLogger(AbstractEventLogger):
             def __init__(self):
@@ -237,7 +237,7 @@ class TestEventLogger(unittest.TestCase):
             }
         ]
 
-    @patch("superset.utils.core.g", spec={})
+    @patch("axbi.utils.core.g", spec={})
     def test_log_with_context_user_null(self, mock_g):
         class DummyEventLogger(AbstractEventLogger):
             def __init__(self):
@@ -296,7 +296,7 @@ class TestEventLogger(unittest.TestCase):
             ]
             assert payload["duration_ms"] >= 100
 
-    @patch("superset.db")
+    @patch("axbi.db")
     def test_curated_payload_used_when_records_empty(self, mock_db):
         """Test that curated_payload is used when records is empty (MCP pattern).
 
@@ -324,13 +324,13 @@ class TestEventLogger(unittest.TestCase):
         assert logs[0].action == "mcp_tool_call"
         assert logs[0].duration_ms == 100
         # Verify JSON contains the curated_payload data
-        from superset.utils import json as json_utils
+        from axbi.utils import json as json_utils
 
         payload = json_utils.loads(logs[0].json)
         assert payload["tool"] == "list_charts"
         assert payload["success"] is True
 
-    @patch("superset.db")
+    @patch("axbi.db")
     def test_records_takes_precedence_over_curated_payload(self, mock_db):
         """Test that records takes precedence over curated_payload."""
         logger = DBEventLogger()
@@ -351,7 +351,7 @@ class TestEventLogger(unittest.TestCase):
         mock_db.session.bulk_save_objects.assert_called_once()
         logs = mock_db.session.bulk_save_objects.call_args[0][0]
         assert len(logs) == 1
-        from superset.utils import json as json_utils
+        from axbi.utils import json as json_utils
 
         payload = json_utils.loads(logs[0].json)
         assert payload.get("from_records") is True

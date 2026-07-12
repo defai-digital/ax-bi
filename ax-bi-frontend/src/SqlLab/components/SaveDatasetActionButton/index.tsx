@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Button } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Button } from '@ax-bi/ui-core/components';
 
 interface SaveDatasetActionButtonProps {
   setShowSave: (arg0: boolean) => void;

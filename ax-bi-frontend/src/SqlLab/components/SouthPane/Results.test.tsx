@@ -18,12 +18,12 @@
  */
 import { render } from 'spec/helpers/testing-library';
 import { initialState, table, defaultQueryEditor } from 'src/SqlLab/fixtures';
-import { denormalizeTimestamp } from '@superset-ui/core';
+import { denormalizeTimestamp } from '@ax-bi/ui-core';
 import { LOCALSTORAGE_MAX_QUERY_AGE_MS } from 'src/SqlLab/constants';
 import Results from './Results';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: (flag: string) => flag === 'SQLLAB_BACKEND_PERSISTENCE',
 }));
 

@@ -17,18 +17,18 @@
 from typing import Any
 from unittest import mock
 
-from superset.async_events.cache_backend import (
+from axbi.async_events.cache_backend import (
     RedisCacheBackend,
     RedisSentinelCacheBackend,
 )
-from superset.extensions import async_query_manager, async_query_manager_factory
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.extensions import async_query_manager, async_query_manager_factory
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.test_app import app
 
 
-class TestAsyncEventApi(SupersetTestCase):
+class TestAsyncEventApi(AxBITestCase):
     UUID = "943c920-32a5-412a-977d-b8e47d36f5a4"
 
     def fetch_events(self, last_id: str | None = None):

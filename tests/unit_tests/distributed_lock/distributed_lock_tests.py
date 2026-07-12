@@ -26,14 +26,14 @@ from freezegun import freeze_time
 from sqlalchemy.orm import Session, sessionmaker
 
 # Force module loading before tests run so patches work correctly
-import superset.commands.distributed_lock.acquire as acquire_module
-import superset.commands.distributed_lock.release as release_module
-from superset import db
-from superset.distributed_lock import DistributedLock
-from superset.distributed_lock.types import LockValue
-from superset.distributed_lock.utils import get_key
-from superset.exceptions import AcquireDistributedLockFailedException
-from superset.key_value.types import JsonKeyValueCodec
+import axbi.commands.distributed_lock.acquire as acquire_module
+import axbi.commands.distributed_lock.release as release_module
+from axbi import db
+from axbi.distributed_lock import DistributedLock
+from axbi.distributed_lock.types import LockValue
+from axbi.distributed_lock.utils import get_key
+from axbi.exceptions import AcquireDistributedLockFailedException
+from axbi.key_value.types import JsonKeyValueCodec
 
 LOCK_VALUE: LockValue = {"value": True}
 MAIN_KEY = get_key("ns", a=1, b=2)
@@ -41,7 +41,7 @@ OTHER_KEY = get_key("ns2", a=1, b=2)
 
 
 def _get_lock(key: UUID, session: Session) -> Any:
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.models import KeyValueEntry
 
     entry = db.session.query(KeyValueEntry).filter_by(uuid=key).first()
     if entry is None or entry.is_expired():
@@ -53,7 +53,7 @@ def _get_lock(key: UUID, session: Session) -> Any:
 def _get_other_session() -> Session:
     # This session is used to simulate what another worker will find in the metastore
     # during the locking process.
-    from superset import db
+    from axbi import db
 
     bind = db.session.get_bind()
     SessionMaker = sessionmaker(bind=bind)  # noqa: N806
@@ -177,7 +177,7 @@ def test_distributed_lock_custom_ttl() -> None:
 
 def test_distributed_lock_default_ttl(app_context: None) -> None:
     """Test Redis lock uses default TTL when not specified."""
-    from superset.commands.distributed_lock.base import get_default_lock_ttl
+    from axbi.commands.distributed_lock.base import get_default_lock_ttl
 
     mock_redis = MagicMock()
     mock_redis.set.return_value = True

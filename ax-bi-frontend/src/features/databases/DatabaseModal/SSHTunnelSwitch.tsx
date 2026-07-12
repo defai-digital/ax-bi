@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { SupersetTheme } from '@apache-superset/core/theme';
-import { Switch } from '@superset-ui/core/components/Switch';
-import { InfoTooltip } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { AxBITheme } from '@ax-bi/core/theme';
+import { Switch } from '@ax-bi/ui-core/components/Switch';
+import { InfoTooltip } from '@ax-bi/ui-core/components';
 import { isEmpty } from 'lodash';
 import { infoTooltip, toggleStyle } from './styles';
 import { SwitchProps } from '../types';
@@ -76,7 +76,7 @@ const SSHTunnelSwitch = ({
   }, [changeMethods, db?.parameters?.ssh, db?.ssh_tunnel, isSSHTunnelEnabled]);
 
   return isSSHTunnelEnabled ? (
-    <div css={(theme: SupersetTheme) => infoTooltip(theme)}>
+    <div css={(theme: AxBITheme) => infoTooltip(theme)}>
       <Switch
         checked={isChecked}
         onChange={handleOnChange}

@@ -41,9 +41,9 @@ import {
   TimeseriesDataRecord,
   tooltipHtml,
   ValueFormatter,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { getOriginalSeries } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { getOriginalSeries } from '@ax-bi/chart-controls';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { SeriesOption } from 'echarts';
 import {

@@ -20,27 +20,27 @@ requires = ["setuptools>=82.0.1", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "apache_superset"
-description = "A modern, enterprise-ready business intelligence web application"
+name = "ax-bi"
+description = "AX BI is a GenAI-native business intelligence platform"
 readme = "README.md"
 dynamic = ["version", "scripts", "entry-points"]
 requires-python = ">=3.12"
 license = "Apache-2.0"
 license-files = ["LICENSE.txt"]
 authors = [
-    { name = "Apache Software Foundation", email = "dev@superset.apache.org" },
+    { name = "DEFAI Private Limited", email = "engineering@defai.digital" },
 ]
 classifiers = [
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    # no bounds for apache-superset-core until we have a stable version
-    "apache-superset-core",
+    # no bounds for ax-bi-core until we have a stable version
+    "ax-bi-core",
     "backoff>=1.8.0",
-    # cachetools is used directly by ``superset.db_engine_specs.aws_iam`` (TTLCache).
+    # cachetools is used directly by ``axbi.db_engine_specs.aws_iam`` (TTLCache).
     # It used to be installed transitively via ``google-auth`` (<2.53), but
-    # ``google-auth`` 2.53+ dropped it, so Superset must declare it
-    # explicitly to keep fresh ``pip install apache-superset`` working
+    # ``google-auth`` 2.53+ dropped it, so AxBI must declare it
+    # explicitly to keep fresh ``pip install ax-bi`` working
     # without the ``base.txt`` lock file (#40962).
     "cachetools>=7.1.4, <8",
     "celery>=5.6.3, <6.0.0",
@@ -74,9 +74,9 @@ dependencies = [
     "jsonpath-ng>=1.8.0, <2",
     "Mako>=1.2.2",
     "markdown>=3.10.2",
-    # marshmallow 4 compatibility: see superset/marshmallow_compatibility.py for a
+    # marshmallow 4 compatibility: see axbi/marshmallow_compatibility.py for a
     # Flask-AppBuilder workaround. Tracking issue:
-    # https://github.com/apache/superset/issues/33162
+    # https://github.com/defai-digital/ax-bi/issues/33162
     "marshmallow>=3.0, <5",
     "marshmallow-union>=0.1.15.post1",
     "msgpack>=1.2.0, <1.3",
@@ -96,9 +96,9 @@ dependencies = [
     "pydantic>=2.13.4",
     "pyparsing>=3.3.2, <4",
     "python-dateutil",
-    "python-dotenv", # optional dependencies for Flask but required for Superset, see https://flask.palletsprojects.com/en/stable/installation/#optional-dependencies
+    "python-dotenv", # optional dependencies for Flask but required for AxBI, see https://flask.palletsprojects.com/en/stable/installation/#optional-dependencies
     "pygeohash",
-    "pyarrow>=24.0.0, <25", # before upgrading pyarrow, check that all db dependencies support this, see e.g. https://github.com/apache/superset/pull/34693
+    "pyarrow>=24.0.0, <25", # before upgrading pyarrow, check that all db dependencies support this, see e.g. https://github.com/defai-digital/ax-bi/pull/34693
     "pyyaml>=6.0.3, <7.0.0",
     "PyJWT>=2.4.0, <3.0",
     "redis>=8.0.0, <9.0",
@@ -135,7 +135,7 @@ clickhouse = ["clickhouse-connect>=1.4.1, <2.0"]
 cockroachdb = ["cockroachdb>=0.3.5, <0.4"]
 crate = ["sqlalchemy-cratedb>=0.43.1, <1"]
 d1 = [
-    "superset-engine-d1>=0.1.0",
+    "axbi-engine-d1>=0.1.0",
     "sqlalchemy-d1>=0.1.0",
     "dbapi-d1>=0.1.0",
 ]
@@ -178,7 +178,7 @@ kusto = ["sqlalchemy-kusto>=3.1.2, <4"]
 kylin = ["kylinpy>=2.8.4, <2.9"]
 mssql = ["pymssql>=2.3.13, <3"]
 # motherduck is an alias for duckdb - MotherDuck works via the duckdb driver
-motherduck = ["apache-superset[duckdb]"]
+motherduck = ["ax-bi[duckdb]"]
 mysql = ["mysqlclient>=2.2.8, <3"]
 ocient = [
     "sqlalchemy-ocient>=3.0.0",
@@ -218,8 +218,8 @@ doris = ["pydoris>=1.2.0, <2.0.0"]
 oceanbase = ["oceanbase_py>=0.0.1.2"]
 ydb = ["ydb-sqlalchemy>=0.1.22", "ydb-sqlglot-plugin>=0.2.8"]
 development = [
-    # no bounds for apache-superset-extensions-cli until a stable version
-    "apache-superset-extensions-cli",
+    # no bounds for ax-bi-extensions-cli until a stable version
+    "ax-bi-extensions-cli",
     "boto3",
     "docker",
     "flask-testing",
@@ -247,15 +247,15 @@ development = [
 ]
 
 [project.urls]
-homepage = "https://superset.apache.org/"
-documentation = "https://superset.apache.org/docs/intro"
+homepage = "https://github.com/defai-digital/ax-bi/"
+documentation = "https://github.com/defai-digital/ax-bi/docs/intro"
 
 
 [tool.isort]
 combine_as_imports = true
 include_trailing_comma = true
 line_length = 88
-known_first_party = "superset, apache-superset-core, apache-superset-extensions-cli"
+known_first_party = "axbi, axbi_core, axbi_extensions_cli"
 known_third_party = "alembic, apispec, backoff, celery, click, colorama, cron_descriptor, croniter, cryptography, dateutil, deprecation, flask, flask_appbuilder, flask_babel, flask_caching, flask_compress, flask_jwt_extended, flask_login, flask_migrate, flask_sqlalchemy, flask_talisman, flask_testing, flask_wtf, freezegun, geohash, geopy, holidays, humanize, isodate, jinja2, jwt, markdown, markupsafe, marshmallow, marshmallow-union, msgpack, nh3, numpy, orjson, pandas, parameterized, parsedatetime, pgsanity, polyline, rison, progress, pyarrow, sqlalchemy_bigquery, pyhive, pyparsing, pytest, pytest_mock, pytz, redis, requests, selenium, setuptools, shillelagh, simplejson, slack, sqlalchemy, sqlalchemy_utils, syntaqlite, typing_extensions, urllib3, werkzeug, wtforms, wtforms_json, yaml"
 multi_line_output = 3
 order_by_type = false
@@ -270,7 +270,7 @@ no_implicit_optional = true
 warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = "superset.migrations.versions.*"
+module = "axbi.migrations.versions.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
@@ -286,24 +286,24 @@ module = "cryptography.*"
 ignore_errors = true
 follow_imports = "skip"
 
-# superset-core is installed as editable locally but CI may not expose types
+# ax-bi-core is installed as editable locally but CI may not expose types
 # This ensures consistent behavior between local dev and CI
 [[tool.mypy.overrides]]
-module = "superset_core.*"
+module = "axbi_core.*"
 follow_imports = "skip"
 
 # Disable warn_unused_ignores for modules with dynamic type assignments
-# These type: ignore comments are needed in CI where superset-core types aren't visible
+# These type: ignore comments are needed in CI where ax-bi-core types aren't visible
 [[tool.mypy.overrides]]
 module = [
-    "superset.core.api.core_api_injection",
-    "superset.security.manager",
-    "superset.daos.base",
-    "superset.connectors.sqla.models",
-    "superset.tags.filters",
-    "superset.commands.security.update",
-    "superset.commands.security.create",
-    "superset.semantic_layers.api",
+    "axbi.core.api.core_api_injection",
+    "axbi.security.manager",
+    "axbi.daos.base",
+    "axbi.connectors.sqla.models",
+    "axbi.tags.filters",
+    "axbi.commands.security.update",
+    "axbi.commands.security.create",
+    "axbi.semantic_layers.api",
 ]
 warn_unused_ignores = false
 
@@ -390,18 +390,18 @@ unfixable = []
 dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.lint.per-file-ignores]
-"superset/mcp_service/app.py" = ["S608", "E501"]  # LLM instruction text: SQL examples (S608) and long lines in multiline string (E501)
-"superset/mcp_service/*/tool/list_*.py" = ["E501"]  # LLM docstring examples show full request shapes which exceed line length
+"axbi/mcp_service/app.py" = ["S608", "E501"]  # LLM instruction text: SQL examples (S608) and long lines in multiline string (E501)
+"axbi/mcp_service/*/tool/list_*.py" = ["E501"]  # LLM docstring examples show full request shapes which exceed line length
 "scripts/*" = ["TID251"]
 "setup.py" = ["TID251"]
-"superset/config.py" = ["TID251"]
-"superset/cli/update.py" = ["TID251"]
-"superset/key_value/types.py" = ["TID251"]
-"superset/translations/utils.py" = ["TID251"]
-"superset/extensions/__init__.py" = ["TID251"]
-"superset/utils/json.py" = ["TID251"]
+"axbi/config.py" = ["TID251"]
+"axbi/cli/update.py" = ["TID251"]
+"axbi/key_value/types.py" = ["TID251"]
+"axbi/translations/utils.py" = ["TID251"]
+"axbi/extensions/__init__.py" = ["TID251"]
+"axbi/utils/json.py" = ["TID251"]
 "docker/*" = ["I"]  # Docker config files have non-standard imports that vary by environment
-"superset/db_engine_specs/lib.py" = ["E501"]  # Database config file with long description strings
+"axbi/db_engine_specs/lib.py" = ["E501"]  # Database config file with long description strings
 
 [tool.ruff.lint.isort]
 case-sensitive = false
@@ -420,7 +420,7 @@ section-order = [
 ]
 
 [tool.ruff.lint.flake8-tidy-imports]
-banned-api = { json = { msg = "Use superset.utils.json or superset.utils.json_fast instead" }, simplejson = { msg = "Use superset.utils.json or superset.utils.json_fast instead" } }
+banned-api = { json = { msg = "Use axbi.utils.json or axbi.utils.json_fast instead" }, simplejson = { msg = "Use axbi.utils.json or axbi.utils.json_fast instead" } }
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.
@@ -488,5 +488,5 @@ paramiko = "5"  # GPL
 pyxlsb = "1"  # GPL
 
 [tool.uv.sources]
-apache-superset-core = { path = "./superset-core", editable = true }
-apache-superset-extensions-cli = { path = "./superset-extensions-cli", editable = true }
+ax-bi-core = { path = "./ax-bi-core", editable = true }
+ax-bi-extensions-cli = { path = "./ax-bi-extensions-cli", editable = true }

@@ -18,11 +18,11 @@
  */
 import { FC, useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
-import { EmptyState } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
+import { EmptyState } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
 
 import { SqlLabRootState } from 'src/SqlLab/types';
 import ResultSet from '../ResultSet';

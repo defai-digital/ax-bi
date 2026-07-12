@@ -30,7 +30,7 @@ import {
   evalExpression,
   FormulaAnnotationLayer,
   isTableAnnotationLayer,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { EchartsTimeseriesChartProps } from '../types';
 import { EchartsMixedTimeseriesProps } from '../MixedTimeseries/types';
 

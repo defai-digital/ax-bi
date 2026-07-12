@@ -20,7 +20,7 @@
 import {
   getMapboxApiKeyFromBootstrap,
   hasMapboxApiKey as hasBootstrapMapboxApiKey,
-} from '@superset-ui/core/utils/mapStyles';
+} from '@ax-bi/ui-core/utils/mapStyles';
 
 export function getMapboxApiKey(): string {
   return getMapboxApiKeyFromBootstrap();

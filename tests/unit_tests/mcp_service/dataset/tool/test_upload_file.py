@@ -27,13 +27,13 @@ import pytest
 from fastmcp import Client
 from openpyxl import Workbook
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.dataset.schemas import DatasetError
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.dataset.schemas import DatasetError
 from tests.unit_tests.conftest import with_feature_flags
 
 # Import the module directly for patching
 upload_file_module = importlib.import_module(
-    "superset.mcp_service.dataset.tool.upload_file"
+    "axbi.mcp_service.dataset.tool.upload_file"
 )
 
 
@@ -127,7 +127,7 @@ def mcp_server():
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -670,7 +670,7 @@ class TestUploadFileSchema:
     """Tests for the UploadFileRequest Pydantic schema."""
 
     def test_valid_request(self) -> None:
-        from superset.mcp_service.dataset.schemas import UploadFileRequest
+        from axbi.mcp_service.dataset.schemas import UploadFileRequest
 
         req = UploadFileRequest(
             file_content="dGVzdA==",
@@ -680,7 +680,7 @@ class TestUploadFileSchema:
         assert req.table_name is None
 
     def test_custom_table_name(self) -> None:
-        from superset.mcp_service.dataset.schemas import UploadFileRequest
+        from axbi.mcp_service.dataset.schemas import UploadFileRequest
 
         req = UploadFileRequest(
             file_content="dGVzdA==",
@@ -692,7 +692,7 @@ class TestUploadFileSchema:
     def test_missing_required_fields(self) -> None:
         from pydantic import ValidationError
 
-        from superset.mcp_service.dataset.schemas import UploadFileRequest
+        from axbi.mcp_service.dataset.schemas import UploadFileRequest
 
         with pytest.raises(ValidationError):
             UploadFileRequest()
@@ -700,7 +700,7 @@ class TestUploadFileSchema:
     def test_empty_filename_rejected(self) -> None:
         from pydantic import ValidationError
 
-        from superset.mcp_service.dataset.schemas import UploadFileRequest
+        from axbi.mcp_service.dataset.schemas import UploadFileRequest
 
         with pytest.raises(ValidationError):
             UploadFileRequest(file_content="dGVzdA==", filename="")

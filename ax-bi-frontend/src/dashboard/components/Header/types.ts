@@ -18,7 +18,7 @@
  */
 
 import { type Dispatch, type SetStateAction } from 'react';
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import {
   DashboardInfo as DashboardInfoType,
   Layout,

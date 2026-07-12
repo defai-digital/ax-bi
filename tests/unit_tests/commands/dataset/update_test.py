@@ -21,7 +21,7 @@ import pytest
 from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 
-from superset.commands.dataset.exceptions import (
+from axbi.commands.dataset.exceptions import (
     DatabaseNotFoundValidationError,
     DatasetExistsValidationError,
     DatasetForbiddenError,
@@ -29,16 +29,16 @@ from superset.commands.dataset.exceptions import (
     DatasetNotFoundError,
     MultiCatalogDisabledValidationError,
 )
-from superset.commands.dataset.update import (
+from axbi.commands.dataset.update import (
     DEFAULT_COLUMNS_FOLDER_UUID,
     DEFAULT_METRICS_FOLDER_UUID,
     UpdateDatasetCommand,
     validate_folders,
 )
-from superset.commands.exceptions import OwnersNotFoundValidationError
-from superset.datasets.schemas import FolderSchema
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
+from axbi.commands.exceptions import OwnersNotFoundValidationError
+from axbi.datasets.schemas import FolderSchema
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
 from tests.unit_tests.conftest import with_feature_flags
 
 
@@ -46,7 +46,7 @@ def test_update_dataset_not_found(mocker: MockerFixture) -> None:
     """
     Test updating an unexisting ID raises a `DatasetNotFoundError`.
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mock_dataset_dao.find_by_id.return_value = None
 
     with pytest.raises(DatasetNotFoundError):
@@ -57,14 +57,14 @@ def test_update_dataset_forbidden(mocker: MockerFixture) -> None:
     """
     Test try updating a dataset without permission raises a `DatasetForbiddenError`.
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mock_dataset_dao.find_by_id.return_value = mocker.MagicMock()
 
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_ownership",
-        side_effect=SupersetSecurityException(
-            SupersetError(
-                error_type=SupersetErrorType.MISSING_OWNERSHIP_ERROR,
+        "axbi.commands.dataset.update.security_manager.raise_for_ownership",
+        side_effect=AxBISecurityException(
+            AxBIError(
+                error_type=AxBIErrorType.MISSING_OWNERSHIP_ERROR,
                 message="Sample message",
                 level=ErrorLevel.ERROR,
             )
@@ -79,7 +79,7 @@ def test_update_dataset_sql_authorized_schema(mocker: MockerFixture) -> None:
     """
     Test that updating a dataset with SQL works when user has schema access.
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mock_database = mocker.MagicMock()
     mock_database.id = 1
     mock_database.get_default_catalog.return_value = "catalog"
@@ -99,15 +99,15 @@ def test_update_dataset_sql_authorized_schema(mocker: MockerFixture) -> None:
 
     # Mock successful ownership check
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_ownership",
+        "axbi.commands.dataset.update.security_manager.raise_for_ownership",
     )
 
     # Mock security manager methods for owner computation
-    mocker.patch("superset.commands.utils.security_manager.is_admin", return_value=True)
+    mocker.patch("axbi.commands.utils.security_manager.is_admin", return_value=True)
 
     # Mock security manager to allow access to the schema
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_access",
+        "axbi.commands.dataset.update.security_manager.raise_for_access",
     )
 
     # Update dataset with SQL - should work when user has access
@@ -124,7 +124,7 @@ def test_update_dataset_sql_unauthorized_schema(mocker: MockerFixture) -> None:
     """
     Test that updating a dataset with SQL to an unauthorized schema raises an error.
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mock_database = mocker.MagicMock()
     mock_database.id = 1
     mock_database.get_default_catalog.return_value = "catalog"
@@ -143,18 +143,18 @@ def test_update_dataset_sql_unauthorized_schema(mocker: MockerFixture) -> None:
 
     # Mock successful ownership check
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_ownership",
+        "axbi.commands.dataset.update.security_manager.raise_for_ownership",
     )
 
     # Mock security manager methods for owner computation
-    mocker.patch("superset.commands.utils.security_manager.is_admin", return_value=True)
+    mocker.patch("axbi.commands.utils.security_manager.is_admin", return_value=True)
 
     # Mock security manager to raise error for SQL schema access
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_access",
-        side_effect=SupersetSecurityException(
-            SupersetError(
-                error_type=SupersetErrorType.MISSING_OWNERSHIP_ERROR,
+        "axbi.commands.dataset.update.security_manager.raise_for_access",
+        side_effect=AxBISecurityException(
+            AxBIError(
+                error_type=AxBIErrorType.MISSING_OWNERSHIP_ERROR,
                 message="You don't have access to the 'restricted_schema' schema",
                 level=ErrorLevel.ERROR,
             )
@@ -208,13 +208,13 @@ def test_update_dataset_validation_errors(
     """
     Test validation errors for the `UpdateDatasetCommand`.
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_ownership",
+        "axbi.commands.dataset.update.security_manager.raise_for_ownership",
     )
-    mocker.patch("superset.commands.utils.security_manager.is_admin", return_value=True)
+    mocker.patch("axbi.commands.utils.security_manager.is_admin", return_value=True)
     mocker.patch(
-        "superset.commands.utils.security_manager.get_user_by_id", return_value=None
+        "axbi.commands.utils.security_manager.get_user_by_id", return_value=None
     )
     mock_database = mocker.MagicMock()
     mock_database.id = 1
@@ -277,13 +277,13 @@ def test_update_dataset_rejects_malicious_expression(
     same validator as adhoc SQL fields, and command-level validation
     surfaces the parser's verdict as a field-level ``ValidationError``.
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_ownership",
+        "axbi.commands.dataset.update.security_manager.raise_for_ownership",
     )
-    mocker.patch("superset.commands.utils.security_manager.is_admin", return_value=True)
+    mocker.patch("axbi.commands.utils.security_manager.is_admin", return_value=True)
     mocker.patch(
-        "superset.commands.utils.security_manager.get_user_by_id", return_value=None
+        "axbi.commands.utils.security_manager.get_user_by_id", return_value=None
     )
     mock_database = mocker.MagicMock()
     mock_database.id = 1
@@ -322,13 +322,13 @@ def test_update_dataset_accepts_benign_expression(mocker: MockerFixture) -> None
     invoke ``validate()`` directly to isolate the validator from the
     rest of the run-path (commit, audit, etc.).
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_ownership",
+        "axbi.commands.dataset.update.security_manager.raise_for_ownership",
     )
-    mocker.patch("superset.commands.utils.security_manager.is_admin", return_value=True)
+    mocker.patch("axbi.commands.utils.security_manager.is_admin", return_value=True)
     mocker.patch(
-        "superset.commands.utils.security_manager.get_user_by_id", return_value=None
+        "axbi.commands.utils.security_manager.get_user_by_id", return_value=None
     )
     mock_database = mocker.MagicMock()
     mock_database.id = 1
@@ -363,13 +363,13 @@ def test_update_dataset_accepts_jinja_expression(mocker: MockerFixture) -> None:
     context, so the parser-based gate is bypassed; the same validator
     re-runs on the rendered SQL at query time.
     """
-    mock_dataset_dao = mocker.patch("superset.commands.dataset.update.DatasetDAO")
+    mock_dataset_dao = mocker.patch("axbi.commands.dataset.update.DatasetDAO")
     mocker.patch(
-        "superset.commands.dataset.update.security_manager.raise_for_ownership",
+        "axbi.commands.dataset.update.security_manager.raise_for_ownership",
     )
-    mocker.patch("superset.commands.utils.security_manager.is_admin", return_value=True)
+    mocker.patch("axbi.commands.utils.security_manager.is_admin", return_value=True)
     mocker.patch(
-        "superset.commands.utils.security_manager.get_user_by_id", return_value=None
+        "axbi.commands.utils.security_manager.get_user_by_id", return_value=None
     )
     mock_database = mocker.MagicMock()
     mock_database.id = 1

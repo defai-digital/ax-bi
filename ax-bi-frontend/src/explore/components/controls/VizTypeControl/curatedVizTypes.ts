@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { VizType } from '@superset-ui/core';
+import { VizType } from '@ax-bi/ui-core';
 
 /**
  * Default chart types shown first when CURATED_VIZ_GALLERY is enabled.

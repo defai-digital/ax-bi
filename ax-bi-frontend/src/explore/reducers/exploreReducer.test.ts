@@ -19,7 +19,7 @@
 
 import exploreReducer, { ExploreState } from './exploreReducer';
 import { setStashFormData } from '../actions/exploreActions';
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 
 test('reset hiddenFormData on SET_STASH_FORM_DATA', () => {
   const initialState: ExploreState = {

@@ -19,10 +19,10 @@
 /* eslint global-require: 0 */
 import $ from 'jquery';
 import {
-  SupersetClient,
+  AxBIClient,
   getClientErrorObject,
   ClientErrorObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import setupErrorMessages from 'src/setup/setupErrorMessages';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -46,7 +46,7 @@ function showApiMessage(resp: ClientErrorObject) {
 }
 
 function toggleCheckbox(apiUrlPrefix: string, selector: string) {
-  SupersetClient.get({
+  AxBIClient.get({
     endpoint: apiUrlPrefix + ($(selector)[0] as HTMLInputElement).checked,
   })
     .then(() => undefined)
@@ -80,7 +80,7 @@ export default function setupApp() {
       >,
     ) {
       ev.preventDefault();
-      SupersetClient.get({
+      AxBIClient.get({
         url: ev.currentTarget.href,
         parseMethod: null,
       }).then(() => {

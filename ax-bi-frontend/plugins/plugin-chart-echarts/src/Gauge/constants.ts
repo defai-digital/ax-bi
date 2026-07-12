@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { AxBITheme } from '@ax-bi/core/theme';
 import type { GaugeSeriesOption } from 'echarts/charts';
 
 export const defaultGaugeSeriesOption = (
-  theme: SupersetTheme,
+  theme: AxBITheme,
 ): GaugeSeriesOption => ({
   splitLine: {
     lineStyle: {

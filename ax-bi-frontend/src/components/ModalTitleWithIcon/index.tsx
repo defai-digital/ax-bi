@@ -17,9 +17,9 @@
  * under the License.
  */
 import { isValidElement, cloneElement } from 'react';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Typography, Icons, TitleProps } from '@superset-ui/core/components';
-import type { IconType } from '@superset-ui/core/components/Icons/types';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Typography, Icons, TitleProps } from '@ax-bi/ui-core/components';
+import type { IconType } from '@ax-bi/ui-core/components/Icons/types';
 
 type ModalTitleWithIconProps = Omit<TitleProps, 'title'> & {
   isEditMode?: boolean;

@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
 import {
   useCallback,
   useEffect,
@@ -28,7 +28,7 @@ import {
   ReactNode,
 } from 'react';
 import cx from 'classnames';
-import TableCollection from '@superset-ui/core/components/TableCollection';
+import TableCollection from '@ax-bi/ui-core/components/TableCollection';
 import BulkTagModal from 'src/features/tags/BulkTagModal';
 import {
   Button,
@@ -38,7 +38,7 @@ import {
   Loading,
   Pagination,
   type EmptyStateProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import CardCollection from './CardCollection';
 import FilterControls from './Filters';
 import { CardSortSelect } from './CardSortSelect';
@@ -57,7 +57,7 @@ const ListViewStyles = styled.div`
     background-color: ${theme.colorBgLayout};
     padding-top: ${theme.paddingXS}px;
 
-    .superset-list-view {
+    .axbi-list-view {
       text-align: left;
       border-radius: 4px 0;
       margin: 0 ${theme.sizeUnit * 4}px;
@@ -448,7 +448,7 @@ export function ListView<T extends object = any>({
           onHide={() => setShowBulkTagModal(false)}
         />
       )}
-      <div data-test={className} className={`superset-list-view ${className} `}>
+      <div data-test={className} className={`axbi-list-view ${className} `}>
         <div className="header">
           {cardViewEnabled && (
             <ViewModeToggle mode={viewMode} setMode={setViewMode} />

@@ -18,7 +18,7 @@
  */
 /* eslint-disable no-param-reassign */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   AppSection,
   DataMask,
@@ -27,10 +27,10 @@ import {
   getColumnLabel,
   JsonObject,
   finestTemporalGrainFormatter,
-} from '@superset-ui/core';
-import { tn } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { tn } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
 import { debounce, isUndefined } from 'lodash';
 import { useImmerReducer } from 'use-immer';
 import {
@@ -40,11 +40,11 @@ import {
   Space,
   Constants,
   Input,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   hasOption,
   propertyComparator,
-} from '@superset-ui/core/components/Select/utils';
+} from '@ax-bi/ui-core/components/Select/utils';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { getDataRecordFormatter, getSelectExtraFormData } from '../../utils';
 import { FilterPluginStyle, StatusMessage } from '../common';

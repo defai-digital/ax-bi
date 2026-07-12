@@ -27,7 +27,7 @@ import {
   getChartMetadataRegistry,
   ChartMetadata,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import ChartContainerComponent from 'src/explore/components/ExploreChartPanel';
 import { setItem, LocalStorageKeys } from 'src/utils/localStorageHelpers';
 
@@ -59,7 +59,7 @@ const createProps = (overrides = {}) => ({
       adhoc_filters: [],
       row_limit: 10000,
       groupby: null,
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
       label_colors: {},
       link_length: '25',
       x_axis_label: 'age',

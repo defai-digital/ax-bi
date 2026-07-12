@@ -17,16 +17,16 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { SupersetTheme, css, styled } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { AxBITheme, css, styled } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import {
   isFeatureEnabled,
   FeatureFlag,
   getChartMetadataRegistry,
   JsonResponse,
-  SupersetClient,
+  AxBIClient,
   isMatrixifyEnabled,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { useState, useMemo, useCallback } from 'react';
 import rison from 'rison';
 import { uniqBy } from 'lodash';
@@ -52,7 +52,7 @@ import {
   InfoTooltip,
   Loading,
   type LabeledValue,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   FacePile,
   ImportModal as ImportModelsModal,
@@ -73,7 +73,7 @@ import { dangerouslyGetItemDoNotUse } from 'src/utils/localStorageHelpers';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import PropertiesModal from 'src/explore/components/PropertiesModal';
 import Chart from 'src/types/Chart';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
 import { TagTypeEnum } from 'src/components/Tag/TagType';
 import { loadTags } from 'src/components/Tag/utils';
@@ -139,7 +139,7 @@ const createFetchDatasets = async (
     ...filters,
   });
 
-  const { json = {} } = await SupersetClient.get({
+  const { json = {} } = await AxBIClient.get({
     endpoint: `/api/v1/dataset/?q=${queryParams}`,
   });
 
@@ -271,7 +271,7 @@ function ChartList(props: ChartListProps) {
   );
 
   function handleBulkChartDelete(chartsToDelete: Chart[]) {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/chart/?q=${rison.encode(
         chartsToDelete.map(({ id }) => id),
       )}`,
@@ -310,7 +310,7 @@ function ChartList(props: ChartListProps) {
         page_size: pageSize,
         ...filters,
       });
-      const response: void | JsonResponse = await SupersetClient.get({
+      const response: void | JsonResponse = await AxBIClient.get({
         endpoint: `/api/v1/dashboard/?q=${queryParams}`,
       }).catch(() =>
         addDangerToast(t('An error occurred while fetching dashboards')),
@@ -397,7 +397,7 @@ function ChartList(props: ChartListProps) {
             {registry.get(vizType)?.name || vizType}
             {formData && isMatrixifyEnabled(formData) && (
               <span
-                css={(theme: SupersetTheme) => css`
+                css={(theme: AxBITheme) => css`
                   margin-left: ${theme.marginXS}px;
                 `}
               >

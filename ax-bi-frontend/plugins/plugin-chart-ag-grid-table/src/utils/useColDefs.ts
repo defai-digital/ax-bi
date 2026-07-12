@@ -17,13 +17,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { ColDef } from '@superset-ui/core/components/ThemedAgGridReact';
+import { t } from '@ax-bi/core/translation';
+import { ColDef } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { useCallback, useMemo } from 'react';
-import { DataRecord, DataRecordValue, JsonObject } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { useTheme } from '@apache-superset/core/theme';
-import { ColorFormatters } from '@superset-ui/chart-controls';
+import { DataRecord, DataRecordValue, JsonObject } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { useTheme } from '@ax-bi/core/theme';
+import { ColorFormatters } from '@ax-bi/chart-controls';
 import { extent as d3Extent, max as d3Max } from 'd3-array';
 import {
   BasicColorFormatterType,

@@ -16,10 +16,10 @@
 # under the License.
 from importlib import import_module
 
-from superset.utils import json
+from axbi.utils import json
 
 better_filters = import_module(
-    "superset.migrations.versions.2018-12-11_22-03_fb13d49b72f9_better_filters",
+    "axbi.migrations.versions.2018-12-11_22-03_fb13d49b72f9_better_filters",
 )
 Slice = better_filters.Slice
 upgrade_slice = better_filters.upgrade_slice

@@ -18,8 +18,8 @@
  */
 
 import { forwardRef } from 'react';
-import { css } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { css } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { getFilterValueForDisplay } from 'src/dashboard/components/nativeFilters/utils';
 import {
   FilterValue,

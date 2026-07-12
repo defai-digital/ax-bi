@@ -146,7 +146,7 @@ def introspect_models() -> dict[str, list[dict[str, Any]]]:
     --------
     Dict[str, List[Dict[str, Any]]]: data structure for jinja2 template
     """
-    from superset import db
+    from axbi import db
 
     data: dict[str, list[dict[str, Any]]] = defaultdict(list)
     seen_models: set[str] = set()
@@ -200,7 +200,7 @@ def erd(output: str | None = None) -> None:
     path = os.path.dirname(__file__)
     output = output or os.path.join(path, "erd.puml")
 
-    from superset.app import create_app
+    from axbi.app import create_app
 
     app = create_app()
     with app.app_context():

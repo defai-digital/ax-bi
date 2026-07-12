@@ -32,7 +32,7 @@ export class EditDatasetModal extends Modal {
     UNLOCK_ICON: '[data-test="unlock"]',
   };
 
-  // FAST_DEBOUNCE in @superset-ui/core is 250 ms; pad slightly so the
+  // FAST_DEBOUNCE in @ax-bi/ui-core is 250 ms; pad slightly so the
   // debounced onChange has reliably flushed before we click Save.
   private static readonly TEXT_CONTROL_DEBOUNCE_FLUSH_MS = 350;
 

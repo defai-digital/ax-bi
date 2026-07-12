@@ -18,7 +18,7 @@
  * under the License.
  */
 import { PathLayer } from '@deck.gl/layers';
-import { JsonObject, QueryFormData } from '@superset-ui/core';
+import { JsonObject, QueryFormData } from '@ax-bi/ui-core';
 import { commonLayerProps } from '../common';
 import sandboxedEval from '../../utils/sandbox';
 import { GetLayerType, createCategoricalDeckGLComponent } from '../../factory';

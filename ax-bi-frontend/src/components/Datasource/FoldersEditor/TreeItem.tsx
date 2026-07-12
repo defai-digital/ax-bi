@@ -21,22 +21,22 @@ import { CSSProperties, useState, memo, useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
-import { css } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { css } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import {
   Checkbox,
   Input,
   Icons,
   EmptyState,
   Tooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   ColumnLabelExtendedType,
   ColumnMeta,
   ColumnTypeLabel,
   Metric,
-} from '@superset-ui/chart-controls';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/chart-controls';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   OptionControlContainer,
   Label,

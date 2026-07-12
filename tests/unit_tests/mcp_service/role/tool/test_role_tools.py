@@ -26,12 +26,12 @@ from fastmcp.exceptions import ToolError
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.role.schemas import ListRolesRequest, RoleFilter
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.role.schemas import ListRolesRequest, RoleFilter
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
-list_roles_module = importlib.import_module("superset.mcp_service.role.tool.list_roles")
+list_roles_module = importlib.import_module("axbi.mcp_service.role.tool.list_roles")
 
 
 def create_mock_role(
@@ -58,7 +58,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -91,7 +91,7 @@ class TestRoleFilterSchema:
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_basic(mock_list, mcp_server):
     """Basic role listing returns expected fields."""
@@ -108,7 +108,7 @@ async def test_list_roles_basic(mock_list, mcp_server):
     assert "Admin" in data["roles"][0]["name"]
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_with_request(mock_list, mcp_server):
     """list_roles accepts an explicit request object."""
@@ -124,7 +124,7 @@ async def test_list_roles_with_request(mock_list, mcp_server):
     assert "Alpha" in data["roles"][0]["name"]
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_with_search(mock_list, mcp_server):
     """list_roles passes search to the DAO."""
@@ -139,7 +139,7 @@ async def test_list_roles_with_search(mock_list, mcp_server):
     assert "Gamma" in data["roles"][0]["name"]
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_with_name_filter(mock_list, mcp_server):
     """list_roles accepts name column filters."""
@@ -157,7 +157,7 @@ async def test_list_roles_with_name_filter(mock_list, mcp_server):
     assert "Viewer" in data["roles"][0]["name"]
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_empty_result(mock_list, mcp_server):
     """list_roles handles empty results gracefully."""
@@ -172,7 +172,7 @@ async def test_list_roles_empty_result(mock_list, mcp_server):
     assert data["total_count"] == 0
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_pagination(mock_list, mcp_server):
     """list_roles returns correct pagination metadata."""
@@ -190,7 +190,7 @@ async def test_list_roles_pagination(mock_list, mcp_server):
     assert data["page_size"] == 3
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_select_columns_filters_output(mock_list, mcp_server):
     """select_columns controls which fields appear in each role dict."""
@@ -278,7 +278,7 @@ async def test_list_roles_serves_valid_sidecar_response(mcp_server):
     )
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_serving_falls_back_on_invalid_candidate(
     mock_list, mcp_server
@@ -351,7 +351,7 @@ async def test_list_roles_search_and_filters_mutually_exclusive(mcp_server):
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.role.RoleDAO.find_by_id")
+@patch("axbi.daos.role.RoleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_role_info_success(mock_find, mcp_server):
     """get_role_info returns role details for a known ID."""
@@ -366,7 +366,7 @@ async def test_get_role_info_success(mock_find, mcp_server):
     assert "Admin" in data["name"]
 
 
-@patch("superset.daos.role.RoleDAO.find_by_id")
+@patch("axbi.daos.role.RoleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_role_info_not_found(mock_find, mcp_server):
     """get_role_info returns a not_found error for unknown IDs."""
@@ -381,7 +381,7 @@ async def test_get_role_info_not_found(mock_find, mcp_server):
     assert data["error_type"] == "not_found"
 
 
-@patch("superset.daos.role.RoleDAO.find_by_id")
+@patch("axbi.daos.role.RoleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_role_info_returns_id_name_and_permissions(mock_find, mcp_server):
     """get_role_info returns id, name, and permissions."""
@@ -398,7 +398,7 @@ async def test_get_role_info_returns_id_name_and_permissions(mock_find, mcp_serv
     assert "can_read on Chart" in data["permissions"][0]
 
 
-@patch("superset.daos.role.RoleDAO.find_by_id")
+@patch("axbi.daos.role.RoleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_role_info_permissions_empty_when_no_perms(mock_find, mcp_server):
     """get_role_info returns an empty permissions list for roles with no permissions."""
@@ -417,7 +417,7 @@ async def test_get_role_info_permissions_empty_when_no_perms(mock_find, mcp_serv
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.role.RoleDAO.list")
+@patch("axbi.daos.role.RoleDAO.list")
 @pytest.mark.asyncio
 async def test_list_roles_role_name_is_wrapped_in_untrusted_content(
     mock_list, mcp_server
@@ -441,7 +441,7 @@ async def test_list_roles_role_name_is_wrapped_in_untrusted_content(
     assert injected_name in entry["name"]
 
 
-@patch("superset.daos.role.RoleDAO.find_by_id")
+@patch("axbi.daos.role.RoleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_role_info_role_name_is_wrapped_in_untrusted_content(
     mock_find, mcp_server

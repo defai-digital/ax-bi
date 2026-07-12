@@ -18,17 +18,17 @@
  */
 import { render, screen, waitFor } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import MatrixifyDimensionControl, {
   MatrixifyDimensionControlValue,
 } from './MatrixifyDimensionControl';
 
 import { fetchTopNValues } from './MatrixifyControl/utils/fetchTopNValues';
 
-// Mock SupersetClient
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+// Mock AxBIClient
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     get: jest.fn(),
   },
   t: (str: string, ...args: any[]) => {
@@ -151,7 +151,7 @@ test('should show value selector in members mode when dimension is selected', ()
     values: [],
   };
 
-  (SupersetClient.get as jest.Mock).mockResolvedValue({
+  (AxBIClient.get as jest.Mock).mockResolvedValue({
     json: { result: ['USA', 'Canada'] },
   });
 
@@ -174,7 +174,7 @@ test('should load dimension values from API in members mode', async () => {
     values: [],
   };
 
-  (SupersetClient.get as jest.Mock).mockResolvedValue({
+  (AxBIClient.get as jest.Mock).mockResolvedValue({
     json: { result: ['USA', 'Canada', 'Mexico'] },
   });
 
@@ -187,7 +187,7 @@ test('should load dimension values from API in members mode', async () => {
   );
 
   await waitFor(() => {
-    expect(SupersetClient.get).toHaveBeenCalledWith({
+    expect(AxBIClient.get).toHaveBeenCalledWith({
       signal: expect.any(AbortSignal),
       endpoint: '/api/v1/datasource/table/1/column/country/values/',
     });
@@ -200,7 +200,7 @@ test('should handle API errors gracefully in members mode', async () => {
     values: [],
   };
 
-  (SupersetClient.get as jest.Mock).mockRejectedValue(new Error('API Error'));
+  (AxBIClient.get as jest.Mock).mockRejectedValue(new Error('API Error'));
 
   render(
     <MatrixifyDimensionControl
@@ -211,7 +211,7 @@ test('should handle API errors gracefully in members mode', async () => {
   );
 
   await waitFor(() => {
-    expect(SupersetClient.get).toHaveBeenCalled();
+    expect(AxBIClient.get).toHaveBeenCalled();
   });
 });
 
@@ -352,7 +352,7 @@ test('should not load values for datasource without filter_select', () => {
     />,
   );
 
-  expect(SupersetClient.get).not.toHaveBeenCalled();
+  expect(AxBIClient.get).not.toHaveBeenCalled();
 });
 
 test('should handle empty dimension value', () => {
@@ -439,7 +439,7 @@ test('should preserve dimension values when rerendering with same mode', async (
     values: ['USA', 'Australia'],
   };
 
-  (SupersetClient.get as jest.Mock).mockResolvedValue({
+  (AxBIClient.get as jest.Mock).mockResolvedValue({
     json: { result: ['USA', 'Canada', 'Australia', 'Mexico'] },
   });
 
@@ -483,7 +483,7 @@ test('should not clear values on initial render with members mode', async () => 
     values: ['USA', 'Australia'],
   };
 
-  (SupersetClient.get as jest.Mock).mockResolvedValue({
+  (AxBIClient.get as jest.Mock).mockResolvedValue({
     json: { result: ['USA', 'Canada', 'Australia', 'Mexico'] },
   });
 
@@ -517,7 +517,7 @@ test('should preserve values when other props change but mode stays the same', a
     values: ['USA', 'Australia'],
   };
 
-  (SupersetClient.get as jest.Mock).mockResolvedValue({
+  (AxBIClient.get as jest.Mock).mockResolvedValue({
     json: { result: ['USA', 'Canada', 'Australia', 'Mexico'] },
   });
 

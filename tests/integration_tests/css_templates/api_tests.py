@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import pytest
 import rison
@@ -24,18 +24,18 @@ from freezegun import freeze_time
 from sqlalchemy.sql import func
 
 import tests.integration_tests.test_app  # noqa: F401
-from superset import db
-from superset.models.core import CssTemplate
-from superset.utils.database import get_example_database  # noqa: F401
-from superset.utils import json
+from axbi import db
+from axbi.models.core import CssTemplate
+from axbi.utils.database import get_example_database  # noqa: F401
+from axbi.utils import json
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 CSS_TEMPLATES_FIXTURE_COUNT = 5
 
 
-class TestCssTemplateApi(SupersetTestCase):
+class TestCssTemplateApi(AxBITestCase):
     def insert_css_template(
         self,
         template_name: str,

@@ -1,5 +1,5 @@
 name: "Setup Docker Environment"
-description: "Reusable steps for setting up QEMU, Docker Buildx, DockerHub login, Supersetbot, and optionally Docker Compose"
+description: "Reusable steps for setting up QEMU, Docker Buildx, DockerHub login, AxBIbot, and optionally Docker Compose"
 inputs:
   build:
     description: "Used for building?"

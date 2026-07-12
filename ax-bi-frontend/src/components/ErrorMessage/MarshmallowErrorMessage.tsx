@@ -17,9 +17,9 @@
  * under the License.
  */
 import { JSONTree } from 'react-json-tree';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { useJsonTreeTheme } from 'src/hooks/useJsonTreeTheme';
-import { Collapse, List, Typography } from '@superset-ui/core/components';
+import { Collapse, List, Typography } from '@ax-bi/ui-core/components';
 import type { ErrorMessageComponentProps } from './types';
 
 interface MarshmallowErrorExtra {

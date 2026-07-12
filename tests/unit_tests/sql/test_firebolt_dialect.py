@@ -17,7 +17,7 @@
 
 """Tests for Firebolt dialect support in sqlglot."""
 
-from superset.sql.parse import SQLScript
+from axbi.sql.parse import SQLScript
 
 
 def test_firebolt_exclude_syntax() -> None:

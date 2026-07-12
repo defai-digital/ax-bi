@@ -22,7 +22,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastmcp.exceptions import ToolError
 
-from superset.mcp_service.middleware import (
+from axbi.mcp_service.middleware import (
     create_rate_limit_middleware,
     InMemoryRateLimiter,
     RateLimitMiddleware,
@@ -35,7 +35,7 @@ class _FakeCache:
 
     def __init__(self) -> None:
         self.store: dict[str, int] = {}
-        self.timeouts: dict[str, int] = {}
+        self.timeouts: dict[str, int | None] = {}
 
     def add(self, key: str, value: int, timeout: int | None = None) -> bool:
         if key in self.store:
@@ -58,7 +58,7 @@ class _FakeCache:
 
 
 def _make_redis_limiter(cache: _FakeCache) -> RedisRateLimiter:
-    with patch("superset.extensions.cache_manager") as cm:
+    with patch("axbi.extensions.cache_manager") as cm:
         cm.cache = cache
         return RedisRateLimiter()
 
@@ -116,7 +116,7 @@ def test_in_memory_limiter_sliding_window() -> None:
     assert [is_limited for is_limited, _ in results] == [False, False, True]
 
 
-def _ctx(name: str, params: dict | None = None) -> SimpleNamespace:
+def _ctx(name: str, params: dict[str, object] | None = None) -> SimpleNamespace:
     return SimpleNamespace(
         message=SimpleNamespace(name=name, params=params or {}),
         method="tools/call",
@@ -128,9 +128,9 @@ def _ctx(name: str, params: dict | None = None) -> SimpleNamespace:
 def test_key_uses_expensive_limit_for_expensive_tool() -> None:
     mw = RateLimitMiddleware()
     with (
-        patch("superset.mcp_service.middleware.get_user_id", return_value=None),
+        patch("axbi.mcp_service.middleware.get_user_id", return_value=None),
         patch(
-            "superset.mcp_service.middleware._principal_from_access_token",
+            "axbi.mcp_service.middleware._principal_from_access_token",
             return_value=None,
         ),
     ):
@@ -142,9 +142,9 @@ def test_key_uses_expensive_limit_for_expensive_tool() -> None:
 def test_key_uses_user_limit_for_known_principal() -> None:
     mw = RateLimitMiddleware()
     with (
-        patch("superset.mcp_service.middleware.get_user_id", return_value=None),
+        patch("axbi.mcp_service.middleware.get_user_id", return_value=None),
         patch(
-            "superset.mcp_service.middleware._principal_from_access_token",
+            "axbi.mcp_service.middleware._principal_from_access_token",
             return_value="jwt:alice",
         ),
     ):
@@ -158,9 +158,9 @@ def test_key_resolves_real_tool_under_tool_search_proxy() -> None:
     # Client called the call_tool proxy; the real tool is expensive.
     ctx = _ctx("call_tool", {"name": "get_chart_data"})
     with (
-        patch("superset.mcp_service.middleware.get_user_id", return_value=None),
+        patch("axbi.mcp_service.middleware.get_user_id", return_value=None),
         patch(
-            "superset.mcp_service.middleware._principal_from_access_token",
+            "axbi.mcp_service.middleware._principal_from_access_token",
             return_value=None,
         ),
     ):
@@ -177,12 +177,12 @@ async def test_middleware_raises_tool_error_when_limited() -> None:
         return "ok"
 
     with (
-        patch("superset.mcp_service.middleware.get_user_id", return_value=None),
+        patch("axbi.mcp_service.middleware.get_user_id", return_value=None),
         patch(
-            "superset.mcp_service.middleware._principal_from_access_token",
+            "axbi.mcp_service.middleware._principal_from_access_token",
             return_value=None,
         ),
-        patch("superset.mcp_service.middleware.mcp_event_log"),
+        patch("axbi.mcp_service.middleware.mcp_event_log"),
     ):
         ctx = _ctx("list_charts")
         first = await mw.on_call_tool(ctx, call_next)
@@ -194,7 +194,7 @@ async def test_middleware_raises_tool_error_when_limited() -> None:
 def test_factory_returns_none_when_disabled() -> None:
     flask_app = SimpleNamespace(config={"MCP_RATE_LIMIT_CONFIG": {"enabled": False}})
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app", return_value=flask_app
+        "axbi.mcp_service.flask_singleton.get_flask_app", return_value=flask_app
     ):
         assert create_rate_limit_middleware() is None
 
@@ -212,7 +212,7 @@ def test_factory_builds_middleware_when_enabled() -> None:
         }
     )
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app", return_value=flask_app
+        "axbi.mcp_service.flask_singleton.get_flask_app", return_value=flask_app
     ):
         mw = create_rate_limit_middleware()
     assert isinstance(mw, RateLimitMiddleware)

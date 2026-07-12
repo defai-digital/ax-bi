@@ -35,7 +35,7 @@ import {
   type Ref,
 } from 'react';
 import type AceEditor from 'react-ace';
-import type { editors } from '@apache-superset/core';
+import type { editors } from '@ax-bi/core';
 import {
   FullSQLEditor,
   JsonEditor,
@@ -44,7 +44,7 @@ import {
   ConfigEditor,
   JSEditor,
   type AceCompleterKeyword,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { Disposable } from '../models';
 
 type EditorKeyword = editors.EditorKeyword;

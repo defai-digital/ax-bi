@@ -19,24 +19,24 @@ from unittest import mock
 import pytest
 from flask_babel import lazy_gettext as _
 
-from superset.commands.chart.exceptions import ChartDataQueryFailedError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import (
+from axbi.commands.chart.exceptions import ChartDataQueryFailedError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import (
+    AxBIErrorException,
+    AxBIErrorsException,
+    AxBIVizException,
     OAuth2RedirectError,
-    SupersetErrorException,
-    SupersetErrorsException,
-    SupersetVizException,
 )
 
 
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.ChartDataQueryContextSchema")
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.ChartDataQueryContextSchema")
 def test_load_chart_data_into_cache_with_error(
     mock_query_context_schema_cls, mock_async_query_manager, mock_security_manager
 ):
     """Test that the task is gracefully marked failed in event of error"""
-    from superset.tasks.async_queries import load_chart_data_into_cache
+    from axbi.tasks.async_queries import load_chart_data_into_cache
 
     job_metadata = {"user_id": 1}
     form_data = {}
@@ -62,25 +62,25 @@ def test_load_chart_data_into_cache_with_error(
     )
 
 
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.ChartDataQueryContextSchema")
-def test_load_chart_data_into_cache_with_superset_error_exception(
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.ChartDataQueryContextSchema")
+def test_load_chart_data_into_cache_with_axbi_error_exception(
     mock_query_context_schema_cls, mock_async_query_manager, mock_security_manager
 ):
-    """Test that SupersetErrorException extracts SIP-40 style errors"""
-    from superset.tasks.async_queries import load_chart_data_into_cache
+    """Test that AxBIErrorException extracts SIP-40 style errors"""
+    from axbi.tasks.async_queries import load_chart_data_into_cache
 
     job_metadata = {"user_id": 1}
     form_data = {}
 
-    superset_error = SupersetError(
+    axbi_error = AxBIError(
         message="Access denied to datasource",
-        error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+        error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
         level=ErrorLevel.ERROR,
         extra={"datasource": "my_table"},
     )
-    err = SupersetErrorException(superset_error)
+    err = AxBIErrorException(axbi_error)
 
     mock_user = mock.MagicMock()
     mock_query_context_schema = mock.MagicMock()
@@ -91,7 +91,7 @@ def test_load_chart_data_into_cache_with_superset_error_exception(
 
     mock_query_context_schema.load.side_effect = err
 
-    with pytest.raises(SupersetErrorException):
+    with pytest.raises(AxBIErrorException):
         load_chart_data_into_cache(job_metadata, form_data)
 
     # Verify the full SIP-40 error structure is preserved
@@ -100,36 +100,36 @@ def test_load_chart_data_into_cache_with_superset_error_exception(
     errors = call_args[1]["errors"]
     assert len(errors) == 1
     assert errors[0]["message"] == "Access denied to datasource"
-    assert errors[0]["error_type"] == SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
+    assert errors[0]["error_type"] == AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
     assert errors[0]["level"] == ErrorLevel.ERROR
     assert errors[0]["extra"]["datasource"] == "my_table"
 
 
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.ChartDataQueryContextSchema")
-def test_load_chart_data_into_cache_with_superset_errors_exception(
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.ChartDataQueryContextSchema")
+def test_load_chart_data_into_cache_with_axbi_errors_exception(
     mock_query_context_schema_cls, mock_async_query_manager, mock_security_manager
 ):
-    """Test that SupersetErrorsException extracts multiple SIP-40 style errors"""
-    from superset.tasks.async_queries import load_chart_data_into_cache
+    """Test that AxBIErrorsException extracts multiple SIP-40 style errors"""
+    from axbi.tasks.async_queries import load_chart_data_into_cache
 
     job_metadata = {"user_id": 1}
     form_data = {}
 
-    superset_errors = [
-        SupersetError(
+    axbi_errors = [
+        AxBIError(
             message="Column not found",
-            error_type=SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.ERROR,
         ),
-        SupersetError(
+        AxBIError(
             message="Table not found",
-            error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.WARNING,
         ),
     ]
-    err = SupersetErrorsException(superset_errors)
+    err = AxBIErrorsException(axbi_errors)
 
     mock_user = mock.MagicMock()
     mock_query_context_schema = mock.MagicMock()
@@ -140,7 +140,7 @@ def test_load_chart_data_into_cache_with_superset_errors_exception(
 
     mock_query_context_schema.load.side_effect = err
 
-    with pytest.raises(SupersetErrorsException):
+    with pytest.raises(AxBIErrorsException):
         load_chart_data_into_cache(job_metadata, form_data)
 
     # Verify all SIP-40 errors are preserved
@@ -149,17 +149,17 @@ def test_load_chart_data_into_cache_with_superset_errors_exception(
     errors = call_args[1]["errors"]
     assert len(errors) == 2
     assert errors[0]["message"] == "Column not found"
-    assert errors[0]["error_type"] == SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR
+    assert errors[0]["error_type"] == AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR
     assert errors[0]["level"] == ErrorLevel.ERROR
     assert errors[1]["message"] == "Table not found"
-    assert errors[1]["error_type"] == SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR
+    assert errors[1]["error_type"] == AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR
     assert errors[1]["level"] == ErrorLevel.WARNING
 
 
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.get_viz")
-@mock.patch("superset.tasks.async_queries.get_datasource_info")
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.get_viz")
+@mock.patch("axbi.tasks.async_queries.get_datasource_info")
 def test_load_explore_json_into_cache_preserves_oauth2_redirect_error(
     mock_get_datasource_info,
     mock_get_viz,
@@ -171,7 +171,7 @@ def test_load_explore_json_into_cache_preserves_oauth2_redirect_error(
     job's errors list as a structured SIP-40 envelope so the frontend can
     render the OAuth2 banner identically to the sync legacy path.
     """
-    from superset.tasks.async_queries import load_explore_json_into_cache
+    from axbi.tasks.async_queries import load_explore_json_into_cache
 
     job_metadata = {"user_id": 1}
     form_data: dict = {}
@@ -184,7 +184,7 @@ def test_load_explore_json_into_cache_preserves_oauth2_redirect_error(
     viz_obj.get_payload.side_effect = OAuth2RedirectError(
         url="https://accounts.example.com/o/oauth2/v2/auth?...",
         tab_id="tab-123",
-        redirect_uri="https://superset.example.com/oauth2/redirect",
+        redirect_uri="https://ax-bi.example.com/oauth2/redirect",
     )
     mock_get_viz.return_value = viz_obj
 
@@ -195,26 +195,26 @@ def test_load_explore_json_into_cache_preserves_oauth2_redirect_error(
     assert call_args[0] == (job_metadata, "error")
     errors = call_args[1]["errors"]
     assert len(errors) == 1
-    assert errors[0]["error_type"] == SupersetErrorType.OAUTH2_REDIRECT
+    assert errors[0]["error_type"] == AxBIErrorType.OAUTH2_REDIRECT
     assert errors[0]["extra"] == {
         "url": "https://accounts.example.com/o/oauth2/v2/auth?...",
         "tab_id": "tab-123",
-        "redirect_uri": "https://superset.example.com/oauth2/redirect",
+        "redirect_uri": "https://ax-bi.example.com/oauth2/redirect",
     }
 
 
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.get_viz")
-@mock.patch("superset.tasks.async_queries.get_datasource_info")
-def test_load_explore_json_into_cache_preserves_superset_errors_exception(
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.get_viz")
+@mock.patch("axbi.tasks.async_queries.get_datasource_info")
+def test_load_explore_json_into_cache_preserves_axbi_errors_exception(
     mock_get_datasource_info,
     mock_get_viz,
     mock_async_query_manager,
     mock_security_manager,
 ):
-    """SupersetErrorsException must be preserved as a list of SIP-40 dicts."""
-    from superset.tasks.async_queries import load_explore_json_into_cache
+    """AxBIErrorsException must be preserved as a list of SIP-40 dicts."""
+    from axbi.tasks.async_queries import load_explore_json_into_cache
 
     job_metadata = {"user_id": 1}
     form_data: dict = {}
@@ -224,45 +224,45 @@ def test_load_explore_json_into_cache_preserves_superset_errors_exception(
     mock_async_query_manager.STATUS_ERROR = "error"
 
     viz_obj = mock.MagicMock()
-    viz_obj.get_payload.side_effect = SupersetErrorsException(
+    viz_obj.get_payload.side_effect = AxBIErrorsException(
         [
-            SupersetError(
+            AxBIError(
                 message="Column not found",
-                error_type=SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
             ),
-            SupersetError(
+            AxBIError(
                 message="Table not found",
-                error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.WARNING,
             ),
         ]
     )
     mock_get_viz.return_value = viz_obj
 
-    with pytest.raises(SupersetErrorsException):
+    with pytest.raises(AxBIErrorsException):
         load_explore_json_into_cache(job_metadata, form_data)
 
     errors = mock_async_query_manager.update_job.call_args[1]["errors"]
     assert len(errors) == 2
-    assert errors[0]["error_type"] == SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR
-    assert errors[1]["error_type"] == SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR
+    assert errors[0]["error_type"] == AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR
+    assert errors[1]["error_type"] == AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR
 
 
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.get_viz")
-@mock.patch("superset.tasks.async_queries.get_datasource_info")
-def test_load_explore_json_into_cache_preserves_superset_viz_exception(
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.get_viz")
+@mock.patch("axbi.tasks.async_queries.get_datasource_info")
+def test_load_explore_json_into_cache_preserves_axbi_viz_exception(
     mock_get_datasource_info,
     mock_get_viz,
     mock_async_query_manager,
     mock_security_manager,
 ):
     """
-    Test that SupersetVizException passes ``ex.errors`` straight through.
+    Test that AxBIVizException passes ``ex.errors`` straight through.
     """
-    from superset.tasks.async_queries import load_explore_json_into_cache
+    from axbi.tasks.async_queries import load_explore_json_into_cache
 
     job_metadata = {"user_id": 1}
     form_data: dict = {}
@@ -274,7 +274,7 @@ def test_load_explore_json_into_cache_preserves_superset_viz_exception(
     payload_errors = [
         {
             "message": "Bad column",
-            "error_type": SupersetErrorType.VIZ_GET_DF_ERROR,
+            "error_type": AxBIErrorType.VIZ_GET_DF_ERROR,
             "level": ErrorLevel.ERROR,
         }
     ]
@@ -283,7 +283,7 @@ def test_load_explore_json_into_cache_preserves_superset_viz_exception(
     viz_obj.has_error.return_value = True
     mock_get_viz.return_value = viz_obj
 
-    with pytest.raises(SupersetVizException):
+    with pytest.raises(AxBIVizException):
         load_explore_json_into_cache(job_metadata, form_data)
 
     errors = mock_async_query_manager.update_job.call_args[1]["errors"]
@@ -298,10 +298,10 @@ def test_load_explore_json_into_cache_preserves_superset_viz_exception(
         {"status": "failed", "errors": []},
     ],
 )
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.get_viz")
-@mock.patch("superset.tasks.async_queries.get_datasource_info")
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.get_viz")
+@mock.patch("axbi.tasks.async_queries.get_datasource_info")
 def test_load_explore_json_into_cache_falls_back_for_malformed_viz_errors(
     mock_get_datasource_info,
     mock_get_viz,
@@ -312,7 +312,7 @@ def test_load_explore_json_into_cache_falls_back_for_malformed_viz_errors(
     """
     Malformed visualization error payloads should not become raw KeyErrors.
     """
-    from superset.tasks.async_queries import load_explore_json_into_cache
+    from axbi.tasks.async_queries import load_explore_json_into_cache
 
     job_metadata = {"user_id": 1}
     form_data: dict = {}
@@ -326,17 +326,17 @@ def test_load_explore_json_into_cache_falls_back_for_malformed_viz_errors(
     viz_obj.has_error.return_value = True
     mock_get_viz.return_value = viz_obj
 
-    with pytest.raises(SupersetVizException):
+    with pytest.raises(AxBIVizException):
         load_explore_json_into_cache(job_metadata, form_data)
 
     errors = mock_async_query_manager.update_job.call_args[1]["errors"]
     assert errors == ["Visualization returned an error"]
 
 
-@mock.patch("superset.tasks.async_queries.security_manager")
-@mock.patch("superset.tasks.async_queries.async_query_manager")
-@mock.patch("superset.tasks.async_queries.get_viz")
-@mock.patch("superset.tasks.async_queries.get_datasource_info")
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.get_viz")
+@mock.patch("axbi.tasks.async_queries.get_datasource_info")
 def test_load_explore_json_into_cache_falls_back_to_string_for_generic_exception(
     mock_get_datasource_info,
     mock_get_viz,
@@ -344,9 +344,9 @@ def test_load_explore_json_into_cache_falls_back_to_string_for_generic_exception
     mock_security_manager,
 ):
     """
-    Test that Non-Superset exception are passed as plain-string error.
+    Test that Non-AxBI exception are passed as plain-string error.
     """
-    from superset.tasks.async_queries import load_explore_json_into_cache
+    from axbi.tasks.async_queries import load_explore_json_into_cache
 
     job_metadata = {"user_id": 1}
     form_data: dict = {}

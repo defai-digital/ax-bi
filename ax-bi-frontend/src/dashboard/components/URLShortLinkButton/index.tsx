@@ -17,21 +17,21 @@
  * under the License.
  */
 import { useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { getClientErrorObject } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { getClientErrorObject } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import {
   Button,
   Icons,
   Popover,
   type PopoverProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { CopyToClipboard } from 'src/components';
 import { getDashboardPermalink } from 'src/utils/urlUtils';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { shallowEqual, useSelector } from 'react-redux';
 import { RootState } from 'src/dashboard/types';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { hasStatefulCharts } from 'src/dashboard/util/chartStateConverter';
 
 export type URLShortLinkButtonProps = {

@@ -16,22 +16,22 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   getColumnLabel,
   getNumberFormatter,
   isEqualArray,
   NumberFormats,
-} from '@superset-ui/core';
-import { styled, useTheme, css } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, useTheme, css } from '@ax-bi/core/theme';
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { FilterBarOrientation } from 'src/dashboard/types';
-// import Metadata from '@superset-ui/core/components/Metadata';
+// import Metadata from '@ax-bi/ui-core/components/Metadata';
 import { isNumber } from 'lodash';
-import { InputNumber } from '@superset-ui/core/components/Input';
-import Slider from '@superset-ui/core/components/Slider';
-import { FormItem, Tooltip, Icons } from '@superset-ui/core/components';
+import { InputNumber } from '@ax-bi/ui-core/components/Input';
+import Slider from '@ax-bi/ui-core/components/Slider';
+import { FormItem, Tooltip, Icons } from '@ax-bi/ui-core/components';
 import { PluginFilterRangeProps, RangeDisplayMode } from './types';
 import { StatusMessage, FilterPluginStyle } from '../common';
 import { getRangeExtraFormData } from '../../utils';

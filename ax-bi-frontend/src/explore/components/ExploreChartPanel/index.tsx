@@ -19,20 +19,20 @@
 import { useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Split from 'react-split';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DatasourceType,
   ensureIsArray,
   isFeatureEnabled,
   FeatureFlag,
   getChartMetadataRegistry,
-  SupersetClient,
+  AxBIClient,
   QueryFormData,
   JsonObject,
   getExtensionsRegistry,
-} from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import ChartContainer from 'src/components/Chart/ChartContainer';
 import { updateExploreChartState } from 'src/explore/actions/exploreActions';
 import {
@@ -249,7 +249,7 @@ const ExploreChartPanel = ({
           ownState: undefined,
         });
 
-        await SupersetClient.put({
+        await AxBIClient.put({
           endpoint: `/api/v1/chart/${slice.slice_id}`,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

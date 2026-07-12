@@ -24,7 +24,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from sqlalchemy.engine.url import make_url
 
-from superset.models.core import Database
+from axbi.models.core import Database
 
 
 def _create_db_with_password(password: str | None) -> Database:
@@ -36,7 +36,7 @@ def _create_db_with_password(password: str | None) -> Database:
     )
 
 
-@patch("superset.models.core.has_app_context")
+@patch("axbi.models.core.has_app_context")
 def test_password_with_percent_literal(mock_has_app_context: MagicMock) -> None:
     """Test password with literal percent character."""
     mock_has_app_context.return_value = False
@@ -49,7 +49,7 @@ def test_password_with_percent_literal(mock_has_app_context: MagicMock) -> None:
     assert parsed.password == password
 
 
-@patch("superset.models.core.has_app_context")
+@patch("axbi.models.core.has_app_context")
 def test_password_with_single_percent(mock_has_app_context: MagicMock) -> None:
     """Test password with single percent."""
     mock_has_app_context.return_value = False
@@ -62,7 +62,7 @@ def test_password_with_single_percent(mock_has_app_context: MagicMock) -> None:
     assert parsed.password == password
 
 
-@patch("superset.models.core.has_app_context")
+@patch("axbi.models.core.has_app_context")
 @pytest.mark.parametrize(
     "password",
     [
@@ -93,7 +93,7 @@ def test_password_with_special_chars(
     assert parsed.password == password
 
 
-@patch("superset.models.core.has_app_context")
+@patch("axbi.models.core.has_app_context")
 def test_password_empty(mock_has_app_context: MagicMock) -> None:
     """Test empty password handling."""
     mock_has_app_context.return_value = False
@@ -104,7 +104,7 @@ def test_password_empty(mock_has_app_context: MagicMock) -> None:
     assert parsed.password in ("", None)
 
 
-@patch("superset.models.core.has_app_context")
+@patch("axbi.models.core.has_app_context")
 def test_password_none(mock_has_app_context: MagicMock) -> None:
     """Test None password handling."""
     mock_has_app_context.return_value = False
@@ -115,7 +115,7 @@ def test_password_none(mock_has_app_context: MagicMock) -> None:
     assert parsed.password is None or parsed.password == ""
 
 
-@patch("superset.models.core.has_app_context")
+@patch("axbi.models.core.has_app_context")
 def test_roundtrip_invariant(mock_has_app_context: MagicMock) -> None:
     """Test password survives roundtrip."""
     mock_has_app_context.return_value = False
@@ -128,7 +128,7 @@ def test_roundtrip_invariant(mock_has_app_context: MagicMock) -> None:
     assert parsed.password == original_password
 
 
-@patch("superset.models.core.has_app_context")
+@patch("axbi.models.core.has_app_context")
 def test_uri_with_username_and_password(mock_has_app_context: MagicMock) -> None:
     """Test URI construction with username and password."""
     mock_has_app_context.return_value = False
@@ -149,8 +149,8 @@ def test_uri_with_username_and_password(mock_has_app_context: MagicMock) -> None
     assert parsed.database == "testdb"
 
 
-@patch("superset.models.core.has_app_context")
-@patch("superset.models.core.app")
+@patch("axbi.models.core.has_app_context")
+@patch("axbi.models.core.app")
 def test_with_app_context_no_custom_store(
     mock_app: MagicMock, mock_has_app_context: MagicMock
 ) -> None:
@@ -171,8 +171,8 @@ def test_with_app_context_no_custom_store(
     assert parsed.password == password
 
 
-@patch("superset.models.core.has_app_context")
-@patch("superset.models.core.app")
+@patch("axbi.models.core.has_app_context")
+@patch("axbi.models.core.app")
 def test_with_app_context_custom_store(
     mock_app: MagicMock, mock_has_app_context: MagicMock
 ) -> None:

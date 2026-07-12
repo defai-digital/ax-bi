@@ -16,17 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { validateNumber } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { t } from '@ax-bi/core/translation';
+import { validateNumber } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ControlFormItemSpec,
   D3_FORMAT_DOCS,
   D3_FORMAT_OPTIONS,
   D3_TIME_FORMAT_DOCS,
   D3_TIME_FORMAT_OPTIONS,
-} from '@superset-ui/chart-controls';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/chart-controls';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { ColumnConfigFormLayout } from './types';
 
 export type SharedColumnConfigProp =

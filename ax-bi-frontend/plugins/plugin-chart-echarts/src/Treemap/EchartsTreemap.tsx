@@ -22,7 +22,7 @@ import {
   getTimeFormatter,
   getColumnLabel,
   getNumberFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { useCallback } from 'react';
 import Echart from '../components/Echart';
 import { NULL_STRING } from '../constants';

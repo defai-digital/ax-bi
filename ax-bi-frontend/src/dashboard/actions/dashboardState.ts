@@ -24,19 +24,19 @@ import {
   isFeatureEnabled,
   FeatureFlag,
   getLabelsColorMap,
-  SupersetClient,
+  AxBIClient,
   getClientErrorObject,
   getCategoricalSchemeRegistry,
   promiseTimeout,
   JsonObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   addChart,
   removeChart,
   refreshChart,
 } from 'src/components/Chart/chartAction';
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
 import { chart as initChart } from 'src/components/Chart/chartReducer';
 import { applyDefaultFormData } from 'src/explore/store';
 import {
@@ -63,7 +63,7 @@ import { navigateWithState, navigateTo } from 'src/utils/navigationUtils';
 import type { AnyAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 import { ResourceStatus } from 'src/hooks/apiResources/apiResources';
-import type { AgGridChartState } from '@superset-ui/core';
+import type { AgGridChartState } from '@ax-bi/ui-core';
 import type { DashboardChartStates } from 'src/dashboard/types/chartState';
 import { UPDATE_COMPONENTS_PARENTS_LIST } from './dashboardLayout';
 import {
@@ -164,7 +164,7 @@ export function fetchFaveStar(id: number) {
     dispatch: AppDispatch,
     getState: GetState,
   ) {
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/dashboard/favorite_status/?q=${rison.encode([id])}`,
     })
       .then(({ json }: { json: JsonObject }) => {
@@ -199,10 +199,10 @@ export function saveFaveStar(id: number, isStarred: boolean) {
   return function saveFaveStarThunk(dispatch: AppDispatch, getState: GetState) {
     const endpoint = `/api/v1/dashboard/${id}/favorites/`;
     const apiCall = isStarred
-      ? SupersetClient.delete({
+      ? AxBIClient.delete({
           endpoint,
         })
-      : SupersetClient.post({ endpoint });
+      : AxBIClient.post({ endpoint });
 
     return apiCall
       .then(() => {
@@ -243,7 +243,7 @@ export function savePublished(
     dispatch: AppDispatch,
     getState: GetState,
   ): Promise<void> {
-    return SupersetClient.put({
+    return AxBIClient.put({
       endpoint: `/api/v1/dashboard/${id}`,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -624,7 +624,7 @@ export function saveDashboardRequest(
         }
 
         // fetch datasets to make sure they are up to date
-        SupersetClient.get({
+        AxBIClient.get({
           endpoint: `/api/v1/dashboard/${id}/datasets`,
           headers: { 'Content-Type': 'application/json' },
         })
@@ -702,7 +702,7 @@ export function saveDashboardRequest(
             };
 
       const updateDashboard = (): Promise<JsonObject | void> =>
-        SupersetClient.put({
+        AxBIClient.put({
           endpoint: `/api/v1/dashboard/${id}`,
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(updatedDashboard),
@@ -720,7 +720,7 @@ export function saveDashboardRequest(
         }
 
         // precheck for overwrite items
-        SupersetClient.get({
+        AxBIClient.get({
           endpoint: `/api/v1/dashboard/${id}`,
         }).then((response: JsonObject) => {
           const dashboard = (response.json as JsonObject).result as JsonObject;
@@ -735,8 +735,7 @@ export function saveDashboardRequest(
                 updatedBy: dashboard.changed_by_name as string,
                 overwriteConfirmItems:
                   overwriteConfirmItems as DashboardState['overwriteConfirmMetadata'] extends
-                    | { overwriteConfirmItems: infer I }
-                    | undefined
+                    { overwriteConfirmItems: infer I } | undefined
                     ? I
                     : never,
                 dashboardId: id,
@@ -777,7 +776,7 @@ export function saveDashboardRequest(
       json_metadata: JSON.stringify(cleanedData.metadata),
     };
 
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: `/api/v1/dashboard/${id}/copy/`,
       jsonPayload: copyPayload,
     })
@@ -1077,7 +1076,7 @@ export function setActiveTab(
   };
 }
 
-// Even though SET_ACTIVE_TABS is not being called from Superset's codebase,
+// Even though SET_ACTIVE_TABS is not being called from AxBI's codebase,
 // it is being used by Preset extensions.
 export const SET_ACTIVE_TABS = 'SET_ACTIVE_TABS';
 
@@ -1270,7 +1269,7 @@ const storeDashboardColorConfig = async (
   id: number,
   metadata: JsonObject,
 ): Promise<JsonObject> =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: `/api/v1/dashboard/${id}/colors?mark_updated=false`,
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -1350,7 +1349,7 @@ export const applyDashboardLabelsColorOnLoad =
       // color scheme might not exist any longer
       if (hasInvalidColorScheme) {
         const defaultScheme = categoricalSchemes.defaultKey;
-        const fallbackScheme = defaultScheme?.toString() || 'supersetColors';
+        const fallbackScheme = defaultScheme?.toString() || 'axbiColors';
         hasChanged = true;
         updatedScheme = fallbackScheme;
 

@@ -18,9 +18,9 @@
  */
 
 import { useMemo, useState, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme, SupersetTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme, AxBITheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import CrossFilter from './CrossFilter';
 import { CrossFilterIndicator } from '../../selectors';
@@ -38,7 +38,7 @@ const CrossFiltersVerticalCollapse = (props: {
   }, []);
 
   const sectionContainerStyle = useCallback(
-    (theme: SupersetTheme) => css`
+    (theme: AxBITheme) => css`
       margin-bottom: ${theme.sizeUnit * 3}px;
       padding: 0 ${theme.sizeUnit * 4}px;
     `,
@@ -46,7 +46,7 @@ const CrossFiltersVerticalCollapse = (props: {
   );
 
   const sectionHeaderStyle = useCallback(
-    (theme: SupersetTheme) => css`
+    (theme: AxBITheme) => css`
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -65,7 +65,7 @@ const CrossFiltersVerticalCollapse = (props: {
   );
 
   const sectionTitleStyle = useCallback(
-    (theme: SupersetTheme) => css`
+    (theme: AxBITheme) => css`
       margin: 0;
       font-size: ${theme.fontSize}px;
       font-weight: ${theme.fontWeightStrong};
@@ -76,14 +76,14 @@ const CrossFiltersVerticalCollapse = (props: {
   );
 
   const sectionContentStyle = useCallback(
-    (theme: SupersetTheme) => css`
+    (theme: AxBITheme) => css`
       padding: ${theme.sizeUnit * 2}px 0;
     `,
     [],
   );
 
   const dividerStyle = useCallback(
-    (theme: SupersetTheme) => css`
+    (theme: AxBITheme) => css`
       height: 1px;
       background: ${theme.colorSplit};
       margin: ${theme.sizeUnit * 2}px 0;
@@ -92,7 +92,7 @@ const CrossFiltersVerticalCollapse = (props: {
   );
 
   const iconStyle = useCallback(
-    (isOpen: boolean, theme: SupersetTheme) => css`
+    (isOpen: boolean, theme: AxBITheme) => css`
       transform: ${isOpen ? 'rotate(0deg)' : 'rotate(180deg)'};
       transition: transform 0.2s ease;
       color: ${theme.colorTextSecondary};

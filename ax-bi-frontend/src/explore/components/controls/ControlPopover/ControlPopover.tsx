@@ -22,9 +22,9 @@ import React, { FC, useCallback, useRef, useEffect, useState } from 'react';
 import {
   Popover,
   PopoverProps as BasePopoverProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 
-import { TooltipPlacement } from '@superset-ui/core/components/Tooltip/types';
+import { TooltipPlacement } from '@ax-bi/ui-core/components/Tooltip/types';
 
 const sectionContainerId = 'controlSections';
 export const getSectionContainerElement = () =>
@@ -202,7 +202,7 @@ const ControlPopover: FC<PopoverProps> = ({
       getPopupContainer={handleGetPopupContainer}
       destroyOnHidden={destroyOnHidden}
       afterOpenChange={handleAfterOpenChange}
-      rootClassName="superset-explore-popover"
+      rootClassName="axbi-explore-popover"
     />
   );
 };

@@ -56,14 +56,14 @@
  * in tandem with `controlPanels/index.js` that defines how controls are composed into sections for
  * each and every visualization type.
  */
-import type { Column, SequentialScheme } from '@superset-ui/core';
+import type { Column, SequentialScheme } from '@ax-bi/ui-core';
 import {
   getCategoricalSchemeRegistry,
   getSequentialSchemeRegistry,
   legacyValidateInteger,
   validateNonEmpty,
-} from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import { datasetLabel } from 'src/features/semanticLayers/label';
 // leaf import: the exploreUtils barrel drags a dependency graph that
 // cycles back into this module at eval time
@@ -349,7 +349,7 @@ export const controls = {
         'applies a date transformation to alter ' +
         'your time column and defines a new time granularity. ' +
         'The options here are defined on a per database ' +
-        'engine basis in the Superset source code.',
+        'engine basis in the AxBI source code.',
     ),
     mapStateToProps: (state: ControlState) => ({
       choices: state.datasource ? state.datasource.time_grain_sqla : null,

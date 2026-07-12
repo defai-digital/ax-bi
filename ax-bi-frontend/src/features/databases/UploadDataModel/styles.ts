@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FormItem } from '@superset-ui/core/components';
-import { css, styled, SupersetTheme } from '@apache-superset/core/theme';
+import { FormItem } from '@ax-bi/ui-core/components';
+import { css, styled, AxBITheme } from '@ax-bi/core/theme';
 
 const MODAL_BODY_HEIGHT = 180.5;
 
@@ -44,14 +44,14 @@ export const antDModalNoPaddingStyles = css`
   }
 `;
 
-export const formStyles = (theme: SupersetTheme) => css`
+export const formStyles = (theme: AxBITheme) => css`
   .switch-label {
     color: ${theme.colorTextSecondary};
     margin-left: ${theme.sizeUnit * 4}px;
   }
 `;
 
-export const antDModalStyles = (theme: SupersetTheme) => css`
+export const antDModalStyles = (theme: AxBITheme) => css`
   .ant-modal-header {
     padding: ${theme.sizeUnit * 4.5}px ${theme.sizeUnit * 4}px
       ${theme.sizeUnit * 4}px;

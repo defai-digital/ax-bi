@@ -18,10 +18,8 @@
  */
 
 import memoizeOne from 'memoize-one';
-import { DataRecord, SuperChart, VizType } from '@superset-ui/core';
-import TableChartPlugin, {
-  TableChartProps,
-} from '@superset-ui/plugin-chart-table';
+import { DataRecord, SuperChart, VizType } from '@ax-bi/ui-core';
+import TableChartPlugin, { TableChartProps } from '@ax-bi/plugin-chart-table';
 import { basicFormData, basicData, birthNames } from './testData';
 import { withResizableChartDemo } from '@storybook-shared';
 

@@ -26,8 +26,8 @@ from unittest.mock import call, Mock, patch
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.utils import decorators
-from superset.utils.backports import StrEnum
+from axbi.utils import decorators
+from axbi.utils.backports import StrEnum
 
 
 class ResponseValues(StrEnum):
@@ -77,7 +77,7 @@ def test_statsd_gauge(
             raise FileNotFoundError("Not found")
         return "OK"
 
-    with patch("superset.extensions.stats_logger_manager.instance.gauge") as mock:
+    with patch("axbi.extensions.stats_logger_manager.instance.gauge") as mock:
         cm = (
             pytest.raises(expected_exception)
             if isclass(expected_exception) and issubclass(expected_exception, Exception)
@@ -89,7 +89,7 @@ def test_statsd_gauge(
             mock.assert_called_once_with(expected_result, 1)
 
 
-@patch("superset.utils.decorators.g")
+@patch("axbi.utils.decorators.g")
 def test_context_decorator(flask_g_mock) -> None:
     @decorators.logs_context()
     def myfunc(*args, **kwargs) -> str:
@@ -300,7 +300,7 @@ def test_transacation_commit(mocker: MockerFixture) -> None:
     """
     Test the `transaction` decorator when the function completes successfully.
     """
-    db = mocker.patch("superset.db")
+    db = mocker.patch("axbi.db")
 
     @decorators.transaction()
     def func() -> int:
@@ -315,7 +315,7 @@ def test_transacation_rollback(mocker: MockerFixture) -> None:
     """
     Test the `transaction` decorator when the function raises an exception.
     """
-    db = mocker.patch("superset.db")
+    db = mocker.patch("axbi.db")
 
     @decorators.transaction()
     def func() -> None:
@@ -331,7 +331,7 @@ def test_transacation_nested(mocker: MockerFixture) -> None:
     """
     Test the `transaction` decorator when the function is nested.
     """
-    db = mocker.patch("superset.db")
+    db = mocker.patch("axbi.db")
 
     @decorators.transaction()
     def func() -> int:

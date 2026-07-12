@@ -73,7 +73,7 @@ testWithAssets(
       truncate_metric: true,
       truncate_metric_b: true,
       comparison_type: 'values',
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
     };
     const chartResp = await apiPost(page, 'api/v1/chart/', {
       slice_name: `mixed_filter_repro_${Date.now()}`,

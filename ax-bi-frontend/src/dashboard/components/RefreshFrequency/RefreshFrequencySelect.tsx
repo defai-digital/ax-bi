@@ -17,10 +17,10 @@
  * under the License.
  */
 import { ChangeEvent, useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { Input } from '@superset-ui/core/components';
-import { Radio, RadioChangeEvent } from '@superset-ui/core/components/Radio';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { Input } from '@ax-bi/ui-core/components';
+import { Radio, RadioChangeEvent } from '@ax-bi/ui-core/components/Radio';
 
 // Minimum custom refresh interval in seconds
 export const MINIMUM_REFRESH_INTERVAL = 1;

@@ -17,10 +17,10 @@
  * under the License.
  */
 import { FC, ReactNode, useCallback, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { NativeFilterType, ChartCustomizationType } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { Collapse, EmptyState, Flex } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { NativeFilterType, ChartCustomizationType } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { Collapse, EmptyState, Flex } from '@ax-bi/ui-core/components';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
   DndContext,

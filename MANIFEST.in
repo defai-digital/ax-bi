@@ -18,10 +18,10 @@ include NOTICE
 include LICENSE.txt
 include README.md
 include ax-bi-frontend/package.json
-recursive-include superset/examples *
-recursive-include superset/migrations *
-recursive-include superset/templates *
-recursive-include superset/translations *
-recursive-include superset/static *
+recursive-include axbi/examples *
+recursive-include axbi/migrations *
+recursive-include axbi/templates *
+recursive-include axbi/translations *
+recursive-include axbi/static *
 recursive-exclude tests *
 global-exclude *.py[cod]

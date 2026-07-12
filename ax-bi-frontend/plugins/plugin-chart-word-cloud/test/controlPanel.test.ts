@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { isCustomControlItem } from '@superset-ui/chart-controls';
+import { isCustomControlItem } from '@ax-bi/chart-controls';
 import controlPanel from '../src/plugin/controlPanel';
 import React, { ReactElement } from 'react';
 

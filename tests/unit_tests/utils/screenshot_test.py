@@ -22,8 +22,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.utils.hashing import hash_from_dict
-from superset.utils.screenshots import (
+from axbi.utils.hashing import hash_from_dict
+from axbi.utils.screenshots import (
     BaseScreenshot,
     ChartScreenshot,
     DashboardScreenshot,
@@ -32,7 +32,7 @@ from superset.utils.screenshots import (
     StatusValues,
 )
 
-BASE_SCREENSHOT_PATH = "superset.utils.screenshots.BaseScreenshot"
+BASE_SCREENSHOT_PATH = "axbi.utils.screenshots.BaseScreenshot"
 
 
 class MockCache:
@@ -258,7 +258,7 @@ class TestScreenshotCachePayloadGetImage:
 
     def test_get_image_raises_exception_when_no_image(self):
         """Test get_image raises ScreenshotImageNotAvailableException when no image"""
-        from superset.exceptions import ScreenshotImageNotAvailableException
+        from axbi.exceptions import ScreenshotImageNotAvailableException
 
         payload = ScreenshotCachePayload()  # No image data
 
@@ -267,7 +267,7 @@ class TestScreenshotCachePayloadGetImage:
 
     def test_get_image_raises_exception_when_image_is_none(self):
         """Test that get_image raises exception when image is explicitly set to None"""
-        from superset.exceptions import ScreenshotImageNotAvailableException
+        from axbi.exceptions import ScreenshotImageNotAvailableException
 
         payload = ScreenshotCachePayload(image=None)
 
@@ -293,8 +293,8 @@ class TestScreenshotCachePayloadGetImage:
 class TestBaseScreenshotDriverFallback:
     """Test BaseScreenshot.driver() fallback logic for Playwright migration."""
 
-    @patch("superset.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_driver_returns_playwright_when_feature_enabled_and_available(
         self, mock_feature_flag, screenshot_obj
     ):
@@ -306,9 +306,9 @@ class TestBaseScreenshotDriverFallback:
         assert driver.__class__.__name__ == "WebDriverPlaywright"
         mock_feature_flag.assert_called_once_with("PLAYWRIGHT_REPORTS_AND_THUMBNAILS")
 
-    @patch("superset.utils.screenshots.logger")
-    @patch("superset.utils.screenshots.PLAYWRIGHT_AVAILABLE", False)
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.screenshots.logger")
+    @patch("axbi.utils.screenshots.PLAYWRIGHT_AVAILABLE", False)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_driver_falls_back_to_selenium_when_playwright_unavailable(
         self, mock_feature_flag, mock_logger, screenshot_obj
     ):
@@ -328,7 +328,7 @@ class TestBaseScreenshotDriverFallback:
         assert "Falling back to Selenium" in log_call
         assert "WebGL/Canvas charts may not render correctly" in log_call
 
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_driver_uses_selenium_when_feature_flag_disabled(
         self, mock_feature_flag, screenshot_obj
     ):
@@ -340,8 +340,8 @@ class TestBaseScreenshotDriverFallback:
         assert driver.__class__.__name__ == "WebDriverSelenium"
         mock_feature_flag.assert_called_once_with("PLAYWRIGHT_REPORTS_AND_THUMBNAILS")
 
-    @patch("superset.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_driver_passes_window_size_to_playwright(
         self, mock_feature_flag, screenshot_obj
     ):
@@ -354,7 +354,7 @@ class TestBaseScreenshotDriverFallback:
         assert driver._window == custom_window_size
         assert driver.__class__.__name__ == "WebDriverPlaywright"
 
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_driver_passes_window_size_to_selenium(
         self, mock_feature_flag, screenshot_obj
     ):
@@ -367,8 +367,8 @@ class TestBaseScreenshotDriverFallback:
         assert driver._window == custom_window_size
         assert driver.__class__.__name__ == "WebDriverSelenium"
 
-    @patch("superset.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_driver_uses_default_window_size_when_none_provided(
         self, mock_feature_flag, screenshot_obj
     ):
@@ -384,8 +384,8 @@ class TestBaseScreenshotDriverFallback:
 class TestScreenshotSubclassesDriverBehavior:
     """Test ChartScreenshot and DashboardScreenshot inherit driver behavior."""
 
-    @patch("superset.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_chart_screenshot_uses_playwright_when_enabled(self, mock_feature_flag):
         """Test ChartScreenshot uses Playwright when feature enabled."""
         mock_feature_flag.return_value = True
@@ -396,9 +396,9 @@ class TestScreenshotSubclassesDriverBehavior:
         assert driver.__class__.__name__ == "WebDriverPlaywright"
         assert driver._window == chart_screenshot.window_size
 
-    @patch("superset.utils.screenshots.logger")
-    @patch("superset.utils.screenshots.PLAYWRIGHT_AVAILABLE", False)
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.screenshots.logger")
+    @patch("axbi.utils.screenshots.PLAYWRIGHT_AVAILABLE", False)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_dashboard_screenshot_falls_back_to_selenium(
         self, mock_feature_flag, mock_logger
     ):
@@ -416,8 +416,8 @@ class TestScreenshotSubclassesDriverBehavior:
         # Should log the fallback message
         mock_logger.info.assert_called_once()
 
-    @patch("superset.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.screenshots.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_custom_window_size_passed_to_driver(self, mock_feature_flag):
         """Test custom window size is passed correctly to driver."""
         mock_feature_flag.return_value = True

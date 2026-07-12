@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlComponentProps } from '@superset-ui/chart-controls';
+import { ControlComponentProps } from '@ax-bi/chart-controls';
 
 export type MapViewConfigs = {
   mode: 'FIT_DATA' | 'CUSTOM';

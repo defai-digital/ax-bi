@@ -22,18 +22,18 @@
 # unique random secure passwords and SECRET_KEY.
 #
 # For verbose logging during development:
-# - Set SUPERSET_LOG_LEVEL=debug in docker/.env-local for detailed AX BI logs
+# - Set AXBI_LOG_LEVEL=debug in docker/.env-local for detailed AX BI logs
 # -----------------------------------------------------------------------
 x-ax-bi-volumes:
   &ax-bi-volumes # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker:/app/docker
-  - superset_home:/app/superset_home
+  - axbi_home:/app/axbi_home
 
 x-common-build: &common-build
   context: .
   target: lean
   cache_from:
-    - apache/superset-cache:3.12-slim-trixie
+    - ghcr.io/defai-digital/ax-bi-cache:3.12-slim-trixie
 
 services:
   redis:
@@ -63,7 +63,7 @@ services:
       - db_home:/var/lib/postgresql/data
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-superset} -d ${POSTGRES_DB:-superset}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-axbi} -d ${POSTGRES_DB:-axbi}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -133,7 +133,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
+          "celery -A axbi.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
         ]
       interval: 30s
       timeout: 10s
@@ -166,7 +166,7 @@ services:
       retries: 5
 
 volumes:
-  superset_home:
+  axbi_home:
     external: false
   db_home:
     external: false

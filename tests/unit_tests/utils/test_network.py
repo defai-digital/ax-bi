@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 import pytest
 
-from superset.utils.network import is_safe_host
+from axbi.utils.network import is_safe_host
 
 
 @pytest.mark.parametrize(
@@ -58,7 +58,7 @@ from superset.utils.network import is_safe_host
 def test_is_safe_host_ip_classification(resolved_ip: str, expected: bool) -> None:
     """Hosts resolving to private/internal IPs must be rejected."""
     with patch(
-        "superset.utils.network.socket.getaddrinfo",
+        "axbi.utils.network.socket.getaddrinfo",
         return_value=[(None, None, None, None, (resolved_ip, 0))],
     ):
         assert is_safe_host("any-hostname") is expected
@@ -69,7 +69,7 @@ def test_is_safe_host_unresolvable_returns_false() -> None:
     import socket
 
     with patch(
-        "superset.utils.network.socket.getaddrinfo",
+        "axbi.utils.network.socket.getaddrinfo",
         side_effect=socket.gaierror("Name or service not known"),
     ):
         assert is_safe_host("nonexistent.invalid") is False
@@ -78,7 +78,7 @@ def test_is_safe_host_unresolvable_returns_false() -> None:
 def test_is_safe_host_empty_results_returns_false() -> None:
     """An empty getaddrinfo result must return False (fail-closed)."""
     with patch(
-        "superset.utils.network.socket.getaddrinfo",
+        "axbi.utils.network.socket.getaddrinfo",
         return_value=[],
     ):
         assert is_safe_host("empty-result.example.com") is False
@@ -87,7 +87,7 @@ def test_is_safe_host_empty_results_returns_false() -> None:
 def test_is_safe_host_malformed_sockaddr_returns_false() -> None:
     """A sockaddr that cannot be parsed as an IP address must return False."""
     with patch(
-        "superset.utils.network.socket.getaddrinfo",
+        "axbi.utils.network.socket.getaddrinfo",
         return_value=[(None, None, None, None, ("not-an-ip", 0))],
     ):
         assert is_safe_host("malformed") is False
@@ -97,7 +97,7 @@ def test_is_safe_host_rejects_if_any_ip_is_private() -> None:
     """A hostname that resolves to both a public and a private IP (split-DNS
     or multi-homed host) must be rejected — all resolved IPs must be safe."""
     with patch(
-        "superset.utils.network.socket.getaddrinfo",
+        "axbi.utils.network.socket.getaddrinfo",
         return_value=[
             (None, None, None, None, ("8.8.8.8", 0)),
             (None, None, None, None, ("10.0.0.1", 0)),  # private — must fail
@@ -118,7 +118,7 @@ def test_is_safe_host_rejects_ipv4_mapped_ipv6(mapped_ip: str) -> None:
     """IPv4-mapped IPv6 addresses must be unwrapped and checked against the
     IPv4 unsafe networks — not treated as safe IPv6 addresses."""
     with patch(
-        "superset.utils.network.socket.getaddrinfo",
+        "axbi.utils.network.socket.getaddrinfo",
         return_value=[(None, None, None, None, (mapped_ip, 0, 0, 0))],
     ):
         assert is_safe_host("mapped") is False
@@ -127,7 +127,7 @@ def test_is_safe_host_rejects_ipv4_mapped_ipv6(mapped_ip: str) -> None:
 def test_is_safe_host_rejects_cgnat_range() -> None:
     """100.64.0.0/10 (RFC 6598 shared address space) must be rejected."""
     with patch(
-        "superset.utils.network.socket.getaddrinfo",
+        "axbi.utils.network.socket.getaddrinfo",
         return_value=[(None, None, None, None, ("100.100.100.200", 0))],
     ):
         assert is_safe_host("cgnat-host") is False

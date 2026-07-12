@@ -19,14 +19,14 @@ import unittest
 from sqlalchemy.dialects import mysql
 from sqlalchemy.dialects.mysql import DATE, NVARCHAR, TEXT, VARCHAR
 
-from superset.db_engine_specs.mysql import MySQLEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs.mysql import MySQLEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestMySQLEngineSpecsDbEngineSpec(SupersetTestCase):
+class TestMySQLEngineSpecsDbEngineSpec(AxBITestCase):
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("MySQLdb"), "mysqlclient not installed"
+        AxBITestCase.is_module_installed("MySQLdb"), "mysqlclient not installed"
     )
     def test_get_datatype_mysql(self):
         """Tests related to datatype mapping for MySQL"""
@@ -70,8 +70,8 @@ class TestMySQLEngineSpecsDbEngineSpec(SupersetTestCase):
         msg = "mysql: Access denied for user 'test'@'testuser.com'"
         result = MySQLEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_ACCESS_DENIED_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_ACCESS_DENIED_ERROR,
                 message='Either the username "test" or the password is incorrect.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -96,8 +96,8 @@ class TestMySQLEngineSpecsDbEngineSpec(SupersetTestCase):
         msg = "mysql: Unknown MySQL server host 'badhostname.com'"
         result = MySQLEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
                 message='Unknown MySQL server host "badhostname.com".',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -117,8 +117,8 @@ class TestMySQLEngineSpecsDbEngineSpec(SupersetTestCase):
         msg = "mysql: Can't connect to MySQL server on 'badconnection.com'"
         result = MySQLEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
                 message='The host "badconnection.com" might be '
                 "down and can't be reached.",
                 level=ErrorLevel.ERROR,
@@ -139,8 +139,8 @@ class TestMySQLEngineSpecsDbEngineSpec(SupersetTestCase):
         msg = "mysql: Can't connect to MySQL server on '93.184.216.34'"
         result = MySQLEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
                 message='The host "93.184.216.34" might be down and can\'t be reached.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -160,9 +160,9 @@ class TestMySQLEngineSpecsDbEngineSpec(SupersetTestCase):
         msg = "mysql: Unknown database 'badDB'"
         result = MySQLEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Unable to connect to database "badDB".',
-                error_type=SupersetErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
+                error_type=AxBIErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "invalid": ["database"],
@@ -180,9 +180,9 @@ class TestMySQLEngineSpecsDbEngineSpec(SupersetTestCase):
         msg = "check the manual that corresponds to your MySQL server version for the right syntax to use near 'from_"  # noqa: E501
         result = MySQLEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Please check your query for syntax errors near "from_". Then, try running your query again.',  # noqa: E501
-                error_type=SupersetErrorType.SYNTAX_ERROR,
+                error_type=AxBIErrorType.SYNTAX_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "MySQL",

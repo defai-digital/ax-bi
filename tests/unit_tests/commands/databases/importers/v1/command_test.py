@@ -32,9 +32,9 @@ def test_import_database_with_encrypted_extra(
     """
     Test that databases are imported with their encrypted extra info when available.
     """
-    from superset import db, security_manager
-    from superset.commands.database.importers.v1 import ImportDatabasesCommand
-    from superset.models.core import Database
+    from axbi import db, security_manager
+    from axbi.commands.database.importers.v1 import ImportDatabasesCommand
+    from axbi.models.core import Database
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
@@ -58,17 +58,17 @@ def test_import_mask_password(
     """
     Test that passwords are masked when importing databases.
     """
-    from superset import db, security_manager
-    from superset.commands.database.importers.v1 import ImportDatabasesCommand
-    from superset.models.core import Database
+    from axbi import db, security_manager
+    from axbi.commands.database.importers.v1 import ImportDatabasesCommand
+    from axbi.models.core import Database
 
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
     configs: dict[str, dict[str, Any]] = {
         "databases/examples.yaml": {
             "database_name": "examples",
-            "sqlalchemy_uri": "postgresql://user:password@localhost:5432/superset",
+            "sqlalchemy_uri": "postgresql://user:password@localhost:5432/ax-bi",
             "cache_timeout": None,
             "expose_in_sqllab": True,
             "allow_run_async": False,
@@ -89,8 +89,7 @@ def test_import_mask_password(
     uuid = configs["databases/examples.yaml"]["uuid"]
     database = db.session.query(Database).filter_by(uuid=uuid).one()
     assert (
-        database.sqlalchemy_uri
-        == "postgresql://user:XXXXXXXXXX@localhost:5432/superset"
+        database.sqlalchemy_uri == "postgresql://user:XXXXXXXXXX@localhost:5432/ax-bi"
     )
     assert database.password == "password"  # noqa: S105
 
@@ -102,17 +101,17 @@ def test_import_database_with_password_in_config(
     """
     Test that passwords in the YAML config are used when importing databases.
     """
-    from superset import db, security_manager
-    from superset.commands.database.importers.v1 import ImportDatabasesCommand
-    from superset.models.core import Database
+    from axbi import db, security_manager
+    from axbi.commands.database.importers.v1 import ImportDatabasesCommand
+    from axbi.models.core import Database
 
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
     configs: dict[str, dict[str, Any]] = {
         "databases/examples.yaml": {
             "database_name": "examples_with_password",
-            "sqlalchemy_uri": "postgresql://user:XXXXXXXXXX@localhost:5432/superset",
+            "sqlalchemy_uri": "postgresql://user:XXXXXXXXXX@localhost:5432/ax-bi",
             "cache_timeout": None,
             "expose_in_sqllab": True,
             "allow_run_async": False,

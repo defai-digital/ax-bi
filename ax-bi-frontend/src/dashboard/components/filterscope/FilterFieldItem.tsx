@@ -17,7 +17,7 @@
  * under the License.
  */
 import cx from 'classnames';
-import { FormLabel } from '@superset-ui/core/components';
+import { FormLabel } from '@ax-bi/ui-core/components';
 
 interface FilterFieldItemProps {
   label: string;

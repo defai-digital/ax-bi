@@ -16,18 +16,18 @@
 # under the License.
 from __future__ import annotations
 
-from superset.db_engine_specs.athena import AthenaEngineSpec
-from superset.db_engine_specs.base import BaseEngineSpec, DatabaseCategory
-from superset.db_engine_specs.bigquery import BigQueryEngineSpec
-from superset.db_engine_specs.cloud_capabilities import (
+from axbi.db_engine_specs.athena import AthenaEngineSpec
+from axbi.db_engine_specs.base import BaseEngineSpec, DatabaseCategory
+from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
+from axbi.db_engine_specs.cloud_capabilities import (
     CloudConnectorSupportLevel,
     CloudDataProductType,
     get_cloud_connector_capability,
     get_cloud_connector_capability_for_values,
     list_high_value_cloud_connectors,
 )
-from superset.db_engine_specs.databricks import DatabricksPythonConnectorEngineSpec
-from superset.db_engine_specs.sqlite import SqliteEngineSpec
+from axbi.db_engine_specs.databricks import DatabricksPythonConnectorEngineSpec
+from axbi.db_engine_specs.sqlite import SqliteEngineSpec
 
 
 def test_high_value_lakehouse_connector_capability() -> None:
@@ -133,10 +133,10 @@ def test_high_value_connector_list_is_sorted_and_stable() -> None:
 
 
 def test_generate_yaml_docs_includes_cloud_capability(mocker) -> None:
-    from superset.db_engine_specs import lib
+    from axbi.db_engine_specs import lib
 
     mocker.patch(
-        "superset.db_engine_specs.lib.load_engine_specs",
+        "axbi.db_engine_specs.lib.load_engine_specs",
         return_value=[BigQueryEngineSpec, SqliteEngineSpec],
     )
 

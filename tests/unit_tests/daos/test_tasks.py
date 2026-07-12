@@ -19,12 +19,12 @@ from collections.abc import Iterator
 from uuid import UUID
 
 import pytest
+from axbi_core.tasks.types import TaskProperties, TaskScope, TaskStatus
 from sqlalchemy.orm.session import Session
-from superset_core.tasks.types import TaskProperties, TaskScope, TaskStatus
 
-from superset.commands.tasks.exceptions import TaskNotAbortableError
-from superset.models.tasks import Task
-from superset.tasks.utils import get_active_dedup_key, get_finished_dedup_key
+from axbi.commands.tasks.exceptions import TaskNotAbortableError
+from axbi.models.tasks import Task
+from axbi.tasks.utils import get_active_dedup_key, get_finished_dedup_key
 
 # Test constants
 TASK_UUID = UUID("e7765491-40c1-4f35-a4f5-06308e79310e")
@@ -81,7 +81,7 @@ def create_task(
 @pytest.fixture
 def session_with_task(session: Session) -> Iterator[Session]:
     """Create a session with Task and TaskSubscriber tables."""
-    from superset.models.task_subscribers import TaskSubscriber
+    from axbi.models.task_subscribers import TaskSubscriber
 
     engine = session.get_bind()
     Task.metadata.create_all(engine)
@@ -93,7 +93,7 @@ def session_with_task(session: Session) -> Iterator[Session]:
 
 def test_find_by_task_key_active(session_with_task: Session) -> None:
     """Test finding active task by task_key"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     create_task(session_with_task)
 
@@ -112,7 +112,7 @@ def test_find_by_task_key_active(session_with_task: Session) -> None:
 
 def test_find_by_task_key_not_found(session_with_task: Session) -> None:
     """Test finding task by task_key returns None when not found"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     result = TaskDAO.find_by_task_key(
         task_type=TEST_TASK_TYPE,
@@ -130,7 +130,7 @@ def test_find_by_task_key_finished_not_found(session_with_task: Session) -> None
     Finished tasks have a different dedup_key format (UUID-based),
     so they won't be found by the active task lookup.
     """
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     create_task(
         session_with_task,
@@ -152,7 +152,7 @@ def test_find_by_task_key_finished_not_found(session_with_task: Session) -> None
 
 def test_create_task_success(session_with_task: Session) -> None:
     """Test successful task creation."""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     result = TaskDAO.create_task(
         task_type=TEST_TASK_TYPE,
@@ -170,7 +170,7 @@ def test_create_task_success(session_with_task: Session) -> None:
 
 def test_create_task_with_user_id(session_with_task: Session) -> None:
     """Test task creation with explicit user_id."""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     result = TaskDAO.create_task(
         task_type=TEST_TASK_TYPE,
@@ -188,7 +188,7 @@ def test_create_task_with_user_id(session_with_task: Session) -> None:
 
 def test_create_task_with_properties(session_with_task: Session) -> None:
     """Test task creation with properties."""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     result = TaskDAO.create_task(
         task_type=TEST_TASK_TYPE,
@@ -204,7 +204,7 @@ def test_create_task_with_properties(session_with_task: Session) -> None:
 
 def test_abort_task_pending_success(session_with_task: Session) -> None:
     """Test successful abort of pending task - goes directly to ABORTED"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -223,7 +223,7 @@ def test_abort_task_in_progress_abortable(session_with_task: Session) -> None:
 
     Should transition to ABORTING status.
     """
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -241,7 +241,7 @@ def test_abort_task_in_progress_abortable(session_with_task: Session) -> None:
 
 def test_abort_task_in_progress_not_abortable(session_with_task: Session) -> None:
     """Test abort of in-progress task without abort handler - raises error"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -256,7 +256,7 @@ def test_abort_task_in_progress_not_abortable(session_with_task: Session) -> Non
 
 def test_abort_task_in_progress_is_abortable_none(session_with_task: Session) -> None:
     """Test abort of in-progress task with is_abortable not set - raises error"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -271,7 +271,7 @@ def test_abort_task_in_progress_is_abortable_none(session_with_task: Session) ->
 
 def test_abort_task_already_aborting(session_with_task: Session) -> None:
     """Test abort of already aborting task - idempotent success"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -288,7 +288,7 @@ def test_abort_task_already_aborting(session_with_task: Session) -> None:
 
 def test_abort_task_not_found(session_with_task: Session) -> None:
     """Test abort fails when task not found"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     result = TaskDAO.abort_task(UUID("00000000-0000-0000-0000-000000000000"))
 
@@ -297,7 +297,7 @@ def test_abort_task_not_found(session_with_task: Session) -> None:
 
 def test_abort_task_already_finished(session_with_task: Session) -> None:
     """Test abort fails when task already finished"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -314,7 +314,7 @@ def test_abort_task_already_finished(session_with_task: Session) -> None:
 
 def test_add_subscriber(session_with_task: Session) -> None:
     """Test adding a subscriber to a task"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -335,7 +335,7 @@ def test_add_subscriber(session_with_task: Session) -> None:
 
 def test_add_subscriber_idempotent(session_with_task: Session) -> None:
     """Test adding same subscriber twice is idempotent"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -358,7 +358,7 @@ def test_add_subscriber_idempotent(session_with_task: Session) -> None:
 
 def test_remove_subscriber(session_with_task: Session) -> None:
     """Test removing a subscriber from a task"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -380,7 +380,7 @@ def test_remove_subscriber(session_with_task: Session) -> None:
 
 def test_remove_subscriber_not_subscribed(session_with_task: Session) -> None:
     """Test removing non-existent subscriber returns None"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -397,7 +397,7 @@ def test_remove_subscriber_not_subscribed(session_with_task: Session) -> None:
 
 def test_get_status(session_with_task: Session) -> None:
     """Test get_status returns status string when task found by UUID"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,
@@ -413,7 +413,7 @@ def test_get_status(session_with_task: Session) -> None:
 
 def test_get_status_not_found(session_with_task: Session) -> None:
     """Test get_status returns None when task not found"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     result = TaskDAO.get_status(UUID("00000000-0000-0000-0000-000000000000"))
 
@@ -425,7 +425,7 @@ def test_conditional_status_update_non_terminal_state_keeps_dedup_key(
 ) -> None:
     """Test that conditional_status_update preserves dedup_key for
     non-terminal transitions"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     # Create task in PENDING state
     task = create_task(
@@ -470,7 +470,7 @@ def test_conditional_status_update_terminal_state_updates_dedup_key(
 ) -> None:
     """Test that terminal states (SUCCESS, FAILURE, ABORTED, TIMED_OUT)
     update dedup_key"""
-    from superset.daos.tasks import TaskDAO
+    from axbi.daos.tasks import TaskDAO
 
     task = create_task(
         session_with_task,

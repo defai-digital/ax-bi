@@ -18,10 +18,10 @@
 # Regression gate for prompt-to-dashboard generation. Runs a version-controlled
 # golden prompt set through the *configured* generation pipeline (the LLM intent
 # mapper if a provider is set, else the heuristic) and fails CI when governance
-# compliance or intent-match regress. Requires a booted Superset with the target
+# compliance or intent-match regress. Requires a booted AxBI with the target
 # datasets indexed — run it in the app container / an integration job, e.g.:
 #
-#   docker compose exec superset scripts/semantic_index/eval_generation_ci.sh
+#   docker compose exec axbi scripts/semantic_index/eval_generation_ci.sh
 #
 # Each MANIFEST row is: dataset_id:golden_file:min_compliance:min_intent
 set -euo pipefail

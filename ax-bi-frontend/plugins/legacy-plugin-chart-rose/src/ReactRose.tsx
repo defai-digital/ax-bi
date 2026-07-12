@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { reactify } from '@superset-ui/core';
-import { styled, css } from '@apache-superset/core/theme';
+import { reactify } from '@ax-bi/ui-core';
+import { styled, css } from '@ax-bi/core/theme';
 import { Global } from '@emotion/react';
 import Component from './Rose';
 
@@ -58,7 +58,7 @@ const Rose = ({ className, ...otherProps }: RoseWrapperProps) => (
 
 export default styled(Rose)`
   ${({ theme }) => `
-    .superset-legacy-chart-rose path {
+    .axbi-legacy-chart-rose path {
         transition: fill-opacity 180ms linear;
         stroke: ${theme.colorBorder};
         stroke-width: 1px;
@@ -66,17 +66,17 @@ export default styled(Rose)`
         fill-opacity: 0.75;
     }
 
-    .superset-legacy-chart-rose text {
+    .axbi-legacy-chart-rose text {
         font-size: ${theme.fontSizeSM}px;
         font-family: ${theme.fontFamily};
         pointer-events: none;
     }
 
-    .superset-legacy-chart-rose .clickable path {
+    .axbi-legacy-chart-rose .clickable path {
         cursor: pointer;
     }
 
-    .superset-legacy-chart-rose .hover path {
+    .axbi-legacy-chart-rose .hover path {
         fill-opacity: 1;
     }
 

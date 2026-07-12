@@ -25,7 +25,7 @@ services:
       - namenode:/hadoop/dfs/name
       - type: bind
         source: "$UPLOAD_FOLDER"
-        target: /tmp/superset_uploads
+        target: /tmp/axbi_uploads
     environment:
       - CLUSTER_NAME=test
     env_file:
@@ -38,7 +38,7 @@ services:
       - datanode:/hadoop/dfs/data
       - type: bind
         source: "$UPLOAD_FOLDER"
-        target: /tmp/superset_uploads
+        target: /tmp/axbi_uploads
     env_file:
       - ./hadoop-hive.env
     environment:
@@ -57,7 +57,7 @@ services:
     volumes:
       - type: bind
         source: "$UPLOAD_FOLDER"
-        target: /tmp/superset_uploads
+        target: /tmp/axbi_uploads
   hive-metastore:
     image: bde2020/hive:2.3.2-postgresql-metastore
     env_file:
@@ -70,7 +70,7 @@ services:
     volumes:
       - type: bind
         source: "$UPLOAD_FOLDER"
-        target: /tmp/superset_uploads
+        target: /tmp/axbi_uploads
   hive-metastore-postgresql:
     image: bde2020/hive-metastore-postgresql:2.3.0
 

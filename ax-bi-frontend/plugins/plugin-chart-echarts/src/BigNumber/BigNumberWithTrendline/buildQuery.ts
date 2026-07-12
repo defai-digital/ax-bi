@@ -23,14 +23,14 @@ import {
   getXAxisColumn,
   isXAxisSet,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   aggregationOperator,
   flattenOperator,
   pivotOperator,
   resampleOperator,
   rollingWindowOperator,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 export default function buildQuery(formData: QueryFormData) {
   const isRawMetric = formData.aggregation === 'raw';

@@ -27,13 +27,13 @@ import httpx
 import pytest
 from authlib.jose.errors import BadSignatureError, DecodeError, ExpiredTokenError
 
-from superset.mcp_service.jwt_verifier import (
+from axbi.mcp_service.jwt_verifier import (
     _auth_error_handler,
     _jwt_failure_reason,
     DetailedBearerAuthBackend,
     DetailedJWTVerifier,
 )
-from superset.utils import json
+from axbi.utils import json
 
 
 def _make_token(
@@ -381,7 +381,7 @@ async def test_valid_token_logs_success(hs256_verifier, caplog):
         "exp": future_exp,
     }
 
-    with caplog.at_level(logging.INFO, logger="superset.mcp_service.jwt_verifier"):
+    with caplog.at_level(logging.INFO, logger="axbi.mcp_service.jwt_verifier"):
         with patch.object(hs256_verifier.jwt, "decode", return_value=claims):
             result = await hs256_verifier.load_access_token(token)
 
@@ -413,7 +413,7 @@ async def test_success_log_tolerates_non_orderable_scopes(hs256_verifier, caplog
         "exp": future_exp,
     }
 
-    with caplog.at_level(logging.INFO, logger="superset.mcp_service.jwt_verifier"):
+    with caplog.at_level(logging.INFO, logger="axbi.mcp_service.jwt_verifier"):
         with (
             patch.object(hs256_verifier.jwt, "decode", return_value=claims),
             patch.object(hs256_verifier, "_extract_scopes", return_value=["read", 1]),
@@ -891,7 +891,7 @@ async def test_warning_logs_never_contain_claim_values(hs256_verifier, caplog):
         "exp": int(time.time()) + 3600,
     }
 
-    with caplog.at_level(logging.DEBUG, logger="superset.mcp_service.jwt_verifier"):
+    with caplog.at_level(logging.DEBUG, logger="axbi.mcp_service.jwt_verifier"):
         with patch.object(hs256_verifier.jwt, "decode", return_value=claims):
             await hs256_verifier.load_access_token(token)
 
@@ -930,7 +930,7 @@ async def test_hs256_secret_never_logged(hs256_verifier, caplog):
         "exp": int(time.time()) + 3600,
     }
 
-    with caplog.at_level(logging.DEBUG, logger="superset.mcp_service.jwt_verifier"):
+    with caplog.at_level(logging.DEBUG, logger="axbi.mcp_service.jwt_verifier"):
         with patch.object(hs256_verifier.jwt, "decode", return_value=claims):
             await hs256_verifier.load_access_token(token)
 
@@ -1020,7 +1020,7 @@ async def test_successful_auth_logged_with_safe_metadata(hs256_verifier, caplog)
         "scope": "read write",
     }
 
-    with caplog.at_level(logging.INFO, logger="superset.mcp_service.jwt_verifier"):
+    with caplog.at_level(logging.INFO, logger="axbi.mcp_service.jwt_verifier"):
         with patch.object(hs256_verifier.jwt, "decode", return_value=claims):
             result = await hs256_verifier.load_access_token(token)
 
@@ -1040,7 +1040,7 @@ async def test_successful_auth_logged_with_safe_metadata(hs256_verifier, caplog)
 def test_sanitize_for_log_escapes_newlines():
     """_sanitize_for_log escapes newline/carriage-return/tab to prevent
     log-line injection from attacker-controlled claim values."""
-    from superset.mcp_service.jwt_verifier import _sanitize_for_log
+    from axbi.mcp_service.jwt_verifier import _sanitize_for_log
 
     injected = "RS256\nFAKE LOG LINE: admin authenticated"
     sanitized = _sanitize_for_log(injected)
@@ -1142,7 +1142,7 @@ def test_warns_when_algorithm_not_configured(caplog):
     """A verifier with a falsy algorithm logs a WARNING that the algorithm is
     not pinned. (fastmcp's JWTVerifier coerces ``algorithm=None`` to a default,
     so we exercise the helper directly with an empty algorithm.)"""
-    from superset.mcp_service.jwt_verifier import _warn_on_weak_jwt_config
+    from axbi.mcp_service.jwt_verifier import _warn_on_weak_jwt_config
 
     with caplog.at_level(logging.WARNING):
         _warn_on_weak_jwt_config(audience="test-audience", algorithm=None)

@@ -27,7 +27,7 @@ import {
   PartialFilters,
   ChartCustomization,
   QueryFormColumn,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   ChartConfiguration,
   ChartQueryPayload,

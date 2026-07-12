@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ChartProps, DatasourceType } from '@superset-ui/core';
+import { ChartProps, DatasourceType } from '@ax-bi/ui-core';
 import transformProps from './transformProps';
 
 interface PolygonFeature {

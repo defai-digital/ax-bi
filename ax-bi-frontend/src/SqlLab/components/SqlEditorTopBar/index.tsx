@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Flex } from '@superset-ui/core/components';
-import { styled } from '@apache-superset/core/theme';
-import { MenuItemType } from '@superset-ui/core/components/Menu';
+import { Flex } from '@ax-bi/ui-core/components';
+import { styled } from '@ax-bi/core/theme';
+import { MenuItemType } from '@ax-bi/ui-core/components/Menu';
 import { ViewLocations } from 'src/SqlLab/contributions';
 import PanelToolbar from 'src/components/PanelToolbar';
 

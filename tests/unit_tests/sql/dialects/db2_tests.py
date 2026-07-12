@@ -18,7 +18,7 @@
 import pytest
 from sqlglot import errors, parse_one
 
-from superset.sql.dialects.db2 import DB2
+from axbi.sql.dialects.db2 import DB2
 
 
 def test_month_truncation() -> None:

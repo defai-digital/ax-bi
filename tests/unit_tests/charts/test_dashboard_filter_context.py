@@ -21,7 +21,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.charts.data.dashboard_filter_context import (
+from axbi.charts.data.dashboard_filter_context import (
     _extract_filter_extra_form_data,
     _find_chart_layout_item,
     _is_filter_in_scope_for_chart,
@@ -31,7 +31,7 @@ from superset.charts.data.dashboard_filter_context import (
     DashboardFilterStatus,
     get_dashboard_filter_context,
 )
-from superset.utils import json
+from axbi.utils import json
 
 SAMPLE_POSITION_JSON = {
     "ROOT_ID": {
@@ -337,14 +337,14 @@ def test_merge_extra_form_data_merges_custom_form_data_dicts() -> None:
 
 
 def test_target_column_from_dict() -> None:
-    from superset.charts.data.dashboard_filter_context import _get_filter_target_column
+    from axbi.charts.data.dashboard_filter_context import _get_filter_target_column
 
     flt = _make_filter(target_column="country")
     assert _get_filter_target_column(flt) == "country"
 
 
 def test_target_column_no_targets() -> None:
-    from superset.charts.data.dashboard_filter_context import _get_filter_target_column
+    from axbi.charts.data.dashboard_filter_context import _get_filter_target_column
 
     flt = _make_filter(target_column=None)
     flt["targets"] = []
@@ -352,7 +352,7 @@ def test_target_column_no_targets() -> None:
 
 
 def test_target_column_ignores_malformed_targets() -> None:
-    from superset.charts.data.dashboard_filter_context import _get_filter_target_column
+    from axbi.charts.data.dashboard_filter_context import _get_filter_target_column
 
     flt = _make_filter()
     flt["targets"] = ["not-an-object"]
@@ -384,7 +384,7 @@ def test_validate_chart_on_dashboard_fails() -> None:
 
 
 def test_dashboard_filter_context_to_dict() -> None:
-    from superset.charts.data.dashboard_filter_context import DashboardFilterInfo
+    from axbi.charts.data.dashboard_filter_context import DashboardFilterInfo
 
     ctx = DashboardFilterContext(
         extra_form_data={"filters": [{"col": "a", "op": "IN", "val": ["x"]}]},
@@ -413,8 +413,8 @@ def test_dashboard_filter_context_to_dict() -> None:
 # --- get_dashboard_filter_context (integration with mocks) ---
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_dashboard_not_found(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -426,8 +426,8 @@ def test_get_dashboard_filter_context_dashboard_not_found(
         get_dashboard_filter_context(dashboard_id=999, chart_id=10)
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_chart_not_on_dashboard(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -446,8 +446,8 @@ def test_get_dashboard_filter_context_chart_not_on_dashboard(
         get_dashboard_filter_context(dashboard_id=42, chart_id=10)
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_static_defaults(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -483,8 +483,8 @@ def test_get_dashboard_filter_context_static_defaults(
     assert ctx.extra_form_data["filters"][0]["val"] == ["US", "UK"]
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_ignores_malformed_metadata(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -506,8 +506,8 @@ def test_get_dashboard_filter_context_ignores_malformed_metadata(
     assert ctx.extra_form_data == {}
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_ignores_malformed_position_json(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -541,8 +541,8 @@ def test_get_dashboard_filter_context_ignores_malformed_position_json(
     assert ctx.extra_form_data["filters"][0]["val"] == ["US"]
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_skips_malformed_filter_entries(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -577,8 +577,8 @@ def test_get_dashboard_filter_context_skips_malformed_filter_entries(
     assert ctx.filters[0].id == "f1"
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_skips_malformed_nested_filter_metadata(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -627,8 +627,8 @@ def test_get_dashboard_filter_context_skips_malformed_nested_filter_metadata(
     assert ctx.extra_form_data["filters"][0]["val"] == ["US"]
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_mixed_filter_types(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -683,8 +683,8 @@ def test_get_dashboard_filter_context_mixed_filter_types(
     assert len(ctx.extra_form_data.get("filters", [])) == 1
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_skips_dividers(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -721,8 +721,8 @@ def test_get_dashboard_filter_context_skips_dividers(
     assert ctx.filters[0].name == "Region"
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_out_of_scope_filter_excluded(
     mock_db: MagicMock,
     mock_check_access: MagicMock,
@@ -762,8 +762,8 @@ def test_get_dashboard_filter_context_out_of_scope_filter_excluded(
     assert ctx.filters[0].id == "f1"
 
 
-@patch("superset.charts.data.dashboard_filter_context._check_dashboard_access")
-@patch("superset.charts.data.dashboard_filter_context.db")
+@patch("axbi.charts.data.dashboard_filter_context._check_dashboard_access")
+@patch("axbi.charts.data.dashboard_filter_context.db")
 def test_get_dashboard_filter_context_chart_not_in_layout_receives_root_filters(
     mock_db: MagicMock,
     mock_check_access: MagicMock,

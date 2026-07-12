@@ -22,7 +22,7 @@ These tests demonstrate the core functionality works correctly.
 
 from unittest.mock import MagicMock, patch
 
-from superset.utils.webdriver import (
+from axbi.utils.webdriver import (
     _PlaywrightBrowserManager,
     PLAYWRIGHT_AVAILABLE,
     validate_webdriver_config,
@@ -36,7 +36,7 @@ class TestPlaywrightMigrationCore:
         """Test that PLAYWRIGHT_AVAILABLE is always a boolean."""
         assert isinstance(PLAYWRIGHT_AVAILABLE, bool)
 
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_validate_webdriver_config_structure(self, mock_feature_flag):
         """Test that validate_webdriver_config returns correct structure."""
         mock_feature_flag.return_value = True
@@ -64,11 +64,11 @@ class TestPlaywrightMigrationCore:
         # Selenium should always be available
         assert result["selenium_available"] is True
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", False)
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", False)
+    @patch("axbi.utils.webdriver.logger")
     def test_webdriver_playwright_fallback_logging(self, mock_logger):
         """Test that WebDriverPlaywright logs fallback correctly."""
-        from superset.utils.webdriver import WebDriverPlaywright
+        from axbi.utils.webdriver import WebDriverPlaywright
 
         mock_user = MagicMock()
         mock_user.username = "test_user"
@@ -87,7 +87,7 @@ class TestPlaywrightMigrationCore:
 
     def test_webdriver_classes_exist(self):
         """Test that both WebDriver classes can be imported."""
-        from superset.utils.webdriver import WebDriverPlaywright, WebDriverSelenium
+        from axbi.utils.webdriver import WebDriverPlaywright, WebDriverSelenium
 
         # Should be able to create instances without errors
         playwright_driver = WebDriverPlaywright("chrome")
@@ -120,9 +120,7 @@ class TestPlaywrightBrowserManager:
         mock_sync_pw.start.return_value = mock_pw_instance
 
         manager = _PlaywrightBrowserManager()
-        with patch(
-            "superset.utils.webdriver.sync_playwright", return_value=mock_sync_pw
-        ):
+        with patch("axbi.utils.webdriver.sync_playwright", return_value=mock_sync_pw):
             browser = manager.get_browser(["--headless"])
 
         assert browser is mock_browser
@@ -159,9 +157,7 @@ class TestPlaywrightBrowserManager:
         manager._browser = stale_browser
         manager._playwright = MagicMock()
 
-        with patch(
-            "superset.utils.webdriver.sync_playwright", return_value=mock_sync_pw
-        ):
+        with patch("axbi.utils.webdriver.sync_playwright", return_value=mock_sync_pw):
             browser = manager.get_browser(["--headless"])
 
         assert browser is new_browser

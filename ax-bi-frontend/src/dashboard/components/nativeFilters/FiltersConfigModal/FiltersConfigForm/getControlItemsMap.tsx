@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { CustomControlItem } from '@superset-ui/chart-controls';
+import { CustomControlItem } from '@ax-bi/chart-controls';
 import { ReactNode } from 'react';
 import {
   Checkbox,
@@ -24,14 +24,14 @@ import {
   InfoTooltip,
   Tooltip,
   type FormInstance,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 import {
   Filter,
   ChartCustomization,
   getChartControlPanelRegistry,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import {
   doesColumnMatchFilterType,
   getControlItems,

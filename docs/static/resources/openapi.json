@@ -8485,7 +8485,7 @@
             "type": "boolean"
           },
           "grace_period": {
-            "description": "Once an alert is triggered, how long, in seconds, before Superset nags you again. (in seconds)",
+            "description": "Once an alert is triggered, how long, in seconds, before AxBI nags you again. (in seconds)",
             "example": 14400,
             "minimum": 1,
             "type": "integer"
@@ -9235,7 +9235,7 @@
             "type": "boolean"
           },
           "grace_period": {
-            "description": "Once an alert is triggered, how long, in seconds, before Superset nags you again. (in seconds)",
+            "description": "Once an alert is triggered, how long, in seconds, before AxBI nags you again. (in seconds)",
             "example": 14400,
             "minimum": 1,
             "type": "integer"
@@ -10571,7 +10571,7 @@
         },
         "type": "object"
       },
-      "SupersetRoleApi.get": {
+      "AxBIRoleApi.get": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10586,7 +10586,7 @@
         ],
         "type": "object"
       },
-      "SupersetRoleApi.get_list": {
+      "AxBIRoleApi.get_list": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10601,7 +10601,7 @@
         ],
         "type": "object"
       },
-      "SupersetRoleApi.post": {
+      "AxBIRoleApi.post": {
         "properties": {
           "name": {
             "maxLength": 64,
@@ -10613,7 +10613,7 @@
         ],
         "type": "object"
       },
-      "SupersetRoleApi.put": {
+      "AxBIRoleApi.put": {
         "properties": {
           "name": {
             "maxLength": 64,
@@ -10625,14 +10625,14 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.get": {
+      "AxBIUserApi.get": {
         "properties": {
           "active": {
             "nullable": true,
             "type": "boolean"
           },
           "changed_by": {
-            "$ref": "#/components/schemas/SupersetUserApi.get.User1"
+            "$ref": "#/components/schemas/AxBIUserApi.get.User1"
           },
           "changed_on": {
             "format": "date-time",
@@ -10640,7 +10640,7 @@
             "type": "string"
           },
           "created_by": {
-            "$ref": "#/components/schemas/SupersetUserApi.get.User"
+            "$ref": "#/components/schemas/AxBIUserApi.get.User"
           },
           "created_on": {
             "format": "date-time",
@@ -10660,7 +10660,7 @@
             "type": "string"
           },
           "groups": {
-            "$ref": "#/components/schemas/SupersetUserApi.get.Group"
+            "$ref": "#/components/schemas/AxBIUserApi.get.Group"
           },
           "id": {
             "type": "integer"
@@ -10679,7 +10679,7 @@
             "type": "integer"
           },
           "roles": {
-            "$ref": "#/components/schemas/SupersetUserApi.get.Role"
+            "$ref": "#/components/schemas/AxBIUserApi.get.Role"
           },
           "username": {
             "maxLength": 128,
@@ -10694,7 +10694,7 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.get.Group": {
+      "AxBIUserApi.get.Group": {
         "properties": {
           "description": {
             "maxLength": 512,
@@ -10719,7 +10719,7 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.get.Role": {
+      "AxBIUserApi.get.Role": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10734,7 +10734,7 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.get.User": {
+      "AxBIUserApi.get.User": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10742,7 +10742,7 @@
         },
         "type": "object"
       },
-      "SupersetUserApi.get.User1": {
+      "AxBIUserApi.get.User1": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10750,14 +10750,14 @@
         },
         "type": "object"
       },
-      "SupersetUserApi.get_list": {
+      "AxBIUserApi.get_list": {
         "properties": {
           "active": {
             "nullable": true,
             "type": "boolean"
           },
           "changed_by": {
-            "$ref": "#/components/schemas/SupersetUserApi.get_list.User1"
+            "$ref": "#/components/schemas/AxBIUserApi.get_list.User1"
           },
           "changed_on": {
             "format": "date-time",
@@ -10765,7 +10765,7 @@
             "type": "string"
           },
           "created_by": {
-            "$ref": "#/components/schemas/SupersetUserApi.get_list.User"
+            "$ref": "#/components/schemas/AxBIUserApi.get_list.User"
           },
           "created_on": {
             "format": "date-time",
@@ -10785,7 +10785,7 @@
             "type": "string"
           },
           "groups": {
-            "$ref": "#/components/schemas/SupersetUserApi.get_list.Group"
+            "$ref": "#/components/schemas/AxBIUserApi.get_list.Group"
           },
           "id": {
             "type": "integer"
@@ -10804,7 +10804,7 @@
             "type": "integer"
           },
           "roles": {
-            "$ref": "#/components/schemas/SupersetUserApi.get_list.Role"
+            "$ref": "#/components/schemas/AxBIUserApi.get_list.Role"
           },
           "username": {
             "maxLength": 128,
@@ -10819,7 +10819,7 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.get_list.Group": {
+      "AxBIUserApi.get_list.Group": {
         "properties": {
           "description": {
             "maxLength": 512,
@@ -10844,7 +10844,7 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.get_list.Role": {
+      "AxBIUserApi.get_list.Role": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10859,7 +10859,7 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.get_list.User": {
+      "AxBIUserApi.get_list.User": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10867,7 +10867,7 @@
         },
         "type": "object"
       },
-      "SupersetUserApi.get_list.User1": {
+      "AxBIUserApi.get_list.User1": {
         "properties": {
           "id": {
             "type": "integer"
@@ -10875,7 +10875,7 @@
         },
         "type": "object"
       },
-      "SupersetUserApi.post": {
+      "AxBIUserApi.post": {
         "properties": {
           "active": {
             "description": "Is user active?It's not a good policy to remove a user, just make it inactive",
@@ -10927,7 +10927,7 @@
         ],
         "type": "object"
       },
-      "SupersetUserApi.put": {
+      "AxBIUserApi.put": {
         "properties": {
           "active": {
             "description": "Is user active?It's not a good policy to remove a user, just make it inactive",
@@ -12732,8 +12732,8 @@
     }
   },
   "info": {
-    "description": "Superset",
-    "title": "Superset",
+    "description": "AX BI",
+    "title": "AX BI",
     "version": "v1"
   },
   "openapi": "3.0.2",
@@ -14266,7 +14266,7 @@
     },
     "/api/v1/assets/export/": {
       "get": {
-        "description": "Gets a ZIP file with all the Superset assets (databases, datasets, charts, dashboards, saved queries) as YAML files.",
+        "description": "Gets a ZIP file with all the AxBI assets (databases, datasets, charts, dashboards, saved queries) as YAML files.",
         "responses": {
           "200": {
             "content": {
@@ -19250,7 +19250,7 @@
     },
     "/api/v1/dashboard/{pk}/export_as_example/": {
       "get": {
-        "description": "Exports a dashboard with its charts and datasets in the example format used by the Superset example loading system. The export includes Parquet data files and YAML configuration files.",
+        "description": "Exports a dashboard with its charts and datasets in the example format used by the AxBI example loading system. The export includes Parquet data files and YAML configuration files.",
         "parameters": [
           {
             "description": "The dashboard id",
@@ -33157,7 +33157,7 @@
                     "result": {
                       "description": "The result from the get list query",
                       "items": {
-                        "$ref": "#/components/schemas/SupersetRoleApi.get_list"
+                        "$ref": "#/components/schemas/AxBIRoleApi.get_list"
                       },
                       "type": "array"
                     }
@@ -33236,7 +33236,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SupersetRoleApi.post"
+                "$ref": "#/components/schemas/AxBIRoleApi.post"
               },
               "example": {
                 "name": "string"
@@ -33256,7 +33256,7 @@
                       "type": "string"
                     },
                     "result": {
-                      "$ref": "#/components/schemas/SupersetRoleApi.post"
+                      "$ref": "#/components/schemas/AxBIRoleApi.post"
                     }
                   },
                   "type": "object"
@@ -33693,7 +33693,7 @@
                       "type": "object"
                     },
                     "result": {
-                      "$ref": "#/components/schemas/SupersetRoleApi.get"
+                      "$ref": "#/components/schemas/AxBIRoleApi.get"
                     },
                     "show_columns": {
                       "description": "A list of columns",
@@ -33790,7 +33790,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SupersetRoleApi.put"
+                "$ref": "#/components/schemas/AxBIRoleApi.put"
               },
               "example": {
                 "name": "string"
@@ -33807,7 +33807,7 @@
                 "schema": {
                   "properties": {
                     "result": {
-                      "$ref": "#/components/schemas/SupersetRoleApi.put"
+                      "$ref": "#/components/schemas/AxBIRoleApi.put"
                     }
                   },
                   "type": "object"
@@ -35105,7 +35105,7 @@
                     "result": {
                       "description": "The result from the get list query",
                       "items": {
-                        "$ref": "#/components/schemas/SupersetUserApi.get_list"
+                        "$ref": "#/components/schemas/AxBIUserApi.get_list"
                       },
                       "type": "array"
                     }
@@ -35184,7 +35184,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SupersetUserApi.post"
+                "$ref": "#/components/schemas/AxBIUserApi.post"
               },
               "example": {
                 "active": true,
@@ -35212,7 +35212,7 @@
                 "schema": {
                   "properties": {
                     "result": {
-                      "$ref": "#/components/schemas/SupersetUserApi.post"
+                      "$ref": "#/components/schemas/AxBIUserApi.post"
                     }
                   },
                   "type": "object"
@@ -35518,7 +35518,7 @@
                       "type": "object"
                     },
                     "result": {
-                      "$ref": "#/components/schemas/SupersetUserApi.get"
+                      "$ref": "#/components/schemas/AxBIUserApi.get"
                     },
                     "show_columns": {
                       "description": "A list of columns",
@@ -35624,7 +35624,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SupersetUserApi.put"
+                "$ref": "#/components/schemas/AxBIUserApi.put"
               },
               "example": {
                 "active": true,
@@ -35652,7 +35652,7 @@
                 "schema": {
                   "properties": {
                     "result": {
-                      "$ref": "#/components/schemas/SupersetUserApi.put"
+                      "$ref": "#/components/schemas/AxBIUserApi.put"
                     }
                   },
                   "type": "object"
@@ -39247,7 +39247,7 @@
     },
     {
       "name": "Available Domains",
-      "description": "Get available domains for the Superset instance."
+      "description": "Get available domains for the AxBI instance."
     },
     {
       "name": "CSS Templates",
@@ -39307,7 +39307,7 @@
     },
     {
       "name": "Import/export",
-      "description": "Import and export Superset assets."
+      "description": "Import and export AxBI assets."
     },
     {
       "name": "LogRestApi",
@@ -39315,7 +39315,7 @@
     },
     {
       "name": "Menu",
-      "description": "Get the Superset menu structure."
+      "description": "Get the AxBI menu structure."
     },
     {
       "name": "OpenApi",
@@ -39375,7 +39375,7 @@
     },
     {
       "name": "Themes",
-      "description": "Manage UI themes for customizing Superset's appearance."
+      "description": "Manage UI themes for customizing AxBI's appearance."
     },
     {
       "name": "User",

@@ -22,15 +22,15 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.dashboard.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.dashboard.schemas import (
     _extract_layout_from_position,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
-from superset.utils import json
+from axbi.utils import json
 
 
 def _wrapped(value: str) -> str:
@@ -60,7 +60,7 @@ def mcp_server():
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -179,7 +179,7 @@ def _tabbed_layout() -> str:
     )
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_layout_basic(mock_find, mcp_server):
     mock_find.return_value = _build_dashboard_mock(position_json=_simple_layout())
@@ -205,7 +205,7 @@ async def test_get_dashboard_layout_basic(mock_find, mcp_server):
     assert chart["height"] == 50
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_layout_tabbed(mock_find, mcp_server):
     mock_find.return_value = _build_dashboard_mock(
@@ -233,7 +233,7 @@ async def test_get_dashboard_layout_tabbed(mock_find, mcp_server):
     assert charts_by_id[20]["tab_path"] == [_wrapped("Details")]
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_layout_empty(mock_find, mcp_server):
     mock_find.return_value = _build_dashboard_mock(position_json=None)
@@ -249,7 +249,7 @@ async def test_get_dashboard_layout_empty(mock_find, mcp_server):
     assert data["charts"] == []
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_layout_not_found(mock_find, mcp_server):
     mock_find.return_value = None
@@ -277,7 +277,7 @@ def test_extract_layout_handles_missing_root():
 
 def test_get_dashboard_info_omitted_fields_references_layout_tool():
     """The position_json omission message must point agents at get_dashboard_layout."""
-    from superset.mcp_service.dashboard.schemas import _build_omitted_fields
+    from axbi.mcp_service.dashboard.schemas import _build_omitted_fields
 
     omitted = _build_omitted_fields(
         json_metadata_str=None, position_json_str='{"ROOT_ID": {}}'

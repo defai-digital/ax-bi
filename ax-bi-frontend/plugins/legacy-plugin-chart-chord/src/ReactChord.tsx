@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { reactify } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { reactify } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import Component from './Chord';
 
 // Type-erase the render function to allow flexible prop spreading in the wrapper.
@@ -43,18 +43,18 @@ const Chord = ({ className, ...otherProps }: ChordWrapperProps) => (
 
 export default styled(Chord)`
   ${({ theme }) => `
-    .superset-legacy-chart-chord svg #circle circle {
+    .axbi-legacy-chart-chord svg #circle circle {
       fill: none;
       pointer-events: all;
     }
-    .superset-legacy-chart-chord svg .group path {
+    .axbi-legacy-chart-chord svg .group path {
       fill-opacity: 60%;
     }
-    .superset-legacy-chart-chord svg path.chord {
+    .axbi-legacy-chart-chord svg path.chord {
       stroke: ${theme.colorText};
       stroke-width: 0.25px;
     }
-    .superset-legacy-chart-chord svg #circle:hover path.fade {
+    .axbi-legacy-chart-chord svg #circle:hover path.fade {
       opacity: 10%;
     }
   `}

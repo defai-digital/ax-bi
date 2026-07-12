@@ -17,18 +17,19 @@
 
 from click.testing import CliRunner
 
-from superset.cli.main import superset
+from axbi.cli.main import axbi
 
 
 def test_top_level_help_does_not_load_app(mocker) -> None:
     app_factory = mocker.Mock(side_effect=AssertionError("app should not load"))
-    mocker.patch.object(superset, "create_app", app_factory)
+    mocker.patch.object(axbi, "create_app", app_factory)
 
-    result = CliRunner().invoke(superset, ["--help"])
+    result = CliRunner().invoke(axbi, ["--help"])
 
     assert result.exit_code == 0
     assert "The AX BI CLI" in result.output
     assert "mcp" in result.output
     assert "runtime-modernization" in result.output
     assert "version" in result.output
+    assert "ax-bi" not in axbi.commands
     app_factory.assert_not_called()

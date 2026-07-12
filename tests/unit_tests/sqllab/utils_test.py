@@ -18,8 +18,8 @@ from __future__ import annotations
 
 import pytest
 
-from superset.common.db_query_status import QueryStatus
-from superset.sqllab.utils import apply_display_max_row_configuration_if_require
+from axbi.common.db_query_status import QueryStatus
+from axbi.sqllab.utils import apply_display_max_row_configuration_if_require
 
 
 def test_apply_display_max_row_configuration_truncates_success_payload() -> None:

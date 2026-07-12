@@ -21,7 +21,7 @@ import re
 from typing import Any
 from unittest.mock import Mock, patch  # noqa: F401
 
-from superset.commands.database.exceptions import DatabaseInvalidError
+from axbi.commands.database.exceptions import DatabaseInvalidError
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -34,13 +34,13 @@ import marshmallow
 from sqlalchemy.exc import ArgumentError  # noqa: F401
 
 import tests.integration_tests.test_app  # noqa: F401
-from superset import db, security_manager
-from superset.constants import NO_TIME_RANGE
-from superset.exceptions import CertificateException, SupersetException  # noqa: F401
-from superset.models.core import Database, Log
-from superset.models.dashboard import Dashboard  # noqa: F401
-from superset.models.slice import Slice  # noqa: F401
-from superset.utils.core import (
+from axbi import db, security_manager
+from axbi.constants import NO_TIME_RANGE
+from axbi.exceptions import CertificateException, AxBIException  # noqa: F401
+from axbi.models.core import Database, Log
+from axbi.models.dashboard import Dashboard  # noqa: F401
+from axbi.models.slice import Slice  # noqa: F401
+from axbi.utils.core import (
     cast_to_num,
     convert_legacy_filters_into_adhoc,
     create_ssl_cert_file,
@@ -57,12 +57,12 @@ from superset.utils.core import (
     split,
     DateColumn,
 )
-from superset.utils import json
-from superset.utils.database import get_or_create_db
-from superset.utils import schema
-from superset.utils.hashing import hash_from_str
-from superset.views.utils import build_extra_filters, get_form_data  # noqa: F401
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.utils import json
+from axbi.utils.database import get_or_create_db
+from axbi.utils import schema
+from axbi.utils.hashing import hash_from_str
+from axbi.views.utils import build_extra_filters, get_form_data  # noqa: F401
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
@@ -72,7 +72,7 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 from .fixtures.certificates import ssl_certificate
 
 
-class TestUtils(SupersetTestCase):
+class TestUtils(AxBITestCase):
     def test_convert_legacy_filters_into_adhoc_where(self):
         form_data = {"where": "a = 1"}
         expected = {
@@ -177,10 +177,10 @@ class TestUtils(SupersetTestCase):
         assert list(split('a "b \\" c"')) == ["a", '"b \\" c"']
 
     def test_get_or_create_db(self):
-        get_or_create_db("test_db", "sqlite:///superset.db")
+        get_or_create_db("test_db", "sqlite:///ax-bi.db")
         database = db.session.query(Database).filter_by(database_name="test_db").one()
         assert database is not None
-        assert database.sqlalchemy_uri == "sqlite:///superset.db"
+        assert database.sqlalchemy_uri == "sqlite:///ax-bi.db"
         assert (
             security_manager.find_permission_view_menu("database_access", database.perm)
             is not None
@@ -194,14 +194,14 @@ class TestUtils(SupersetTestCase):
 
     def test_get_or_create_db_invalid_uri(self):
         with self.assertRaises(DatabaseInvalidError):  # noqa: PT027
-            get_or_create_db("test_db", "yoursql:superset.db/()")
+            get_or_create_db("test_db", "yoursql:axbi.db/()")
 
     def test_get_or_create_db_existing_invalid_uri(self):
-        database = get_or_create_db("test_db", "sqlite:///superset.db")
+        database = get_or_create_db("test_db", "sqlite:///ax-bi.db")
         database.sqlalchemy_uri = "None"
         db.session.commit()
-        database = get_or_create_db("test_db", "sqlite:///superset.db")
-        assert database.sqlalchemy_uri == "sqlite:///superset.db"
+        database = get_or_create_db("test_db", "sqlite:///ax-bi.db")
+        assert database.sqlalchemy_uri == "sqlite:///ax-bi.db"
 
     def test_as_list(self):
         self.assertListEqual(as_list(123), [123])  # noqa: PT009

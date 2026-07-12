@@ -22,7 +22,7 @@ import {
   getMetricLabel,
   getNumberFormatter,
   getTimeFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { BoxplotSeriesOption } from 'echarts/charts';
 import type { CallbackDataParams } from 'echarts/types/src/util/types';

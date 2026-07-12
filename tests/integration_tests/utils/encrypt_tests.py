@@ -21,14 +21,14 @@ from sqlalchemy import String, TypeDecorator
 from sqlalchemy_utils import EncryptedType
 from sqlalchemy_utils.types.encrypted.encrypted_type import StringEncryptedType
 
-from superset.extensions import encrypted_field_factory
-from superset.utils.encrypt import (
+from axbi.extensions import encrypted_field_factory
+from axbi.utils.encrypt import (
     AbstractEncryptedFieldAdapter,
     ReEncryptStats,
     SecretsMigrator,
     SQLAlchemyUtilsAdapter,
 )
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 
 
 class CustomEncFieldAdapter(AbstractEncryptedFieldAdapter):
@@ -44,7 +44,7 @@ class CustomEncFieldAdapter(AbstractEncryptedFieldAdapter):
             raise Exception("Missing app_config kwarg")
 
 
-class EncryptedFieldTest(SupersetTestCase):
+class EncryptedFieldTest(AxBITestCase):
     def setUp(self) -> None:
         self.app.config["SQLALCHEMY_ENCRYPTED_FIELD_TYPE_ADAPTER"] = (
             SQLAlchemyUtilsAdapter
@@ -76,7 +76,7 @@ class EncryptedFieldTest(SupersetTestCase):
         that an encrypted field is needed.
         :return:
         """
-        from superset.extensions import encrypted_field_factory
+        from axbi.extensions import encrypted_field_factory
 
         migrator = SecretsMigrator("")
         encrypted_fields = migrator.discover_encrypted_fields()
@@ -115,7 +115,7 @@ class EncryptedFieldTest(SupersetTestCase):
         (e.g. `semantic_layers` uses `uuid` as its PK).
         """
         # Import triggers FAB metadata registration for the semantic_layers table.
-        from superset.semantic_layers.models import SemanticLayer  # noqa: F401
+        from axbi.semantic_layers.models import SemanticLayer  # noqa: F401
 
         migrator = SecretsMigrator("")
         encrypted_fields = migrator.discover_encrypted_fields()

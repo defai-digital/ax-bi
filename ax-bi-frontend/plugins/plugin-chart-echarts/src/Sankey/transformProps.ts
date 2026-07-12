@@ -26,7 +26,7 @@ import {
   getMetricLabel,
   getNumberFormatter,
   tooltipHtml,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { SankeyChartProps, SankeyTransformedProps } from './types';
 import { Refs } from '../types';
 import { getDefaultTooltip } from '../utils/tooltip';

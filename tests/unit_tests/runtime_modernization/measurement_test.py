@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import pytest
 
-from superset.runtime_modernization.measurement import (
+from axbi.runtime_modernization.measurement import (
     measure_runtime_candidate,
     runtime_metric_key,
 )

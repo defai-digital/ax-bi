@@ -24,8 +24,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import BaseModel
 
-from superset.mcp_service.ai import provider_factory
-from superset.mcp_service.ai.anthropic_provider import (
+from axbi.mcp_service.ai import provider_factory
+from axbi.mcp_service.ai.anthropic_provider import (
     AnthropicProvider,
     AnthropicProviderError,
 )
@@ -56,7 +56,9 @@ def test_complete_json_returns_parsed_output() -> None:
     )
 
     assert result is parsed
-    _, kwargs = provider._client.messages.parse.call_args  # noqa: SLF001
+    client = provider._client  # noqa: SLF001
+    assert client is not None
+    _, kwargs = client.messages.parse.call_args
     assert kwargs["model"] == "claude-opus-4-8"
     assert kwargs["output_format"] is _Result
     assert kwargs["system"] == "sys"

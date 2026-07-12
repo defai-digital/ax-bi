@@ -19,7 +19,7 @@
 import fetchMock from 'fetch-mock';
 import { fireEvent, screen, waitFor } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
-import { isFeatureEnabled } from '@superset-ui/core';
+import { isFeatureEnabled } from '@ax-bi/ui-core';
 import {
   API_ENDPOINTS,
   mockDashboards,
@@ -29,8 +29,8 @@ import {
 
 jest.setTimeout(30000);
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

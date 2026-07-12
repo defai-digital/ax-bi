@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlStateMapping } from '@superset-ui/chart-controls';
+import { ControlStateMapping } from '@ax-bi/chart-controls';
 
 import {
   ChartState,
@@ -39,7 +39,7 @@ import {
   NO_TIME_RANGE,
   QueryFormColumn,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   getFormDataFromControls,
   applyMapStateToPropsToControl,
@@ -151,7 +151,7 @@ export const hydrateExplore =
         type === 'CATEGORICAL' ? colorSchemeKey : linearColorSchemeKey;
       const registryDefaultScheme = schemes.defaultKey;
       const defaultScheme =
-        type === 'CATEGORICAL' ? 'supersetColors' : 'superset_seq_1';
+        type === 'CATEGORICAL' ? 'axbiColors' : 'axbi_seq_1';
       const currentScheme = initialFormData[key];
       const colorSchemeExists = !!schemes.get(currentScheme, true);
 
@@ -169,14 +169,14 @@ export const hydrateExplore =
       // which will be manipulable by future reducers.
       can_add: findPermission('can_write', 'Chart', user?.roles),
       can_download: granularExport
-        ? findPermission('can_export_data', 'Superset', user?.roles)
-        : findPermission('can_csv', 'Superset', user?.roles),
+        ? findPermission('can_export_data', 'AxBI', user?.roles)
+        : findPermission('can_csv', 'AxBI', user?.roles),
       can_export_image: granularExport
-        ? findPermission('can_export_image', 'Superset', user?.roles)
-        : findPermission('can_csv', 'Superset', user?.roles),
+        ? findPermission('can_export_image', 'AxBI', user?.roles)
+        : findPermission('can_csv', 'AxBI', user?.roles),
       can_copy_clipboard: granularExport
-        ? findPermission('can_copy_clipboard', 'Superset', user?.roles)
-        : findPermission('can_csv', 'Superset', user?.roles),
+        ? findPermission('can_copy_clipboard', 'AxBI', user?.roles)
+        : findPermission('can_csv', 'AxBI', user?.roles),
       can_overwrite:
         ensureIsArray(slice?.owners).includes(user?.userId as number) ||
         ensureIsArray(metadata?.extra_owners).some(

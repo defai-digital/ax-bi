@@ -26,22 +26,22 @@ import pytest
 from flask.ctx import AppContext
 from flask_appbuilder.security.sqla.models import User
 
-from superset.extensions import db
-from superset.key_value.exceptions import (
+from axbi.extensions import db
+from axbi.key_value.exceptions import (
     KeyValueCreateFailedError,
     KeyValueUpdateFailedError,
 )
-from superset.key_value.types import (
+from axbi.key_value.types import (
     JsonKeyValueCodec,
     KeyValueResource,
     PickleKeyValueCodec,
 )
-from superset.utils import json
-from superset.utils.core import override_user
+from axbi.utils import json
+from axbi.utils.core import override_user
 from tests.unit_tests.fixtures.common import admin_user, after_each  # noqa: F401
 
 if TYPE_CHECKING:
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.models import KeyValueEntry
 
 ID_KEY = 123
 UUID_KEY = UUID("3e7a2ab8-bcaf-49b0-a5df-dfb432f291cc")
@@ -55,7 +55,7 @@ NEW_VALUE = {"foo": "baz"}
 
 @pytest.fixture
 def key_value_entry() -> KeyValueEntry:
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.models import KeyValueEntry
 
     entry = KeyValueEntry(
         id=ID_KEY,
@@ -73,8 +73,8 @@ def test_create_id_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
-    from superset.key_value.models import KeyValueEntry
+    from axbi.daos.key_value import KeyValueDAO
+    from axbi.key_value.models import KeyValueEntry
 
     with override_user(admin_user):
         created_entry = KeyValueDAO.create_entry(
@@ -95,8 +95,8 @@ def test_create_uuid_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
-    from superset.key_value.models import KeyValueEntry
+    from axbi.daos.key_value import KeyValueDAO
+    from axbi.key_value.models import KeyValueEntry
 
     with override_user(admin_user):
         created_entry = KeyValueDAO.create_entry(
@@ -115,7 +115,7 @@ def test_create_fail_json_entry(
     app_context: AppContext,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     with pytest.raises(KeyValueCreateFailedError):
         KeyValueDAO.create_entry(
@@ -130,8 +130,8 @@ def test_create_pickle_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
-    from superset.key_value.models import KeyValueEntry
+    from axbi.daos.key_value import KeyValueDAO
+    from axbi.key_value.models import KeyValueEntry
 
     with override_user(admin_user):
         created_entry = KeyValueDAO.create_entry(
@@ -152,7 +152,7 @@ def test_get_value(
     key_value_entry: KeyValueEntry,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     value = KeyValueDAO.get_value(
         resource=RESOURCE,
@@ -167,7 +167,7 @@ def test_get_id_entry(
     key_value_entry: KeyValueEntry,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     found_entry = KeyValueDAO.get_entry(resource=RESOURCE, key=key_value_entry.id)
     assert found_entry is not None
@@ -179,7 +179,7 @@ def test_get_uuid_entry(
     key_value_entry: KeyValueEntry,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     assert key_value_entry.uuid is not None
     found_entry = KeyValueDAO.get_entry(resource=RESOURCE, key=key_value_entry.uuid)
@@ -191,7 +191,7 @@ def test_get_id_entry_missing(
     app_context: AppContext,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     entry = KeyValueDAO.get_entry(resource=RESOURCE, key=456)
     assert entry is None
@@ -201,7 +201,7 @@ def test_get_expired_entry(
     app_context: AppContext,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     created_entry = KeyValueDAO.create_entry(
         resource=RESOURCE,
@@ -219,7 +219,7 @@ def test_get_future_expiring_entry(
     app_context: AppContext,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     created_entry = KeyValueDAO.create_entry(
         resource=RESOURCE,
@@ -239,7 +239,7 @@ def test_update_id_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     with override_user(admin_user):
         updated_entry = KeyValueDAO.update_entry(
@@ -265,7 +265,7 @@ def test_update_uuid_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     with override_user(admin_user):
         updated_entry = KeyValueDAO.update_entry(
@@ -290,7 +290,7 @@ def test_update_missing_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     with override_user(admin_user):
         with pytest.raises(KeyValueUpdateFailedError):
@@ -308,7 +308,7 @@ def test_upsert_id_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     with override_user(admin_user):
         entry = KeyValueDAO.upsert_entry(
@@ -329,7 +329,7 @@ def test_upsert_uuid_entry(
     admin_user: User,  # noqa: F811
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     with override_user(admin_user):
         entry = KeyValueDAO.upsert_entry(
@@ -352,7 +352,7 @@ def test_upsert_missing_entry(
     app_context: AppContext,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     entry = KeyValueDAO.get_entry(resource=RESOURCE, key=ID_KEY)
     assert entry is None
@@ -372,7 +372,7 @@ def test_delete_id_entry(
     key_value_entry: KeyValueEntry,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     assert KeyValueDAO.delete_entry(resource=RESOURCE, key=ID_KEY) is True
 
@@ -382,7 +382,7 @@ def test_delete_uuid_entry(
     key_value_entry: KeyValueEntry,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     assert KeyValueDAO.delete_entry(resource=RESOURCE, key=UUID_KEY) is True
 
@@ -391,6 +391,6 @@ def test_delete_entry_missing(
     app_context: AppContext,
     after_each: None,  # noqa: F811
 ) -> None:
-    from superset.daos.key_value import KeyValueDAO
+    from axbi.daos.key_value import KeyValueDAO
 
     assert KeyValueDAO.delete_entry(resource=RESOURCE, key=12345678) is False

@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getChartMetadataRegistry } from '@superset-ui/core';
+import { getChartMetadataRegistry } from '@ax-bi/ui-core';
 import { getQuerySettings } from '.';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getChartMetadataRegistry: jest.fn(),
 }));
 

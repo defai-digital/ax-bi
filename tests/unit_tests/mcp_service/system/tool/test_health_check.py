@@ -23,9 +23,9 @@ from unittest.mock import MagicMock
 import pytest
 from flask import current_app
 
-from superset.mcp_service.system.schemas import HealthCheckResponse
-from superset.mcp_service.system.tool.health_check import health_check
-from superset.runtime_modernization.ax_services import AxServicesResponse
+from axbi.mcp_service.system.schemas import HealthCheckResponse
+from axbi.mcp_service.system.tool.health_check import health_check
+from axbi.runtime_modernization.ax_services import AxServicesResponse
 
 
 def test_health_check_response_schema():
@@ -74,15 +74,15 @@ async def test_health_check_emits_runtime_modernization_metrics(
     current_app.config["STATS_LOGGER"] = stats_logger
     current_app.config["MCP_DEV_USERNAME"] = "admin"
     mocker.patch(
-        "superset.mcp_service.auth.load_user_with_relationships",
+        "axbi.mcp_service.auth.load_user_with_relationships",
         return_value=MagicMock(),
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        "axbi.mcp_service.system.tool.health_check.get_version_metadata",
         return_value={"version_string": "test-version"},
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        "axbi.mcp_service.system.tool.health_check.is_feature_enabled",
         return_value=False,
     )
 
@@ -112,20 +112,20 @@ async def test_health_check_shadows_ax_services_when_enabled(
     current_app.config["STATS_LOGGER"] = stats_logger
     current_app.config["MCP_DEV_USERNAME"] = "admin"
     mocker.patch(
-        "superset.mcp_service.auth.load_user_with_relationships",
+        "axbi.mcp_service.auth.load_user_with_relationships",
         return_value=MagicMock(),
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        "axbi.mcp_service.system.tool.health_check.get_version_metadata",
         return_value={"version_string": "test-version"},
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        "axbi.mcp_service.system.tool.health_check.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+        "axbi.mcp_service.system.tool.health_check.AxServicesClient"
     ).return_value
     ax_services_client.health.return_value = AxServicesResponse(
         ok=True,
@@ -155,26 +155,26 @@ async def test_health_check_reports_shadow_mismatch(
 
     caplog.set_level(
         logging.WARNING,
-        logger="superset.mcp_service.system.tool.health_check",
+        logger="axbi.mcp_service.system.tool.health_check",
     )
     stats_logger = MagicMock()
     current_app.config["STATS_LOGGER"] = stats_logger
     current_app.config["MCP_DEV_USERNAME"] = "admin"
     mocker.patch(
-        "superset.mcp_service.auth.load_user_with_relationships",
+        "axbi.mcp_service.auth.load_user_with_relationships",
         return_value=MagicMock(),
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        "axbi.mcp_service.system.tool.health_check.get_version_metadata",
         return_value={"version_string": "test-version"},
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        "axbi.mcp_service.system.tool.health_check.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+        "axbi.mcp_service.system.tool.health_check.AxServicesClient"
     ).return_value
     ax_services_client.health.return_value = AxServicesResponse(
         ok=False,
@@ -205,20 +205,20 @@ async def test_health_check_serves_ax_services_when_enabled(
     current_app.config["STATS_LOGGER"] = stats_logger
     current_app.config["MCP_DEV_USERNAME"] = "admin"
     mocker.patch(
-        "superset.mcp_service.auth.load_user_with_relationships",
+        "axbi.mcp_service.auth.load_user_with_relationships",
         return_value=MagicMock(),
     )
     get_version_metadata = mocker.patch(
-        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        "axbi.mcp_service.system.tool.health_check.get_version_metadata",
         return_value={"version_string": "python-version"},
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        "axbi.mcp_service.system.tool.health_check.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"TS_MCP_ORCHESTRATION", "TS_HEALTH_CHECK_SERVING"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+        "axbi.mcp_service.system.tool.health_check.AxServicesClient"
     ).return_value
     ax_services_client.health.return_value = AxServicesResponse(
         ok=True,
@@ -267,20 +267,20 @@ async def test_health_check_falls_back_when_ax_services_health_contract_is_inval
     current_app.config["STATS_LOGGER"] = stats_logger
     current_app.config["MCP_DEV_USERNAME"] = "admin"
     mocker.patch(
-        "superset.mcp_service.auth.load_user_with_relationships",
+        "axbi.mcp_service.auth.load_user_with_relationships",
         return_value=MagicMock(),
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.get_version_metadata",
+        "axbi.mcp_service.system.tool.health_check.get_version_metadata",
         return_value={"version_string": "python-version"},
     )
     mocker.patch(
-        "superset.mcp_service.system.tool.health_check.is_feature_enabled",
+        "axbi.mcp_service.system.tool.health_check.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"TS_MCP_ORCHESTRATION", "TS_HEALTH_CHECK_SERVING"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.system.tool.health_check.AxServicesClient"
+        "axbi.mcp_service.system.tool.health_check.AxServicesClient"
     ).return_value
     ax_services_client.health.return_value = AxServicesResponse(
         ok=True,

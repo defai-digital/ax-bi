@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ColumnTypeLabel } from '@superset-ui/chart-controls';
+import { ColumnTypeLabel } from '@ax-bi/chart-controls';
 import { AggregateOption as AggregateOptionType } from './types';
 
 interface AggregateOptionProps {

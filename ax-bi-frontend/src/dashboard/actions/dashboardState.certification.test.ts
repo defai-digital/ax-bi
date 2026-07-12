@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient, isFeatureEnabled } from '@superset-ui/core';
+import { AxBIClient, isFeatureEnabled } from '@ax-bi/ui-core';
 import { waitFor } from 'spec/helpers/testing-library';
 import {
   filterId,
@@ -27,8 +27,8 @@ import mockDashboardData from 'spec/fixtures/mockDashboardData';
 import { saveDashboardRequest } from 'src/dashboard/actions/dashboardState';
 import { SAVE_TYPE_OVERWRITE } from 'src/dashboard/util/constants';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -36,7 +36,7 @@ const mockIsFeatureEnabled = isFeatureEnabled as jest.Mock;
 
 const mockState = {
   dashboardState: { sliceIds: [filterId], hasUnsavedChanges: true },
-  dashboardInfo: { metadata: { color_scheme: 'supersetColors' } },
+  dashboardInfo: { metadata: { color_scheme: 'axbiColors' } },
   sliceEntities,
   dashboardFilters: emptyFilters,
   dashboardLayout: {
@@ -55,9 +55,9 @@ beforeEach(() => {
   // depends on the global feature-flag state and the assertions become
   // non-deterministic, meaning a reverted fix may go undetected.
   mockIsFeatureEnabled.mockReturnValue(false);
-  jest.spyOn(SupersetClient, 'post').mockResolvedValue({} as any);
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({} as any);
-  putStub = jest.spyOn(SupersetClient, 'put').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'post').mockResolvedValue({} as any);
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({} as any);
+  putStub = jest.spyOn(AxBIClient, 'put').mockResolvedValue({
     json: { result: mockDashboardData },
   } as any);
 });

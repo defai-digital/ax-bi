@@ -18,12 +18,12 @@
  */
 import { memo, useCallback, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { useTruncation } from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { useTruncation } from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { setDirectPathToChild } from 'src/dashboard/actions/dashboardState';
-import { List } from '@superset-ui/core/components/List';
+import { List } from '@ax-bi/ui-core/components/List';
 import {
   DependencyItem,
   Row,

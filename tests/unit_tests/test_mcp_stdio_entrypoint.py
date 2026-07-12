@@ -26,41 +26,39 @@ from unittest.mock import MagicMock
 import click
 import pytest
 
-_ENTRYPOINT_PATH = (
-    Path(__file__).resolve().parents[2] / "superset/mcp_service/__main__.py"
-)
+_ENTRYPOINT_PATH = Path(__file__).resolve().parents[2] / "axbi/mcp_service/__main__.py"
 
 
 def _install_entrypoint_stubs(monkeypatch: pytest.MonkeyPatch) -> None:
-    superset_module = cast(Any, ModuleType("superset"))
-    superset_module.__path__ = []
+    axbi_module = cast(Any, ModuleType("axbi"))
+    axbi_module.__path__ = []
 
-    mcp_service_module = cast(Any, ModuleType("superset.mcp_service"))
+    mcp_service_module = cast(Any, ModuleType("axbi.mcp_service"))
     mcp_service_module.__path__ = []
 
-    app_module = cast(Any, ModuleType("superset.mcp_service.app"))
+    app_module = cast(Any, ModuleType("axbi.mcp_service.app"))
     app_module.init_fastmcp_server = MagicMock()
     app_module.mcp = MagicMock()
 
-    middleware_module = cast(Any, ModuleType("superset.mcp_service.middleware"))
+    middleware_module = cast(Any, ModuleType("axbi.mcp_service.middleware"))
     middleware_module.create_response_size_guard_middleware = lambda: None
 
-    server_module = cast(Any, ModuleType("superset.mcp_service.server"))
+    server_module = cast(Any, ModuleType("axbi.mcp_service.server"))
     server_module.build_middleware_list = lambda: []
 
-    monkeypatch.setitem(sys.modules, "superset", superset_module)
-    monkeypatch.setitem(sys.modules, "superset.mcp_service", mcp_service_module)
-    monkeypatch.setitem(sys.modules, "superset.mcp_service.app", app_module)
+    monkeypatch.setitem(sys.modules, "axbi", axbi_module)
+    monkeypatch.setitem(sys.modules, "axbi.mcp_service", mcp_service_module)
+    monkeypatch.setitem(sys.modules, "axbi.mcp_service.app", app_module)
     monkeypatch.setitem(
         sys.modules,
-        "superset.mcp_service.middleware",
+        "axbi.mcp_service.middleware",
         middleware_module,
     )
-    monkeypatch.setitem(sys.modules, "superset.mcp_service.server", server_module)
+    monkeypatch.setitem(sys.modules, "axbi.mcp_service.server", server_module)
 
 
 def _load_entrypoint(monkeypatch: pytest.MonkeyPatch) -> None:
-    module_name = "superset.mcp_service.__main__"
+    module_name = "axbi.mcp_service.__main__"
     spec = util.spec_from_file_location(module_name, _ENTRYPOINT_PATH)
     assert spec is not None
     assert spec.loader is not None

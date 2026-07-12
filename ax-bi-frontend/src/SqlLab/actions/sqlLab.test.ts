@@ -31,7 +31,7 @@ import {
   initialState,
   queryId,
 } from 'src/SqlLab/fixtures';
-import { SupersetClient, isFeatureEnabled } from '@superset-ui/core';
+import { AxBIClient, isFeatureEnabled } from '@ax-bi/ui-core';
 import { ADD_TOAST } from 'src/components/MessageToasts/actions';
 import { EMPTY_STATE_QE_ID } from 'src/SqlLab/hooks/useQueryEditor';
 import { ToastType } from '../../components/MessageToasts/types';
@@ -55,8 +55,8 @@ afterAll(() => {
   jest.resetAllMocks();
 });
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -772,20 +772,20 @@ describe('async actions', () => {
 
   // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
   describe('popSavedQuery', () => {
-    const supersetClientGetSpy = jest.spyOn(SupersetClient, 'get');
+    const axbiClientGetSpy = jest.spyOn(AxBIClient, 'get');
     const store = mockStore({});
 
     const mockSavedQueryApiResponse = {
       catalog: null,
       changed_by: {
-        first_name: 'Superset',
+        first_name: 'AxBI',
         id: 1,
         last_name: 'Admin',
       },
       changed_on: '2024-12-28T20:06:14.246743',
       changed_on_delta_humanized: '8 days ago',
       created_by: {
-        first_name: 'Superset',
+        first_name: 'AxBI',
         id: 1,
         last_name: 'Admin',
       },
@@ -816,28 +816,28 @@ describe('async actions', () => {
     };
 
     beforeEach(() => {
-      supersetClientGetSpy.mockClear();
+      axbiClientGetSpy.mockClear();
       store.clearActions();
     });
 
     afterAll(() => {
-      supersetClientGetSpy.mockRestore();
+      axbiClientGetSpy.mockRestore();
     });
 
     test('calls API endpint with correct params', async () => {
-      supersetClientGetSpy.mockResolvedValue({
+      axbiClientGetSpy.mockResolvedValue({
         json: { result: mockSavedQueryApiResponse },
       } as any);
 
       await makeRequest(123);
 
-      expect(supersetClientGetSpy).toHaveBeenCalledWith({
+      expect(axbiClientGetSpy).toHaveBeenCalledWith({
         endpoint: '/api/v1/saved_query/123',
       });
     });
 
     test('dispatches addQueryEditor with correct params on successful API call', async () => {
-      supersetClientGetSpy.mockResolvedValue({
+      axbiClientGetSpy.mockResolvedValue({
         json: { result: mockSavedQueryApiResponse },
       } as any);
 
@@ -864,7 +864,7 @@ describe('async actions', () => {
     });
 
     test('should dispatch addDangerToast on API error', async () => {
-      supersetClientGetSpy.mockResolvedValue(new Error() as any);
+      axbiClientGetSpy.mockResolvedValue(new Error() as any);
 
       await makeRequest(1);
 

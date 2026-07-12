@@ -18,12 +18,12 @@
  */
 import { RefObject, Ref } from 'react';
 
-// value imports use direct modules: the @superset-ui/core barrel can be
+// value imports use direct modules: the @ax-bi/ui-core barrel can be
 // mid-evaluation (import cycle), leaving ChartPlugin/ChartProps undefined
 // when EchartsChartPlugin evaluates
-import ChartPlugin from '@superset-ui/core/chart/models/ChartPlugin';
-import ChartProps from '@superset-ui/core/chart/models/ChartProps';
-import ChartMetadata from '@superset-ui/core/chart/models/ChartMetadata';
+import ChartPlugin from '@ax-bi/ui-core/chart/models/ChartPlugin';
+import ChartProps from '@ax-bi/ui-core/chart/models/ChartProps';
+import ChartMetadata from '@ax-bi/ui-core/chart/models/ChartMetadata';
 import type {
   ChartDataResponseResult,
   ContextMenuFilters,
@@ -34,7 +34,7 @@ import type {
   QueryFormColumn,
   SetDataMaskHook,
   SqlaFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { EChartsCoreOption, EChartsType } from 'echarts/core';
 import type { TooltipMarker } from 'echarts/types/src/util/format';
 import type { ECElementEvent } from 'echarts/types/src/util/types';

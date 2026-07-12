@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import type { editors } from '@apache-superset/core';
+import type { editors } from '@ax-bi/core';
 import { Disposable } from '../models';
 
 type EditorLanguage = editors.EditorLanguage;

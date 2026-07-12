@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { NativeFilterScope } from '@superset-ui/core';
+import { NativeFilterScope } from '@ax-bi/ui-core';
 import { CHART_TYPE } from './componentTypes';
 import { LayoutItem } from '../types';
 

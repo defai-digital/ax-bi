@@ -17,7 +17,7 @@
  * under the License.
  */
 import { nanoid } from 'nanoid';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 
 import {
   CHART_TYPE,

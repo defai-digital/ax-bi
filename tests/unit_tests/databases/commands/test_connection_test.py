@@ -18,12 +18,12 @@
 import pytest
 from parameterized import parameterized
 
-from superset.commands.database.ssh_tunnel.exceptions import SSHTunnelDatabasePortError
-from superset.commands.database.test_connection import (
+from axbi.commands.database.ssh_tunnel.exceptions import SSHTunnelDatabasePortError
+from axbi.commands.database.test_connection import (
     get_log_connection_action,
     TestConnectionDatabaseCommand,
 )
-from superset.databases.ssh_tunnel.models import SSHTunnel
+from axbi.databases.ssh_tunnel.models import SSHTunnel
 from tests.unit_tests.conftest import with_feature_flags
 
 
@@ -61,7 +61,7 @@ def test_ssh_tunnel_allows_uri_without_port_when_backend_has_default() -> None:
 @with_feature_flags(SSH_TUNNELING=True)
 def test_ssh_tunnel_requires_port_when_backend_has_no_default() -> None:
     """
-    Database URIs need an explicit port when Superset has no backend default.
+    Database URIs need an explicit port when AxBI has no backend default.
     """
     command = TestConnectionDatabaseCommand(
         {

@@ -17,12 +17,12 @@
  * under the License.
  */
 import { ReactNode, useContext, useEffect, useMemo } from 'react';
-import { logging } from '@apache-superset/core/utils';
+import { logging } from '@ax-bi/core/utils';
 import {
   Theme,
   normalizeThemeConfig,
   isThemeConfigDark,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/core/theme';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { ThemeContext } from 'src/theme/ThemeProvider';
 import type { Dashboard } from 'src/types/Dashboard';
@@ -87,7 +87,7 @@ export default function CrudThemeProvider({
       .map((url: string) => `@import url(${JSON.stringify(url)});`)
       .join('\n');
     const style = document.createElement('style');
-    style.setAttribute('data-superset-fonts', 'true');
+    style.setAttribute('data-axbi-fonts', 'true');
     style.textContent = css;
     document.head.appendChild(style);
 
@@ -101,8 +101,8 @@ export default function CrudThemeProvider({
   }
 
   return (
-    <dashboardTheme.SupersetThemeProvider>
+    <dashboardTheme.AxBIThemeProvider>
       {children}
-    </dashboardTheme.SupersetThemeProvider>
+    </dashboardTheme.AxBIThemeProvider>
   );
 }

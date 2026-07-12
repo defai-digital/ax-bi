@@ -23,7 +23,7 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { Form, Select } from '@superset-ui/core/components';
+import { Form, Select } from '@ax-bi/ui-core/components';
 import { CollapsibleControl } from './CollapsibleControl';
 import { getTimeGrainOptions } from './utils';
 

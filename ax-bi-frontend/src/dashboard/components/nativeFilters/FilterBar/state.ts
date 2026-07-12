@@ -24,7 +24,7 @@ import {
   DataMaskWithId,
   Filter,
   Filters,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { useEffect, useMemo, useState } from 'react';
 import { ChartsState, RootState } from 'src/dashboard/types';
 import {

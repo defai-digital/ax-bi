@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import { omit } from 'lodash';
 
 const TEMPORARY_CONTROLS: string[] = ['url_params'];

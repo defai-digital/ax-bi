@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import type { ErrorMessageComponentProps } from './types';
 import { ErrorAlert } from './ErrorAlert';
 
-interface SupersetParseErrorExtra {
+interface AxBIParseErrorExtra {
   sql: string;
   engine: string | null;
   line: number | null;
@@ -35,7 +35,7 @@ export function InvalidSQLErrorMessage({
   error,
   subtitle,
   closable,
-}: ErrorMessageComponentProps<SupersetParseErrorExtra>) {
+}: ErrorMessageComponentProps<AxBIParseErrorExtra>) {
   const { extra, level, message } = error;
 
   const { sql, line, column } = extra;

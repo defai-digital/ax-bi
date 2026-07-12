@@ -22,7 +22,7 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { VizType } from '@superset-ui/core';
+import { VizType } from '@ax-bi/ui-core';
 import fetchMock from 'fetch-mock';
 import { act } from 'react';
 import handleResourceExport from 'src/utils/export';

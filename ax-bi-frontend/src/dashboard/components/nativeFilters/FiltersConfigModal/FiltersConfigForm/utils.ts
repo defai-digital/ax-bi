@@ -17,11 +17,11 @@
  * under the License.
  */
 import { flatMapDeep } from 'lodash';
-import type { FormInstance } from '@superset-ui/core/components';
+import type { FormInstance } from '@ax-bi/ui-core/components';
 import { useState, useCallback } from 'react';
-import { CustomControlItem, Dataset } from '@superset-ui/chart-controls';
-import { Column, ensureIsArray } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { CustomControlItem, Dataset } from '@ax-bi/chart-controls';
+import { Column, ensureIsArray } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { DatasourcesState, ChartsState } from 'src/dashboard/types';
 import { FILTER_SUPPORTED_TYPES } from './constants';
 

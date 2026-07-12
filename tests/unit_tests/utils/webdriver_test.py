@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 import pytest
 
-from superset.utils.webdriver import (
+from axbi.utils.webdriver import (
     check_playwright_availability,
     PLAYWRIGHT_AVAILABLE,
     PLAYWRIGHT_INSTALL_MESSAGE,
@@ -46,9 +46,9 @@ def mock_app():
 class TestWebDriverSelenium:
     """Test WebDriverSelenium timeout handling for urllib3 2.x compatibility."""
 
-    @patch("superset.utils.webdriver.app")
-    @patch("superset.utils.webdriver.firefox")
-    @patch("superset.utils.webdriver.chrome")
+    @patch("axbi.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.firefox")
+    @patch("axbi.utils.webdriver.chrome")
     def test_timeout_conversion_to_float(
         self, mock_chrome, mock_firefox, mock_app_patch, mock_app
     ):
@@ -88,8 +88,8 @@ class TestWebDriverSelenium:
         assert call_kwargs["read_timeout"] == 15.0
         assert call_kwargs["command_executor_timeout"] == 25.0
 
-    @patch("superset.utils.webdriver.app")
-    @patch("superset.utils.webdriver.chrome")
+    @patch("axbi.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.chrome")
     def test_timeout_none_handling(self, mock_chrome, mock_app_patch, mock_app):
         """Test that None, 'None', and 'null' timeout values are set to None."""
         mock_app_patch.config = {
@@ -122,9 +122,9 @@ class TestWebDriverSelenium:
         assert call_kwargs["connect_timeout"] is None
         assert call_kwargs["socket_timeout"] is None
 
-    @patch("superset.utils.webdriver.app")
-    @patch("superset.utils.webdriver.chrome")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.chrome")
+    @patch("axbi.utils.webdriver.logger")
     def test_invalid_timeout_warning(
         self, mock_logger, mock_chrome, mock_app_patch, mock_app
     ):
@@ -175,8 +175,8 @@ class TestWebDriverSelenium:
             "abc123",
         )
 
-    @patch("superset.utils.webdriver.app")
-    @patch("superset.utils.webdriver.chrome")
+    @patch("axbi.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.chrome")
     def test_non_timeout_config_preserved(self, mock_chrome, mock_app_patch, mock_app):
         """Test that non-timeout configuration values are preserved."""
         mock_app_patch.config = {
@@ -211,8 +211,8 @@ class TestWebDriverSelenium:
         assert call_kwargs["another_option"] == 123
         assert call_kwargs["boolean_option"] is True
 
-    @patch("superset.utils.webdriver.app")
-    @patch("superset.utils.webdriver.chrome")
+    @patch("axbi.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.chrome")
     def test_timeout_key_case_insensitive(self, mock_chrome, mock_app_patch, mock_app):
         """Test that timeout detection is case-insensitive."""
         mock_app_patch.config = {
@@ -247,8 +247,8 @@ class TestWebDriverSelenium:
         assert call_kwargs["SOCKET_TIMEOUT"] == 30.0
         assert call_kwargs["connection_timeout_ms"] == 5000.0
 
-    @patch("superset.utils.webdriver.app")
-    @patch("superset.utils.webdriver.chrome")
+    @patch("axbi.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.chrome")
     def test_empty_webdriver_config(self, mock_chrome, mock_app_patch, mock_app):
         """Test handling of empty webdriver configuration."""
         mock_app_patch.config = {
@@ -273,8 +273,8 @@ class TestWebDriverSelenium:
         # Should create driver without errors
         mock_driver_class.assert_called_once()
 
-    @patch("superset.utils.webdriver.app")
-    @patch("superset.utils.webdriver.chrome")
+    @patch("axbi.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.chrome")
     def test_none_nested_webdriver_config(self, mock_chrome, mock_app_patch):
         """Test handling of None nested webdriver configuration sections."""
         mock_app_patch.config = {
@@ -307,7 +307,7 @@ class TestWebDriverSelenium:
         mock_options.set_capability.assert_not_called()
         mock_service_class.assert_called_once_with()
 
-    @patch("superset.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.app")
     def test_driver_sets_page_load_timeout(self, mock_app_patch: MagicMock) -> None:
         """driver.get() must be bounded so it can't block forever (#40047)."""
         mock_app_patch.config = {
@@ -321,7 +321,7 @@ class TestWebDriverSelenium:
             assert driver.driver is mock_driver
         mock_driver.set_page_load_timeout.assert_called_once_with(120)
 
-    @patch("superset.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.app")
     def test_driver_skips_page_load_timeout_when_none(
         self, mock_app_patch: MagicMock
     ) -> None:
@@ -341,7 +341,7 @@ class TestWebDriverSelenium:
 class TestPlaywrightAvailabilityCheck:
     """Test comprehensive Playwright availability checking."""
 
-    @patch("superset.utils.webdriver.sync_playwright", None)
+    @patch("axbi.utils.webdriver.sync_playwright", None)
     def test_check_playwright_availability_returns_false_when_module_not_available(
         self,
     ):
@@ -349,8 +349,8 @@ class TestPlaywrightAvailabilityCheck:
         result = check_playwright_availability()
         assert result is False
 
-    @patch("superset.utils.webdriver.sync_playwright")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.sync_playwright")
+    @patch("axbi.utils.webdriver.logger")
     def test_check_playwright_availability_uses_lightweight_check(
         self, mock_logger, mock_sync_playwright
     ):
@@ -368,8 +368,8 @@ class TestPlaywrightAvailabilityCheck:
         # Should not launch browser if executable_path works
         mock_playwright_instance.chromium.launch.assert_not_called()
 
-    @patch("superset.utils.webdriver.sync_playwright")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.sync_playwright")
+    @patch("axbi.utils.webdriver.logger")
     def test_check_playwright_availability_falls_back_to_launch(
         self, mock_logger, mock_sync_playwright
     ):
@@ -394,8 +394,8 @@ class TestPlaywrightAvailabilityCheck:
         mock_playwright_instance.chromium.launch.assert_called_once_with(headless=True)
         mock_browser.close.assert_called_once()
 
-    @patch("superset.utils.webdriver.sync_playwright")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.sync_playwright")
+    @patch("axbi.utils.webdriver.logger")
     def test_check_playwright_availability_handles_browser_launch_failure(
         self, mock_logger, mock_sync_playwright
     ):
@@ -423,8 +423,8 @@ class TestPlaywrightAvailabilityCheck:
         )
         assert "playwright install chromium" in warning_call
 
-    @patch("superset.utils.webdriver.sync_playwright")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.sync_playwright")
+    @patch("axbi.utils.webdriver.logger")
     def test_check_playwright_availability_handles_context_manager_error(
         self, mock_logger, mock_sync_playwright
     ):
@@ -443,7 +443,7 @@ class TestPlaywrightAvailabilityCheck:
 class TestPlaywrightMigrationSupport:
     """Test Playwright migration and fallback functionality."""
 
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_validate_webdriver_config_all_available(self, mock_feature_flag):
         """Test validate_webdriver_config when all dependencies available."""
         mock_feature_flag.return_value = True
@@ -459,7 +459,7 @@ class TestPlaywrightMigrationSupport:
         else:
             assert result["recommended_action"] == PLAYWRIGHT_INSTALL_MESSAGE
 
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_validate_webdriver_config_feature_flag_disabled(self, mock_feature_flag):
         """Test validate_webdriver_config when feature flag is disabled."""
         mock_feature_flag.return_value = False
@@ -469,8 +469,8 @@ class TestPlaywrightMigrationSupport:
         assert result["selenium_available"] is True
         assert result["playwright_feature_enabled"] is False
 
-    @patch("superset.extensions.feature_flag_manager.is_feature_enabled")
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", False)
+    @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", False)
     def test_validate_webdriver_config_playwright_unavailable(self, mock_feature_flag):
         """Test validate_webdriver_config when Playwright not available."""
         mock_feature_flag.return_value = True
@@ -486,8 +486,8 @@ class TestPlaywrightMigrationSupport:
 class TestWebDriverPlaywrightFallback:
     """Test WebDriverPlaywright fallback behavior when unavailable."""
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", False)
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", False)
+    @patch("axbi.utils.webdriver.logger")
     def test_get_screenshot_returns_none_when_unavailable(self, mock_logger, mock_app):
         """Test WebDriverPlaywright.get_screenshot returns None when unavailable."""
         mock_user = MagicMock()
@@ -507,9 +507,9 @@ class TestWebDriverPlaywrightFallback:
         # Check the substituted parameter
         assert mock_logger.info.call_args[0][1] == PLAYWRIGHT_INSTALL_MESSAGE
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver._browser_manager")
-    @patch("superset.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver._browser_manager")
+    @patch("axbi.utils.webdriver.app")
     def test_get_screenshot_works_when_available(self, mock_app, mock_browser_manager):
         """Test WebDriverPlaywright.get_screenshot works when Playwright available."""
         # Setup mocks
@@ -557,14 +557,14 @@ class TestWebDriverPlaywrightFallback:
             "http://example.com", wait_until="networkidle"
         )
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver._browser_manager")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver._browser_manager")
+    @patch("axbi.utils.webdriver.logger")
     def test_get_screenshot_handles_playwright_timeout(
         self, mock_logger, mock_browser_manager
     ):
         """Test WebDriverPlaywright handles PlaywrightTimeout gracefully."""
-        from superset.utils.webdriver import PlaywrightTimeout
+        from axbi.utils.webdriver import PlaywrightTimeout
 
         mock_user = MagicMock()
         mock_user.username = "test_user"
@@ -579,7 +579,7 @@ class TestWebDriverPlaywrightFallback:
         mock_context.new_page.return_value = mock_page
         mock_page.goto.side_effect = PlaywrightTimeout("Timeout")
 
-        with patch("superset.utils.webdriver.app") as mock_app:
+        with patch("axbi.utils.webdriver.app") as mock_app:
             mock_app.config = {
                 "WEBDRIVER_OPTION_ARGS": [],
                 "WEBDRIVER_WINDOW": {"pixel_density": 1},
@@ -624,13 +624,13 @@ class TestWebDriverConstantsWithImportError:
         # PLAYWRIGHT_AVAILABLE should be boolean regardless of installation
         assert isinstance(PLAYWRIGHT_AVAILABLE, bool)
 
-    @patch("superset.utils.webdriver.sync_playwright", None)
+    @patch("axbi.utils.webdriver.sync_playwright", None)
     def test_dummy_classes_when_playwright_unavailable(self):
         """Test that dummy classes are defined when Playwright unavailable."""
         # Force reimport to test ImportError path
         from importlib import reload
 
-        import superset.utils.webdriver as webdriver_module
+        import axbi.utils.webdriver as webdriver_module
 
         # Mock the import to fail
         with patch.dict("sys.modules", {"playwright.sync_api": None}):
@@ -645,14 +645,14 @@ class TestWebDriverConstantsWithImportError:
 class TestWebDriverPlaywrightErrorHandling:
     """Test error handling in WebDriverPlaywright methods."""
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver.sync_playwright")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver.sync_playwright")
+    @patch("axbi.utils.webdriver.logger")
     def test_find_unexpected_errors_handles_playwright_error(
         self, mock_logger, mock_sync_playwright
     ):
         """Test find_unexpected_errors handles PlaywrightError gracefully."""
-        from superset.utils.webdriver import PlaywrightError
+        from axbi.utils.webdriver import PlaywrightError
 
         mock_page = MagicMock()
         mock_page.get_by_role.side_effect = PlaywrightError("Test error")
@@ -664,9 +664,9 @@ class TestWebDriverPlaywrightErrorHandling:
             "Failed to capture unexpected errors"
         )
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver.sync_playwright")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver.sync_playwright")
+    @patch("axbi.utils.webdriver.logger")
     def test_find_unexpected_errors_processes_alerts(
         self, mock_logger, mock_sync_playwright
     ):
@@ -696,9 +696,9 @@ class TestWebDriverPlaywrightErrorHandling:
         mock_button.click.assert_called_once()
         mock_close_button.click.assert_called_once()
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver._browser_manager")
-    @patch("superset.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver._browser_manager")
+    @patch("axbi.utils.webdriver.app")
     def test_uses_wait_for_function_to_detect_spinners(
         self, mock_app, mock_browser_manager
     ):
@@ -745,15 +745,15 @@ class TestWebDriverPlaywrightErrorHandling:
         ]
         assert loading_locator_calls == []
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver._browser_manager")
-    @patch("superset.utils.webdriver.logger")
-    @patch("superset.utils.webdriver.app")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver._browser_manager")
+    @patch("axbi.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.app")
     def test_spinner_timeout_logs_warning_and_raises(
         self, mock_app, mock_logger, mock_browser_manager
     ):
         """Spinner timeout is logged as a warning and re-raised."""
-        from superset.utils.webdriver import PlaywrightTimeout
+        from axbi.utils.webdriver import PlaywrightTimeout
 
         mock_user = MagicMock()
         mock_user.username = "test_user"
@@ -797,14 +797,14 @@ class TestWebDriverPlaywrightErrorHandling:
             60,
         )
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver._browser_manager")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver._browser_manager")
+    @patch("axbi.utils.webdriver.logger")
     def test_get_screenshot_raises_on_element_wait_timeout(
         self, mock_logger, mock_browser_manager
     ):
         """Test that PlaywrightTimeout propagates when waiting for page elements."""
-        from superset.utils.webdriver import PlaywrightTimeout
+        from axbi.utils.webdriver import PlaywrightTimeout
 
         mock_user = MagicMock()
         mock_user.username = "test_user"
@@ -824,7 +824,7 @@ class TestWebDriverPlaywrightErrorHandling:
         mock_page.locator.return_value = mock_element
         mock_element.wait_for.side_effect = timeout
 
-        with patch("superset.utils.webdriver.app") as mock_app:
+        with patch("axbi.utils.webdriver.app") as mock_app:
             mock_app.config = {
                 "WEBDRIVER_OPTION_ARGS": [],
                 "WEBDRIVER_WINDOW": {"pixel_density": 1},
@@ -857,9 +857,9 @@ class TestWebDriverPlaywrightErrorHandling:
             "Timed out requesting url %s", "http://example.com"
         )
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver._browser_manager")
-    @patch("superset.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver._browser_manager")
+    @patch("axbi.utils.webdriver.logger")
     def test_missing_element_for_dashboard_height_falls_back_without_crashing(
         self, mock_logger, mock_browser_manager
     ):
@@ -905,7 +905,7 @@ class TestWebDriverPlaywrightErrorHandling:
 
         mock_page.evaluate.side_effect = evaluate_side_effect
 
-        with patch("superset.utils.webdriver.app") as mock_app:
+        with patch("axbi.utils.webdriver.app") as mock_app:
             mock_app.config = {
                 "WEBDRIVER_OPTION_ARGS": [],
                 "WEBDRIVER_WINDOW": {"pixel_density": 1},
@@ -940,10 +940,10 @@ class TestWebDriverPlaywrightErrorHandling:
             "http://example.com",
         )
 
-    @patch("superset.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
-    @patch("superset.utils.webdriver._browser_manager")
-    @patch("superset.utils.webdriver.logger")
-    @patch("superset.utils.webdriver.take_tiled_screenshot")
+    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", True)
+    @patch("axbi.utils.webdriver._browser_manager")
+    @patch("axbi.utils.webdriver.logger")
+    @patch("axbi.utils.webdriver.take_tiled_screenshot")
     def test_tiled_screenshot_failure_returns_none_without_fallback(
         self, mock_take_tiled, mock_logger, mock_browser_manager
     ) -> None:
@@ -974,7 +974,7 @@ class TestWebDriverPlaywrightErrorHandling:
         mock_page.evaluate.side_effect = evaluate_side_effect
         mock_take_tiled.return_value = None  # tiled screenshot fails
 
-        with patch("superset.utils.webdriver.app") as mock_app:
+        with patch("axbi.utils.webdriver.app") as mock_app:
             mock_app.config = {
                 "WEBDRIVER_OPTION_ARGS": [],
                 "WEBDRIVER_WINDOW": {"pixel_density": 1},

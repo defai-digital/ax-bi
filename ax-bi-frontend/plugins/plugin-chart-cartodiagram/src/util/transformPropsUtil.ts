@@ -17,11 +17,7 @@
  * under the License.
  */
 
-import {
-  ChartProps,
-  convertKeysToCamelCase,
-  DataRecord,
-} from '@superset-ui/core';
+import { ChartProps, convertKeysToCamelCase, DataRecord } from '@ax-bi/ui-core';
 import { isObject } from 'lodash';
 import {
   LocationConfigMapping,
@@ -247,9 +243,9 @@ export const stripGeomColumnFromQueryData = (
 };
 
 /**
- * Create the chart configurations depending on the referenced Superset chart.
+ * Create the chart configurations depending on the referenced AxBI chart.
  *
- * @param selectedChart The configuration of the referenced Superset chart
+ * @param selectedChart The configuration of the referenced AxBI chart
  * @param geomColumn The name of the geometry column
  * @param chartProps The properties provided within this OL plugin
  * @param chartTransformer The transformer function

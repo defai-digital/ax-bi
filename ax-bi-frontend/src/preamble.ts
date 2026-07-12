@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { configure, LanguagePack } from '@apache-superset/core/translation';
-import { logging } from '@apache-superset/core/utils';
-import { makeApi, initFeatureFlags } from '@superset-ui/core';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+import { configure, LanguagePack } from '@ax-bi/core/translation';
+import { logging } from '@ax-bi/core/utils';
+import { makeApi, initFeatureFlags } from '@ax-bi/ui-core';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 import setupClient from './setup/setupClient';
 import setupColors from './setup/setupColors';
 import setupFormatters from './setup/setupFormatters';
@@ -61,11 +61,11 @@ export default function initPreamble(): Promise<void> {
       lang,
     );
 
-    // Setup SupersetClient early so we can fetch language pack
+    // Setup AxBIClient early so we can fetch language pack
     setupClient({ appRoot: applicationRoot() });
 
     // Load language pack before rendering
-    // Use native fetch to avoid race condition with SupersetClient initialization
+    // Use native fetch to avoid race condition with AxBIClient initialization
     if (lang !== 'en') {
       const abortController = new AbortController();
       const timeoutId = window.setTimeout(() => {
@@ -114,7 +114,7 @@ export default function initPreamble(): Promise<void> {
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           getMe().catch(() => {
-            // SupersetClient will redirect to login on 401
+            // AxBIClient will redirect to login on 401
           });
         }
       });

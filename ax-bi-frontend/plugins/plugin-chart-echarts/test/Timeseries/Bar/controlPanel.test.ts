@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlPanelsContainerProps } from '@superset-ui/chart-controls/types';
-import { GenericDataType } from '@apache-superset/core/common';
+import { ControlPanelsContainerProps } from '@ax-bi/chart-controls/types';
+import { GenericDataType } from '@ax-bi/core/common';
 import controlPanel from '../../../src/Timeseries/Regular/Bar/controlPanel';
 import {
   StackControlOptionsWithoutStream,
@@ -49,8 +49,8 @@ const getControl = (controlName: string) => {
 };
 
 // Mock getStandardizedControls
-jest.mock('@superset-ui/chart-controls', () => {
-  const actual = jest.requireActual('@superset-ui/chart-controls');
+jest.mock('@ax-bi/chart-controls', () => {
+  const actual = jest.requireActual('@ax-bi/chart-controls');
   return {
     ...actual,
     getStandardizedControls: jest.fn(() => ({

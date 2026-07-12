@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { getExtensionsRegistry } from '@superset-ui/core';
+import { getExtensionsRegistry } from '@ax-bi/ui-core';
 import { useEffect } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { QueryParamProvider } from 'use-query-params';
@@ -26,7 +26,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DynamicPluginProvider } from 'src/components';
 import { EmbeddedUiConfigProvider } from 'src/components/UiConfigContext';
-import { SupersetThemeProvider } from 'src/theme/ThemeProvider';
+import { AxBIThemeProvider } from 'src/theme/ThemeProvider';
 import { ThemeController } from 'src/theme/ThemeController';
 import { installDesktopThemeBridge } from 'src/theme/desktopThemeBridge';
 import { installDesktopShellBridge } from 'src/theme/desktopShell';
@@ -54,7 +54,7 @@ export const RootContextProviders: React.FC<{ children?: React.ReactNode }> = ({
   );
 
   return (
-    <SupersetThemeProvider themeController={themeController}>
+    <AxBIThemeProvider themeController={themeController}>
       <ReduxProvider store={store}>
         {/* @ts-expect-error react-dnd types not updated for React 18 */}
         <DndProvider backend={HTML5Backend}>
@@ -80,6 +80,6 @@ export const RootContextProviders: React.FC<{ children?: React.ReactNode }> = ({
           </EmbeddedUiConfigProvider>
         </DndProvider>
       </ReduxProvider>
-    </SupersetThemeProvider>
+    </AxBIThemeProvider>
   );
 };

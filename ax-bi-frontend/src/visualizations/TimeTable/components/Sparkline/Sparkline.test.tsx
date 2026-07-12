@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render } from '@superset-ui/core/spec';
+import { render } from '@ax-bi/ui-core/spec';
 import Sparkline from './Sparkline';
 
 const mockEntries = [

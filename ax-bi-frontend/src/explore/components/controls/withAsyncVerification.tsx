@@ -20,9 +20,9 @@ import { ComponentType, useCallback, useEffect, useRef, useState } from 'react';
 import {
   ExtraControlProps,
   sharedControlComponents,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
-import { JsonArray, JsonValue } from '@superset-ui/core';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { JsonArray, JsonValue } from '@ax-bi/ui-core';
 import { ControlProps } from 'src/explore/components/Control';
 import builtInControlComponents from 'src/explore/components/controls';
 import useEffectEvent from 'src/hooks/useEffectEvent';

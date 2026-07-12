@@ -29,7 +29,7 @@ import {
   createSmartDateVerboseFormatter,
   createSmartDateDetailedFormatter,
   createMemoryFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { FormatLocaleDefinition } from 'd3-format';
 import { TimeLocaleDefinition } from 'd3-time-format';
 

@@ -21,7 +21,7 @@ import {
   NativeFilterType,
   ChartCustomization,
   ChartCustomizationType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import nativeFilterReducer, { getInitialState } from './nativeFilters';
 import { SET_NATIVE_FILTERS_CONFIG_COMPLETE } from '../actions/nativeFilters';
 import { HYDRATE_DASHBOARD } from '../actions/hydrate';

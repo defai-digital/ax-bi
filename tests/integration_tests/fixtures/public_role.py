@@ -17,7 +17,7 @@
 import pytest
 from flask.ctx import AppContext
 
-from superset.extensions import db, security_manager
+from axbi.extensions import db, security_manager
 from tests.integration_tests.test_app import app
 
 

@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useMemo, useState, useEffect } from 'react';
-import { useJsonValidation } from '@superset-ui/core/components/AsyncAceEditor';
-import type { JsonValidationAnnotation } from '@superset-ui/core/components/AsyncAceEditor';
-import { type AnyThemeConfig } from '@apache-superset/core/theme';
+import { useJsonValidation } from '@ax-bi/ui-core/components/AsyncAceEditor';
+import type { JsonValidationAnnotation } from '@ax-bi/ui-core/components/AsyncAceEditor';
+import { type AnyThemeConfig } from '@ax-bi/core/theme';
 import { validateTheme } from '../utils/themeStructureValidation';
 import { validateThemeContrast } from '../utils/themeContrastValidation';
 

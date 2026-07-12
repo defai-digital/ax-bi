@@ -14,32 +14,32 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from unittest import mock
 from unittest.mock import patch  # noqa: F401
 
 import pytest
 
-from superset.commands.dashboard.exceptions import DashboardForbiddenError
-from superset.daos.dashboard import DashboardDAO
-from superset.utils import json
-from superset.utils.core import backend, override_user
+from axbi.commands.dashboard.exceptions import DashboardForbiddenError
+from axbi.daos.dashboard import DashboardDAO
+from axbi.utils import json
+from axbi.utils.core import backend, override_user
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import (
     ADMIN_USERNAME,
     GAMMA_SQLLAB_USERNAME,
     GAMMA_USERNAME,
 )
-from tests.integration_tests.dashboards.dashboard_test_utils import *  # noqa: F403
-from tests.integration_tests.dashboards.security.base_case import (
-    BaseTestDashboardSecurity,
-)
-from tests.integration_tests.dashboards.superset_factory_util import (
+from tests.integration_tests.dashboards.axbi_factory_util import (
     create_dashboard_to_db,
     create_database_to_db,
     create_datasource_table_to_db,
     create_slice_to_db,
+)
+from tests.integration_tests.dashboards.dashboard_test_utils import *  # noqa: F403
+from tests.integration_tests.dashboards.security.base_case import (
+    BaseTestDashboardSecurity,
 )
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
@@ -58,7 +58,7 @@ CHART_DATA_URI = "api/v1/chart/data"
 
 
 @mock.patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
+    "axbi.extensions.feature_flag_manager._feature_flags",
     DASHBOARD_RBAC=True,
 )
 class TestDashboardRoleBasedSecurity(BaseTestDashboardSecurity):

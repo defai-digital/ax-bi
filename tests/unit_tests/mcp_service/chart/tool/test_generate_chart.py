@@ -24,7 +24,7 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 from sqlalchemy.orm.exc import DetachedInstanceError
 
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     AxisConfig,
     ColumnRef,
     FilterConfig,
@@ -33,14 +33,14 @@ from superset.mcp_service.chart.schemas import (
     TableChartConfig,
     XYChartConfig,
 )
-from superset.mcp_service.chart.tool.generate_chart import (
+from axbi.mcp_service.chart.tool.generate_chart import (
     _compile_chart,
     _sanitize_generate_chart_form_data_for_llm_context,
     CompileResult,
     generate_chart,
 )
-from superset.mcp_service.utils import sanitize_for_llm_context
-from superset.utils import json as utils_json
+from axbi.mcp_service.utils import sanitize_for_llm_context
+from axbi.utils import json as utils_json
 
 
 class TestGenerateChart:
@@ -77,22 +77,22 @@ class TestGenerateChart:
 
         with (
             patch(
-                "superset.mcp_service.auth.get_user_from_request",
+                "axbi.mcp_service.auth.get_user_from_request",
                 return_value=mock_user,
             ),
             patch(
-                "superset.mcp_service.chart.validation.ValidationPipeline."
+                "axbi.mcp_service.chart.validation.ValidationPipeline."
                 "validate_request_with_warnings",
                 return_value=validation_result,
             ),
             patch(
-                "superset.mcp_service.chart.chart_utils.generate_explore_link",
+                "axbi.mcp_service.chart.chart_utils.generate_explore_link",
                 return_value=(
                     "http://localhost:9001/explore/?"
                     "form_data_key=test_form_data_key_123"
                 ),
             ),
-            patch("superset.daos.dataset.DatasetDAO.find_by_id", return_value=None),
+            patch("axbi.daos.dataset.DatasetDAO.find_by_id", return_value=None),
         ):
             result = await generate_chart(request, ctx=ctx)
 
@@ -346,8 +346,8 @@ class TestGenerateChart:
 class TestCompileChart:
     """Tests for _compile_chart helper."""
 
-    @patch("superset.commands.chart.data.get_data_command.ChartDataCommand")
-    @patch("superset.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.commands.chart.data.get_data_command.ChartDataCommand")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
     def test_compile_chart_success(self, mock_factory_cls, mock_cmd_cls):
         """Test _compile_chart returns success when query executes cleanly."""
         mock_factory_cls.return_value.create.return_value = MagicMock()
@@ -367,8 +367,8 @@ class TestCompileChart:
         assert result.error is None
         assert result.row_count == 2
 
-    @patch("superset.commands.chart.data.get_data_command.ChartDataCommand")
-    @patch("superset.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.commands.chart.data.get_data_command.ChartDataCommand")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
     def test_compile_chart_query_error_in_payload(self, mock_factory_cls, mock_cmd_cls):
         """Test _compile_chart detects errors embedded in query results."""
         mock_factory_cls.return_value.create.return_value = MagicMock()
@@ -381,11 +381,11 @@ class TestCompileChart:
         assert result.success is False
         assert "bad_col" in (result.error or "")
 
-    @patch("superset.commands.chart.data.get_data_command.ChartDataCommand")
-    @patch("superset.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.commands.chart.data.get_data_command.ChartDataCommand")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
     def test_compile_chart_command_exception(self, mock_factory_cls, mock_cmd_cls):
         """Test _compile_chart handles ChartDataQueryFailedError."""
-        from superset.commands.chart.exceptions import (
+        from axbi.commands.chart.exceptions import (
             ChartDataQueryFailedError,
         )
 
@@ -399,8 +399,8 @@ class TestCompileChart:
         assert result.success is False
         assert "syntax error" in (result.error or "")
 
-    @patch("superset.commands.chart.data.get_data_command.ChartDataCommand")
-    @patch("superset.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.commands.chart.data.get_data_command.ChartDataCommand")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
     def test_compile_chart_value_error(self, mock_factory_cls, mock_cmd_cls):
         """Test _compile_chart handles ValueError from bad config."""
         mock_factory_cls.return_value.create.side_effect = ValueError("invalid metric")
@@ -442,7 +442,7 @@ class TestChartSerializationEagerLoading:
 
     def test_serialize_chart_object_succeeds_with_loaded_relationships(self):
         """serialize_chart_object works when tags/owners are already loaded."""
-        from superset.mcp_service.chart.schemas import serialize_chart_object
+        from axbi.mcp_service.chart.schemas import serialize_chart_object
 
         chart = _make_mock_chart()
         result = serialize_chart_object(chart)
@@ -455,7 +455,7 @@ class TestChartSerializationEagerLoading:
 
     def test_serialize_chart_object_with_certification_fields(self):
         """serialize_chart_object correctly serializes non-None certification values."""
-        from superset.mcp_service.chart.schemas import serialize_chart_object
+        from axbi.mcp_service.chart.schemas import serialize_chart_object
 
         chart = _make_mock_chart()
         chart.certified_by = "Data Team"
@@ -471,7 +471,7 @@ class TestChartSerializationEagerLoading:
 
     def test_serialize_chart_object_ignores_non_object_params(self) -> None:
         """Chart params must be object-shaped before becoming response form_data."""
-        from superset.mcp_service.chart.schemas import serialize_chart_object
+        from axbi.mcp_service.chart.schemas import serialize_chart_object
 
         chart = _make_mock_chart()
         chart.params = "[]"
@@ -486,7 +486,7 @@ class TestChartSerializationEagerLoading:
         self,
     ) -> None:
         """serialize_chart_object sanitizes chart read-path content in place."""
-        from superset.mcp_service.chart.schemas import serialize_chart_object
+        from axbi.mcp_service.chart.schemas import serialize_chart_object
 
         chart = _make_mock_chart()
         chart.description = "Show sales instructions"
@@ -573,7 +573,7 @@ class TestChartSerializationEagerLoading:
     def test_serialize_chart_object_fails_on_detached_instance(self):
         """serialize_chart_object raises when accessing lazy attrs on detached
         instance — this is the bug scenario that the eager-loading fix prevents."""
-        from superset.mcp_service.chart.schemas import serialize_chart_object
+        from axbi.mcp_service.chart.schemas import serialize_chart_object
 
         chart = _make_mock_chart()
         # Simulate detached instance: accessing .tags raises DetachedInstanceError
@@ -716,7 +716,7 @@ class TestGenerateChartSqlMetric:
         """Regression: previously the generate_chart response's top-level
         ``form_data`` skipped the per-key SQL-metric wrap, shipping LLM-
         controlled sqlExpression/label back unwrapped."""
-        from superset.mcp_service.chart.tool.generate_chart import (
+        from axbi.mcp_service.chart.tool.generate_chart import (
             _sanitize_generate_chart_form_data_for_llm_context,
         )
 

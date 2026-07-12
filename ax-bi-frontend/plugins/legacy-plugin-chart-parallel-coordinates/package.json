@@ -1,7 +1,7 @@
 {
-  "name": "@superset-ui/legacy-plugin-chart-parallel-coordinates",
+  "name": "@ax-bi/legacy-plugin-chart-parallel-coordinates",
   "version": "0.20.3",
-  "description": "Superset Legacy Chart - Parallel Coordinates",
+  "description": "AxBI Legacy Chart - Parallel Coordinates",
   "sideEffects": [
     "*.css"
   ],
@@ -13,16 +13,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/legacy-plugin-chart-parallel-coordinates"
   },
   "keywords": [
-    "superset"
+    "axbi"
   ],
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/legacy-plugin-chart-parallel-coordinates#readme",
   "publishConfig": {
@@ -33,9 +33,9 @@
     "prop-types": "^15.8.1"
   },
   "peerDependencies": {
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
-    "@apache-superset/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
+    "@ax-bi/core": "*",
     "react": "^18.3.0 || ^19.0.0"
   }
 }

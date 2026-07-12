@@ -21,8 +21,8 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from superset.connectors.sqla.models import SqlaTable, TableColumn
-from superset.datasets.datetime_format_detector import DatetimeFormatDetector
+from axbi.connectors.sqla.models import SqlaTable, TableColumn
+from axbi.datasets.datetime_format_detector import DatetimeFormatDetector
 
 
 @pytest.fixture

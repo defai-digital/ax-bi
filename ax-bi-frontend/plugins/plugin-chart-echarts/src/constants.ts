@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { JsonValue, TimeGranularity } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { JsonValue, TimeGranularity } from '@ax-bi/ui-core';
 import { ReactNode } from 'react';
 import {
   LegendFormData,

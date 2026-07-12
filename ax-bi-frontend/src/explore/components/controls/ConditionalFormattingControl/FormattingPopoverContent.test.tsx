@@ -22,8 +22,8 @@ import {
   fireEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { Comparator, ColorSchemeEnum } from '@superset-ui/chart-controls';
-import { GenericDataType } from '@apache-superset/core/common';
+import { Comparator, ColorSchemeEnum } from '@ax-bi/chart-controls';
+import { GenericDataType } from '@ax-bi/core/common';
 import { FormattingPopoverContent } from './FormattingPopoverContent';
 
 const mockOnChange = jest.fn();

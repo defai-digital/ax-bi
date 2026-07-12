@@ -21,7 +21,7 @@ from typing import Any
 
 import pytest
 
-from superset.mcp_service.utils import retry_utils
+from axbi.mcp_service.utils import retry_utils
 
 
 def test_retryable_operation_context_manager_api_removed() -> None:

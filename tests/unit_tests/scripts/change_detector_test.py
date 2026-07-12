@@ -62,18 +62,18 @@ def test_ax_services_changes_include_shared_change_detector() -> None:
     assert _detects("ax-services", ".github/actions/change-detector/action.yml")
 
 
-def test_superset_rust_changes_include_sql_parser_integration() -> None:
+def test_axbi_rust_changes_include_sql_parser_integration() -> None:
     """Changing Rust SQL parser integration re-runs Rust checks."""
 
-    assert _detects("superset-rust", "superset/sql/parse.py")
-    assert _detects("superset-rust", "tests/unit_tests/sql/parse_tests.py")
+    assert _detects("ax-bi-rust", "axbi/sql/parse.py")
+    assert _detects("ax-bi-rust", "tests/unit_tests/sql/parse_tests.py")
 
 
-def test_superset_rust_changes_include_shared_change_detector() -> None:
+def test_axbi_rust_changes_include_shared_change_detector() -> None:
     """Changing the shared detector re-runs Rust checks."""
 
-    assert _detects("superset-rust", "scripts/change_detector.py")
-    assert _detects("superset-rust", ".github/actions/change-detector/action.yml")
+    assert _detects("ax-bi-rust", "scripts/change_detector.py")
+    assert _detects("ax-bi-rust", ".github/actions/change-detector/action.yml")
 
 
 def test_frontend_build_excludes_browser_test_harness() -> None:

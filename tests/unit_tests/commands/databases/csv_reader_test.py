@@ -23,8 +23,8 @@ import pandas as pd
 import pytest
 from werkzeug.datastructures import FileStorage
 
-from superset.commands.database.exceptions import DatabaseUploadFailed
-from superset.commands.database.uploaders.csv_reader import CSVReader, CSVReaderOptions
+from axbi.commands.database.exceptions import DatabaseUploadFailed
+from axbi.commands.database.uploaders.csv_reader import CSVReader, CSVReaderOptions
 from tests.unit_tests.fixtures.common import create_csv_file
 
 CSV_DATA = [
@@ -1094,9 +1094,9 @@ def test_csv_reader_engine_selection():
     )
 
     # Test 1: Feature flag disabled (default) - should use c engine
-    with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+    with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
         with patch(
-            "superset.commands.database.uploaders.csv_reader.is_feature_enabled"
+            "axbi.commands.database.uploaders.csv_reader.is_feature_enabled"
         ) as mock_flag:
             mock_flag.return_value = False
             mock_pd.__version__ = "2.0.0"
@@ -1111,9 +1111,9 @@ def test_csv_reader_engine_selection():
             assert call_kwargs.get("engine") == "c"
 
     # Test 2: Feature flag enabled - pyarrow would be used but chunking prevents it
-    with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+    with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
         with patch(
-            "superset.commands.database.uploaders.csv_reader.is_feature_enabled"
+            "axbi.commands.database.uploaders.csv_reader.is_feature_enabled"
         ) as mock_flag:
             with patch("importlib.util") as mock_util:
                 mock_flag.return_value = True
@@ -1136,9 +1136,9 @@ def test_csv_reader_engine_selection():
                 assert call_kwargs.get("engine") == "c"
 
     # Test 3: Feature flag enabled but unsupported options - should use c engine
-    with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+    with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
         with patch(
-            "superset.commands.database.uploaders.csv_reader.is_feature_enabled"
+            "axbi.commands.database.uploaders.csv_reader.is_feature_enabled"
         ) as mock_flag:
             mock_flag.return_value = True
             mock_pd.__version__ = "2.0.0"
@@ -1165,7 +1165,7 @@ def test_csv_reader_low_memory_setting():
         options=CSVReaderOptions(),
     )
 
-    with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+    with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
         mock_pd.__version__ = "2.0.0"
         mock_pd.read_csv = MagicMock(return_value=pd.DataFrame({"col1": [1, 2, 3]}))
         mock_pd.DataFrame = pd.DataFrame
@@ -1186,7 +1186,7 @@ def test_csv_reader_cache_dates_setting():
         options=CSVReaderOptions(column_dates=["date_col"]),
     )
 
-    with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+    with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
         mock_pd.__version__ = "2.0.0"
         mock_pd.read_csv = MagicMock(
             return_value=pd.DataFrame({"date_col": ["2023-01-01"]})
@@ -1212,9 +1212,9 @@ def test_csv_reader_pyarrow_feature_flag():
 
     # Test _read_csv directly to avoid the file_to_dataframe chunking logic
     with patch(
-        "superset.commands.database.uploaders.csv_reader.is_feature_enabled"
+        "axbi.commands.database.uploaders.csv_reader.is_feature_enabled"
     ) as mock_flag:
-        with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+        with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
             with patch.object(
                 CSVReader, "_select_optimal_engine"
             ) as mock_engine_select:
@@ -1246,9 +1246,9 @@ def test_csv_reader_pyarrow_feature_flag():
 
     # Test 2: Feature flag disabled
     with patch(
-        "superset.commands.database.uploaders.csv_reader.is_feature_enabled"
+        "axbi.commands.database.uploaders.csv_reader.is_feature_enabled"
     ) as mock_flag:
-        with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+        with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
             mock_flag.return_value = False
             mock_pd.__version__ = "2.0.0"
             mock_pd.read_csv = MagicMock(return_value=pd.DataFrame({"col1": [1]}))
@@ -1270,9 +1270,9 @@ def test_csv_reader_pyarrow_feature_flag():
 
     # Test 3: Feature flag enabled but unsupported options present
     with patch(
-        "superset.commands.database.uploaders.csv_reader.is_feature_enabled"
+        "axbi.commands.database.uploaders.csv_reader.is_feature_enabled"
     ) as mock_flag:
-        with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
+        with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
             mock_flag.return_value = True
             mock_pd.__version__ = "2.0.0"
             mock_pd.read_csv = MagicMock(return_value=pd.DataFrame({"col1": [1]}))
@@ -1297,9 +1297,9 @@ def test_csv_reader_select_optimal_engine():
     from unittest.mock import MagicMock, patch
 
     # Test 1: PyArrow available, no built-in support
-    with patch("superset.commands.database.uploaders.csv_reader.util") as mock_util:
-        with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
-            with patch("superset.commands.database.uploaders.csv_reader.logger"):
+    with patch("axbi.commands.database.uploaders.csv_reader.util") as mock_util:
+        with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
+            with patch("axbi.commands.database.uploaders.csv_reader.logger"):
                 mock_util.find_spec = MagicMock(
                     return_value=MagicMock()
                 )  # PyArrow found
@@ -1311,17 +1311,17 @@ def test_csv_reader_select_optimal_engine():
                     assert result == "pyarrow"
 
     # Test 2: PyArrow not available
-    with patch("superset.commands.database.uploaders.csv_reader.util") as mock_util:
-        with patch("superset.commands.database.uploaders.csv_reader.logger"):
+    with patch("axbi.commands.database.uploaders.csv_reader.util") as mock_util:
+        with patch("axbi.commands.database.uploaders.csv_reader.logger"):
             mock_util.find_spec = MagicMock(return_value=None)  # PyArrow not found
 
             result = CSVReader._select_optimal_engine()
             assert result == "c"
 
     # Test 3: Pandas with built-in pyarrow
-    with patch("superset.commands.database.uploaders.csv_reader.util") as mock_util:
-        with patch("superset.commands.database.uploaders.csv_reader.pd") as mock_pd:
-            with patch("superset.commands.database.uploaders.csv_reader.logger"):
+    with patch("axbi.commands.database.uploaders.csv_reader.util") as mock_util:
+        with patch("axbi.commands.database.uploaders.csv_reader.pd") as mock_pd:
+            with patch("axbi.commands.database.uploaders.csv_reader.logger"):
                 mock_util.find_spec = MagicMock(
                     return_value=MagicMock()
                 )  # PyArrow found
@@ -1333,8 +1333,8 @@ def test_csv_reader_select_optimal_engine():
                     assert result == "c"
 
     # Test 4: PyArrow import fails
-    with patch("superset.commands.database.uploaders.csv_reader.util") as mock_util:
-        with patch("superset.commands.database.uploaders.csv_reader.logger"):
+    with patch("axbi.commands.database.uploaders.csv_reader.util") as mock_util:
+        with patch("axbi.commands.database.uploaders.csv_reader.logger"):
             mock_util.find_spec = MagicMock(return_value=MagicMock())  # PyArrow found
 
             # Mock import error
@@ -1401,9 +1401,7 @@ def test_csv_reader_chunk_concatenation_error_logging():
     csv_reader = CSVReader(options=CSVReaderOptions())
 
     # Mock pd.concat to raise an exception
-    with patch(
-        "superset.commands.database.uploaders.csv_reader.pd.concat"
-    ) as mock_concat:
+    with patch("axbi.commands.database.uploaders.csv_reader.pd.concat") as mock_concat:
         mock_concat.side_effect = ValueError(
             "Cannot concatenate chunks with different dtypes"
         )
@@ -1430,9 +1428,7 @@ def test_csv_reader_chunk_concatenation_error_warning(caplog):
     csv_reader = CSVReader(options=CSVReaderOptions())
 
     # Mock pd.concat to raise an exception
-    with patch(
-        "superset.commands.database.uploaders.csv_reader.pd.concat"
-    ) as mock_concat:
+    with patch("axbi.commands.database.uploaders.csv_reader.pd.concat") as mock_concat:
         mock_concat.side_effect = ValueError(
             "Cannot concatenate chunks with different dtypes"
         )

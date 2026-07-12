@@ -17,7 +17,7 @@
  * under the License.
  */
 import { Layout, LayoutItem, Charts } from 'src/dashboard/types';
-import { VizType } from '@superset-ui/core';
+import { VizType } from '@ax-bi/ui-core';
 import { buildTree, getTreeCheckedItems } from './utils';
 import type { TreeItem } from './types';
 
@@ -474,7 +474,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
           Strategy: '#A1A6BD',
         },
         shared_label_colors: [],
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         extra_filters: [
           {
             col: '__time_range',
@@ -699,7 +699,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
           metric: 'metrics',
         },
         shared_label_colors: [],
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         extra_filters: [
           {
             col: '__time_range',
@@ -748,7 +748,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
               metric: 'metrics',
             },
             shared_label_colors: [],
-            color_scheme: 'supersetColors',
+            color_scheme: 'axbiColors',
             dashboardId: 9,
             applied_time_extras: {},
             where: '',
@@ -2888,7 +2888,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         order_desc: true,
         contribution: false,
         row_limit: null,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         show_brush: 'auto',
         show_legend: true,
         rich_tooltip: true,
@@ -3018,7 +3018,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         show_legend: false,
         line_interpolation: 'linear',
         stacked_style: 'stream',
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         rich_tooltip: true,
         x_axis_label: 'Year Published',
         bottom_margin: 'auto',
@@ -3097,7 +3097,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
             show_legend: false,
             line_interpolation: 'linear',
             stacked_style: 'stream',
-            color_scheme: 'supersetColors',
+            color_scheme: 'axbiColors',
             rich_tooltip: true,
             x_axis_label: 'Year Published',
             bottom_margin: 'auto',
@@ -16295,7 +16295,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         show_legend: false,
         line_interpolation: 'linear',
         stacked_style: 'stream',
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         rich_tooltip: true,
         x_axis_label: 'Year Published',
         bottom_margin: 'auto',
@@ -16489,7 +16489,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         row_limit: null,
         order_desc: true,
         contribution: true,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         show_legend: true,
         rich_tooltip: true,
         bar_stacked: true,
@@ -16636,7 +16636,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
             row_limit: null,
             order_desc: true,
             contribution: true,
-            color_scheme: 'supersetColors',
+            color_scheme: 'axbiColors',
             show_legend: true,
             rich_tooltip: true,
             bar_stacked: true,
@@ -17179,7 +17179,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         row_limit: null,
         order_desc: true,
         contribution: true,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         show_legend: true,
         rich_tooltip: true,
         bar_stacked: true,
@@ -17314,7 +17314,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         row_limit: null,
         order_desc: true,
         contribution: false,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         show_legend: true,
         show_bar_value: false,
         rich_tooltip: true,
@@ -17439,7 +17439,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         ],
         row_limit: null,
         sort_by_metric: true,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         show_labels_threshold: 5,
         show_legend: false,
         legendType: 'scroll',
@@ -17620,7 +17620,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         ],
         row_limit: null,
         sort_by_metric: true,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         show_labels_threshold: 5,
         show_legend: false,
         legendType: 'scroll',
@@ -17659,7 +17659,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         groupby: ['platform'],
         row_limit: 10,
         order_desc: true,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         treemap_ratio: 1.618033988749895,
         number_format: 'SMART_NUMBER',
         queryFields: {
@@ -17696,7 +17696,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
             groupby: ['platform'],
             row_limit: 10,
             order_desc: true,
-            color_scheme: 'supersetColors',
+            color_scheme: 'axbiColors',
             treemap_ratio: 1.618033988749895,
             number_format: 'SMART_NUMBER',
             queryFields: {
@@ -17785,7 +17785,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         groupby: ['platform'],
         row_limit: 10,
         order_desc: true,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         treemap_ratio: 1.618033988749895,
         number_format: 'SMART_NUMBER',
         label_colors: {
@@ -17871,7 +17871,7 @@ describe('Ensure buildTree does not throw runtime errors when encountering an in
         groupby: ['genre'],
         row_limit: null,
         order_desc: true,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         treemap_ratio: 1.618033988749895,
         number_format: 'SMART_NUMBER',
         label_colors: {

@@ -17,11 +17,11 @@
 
 import pytest
 
-from superset import db
-from superset.commands.report.create import CreateReportScheduleCommand
-from superset.commands.report.exceptions import ReportScheduleInvalidError
-from superset.models.dashboard import Dashboard
-from superset.reports.models import (
+from axbi import db
+from axbi.commands.report.create import CreateReportScheduleCommand
+from axbi.commands.report.exceptions import ReportScheduleInvalidError
+from axbi.models.dashboard import Dashboard
+from axbi.reports.models import (
     ReportCreationMethod,
     ReportRecipientType,
     ReportScheduleType,

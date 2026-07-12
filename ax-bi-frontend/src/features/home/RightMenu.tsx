@@ -19,28 +19,22 @@
 import { FC, PureComponent, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   getExtensionsRegistry,
   isFeatureEnabled,
   FeatureFlag,
   CACHE_KEY,
-} from '@superset-ui/core';
-import {
-  styled,
-  css,
-  SupersetTheme,
-  useTheme,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, css, AxBITheme, useTheme } from '@ax-bi/core/theme';
 import {
   Tag,
   Tooltip,
   Menu,
   Icons,
   Typography,
-  TelemetryPixel,
-} from '@superset-ui/core/components';
-import type { ItemType, MenuItem } from '@superset-ui/core/components/Menu';
+} from '@ax-bi/ui-core/components';
+import type { ItemType, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 import { findPermission } from 'src/utils/findPermission';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
@@ -390,7 +384,7 @@ const RightMenu = ({
         }
         const showLogout =
           !isEmbedded() ||
-          !isFeatureEnabled(FeatureFlag.DisableEmbeddedSupersetLogout);
+          !isFeatureEnabled(FeatureFlag.DisableEmbeddedAxBILogout);
         if (showLogout) {
           userItems.push({
             key: 'logout',
@@ -460,7 +454,7 @@ const RightMenu = ({
               style: { height: 'auto', minHeight: 'auto' },
               label: (
                 <div
-                  css={(theme: SupersetTheme) => css`
+                  css={(theme: AxBITheme) => css`
                     font-size: ${theme.fontSizeSM}px;
                     color: ${theme.colorTextSecondary || theme.colorText};
                     white-space: pre-wrap;
@@ -672,11 +666,6 @@ const RightMenu = ({
         disabledOverflow
         items={menuItems}
       />
-      <TelemetryPixel
-        version={navbarRight.version_string}
-        sha={navbarRight.version_sha}
-        build={navbarRight.build_number}
-      />
     </StyledDiv>
   );
 };
@@ -687,7 +676,7 @@ const RightMenuWithQueryWrapper: FC<RightMenuProps> = props => (
 
 // Query param manipulation requires that, during the setup, the
 // QueryParamProvider is present and configured.
-// Superset still has multiple entry points, and not all of them have
+// AxBI still has multiple entry points, and not all of them have
 // the same setup, and critically, not all of them have the QueryParamProvider.
 // This wrapper ensures the RightMenu renders regardless of the provider being present.
 class RightMenuErrorWrapper extends PureComponent<RightMenuProps> {

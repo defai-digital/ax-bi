@@ -16,18 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { SupersetTheme } from '@apache-superset/core/theme';
+import type { AxBITheme } from '@ax-bi/core/theme';
 import { axbiSoftShadow } from './index';
 
 const lightTheme = {
   sizeUnit: 4,
   colorBgContainer: '#ffffff',
-} as SupersetTheme;
+} as AxBITheme;
 
 const darkTheme = {
   sizeUnit: 4,
   colorBgContainer: '#171d22',
-} as SupersetTheme;
+} as AxBITheme;
 
 test('axbiSoftShadow uses cool slate shadow in light mode', () => {
   const shadow = axbiSoftShadow(lightTheme);

@@ -21,7 +21,7 @@ from unittest.mock import MagicMock, patch
 
 from sqlalchemy.exc import IntegrityError
 
-from superset.security.session_invalidation import (
+from axbi.security.session_invalidation import (
     _as_utc_timestamp,
     enforce_session_validity,
     invalidate_user_sessions,
@@ -78,7 +78,7 @@ def test_naive_epoch_is_treated_as_utc() -> None:
     assert is_session_invalidated(login_at=just_after, invalidated_at=naive) is False
 
 
-MODULE = "superset.security.session_invalidation"
+MODULE = "axbi.security.session_invalidation"
 
 
 def _user(*, authenticated: bool = True, guest: bool = False) -> SimpleNamespace:

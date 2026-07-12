@@ -16,12 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  styled,
-  useTheme,
-  type SupersetTheme,
-} from '@apache-superset/core/theme';
-import { CustomCellRendererProps } from '@superset-ui/core/components/ThemedAgGridReact';
+import { styled, useTheme, type AxBITheme } from '@ax-bi/core/theme';
+import { CustomCellRendererProps } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { BasicColorFormatterType, InputColumn, ValueRange } from '../types';
 import { useIsDark } from '../utils/useTableTheme';
 
@@ -116,7 +112,7 @@ function cellBackground({
   value: number;
   colorPositiveNegative: boolean;
   isDarkTheme: boolean;
-  theme: SupersetTheme | null;
+  theme: AxBITheme | null;
 }) {
   if (!colorPositiveNegative) {
     return 'transparent'; // Use transparent background when colorPositiveNegative is false

@@ -19,7 +19,7 @@ import pytest
 from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 
-from superset.reports.schemas import (
+from axbi.reports.schemas import (
     ReportRecipientSchema,
     ReportSchedulePostSchema,
     ReportSchedulePutSchema,

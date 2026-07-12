@@ -19,9 +19,9 @@
 import { useRef, ReactNode, useMemo } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { t } from '@apache-superset/core/translation';
-import { styled, useTheme, css, keyframes } from '@apache-superset/core/theme';
-import { InfoTooltip, Icons, Tooltip } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled, useTheme, css, keyframes } from '@ax-bi/core/theme';
+import { InfoTooltip, Icons, Tooltip } from '@ax-bi/ui-core/components';
 import { savedMetricType } from 'src/explore/components/controls/MetricControl/types';
 import AdhocMetric from 'src/explore/components/controls/MetricControl/AdhocMetric';
 import { StyledMetricOption } from '../../optionRenderers';

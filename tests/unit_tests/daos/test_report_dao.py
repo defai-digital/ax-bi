@@ -19,9 +19,9 @@ from __future__ import annotations
 import pytest
 from sqlalchemy.orm.session import Session
 
-from superset.daos.report import ReportScheduleDAO
-from superset.reports.models import ReportSchedule, ReportScheduleType
-from superset.utils import json
+from axbi.daos.report import ReportScheduleDAO
+from axbi.reports.models import ReportSchedule, ReportScheduleType
+from axbi.utils import json
 
 
 @pytest.fixture(autouse=True)

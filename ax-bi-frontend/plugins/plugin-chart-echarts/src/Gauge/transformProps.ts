@@ -25,7 +25,7 @@ import {
   getColumnLabel,
   getValueFormatter,
   tooltipHtml,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { GaugeSeriesOption } from 'echarts/charts';
 import type { GaugeDataItemOption } from 'echarts/types/src/chart/gauge/GaugeSeries';

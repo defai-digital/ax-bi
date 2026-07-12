@@ -18,7 +18,7 @@
 from typing import Any
 from unittest.mock import MagicMock, patch
 
-from superset.security.manager import SupersetSecurityManager
+from axbi.security.manager import AxBISecurityManager
 
 _DASHBOARD_RESOURCE = {"type": "dashboard", "id": "abc-uuid"}
 
@@ -35,28 +35,28 @@ def _embedded(revoked_before) -> MagicMock:
 
 def test_guest_token_not_revoked_when_no_revocation_set() -> None:
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=_embedded(None),
     ):
-        assert SupersetSecurityManager._is_guest_token_revoked(_token(1000)) is False
+        assert AxBISecurityManager._is_guest_token_revoked(_token(1000)) is False
 
 
 def test_guest_token_revoked_when_issued_before_revocation() -> None:
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=_embedded(2000),
     ):
         # Token issued at 1000, revocation at 2000 -> revoked.
-        assert SupersetSecurityManager._is_guest_token_revoked(_token(1000)) is True
+        assert AxBISecurityManager._is_guest_token_revoked(_token(1000)) is True
 
 
 def test_guest_token_valid_when_issued_after_revocation() -> None:
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=_embedded(2000),
     ):
         # Token issued at 3000, after the revocation cutoff -> still valid.
-        assert SupersetSecurityManager._is_guest_token_revoked(_token(3000)) is False
+        assert AxBISecurityManager._is_guest_token_revoked(_token(3000)) is False
 
 
 def test_guest_token_without_iat_is_revoked_when_cutoff_set() -> None:
@@ -64,19 +64,19 @@ def test_guest_token_without_iat_is_revoked_when_cutoff_set() -> None:
     # fails closed and is treated as revoked when a cutoff is configured.
     token = {"type": "guest", "resources": [_DASHBOARD_RESOURCE]}
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=_embedded(2000),
     ):
-        assert SupersetSecurityManager._is_guest_token_revoked(token) is True
+        assert AxBISecurityManager._is_guest_token_revoked(token) is True
 
 
 def test_guest_token_without_iat_is_not_revoked_when_no_cutoff() -> None:
     token = {"type": "guest", "resources": [_DASHBOARD_RESOURCE]}
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=_embedded(None),
     ):
-        assert SupersetSecurityManager._is_guest_token_revoked(token) is False
+        assert AxBISecurityManager._is_guest_token_revoked(token) is False
 
 
 def test_guest_token_revoked_via_legacy_dashboard_id_resource() -> None:
@@ -88,15 +88,15 @@ def test_guest_token_revoked_via_legacy_dashboard_id_resource() -> None:
     dashboard.embedded = [_embedded(2000)]
     with (
         patch(
-            "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+            "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
             return_value=None,
         ),
         patch(
-            "superset.models.dashboard.Dashboard.get",
+            "axbi.models.dashboard.Dashboard.get",
             return_value=dashboard,
         ),
     ):
-        assert SupersetSecurityManager._is_guest_token_revoked(_token(1000)) is True
+        assert AxBISecurityManager._is_guest_token_revoked(_token(1000)) is True
 
 
 def test_guest_token_not_revoked_when_resource_unresolvable() -> None:
@@ -104,15 +104,15 @@ def test_guest_token_not_revoked_when_resource_unresolvable() -> None:
     # cutoff to enforce and the token is treated as not revoked.
     with (
         patch(
-            "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+            "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
             return_value=None,
         ),
         patch(
-            "superset.models.dashboard.Dashboard.get",
+            "axbi.models.dashboard.Dashboard.get",
             return_value=None,
         ),
     ):
-        assert SupersetSecurityManager._is_guest_token_revoked(_token(1000)) is False
+        assert AxBISecurityManager._is_guest_token_revoked(_token(1000)) is False
 
 
 def test_guest_token_revocation_ignores_malformed_resources() -> None:
@@ -122,23 +122,23 @@ def test_guest_token_revocation_ignores_malformed_resources() -> None:
         "resources": ["malformed", _DASHBOARD_RESOURCE],
     }
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=_embedded(None),
     ):
-        assert SupersetSecurityManager._is_guest_token_revoked(token) is False
+        assert AxBISecurityManager._is_guest_token_revoked(token) is False
 
 
-def _manager() -> SupersetSecurityManager:
+def _manager() -> AxBISecurityManager:
     # Build an instance without running the (heavy) FAB __init__: we only
     # exercise revoke_guest_token_access, which depends on nothing but
     # _get_current_epoch_time and the EmbeddedDashboardDAO lookup.
-    return SupersetSecurityManager.__new__(SupersetSecurityManager)
+    return AxBISecurityManager.__new__(AxBISecurityManager)
 
 
 def test_revoke_guest_token_access_uses_explicit_before() -> None:
     embedded = _embedded(None)
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=embedded,
     ):
         _manager().revoke_guest_token_access("abc-uuid", before=1234)
@@ -150,7 +150,7 @@ def test_revoke_guest_token_access_defaults_to_ceil_of_now() -> None:
     manager = _manager()
     with (
         patch(
-            "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+            "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
             return_value=embedded,
         ),
         patch.object(manager, "_get_current_epoch_time", return_value=1000.25),
@@ -163,7 +163,7 @@ def test_revoke_guest_token_access_defaults_to_ceil_of_now() -> None:
 
 def test_revoke_guest_token_access_noop_when_embedded_missing() -> None:
     with patch(
-        "superset.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
+        "axbi.daos.dashboard.EmbeddedDashboardDAO.find_by_id",
         return_value=None,
     ):
         # Should simply return without raising when the UUID does not resolve.

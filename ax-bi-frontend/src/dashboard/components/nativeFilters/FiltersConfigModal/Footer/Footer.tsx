@@ -17,8 +17,8 @@
  * under the License.
  */
 import { FC } from 'react';
-import { Button, type OnClickHandler } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+import { Button, type OnClickHandler } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 import { CancelConfirmationAlert } from './CancelConfirmationAlert';
 
 type FooterProps = {

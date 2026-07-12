@@ -24,7 +24,7 @@ import type { ReactNode } from 'react';
 import type {
   DataMaskStateWithId,
   QueryObjectFilterClause,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   FilterConfigMap,
   resolveTransitiveParentIds,

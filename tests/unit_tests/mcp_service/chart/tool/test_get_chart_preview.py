@@ -26,7 +26,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     AccessibilityMetadata,
     ASCIIPreview,
     ChartError,
@@ -38,7 +38,7 @@ from superset.mcp_service.chart.schemas import (
     URLPreview,
     VegaLitePreview,
 )
-from superset.mcp_service.chart.tool.get_chart_preview import (
+from axbi.mcp_service.chart.tool.get_chart_preview import (
     _build_chart_description,
     _build_query_columns,
     _build_query_metrics,
@@ -47,8 +47,8 @@ from superset.mcp_service.chart.tool.get_chart_preview import (
     TablePreviewStrategy,
     VegaLitePreviewStrategy,
 )
-from superset.mcp_service.utils import sanitize_for_llm_context
-from superset.utils import json as utils_json
+from axbi.mcp_service.utils import sanitize_for_llm_context
+from axbi.utils import json as utils_json
 
 
 @pytest.mark.parametrize(
@@ -323,10 +323,10 @@ class TestGetChartPreview:
     ) -> None:
         """Saved chart adhoc filters should constrain table previews."""
         query_context_factory_module = importlib.import_module(
-            "superset.common.query_context_factory"
+            "axbi.common.query_context_factory"
         )
         get_data_command_module = importlib.import_module(
-            "superset.commands.chart.data.get_data_command"
+            "axbi.commands.chart.data.get_data_command"
         )
 
         captured_query_contexts: list[dict[str, Any]] = []
@@ -402,10 +402,10 @@ class TestGetChartPreview:
     ) -> None:
         """Preview query construction should handle charts without metrics[]."""
         query_context_factory_module = importlib.import_module(
-            "superset.common.query_context_factory"
+            "axbi.common.query_context_factory"
         )
         get_data_command_module = importlib.import_module(
-            "superset.commands.chart.data.get_data_command"
+            "axbi.commands.chart.data.get_data_command"
         )
 
         captured_query_contexts: list[dict[str, Any]] = []
@@ -473,10 +473,10 @@ class TestGetChartPreview:
     ) -> None:
         """ASCII preview should use chart-type-aware query construction."""
         query_context_factory_module = importlib.import_module(
-            "superset.common.query_context_factory"
+            "axbi.common.query_context_factory"
         )
         get_data_command_module = importlib.import_module(
-            "superset.commands.chart.data.get_data_command"
+            "axbi.commands.chart.data.get_data_command"
         )
 
         captured_query_contexts: list[dict[str, Any]] = []
@@ -548,16 +548,16 @@ class TestGetChartPreview:
         from contextlib import nullcontext
 
         get_chart_preview_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_preview"
+            "axbi.mcp_service.chart.tool.get_chart_preview"
         )
         query_context_factory_module = importlib.import_module(
-            "superset.common.query_context_factory"
+            "axbi.common.query_context_factory"
         )
         get_data_command_module = importlib.import_module(
-            "superset.commands.chart.data.get_data_command"
+            "axbi.commands.chart.data.get_data_command"
         )
         get_form_data_module = importlib.import_module(
-            "superset.commands.explore.form_data.get"
+            "axbi.commands.explore.form_data.get"
         )
 
         class AsyncContext:
@@ -705,10 +705,10 @@ class TestGetChartPreview:
         from contextlib import nullcontext
 
         get_chart_preview_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_preview"
+            "axbi.mcp_service.chart.tool.get_chart_preview"
         )
         get_form_data_module = importlib.import_module(
-            "superset.commands.explore.form_data.get"
+            "axbi.commands.explore.form_data.get"
         )
 
         class AsyncContext:
@@ -788,7 +788,7 @@ class TestGetChartPreview:
         )
         monkeypatch.setattr(
             get_chart_preview_module,
-            "get_superset_base_url",
+            "get_axbi_base_url",
             lambda: "http://localhost",
         )
 
@@ -852,7 +852,7 @@ class TestGetChartPreview:
     @pytest.mark.asyncio
     async def test_accessibility_metadata(self):
         """Test accessibility metadata structure."""
-        from superset.mcp_service.chart.schemas import AccessibilityMetadata
+        from axbi.mcp_service.chart.schemas import AccessibilityMetadata
 
         metadata = AccessibilityMetadata(
             color_blind_safe=True,
@@ -866,7 +866,7 @@ class TestGetChartPreview:
     @pytest.mark.asyncio
     async def test_performance_metadata(self):
         """Test performance metadata structure."""
-        from superset.mcp_service.chart.schemas import PerformanceMetadata
+        from axbi.mcp_service.chart.schemas import PerformanceMetadata
 
         metadata = PerformanceMetadata(
             query_duration_ms=150,
@@ -1050,9 +1050,7 @@ class TestChartPreviewSanitization:
         assert result.content.html_content == sanitize_for_llm_context(
             "<div>Revenue by region</div>"
         )
-        assert (
-            result.content.preview_url == "/ax-bi/explore/?slice_id=6&standalone=1"
-        )
+        assert result.content.preview_url == "/ax-bi/explore/?slice_id=6&standalone=1"
         assert result.explore_url == "/explore/?slice_id=6"
 
     @pytest.mark.asyncio
@@ -1230,11 +1228,11 @@ class TestDetachedInstanceError:
         from contextlib import nullcontext
         from unittest.mock import MagicMock, patch
 
-        from superset.mcp_service.chart.schemas import URLPreview
-        from superset.utils import json
+        from axbi.mcp_service.chart.schemas import URLPreview
+        from axbi.utils import json
 
         get_chart_preview_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_preview"
+            "axbi.mcp_service.chart.tool.get_chart_preview"
         )
 
         mock_chart = MagicMock()
@@ -1284,19 +1282,19 @@ class TestDetachedInstanceError:
                 return_value=url_preview,
             ),
             patch(
-                "superset.mcp_service.utils.url_utils.get_superset_base_url",
+                "axbi.mcp_service.utils.url_utils.get_axbi_base_url",
                 return_value="http://localhost",
             ),
         ):
             from fastmcp import Client
 
-            from superset.mcp_service.app import mcp
-            from superset.mcp_service.chart.schemas import GetChartPreviewRequest
+            from axbi.mcp_service.app import mcp
+            from axbi.mcp_service.chart.schemas import GetChartPreviewRequest
 
-            with patch("superset.mcp_service.auth.get_user_from_request") as mu:
+            with patch("axbi.mcp_service.auth.get_user_from_request") as mu:
                 mu.return_value = MagicMock(id=1, username="admin")
                 with patch(
-                    "superset.mcp_service.auth.check_tool_permission", return_value=True
+                    "axbi.mcp_service.auth.check_tool_permission", return_value=True
                 ):
                     async with Client(mcp) as client:
                         response = await client.call_tool(
@@ -1330,7 +1328,7 @@ class TestDetachedInstanceError:
         from sqlalchemy.orm.exc import DetachedInstanceError
 
         get_chart_preview_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_preview"
+            "axbi.mcp_service.chart.tool.get_chart_preview"
         )
 
         mock_chart = MagicMock()
@@ -1369,20 +1367,20 @@ class TestDetachedInstanceError:
                 side_effect=DetachedInstanceError(),
             ),
             patch(
-                "superset.mcp_service.utils.url_utils.get_superset_base_url",
+                "axbi.mcp_service.utils.url_utils.get_axbi_base_url",
                 return_value="http://localhost",
             ),
         ):
             from fastmcp import Client
 
-            from superset.mcp_service.app import mcp
-            from superset.mcp_service.chart.schemas import GetChartPreviewRequest
-            from superset.utils import json
+            from axbi.mcp_service.app import mcp
+            from axbi.mcp_service.chart.schemas import GetChartPreviewRequest
+            from axbi.utils import json
 
-            with patch("superset.mcp_service.auth.get_user_from_request") as mu:
+            with patch("axbi.mcp_service.auth.get_user_from_request") as mu:
                 mu.return_value = MagicMock(id=1, username="admin")
                 with patch(
-                    "superset.mcp_service.auth.check_tool_permission", return_value=True
+                    "axbi.mcp_service.auth.check_tool_permission", return_value=True
                 ):
                     async with Client(mcp) as client:
                         response = await client.call_tool(

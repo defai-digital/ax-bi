@@ -28,7 +28,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   getChartControlPanelRegistry,
@@ -41,13 +41,8 @@ import {
   isFeatureEnabled,
   FeatureFlag,
   VizType,
-} from '@superset-ui/core';
-import {
-  styled,
-  css,
-  SupersetTheme,
-  useTheme,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, css, AxBITheme, useTheme } from '@ax-bi/core/theme';
 import {
   ControlPanelSectionConfig,
   ControlState,
@@ -57,24 +52,19 @@ import {
   isCustomControlItem,
   isTemporalColumn,
   sections,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { useSelector } from 'react-redux';
 import { kebabCase, isEqual } from 'lodash';
 
-import {
-  Collapse,
-  Loading,
-  Label,
-  Tooltip,
-} from '@superset-ui/core/components';
-import Tabs from '@superset-ui/core/components/Tabs';
+import { Collapse, Loading, Label, Tooltip } from '@ax-bi/ui-core/components';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import { PluginContext } from 'src/components';
 import { useConfirmModal } from 'src/hooks/useConfirmModal';
 
 import { getSectionsToRender } from 'src/explore/controlUtils';
 import { ExploreActions } from 'src/explore/actions/exploreActions';
 import { ChartState, ExplorePageState } from 'src/explore/types';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import ControlRow from './ControlRow';
 import Control from './Control';
 import { ExploreAlert } from './ExploreAlert';
@@ -132,7 +122,7 @@ const iconStyles = css`
   }
 `;
 
-const actionButtonsContainerStyles = (theme: SupersetTheme) => css`
+const actionButtonsContainerStyles = (theme: AxBITheme) => css`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -617,7 +607,7 @@ export const ControlPanelsContainer = (props: ControlPanelsContainerProps) => {
     const PanelHeader = () => (
       <span data-test="collapsible-control-panel-header">
         <span
-          css={(theme: SupersetTheme) => css`
+          css={(theme: AxBITheme) => css`
             font-size: ${theme.fontSize}px;
             line-height: 1.3;
           `}
@@ -802,7 +792,7 @@ export const ControlPanelsContainer = (props: ControlPanelsContainerProps) => {
         <span>{t('Data')}</span>
         {props.errorMessage && (
           <span
-            css={(theme: SupersetTheme) => css`
+            css={(theme: AxBITheme) => css`
               margin-left: ${theme.sizeUnit * 2}px;
             `}
           >
@@ -880,7 +870,7 @@ export const ControlPanelsContainer = (props: ControlPanelsContainerProps) => {
         <span>{t('Matrixify')}</span>
         {matrixifyHasErrors && (
           <span
-            css={(theme: SupersetTheme) => css`
+            css={(theme: AxBITheme) => css`
               margin-left: ${theme.sizeUnit * 2}px;
             `}
           >

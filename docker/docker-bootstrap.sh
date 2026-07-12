@@ -21,9 +21,9 @@ set -eo pipefail
 # Make python interactive
 if [ "$DEV_MODE" == "true" ]; then
     if [ "$(whoami)" = "root" ] && command -v uv > /dev/null 2>&1; then
-      # Always ensure superset-core is available
-      echo "Installing superset-core in editable mode"
-      uv pip install --no-deps -e /app/superset-core
+      # Always ensure ax-bi-core is available
+      echo "Installing ax-bi-core in editable mode"
+      uv pip install --no-deps -e /app/ax-bi-core
 
       # Only reinstall the main app for non-worker processes
       if [ "$1" != "worker" ] && [ "$1" != "beat" ]; then
@@ -37,8 +37,8 @@ PORT=${PORT:-8088}
 # If Cypress run – overwrite the password for admin and export env variables
 if [ "$CYPRESS_CONFIG" == "true" ]; then
     export AX_BI_TESTENV=true
-    export POSTGRES_DB=superset_cypress
-    export SUPERSET__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@db:5432/superset_cypress
+    export POSTGRES_DB=axbi_cypress
+    export AXBI__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://ax-bi:axbi@db:5432/axbi_cypress
     PORT=8081
 fi
 # Skip postgres requirements installation for workers to avoid conflicts
@@ -71,12 +71,12 @@ case "${1}" in
   worker)
     echo "Starting Celery worker..."
     # setting up only 2 workers by default to contain memory usage in dev environments
-    celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-2} ${WORKER_LOG_FILE:+--logfile=$WORKER_LOG_FILE}
+    celery --app=axbi.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-2} ${WORKER_LOG_FILE:+--logfile=$WORKER_LOG_FILE}
     ;;
   beat)
     echo "Starting Celery beat..."
     rm -f /tmp/celerybeat.pid
-    celery --app=superset.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid -l INFO -s "${SUPERSET_HOME}"/celerybeat-schedule ${BEAT_LOG_FILE:+--logfile=$BEAT_LOG_FILE}
+    celery --app=axbi.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid -l INFO -s "${AXBI_HOME}"/celerybeat-schedule ${BEAT_LOG_FILE:+--logfile=$BEAT_LOG_FILE}
     ;;
   app)
     echo "Starting web app (using development server)..."
@@ -89,13 +89,13 @@ case "${1}" in
     export FLASK_DEBUG
 
     # Werkzeug's interactive debugger (/console) is a separate, security-sensitive
-    # feature and must be opted into explicitly via SUPERSET_DEBUG_ENABLED=true.
-    if [[ "${SUPERSET_DEBUG_ENABLED:-}" == "true" ]]; then
+    # feature and must be opted into explicitly via AXBI_DEBUG_ENABLED=true.
+    if [[ "${AXBI_DEBUG_ENABLED:-}" == "true" ]]; then
         DEBUGGER_FLAG="--debugger"
         echo "  ⚠️  Werkzeug debugger enabled (requires PIN for /console access)"
     else
         DEBUGGER_FLAG="--no-debugger"
-        echo "  🔒 Werkzeug debugger disabled (set SUPERSET_DEBUG_ENABLED=true to enable)"
+        echo "  🔒 Werkzeug debugger disabled (set AXBI_DEBUG_ENABLED=true to enable)"
     fi
 
     flask run -p $PORT --reload $DEBUGGER_FLAG --host=0.0.0.0 --exclude-patterns "*/node_modules/*:*/.venv/*:*/build/*:*/__pycache__/*:*/ax-bi-frontend/*"

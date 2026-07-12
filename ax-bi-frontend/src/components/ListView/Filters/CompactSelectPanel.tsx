@@ -27,14 +27,14 @@ import {
   type RefObject,
 } from 'react';
 import { debounce } from 'lodash';
-import { t } from '@apache-superset/core/translation';
-import { useTheme, styled, css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { useTheme, styled, css } from '@ax-bi/core/theme';
 import {
   Icons,
   Input,
   Constants,
   type InputRef,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import type { SelectOption, ListViewFilter as Filter } from '../types';
 import type { FilterHandler } from './types';
 
@@ -106,9 +106,9 @@ const OptionItem = styled.li<{ $active: boolean }>`
     transition: background 0.15s;
 
     &:hover {
-      background: ${$active
-        ? theme.colorPrimaryBgHover
-        : theme.colorFillTertiary};
+      background: ${
+        $active ? theme.colorPrimaryBgHover : theme.colorFillTertiary
+      };
       outline: 2px solid ${theme.colorPrimary};
       outline-offset: -2px;
     }

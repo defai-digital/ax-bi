@@ -36,7 +36,7 @@ import {
   JsonValue,
   QueryFormData,
   SetDataMaskHook,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { Layer, PickingInfo, Color } from '@deck.gl/core';
 import { ScaleLinear } from 'd3-scale';
 import { ColorBreakpointType } from '../types';

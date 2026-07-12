@@ -20,7 +20,7 @@ import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import {
   CategoricalScheme,
   getCategoricalSchemeRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import ColorPickerControl from 'src/explore/components/controls/ColorPickerControl';
 
 const defaultProps = {

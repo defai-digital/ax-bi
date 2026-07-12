@@ -16,7 +16,7 @@
 # under the License.
 import pytest
 
-from superset.runtime_modernization.inventory import (
+from axbi.runtime_modernization.inventory import (
     get_candidate_inventory,
     get_inventory_item,
     get_runtime_inventory,
@@ -34,7 +34,7 @@ def test_runtime_inventory_names_are_unique() -> None:
 
 
 def test_runtime_inventory_keeps_security_and_metadata_in_python() -> None:
-    """Security-sensitive Superset core areas are not extraction candidates."""
+    """Security-sensitive AxBI core areas are not extraction candidates."""
 
     security = get_inventory_item("auth_rbac_security")
     metadata = get_inventory_item("metadata_models_daos")
@@ -60,10 +60,10 @@ def test_runtime_inventory_defers_user_directory_tools() -> None:
 
     item = get_inventory_item("mcp_user_directory_tools")
 
-    assert item.module_patterns == ("superset/mcp_service/user",)
+    assert item.module_patterns == ("axbi/mcp_service/user",)
     assert item.target_runtime == Runtime.PYTHON
     assert item.disposition == MigrationDisposition.DEFER
-    assert "general Superset user-list API design" in item.required_evidence
+    assert "general AxBI user-list API design" in item.required_evidence
     assert "authorization compatibility review" in item.required_evidence
 
 

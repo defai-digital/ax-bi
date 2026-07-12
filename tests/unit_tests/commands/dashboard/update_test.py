@@ -19,12 +19,12 @@ from unittest.mock import call, MagicMock, patch
 
 import pytest
 
-from superset.commands.dashboard.exceptions import DashboardInvalidError
-from superset.commands.dashboard.update import (
+from axbi.commands.dashboard.exceptions import DashboardInvalidError
+from axbi.commands.dashboard.update import (
     _get_native_filter_ids,
     UpdateDashboardCommand,
 )
-from superset.utils import json
+from axbi.utils import json
 
 
 def test_get_native_filter_ids_ignores_malformed_metadata() -> None:
@@ -56,9 +56,7 @@ def test_process_native_filter_diff_ignores_malformed_current_metadata() -> None
     )
     command._model = MagicMock(id=1, json_metadata="{malformed")
 
-    with patch(
-        "superset.commands.dashboard.update.ReportScheduleDAO"
-    ) as mock_report_dao:
+    with patch("axbi.commands.dashboard.update.ReportScheduleDAO") as mock_report_dao:
         command.process_native_filter_diff()
 
     mock_report_dao.find_by_native_filter_id.assert_not_called()
@@ -75,9 +73,7 @@ def test_process_tab_diff_deduplicates_current_dashboard_reports() -> None:
     other_dashboard_report = MagicMock(id=8, dashboard_id=2)
 
     with (
-        patch(
-            "superset.commands.dashboard.update.ReportScheduleDAO"
-        ) as mock_report_dao,
+        patch("axbi.commands.dashboard.update.ReportScheduleDAO") as mock_report_dao,
         patch.object(command, "_send_deactivated_report_email") as mock_send_email,
     ):
         mock_report_dao.find_by_extra_metadata.side_effect = [
@@ -99,10 +95,8 @@ def test_validate_rejects_non_object_json_metadata() -> None:
     command = UpdateDashboardCommand(1, {"json_metadata": "[]"})
 
     with (
-        patch("superset.commands.dashboard.update.DashboardDAO") as mock_dao,
-        patch(
-            "superset.commands.dashboard.update.security_manager.raise_for_ownership"
-        ),
+        patch("axbi.commands.dashboard.update.DashboardDAO") as mock_dao,
+        patch("axbi.commands.dashboard.update.security_manager.raise_for_ownership"),
     ):
         mock_dao.find_by_id.return_value = MagicMock(id=1)
 

@@ -17,14 +17,10 @@
  * under the License.
  */
 
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
-import {
-  SupersetClient,
-  getClientErrorObject,
-  lruCache,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, getClientErrorObject, lruCache } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import Chart from 'src/types/Chart';
 import { intersection } from 'lodash';
 import rison from 'rison';
@@ -32,7 +28,7 @@ import type {
   ListViewFetchDataConfig as FetchDataConfig,
   ListViewFilterValue as FilterValue,
 } from 'src/components';
-import SupersetText from 'src/utils/textUtils';
+import AxBIText from 'src/utils/textUtils';
 import { findPermission } from 'src/utils/findPermission';
 import { User } from 'src/types/bootstrapTypes';
 import { RecentActivity, WelcomeTable } from 'src/features/home/types';
@@ -113,7 +109,7 @@ const createFetchResourceMethod =
     });
     let json: FetchResourceJson = {};
     try {
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: `${resourceEndpoint}?q=${queryParams}`,
       });
       json = (response.json ?? {}) as FetchResourceJson;
@@ -194,10 +190,10 @@ export const getEditedObjects = (userId: string | number) => {
     ],
   };
   const batch = [
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/dashboard/?q=${getParams(filters.edited)}`,
     }),
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/chart/?q=${getParams(filters.edited)}`,
     }),
   ];
@@ -224,7 +220,7 @@ export const getUserOwnedObjects = (
   ],
   selectColumns?: string[],
 ) =>
-  SupersetClient.get({
+  AxBIClient.get({
     endpoint: `/api/v1/${resource}/?q=${getParams(filters, selectColumns)}`,
   }).then(res => res.json?.result);
 
@@ -235,10 +231,10 @@ export const getFilteredChartsandDashboards = (
   chartSelectColumns?: string[],
 ) => {
   const newBatch = [
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/chart/?q=${getParams(filters, chartSelectColumns)}`,
     }),
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/dashboard/?q=${getParams(
         filters,
         dashboardSelectColumns,
@@ -264,7 +260,7 @@ export const getRecentActivityObjs = (
   addDangerToast: (arg1: string, arg2: any) => any,
   filters: Filter[],
 ) =>
-  SupersetClient.get({ endpoint: recent }).then(recentsRes => {
+  AxBIClient.get({ endpoint: recent }).then(recentsRes => {
     const res: any = {};
     const distinctRes = lruCache<RecentActivity>(6);
     recentsRes.json.result.reverse().forEach((record: RecentActivity) => {
@@ -320,7 +316,7 @@ export function createErrorHandler(
     const parsedError = await getClientErrorObject(e);
     // Taking the first error returned from the API
     const errorsArray = parsedError?.errors;
-    const config = await SupersetText;
+    const config = await AxBIText;
     if (
       errorsArray?.length &&
       config?.ERRORS &&
@@ -359,7 +355,7 @@ export function handleChartDelete(
       },
     ],
   };
-  SupersetClient.delete({
+  AxBIClient.delete({
     endpoint: `/api/v1/chart/${id}`,
   }).then(
     () => {
@@ -383,7 +379,7 @@ export function handleDashboardDelete(
   userId?: string | number,
   getData?: (tab: TableTab) => void,
 ) {
-  return SupersetClient.delete({
+  return AxBIClient.delete({
     endpoint: `/api/v1/dashboard/${id}`,
   }).then(
     () => {

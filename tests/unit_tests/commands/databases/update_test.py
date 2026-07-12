@@ -19,10 +19,10 @@ from unittest.mock import MagicMock
 
 from pytest_mock import MockerFixture
 
-from superset import db
-from superset.commands.database.update import UpdateDatabaseCommand
-from superset.extensions import security_manager
-from superset.utils import json
+from axbi import db
+from axbi.commands.database.update import UpdateDatabaseCommand
+from axbi.extensions import security_manager
+from axbi.utils import json
 from tests.conftest import with_config
 from tests.unit_tests.commands.databases.conftest import oauth2_client_info
 
@@ -46,15 +46,15 @@ def test_update_with_catalog(
     When update is called, only `catalog2.schema3` has permissions associated with it,
     so `catalog1.*` and `catalog2.schema4` are added.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_with_catalog
     database_dao.update.return_value = database_with_catalog
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_with_catalog
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -69,7 +69,7 @@ def test_update_with_catalog(
         None,
         None,
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     UpdateDatabaseCommand(1, {}).run()
 
@@ -111,18 +111,18 @@ def test_update_sync_perms_in_async_mode(
     Test that updating a DB connection with async mode enables
     triggers the celery task to syn perms.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_with_catalog
     database_dao.update.return_value = database_with_catalog
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_with_catalog
     sync_task = mocker.patch(
-        "superset.commands.database.sync_permissions.sync_database_permissions_task.delay"
+        "axbi.commands.database.sync_permissions.sync_database_permissions_task.delay"
     )
-    mocker.patch("superset.commands.database.update.get_username", return_value="admin")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username", return_value="admin")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     UpdateDatabaseCommand(1, {}).run()
 
@@ -144,15 +144,15 @@ def test_update_without_catalog(
     When update is called, only `schema2` has permissions associated with it, so `schema1`
     is added.
     """  # noqa: E501
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_without_catalog
     database_dao.update.return_value = database_without_catalog
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_without_catalog
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -162,7 +162,7 @@ def test_update_without_catalog(
         None,  # schema1 has no permissions
         "[my_db].[schema2]",  # second schema already exists
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     UpdateDatabaseCommand(1, {}).run()
 
@@ -196,21 +196,21 @@ def test_rename_with_catalog(
     """
     original_database = mocker.MagicMock()
     original_database.database_name = "my_db"
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = original_database
     database_with_catalog.database_name = "my_other_db"
     database_dao.update.return_value = database_with_catalog
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_with_catalog
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     dataset = mocker.MagicMock()
     chart = mocker.MagicMock()
     sync_db_perms_dao.get_datasets.return_value = [dataset]
-    dataset_dao = mocker.patch("superset.commands.database.sync_permissions.DatasetDAO")
+    dataset_dao = mocker.patch("axbi.commands.database.sync_permissions.DatasetDAO")
     dataset_dao.get_related_objects.return_value = {"charts": [chart]}
 
     find_permission_view_menu = mocker.patch.object(
@@ -232,8 +232,8 @@ def test_rename_with_catalog(
         catalog2_schema3_pvm,  # old [my_db].[catalog2].[schema3]
         None,  # [my_db].[catalog2].[schema4] doesn't exist
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
-    add_vm = mocker.patch("superset.commands.database.sync_permissions.add_vm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
+    add_vm = mocker.patch("axbi.commands.database.sync_permissions.add_vm")
 
     UpdateDatabaseCommand(1, {}).run()
 
@@ -295,19 +295,19 @@ def test_rename_without_catalog(
     When update is called, only `schema2` has permissions associated with it, so `schema1`
     is added. Additionally, the database has been renamed from `my_db` to `my_other_db`.
     """  # noqa: E501
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     original_database = mocker.MagicMock()
     original_database.database_name = "my_db"
     database_without_catalog.database_name = "my_other_db"
     database_dao.update.return_value = database_without_catalog
     database_dao.find_by_id.return_value = original_database
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_without_catalog
     sync_db_perms_dao.get_datasets.return_value = []
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -321,7 +321,7 @@ def test_rename_without_catalog(
         None,  # [my_db].[schema1] doesn't exist
         schema2_pvm,  # old [my_db].[schema2]
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     UpdateDatabaseCommand(1, {}).run()
 
@@ -343,7 +343,7 @@ def test_rename_without_catalog_with_assets(
     Test that permissions are renamed correctly when the DB connection does not support
     catalogs, and it has assets associated with it.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     original_database = mocker.MagicMock()
     original_database.database_name = "my_db"
     database_without_catalog.database_name = "my_other_db"
@@ -351,16 +351,16 @@ def test_rename_without_catalog_with_assets(
     database_dao.update.return_value = database_without_catalog
     database_dao.find_by_id.return_value = original_database
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_without_catalog
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     dataset = mocker.MagicMock()
     chart = mocker.MagicMock()
     sync_db_perms_dao.get_datasets.return_value = [dataset]
-    dataset_dao = mocker.patch("superset.commands.database.sync_permissions.DatasetDAO")
+    dataset_dao = mocker.patch("axbi.commands.database.sync_permissions.DatasetDAO")
     dataset_dao.get_related_objects.return_value = {"charts": [chart]}
 
     find_permission_view_menu = mocker.patch.object(
@@ -390,15 +390,15 @@ def test_update_with_oauth2(
     """
     Test that the database can be updated even if OAuth2 is needed to connect.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_needs_oauth2
     database_dao.update.return_value = database_needs_oauth2
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_needs_oauth2
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -408,7 +408,7 @@ def test_update_with_oauth2(
         None,  # schema1 has no permissions
         "[my_db].[schema2]",  # second schema already exists
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     UpdateDatabaseCommand(1, {}).run()
 
@@ -423,15 +423,15 @@ def test_update_with_oauth2_changed(
     """
     Test that the database can be updated even if OAuth2 is needed to connect.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_needs_oauth2
     database_dao.update.return_value = database_needs_oauth2
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_needs_oauth2
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -441,7 +441,7 @@ def test_update_with_oauth2_changed(
         None,  # schema1 has no permissions
         "[my_db].[schema2]",  # second schema already exists
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     modified_oauth2_client_info = oauth2_client_info.copy()
     modified_oauth2_client_info["scope"] = "scope-b"
@@ -466,15 +466,15 @@ def test_remove_oauth_config_purges_tokens(
     """
     Test that removing the OAuth config from a database purges existing tokens.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_needs_oauth2
     database_dao.update.return_value = database_needs_oauth2
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_needs_oauth2
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -484,7 +484,7 @@ def test_remove_oauth_config_purges_tokens(
         None,
         "[my_db].[schema2]",
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     UpdateDatabaseCommand(1, {"masked_encrypted_extra": None}).run()
 
@@ -504,15 +504,15 @@ def test_update_oauth2_non_object_encrypted_extra_purges_tokens(
     """
     Test that non-object encrypted extra updates remove OAuth and purge tokens.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_needs_oauth2
     database_dao.update.return_value = database_needs_oauth2
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_needs_oauth2
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -522,7 +522,7 @@ def test_update_oauth2_non_object_encrypted_extra_purges_tokens(
         None,
         "[my_db].[schema2]",
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     UpdateDatabaseCommand(1, {"masked_encrypted_extra": "[]"}).run()
 
@@ -537,15 +537,15 @@ def test_update_oauth2_removes_masked_encrypted_extra_key(
     """
     Test that the ``masked_encrypted_extra`` key is properly purged from the properties.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_needs_oauth2
     database_dao.update.return_value = database_needs_oauth2
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_needs_oauth2
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -555,7 +555,7 @@ def test_update_oauth2_removes_masked_encrypted_extra_key(
         None,
         "[my_db].[schema2]",
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     modified_oauth2_client_info = oauth2_client_info.copy()
     modified_oauth2_client_info["scope"] = "scope-b"
@@ -589,15 +589,15 @@ def test_update_other_fields_dont_affect_oauth(
     Test that not including ``masked_encrypted_extra`` in the payload does not
     touch the OAuth config.
     """
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database_needs_oauth2
     database_dao.update.return_value = database_needs_oauth2
     sync_db_perms_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     sync_db_perms_dao.find_by_id.return_value = database_needs_oauth2
-    mocker.patch("superset.commands.database.update.get_username")
-    mocker.patch("superset.security_manager.get_user_by_username")
+    mocker.patch("axbi.commands.database.update.get_username")
+    mocker.patch("axbi.security_manager.get_user_by_username")
 
     find_permission_view_menu = mocker.patch.object(
         security_manager,
@@ -607,7 +607,7 @@ def test_update_other_fields_dont_affect_oauth(
         None,
         "[my_db].[schema2]",
     ]
-    add_pvm = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     UpdateDatabaseCommand(1, {"database_name": "New DB name"}).run()
 
@@ -626,11 +626,11 @@ def test_update_with_catalog_change(mocker: MockerFixture) -> None:
     new_database = mocker.MagicMock(allow_multi_catalog=False)
     new_database.get_default_catalog.return_value = "project-B"
 
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = old_database
     database_dao.update.return_value = new_database
 
-    mocker.patch("superset.commands.database.update.SyncPermissionsCommand")
+    mocker.patch("axbi.commands.database.update.SyncPermissionsCommand")
     mocker.patch.object(
         UpdateDatabaseCommand,
         "validate",
@@ -658,11 +658,11 @@ def test_update_without_catalog_change(mocker: MockerFixture) -> None:
     new_database.database_name = "Fancy new DB"
     new_database.get_default_catalog.return_value = "project-A"
 
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = old_database
     database_dao.update.return_value = new_database
 
-    mocker.patch("superset.commands.database.update.SyncPermissionsCommand")
+    mocker.patch("axbi.commands.database.update.SyncPermissionsCommand")
     mocker.patch.object(
         UpdateDatabaseCommand,
         "validate",
@@ -688,10 +688,10 @@ def test_update_broken_connection(mocker: MockerFixture) -> None:
     new_db = mocker.MagicMock()
     new_db.get_default_catalog.return_value = "main"
 
-    database_dao = mocker.patch("superset.commands.database.update.DatabaseDAO")
+    database_dao = mocker.patch("axbi.commands.database.update.DatabaseDAO")
     database_dao.find_by_id.return_value = database
     database_dao.update.return_value = new_db
-    mocker.patch("superset.commands.database.update.SyncPermissionsCommand")
+    mocker.patch("axbi.commands.database.update.SyncPermissionsCommand")
 
     update_catalog_attribute = mocker.patch.object(
         UpdateDatabaseCommand,

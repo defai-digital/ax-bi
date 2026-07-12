@@ -22,11 +22,11 @@ import pytest
 from pandas import Timestamp
 from pandas._libs.tslibs import NaT
 
-from superset.dataframe import df_to_records
-from superset.db_engine_specs import BaseEngineSpec
-from superset.result_set import SupersetResultSet
-from superset.superset_typing import DbapiDescription
-from superset.utils import json as superset_json
+from axbi.axbi_typing import DbapiDescription
+from axbi.dataframe import df_to_records
+from axbi.db_engine_specs import BaseEngineSpec
+from axbi.result_set import AxBIResultSet
+from axbi.utils import json as axbi_json
 
 
 def test_df_to_records() -> None:
@@ -34,7 +34,7 @@ def test_df_to_records() -> None:
     cursor_descr: DbapiDescription = [
         (column, "string", None, None, None, None, False) for column in ("a", "b", "c")
     ]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == [
@@ -48,7 +48,7 @@ def test_df_to_records_NaT_type() -> None:  # noqa: N802
     cursor_descr: DbapiDescription = [
         ("date", "timestamp with time zone", None, None, None, None, False)
     ]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == [
@@ -71,7 +71,7 @@ def test_df_to_records_mixed_emoji_type() -> None:
         ("count", "integer", None, None, None, None, False),
     ]
 
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == [
@@ -108,7 +108,7 @@ def test_df_to_records_mixed_accent_type() -> None:
         ("count", "integer", None, None, None, None, False),
     ]
 
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == [
@@ -138,7 +138,7 @@ def test_js_max_int() -> None:
         ("b", "int", None, None, None, None, False),
         ("c", "string", None, None, None, None, False),
     ]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == [
@@ -185,7 +185,7 @@ def test_max_pandas_timestamp(input_, expected) -> None:
         ("a", "datetime", None, None, None, None, False),
         ("b", "int", None, None, None, None, False),
     ]
-    results = SupersetResultSet(input_, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(input_, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == expected
@@ -196,7 +196,7 @@ def test_df_to_records_with_nan_from_division_by_zero() -> None:
     # Simulate Athena query: select 0.00 / 0.00 as test
     data = [(np.nan,), (5.0,), (np.nan,)]
     cursor_descr: DbapiDescription = [("test", "double", None, None, None, None, False)]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == [
@@ -222,7 +222,7 @@ def test_df_to_records_with_mixed_nan_and_valid_values() -> None:
         ("value2", "double", None, None, None, None, False),
         ("value3", "int", None, None, None, None, False),
     ]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     assert df_to_records(df) == [
@@ -247,7 +247,7 @@ def test_df_to_records_with_inf_and_nan() -> None:
         ("result", "double", None, None, None, None, False),
         ("description", "varchar", None, None, None, None, False),
     ]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     records = df_to_records(df)
@@ -279,7 +279,7 @@ def test_df_to_records_nan_json_serialization() -> None:
     # Simulate Athena query: SELECT 0.00 / 0.00 as test
     data = [(np.nan,), (5.0,), (np.nan,)]
     cursor_descr: DbapiDescription = [("test", "double", None, None, None, None, False)]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     # Get records with our fix
@@ -293,8 +293,8 @@ def test_df_to_records_nan_json_serialization() -> None:
     ]
 
     # This should succeed with valid, spec-compliant JSON
-    json_output = superset_json.dumps(records)
-    parsed = superset_json.loads(json_output)
+    json_output = axbi_json.dumps(records)
+    parsed = axbi_json.loads(json_output)
 
     # Verify JSON serialization works correctly
     assert parsed == records
@@ -313,12 +313,12 @@ def test_df_to_records_nan_json_serialization() -> None:
     with pytest.raises(
         ValueError, match="Out of range float values are not JSON compliant"
     ):
-        superset_json.dumps(records_without_fix, ignore_nan=False)
+        axbi_json.dumps(records_without_fix, ignore_nan=False)
 
     # With ignore_nan=True, it works by converting NaN to null
     # But this requires the flag to be set everywhere - our fix eliminates this need
-    json_with_ignore = superset_json.dumps(records_without_fix, ignore_nan=True)
-    parsed_with_ignore = superset_json.loads(json_with_ignore)
+    json_with_ignore = axbi_json.dumps(records_without_fix, ignore_nan=True)
+    parsed_with_ignore = axbi_json.loads(json_with_ignore)
     # The output is the same, but our fix doesn't require the ignore_nan flag
     assert parsed_with_ignore[0]["test"] is None
 
@@ -339,27 +339,27 @@ def test_df_to_records_with_json_serialization_like_sql_lab() -> None:
         ("value1", "double", None, None, None, None, False),
         ("value2", "double", None, None, None, None, False),
     ]
-    results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+    results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
     df = results.to_pandas_df()
 
     # Mimic sql_lab.py:360 - this is where df_to_records is used
     records = df_to_records(df) or []
 
-    # Mimic sql_lab.py:332 - JSON serialization with Superset's custom json.dumps
+    # Mimic sql_lab.py:332 - JSON serialization with AxBI's custom json.dumps
     # This should work without errors
-    json_str = superset_json.dumps(
-        records, default=superset_json.json_iso_dttm_ser, ignore_nan=True
+    json_str = axbi_json.dumps(
+        records, default=axbi_json.json_iso_dttm_ser, ignore_nan=True
     )
 
     # Verify it's valid JSON and NaN values are properly handled as null
-    parsed = superset_json.loads(json_str)
+    parsed = axbi_json.loads(json_str)
     assert parsed[0]["value2"] is None  # NaN became null
     assert parsed[1]["value1"] is None  # NaN became null
     assert parsed[0]["value1"] == 100.0
 
     # Also verify it works without ignore_nan flag (since we convert NaN to None)
-    json_str_no_flag = superset_json.dumps(
-        records, default=superset_json.json_iso_dttm_ser, ignore_nan=False
+    json_str_no_flag = axbi_json.dumps(
+        records, default=axbi_json.json_iso_dttm_ser, ignore_nan=False
     )
-    parsed_no_flag = superset_json.loads(json_str_no_flag)
+    parsed_no_flag = axbi_json.loads(json_str_no_flag)
     assert parsed_no_flag == parsed  # Same result

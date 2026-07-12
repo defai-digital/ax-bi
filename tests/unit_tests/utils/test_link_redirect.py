@@ -18,17 +18,15 @@
 import pytest
 from flask import Flask
 
-from superset.utils.link_redirect import is_safe_redirect_url, process_html_links
+from axbi.utils.link_redirect import is_safe_redirect_url, process_html_links
 
 
 @pytest.fixture
 def app():
     """Minimal Flask app with the config keys used by link_redirect."""
     application = Flask(__name__)
-    application.config["WEBDRIVER_BASEURL"] = "http://superset.example.com"
-    application.config["WEBDRIVER_BASEURL_USER_FRIENDLY"] = (
-        "https://superset.example.com"
-    )
+    application.config["WEBDRIVER_BASEURL"] = "http://ax-bi.example.com"
+    application.config["WEBDRIVER_BASEURL_USER_FRIENDLY"] = "https://ax-bi.example.com"
     application.config["ALERT_REPORTS_ENABLE_LINK_REDIRECT"] = True
     with application.app_context():
         yield application
@@ -42,12 +40,12 @@ def app():
 def test_external_link_is_rewritten(app: Flask) -> None:
     html = '<a href="https://evil.com/page">Click</a>'
     result = process_html_links(html)
-    assert "superset.example.com/redirect/?url=https%3A%2F%2Fevil.com%2Fpage" in result
+    assert "axbi.example.com/redirect/?url=https%3A%2F%2Fevil.com%2Fpage" in result
     assert "evil.com/page" not in result.split("url=")[0]
 
 
 def test_internal_link_is_not_rewritten(app: Flask) -> None:
-    html = '<a href="https://superset.example.com/dashboard/1">Dashboard</a>'
+    html = '<a href="https://ax-bi.example.com/dashboard/1">Dashboard</a>'
     result = process_html_links(html)
     assert result == html
 
@@ -60,7 +58,7 @@ def test_relative_link_is_not_rewritten(app: Flask) -> None:
 
 def test_no_double_redirect(app: Flask) -> None:
     html = (
-        '<a href="https://superset.example.com/redirect/'
+        '<a href="https://ax-bi.example.com/redirect/'
         '?url=https%3A%2F%2Fexternal.com">Already redirected</a>'
     )
     result = process_html_links(html)
@@ -70,12 +68,12 @@ def test_no_double_redirect(app: Flask) -> None:
 def test_multiple_links(app: Flask) -> None:
     html = (
         '<a href="https://evil.com">Bad</a>'
-        '<a href="https://superset.example.com/x">Good</a>'
+        '<a href="https://ax-bi.example.com/x">Good</a>'
         '<a href="https://other.com">Other</a>'
     )
     result = process_html_links(html)
     assert result.count("/redirect/?url=") == 2
-    assert "superset.example.com/x" in result
+    assert "axbi.example.com/x" in result
 
 
 def test_disabled_via_config(app: Flask) -> None:
@@ -113,7 +111,7 @@ def test_html_without_links(app: Flask) -> None:
 
 
 def test_safe_internal_url(app: Flask) -> None:
-    assert is_safe_redirect_url("https://superset.example.com/dashboard/1")
+    assert is_safe_redirect_url("https://ax-bi.example.com/dashboard/1")
 
 
 def test_safe_relative_url(app: Flask) -> None:

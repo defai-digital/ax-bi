@@ -26,14 +26,14 @@ import pandas as pd
 import pytest
 from werkzeug.datastructures import FileStorage
 
-from superset.commands.database.uploaders.base import BaseDataReader
-from superset.commands.database.uploaders.columnar_reader import ColumnarReader
-from superset.commands.database.uploaders.csv_reader import CSVReader, CSVReaderOptions
-from superset.commands.database.uploaders.excel_reader import (
+from axbi.commands.database.uploaders.base import BaseDataReader
+from axbi.commands.database.uploaders.columnar_reader import ColumnarReader
+from axbi.commands.database.uploaders.csv_reader import CSVReader, CSVReaderOptions
+from axbi.commands.database.uploaders.excel_reader import (
     ExcelReader,
     ExcelReaderOptions,
 )
-from superset.commands.database.uploaders.structured_reader import StructuredReader
+from axbi.commands.database.uploaders.structured_reader import StructuredReader
 
 SAMPLE_DIR = Path(__file__).parent / "sample_files"
 EXPECTED_SAMPLE_FILES = {

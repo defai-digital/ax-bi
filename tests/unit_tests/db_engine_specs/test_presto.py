@@ -26,8 +26,8 @@ from sqlalchemy import column, sql, text, types
 from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.engine.url import make_url
 
-from superset.sql.parse import Table
-from superset.utils.core import GenericDataType
+from axbi.sql.parse import Table
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -61,7 +61,7 @@ def test_convert_dttm(
     dttm: datetime,
     expected_result: str | None,
 ) -> None:
-    from superset.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -85,7 +85,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
 
     assert_column_spec(spec, native_type, sqla_type, attrs, generic_type, is_dttm)
 
@@ -94,7 +94,7 @@ def test_get_schema_from_engine_params() -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
     """
-    from superset.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
 
     assert (
         PrestoEngineSpec.get_schema_from_engine_params(
@@ -121,7 +121,7 @@ def test_get_schema_from_engine_params() -> None:
     )
 
 
-@mock.patch("superset.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
+@mock.patch("axbi.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
 @pytest.mark.parametrize(
     ["column_type", "column_value", "expected_value"],
     [
@@ -137,7 +137,7 @@ def test_where_latest_partition(
     column_value: Any,
     expected_value: str,
 ) -> None:
-    from superset.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
 
     mock_latest_partition.return_value = (["partition_key"], [column_value])
 
@@ -168,13 +168,13 @@ def test_latest_sub_partition_rejects_unknown_filter() -> None:
     """
     Unknown partition filters should fail before the partition query is executed.
     """
-    from superset.db_engine_specs.presto import PrestoEngineSpec
-    from superset.exceptions import SupersetTemplateException
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.exceptions import AxBITemplateException
 
     database = mock.Mock()
     table = Table("test_table", "test_schema")
 
-    with pytest.raises(SupersetTemplateException, match=r"Field \[bad_field\]"):
+    with pytest.raises(AxBITemplateException, match=r"Field \[bad_field\]"):
         PrestoEngineSpec.latest_sub_partition(
             database,
             table,
@@ -189,7 +189,7 @@ def test_adjust_engine_params_fully_qualified() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has catalog and schema.
     """
-    from superset.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
 
     url = make_url("presto://localhost:8080/hive/default")
 
@@ -223,7 +223,7 @@ def test_adjust_engine_params_catalog_only() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has only the catalog.
     """
-    from superset.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
 
     url = make_url("presto://localhost:8080/hive")
 
@@ -257,8 +257,8 @@ def test_get_default_catalog() -> None:
     """
     Test the ``get_default_catalog`` method.
     """
-    from superset.db_engine_specs.presto import PrestoEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.models.core import Database
 
     database = Database(
         database_name="my_db",
@@ -334,7 +334,7 @@ def test_get_default_catalog() -> None:
     ],
 )
 def test_timegrain_expressions(time_grain: str, expected_result: str) -> None:
-    from superset.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
 
     actual = str(
         spec.get_timestamp_expr(col=column("col"), pdf=None, time_grain=time_grain)
@@ -346,7 +346,7 @@ def test_select_star(mocker: MockerFixture) -> None:
     """
     Test the ``select_star`` method.
     """
-    from superset.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.presto import PrestoEngineSpec as spec  # noqa: N813
 
     database = mocker.MagicMock()
     dialect = mocker.MagicMock()
@@ -387,8 +387,8 @@ def test_handle_boolean_filter() -> None:
     """
     from sqlalchemy import Boolean, Column
 
-    from superset.db_engine_specs.presto import PrestoEngineSpec
-    from superset.utils.core import FilterOperator
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.utils.core import FilterOperator
 
     bool_col = Column("test_col", Boolean)
 
@@ -438,10 +438,10 @@ def test_extract_errors_maps_401_to_access_denied() -> None:
     status-code message that pyhive raises when the server rejects the
     initial request. Adding the pattern surfaces a user-readable error.
     """
-    from superset.db_engine_specs.presto import PrestoEngineSpec
-    from superset.errors import SupersetErrorType
+    from axbi.db_engine_specs.presto import PrestoEngineSpec
+    from axbi.errors import AxBIErrorType
 
     msg = "presto error: Unexpected status code 401 b'Unauthorized'"
     result = PrestoEngineSpec.extract_errors(Exception(msg))
     assert len(result) == 1
-    assert result[0].error_type == SupersetErrorType.CONNECTION_ACCESS_DENIED_ERROR
+    assert result[0].error_type == AxBIErrorType.CONNECTION_ACCESS_DENIED_ERROR

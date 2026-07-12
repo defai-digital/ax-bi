@@ -18,11 +18,11 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.connectors.sqla.utils import (
+from axbi.connectors.sqla.utils import (
     get_columns_description,
     get_virtual_table_metadata,
 )
-from superset.exceptions import SupersetSecurityException
+from axbi.exceptions import AxBISecurityException
 
 
 # Returns column descriptions when given valid database, catalog, schema, and query
@@ -52,7 +52,7 @@ def test_returns_column_descriptions(mocker: MockerFixture) -> None:
     db_engine_spec.get_column_spec.return_value.is_dttm = False
     db_engine_spec.get_column_spec.return_value.generic_type = "STRING"
 
-    mocker.patch("superset.result_set.SupersetResultSet", return_value=result_set)
+    mocker.patch("axbi.result_set.AxBIResultSet", return_value=result_set)
 
     columns = get_columns_description(
         database, "catalog", "schema", "SELECT * FROM table"
@@ -102,7 +102,7 @@ def test_get_virtual_table_metadata(mocker: MockerFixture) -> None:
     Test the `get_virtual_table_metadata` function.
     """
     mocker.patch(
-        "superset.connectors.sqla.utils.get_columns_description",
+        "axbi.connectors.sqla.utils.get_columns_description",
         return_value=[{"name": "one", "type": "INTEGER"}],
     )
     dataset = mocker.MagicMock(
@@ -122,7 +122,7 @@ def test_get_virtual_table_metadata_mutating(mocker: MockerFixture) -> None:
     dataset.database.db_engine_spec.engine = "postgresql"
     dataset.get_template_processor().process_template.return_value = dataset.sql
 
-    with pytest.raises(SupersetSecurityException) as excinfo:
+    with pytest.raises(AxBISecurityException) as excinfo:
         get_virtual_table_metadata(dataset)
     assert str(excinfo.value) == "Only `SELECT` statements are allowed"
 
@@ -135,7 +135,7 @@ def test_get_virtual_table_metadata_multiple(mocker: MockerFixture) -> None:
     dataset.database.db_engine_spec.engine = "postgresql"
     dataset.get_template_processor().process_template.return_value = dataset.sql
 
-    with pytest.raises(SupersetSecurityException) as excinfo:
+    with pytest.raises(AxBISecurityException) as excinfo:
         get_virtual_table_metadata(dataset)
     assert str(excinfo.value) == "Only single queries supported"
 
@@ -148,7 +148,7 @@ def test_get_virtual_table_metadata_renders_jinja(mocker: MockerFixture) -> None
     "SYNC COLUMNS FROM SOURCE" on a dataset that uses {{ from_dttm }} etc.).
     """
     mock_get_columns_description = mocker.patch(
-        "superset.connectors.sqla.utils.get_columns_description",
+        "axbi.connectors.sqla.utils.get_columns_description",
         return_value=[{"name": "rendered_col", "type": "INTEGER"}],
     )
 
@@ -161,7 +161,7 @@ def test_get_virtual_table_metadata_renders_jinja(mocker: MockerFixture) -> None
     dataset.get_template_processor().process_template.return_value = rendered_sql
 
     # If Jinja rendering is skipped, sqlglot tries to parse the raw {{ ... }}
-    # and raises SupersetGenericDBErrorException / SupersetParseError.
+    # and raises AxBIGenericDBErrorException / AxBIParseError.
     assert get_virtual_table_metadata(dataset) == [
         {"name": "rendered_col", "type": "INTEGER"}
     ]

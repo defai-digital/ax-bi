@@ -15,9 +15,9 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset import db, security_manager
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.slice import Slice
+from axbi import db, security_manager
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.slice import Slice
 
 
 class InsertChartMixin:

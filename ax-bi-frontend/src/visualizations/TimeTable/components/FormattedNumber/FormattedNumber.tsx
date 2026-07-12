@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { formatNumber } from '@superset-ui/core';
+import { formatNumber } from '@ax-bi/ui-core';
 import { parseToNumber } from '../../utils';
 
 interface FormattedNumberProps {

@@ -22,8 +22,8 @@ import pandas as pd
 from openpyxl import load_workbook
 from pandas.api.types import is_numeric_dtype
 
-from superset.utils.core import GenericDataType
-from superset.utils.excel import (
+from axbi.utils.core import GenericDataType
+from axbi.utils.excel import (
     apply_column_types,
     df_to_excel,
     NEUTRAL_TIMESTAMP,

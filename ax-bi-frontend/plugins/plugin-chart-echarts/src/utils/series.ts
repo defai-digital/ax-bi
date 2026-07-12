@@ -30,10 +30,10 @@ import {
   NumberFormatter,
   TimeFormatter,
   ValueFormatter,
-} from '@superset-ui/core';
-import { SupersetTheme } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
-import { SortSeriesType, LegendPaddingType } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { AxBITheme } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
+import { SortSeriesType, LegendPaddingType } from '@ax-bi/chart-controls';
 import { format } from 'echarts/core';
 import type { LegendComponentOption } from 'echarts/components';
 import type { SeriesOption } from 'echarts';
@@ -73,11 +73,7 @@ const ESTIMATED_LEGEND_SELECTOR_WIDTH = 112;
 const LEGEND_TEXT_WIDTH_CACHE = new Map<string, number>();
 
 type LegendDataItem =
-  | string
-  | number
-  | null
-  | undefined
-  | { name?: string | number | null };
+  string | number | null | undefined | { name?: string | number | null };
 
 export type LegendLayoutResult = {
   effectiveMargin?: number;
@@ -100,7 +96,7 @@ function getLegendLabel(item: LegendDataItem): string {
   return String(item.name);
 }
 
-function measureLegendTextWidth(text: string, theme: SupersetTheme): number {
+function measureLegendTextWidth(text: string, theme: AxBITheme): number {
   const cacheKey = `${theme.fontFamily}:${theme.fontSizeSM}:${text}`;
   const cachedWidth = LEGEND_TEXT_WIDTH_CACHE.get(cacheKey);
   if (cachedWidth !== undefined) {
@@ -138,7 +134,7 @@ function getLegendLabels(items: LegendDataItem[]): string[] {
   return items.filter(hasLegendLabel).map(getLegendLabel);
 }
 
-function getLegendItemWidths(labels: string[], theme: SupersetTheme): number[] {
+function getLegendItemWidths(labels: string[], theme: AxBITheme): number[] {
   return labels.map(
     label =>
       DEFAULT_LEGEND_ICON_WIDTH +
@@ -151,7 +147,7 @@ function estimateHorizontalLegendRows(
   labels: string[],
   chartWidth: number,
   showSelectors: boolean,
-  theme: SupersetTheme,
+  theme: AxBITheme,
 ): number {
   const availableWidth = Math.max(
     chartWidth - LEGEND_HORIZONTAL_SIDE_GUTTER,
@@ -228,7 +224,7 @@ export function getHorizontalLegendAvailableWidth({
 
 function getLongestLegendLabelWidth(
   labels: string[],
-  theme: SupersetTheme,
+  theme: AxBITheme,
 ): number {
   return labels.reduce(
     (maxWidth, label) =>
@@ -261,7 +257,7 @@ function getHorizontalPlainLegendLayout({
   legendLabels: string[];
   orientation: LegendOrientation.Top | LegendOrientation.Bottom;
   showSelectors: boolean;
-  theme: SupersetTheme;
+  theme: AxBITheme;
 }): LegendLayoutResult {
   const rowCount = estimateHorizontalLegendRows(
     legendLabels,
@@ -304,7 +300,7 @@ function getVerticalPlainLegendLayout({
   currentMargin: number;
   legendLabels: string[];
   showSelectors: boolean;
-  theme: SupersetTheme;
+  theme: AxBITheme;
 }): LegendLayoutResult {
   if (legendLabels.length === 0) {
     return {
@@ -376,7 +372,7 @@ export function getLegendLayoutResult({
   orientation: LegendOrientation;
   show: boolean;
   showSelectors?: boolean;
-  theme: SupersetTheme;
+  theme: AxBITheme;
   type: LegendType;
 }): LegendLayoutResult {
   if (!show || type !== LegendType.Plain) {
@@ -791,7 +787,7 @@ export function getLegendProps(
   type: LegendType,
   orientation: LegendOrientation,
   show: boolean,
-  theme: SupersetTheme,
+  theme: AxBITheme,
   zoomable = false,
   legendState?: LegendState,
   padding?: LegendPaddingType,

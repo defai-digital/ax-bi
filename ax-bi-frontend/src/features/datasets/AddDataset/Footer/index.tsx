@@ -17,15 +17,10 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import {
-  Button,
-  DropdownButton,
-  Menu,
-  Flex,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Button, DropdownButton, Menu, Flex } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { useSingleViewResource } from 'src/views/CRUD/hooks';
 import { logEvent } from 'src/logger/actions';
 import withToasts from 'src/components/MessageToasts/withToasts';

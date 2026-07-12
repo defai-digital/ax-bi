@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart, VizType } from '@superset-ui/core';
-import { BubbleChartPlugin } from '@superset-ui/legacy-preset-chart-nvd3';
+import { SuperChart, VizType } from '@ax-bi/ui-core';
+import { BubbleChartPlugin } from '@ax-bi/legacy-preset-chart-nvd3';
 import { dummyDatasource, withResizableChartDemo } from '@storybook-shared';
 import data from './data';
 
@@ -37,12 +37,7 @@ export default {
   argTypes: {
     colorScheme: {
       control: 'select',
-      options: [
-        'supersetColors',
-        'd3Category10',
-        'bnbColors',
-        'googleCategory20c',
-      ],
+      options: ['axbiColors', 'd3Category10', 'bnbColors', 'googleCategory20c'],
     },
     maxBubbleSize: {
       control: { type: 'range', min: 10, max: 100, step: 5 },

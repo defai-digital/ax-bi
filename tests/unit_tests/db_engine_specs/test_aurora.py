@@ -24,12 +24,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.utils import json
+from axbi.utils import json
 from tests.unit_tests.conftest import with_feature_flags
 
 
 def test_aurora_postgres_engine_spec_properties() -> None:
-    from superset.db_engine_specs.aurora import AuroraPostgresEngineSpec
+    from axbi.db_engine_specs.aurora import AuroraPostgresEngineSpec
 
     assert AuroraPostgresEngineSpec.engine == "postgresql"
     assert AuroraPostgresEngineSpec.engine_name == "Aurora PostgreSQL"
@@ -37,7 +37,7 @@ def test_aurora_postgres_engine_spec_properties() -> None:
 
 
 def test_update_params_from_encrypted_extra_without_iam() -> None:
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps({})
@@ -53,7 +53,7 @@ def test_update_params_from_encrypted_extra_without_iam() -> None:
 
 
 def test_update_params_from_encrypted_extra_iam_disabled() -> None:
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -62,7 +62,7 @@ def test_update_params_from_encrypted_extra_iam_disabled() -> None:
                 "enabled": False,
                 "role_arn": "arn:aws:iam::123456789012:role/TestRole",
                 "region": "us-east-1",
-                "db_username": "superset_user",
+                "db_username": "axbi_user",
             }
         }
     )
@@ -79,8 +79,8 @@ def test_update_params_from_encrypted_extra_iam_disabled() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_update_params_from_encrypted_extra_with_iam() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -89,7 +89,7 @@ def test_update_params_from_encrypted_extra_with_iam() -> None:
                 "enabled": True,
                 "role_arn": "arn:aws:iam::123456789012:role/TestRole",
                 "region": "us-east-1",
-                "db_username": "superset_iam_user",
+                "db_username": "axbi_iam_user",
             }
         }
     )
@@ -119,12 +119,12 @@ def test_update_params_from_encrypted_extra_with_iam() -> None:
 
     assert "connect_args" in params
     assert params["connect_args"]["password"] == "iam-auth-token"  # noqa: S105
-    assert params["connect_args"]["user"] == "superset_iam_user"
+    assert params["connect_args"]["user"] == "axbi_iam_user"
     assert params["connect_args"]["sslmode"] == "require"
 
 
 def test_update_params_merges_remaining_encrypted_extra() -> None:
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -146,7 +146,7 @@ def test_update_params_merges_remaining_encrypted_extra() -> None:
 
 
 def test_update_params_from_encrypted_extra_no_encrypted_extra() -> None:
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = None
@@ -162,7 +162,7 @@ def test_update_params_from_encrypted_extra_no_encrypted_extra() -> None:
 def test_update_params_from_encrypted_extra_invalid_json(
     encrypted_extra: object,
 ) -> None:
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = encrypted_extra
@@ -174,7 +174,7 @@ def test_update_params_from_encrypted_extra_invalid_json(
 
 
 def test_encrypted_extra_sensitive_fields() -> None:
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     # Verify sensitive fields are properly defined
     assert (
@@ -184,7 +184,7 @@ def test_encrypted_extra_sensitive_fields() -> None:
 
 
 def test_mask_encrypted_extra() -> None:
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     encrypted_extra = json.dumps(
         {
@@ -193,7 +193,7 @@ def test_mask_encrypted_extra() -> None:
                 "role_arn": "arn:aws:iam::123456789012:role/SecretRole",
                 "external_id": "secret-external-id-12345",
                 "region": "us-east-1",
-                "db_username": "superset_user",
+                "db_username": "axbi_user",
             }
         }
     )
@@ -213,12 +213,12 @@ def test_mask_encrypted_extra() -> None:
     # Non-sensitive fields should remain unchanged
     assert masked_config["aws_iam"]["enabled"] is True
     assert masked_config["aws_iam"]["region"] == "us-east-1"
-    assert masked_config["aws_iam"]["db_username"] == "superset_user"
+    assert masked_config["aws_iam"]["db_username"] == "axbi_user"
 
 
 def test_aurora_postgres_inherits_from_postgres() -> None:
-    from superset.db_engine_specs.aurora import AuroraPostgresEngineSpec
-    from superset.db_engine_specs.postgres import PostgresEngineSpec
+    from axbi.db_engine_specs.aurora import AuroraPostgresEngineSpec
+    from axbi.db_engine_specs.postgres import PostgresEngineSpec
 
     # Verify inheritance
     assert issubclass(AuroraPostgresEngineSpec, PostgresEngineSpec)
@@ -229,7 +229,7 @@ def test_aurora_postgres_inherits_from_postgres() -> None:
 
 
 def test_aurora_mysql_engine_spec_properties() -> None:
-    from superset.db_engine_specs.aurora import AuroraMySQLEngineSpec
+    from axbi.db_engine_specs.aurora import AuroraMySQLEngineSpec
 
     assert AuroraMySQLEngineSpec.engine == "mysql"
     assert AuroraMySQLEngineSpec.engine_name == "Aurora MySQL"
@@ -237,15 +237,15 @@ def test_aurora_mysql_engine_spec_properties() -> None:
 
 
 def test_aurora_mysql_inherits_from_mysql() -> None:
-    from superset.db_engine_specs.aurora import AuroraMySQLEngineSpec
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.aurora import AuroraMySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     assert issubclass(AuroraMySQLEngineSpec, MySQLEngineSpec)
     assert AuroraMySQLEngineSpec.supports_dynamic_schema is True
 
 
 def test_aurora_mysql_has_iam_support() -> None:
-    from superset.db_engine_specs.aurora import AuroraMySQLEngineSpec
+    from axbi.db_engine_specs.aurora import AuroraMySQLEngineSpec
 
     # Verify it inherits encrypted_extra_sensitive_fields
     assert (
@@ -259,8 +259,8 @@ def test_aurora_mysql_has_iam_support() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_aurora_mysql_update_params_from_encrypted_extra_with_iam() -> None:
-    from superset.db_engine_specs.aurora import AuroraMySQLEngineSpec
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aurora import AuroraMySQLEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -269,7 +269,7 @@ def test_aurora_mysql_update_params_from_encrypted_extra_with_iam() -> None:
                 "enabled": True,
                 "role_arn": "arn:aws:iam::123456789012:role/TestRole",
                 "region": "us-east-1",
-                "db_username": "superset_iam_user",
+                "db_username": "axbi_iam_user",
             }
         }
     )
@@ -299,13 +299,13 @@ def test_aurora_mysql_update_params_from_encrypted_extra_with_iam() -> None:
 
     assert "connect_args" in params
     assert params["connect_args"]["password"] == "iam-auth-token"  # noqa: S105
-    assert params["connect_args"]["user"] == "superset_iam_user"
+    assert params["connect_args"]["user"] == "axbi_iam_user"
     # Note: ssl_mode is not set because MySQL drivers don't support it.
     # SSL should be configured via the database's extra settings.
 
 
 def test_aurora_data_api_classes_unchanged() -> None:
-    from superset.db_engine_specs.aurora import (
+    from axbi.db_engine_specs.aurora import (
         AuroraMySQLDataAPI,
         AuroraPostgresDataAPI,
     )

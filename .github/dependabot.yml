@@ -22,14 +22,14 @@ updates:
       # GH thread: https://github.com/jsdom/jsdom/issues/3492
       - dependency-name: "jest-environment-jsdom"
       # `@swc/plugin-transform-imports` doesn't work with current Webpack-SWC hybrid setup
-      # See https://github.com/apache/superset/pull/37384#issuecomment-3793991389
+      # See https://github.com/defai-digital/ax-bi/pull/37384#issuecomment-3793991389
       # TODO: remove the plugin once Lodash usage has been migrated to a more readily tree-shakeable alternative
       - dependency-name: "@swc/plugin-transform-imports"
       # `just-handlerbars-helpers` library in plugin-chart-handlebars requires `currencyformatter`` to be < 2
       - dependency-name: "currencyformatter.js"
         update-types: ["version-update:semver-major"]
       # TODO: remove below clause once https://github.com/pmmmwh/react-refresh-webpack-plugin/pull/940 lands onto a future release
-      # and confirm the issue https://github.com/apache/superset/issues/39600 is fixed
+      # and confirm the issue https://github.com/defai-digital/ax-bi/issues/39600 is fixed
       - dependency-name: "react-checkbox-tree"
         update-types: ["version-update:semver-major"]
     directory: "/ax-bi-frontend/"
@@ -92,7 +92,7 @@ updates:
       default-days: 7
 
   - package-ecosystem: "npm"
-    directory: "/superset-websocket/"
+    directory: "/ax-bi-websocket/"
     schedule:
       interval: "weekly"
     labels:
@@ -104,7 +104,7 @@ updates:
       default-days: 7
 
   - package-ecosystem: "npm"
-    directory: "/superset-websocket/utils/client-ws-app/"
+    directory: "/ax-bi-websocket/utils/client-ws-app/"
     schedule:
       interval: "weekly"
     labels:

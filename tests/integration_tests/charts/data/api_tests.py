@@ -29,32 +29,32 @@ import pytest
 from flask import g, Response
 from flask.ctx import AppContext
 
-from superset.charts.data.api import ChartDataRestApi
-from superset.commands.chart.data.get_data_command import ChartDataCommand
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
-from superset.connectors.sqla.models import SqlaTable, TableColumn
-from superset.constants import CACHE_DISABLED_TIMEOUT
-from superset.errors import SupersetErrorType
-from superset.extensions import async_query_manager_factory, db
-from superset.models.annotations import AnnotationLayer
-from superset.models.slice import Slice
-from superset.models.sql_lab import Query
-from superset.superset_typing import AdhocColumn
-from superset.utils import json
-from superset.utils.core import (
+from axbi.axbi_typing import AdhocColumn
+from axbi.charts.data.api import ChartDataRestApi
+from axbi.commands.chart.data.get_data_command import ChartDataCommand
+from axbi.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from axbi.connectors.sqla.models import SqlaTable, TableColumn
+from axbi.constants import CACHE_DISABLED_TIMEOUT
+from axbi.errors import AxBIErrorType
+from axbi.extensions import async_query_manager_factory, db
+from axbi.models.annotations import AnnotationLayer
+from axbi.models.slice import Slice
+from axbi.models.sql_lab import Query
+from axbi.utils import json
+from axbi.utils.core import (
     AdhocMetricExpressionType,
     AnnotationType,
     backend,
     ExtraFiltersReasonType,
     get_example_default_schema,
 )
-from superset.utils.database import get_example_database, get_main_database
+from axbi.utils.database import get_example_database, get_main_database
 from tests.common.query_context_generator import ANNOTATION_LAYERS
 from tests.conftest import with_config
 from tests.integration_tests.annotation_layers.fixtures import (
     create_annotation_layers,  # noqa: F401
 )
-from tests.integration_tests.base_tests import SupersetTestCase, test_client
+from tests.integration_tests.base_tests import AxBITestCase, test_client
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import (
     ADMIN_USERNAME,
@@ -94,7 +94,7 @@ def _skip_by_backend(app_context: AppContext):
         pytest.skip("Skipping tests for Hive backend")
 
 
-class BaseTestChartDataApi(SupersetTestCase):
+class BaseTestChartDataApi(AxBITestCase):
     query_context_payload_template = None
 
     def setUp(self) -> None:
@@ -241,7 +241,7 @@ class TestPostChartDataApi(BaseTestChartDataApi):
         assert response == {"dashboard_id": 1, "dataset_id": 3, "slice_id": 2}
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.utils.decorators.g")
+    @mock.patch("axbi.utils.decorators.g")
     def test_with_valid_qc__data_is_returned(self, mock_g):
         mock_g.logs_context = {}
         # arrange
@@ -718,7 +718,7 @@ class TestPostChartDataApi(BaseTestChartDataApi):
         assert rv.status_code == 403
         assert (
             rv.json["errors"][0]["error_type"]
-            == SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
+            == AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
         )
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
@@ -759,7 +759,7 @@ class TestPostChartDataApi(BaseTestChartDataApi):
 
     @with_feature_flags(GLOBAL_ASYNC_QUERIES=True)
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.extensions.event_logger.log")
+    @mock.patch("axbi.extensions.event_logger.log")
     def test_chart_data_async_cached_sync_response(self, mock_event_logger):
         """
         Chart data API: Test chart data query returns results synchronously
@@ -799,7 +799,7 @@ class TestPostChartDataApi(BaseTestChartDataApi):
             assert records[0]["is_cached"] is True
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.extensions.event_logger.log")
+    @mock.patch("axbi.extensions.event_logger.log")
     def test_chart_data_post_is_cached_in_event_logger(self, mock_event_logger):
         """
         Chart data API: Test that is_cached is logged to event logger for POST requests
@@ -834,7 +834,7 @@ class TestPostChartDataApi(BaseTestChartDataApi):
 
     @with_feature_flags(GLOBAL_ASYNC_QUERIES=True)
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.charts.data.api.ChartDataCommand.run")
+    @mock.patch("axbi.charts.data.api.ChartDataCommand.run")
     def test_chart_data_async_force_refresh(self, mock_run):
         """
         Chart data API: Test that force=true skips cache and triggers async job
@@ -1117,9 +1117,9 @@ class TestPostChartDataApi(BaseTestChartDataApi):
             assert rv.status_code == 200
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @mock.patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @mock.patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_embedded_user_drill_by_allowed_column(
         self, mock_is_guest_user, mock_has_guest_access
     ):
@@ -1136,9 +1136,9 @@ class TestPostChartDataApi(BaseTestChartDataApi):
         assert rv.status_code == 200
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @mock.patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
-    @with_feature_flags(EMBEDDED_SUPERSET=True)
+    @mock.patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
+    @with_feature_flags(EMBEDDED_AXBI=True)
     def test_embedded_user_drill_by_disallowed_column(
         self, mock_is_guest_user, mock_has_guest_access
     ):
@@ -1337,7 +1337,7 @@ class TestGetChartDataApi(BaseTestChartDataApi):
         assert rv.json["result"][0]["is_cached"]
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.extensions.event_logger.log")
+    @mock.patch("axbi.extensions.event_logger.log")
     def test_chart_data_is_cached_in_event_logger(self, mock_event_logger):
         """
         Chart data API: Test that is_cached is logged to event logger
@@ -1401,7 +1401,7 @@ class TestGetChartDataApi(BaseTestChartDataApi):
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(GLOBAL_ASYNC_QUERIES=True)
-    @mock.patch("superset.charts.data.api.QueryContextCacheLoader")
+    @mock.patch("axbi.charts.data.api.QueryContextCacheLoader")
     def test_chart_data_cache(self, cache_loader):
         """
         Chart data cache API: Test chart data async cache request
@@ -1427,7 +1427,7 @@ class TestGetChartDataApi(BaseTestChartDataApi):
         assert data["result"][0]["rowcount"] == expected_row_count
 
     @with_feature_flags(GLOBAL_ASYNC_QUERIES=True)
-    @mock.patch("superset.charts.data.api.QueryContextCacheLoader")
+    @mock.patch("axbi.charts.data.api.QueryContextCacheLoader")
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_chart_data_cache_run_failed(self, cache_loader):
         """
@@ -1445,7 +1445,7 @@ class TestGetChartDataApi(BaseTestChartDataApi):
         assert data["message"] == "Error loading data from cache"
 
     @with_feature_flags(GLOBAL_ASYNC_QUERIES=True)
-    @mock.patch("superset.charts.data.api.QueryContextCacheLoader")
+    @mock.patch("axbi.charts.data.api.QueryContextCacheLoader")
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_chart_data_cache_no_login(self, cache_loader):
         """
@@ -1530,8 +1530,8 @@ class TestGetChartDataApi(BaseTestChartDataApi):
             }
         ]
 
-    @mock.patch("superset.security.manager.SupersetSecurityManager.has_guest_access")
-    @mock.patch("superset.security.manager.SupersetSecurityManager.is_guest_user")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.has_guest_access")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.is_guest_user")
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_chart_data_as_guest_user(self, is_guest_user, has_guest_access):
         """
@@ -1848,13 +1848,13 @@ class TestGetChartDataWithDashboardFilter(BaseTestChartDataApi):
         return chart
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.charts.data.api.get_dashboard_filter_context")
+    @mock.patch("axbi.charts.data.api.get_dashboard_filter_context")
     def test_get_data_with_dashboard_filter_context(self, mock_get_filter_ctx):
         """
         Chart data API: Test GET with filters_dashboard_id returns
         dashboard_filters metadata in the response.
         """
-        from superset.charts.data.dashboard_filter_context import (
+        from axbi.charts.data.dashboard_filter_context import (
             DashboardFilterContext,
             DashboardFilterInfo,
             DashboardFilterStatus,
@@ -1891,7 +1891,7 @@ class TestGetChartDataWithDashboardFilter(BaseTestChartDataApi):
         assert data["dashboard_filters"]["filters"][1]["status"] == "not_applied"
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.charts.data.api.get_dashboard_filter_context")
+    @mock.patch("axbi.charts.data.api.get_dashboard_filter_context")
     def test_get_data_with_dashboard_filter_applies_filters_to_query(
         self, mock_get_filter_ctx
     ):
@@ -1900,7 +1900,7 @@ class TestGetChartDataWithDashboardFilter(BaseTestChartDataApi):
         extra_form_data filters into the query so they appear in the
         compiled SQL.
         """
-        from superset.charts.data.dashboard_filter_context import (
+        from axbi.charts.data.dashboard_filter_context import (
             DashboardFilterContext,
             DashboardFilterInfo,
             DashboardFilterStatus,
@@ -1936,7 +1936,7 @@ class TestGetChartDataWithDashboardFilter(BaseTestChartDataApi):
         assert "boy" in query_sql.lower()
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.charts.data.api.get_dashboard_filter_context")
+    @mock.patch("axbi.charts.data.api.get_dashboard_filter_context")
     def test_get_data_without_dashboard_filter_has_no_metadata(
         self, mock_get_filter_ctx
     ):
@@ -1971,7 +1971,7 @@ class TestGetChartDataWithDashboardFilter(BaseTestChartDataApi):
         assert "integer" in data["message"].lower()
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.charts.data.api.get_dashboard_filter_context")
+    @mock.patch("axbi.charts.data.api.get_dashboard_filter_context")
     def test_get_data_dashboard_not_found_returns_400(self, mock_get_filter_ctx):
         """
         Chart data API: Test GET with invalid dashboard ID returns 400.
@@ -1986,18 +1986,18 @@ class TestGetChartDataWithDashboardFilter(BaseTestChartDataApi):
         assert rv.status_code == 400
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.charts.data.api.get_dashboard_filter_context")
+    @mock.patch("axbi.charts.data.api.get_dashboard_filter_context")
     def test_get_data_dashboard_access_denied_returns_403(self, mock_get_filter_ctx):
         """
         Chart data API: Test GET with inaccessible dashboard returns 403.
         """
-        from superset.errors import SupersetError, SupersetErrorType
-        from superset.exceptions import SupersetSecurityException
+        from axbi.errors import AxBIError, AxBIErrorType
+        from axbi.exceptions import AxBISecurityException
 
         chart = self._setup_chart_with_query_context()
-        mock_get_filter_ctx.side_effect = SupersetSecurityException(
-            SupersetError(
-                error_type=SupersetErrorType.DASHBOARD_SECURITY_ACCESS_ERROR,
+        mock_get_filter_ctx.side_effect = AxBISecurityException(
+            AxBIError(
+                error_type=AxBIErrorType.DASHBOARD_SECURITY_ACCESS_ERROR,
                 message="Access denied",
                 level="warning",
             )
@@ -2010,7 +2010,7 @@ class TestGetChartDataWithDashboardFilter(BaseTestChartDataApi):
         assert rv.status_code == 403
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @mock.patch("superset.charts.data.api.get_dashboard_filter_context")
+    @mock.patch("axbi.charts.data.api.get_dashboard_filter_context")
     def test_get_data_chart_not_on_dashboard_returns_400(self, mock_get_filter_ctx):
         """
         Chart data API: Test GET where chart is not on the dashboard returns 400.

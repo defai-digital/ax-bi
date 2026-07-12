@@ -26,26 +26,24 @@ from fastmcp.client.client import CallToolResult
 from mcp.types import TextContent
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.schemas import ChartFilter
-from superset.mcp_service.common.schema_discovery import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.schemas import ChartFilter
+from axbi.mcp_service.common.schema_discovery import (
     ColumnMetadata,
     ModelSchemaInfo,
 )
-from superset.mcp_service.dashboard.schemas import DashboardFilter
-from superset.mcp_service.privacy import (
+from axbi.mcp_service.dashboard.schemas import DashboardFilter
+from axbi.mcp_service.privacy import (
     CHART_DATA_MODEL_COLUMNS,
     DATA_MODEL_METADATA_ERROR_TYPE,
     tool_requires_data_model_metadata_access,
     user_can_view_data_model_metadata,
 )
-from superset.mcp_service.system.schemas import InstanceInfo, UserInfo
-from superset.mcp_service.system.tool.get_schema import get_schema
-from superset.utils import json
+from axbi.mcp_service.system.schemas import InstanceInfo, UserInfo
+from axbi.mcp_service.system.tool.get_schema import get_schema
+from axbi.utils import json
 
-get_schema_module = importlib.import_module(
-    "superset.mcp_service.system.tool.get_schema"
-)
+get_schema_module = importlib.import_module("axbi.mcp_service.system.tool.get_schema")
 
 
 def _result_text(result: CallToolResult) -> str:
@@ -68,7 +66,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -83,7 +81,7 @@ def _make_instance_info(**kwargs):
     """Build a minimal InstanceInfo with defaults; override with kwargs."""
     from datetime import datetime, timezone
 
-    from superset.mcp_service.system.schemas import (
+    from axbi.mcp_service.system.schemas import (
         DashboardBreakdown,
         DatabaseBreakdown,
         FeatureAvailability,
@@ -133,12 +131,12 @@ def test_get_schema_is_not_globally_hidden_from_tool_search() -> None:
 
 
 def test_redact_data_model_metadata_removes_dataset_and_database_summary():
-    from superset.mcp_service.system.schemas import (
+    from axbi.mcp_service.system.schemas import (
         DatabaseBreakdown,
         InstanceSummary,
         RecentActivity,
     )
-    from superset.mcp_service.system.tool.get_instance_info import (
+    from axbi.mcp_service.system.tool.get_instance_info import (
         _redact_data_model_metadata,
     )
 
@@ -181,7 +179,7 @@ def test_redact_data_model_metadata_removes_dataset_and_database_summary():
 def test_user_can_view_data_model_metadata_requires_stronger_dataset_permission(
     app_context,
 ):
-    with patch("superset.security_manager", new_callable=Mock) as mock_security_manager:
+    with patch("axbi.security_manager", new_callable=Mock) as mock_security_manager:
         mock_security_manager.can_access.side_effect = (
             lambda permission_name, view_name: permission_name == "can_read"
         )
@@ -373,7 +371,7 @@ class TestGetInstanceInfoCurrentUserViaMCP:
         # via dotted module path because __init__.py re-exports
         # get_instance_info as a function, which shadows the submodule name
         # and breaks mock resolution on Python 3.10.
-        from superset.mcp_service.mcp_core import InstanceInfoCore
+        from axbi.mcp_service.mcp_core import InstanceInfoCore
 
         mock_role = Mock()
         mock_role.name = "Alpha"
@@ -412,7 +410,7 @@ class TestGetInstanceInfoCurrentUserViaMCP:
     @pytest.mark.asyncio
     async def test_get_instance_info_no_user_returns_null(self, mcp_server):
         """Test that current_user is null when g.user is not set."""
-        from superset.mcp_service.mcp_core import InstanceInfoCore
+        from axbi.mcp_service.mcp_core import InstanceInfoCore
 
         with (
             patch.object(
@@ -434,7 +432,7 @@ class TestGetInstanceInfoCurrentUserViaMCP:
     @pytest.mark.asyncio
     async def test_get_instance_info_user_missing_optional_attrs(self, mcp_server):
         """Test current_user when g.user is missing optional attributes."""
-        from superset.mcp_service.mcp_core import InstanceInfoCore
+        from axbi.mcp_service.mcp_core import InstanceInfoCore
 
         # User object with only id and username (no first_name, etc.)
         mock_g_user = Mock(spec=["id", "username"])

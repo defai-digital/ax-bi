@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SuperChart, VizType } from '@superset-ui/core';
-import { BigNumberChartPlugin } from '@superset-ui/plugin-chart-echarts';
+import { SuperChart, VizType } from '@ax-bi/ui-core';
+import { BigNumberChartPlugin } from '@ax-bi/plugin-chart-echarts';
 import { withResizableChartDemo } from '@storybook-shared';
 import testData from './data';
 

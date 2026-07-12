@@ -24,7 +24,7 @@ def test_task_prune_cutoff_is_naive_utc() -> None:
     Task.ended_at is stored as a UTC-oriented naive datetime, so the retention
     cutoff should use the shared naive UTC clock instead of local server time.
     """
-    from superset.commands.tasks.prune import TaskPruneCommand
+    from axbi.commands.tasks.prune import TaskPruneCommand
 
     captured: dict[str, datetime] = {}
 
@@ -39,7 +39,7 @@ def test_task_prune_cutoff_is_naive_utc() -> None:
     session = MagicMock()
     session.execute.side_effect = fake_execute
 
-    with patch("superset.commands.tasks.prune.db") as mock_db:
+    with patch("axbi.commands.tasks.prune.db") as mock_db:
         mock_db.session = session
         TaskPruneCommand(retention_period_days=30).run()
 

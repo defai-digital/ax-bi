@@ -21,8 +21,8 @@ import pytest
 from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 
-from superset.dashboards.permalink.schemas import DashboardPermalinkStateSchema
-from superset.dashboards.schemas import (
+from axbi.dashboards.permalink.schemas import DashboardPermalinkStateSchema
+from axbi.dashboards.schemas import (
     DashboardCopySchema,
     DashboardDatasetSchema,
     DashboardPostSchema,
@@ -59,7 +59,7 @@ def _dataset_payload() -> dict[str, Any]:
 def test_dashboard_dataset_guest_filtering(mocker: MockerFixture) -> None:
     """Guest users should not receive sensitive dataset fields."""
     mocker.patch(
-        "superset.dashboards.schemas.security_manager.is_guest_user",
+        "axbi.dashboards.schemas.security_manager.is_guest_user",
         return_value=True,
     )
     result = DashboardDatasetSchema().dump(_dataset_payload())
@@ -71,7 +71,7 @@ def test_dashboard_dataset_guest_filtering(mocker: MockerFixture) -> None:
 def test_dashboard_dataset_non_guest_keeps_fields(mocker: MockerFixture) -> None:
     """Non-guest users keep the sensitive dataset fields."""
     mocker.patch(
-        "superset.dashboards.schemas.security_manager.is_guest_user",
+        "axbi.dashboards.schemas.security_manager.is_guest_user",
         return_value=False,
     )
     result = DashboardDatasetSchema().dump(_dataset_payload())

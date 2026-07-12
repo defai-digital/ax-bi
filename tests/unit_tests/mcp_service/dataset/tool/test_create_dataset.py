@@ -24,7 +24,7 @@ import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 
-from superset.commands.dataset.exceptions import (
+from axbi.commands.dataset.exceptions import (
     DatabaseNotFoundValidationError,
     DatasetCreateFailedError,
     DatasetDataAccessIsNotAllowed,
@@ -32,15 +32,15 @@ from superset.commands.dataset.exceptions import (
     DatasetInvalidError,
     TableNotFoundValidationError,
 )
-from superset.mcp_service.app import mcp
-from superset.sql.parse import Table
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.sql.parse import Table
+from axbi.utils import json
 
 # Use importlib to get the module object directly, bypassing the __init__.py
 # attribute binding that shadows the module name with the exported function.
 # This ensures patch.object resolves to the module in all Python versions.
 create_dataset_module = importlib.import_module(
-    "superset.mcp_service.dataset.tool.create_dataset"
+    "axbi.mcp_service.dataset.tool.create_dataset"
 )
 
 
@@ -92,7 +92,7 @@ def mcp_server():
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"

@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for email service in Superset"""
+"""Unit tests for email service in AxBI"""
 
 import logging
 import ssl
@@ -27,8 +27,8 @@ from unittest import mock
 
 from flask import current_app
 
-from superset.utils import core as utils
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.utils import core as utils
+from tests.integration_tests.base_tests import AxBITestCase
 
 from .utils import read_fixture
 
@@ -36,11 +36,11 @@ send_email_test = mock.Mock()
 logger = logging.getLogger(__name__)
 
 
-class TestEmailSmtp(SupersetTestCase):
+class TestEmailSmtp(AxBITestCase):
     def setUp(self):
         current_app.config["SMTP_SSL"] = False
 
-    @mock.patch("superset.utils.core.send_mime_email")
+    @mock.patch("axbi.utils.core.send_mime_email")
     def test_send_smtp(self, mock_send_mime):
         attachment = tempfile.NamedTemporaryFile()
         attachment.write(b"attachment")
@@ -60,7 +60,7 @@ class TestEmailSmtp(SupersetTestCase):
         mimeapp = MIMEApplication("attachment")
         assert msg.get_payload()[-1].get_payload() == mimeapp.get_payload()
 
-    @mock.patch("superset.utils.core.send_mime_email")
+    @mock.patch("axbi.utils.core.send_mime_email")
     def test_send_smtp_with_email_mutator(self, mock_send_mime):
         attachment = tempfile.NamedTemporaryFile()
         attachment.write(b"attachment")
@@ -91,7 +91,7 @@ class TestEmailSmtp(SupersetTestCase):
         assert msg.get_payload()[-1].get_payload() == mimeapp.get_payload()
         current_app.config["EMAIL_HEADER_MUTATOR"] = base_email_mutator
 
-    @mock.patch("superset.utils.core.send_mime_email")
+    @mock.patch("axbi.utils.core.send_mime_email")
     def test_send_smtp_with_email_mutator_changing_recipients(self, mock_send_mime):
         attachment = tempfile.NamedTemporaryFile()
         attachment.write(b"attachment")
@@ -121,7 +121,7 @@ class TestEmailSmtp(SupersetTestCase):
         assert msg.get_payload()[-1].get_payload() == mimeapp.get_payload()
         current_app.config["EMAIL_HEADER_MUTATOR"] = base_email_mutator
 
-    @mock.patch("superset.utils.core.send_mime_email")
+    @mock.patch("axbi.utils.core.send_mime_email")
     def test_send_smtp_data(self, mock_send_mime):
         utils.send_email_smtp(
             "to", "subject", "content", current_app.config, data={"1.txt": b"data"}
@@ -138,7 +138,7 @@ class TestEmailSmtp(SupersetTestCase):
         mimeapp = MIMEApplication("data")
         assert msg.get_payload()[-1].get_payload() == mimeapp.get_payload()
 
-    @mock.patch("superset.utils.core.send_mime_email")
+    @mock.patch("axbi.utils.core.send_mime_email")
     def test_send_smtp_inline_images(self, mock_send_mime):
         image = read_fixture("sample.png")
         utils.send_email_smtp(
@@ -160,7 +160,7 @@ class TestEmailSmtp(SupersetTestCase):
         mimeapp = MIMEImage(image)
         assert msg.get_payload()[-1].get_payload() == mimeapp.get_payload()
 
-    @mock.patch("superset.utils.core.send_mime_email")
+    @mock.patch("axbi.utils.core.send_mime_email")
     def test_send_bcc_smtp(self, mock_send_mime):
         attachment = tempfile.NamedTemporaryFile()
         attachment.write(b"attachment")

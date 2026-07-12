@@ -19,7 +19,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from superset.mcp_service.system.system_utils import calculate_feature_availability
+from axbi.mcp_service.system.system_utils import calculate_feature_availability
 
 
 def test_calculate_feature_availability_returns_menus():
@@ -31,7 +31,7 @@ def test_calculate_feature_availability_returns_menus():
         "Charts",
     }
 
-    with patch("superset.security_manager", mock_sm):
+    with patch("axbi.security_manager", mock_sm):
         result = calculate_feature_availability({}, {}, {})
 
     assert result.accessible_menus == ["Charts", "Dashboards", "SQL Lab"]
@@ -43,7 +43,7 @@ def test_calculate_feature_availability_empty_when_no_context():
     broken_sm = MagicMock()
     broken_sm.user_view_menu_names.side_effect = RuntimeError("no ctx")
 
-    with patch("superset.security_manager", broken_sm):
+    with patch("axbi.security_manager", broken_sm):
         result = calculate_feature_availability({}, {}, {})
 
     assert result.accessible_menus == []
@@ -54,7 +54,7 @@ def test_calculate_feature_availability_menus_sorted():
     mock_sm = MagicMock()
     mock_sm.user_view_menu_names.return_value = {"Zzz", "Aaa", "Mmm"}
 
-    with patch("superset.security_manager", mock_sm):
+    with patch("axbi.security_manager", mock_sm):
         result = calculate_feature_availability({}, {}, {})
 
     assert result.accessible_menus == ["Aaa", "Mmm", "Zzz"]

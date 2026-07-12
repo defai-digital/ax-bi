@@ -157,7 +157,7 @@ export function interceptPost() {
 }
 
 export function interceptLog() {
-  cy.intercept('**/superset/log/?explode=events&dashboard_id=*').as('logs');
+  cy.intercept('**/ax-bi/log/?explode=events&dashboard_id=*').as('logs');
 }
 
 export function interceptDataset() {

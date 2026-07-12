@@ -22,7 +22,7 @@ set -e
 #
 /app/docker/docker-bootstrap.sh
 
-if [ "$SUPERSET_LOAD_EXAMPLES" = "yes" ]; then
+if [ "$AXBI_LOAD_EXAMPLES" = "yes" ]; then
     STEP_CNT=4
 else
     STEP_CNT=3
@@ -40,8 +40,8 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 if [ "$CYPRESS_CONFIG" == "true" ]; then
     ADMIN_PASSWORD="general"
     export AX_BI_TESTENV=true
-    export POSTGRES_DB=superset_cypress
-    export SUPERSET__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://superset:superset@db:5432/superset_cypress
+    export POSTGRES_DB=axbi_cypress
+    export AXBI__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://ax-bi:axbi@db:5432/axbi_cypress
 fi
 # Initialize the database
 echo_step "1" "Starting" "Applying DB migrations"
@@ -55,9 +55,9 @@ if [ "$CYPRESS_CONFIG" == "true" ]; then
 else
     ax-bi fab create-admin \
         --username admin \
-        --email admin@superset.com \
+        --email admin@axbi.com \
         --password "$ADMIN_PASSWORD" \
-        --firstname Superset \
+        --firstname AxBI \
         --lastname Admin
 fi
 echo_step "2" "Complete" "Setting up admin user"
@@ -66,12 +66,12 @@ echo_step "3" "Starting" "Setting up roles and perms"
 ax-bi init
 echo_step "3" "Complete" "Setting up roles and perms"
 
-if [ "$SUPERSET_LOAD_EXAMPLES" = "yes" ]; then
+if [ "$AXBI_LOAD_EXAMPLES" = "yes" ]; then
     # Load some data to play with
     echo_step "4" "Starting" "Loading examples"
 
 
-    # If Cypress run which consumes superset_test_config – load required data for tests
+    # If Cypress run which consumes axbi_test_config – load required data for tests
     if [ "$CYPRESS_CONFIG" == "true" ]; then
         ax-bi load_examples --load-test-data
     else

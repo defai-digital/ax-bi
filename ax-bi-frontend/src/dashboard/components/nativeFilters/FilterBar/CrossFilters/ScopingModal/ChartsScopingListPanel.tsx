@@ -18,8 +18,8 @@
  */
 
 import { ReactNode, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import {
   ChartConfiguration,
   DashboardLayout,
@@ -28,8 +28,8 @@ import {
 } from 'src/dashboard/types';
 import { useSelector } from 'react-redux';
 import { CHART_TYPE } from 'src/dashboard/util/componentTypes';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Button } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Button } from '@ax-bi/ui-core/components';
 import { FilterTitle } from 'src/dashboard/components/nativeFilters/FiltersConfigModal/FilterTitleContainer';
 import { NEW_CHART_SCOPING_ID } from './constants';
 

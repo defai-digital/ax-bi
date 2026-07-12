@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { getTimeFormatter } from '@superset-ui/core';
+import { getTimeFormatter } from '@ax-bi/ui-core';
 
 // Cal-Heatmap provides local timestamps (UTC shifted by the browser's timezone
 // offset). We subtract that offset so the formatter displays the correct UTC

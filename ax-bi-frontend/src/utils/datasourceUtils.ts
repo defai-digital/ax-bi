@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import type { ISaveableDatasource } from 'src/SqlLab/components/SaveDatasetModal';
 
 // Flexible interface that captures what this function actually needs to work

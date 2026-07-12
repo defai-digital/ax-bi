@@ -22,10 +22,10 @@ from unittest.mock import MagicMock, Mock, patch
 from uuid import UUID
 
 import pytest
+from axbi_core.tasks.types import TaskStatus
 from freezegun import freeze_time
-from superset_core.tasks.types import TaskStatus
 
-from superset.tasks.context import TaskContext
+from axbi.tasks.context import TaskContext
 
 TEST_UUID = UUID("b8b61b7b-1cd3-4a31-a74a-0a95341afc06")
 
@@ -42,7 +42,7 @@ def mock_task():
 @pytest.fixture
 def mock_task_dao(mock_task):
     """Mock TaskDAO to return our test task."""
-    with patch("superset.daos.tasks.TaskDAO") as mock_dao:
+    with patch("axbi.daos.tasks.TaskDAO") as mock_dao:
         mock_dao.find_one_or_none.return_value = mock_task
         yield mock_dao
 
@@ -50,7 +50,7 @@ def mock_task_dao(mock_task):
 @pytest.fixture
 def mock_update_command():
     """Mock UpdateTaskCommand to avoid database operations."""
-    with patch("superset.commands.tasks.update.UpdateTaskCommand") as mock_cmd:
+    with patch("axbi.commands.tasks.update.UpdateTaskCommand") as mock_cmd:
         mock_cmd.return_value.run.return_value = None
         yield mock_cmd
 
@@ -79,8 +79,8 @@ def task_context(mock_task, mock_task_dao, mock_update_command, mock_flask_app):
     mock_task.payload_dict = {}
 
     with (
-        patch("superset.tasks.context.current_app") as mock_current_app,
-        patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+        patch("axbi.tasks.context.current_app") as mock_current_app,
+        patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
     ):
         # Disable Redis by making distributed_coordination return None
         mock_cache_manager.distributed_coordination = None
@@ -129,7 +129,7 @@ class TestTaskAbortProperties:
 
     def test_aborting_status(self):
         """Test ABORTING status check."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.status = TaskStatus.ABORTING.value
@@ -138,7 +138,7 @@ class TestTaskAbortProperties:
 
     def test_is_abortable_in_properties(self):
         """Test is_abortable is accessible via properties."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.update_properties({"is_abortable": True})
@@ -147,7 +147,7 @@ class TestTaskAbortProperties:
 
     def test_is_abortable_default_none(self):
         """Test is_abortable defaults to None for new tasks."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
 
@@ -159,7 +159,7 @@ class TestTaskSetStatus:
 
     def test_set_status_in_progress_sets_is_abortable_false(self):
         """Test that transitioning to IN_PROGRESS sets is_abortable to False."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.uuid = "test-uuid"
@@ -172,7 +172,7 @@ class TestTaskSetStatus:
 
     def test_set_status_in_progress_preserves_existing_is_abortable(self):
         """Test that re-setting IN_PROGRESS doesn't override is_abortable."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.uuid = "test-uuid"
@@ -188,7 +188,7 @@ class TestTaskSetStatus:
 
     def test_set_status_aborting_does_not_set_ended_at(self):
         """Test that ABORTING status does not set ended_at."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.uuid = "test-uuid"
@@ -200,7 +200,7 @@ class TestTaskSetStatus:
 
     def test_set_status_aborted_sets_ended_at(self):
         """Test that ABORTED status sets ended_at."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.uuid = "test-uuid"
@@ -216,7 +216,7 @@ class TestTaskDuration:
 
     def test_duration_seconds_finished_task(self):
         """Test duration for finished task returns actual duration."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.status = TaskStatus.SUCCESS.value  # Must be finished to use ended_at
@@ -229,7 +229,7 @@ class TestTaskDuration:
     @freeze_time("2024-01-01 10:00:30")
     def test_duration_seconds_running_task(self):
         """Test duration for running task returns time since start."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.started_at = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
@@ -241,7 +241,7 @@ class TestTaskDuration:
     @freeze_time("2024-01-01 10:00:15")
     def test_duration_seconds_pending_task(self):
         """Test duration for pending task returns queue time."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.created_on = datetime(2024, 1, 1, 10, 0, 0, tzinfo=timezone.utc)
@@ -253,7 +253,7 @@ class TestTaskDuration:
 
     def test_duration_seconds_no_timestamps(self):
         """Test duration returns None when no timestamps available."""
-        from superset.models.tasks import Task
+        from axbi.models.tasks import Task
 
         task = Task()
         task.created_on = None
@@ -278,7 +278,7 @@ class TestAbortHandlerRegistration:
         assert len(task_context._abort_handlers) == 1
         assert not handler_called
 
-    @patch("superset.tasks.context.current_app")
+    @patch("axbi.tasks.context.current_app")
     def test_on_abort_sets_abortable(self, mock_app):
         """Test on_abort sets is_abortable to True on first handler."""
         mock_app.config = {"TASK_ABORT_POLLING_DEFAULT_INTERVAL": 1.0}
@@ -300,7 +300,7 @@ class TestAbortHandlerRegistration:
 
             mock_set_abortable.assert_called_once()
 
-    @patch("superset.tasks.context.current_app")
+    @patch("axbi.tasks.context.current_app")
     def test_on_abort_only_sets_abortable_once(self, mock_app):
         """Test on_abort only calls _set_abortable for first handler."""
         mock_app.config = {"TASK_ABORT_POLLING_DEFAULT_INTERVAL": 1.0}
@@ -334,7 +334,7 @@ class TestAbortHandlerRegistration:
         mock_task.properties_dict = {}
         mock_task.payload_dict = {}
 
-        with patch("superset.tasks.context.current_app") as mock_app:
+        with patch("axbi.tasks.context.current_app") as mock_app:
             mock_app._get_current_object = Mock(return_value=mock_app)
             ctx = TaskContext(mock_task)
             assert ctx.abort_handlers_completed is False
@@ -380,7 +380,7 @@ class TestAbortPolling:
 
     def test_on_abort_with_custom_interval(self, task_context):
         """Test that custom interval can be set via start_abort_polling."""
-        with patch("superset.tasks.context.current_app") as mock_app:
+        with patch("axbi.tasks.context.current_app") as mock_app:
             mock_app.config = {"TASK_ABORT_POLLING_DEFAULT_INTERVAL": 0.1}
             mock_app._get_current_object = Mock(return_value=mock_app)
 

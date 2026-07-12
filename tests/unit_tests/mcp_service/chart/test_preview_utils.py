@@ -23,11 +23,11 @@ import ast
 import inspect
 from pathlib import Path
 
-from superset.mcp_service.chart import preview_utils
+from axbi.mcp_service.chart import preview_utils
 
 
 def _imports_chart_data_command(node: ast.Import | ast.ImportFrom) -> bool:
-    blocked_module = "superset.commands.chart.data.get_data_command"
+    blocked_module = "axbi.commands.chart.data.get_data_command"
 
     if isinstance(node, ast.Import):
         return any(
@@ -40,7 +40,7 @@ def _imports_chart_data_command(node: ast.Import | ast.ImportFrom) -> bool:
         module == blocked_module
         or module.startswith(f"{blocked_module}.")
         or (
-            module == "superset.commands.chart.data"
+            module == "axbi.commands.chart.data"
             and any(alias.name == "get_data_command" for alias in node.names)
         )
     )

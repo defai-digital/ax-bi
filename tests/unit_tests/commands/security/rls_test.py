@@ -18,10 +18,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.security.create import CreateRLSRuleCommand
-from superset.commands.security.delete import DeleteRLSRuleCommand
-from superset.commands.security.exceptions import RLSDatasourceForbiddenError
-from superset.commands.security.update import UpdateRLSRuleCommand
+from axbi.commands.security.create import CreateRLSRuleCommand
+from axbi.commands.security.delete import DeleteRLSRuleCommand
+from axbi.commands.security.exceptions import RLSDatasourceForbiddenError
+from axbi.commands.security.update import UpdateRLSRuleCommand
 
 
 def _mock_tables(*table_ids: int) -> list[MagicMock]:
@@ -44,13 +44,13 @@ def test_create_rls_rule_forbidden_when_no_datasource_access() -> None:
     tables = _mock_tables(1)
 
     with (
-        _patch_query("superset.commands.security.create", tables),
+        _patch_query("axbi.commands.security.create", tables),
         patch(
-            "superset.commands.security.create.populate_roles",
+            "axbi.commands.security.create.populate_roles",
             return_value=[],
         ),
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=False,
         ) as can_access,
     ):
@@ -65,13 +65,13 @@ def test_create_rls_rule_allowed_when_datasource_access() -> None:
     tables = _mock_tables(1, 2)
 
     with (
-        _patch_query("superset.commands.security.create", tables),
+        _patch_query("axbi.commands.security.create", tables),
         patch(
-            "superset.commands.security.create.populate_roles",
+            "axbi.commands.security.create.populate_roles",
             return_value=[],
         ),
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=True,
         ) as can_access,
     ):
@@ -87,13 +87,13 @@ def test_create_rls_rule_forbidden_if_any_datasource_denied() -> None:
     tables = _mock_tables(1, 2)
 
     with (
-        _patch_query("superset.commands.security.create", tables),
+        _patch_query("axbi.commands.security.create", tables),
         patch(
-            "superset.commands.security.create.populate_roles",
+            "axbi.commands.security.create.populate_roles",
             return_value=[],
         ),
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             side_effect=[True, False],
         ),
     ):
@@ -106,17 +106,17 @@ def test_update_rls_rule_forbidden_when_no_datasource_access() -> None:
     tables = _mock_tables(1)
 
     with (
-        _patch_query("superset.commands.security.update", tables),
+        _patch_query("axbi.commands.security.update", tables),
         patch(
-            "superset.commands.security.update.RLSDAO.find_by_id",
+            "axbi.commands.security.update.RLSDAO.find_by_id",
             return_value=MagicMock(),
         ),
         patch(
-            "superset.commands.security.update.populate_roles",
+            "axbi.commands.security.update.populate_roles",
             return_value=[],
         ),
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=False,
         ) as can_access,
     ):
@@ -131,17 +131,17 @@ def test_update_rls_rule_allowed_when_datasource_access() -> None:
     tables = _mock_tables(1)
 
     with (
-        _patch_query("superset.commands.security.update", tables),
+        _patch_query("axbi.commands.security.update", tables),
         patch(
-            "superset.commands.security.update.RLSDAO.find_by_id",
+            "axbi.commands.security.update.RLSDAO.find_by_id",
             return_value=MagicMock(),
         ),
         patch(
-            "superset.commands.security.update.populate_roles",
+            "axbi.commands.security.update.populate_roles",
             return_value=[],
         ),
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=True,
         ) as can_access,
     ):
@@ -163,15 +163,15 @@ def test_update_rls_rule_partial_update_preserves_tables_and_roles() -> None:
     rule.tables = _mock_tables(1)
     with (
         patch(
-            "superset.commands.security.update.RLSDAO.find_by_id",
+            "axbi.commands.security.update.RLSDAO.find_by_id",
             return_value=rule,
         ),
         patch(
-            "superset.commands.security.update.populate_roles",
+            "axbi.commands.security.update.populate_roles",
         ) as populate_roles,
-        patch("superset.commands.security.update.db.session.query") as query,
+        patch("axbi.commands.security.update.db.session.query") as query,
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=True,
         ),
     ):
@@ -192,16 +192,16 @@ def test_update_rls_rule_only_roles_present_does_not_touch_tables() -> None:
     rule.tables = _mock_tables(1)
     with (
         patch(
-            "superset.commands.security.update.RLSDAO.find_by_id",
+            "axbi.commands.security.update.RLSDAO.find_by_id",
             return_value=rule,
         ),
         patch(
-            "superset.commands.security.update.populate_roles",
+            "axbi.commands.security.update.populate_roles",
             return_value=["resolved-role"],
         ) as populate_roles,
-        patch("superset.commands.security.update.db.session.query") as query,
+        patch("axbi.commands.security.update.db.session.query") as query,
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=True,
         ),
     ):
@@ -225,12 +225,12 @@ def test_update_rls_rule_partial_update_enforces_access_on_existing_tables() -> 
     rule.tables = _mock_tables(1)
     with (
         patch(
-            "superset.commands.security.update.RLSDAO.find_by_id",
+            "axbi.commands.security.update.RLSDAO.find_by_id",
             return_value=rule,
         ),
-        patch("superset.commands.security.update.db.session.query") as query,
+        patch("axbi.commands.security.update.db.session.query") as query,
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=False,
         ) as can_access,
     ):
@@ -250,11 +250,11 @@ def test_delete_rls_rule_forbidden_when_no_datasource_access() -> None:
 
     with (
         patch(
-            "superset.commands.security.delete.RLSDAO.find_by_ids",
+            "axbi.commands.security.delete.RLSDAO.find_by_ids",
             return_value=[rule],
         ),
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=False,
         ) as can_access,
     ):
@@ -272,11 +272,11 @@ def test_delete_rls_rule_allowed_when_datasource_access() -> None:
 
     with (
         patch(
-            "superset.commands.security.delete.RLSDAO.find_by_ids",
+            "axbi.commands.security.delete.RLSDAO.find_by_ids",
             return_value=[rule],
         ),
         patch(
-            "superset.commands.security.utils.security_manager.can_access_datasource",
+            "axbi.commands.security.utils.security_manager.can_access_datasource",
             return_value=True,
         ) as can_access,
     ):

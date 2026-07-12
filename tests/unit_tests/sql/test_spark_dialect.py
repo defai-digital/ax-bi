@@ -25,9 +25,9 @@ BOOL_OR (instead of rewriting them to LOGICAL_OR as the Hive dialect does).
 import pytest
 from sqlalchemy.engine.url import make_url
 
-from superset.db_engine_specs import get_engine_spec
-from superset.db_engine_specs.spark import SparkEngineSpec
-from superset.sql.parse import LimitMethod, SQLScript, SQLStatement
+from axbi.db_engine_specs import get_engine_spec
+from axbi.db_engine_specs.spark import SparkEngineSpec
+from axbi.sql.parse import LimitMethod, SQLScript, SQLStatement
 
 
 def test_spark_url_resolves_to_spark_engine_spec() -> None:
@@ -70,7 +70,7 @@ def test_spark_preserves_bool_or(sql: str, expected: str) -> None:
 def test_spark_preserves_bool_or_with_limit() -> None:
     """BOOL_OR should be preserved after applying a LIMIT (the SQLLab flow).
 
-    In SQLLab, Superset parses the user's SQL, applies a LIMIT, and regenerates
+    In SQLLab, AxBI parses the user's SQL, applies a LIMIT, and regenerates
     the SQL using the engine's sqlglot dialect. This test replicates that full
     flow for a spark:// connection.
     """

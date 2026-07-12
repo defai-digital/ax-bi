@@ -19,8 +19,8 @@
 
 import memoizeOne from 'memoize-one';
 import React from 'react';
-import { isControlPanelSectionConfig } from '@superset-ui/chart-controls';
-import { getChartControlPanelRegistry, JsonObject } from '@superset-ui/core';
+import { isControlPanelSectionConfig } from '@ax-bi/chart-controls';
+import { getChartControlPanelRegistry, JsonObject } from '@ax-bi/ui-core';
 import type { ControlMap } from 'src/components/AlteredSliceTag/types';
 import { controls } from '../explore/controls';
 

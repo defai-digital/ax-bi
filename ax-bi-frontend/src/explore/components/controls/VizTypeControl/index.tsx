@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useCallback, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { getChartMetadataRegistry } from '@superset-ui/core';
-import { css, styled, SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { getChartMetadataRegistry } from '@ax-bi/ui-core';
+import { css, styled, AxBITheme } from '@ax-bi/core/theme';
 import { usePluginContext } from 'src/components';
-import { Icons, Modal } from '@superset-ui/core/components';
+import { Icons, Modal } from '@ax-bi/ui-core/components';
 import { noOp } from 'src/utils/common';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { FilterPlugins } from 'src/constants';
@@ -47,7 +47,7 @@ function VizSupportValidation({ vizType }: { vizType: string }) {
   return (
     <div
       className="text-danger"
-      css={(theme: SupersetTheme) => css`
+      css={(theme: AxBITheme) => css`
         margin-top: ${theme.sizeUnit}px;
       `}
     >
@@ -94,7 +94,7 @@ const VizTypeControl = ({
   return (
     <>
       <div
-        css={(theme: SupersetTheme) => css`
+        css={(theme: AxBITheme) => css`
           min-width: ${theme.sizeUnit * 72}px;
           max-width: fit-content;
         `}
@@ -103,7 +103,7 @@ const VizTypeControl = ({
         {initialValue && <VizSupportValidation vizType={initialValue} />}
       </div>
       <div
-        css={(theme: SupersetTheme) => css`
+        css={(theme: AxBITheme) => css`
           display: flex;
           justify-content: flex-end;
           margin-top: ${theme.sizeUnit * 2}px;

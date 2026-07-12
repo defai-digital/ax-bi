@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useCallback } from 'react';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import rison from 'rison';
 import {
   OwnerSelectLabel,
@@ -36,7 +36,7 @@ export const useAccessOptions = () => {
         page,
         page_size: pageSize,
       });
-      return SupersetClient.get({
+      return AxBIClient.get({
         endpoint: `/api/v1/dashboard/related/${accessType}?q=${query}`,
       }).then(response => ({
         data: response.json.result

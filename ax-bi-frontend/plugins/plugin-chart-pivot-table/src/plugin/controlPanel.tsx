@@ -22,8 +22,8 @@ import {
   Dataset,
   getStandardizedControls,
   sharedControls,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   isAdhocColumn,
@@ -32,7 +32,7 @@ import {
   SMART_DATE_ID,
   validateNonEmpty,
   QueryFormColumn,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { MetricsLayoutEnum } from '../types';
 
 const config: ControlPanelConfig = {

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, SqlaFormData } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps, SqlaFormData } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { EchartsBoxPlotChartProps } from '../../src/BoxPlot/types';
 import transformProps from '../../src/BoxPlot/transformProps';
 
@@ -68,7 +68,7 @@ describe('BoxPlot transformProps', () => {
         ],
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const buildChartProps = (formDataOverrides: Partial<SqlaFormData> = {}) =>
@@ -77,7 +77,7 @@ describe('BoxPlot transformProps', () => {
       width: 800,
       height: 600,
       queriesData: chartProps.queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     }) as EchartsBoxPlotChartProps;
 
   test('should transform chart props for viz', () => {

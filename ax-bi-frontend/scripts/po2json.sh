@@ -26,21 +26,21 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   cat <<'EOF'
 Usage: ./scripts/po2json.sh
 
-Generate frontend JSON translation files from Superset .po catalogs.
+Generate frontend JSON translation files from AxBI .po catalogs.
 EOF
   exit 0
 fi
 
 export NODE_NO_WARNINGS=1
 
-for file in $( find ../superset/translations/** -name '*.po' );
+for file in $( find ../ax-bi/translations/** -name '*.po' );
 do
   extension=${file##*.}
   filename="${file%.*}"
   if [ $extension == "po" ]
   then
-    echo "po2json --domain superset --format jed1.x $file $filename.json"
-    po2json --domain superset --format jed1.x --fuzzy $file $filename.json
+    echo "po2json --domain axbi --format jed1.x $file $filename.json"
+    po2json --domain axbi --format jed1.x --fuzzy $file $filename.json
     prettier --write $filename.json
   fi
 done

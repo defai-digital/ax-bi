@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
 import ControlHeader from 'src/explore/components/ControlHeader';
 import {
   Select,
@@ -26,7 +26,7 @@ import {
   type LabeledValue,
   type SelectOptionsType,
   type SelectProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import withToasts from 'src/components/MessageToasts/withToasts';
 
 type SelectAsyncProps = Omit<SelectProps, 'options' | 'ariaLabel' | 'onChange'>;
@@ -103,7 +103,7 @@ const SelectAsyncControl = ({
         addDangerToast(t('Error while fetching data: %s', error));
       });
     const loadOptions = () =>
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: dataEndpoint,
       })
         .then(response => {

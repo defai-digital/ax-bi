@@ -17,8 +17,8 @@
  * under the License.
  */
 import { LegacyRef } from 'react';
-import { css, styled } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { css, styled } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 interface DragHandleProps {
   position: 'left' | 'top';
@@ -30,10 +30,12 @@ const DragHandleContainer = styled.div<{ position: 'left' | 'top' }>`
     height: ${theme.sizeUnit * 5}px;
     overflow: hidden;
     cursor: move;
-    ${position === 'top' &&
-    css`
-      transform: rotate(90deg);
-    `}
+    ${
+      position === 'top' &&
+      css`
+        transform: rotate(90deg);
+      `
+    }
     & path {
       fill: ${theme.colorIcon};
     }

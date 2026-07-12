@@ -19,7 +19,7 @@
 import { sanitizeUrl } from '@braintree/sanitize-url';
 import { useCallback, useState, FormEvent } from 'react';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
-import { Radio, RadioChangeEvent } from '@superset-ui/core/components/Radio';
+import { Radio, RadioChangeEvent } from '@ax-bi/ui-core/components/Radio';
 import {
   AsyncSelect,
   Button,
@@ -29,10 +29,10 @@ import {
   type SelectValue,
   Icons,
   Flex,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 import {
-  SupersetClient,
+  AxBIClient,
   JsonResponse,
   QueryResponse,
   QueryFormData,
@@ -40,9 +40,9 @@ import {
   FeatureFlag,
   isFeatureEnabled,
   getClientErrorObject,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 import { useAppSelector } from 'src/SqlLab/hooks/useAppSelector';
 import rison from 'rison';
@@ -57,7 +57,7 @@ import { mountExploreUrl } from 'src/explore/exploreUtils';
 import { postFormData } from 'src/explore/exploreUtils/formData';
 import { URL_PARAMS } from 'src/constants';
 import { isEmpty } from 'lodash';
-import { clearDatasetCache } from 'src/utils/cachedSupersetGet';
+import { clearDatasetCache } from 'src/utils/cachedAxBIGet';
 
 interface QueryDatabase {
   id?: number;
@@ -176,7 +176,7 @@ const updateDataset = async ({
     ...(templateParams !== undefined && { template_params: templateParams }),
   });
 
-  const data: JsonResponse = await SupersetClient.put({
+  const data: JsonResponse = await AxBIClient.put({
     endpoint,
     headers,
     body,
@@ -333,7 +333,7 @@ export const SaveDatasetModal = ({
         order_direction: 'desc',
       });
 
-      return SupersetClient.get({
+      return AxBIClient.get({
         endpoint: `/api/v1/dataset/?q=${queryParams}`,
       }).then(response => ({
         data: response.json.result.map(

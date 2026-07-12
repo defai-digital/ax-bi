@@ -23,22 +23,22 @@ from flask import current_app
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import db
-from superset.commands.exceptions import ImportFailedError
-from superset.utils import json
+from axbi import db
+from axbi.commands.exceptions import ImportFailedError
+from axbi.utils import json
 
 
 def test_import_database(mocker: MockerFixture, session: Session) -> None:
     """
     Test importing a database.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -74,9 +74,9 @@ def test_import_database_no_creds(mocker: MockerFixture, session: Session) -> No
     """
     Test importing a database.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config_no_creds
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
@@ -96,13 +96,13 @@ def test_import_database_without_extra(mocker: MockerFixture, session: Session) 
     """
     Test importing a database config that omits optional extra metadata.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -121,9 +121,9 @@ def test_import_database_sqlite_invalid(
     """
     Test importing a database.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config_sqlite
 
     current_app.config["PREVENT_UNSAFE_DB_CONNECTIONS"] = True
@@ -154,12 +154,12 @@ def test_import_database_sqlite_allowed_with_ignore_permissions(
     key fix from PR #37577 that allows example loading to work in CI/showtime
     environments where PREVENT_UNSAFE_DB_CONNECTIONS is enabled.
     """
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config_sqlite
 
     mocker.patch.dict(current_app.config, {"PREVENT_UNSAFE_DB_CONNECTIONS": True})
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -183,13 +183,13 @@ def test_import_database_managed_externally(
     """
     Test importing a database that is managed externally.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -210,9 +210,9 @@ def test_import_database_without_permission(
     """
     Test importing a database when a user doesn't have permissions to create.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config
 
     mocker.patch.object(security_manager, "can_access", return_value=False)
@@ -234,13 +234,13 @@ def test_import_database_with_version(mocker: MockerFixture, session: Session) -
     """
     Test importing a database with a version set.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -258,13 +258,13 @@ def test_import_database_with_user_impersonation(
     """
     Test importing a database that is managed externally.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
 
@@ -285,15 +285,15 @@ def test_import_database_with_masked_encrypted_extra_new_db(
     When no existing DB matches the UUID, the masked_encrypted_extra value
     should be stored as-is in encrypted_extra.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import (
         database_config_with_masked_encrypted_extra,
     )
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -319,15 +319,15 @@ def test_import_database_with_non_object_masked_encrypted_extra_new_db(
     """
     Test new database import normalizes non-object masked_encrypted_extra.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import (
         database_config_with_masked_encrypted_extra,
     )
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -351,16 +351,16 @@ def test_import_database_with_masked_encrypted_extra_existing_db(
     an existing DB has the real values, reveal_sensitive should restore
     the original values from the existing DB's encrypted_extra.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.constants import PASSWORD_MASK
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.constants import PASSWORD_MASK
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import (
         database_config_with_masked_encrypted_extra,
     )
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -399,16 +399,16 @@ def test_import_database_with_masked_encrypted_extra_missing_existing_secret(
     """
     Test masked imports tolerate existing encrypted_extra missing the secret path.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.constants import PASSWORD_MASK
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.constants import PASSWORD_MASK
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import (
         database_config_with_masked_encrypted_extra,
     )
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -443,15 +443,15 @@ def test_import_database_with_non_object_masked_encrypted_extra_existing_db(
     """
     Test existing database import tolerates non-object masked_encrypted_extra.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import (
         database_config_with_masked_encrypted_extra,
     )
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
-    mocker.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    mocker.patch("axbi.commands.database.importers.v1.utils.add_permissions")
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -476,19 +476,19 @@ def test_import_database_oauth2_redirect_is_nonfatal(
     Test that an OAuth2RedirectError from add_permissions is logged
     and does not prevent the import from succeeding.
     """
-    from superset import security_manager
-    from superset.commands.database.importers.v1.utils import import_database
-    from superset.exceptions import OAuth2RedirectError
-    from superset.models.core import Database
+    from axbi import security_manager
+    from axbi.commands.database.importers.v1.utils import import_database
+    from axbi.exceptions import OAuth2RedirectError
+    from axbi.models.core import Database
     from tests.integration_tests.fixtures.importexport import database_config
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     mock_add_perms = mocker.patch(
-        "superset.commands.database.importers.v1.utils.add_permissions",
+        "axbi.commands.database.importers.v1.utils.add_permissions",
         side_effect=OAuth2RedirectError(
             url="https://oauth.example.com/authorize",
             tab_id="abc-123",
-            redirect_uri="https://superset.example.com/callback",
+            redirect_uri="https://ax-bi.example.com/callback",
         ),
     )
 
@@ -520,17 +520,17 @@ def test_import_datasources_cli_encrypts_password(
     (``XXXXXXXXXX``) rather than the cleartext secret, and ``database.password``
     must hold the real credential so that connections still work.
     """
-    from superset import db
-    from superset.commands.dataset.importers.v0 import import_from_dict
-    from superset.constants import PASSWORD_MASK
-    from superset.models.core import Database
+    from axbi import db
+    from axbi.commands.dataset.importers.v0 import import_from_dict
+    from axbi.constants import PASSWORD_MASK
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
 
     plaintext_password = "secret-password"  # noqa: S105
     plaintext_uri = (
-        f"postgresql://user:{plaintext_password}@db.example.org:5432/superset_data"
+        f"postgresql://user:{plaintext_password}@db.example.org:5432/axbi_data"
     )
 
     # This is the exact YAML structure produced by the Helm chart / docs example
@@ -593,15 +593,15 @@ def test_import_datasources_cli_no_password_does_not_clobber_existing(
     ``set_sqlalchemy_uri`` on a password-less URI would set ``password = None``
     and break existing connections.
     """
-    from superset import db
-    from superset.commands.dataset.importers.v0 import import_from_dict
-    from superset.models.core import Database
+    from axbi import db
+    from axbi.commands.dataset.importers.v0 import import_from_dict
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     Database.metadata.create_all(engine)  # pylint: disable=no-member
 
     # URI with no password segment — this is the "secret kept out of YAML" pattern.
-    no_password_uri = "postgresql://user@db.example.org:5432/superset_data"  # noqa: S105
+    no_password_uri = "postgresql://user@db.example.org:5432/axbi_data"  # noqa: S105
 
     data: dict[str, list[dict[str, object]]] = {
         "databases": [

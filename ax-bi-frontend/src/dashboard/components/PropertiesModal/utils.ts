@@ -17,7 +17,7 @@
  * under the License.
  */
 import { type ReactNode } from 'react';
-import { ensureIsArray } from '@superset-ui/core';
+import { ensureIsArray } from '@ax-bi/ui-core';
 import {
   OWNER_TEXT_LABEL_PROP,
   OWNER_EMAIL_PROP,

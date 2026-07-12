@@ -19,11 +19,11 @@
 import { PureComponent } from 'react';
 import cloudLayout from 'd3-cloud';
 import { scaleLinear } from 'd3-scale';
-import { seed, CategoricalColorNamespace } from '@superset-ui/core';
-import { SupersetTheme, withTheme } from '@apache-superset/core/theme';
+import { seed, CategoricalColorNamespace } from '@ax-bi/ui-core';
+import { AxBITheme, withTheme } from '@ax-bi/core/theme';
 import { isEqual } from 'lodash';
 
-const seedRandom = seed('superset-ui');
+const seedRandom = seed('axbi-ui');
 
 export type PlainObject = Record<string, unknown>;
 
@@ -92,7 +92,7 @@ const defaultProps: Required<WordCloudVisualProps> = {
 };
 
 type FullWordCloudProps = WordCloudProps &
-  typeof defaultProps & { theme: SupersetTheme };
+  typeof defaultProps & { theme: AxBITheme };
 
 const SCALE_FACTOR_STEP = 0.5;
 const MAX_SCALE_FACTOR = 3;

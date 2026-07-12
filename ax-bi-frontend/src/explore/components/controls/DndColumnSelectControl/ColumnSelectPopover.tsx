@@ -27,25 +27,25 @@ import {
   useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { editors } from '@apache-superset/core';
-import { t } from '@apache-superset/core/translation';
+import { editors } from '@ax-bi/core';
+import { t } from '@ax-bi/core/translation';
 import {
   AdhocColumn,
   isAdhocColumn,
   DatasourceType,
   Metric,
   QueryFormMetric,
-} from '@superset-ui/core';
-import { styled, css } from '@apache-superset/core/theme';
-import { ColumnMeta, isSavedExpression } from '@superset-ui/chart-controls';
-import Tabs from '@superset-ui/core/components/Tabs';
+} from '@ax-bi/ui-core';
+import { styled, css } from '@ax-bi/core/theme';
+import { ColumnMeta, isSavedExpression } from '@ax-bi/chart-controls';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import {
   Button,
   Form,
   FormItem,
   Select,
   EmptyState,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 
 import sqlKeywords from 'src/SqlLab/utils/sqlKeywords';
 import { getColumnKeywords } from 'src/explore/controlUtils/getColumnKeywords';

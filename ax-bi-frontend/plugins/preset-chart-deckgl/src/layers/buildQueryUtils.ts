@@ -21,7 +21,7 @@ import {
   QueryObjectFilterClause,
   QueryFormColumn,
   getColumnLabel,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export function addJsColumnsToColumns(
   columns: string[],

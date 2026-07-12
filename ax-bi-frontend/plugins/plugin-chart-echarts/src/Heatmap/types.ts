@@ -22,7 +22,7 @@ import {
   QueryFormData,
   QueryFormMetric,
   RgbaColor,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { BaseChartProps, BaseTransformedProps } from '../types';
 
 export interface HeatmapFormData extends QueryFormData {

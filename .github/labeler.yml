@@ -9,13 +9,13 @@
 
 ############################################
 # General workflow warnings
-# full list of labels is here: https://github.com/apache/superset/labels
+# full list of labels is here: https://github.com/defai-digital/ax-bi/labels
 ############################################
 
 "risk:db-migration":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/migrations/**'
+    - 'axbi/migrations/**'
 
 "risk:ci-script":
 - changed-files:
@@ -29,18 +29,18 @@
 "dependencies:python":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/requirements/**'
-    - 'superset/translations/requirements.txt'
+    - 'axbi/requirements/**'
+    - 'axbi/translations/requirements.txt'
 
 "dependencies:npm":
 - changed-files:
   - any-glob-to-any-file:
     - 'ax-bi-frontend/package.json'
     - 'ax-bi-frontend/package-lock.json'
-    - 'superset-embedded-sdk/package.json'
-    - 'superset-embedded-sdk/package-lock.json'
-    - 'superset-websocket/package.json'
-    - 'superset-websocket/package-lock.json'
+    - 'ax-bi-embedded-sdk/package.json'
+    - 'ax-bi-embedded-sdk/package-lock.json'
+    - 'ax-bi-websocket/package.json'
+    - 'ax-bi-websocket/package-lock.json'
     - 'ax-bi-frontend/cypress-base/package.json'
     - 'ax-bi-frontend/cypress-base/package-lock.json'
     - 'ax-bi-frontend/packages/**/package.json'
@@ -58,93 +58,93 @@
 "api":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/**/api.py'
-    - 'superset/views/core.py'
+    - 'axbi/**/api.py'
+    - 'axbi/views/core.py'
 
 "i18n":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/**'
+    - 'axbi/translations/**'
 
 "i18n:brazilian":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/pt_BR/**'
+    - 'axbi/translations/pt_BR/**'
 
 "i18n:chinese":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/zh/**'
+    - 'axbi/translations/zh/**'
 
 "i18n:czech":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/cs/**'
+    - 'axbi/translations/cs/**'
 
 "i18n:traditional-chinese":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/zh_TW/**'
+    - 'axbi/translations/zh_TW/**'
 
 "i18n:dutch":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/nl/**'
+    - 'axbi/translations/nl/**'
 
 "i18n:french":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/fr/**'
+    - 'axbi/translations/fr/**'
 
 "i18n:italian":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/it/**'
+    - 'axbi/translations/it/**'
 
 "i18n:japanese":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/ja/**'
+    - 'axbi/translations/ja/**'
 
 "i18n:korean":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/ko/**'
+    - 'axbi/translations/ko/**'
 
 "i18n:portuguese":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/pt/**'
+    - 'axbi/translations/pt/**'
 
 "i18n:russian":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/ru/**'
+    - 'axbi/translations/ru/**'
 
 "i18n:slovak":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/sk/**'
+    - 'axbi/translations/sk/**'
 
 "i18n:latvian":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/lv/**'
+    - 'axbi/translations/lv/**'
 
 "i18n:ukrainian":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/uk/**'
+    - 'axbi/translations/uk/**'
 
 "i18n:spanish":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/es/**'
+    - 'axbi/translations/es/**'
 
 "i18n:persian":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset/translations/fa/**'
+    - 'axbi/translations/fa/**'
 
 ############################################
 # Sub-projects and monorepo packages
@@ -163,7 +163,7 @@
 "embedded":
 - changed-files:
   - any-glob-to-any-file:
-    - 'superset-embedded-sdk/**'
+    - 'ax-bi-embedded-sdk/**'
 
 "github_actions":
 - changed-files:

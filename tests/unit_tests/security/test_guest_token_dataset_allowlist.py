@@ -26,8 +26,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.exceptions import SupersetSecurityException
-from superset.security.guest_token import (
+from axbi.exceptions import AxBISecurityException
+from axbi.security.guest_token import (
     GuestToken,
     GuestTokenResourceType,
     GuestUser,
@@ -67,22 +67,22 @@ def _make_datasource(dataset_id: int) -> MagicMock:
 
 def test_create_guest_access_token_without_datasets_omits_claim() -> None:
     """When datasets=None the JWT must not contain a datasets key."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
-    sm = MagicMock(spec=SupersetSecurityManager)
+    sm = MagicMock(spec=AxBISecurityManager)
     sm._get_current_epoch_time.return_value = 0
-    sm._get_guest_token_jwt_audience.return_value = "superset"
+    sm._get_guest_token_jwt_audience.return_value = "axbi"
     sm.pyjwt_for_guest_token = MagicMock()
 
     with patch(
-        "superset.security.manager.get_conf",
+        "axbi.security.manager.get_conf",
         return_value={
             "GUEST_TOKEN_JWT_SECRET": "secret",
             "GUEST_TOKEN_JWT_ALGO": "HS256",
             "GUEST_TOKEN_JWT_EXP_SECONDS": 300,
         },
     ):
-        SupersetSecurityManager.create_guest_access_token(
+        AxBISecurityManager.create_guest_access_token(
             sm, user={}, resources=[], rls=[], datasets=None
         )
 
@@ -92,22 +92,22 @@ def test_create_guest_access_token_without_datasets_omits_claim() -> None:
 
 def test_create_guest_access_token_with_datasets_includes_claim() -> None:
     """When datasets is provided the JWT must include the datasets claim."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
-    sm = MagicMock(spec=SupersetSecurityManager)
+    sm = MagicMock(spec=AxBISecurityManager)
     sm._get_current_epoch_time.return_value = 0
-    sm._get_guest_token_jwt_audience.return_value = "superset"
+    sm._get_guest_token_jwt_audience.return_value = "axbi"
     sm.pyjwt_for_guest_token = MagicMock()
 
     with patch(
-        "superset.security.manager.get_conf",
+        "axbi.security.manager.get_conf",
         return_value={
             "GUEST_TOKEN_JWT_SECRET": "secret",
             "GUEST_TOKEN_JWT_ALGO": "HS256",
             "GUEST_TOKEN_JWT_EXP_SECONDS": 300,
         },
     ):
-        SupersetSecurityManager.create_guest_access_token(
+        AxBISecurityManager.create_guest_access_token(
             sm, user={}, resources=[], rls=[], datasets=[7, 8]
         )
 
@@ -123,9 +123,9 @@ def test_create_guest_access_token_with_datasets_includes_claim() -> None:
 def _sm_for_access_test(guest_user: GuestUser) -> MagicMock:
     """Build a security-manager mock wired to grant basic datasource access
     through the guest path so only the allowlist gate is exercised."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
-    sm = MagicMock(spec=SupersetSecurityManager)
+    sm = MagicMock(spec=AxBISecurityManager)
     sm.is_guest_user.return_value = True
     sm.get_current_guest_user_if_guest.return_value = guest_user
     # Make every upstream access check pass so we isolate the allowlist check.
@@ -135,7 +135,7 @@ def _sm_for_access_test(guest_user: GuestUser) -> MagicMock:
 
 def test_raise_for_access_no_datasets_claim_allows_any_datasource() -> None:
     """A token without a datasets claim must allow all datasources (backward compat)."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
     guest_user = _make_guest_user(datasets=None)
     sm = _sm_for_access_test(guest_user)
@@ -143,47 +143,47 @@ def test_raise_for_access_no_datasets_claim_allows_any_datasource() -> None:
 
     # can_access_schema returns True so the main block does not raise,
     # then we hit our allowlist check — with no claim it must not raise either.
-    SupersetSecurityManager.raise_for_access(sm, datasource=datasource)  # no exception
+    AxBISecurityManager.raise_for_access(sm, datasource=datasource)  # no exception
 
 
 def test_raise_for_access_datasets_claim_allows_listed_datasource() -> None:
     """A token with datasets=[7, 8] must allow datasource id=7."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
     guest_user = _make_guest_user(datasets=[7, 8])
     sm = _sm_for_access_test(guest_user)
     datasource = _make_datasource(dataset_id=7)
 
-    SupersetSecurityManager.raise_for_access(sm, datasource=datasource)  # no exception
+    AxBISecurityManager.raise_for_access(sm, datasource=datasource)  # no exception
 
 
 def test_raise_for_access_datasets_claim_blocks_unlisted_datasource() -> None:
     """A token with datasets=[7, 8] must block datasource id=99."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
     guest_user = _make_guest_user(datasets=[7, 8])
     sm = _sm_for_access_test(guest_user)
     datasource = _make_datasource(dataset_id=99)
 
-    with pytest.raises(SupersetSecurityException):
-        SupersetSecurityManager.raise_for_access(sm, datasource=datasource)
+    with pytest.raises(AxBISecurityException):
+        AxBISecurityManager.raise_for_access(sm, datasource=datasource)
 
 
 def test_raise_for_access_empty_datasets_list_blocks_all() -> None:
     """An explicit empty allowlist (datasets=[]) must block every datasource."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
     guest_user = _make_guest_user(datasets=[])
     sm = _sm_for_access_test(guest_user)
     datasource = _make_datasource(dataset_id=7)
 
-    with pytest.raises(SupersetSecurityException):
-        SupersetSecurityManager.raise_for_access(sm, datasource=datasource)
+    with pytest.raises(AxBISecurityException):
+        AxBISecurityManager.raise_for_access(sm, datasource=datasource)
 
 
 def test_raise_for_access_malformed_datasets_claim_blocks_access() -> None:
     """A non-integer element in the datasets claim must be treated as a denial."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
     # Simulate a token whose datasets claim was tampered to contain strings.
     guest_user = _make_guest_user(datasets=None)
@@ -191,8 +191,8 @@ def test_raise_for_access_malformed_datasets_claim_blocks_access() -> None:
     sm = _sm_for_access_test(guest_user)
     datasource = _make_datasource(dataset_id=7)
 
-    with pytest.raises(SupersetSecurityException):
-        SupersetSecurityManager.raise_for_access(sm, datasource=datasource)
+    with pytest.raises(AxBISecurityException):
+        AxBISecurityManager.raise_for_access(sm, datasource=datasource)
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +202,7 @@ def test_raise_for_access_malformed_datasets_claim_blocks_access() -> None:
 
 def test_guest_token_create_schema_datasets_optional() -> None:
     """datasets is optional — a payload without it must load successfully."""
-    from superset.security.api import GuestTokenCreateSchema
+    from axbi.security.api import GuestTokenCreateSchema
 
     schema = GuestTokenCreateSchema()
     result = schema.load({"resources": [{"type": "dashboard", "id": "abc"}], "rls": []})
@@ -211,7 +211,7 @@ def test_guest_token_create_schema_datasets_optional() -> None:
 
 def test_guest_token_create_schema_datasets_accepted() -> None:
     """datasets=[7, 8] must load and be present in the result."""
-    from superset.security.api import GuestTokenCreateSchema
+    from axbi.security.api import GuestTokenCreateSchema
 
     schema = GuestTokenCreateSchema()
     result = schema.load(
@@ -233,14 +233,14 @@ def test_get_current_guest_user_if_guest_returns_guest_user() -> None:
     """Returns the GuestUser when g.user is a GuestUser instance."""
     from unittest.mock import patch
 
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
     guest_user = _make_guest_user()
-    sm = MagicMock(spec=SupersetSecurityManager)
+    sm = MagicMock(spec=AxBISecurityManager)
 
-    with patch("superset.security.manager.g") as mock_g:
+    with patch("axbi.security.manager.g") as mock_g:
         mock_g.user = guest_user
-        result = SupersetSecurityManager.get_current_guest_user_if_guest(sm)
+        result = AxBISecurityManager.get_current_guest_user_if_guest(sm)
 
     assert result is guest_user
 
@@ -249,25 +249,25 @@ def test_get_current_guest_user_if_guest_returns_none_for_regular_user() -> None
     """Returns None when g.user is a regular (non-guest) user."""
     from unittest.mock import patch
 
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
     regular_user = MagicMock()  # not a GuestUser instance
-    sm = MagicMock(spec=SupersetSecurityManager)
+    sm = MagicMock(spec=AxBISecurityManager)
 
-    with patch("superset.security.manager.g") as mock_g:
+    with patch("axbi.security.manager.g") as mock_g:
         mock_g.user = regular_user
-        result = SupersetSecurityManager.get_current_guest_user_if_guest(sm)
+        result = AxBISecurityManager.get_current_guest_user_if_guest(sm)
 
     assert result is None
 
 
 def test_raise_for_access_non_guest_skips_allowlist_check() -> None:
     """Allowlist check is skipped when get_current_guest_user_if_guest returns None."""
-    from superset.security.manager import SupersetSecurityManager
+    from axbi.security.manager import AxBISecurityManager
 
-    sm = MagicMock(spec=SupersetSecurityManager)
+    sm = MagicMock(spec=AxBISecurityManager)
     sm.get_current_guest_user_if_guest.return_value = None
     datasource = _make_datasource(dataset_id=99)
 
     # Should not raise — allowlist block is not entered when there is no guest user.
-    SupersetSecurityManager.raise_for_access(sm, datasource=datasource)
+    AxBISecurityManager.raise_for_access(sm, datasource=datasource)

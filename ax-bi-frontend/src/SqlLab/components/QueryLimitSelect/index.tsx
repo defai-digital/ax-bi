@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { t } from '@apache-superset/core/translation';
-import { Dropdown, Button } from '@superset-ui/core/components';
-import { Menu } from '@superset-ui/core/components/Menu';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { Dropdown, Button } from '@ax-bi/ui-core/components';
+import { Menu } from '@ax-bi/ui-core/components/Menu';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { queryEditorSetQueryLimit } from 'src/SqlLab/actions/sqlLab';
 import useQueryEditor from 'src/SqlLab/hooks/useQueryEditor';
 

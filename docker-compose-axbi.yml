@@ -19,22 +19,21 @@ x-axbi-image: &axbi-image ${AXBI_IMAGE:-ghcr.io/defai-digital/ax-bi:latest}
 x-axbi-services-image: &axbi-services-image ${AX_SERVICES_IMAGE:-ghcr.io/defai-digital/ax-bi-services:latest}
 
 x-axbi-env: &axbi-env
-  SUPERSET_CONFIG_PATH: /app/docker/pythonpath_axbi/superset_config.py
-  SUPERSET_ENV: production
-  SUPERSET_LOAD_EXAMPLES: ${SUPERSET_LOAD_EXAMPLES:-no}
-  SUPERSET_LOG_LEVEL: ${SUPERSET_LOG_LEVEL:-info}
+  AXBI_CONFIG_PATH: /app/docker/pythonpath_axbi/axbi_config.py
+  AXBI_ENV: production
+  AXBI_LOAD_EXAMPLES: ${AXBI_LOAD_EXAMPLES:-no}
+  AXBI_LOG_LEVEL: ${AXBI_LOG_LEVEL:-info}
   AX_BI_SECRET_KEY: ${AX_BI_SECRET_KEY:?Set AX_BI_SECRET_KEY in docker/.env-axbi}
-  SUPERSET_SECRET_KEY: ${AX_BI_SECRET_KEY:?Set AX_BI_SECRET_KEY in docker/.env-axbi}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in docker/.env-axbi}
   DATABASE_DIALECT: ${DATABASE_DIALECT:-postgresql}
   DATABASE_HOST: ${DATABASE_HOST:-db}
   DATABASE_PORT: ${DATABASE_PORT:-5432}
-  DATABASE_DB: ${DATABASE_DB:-superset}
-  DATABASE_USER: ${DATABASE_USER:-superset}
+  DATABASE_DB: ${DATABASE_DB:-axbi}
+  DATABASE_USER: ${DATABASE_USER:-axbi}
   DATABASE_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in docker/.env-axbi}
-  UPLOAD_FOLDER: ${UPLOAD_FOLDER:-/app/superset_home/uploads}
+  UPLOAD_FOLDER: ${UPLOAD_FOLDER:-/app/axbi_home/uploads}
   LOCAL_DB_NAME: ${LOCAL_DB_NAME:-Local Files}
-  LOCAL_DB_PATH: ${LOCAL_DB_PATH:-/app/superset_home/uploads/local_files.duckdb}
+  LOCAL_DB_PATH: ${LOCAL_DB_PATH:-/app/axbi_home/uploads/local_files.duckdb}
   REDIS_HOST: redis
   REDIS_PORT: 6379
   ENABLE_PROXY_FIX: ${ENABLE_PROXY_FIX:-true}
@@ -70,8 +69,8 @@ services:
     restart: unless-stopped
     environment:
       PGDATA: /var/lib/postgresql/data
-      POSTGRES_DB: ${POSTGRES_DB:-superset}
-      POSTGRES_USER: ${POSTGRES_USER:-superset}
+      POSTGRES_DB: ${POSTGRES_DB:-axbi}
+      POSTGRES_USER: ${POSTGRES_USER:-axbi}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:?Set DATABASE_PASSWORD in docker/.env-axbi}
     volumes:
       - db_home:/var/lib/postgresql/data
@@ -82,7 +81,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "pg_isready -U ${POSTGRES_USER:-superset} -d ${POSTGRES_DB:-superset}",
+          "pg_isready -U ${POSTGRES_USER:-axbi} -d ${POSTGRES_DB:-axbi}",
         ]
       interval: 10s
       timeout: 5s
@@ -98,7 +97,7 @@ services:
       redis:
         condition: service_healthy
     volumes:
-      - superset_home:/app/superset_home
+      - axbi_home:/app/axbi_home
     healthcheck:
       disable: true
 
@@ -107,13 +106,13 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     restart: unless-stopped
     ports:
-      - "${SUPERSET_PORT:-8088}:8088"
+      - "${AXBI_PORT:-8088}:8088"
     environment: *axbi-env
     depends_on:
       ax-bi-init:
         condition: service_completed_successfully
     volumes:
-      - superset_home:/app/superset_home
+      - axbi_home:/app/axbi_home
     extra_hosts:
       - "host.docker.internal:host-gateway"
     security_opt:
@@ -134,7 +133,7 @@ services:
       ax-bi-init:
         condition: service_completed_successfully
     volumes:
-      - superset_home:/app/superset_home
+      - axbi_home:/app/axbi_home
     extra_hosts:
       - "host.docker.internal:host-gateway"
     security_opt:
@@ -143,7 +142,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "celery -A superset.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
+          "celery -A axbi.tasks.celery_app:app inspect ping -d celery@$$HOSTNAME",
         ]
       interval: 30s
       timeout: 10s
@@ -158,7 +157,7 @@ services:
       ax-bi-init:
         condition: service_completed_successfully
     volumes:
-      - superset_home:/app/superset_home
+      - axbi_home:/app/axbi_home
     security_opt:
       - no-new-privileges:true
     healthcheck:
@@ -184,7 +183,7 @@ services:
       ax-bi-init:
         condition: service_completed_successfully
     volumes:
-      - superset_home:/app/superset_home
+      - axbi_home:/app/axbi_home
     extra_hosts:
       - "host.docker.internal:host-gateway"
     security_opt:
@@ -207,7 +206,7 @@ services:
     environment:
       AX_SERVICES_HOST: 0.0.0.0
       AX_SERVICES_PORT: 5010
-      AX_SUPERSET_BASE_URL: http://ax-bi:8088
+      AXBI_BASE_URL: http://ax-bi:8088
       AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
     ports:
       - "${AX_SERVICES_PORT:-5010}:5010"
@@ -218,7 +217,7 @@ services:
       - no-new-privileges:true
 
 volumes:
-  superset_home:
+  axbi_home:
     external: false
   db_home:
     external: false

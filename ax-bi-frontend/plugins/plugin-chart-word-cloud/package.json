@@ -1,7 +1,7 @@
 {
-  "name": "@superset-ui/plugin-chart-word-cloud",
+  "name": "@ax-bi/plugin-chart-word-cloud",
   "version": "0.20.4",
-  "description": "Superset Chart Plugin - Word Cloud",
+  "description": "AxBI Chart Plugin - Word Cloud",
   "sideEffects": [
     "*.css"
   ],
@@ -13,16 +13,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/plugin-chart-word-cloud"
   },
   "keywords": [
-    "superset"
+    "axbi"
   ],
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/plugin-chart-word-cloud#readme",
   "publishConfig": {
@@ -34,9 +34,9 @@
     "d3-scale": "^4.0.2"
   },
   "peerDependencies": {
-    "@apache-superset/core": "*",
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
     "@types/lodash": "*",
     "@types/react": "*",
     "react": "^18.3.0 || ^19.0.0"

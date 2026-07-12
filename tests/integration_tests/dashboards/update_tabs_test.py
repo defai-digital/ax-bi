@@ -18,10 +18,10 @@ from unittest.mock import ANY, call, MagicMock, patch
 
 import pytest
 
-from superset import db, security_manager
-from superset.commands.dashboard.update import UpdateDashboardCommand
-from superset.models.dashboard import Dashboard
-from superset.utils.json import dumps
+from axbi import db, security_manager
+from axbi.commands.dashboard.update import UpdateDashboardCommand
+from axbi.models.dashboard import Dashboard
+from axbi.utils.json import dumps
 from tests.integration_tests.fixtures.tabbed_dashboard import (
     tabbed_dashboard,  # noqa: F401
 )
@@ -51,9 +51,9 @@ def remove_tabs_from_dashboard(dashboard: Dashboard, tabs: list[str]):
     return data
 
 
-@patch("superset.commands.dashboard.update.send_email_smtp")
+@patch("axbi.commands.dashboard.update.send_email_smtp")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
+    "axbi.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
 )
 def test_tab_deletion_single_report(
     send_email_smtp_mock: MagicMock,
@@ -83,9 +83,9 @@ def test_tab_deletion_single_report(
     cleanup_report_schedule(report)
 
 
-@patch("superset.commands.dashboard.update.send_email_smtp")
+@patch("axbi.commands.dashboard.update.send_email_smtp")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
+    "axbi.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
 )
 def test_tab_deletion_multiple_reports(
     send_email_smtp_mock: MagicMock,
@@ -156,9 +156,9 @@ def test_tab_deletion_multiple_reports(
     cleanup_report_schedule(report3)
 
 
-@patch("superset.commands.dashboard.update.send_email_smtp")
+@patch("axbi.commands.dashboard.update.send_email_smtp")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
+    "axbi.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
 )
 def test_multitple_tabs_removed(
     send_email_smtp_mock: MagicMock,

@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.semantic_layer.exceptions import (
+from axbi.commands.semantic_layer.exceptions import (
     SemanticLayerCreateFailedError,
     SemanticLayerDeleteFailedError,
     SemanticLayerForbiddenError,
@@ -37,8 +37,8 @@ from superset.commands.semantic_layer.exceptions import (
     SemanticViewNotFoundError,
     SemanticViewUpdateFailedError,
 )
-from superset.exceptions import SupersetSecurityException
-from superset.semantic_layers.api import SemanticLayerRestApi, SemanticViewRestApi
+from axbi.exceptions import AxBISecurityException
+from axbi.semantic_layers.api import SemanticLayerRestApi, SemanticViewRestApi
 
 SEMANTIC_LAYERS_APP = pytest.mark.parametrize(
     "app",
@@ -58,7 +58,7 @@ def test_put_semantic_view(
     changed_model.id = 1
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = changed_model
 
@@ -98,7 +98,7 @@ def test_put_semantic_view_not_found(
 ) -> None:
     """Test PUT returns 404 when semantic view does not exist."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewNotFoundError()
 
@@ -118,7 +118,7 @@ def test_put_semantic_view_forbidden(
 ) -> None:
     """Test PUT returns 403 when user lacks ownership."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewForbiddenError()
 
@@ -138,7 +138,7 @@ def test_put_semantic_view_invalid(
 ) -> None:
     """Test PUT returns 422 when validation fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewInvalidError()
 
@@ -158,7 +158,7 @@ def test_put_semantic_view_update_failed(
 ) -> None:
     """Test PUT returns 422 when the update operation fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewUpdateFailedError()
 
@@ -179,7 +179,7 @@ def test_put_semantic_view_bad_request(
     """Test PUT returns 400 when the request payload has invalid fields."""
     # Marshmallow raises ValidationError for unknown fields
     mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
 
     response = client.put(
@@ -201,7 +201,7 @@ def test_put_semantic_view_description_only(
     changed_model.id = 1
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = changed_model
 
@@ -226,7 +226,7 @@ def test_put_semantic_view_cache_timeout_only(
     changed_model.id = 2
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = changed_model
 
@@ -252,7 +252,7 @@ def test_put_semantic_view_null_values(
     changed_model.id = 1
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = changed_model
 
@@ -277,7 +277,7 @@ def test_put_semantic_view_empty_payload(
     changed_model.id = 1
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticViewCommand",
+        "axbi.semantic_layers.api.UpdateSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = changed_model
 
@@ -306,7 +306,7 @@ def test_get_types(
     mock_cls.description = "Connect to Snowflake."
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -331,7 +331,7 @@ def test_get_types_empty(
 ) -> None:
     """Test GET /types returns empty list when no types registered."""
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {},
         clear=True,
     )
@@ -353,7 +353,7 @@ def test_configuration_schema(
     mock_cls.get_configuration_schema.return_value = {"type": "object"}
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -389,7 +389,7 @@ def test_configuration_schema_with_partial_config(
     }
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -426,7 +426,7 @@ def test_configuration_schema_with_invalid_partial_config(
     mock_cls.get_configuration_schema.return_value = {"type": "object"}
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -448,7 +448,7 @@ def test_configuration_schema_unknown_type(
 ) -> None:
     """Test POST /schema/configuration returns 400 for unknown type."""
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {},
         clear=True,
     )
@@ -469,7 +469,7 @@ def test_configuration_schema_ignores_non_object_body(
 ) -> None:
     """Test POST /schema/configuration rejects non-object bodies cleanly."""
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {},
         clear=True,
     )
@@ -495,14 +495,14 @@ def test_runtime_schema(
     mock_layer.type = "snowflake"
     mock_layer.implementation.configuration = {"account": "test"}
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     mock_cls = MagicMock()
     mock_cls.get_runtime_schema.return_value = {"type": "object"}
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -531,14 +531,14 @@ def test_runtime_schema_no_body(
     mock_layer.type = "snowflake"
     mock_layer.implementation.configuration = {"account": "test"}
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     mock_cls = MagicMock()
     mock_cls.get_runtime_schema.return_value = {"type": "object"}
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -563,14 +563,14 @@ def test_runtime_schema_ignores_non_object_body(
     mock_layer.type = "snowflake"
     mock_layer.implementation.configuration = {"account": "test"}
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     mock_cls = MagicMock()
     mock_cls.get_runtime_schema.return_value = {"type": "object"}
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -591,7 +591,7 @@ def test_runtime_schema_not_found(
     mocker: MockerFixture,
 ) -> None:
     """Test POST /<uuid>/schema/runtime returns 404 when layer not found."""
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = None
 
     response = client.post(
@@ -612,11 +612,11 @@ def test_runtime_schema_unknown_type(
     mock_layer = MagicMock()
     mock_layer.type = "unknown_type"
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {},
         clear=True,
     )
@@ -641,14 +641,14 @@ def test_runtime_schema_exception(
     mock_layer.type = "snowflake"
     mock_layer.implementation.configuration = {"account": "test"}
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     mock_cls = MagicMock()
     mock_cls.get_runtime_schema.side_effect = ValueError("Bad config")
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -673,7 +673,7 @@ def test_post_semantic_layer(
     new_model.uuid = test_uuid
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticLayerCommand",
+        "axbi.semantic_layers.api.CreateSemanticLayerCommand",
     )
     mock_command.return_value.run.return_value = new_model
 
@@ -697,7 +697,7 @@ def test_post_semantic_layer_invalid(
 ) -> None:
     """Test POST / returns 422 when validation fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticLayerCommand",
+        "axbi.semantic_layers.api.CreateSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerInvalidError(
         "Unknown type: bad"
@@ -721,7 +721,7 @@ def test_post_semantic_layer_create_failed(
 ) -> None:
     """Test POST / returns 422 when creation fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticLayerCommand",
+        "axbi.semantic_layers.api.CreateSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerCreateFailedError()
 
@@ -743,7 +743,7 @@ def test_post_semantic_layer_missing_required_fields(
 ) -> None:
     """Test POST / returns 400 when required fields are missing."""
     mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticLayerCommand",
+        "axbi.semantic_layers.api.CreateSemanticLayerCommand",
     )
 
     response = client.post(
@@ -791,7 +791,7 @@ def test_put_semantic_layer(
     changed_model.uuid = test_uuid
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticLayerCommand",
+        "axbi.semantic_layers.api.UpdateSemanticLayerCommand",
     )
     mock_command.return_value.run.return_value = changed_model
 
@@ -814,7 +814,7 @@ def test_put_semantic_layer_not_found(
 ) -> None:
     """Test PUT /<uuid> returns 404 when layer not found."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticLayerCommand",
+        "axbi.semantic_layers.api.UpdateSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerNotFoundError()
 
@@ -834,7 +834,7 @@ def test_put_semantic_layer_forbidden(
 ) -> None:
     """Test PUT /<uuid> returns 403 when ownership check fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticLayerCommand",
+        "axbi.semantic_layers.api.UpdateSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerForbiddenError()
 
@@ -854,7 +854,7 @@ def test_put_semantic_layer_invalid(
 ) -> None:
     """Test PUT /<uuid> returns 422 when validation fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticLayerCommand",
+        "axbi.semantic_layers.api.UpdateSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerInvalidError(
         "Name already exists"
@@ -876,7 +876,7 @@ def test_put_semantic_layer_update_failed(
 ) -> None:
     """Test PUT /<uuid> returns 422 when update fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.UpdateSemanticLayerCommand",
+        "axbi.semantic_layers.api.UpdateSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerUpdateFailedError()
 
@@ -911,7 +911,7 @@ def test_delete_semantic_layer(
     """Test DELETE /<uuid> deletes a semantic layer."""
     test_uuid = str(uuid_lib.uuid4())
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticLayerCommand",
+        "axbi.semantic_layers.api.DeleteSemanticLayerCommand",
     )
     mock_command.return_value.run.return_value = None
 
@@ -929,7 +929,7 @@ def test_delete_semantic_layer_not_found(
 ) -> None:
     """Test DELETE /<uuid> returns 404 when layer not found."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticLayerCommand",
+        "axbi.semantic_layers.api.DeleteSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerNotFoundError()
 
@@ -946,7 +946,7 @@ def test_delete_semantic_layer_forbidden(
 ) -> None:
     """Test DELETE /<uuid> returns 403 when ownership check fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticLayerCommand",
+        "axbi.semantic_layers.api.DeleteSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerForbiddenError()
 
@@ -963,7 +963,7 @@ def test_delete_semantic_layer_failed(
 ) -> None:
     """Test DELETE /<uuid> returns 422 when deletion fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticLayerCommand",
+        "axbi.semantic_layers.api.DeleteSemanticLayerCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerDeleteFailedError()
 
@@ -997,7 +997,7 @@ def test_get_list_semantic_layers(
     layer2.configuration = '{"account": "test"}'
     layer2.changed_on_delta_humanized.return_value = "2 hours ago"
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_all.return_value = [layer1, layer2]
 
     response = client.get("/api/v1/semantic_layer/")
@@ -1018,7 +1018,7 @@ def test_get_list_semantic_layers_empty(
     mocker: MockerFixture,
 ) -> None:
     """Test GET / returns empty list when no layers exist."""
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_all.return_value = []
 
     response = client.get("/api/v1/semantic_layer/")
@@ -1044,7 +1044,7 @@ def test_get_semantic_layer(
     layer.configuration = '{"account": "test"}'
     layer.changed_on_delta_humanized.return_value = "1 day ago"
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = layer
 
     response = client.get(f"/api/v1/semantic_layer/{test_uuid}")
@@ -1065,7 +1065,7 @@ def test_get_semantic_layer_not_found(
     mocker: MockerFixture,
 ) -> None:
     """Test GET /<uuid> returns 404 when layer not found."""
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = None
 
     response = client.get(f"/api/v1/semantic_layer/{uuid_lib.uuid4()}")
@@ -1089,7 +1089,7 @@ def test_serialize_layer_string_config(
     layer.configuration = '{"account": "test"}'
     layer.changed_on_delta_humanized.return_value = "1 day ago"
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = layer
 
     response = client.get(f"/api/v1/semantic_layer/{layer.uuid}")
@@ -1114,7 +1114,7 @@ def test_serialize_layer_dict_config(
     layer.configuration = {"account": "test"}
     layer.changed_on_delta_humanized.return_value = "1 day ago"
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = layer
 
     response = client.get(f"/api/v1/semantic_layer/{layer.uuid}")
@@ -1139,7 +1139,7 @@ def test_serialize_layer_none_config(
     layer.configuration = None
     layer.changed_on_delta_humanized.return_value = "1 day ago"
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = layer
 
     response = client.get(f"/api/v1/semantic_layer/{layer.uuid}")
@@ -1166,7 +1166,7 @@ def test_serialize_layer_malformed_config(
     layer.configuration = configuration
     layer.changed_on_delta_humanized.return_value = "1 day ago"
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = layer
 
     response = client.get(f"/api/v1/semantic_layer/{layer.uuid}")
@@ -1177,7 +1177,7 @@ def test_serialize_layer_malformed_config(
 
 def test_get_required_fields_non_dict_variant_def() -> None:
     """A $defs entry that isn't a mapping yields no required fields."""
-    from superset.semantic_layers.api import _get_required_fields
+    from axbi.semantic_layers.api import _get_required_fields
 
     assert (
         _get_required_fields({"VariantA": "not-a-dict"}, "#/$defs/VariantA", "disc")
@@ -1187,7 +1187,7 @@ def test_get_required_fields_non_dict_variant_def() -> None:
 
 def test_infer_discriminators_injects_discriminator() -> None:
     """Test _infer_discriminators injects discriminator values."""
-    from superset.semantic_layers.api import _infer_discriminators
+    from axbi.semantic_layers.api import _infer_discriminators
 
     schema = {
         "$defs": {
@@ -1209,7 +1209,7 @@ def test_infer_discriminators_injects_discriminator() -> None:
 
 def test_infer_discriminators_no_match() -> None:
     """Test _infer_discriminators returns data unchanged when no match."""
-    from superset.semantic_layers.api import _infer_discriminators
+    from axbi.semantic_layers.api import _infer_discriminators
 
     schema = {
         "$defs": {
@@ -1231,7 +1231,7 @@ def test_infer_discriminators_no_match() -> None:
 
 def test_infer_discriminators_skips_non_dict() -> None:
     """Test _infer_discriminators skips non-dict values."""
-    from superset.semantic_layers.api import _infer_discriminators
+    from axbi.semantic_layers.api import _infer_discriminators
 
     schema = {
         "$defs": {},
@@ -1244,7 +1244,7 @@ def test_infer_discriminators_skips_non_dict() -> None:
 
 def test_infer_discriminators_skips_if_discriminator_present() -> None:
     """Test _infer_discriminators skips when discriminator already set."""
-    from superset.semantic_layers.api import _infer_discriminators
+    from axbi.semantic_layers.api import _infer_discriminators
 
     schema = {
         "$defs": {},
@@ -1264,7 +1264,7 @@ def test_infer_discriminators_skips_if_discriminator_present() -> None:
 
 def test_infer_discriminators_no_discriminator() -> None:
     """Test _infer_discriminators skips properties without discriminator."""
-    from superset.semantic_layers.api import _infer_discriminators
+    from axbi.semantic_layers.api import _infer_discriminators
 
     schema = {
         "$defs": {},
@@ -1330,7 +1330,7 @@ def test_infer_discriminators_skips_malformed_schema_fragments(
     schema: dict[str, Any],
 ) -> None:
     """Malformed schema fragments should not crash discriminator inference."""
-    from superset.semantic_layers.api import _infer_discriminators
+    from axbi.semantic_layers.api import _infer_discriminators
 
     data = {"auth": {"field_a": "value"}}
 
@@ -1339,7 +1339,7 @@ def test_infer_discriminators_skips_malformed_schema_fragments(
 
 def test_parse_partial_config_strict_success() -> None:
     """Test _parse_partial_config returns config on strict validation."""
-    from superset.semantic_layers.api import _parse_partial_config
+    from axbi.semantic_layers.api import _parse_partial_config
 
     mock_cls = MagicMock()
     mock_cls.configuration_class.model_json_schema.return_value = {
@@ -1356,7 +1356,7 @@ def test_parse_partial_config_falls_back_to_partial() -> None:
     """Test _parse_partial_config falls back to partial validation."""
     from pydantic import ValidationError as PydanticValidationError
 
-    from superset.semantic_layers.api import _parse_partial_config
+    from axbi.semantic_layers.api import _parse_partial_config
 
     mock_cls = MagicMock()
     mock_cls.configuration_class.model_json_schema.return_value = {
@@ -1376,7 +1376,7 @@ def test_parse_partial_config_returns_none_on_failure() -> None:
     """Test _parse_partial_config returns None when all validation fails."""
     from pydantic import ValidationError as PydanticValidationError
 
-    from superset.semantic_layers.api import _parse_partial_config
+    from axbi.semantic_layers.api import _parse_partial_config
 
     mock_cls = MagicMock()
     mock_cls.configuration_class.model_json_schema.return_value = {
@@ -1407,7 +1407,7 @@ def test_configuration_schema_enrichment_error_fallback(
     ]
 
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
@@ -1455,7 +1455,7 @@ def test_connections_list(
     mock_layer.changed_on_delta_humanized.return_value = "1 day ago"
     mock_layer.changed_by = None
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     db_query = MagicMock()
     db_query.options.return_value = db_query
     db_query.all.return_value = [mock_db]
@@ -1469,13 +1469,13 @@ def test_connections_list(
     mock_cls = MagicMock()
     mock_cls.name = "Snowflake"
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
 
     mocker.patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=True,
     )
 
@@ -1496,7 +1496,7 @@ def test_connections_database_only(
     """Test GET /connections/ returns 404 when feature flag is disabled."""
 
     mocker.patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=False,
     )
 
@@ -1512,7 +1512,7 @@ def test_connections_name_filter(
     mocker: MockerFixture,
 ) -> None:
     """Test GET /connections/ with name filter."""
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     db_query = MagicMock()
     db_query.options.return_value = db_query
     db_query.all.return_value = []
@@ -1524,7 +1524,7 @@ def test_connections_name_filter(
     mock_db_session.query.side_effect = [db_query, sl_query]
 
     mocker.patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=True,
     )
 
@@ -1574,7 +1574,7 @@ def test_connections_sort_by_name(
     mock_layer.changed_on_delta_humanized.return_value = "1 day ago"
     mock_layer.changed_by = None
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     db_query = MagicMock()
     db_query.options.return_value = db_query
     db_query.all.return_value = [mock_db]
@@ -1586,13 +1586,13 @@ def test_connections_sort_by_name(
     mock_cls = MagicMock()
     mock_cls.name = "Snowflake"
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
 
     mocker.patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=True,
     )
 
@@ -1629,14 +1629,14 @@ def test_connections_source_type_filter(
     mock_db.changed_on_delta_humanized.return_value = "1 month ago"
     mock_db.changed_by = None
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     db_query = MagicMock()
     db_query.options.return_value = db_query
     db_query.all.return_value = [mock_db]
     mock_db_session.query.return_value = db_query
 
     mocker.patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=True,
     )
 
@@ -1672,7 +1672,7 @@ def test_connections_source_type_semantic_layer_only(
     mock_layer.changed_on_delta_humanized.return_value = "1 day ago"
     mock_layer.changed_by = None
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     sl_query = MagicMock()
     sl_query.options.return_value = sl_query
     sl_query.all.return_value = [mock_layer]
@@ -1681,13 +1681,13 @@ def test_connections_source_type_semantic_layer_only(
     mock_cls = MagicMock()
     mock_cls.name = "Snowflake"
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
 
     mocker.patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=True,
     )
 
@@ -1730,7 +1730,7 @@ def test_connections_semantic_layer_filters_by_perms(
     mock_layer.changed_on_delta_humanized.return_value = "1 day ago"
     mock_layer.changed_by = None
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     sl_query = MagicMock()
     sl_query.options.return_value = sl_query
     sl_query.filter.return_value = sl_query
@@ -1740,21 +1740,21 @@ def test_connections_semantic_layer_filters_by_perms(
     mock_cls = MagicMock()
     mock_cls.name = "Snowflake"
     mocker.patch.dict(
-        "superset.semantic_layers.api.registry",
+        "axbi.semantic_layers.api.registry",
         {"snowflake": mock_cls},
         clear=True,
     )
 
     mocker.patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=True,
     )
     mocker.patch(
-        "superset.semantic_layers.api.security_manager.can_access_all_datasources",
+        "axbi.semantic_layers.api.security_manager.can_access_all_datasources",
         return_value=False,
     )
     mocker.patch(
-        "superset.semantic_layers.api.security_manager.user_view_menu_names",
+        "axbi.semantic_layers.api.security_manager.user_view_menu_names",
         return_value=["[Restricted Layer]"],
     )
 
@@ -1791,7 +1791,7 @@ def test_post_semantic_view_bulk_create(
     new_model.name = "View 1"
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticViewCommand",
+        "axbi.semantic_layers.api.CreateSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = new_model
 
@@ -1863,7 +1863,7 @@ def test_post_semantic_view_layer_not_found(
 ) -> None:
     """Test POST / collects layer-not-found errors."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticViewCommand",
+        "axbi.semantic_layers.api.CreateSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticLayerNotFoundError()
 
@@ -1892,7 +1892,7 @@ def test_post_semantic_view_create_failed(
 ) -> None:
     """Test POST / collects create-failed errors."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticViewCommand",
+        "axbi.semantic_layers.api.CreateSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewCreateFailedError()
 
@@ -1924,7 +1924,7 @@ def test_post_semantic_view_partial_success(
     new_model.name = "Good View"
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.CreateSemanticViewCommand",
+        "axbi.semantic_layers.api.CreateSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = [
         new_model,
@@ -1967,7 +1967,7 @@ def test_delete_semantic_view(
 ) -> None:
     """Test DELETE /<pk> deletes a semantic view."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.DeleteSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = None
 
@@ -1985,7 +1985,7 @@ def test_delete_semantic_view_not_found(
 ) -> None:
     """Test DELETE /<pk> returns 404 when view not found."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.DeleteSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewNotFoundError()
 
@@ -2002,7 +2002,7 @@ def test_delete_semantic_view_failed(
 ) -> None:
     """Test DELETE /<pk> returns 422 when deletion fails."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.DeleteSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewDeleteFailedError()
 
@@ -2019,7 +2019,7 @@ def test_delete_semantic_view_forbidden(
 ) -> None:
     """Test DELETE /<pk> returns 403 when user lacks ownership."""
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.DeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.DeleteSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewForbiddenError()
 
@@ -2043,7 +2043,7 @@ def test_bulk_delete_semantic_view(
     import prison as rison_lib
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.BulkDeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.BulkDeleteSemanticViewCommand",
     )
     mock_command.return_value.run.return_value = None
 
@@ -2065,7 +2065,7 @@ def test_bulk_delete_semantic_view_not_found(
     import prison as rison_lib
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.BulkDeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.BulkDeleteSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewNotFoundError()
 
@@ -2085,7 +2085,7 @@ def test_bulk_delete_semantic_view_failed(
     import prison as rison_lib
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.BulkDeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.BulkDeleteSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewDeleteFailedError()
 
@@ -2105,7 +2105,7 @@ def test_bulk_delete_semantic_view_forbidden(
     import prison as rison_lib
 
     mock_command = mocker.patch(
-        "superset.semantic_layers.api.BulkDeleteSemanticViewCommand",
+        "axbi.semantic_layers.api.BulkDeleteSemanticViewCommand",
     )
     mock_command.return_value.run.side_effect = SemanticViewForbiddenError()
 
@@ -2177,7 +2177,7 @@ def test_get_views(
         mock_view2,
     ]
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     mock_dao.get_semantic_views.return_value = []
@@ -2210,7 +2210,7 @@ def test_get_views_with_existing(
     mock_view.name = "Existing View"
     mock_layer.implementation.get_semantic_views.return_value = [mock_view]
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     existing_view = MagicMock()
@@ -2238,7 +2238,7 @@ def test_get_views_not_found(
     mocker: MockerFixture,
 ) -> None:
     """Test POST /<uuid>/views returns 404 when layer not found."""
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = None
 
     response = client.post(
@@ -2261,7 +2261,7 @@ def test_get_views_ignores_non_object_body(
     mock_layer.uuid = uuid_lib.uuid4()
     mock_layer.implementation.get_semantic_views.return_value = []
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
     mock_dao.get_semantic_views.return_value = []
 
@@ -2288,7 +2288,7 @@ def test_get_views_exception(
         "Connection failed"
     )
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     response = client.post(
@@ -2315,7 +2315,7 @@ def test_get_views_existing_dict_config(
     mock_view.name = "View X"
     mock_layer.implementation.get_semantic_views.return_value = [mock_view]
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     existing_view = MagicMock()
@@ -2349,7 +2349,7 @@ def test_get_views_existing_malformed_config(
     mock_view.name = "View X"
     mock_layer.implementation.get_semantic_views.return_value = [mock_view]
 
-    mock_dao = mocker.patch("superset.semantic_layers.api.SemanticLayerDAO")
+    mock_dao = mocker.patch("axbi.semantic_layers.api.SemanticLayerDAO")
     mock_dao.find_by_uuid.return_value = mock_layer
 
     existing_view = MagicMock()
@@ -2413,7 +2413,7 @@ def test_get_semantic_view_structure(
     mock_view.implementation.get_dimensions.return_value = {mock_dim}
     mock_view.implementation.get_metrics.return_value = {mock_metric}
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     mock_db_session.query.return_value.filter_by.return_value.first.return_value = (
         mock_view
     )
@@ -2443,7 +2443,7 @@ def test_get_semantic_view_structure_not_found(
     mocker: MockerFixture,
 ) -> None:
     """Test GET /<pk>/structure returns 404 when view not found."""
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     mock_db_session.query.return_value.filter_by.return_value.first.return_value = None
 
     response = client.get("/api/v1/semantic_view/999/structure")
@@ -2478,7 +2478,7 @@ def test_get_semantic_view_structure_implementation_error(
         "Connection failed"
     )
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     mock_db_session.query.return_value.filter_by.return_value.first.return_value = (
         mock_view
     )
@@ -2507,7 +2507,7 @@ def test_get_semantic_view_structure_no_grain(
     mock_view.implementation.get_dimensions.return_value = {mock_dim}
     mock_view.implementation.get_metrics.return_value = set()
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     mock_db_session.query.return_value.filter_by.return_value.first.return_value = (
         mock_view
     )
@@ -2531,9 +2531,9 @@ def test_get_semantic_view_structure_forbidden(
     mock_view = MagicMock()
     access_error = MagicMock()
     access_error.message = "Forbidden"
-    mock_view.raise_for_access.side_effect = SupersetSecurityException(access_error)
+    mock_view.raise_for_access.side_effect = AxBISecurityException(access_error)
 
-    mock_db_session = mocker.patch("superset.semantic_layers.api.db.session")
+    mock_db_session = mocker.patch("axbi.semantic_layers.api.db.session")
     mock_db_session.query.return_value.filter_by.return_value.first.return_value = (
         mock_view
     )
@@ -2550,7 +2550,7 @@ def test_semantic_view_structure_flag_off_unwrapped() -> None:
     structure_fn = inspect.unwrap(SemanticViewRestApi.structure)
 
     with patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=False,
     ):
         response = structure_fn(api, 1)
@@ -2566,7 +2566,7 @@ def test_semantic_view_post_flag_off_unwrapped() -> None:
     post_fn = inspect.unwrap(SemanticViewRestApi.post)
 
     with patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=False,
     ):
         response = post_fn(api)
@@ -2582,7 +2582,7 @@ def test_semantic_view_delete_flag_off_unwrapped() -> None:
     delete_fn = inspect.unwrap(SemanticViewRestApi.delete)
 
     with patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=False,
     ):
         response = delete_fn(api, 1)
@@ -2598,7 +2598,7 @@ def test_semantic_view_bulk_delete_flag_off_unwrapped() -> None:
     bulk_delete_fn = inspect.unwrap(SemanticViewRestApi.bulk_delete)
 
     with patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=False,
     ):
         response = bulk_delete_fn(api, rison=[1])
@@ -2614,7 +2614,7 @@ def test_semantic_layer_views_flag_off_unwrapped() -> None:
     views_fn = inspect.unwrap(SemanticLayerRestApi.views)
 
     with patch(
-        "superset.semantic_layers.api.is_feature_enabled",
+        "axbi.semantic_layers.api.is_feature_enabled",
         return_value=False,
     ):
         response = views_fn(api, str(uuid_lib.uuid4()))

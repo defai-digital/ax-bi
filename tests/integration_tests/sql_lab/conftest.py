@@ -21,10 +21,10 @@ from contextlib import AbstractContextManager
 import pytest
 from flask_appbuilder.security.sqla import models as ab_models
 
-from superset import db
-from superset.models.sql_lab import Query
-from superset.utils.core import shortid
-from superset.utils.database import get_example_database
+from axbi import db
+from axbi.models.sql_lab import Query
+from axbi.utils.core import shortid
+from axbi.utils.database import get_example_database
 
 
 def force_async_run(allow_run_async: bool):

@@ -25,7 +25,7 @@ repos:
       - id: mypy
         name: mypy (main)
         args: [--check-untyped-defs]
-        exclude: ^superset-extensions-cli/|^docker/pythonpath_.*/superset_config.*\.py$
+        exclude: ^ax-bi-extensions-cli/|^docker/pythonpath_.*/axbi_config.*\.py$
         additional_dependencies: [
             types-cachetools,
             types-simplejson,
@@ -42,17 +42,17 @@ repos:
             types-Markdown,
           ]
       - id: mypy
-        name: mypy (superset-extensions-cli)
+        name: mypy (ax-bi-extensions-cli)
         args: [--check-untyped-defs]
-        files: ^superset-extensions-cli/
+        files: ^ax-bi-extensions-cli/
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       - id: check-docstring-first
       - id: check-added-large-files
-        exclude: ^.*\.(geojson)$|^docs/static/img/screenshots/.*|^ax-bi-frontend/CHANGELOG\.md$|^superset/examples/.*/data\.parquet$|^superset/translations/.*\.po$
+        exclude: ^.*\.(geojson)$|^docs/static/img/screenshots/.*|^ax-bi-frontend/CHANGELOG\.md$|^axbi/examples/.*/data\.parquet$|^axbi/translations/.*\.po$
       - id: check-yaml
-        exclude: ^helm/superset/templates/
+        exclude: ^helm/ax-bi/templates/
       - id: debug-statements
       - id: end-of-file-fixer
         exclude: .*/lerna\.json$|^docs/static/img/logos/
@@ -123,11 +123,11 @@ repos:
   - repo: local
     hooks:
       - id: pylint
-        name: pylint with custom Superset plugins
+        name: pylint with custom AxBI plugins
         entry: bash
         language: system
         types: [python]
-        exclude: ^(tests/|superset/migrations/|scripts/|docker/)
+        exclude: ^(tests/|axbi/migrations/|scripts/|docker/)
         args:
           - -c
           - |
@@ -137,26 +137,32 @@ repos:
               git fetch --no-recurse-submodules origin "$TARGET_BRANCH" 2>/dev/null || true
             fi
             BASE=$(git merge-base origin/"$TARGET_BRANCH" HEAD 2>/dev/null) || BASE="HEAD"
-            files=$(git diff --name-only --diff-filter=ACM "$BASE"..HEAD 2>/dev/null | grep '^superset/.*\.py$' || true)
+            files=$(git diff --name-only --diff-filter=ACM "$BASE"..HEAD 2>/dev/null | grep '^axbi/.*\.py$' || true)
             if [ -n "$files" ]; then
-              pylint --rcfile=.pylintrc --load-plugins=superset.extensions.pylint --reports=no $files
+              pylint --rcfile=.pylintrc --load-plugins=axbi.extensions.pylint --reports=no $files
             else
               echo "No Python files to lint."
             fi
       - id: db-engine-spec-metadata
         name: database engine spec metadata validation
-        entry: python superset/db_engine_specs/lint_metadata.py --strict
+        entry: python axbi/db_engine_specs/lint_metadata.py --strict
         language: system
-        files: ^superset/db_engine_specs/.*\.py$
-        exclude: ^superset/db_engine_specs/(base|lib|lint_metadata|__init__)\.py$
+        files: ^axbi/db_engine_specs/.*\.py$
+        exclude: ^axbi/db_engine_specs/(base|lib|lint_metadata|__init__)\.py$
         pass_filenames: false
   - repo: local
     hooks:
+      - id: axbi-branding
+        name: AX BI source branding boundary
+        entry: python scripts/check_axbi_branding.py
+        language: system
+        pass_filenames: false
+        always_run: true
       - id: feature-flags-sync
         name: feature flags documentation sync
         entry: bash -c 'python scripts/extract_feature_flags.py > docs/static/feature-flags.json.tmp && if ! diff -q docs/static/feature-flags.json docs/static/feature-flags.json.tmp > /dev/null 2>&1; then mv docs/static/feature-flags.json.tmp docs/static/feature-flags.json && echo "Updated docs/static/feature-flags.json" && exit 1; else rm docs/static/feature-flags.json.tmp; fi'
         language: system
-        files: ^superset/config\.py$
+        files: ^axbi/config\.py$
         pass_filenames: false
       - id: zizmor
         name: zizmor (GHA security audit)

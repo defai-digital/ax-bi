@@ -17,7 +17,7 @@
  * under the License.
  */
 import { datasourceId } from 'spec/fixtures/mockDatasource';
-import { DatasourceType, VizType } from '@superset-ui/core';
+import { DatasourceType, VizType } from '@ax-bi/ui-core';
 import { sliceId } from './mockChartQueries';
 
 export const filterId = 127;

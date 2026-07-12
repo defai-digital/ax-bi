@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 
-from superset.views.sqllab import _load_requested_query
+from axbi.views.sqllab import _load_requested_query
 
 
 def test_load_requested_query_accepts_object() -> None:

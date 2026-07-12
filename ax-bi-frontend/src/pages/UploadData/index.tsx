@@ -18,12 +18,12 @@
  */
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useCallback, useRef, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
-import { Upload, Progress } from '@superset-ui/core/components';
-import { Alert } from '@apache-superset/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
+import { Upload, Progress } from '@ax-bi/ui-core/components';
+import { Alert } from '@ax-bi/core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { URL_PARAMS } from 'src/constants';
 import {
@@ -249,7 +249,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
       formData.append('file', file);
 
       try {
-        const response = await SupersetClient.post({
+        const response = await AxBIClient.post({
           endpoint: '/api/v1/database/auto_upload/',
           body: formData,
           headers: { Accept: 'application/json' },

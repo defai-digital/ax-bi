@@ -24,8 +24,8 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.dataset.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.dataset.schemas import (
     DatasetError,
     DatasetInfo,
     FileItem,
@@ -33,16 +33,16 @@ from superset.mcp_service.dataset.schemas import (
     UploadFilesRequest,
     UploadFilesResponse,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     sanitize_for_llm_context,
 )
 
 upload_files_module = importlib.import_module(
-    "superset.mcp_service.dataset.tool.upload_files"
+    "axbi.mcp_service.dataset.tool.upload_files"
 )
 upload_file_module = importlib.import_module(
-    "superset.mcp_service.dataset.tool.upload_file"
+    "axbi.mcp_service.dataset.tool.upload_file"
 )
 
 
@@ -66,7 +66,7 @@ def mcp_server():
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"

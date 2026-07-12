@@ -21,14 +21,14 @@ import numpy as np
 import pandas as pd
 from sqlalchemy.types import NVARCHAR
 
-from superset.db_engine_specs.redshift import RedshiftEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.sql.parse import Table
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs.redshift import RedshiftEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.sql.parse import Table
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.test_app import app
 
 
-class TestRedshiftDbEngineSpec(SupersetTestCase):
+class TestRedshiftDbEngineSpec(AxBITestCase):
     def test_extract_errors(self):
         """
         Test that custom error messages are extracted correctly.
@@ -36,8 +36,8 @@ class TestRedshiftDbEngineSpec(SupersetTestCase):
         msg = 'FATAL:  password authentication failed for user "wronguser"'
         result = RedshiftEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_ACCESS_DENIED_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_ACCESS_DENIED_ERROR,
                 message='Either the username "wronguser" or the password is incorrect.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -65,8 +65,8 @@ class TestRedshiftDbEngineSpec(SupersetTestCase):
         )
         result = RedshiftEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
                 message='The hostname "badhost" cannot be resolved.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -94,8 +94,8 @@ could not connect to server: Connection refused
         )
         result = RedshiftEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_PORT_CLOSED_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_PORT_CLOSED_ERROR,
                 message='Port 12345 on hostname "localhost" refused the connection.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -117,8 +117,8 @@ psql: error: could not connect to server: Operation timed out
         )
         result = RedshiftEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
                 message=(
                     'The host "example.com" might be down, '
                     "and can't be reached on port 12345."
@@ -148,8 +148,8 @@ psql: error: could not connect to server: Operation timed out
         )
         result = RedshiftEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
                 message=(
                     'The host "93.184.216.34" might be down, '
                     "and can't be reached on port 12345."
@@ -172,8 +172,8 @@ psql: error: could not connect to server: Operation timed out
         msg = 'database "badDB" does not exist'
         result = RedshiftEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
                 message='We were unable to connect to your database named "badDB".'
                 " Please verify your database name and try again.",
                 level=ErrorLevel.ERROR,

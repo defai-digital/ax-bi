@@ -42,25 +42,25 @@ def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
     mock_decorators.ToolAnnotations = dict
 
     saved_modules: dict[str, types.ModuleType] = {}
-    for key in ("superset_core.mcp", "superset_core.mcp.decorators"):
+    for key in ("axbi_core.mcp", "axbi_core.mcp.decorators"):
         if key in sys.modules:
             saved_modules[key] = sys.modules[key]
 
-    sys.modules["superset_core.mcp"] = MagicMock()
-    sys.modules["superset_core.mcp.decorators"] = mock_decorators
+    sys.modules["axbi_core.mcp"] = MagicMock()
+    sys.modules["axbi_core.mcp.decorators"] = mock_decorators
     return saved_modules
 
 
 def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
     for key in list(sys.modules.keys()):
-        if key.startswith("superset_core.mcp"):
+        if key.startswith("axbi_core.mcp"):
             del sys.modules[key]
     sys.modules.update(saved_modules)
 
 
 _saved = _force_passthrough_decorators()
 try:
-    module = import_module("superset.mcp_service.ai.tool.suggest_chart_improvements")
+    module = import_module("axbi.mcp_service.ai.tool.suggest_chart_improvements")
 finally:
     _restore_modules(_saved)
 
@@ -112,9 +112,9 @@ def test_load_accessible_chart_rejects_chart_without_datasource_access() -> None
     denied = MagicMock(is_valid=False)
 
     with (
-        patch("superset.daos.chart.ChartDAO.find_by_id", return_value=chart),
+        patch("axbi.daos.chart.ChartDAO.find_by_id", return_value=chart),
         patch(
-            "superset.mcp_service.auth.check_chart_data_access",
+            "axbi.mcp_service.auth.check_chart_data_access",
             return_value=denied,
         ),
     ):

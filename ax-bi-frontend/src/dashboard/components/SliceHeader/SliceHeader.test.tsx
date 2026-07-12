@@ -18,7 +18,7 @@
  */
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
-import { getExtensionsRegistry, VizType } from '@superset-ui/core';
+import { getExtensionsRegistry, VizType } from '@ax-bi/ui-core';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
 import { useUiConfig } from 'src/components/UiConfigContext';
@@ -34,8 +34,8 @@ jest.mock('src/dashboard/components/SliceHeaderControls', () => ({
       data-is-expanded={props.isExpanded}
       data-cached-dttm={props.cachedDttm}
       data-updated-dttm={props.updatedDttm}
-      data-superset-can-explore={props.supersetCanExplore}
-      data-superset-can-csv={props.supersetCanCSV}
+      data-axbi-can-explore={props.axbiCanExplore}
+      data-axbi-can-csv={props.axbiCanCSV}
       data-component-id={props.componentId}
       data-dashboard-id={props.dashboardId}
       data-is-full-size={props.isFullSize}
@@ -143,8 +143,8 @@ const createProps = (overrides: any = {}) => ({
   isCached: [false],
   isExpanded: false,
   sliceName: 'Vaccine Candidates per Phase',
-  supersetCanExplore: true,
-  supersetCanCSV: true,
+  axbiCanExplore: true,
+  axbiCanCSV: true,
   slice: {
     slice_id: MOCKED_CHART_ID,
     slice_url: `/explore/?form_data=%7B%22slice_id%22%3A%20${MOCKED_CHART_ID}%7D`,
@@ -152,7 +152,7 @@ const createProps = (overrides: any = {}) => ({
     form_data: {
       adhoc_filters: [],
       bottom_margin: 'auto',
-      color_scheme: 'SUPERSET_DEFAULT',
+      color_scheme: 'AXBI_DEFAULT',
       columns: [],
       datasource: '58__table',
       groupby: ['clinical_stage'],
@@ -221,8 +221,8 @@ test('Should render - default props', () => {
   delete props.isCached;
   delete props.isExpanded;
   delete props.sliceName;
-  delete props.supersetCanExplore;
-  delete props.supersetCanCSV;
+  delete props.axbiCanExplore;
+  delete props.axbiCanCSV;
 
   render(<SliceHeader {...props} />, {
     useRedux: true,
@@ -249,8 +249,8 @@ test('Should render default props and "call" actions', () => {
   delete props.isCached;
   delete props.isExpanded;
   delete props.sliceName;
-  delete props.supersetCanExplore;
-  delete props.supersetCanCSV;
+  delete props.axbiCanExplore;
+  delete props.axbiCanCSV;
 
   render(<SliceHeader {...props} />, {
     useRedux: true,
@@ -317,8 +317,8 @@ test('Display cmd button in tooltip if running on MacOS', async () => {
   ).toBeInTheDocument();
 });
 
-test('Should not render click to edit prompt and run onExploreChart on click if supersetCanExplore=false', () => {
-  const props = createProps({ supersetCanExplore: false });
+test('Should not render click to edit prompt and run onExploreChart on click if axbiCanExplore=false', () => {
+  const props = createProps({ axbiCanExplore: false });
   const history = createMemoryHistory({
     initialEntries: ['/ax-bi/dashboard/1/'],
   });
@@ -459,11 +459,11 @@ test('Correct props to "SliceHeaderControls"', () => {
     'false',
   );
   expect(screen.getByTestId('SliceHeaderControls')).toHaveAttribute(
-    'data-superset-can-csv',
+    'data-axbi-can-csv',
     'true',
   );
   expect(screen.getByTestId('SliceHeaderControls')).toHaveAttribute(
-    'data-superset-can-explore',
+    'data-axbi-can-explore',
     'true',
   );
   expect(screen.getByTestId('SliceHeaderControls')).toHaveAttribute(

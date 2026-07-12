@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SupersetTheme } from '@apache-superset/core/theme';
-import { Switch } from '@superset-ui/core/components/Switch';
+import { t } from '@ax-bi/core/translation';
+import { AxBITheme } from '@ax-bi/core/theme';
+import { Switch } from '@ax-bi/ui-core/components/Switch';
 import {
   InfoTooltip,
   LabeledErrorBoundInput as ValidatedInput,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { FieldPropTypes, parseExtraJson } from '../../types';
 import { toggleStyle, infoTooltip } from '../styles';
 
@@ -284,9 +284,7 @@ export const displayField = ({
       placeholder=""
       label={t('Display Name')}
       onChange={changeMethods.onChange}
-      helpText={t(
-        'Pick a nickname for how the database will display in Superset.',
-      )}
+      helpText={t('Pick a nickname for how the database will display in AxBI.')}
     />
   </>
 );
@@ -320,7 +318,7 @@ export const forceSSLField = ({
   db,
   sslForced,
 }: FieldPropTypes) => (
-  <div css={(theme: SupersetTheme) => infoTooltip(theme)}>
+  <div css={(theme: AxBITheme) => infoTooltip(theme)}>
     <Switch
       disabled={sslForced && !isEditMode}
       checked={db?.parameters?.encryption || sslForced}

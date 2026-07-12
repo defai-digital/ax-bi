@@ -25,18 +25,16 @@ from fastmcp import Client
 from fastmcp.exceptions import ToolError
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.system.schemas import FindUsersRequest, FindUsersResponse
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.system.schemas import FindUsersRequest, FindUsersResponse
+from axbi.utils import json
 
 # Import the submodule directly so ``patch.object`` targets the module (not the
 # ``find_users`` function that ``tool/__init__.py`` re-exports onto the
 # package). The package attribute is the function, so dotted-string patches
-# like ``superset.mcp_service.system.tool.find_users.db`` can resolve to the
+# like ``axbi.mcp_service.system.tool.find_users.db`` can resolve to the
 # function in some import orderings and fail with AttributeError.
-find_users_module = importlib.import_module(
-    "superset.mcp_service.system.tool.find_users"
-)
+find_users_module = importlib.import_module("axbi.mcp_service.system.tool.find_users")
 
 
 @pytest.fixture
@@ -47,7 +45,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -206,7 +204,7 @@ def test_find_users_request_strips_query_whitespace():
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_passes_created_by_fk_filter_to_dao(
     mock_list, mcp_server
@@ -234,7 +232,7 @@ async def test_list_dashboards_passes_created_by_fk_filter_to_dao(
     )
 
 
-@patch("superset.daos.chart.ChartDAO.list")
+@patch("axbi.daos.chart.ChartDAO.list")
 @pytest.mark.asyncio
 async def test_list_charts_passes_changed_by_fk_filter_to_dao(mock_list, mcp_server):
     """list_charts should accept changed_by_fk filter and forward it."""

@@ -17,16 +17,16 @@
  * under the License.
  */
 import { FC, useMemo, createContext, useContext, useRef } from 'react';
-import { styled } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import {
   Flex,
   Steps,
   type StepsProps,
   StyledSpin,
   Timer,
-} from '@superset-ui/core/components';
-import { QueryResponse, QueryState, usePrevious } from '@superset-ui/core';
+} from '@ax-bi/ui-core/components';
+import { QueryResponse, QueryState, usePrevious } from '@ax-bi/ui-core';
 import QueryStateLabel from '../QueryStateLabel';
 
 type QueryStatusBarProps = {

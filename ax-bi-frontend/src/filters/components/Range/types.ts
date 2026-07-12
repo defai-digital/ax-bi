@@ -21,7 +21,7 @@ import {
   DataRecord,
   FilterState,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { RefObject } from 'react';
 import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
 import { FilterBarOrientation } from '../../../dashboard/types';

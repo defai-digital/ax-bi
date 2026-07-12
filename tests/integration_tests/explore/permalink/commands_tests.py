@@ -20,18 +20,18 @@ from unittest.mock import patch
 import pytest
 from flask import current_app
 
-from superset import db, security_manager
-from superset.commands.explore.permalink.create import CreateExplorePermalinkCommand
-from superset.commands.explore.permalink.get import GetExplorePermalinkCommand
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.slice import Slice
-from superset.models.sql_lab import Query
-from superset.utils.core import DatasourceType, get_example_default_schema
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from axbi.commands.explore.permalink.create import CreateExplorePermalinkCommand
+from axbi.commands.explore.permalink.get import GetExplorePermalinkCommand
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.slice import Slice
+from axbi.models.sql_lab import Query
+from axbi.utils.core import DatasourceType, get_example_default_schema
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestCreatePermalinkDataCommand(SupersetTestCase):
+class TestCreatePermalinkDataCommand(AxBITestCase):
     @pytest.fixture
     def create_dataset(self):
         with self.create_app().app_context():
@@ -92,7 +92,7 @@ class TestCreatePermalinkDataCommand(SupersetTestCase):
             db.session.delete(query)
             db.session.commit()
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice")
     def test_create_permalink_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -109,7 +109,7 @@ class TestCreatePermalinkDataCommand(SupersetTestCase):
 
         assert isinstance(command.run(), str)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice")
     def test_get_permalink_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -133,9 +133,9 @@ class TestCreatePermalinkDataCommand(SupersetTestCase):
 
         assert cache_data.get("datasource") == datasource
 
-    @patch("superset.security.manager.g")
-    @patch("superset.daos.key_value.KeyValueDAO.get_value")
-    @patch("superset.commands.explore.permalink.get.decode_permalink_id")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.daos.key_value.KeyValueDAO.get_value")
+    @patch("axbi.commands.explore.permalink.get.decode_permalink_id")
     @pytest.mark.usefixtures("create_dataset", "create_slice")
     def test_get_permalink_command_with_old_dataset_key(
         self, decode_id_mock, kv_get_value_mock, mock_g

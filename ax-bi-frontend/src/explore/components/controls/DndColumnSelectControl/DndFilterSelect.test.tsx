@@ -19,13 +19,9 @@
 import { thunk } from 'redux-thunk';
 import configureStore from 'redux-mock-store';
 
-import {
-  ensureIsArray,
-  QueryFormData,
-  QueryFormMetric,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { ensureIsArray, QueryFormData, QueryFormMetric } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import {
   act,
   fireEvent,

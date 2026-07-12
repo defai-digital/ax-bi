@@ -23,14 +23,14 @@ from unittest.mock import Mock, patch
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.report.exceptions import (
+from axbi.commands.report.exceptions import (
     ReportScheduleForbiddenError,
     ReportScheduleInvalidError,
 )
-from superset.commands.report.update import UpdateReportScheduleCommand
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
-from superset.reports.models import (
+from axbi.commands.report.update import UpdateReportScheduleCommand
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
+from axbi.reports.models import (
     ReportCreationMethod,
     ReportScheduleType,
     ReportState,
@@ -57,18 +57,18 @@ def _make_model(
 
 def _setup_mocks(mocker: MockerFixture, model: Mock) -> None:
     mocker.patch(
-        "superset.commands.report.update.ReportScheduleDAO.find_by_id",
+        "axbi.commands.report.update.ReportScheduleDAO.find_by_id",
         return_value=model,
     )
     mocker.patch(
-        "superset.commands.report.update.ReportScheduleDAO.validate_update_uniqueness",
+        "axbi.commands.report.update.ReportScheduleDAO.validate_update_uniqueness",
         return_value=True,
     )
     mocker.patch(
-        "superset.commands.report.update.security_manager.raise_for_ownership",
+        "axbi.commands.report.update.security_manager.raise_for_ownership",
     )
     mocker.patch(
-        "superset.commands.report.update.DatabaseDAO.find_by_id",
+        "axbi.commands.report.update.DatabaseDAO.find_by_id",
         return_value=mocker.Mock(),
     )
     mocker.patch.object(
@@ -239,7 +239,7 @@ def test_report_with_nonexistent_database_returns_not_allowed(
     model = _make_model(mocker, model_type=ReportScheduleType.REPORT, database_id=None)
     _setup_mocks(mocker, model)
     mocker.patch(
-        "superset.commands.report.update.DatabaseDAO.find_by_id",
+        "axbi.commands.report.update.DatabaseDAO.find_by_id",
         return_value=None,
     )
 
@@ -265,7 +265,7 @@ def test_report_to_alert_with_db_accepted(mocker: MockerFixture) -> None:
 
 # --- Recipient enforcement for chart/dashboard reports ---
 
-_PATCH_GET_USER_EMAIL = "superset.commands.report.update.get_user_email"
+_PATCH_GET_USER_EMAIL = "axbi.commands.report.update.get_user_email"
 
 
 def test_chart_report_update_recipient_overridden_with_owner_email(
@@ -432,11 +432,11 @@ def test_ownership_check_raises_forbidden(mocker: MockerFixture) -> None:
     model = _make_model(mocker, model_type=ReportScheduleType.REPORT, database_id=None)
     _setup_mocks(mocker, model)
     mocker.patch(
-        "superset.commands.report.update.security_manager.raise_for_ownership",
-        side_effect=SupersetSecurityException(
-            SupersetError(
+        "axbi.commands.report.update.security_manager.raise_for_ownership",
+        side_effect=AxBISecurityException(
+            AxBIError(
                 message="Forbidden",
-                error_type=SupersetErrorType.GENERIC_BACKEND_ERROR,
+                error_type=AxBIErrorType.GENERIC_BACKEND_ERROR,
                 level=ErrorLevel.ERROR,
             )
         ),
@@ -454,11 +454,11 @@ def test_ownership_check_runs_before_payload_validation(
     model = _make_model(mocker, model_type=ReportScheduleType.ALERT, database_id=1)
     model.last_state = ReportState.WORKING
     find_by_id = mocker.patch(
-        "superset.commands.report.update.ReportScheduleDAO.find_by_id",
+        "axbi.commands.report.update.ReportScheduleDAO.find_by_id",
         return_value=model,
     )
     database_lookup = mocker.patch(
-        "superset.commands.report.update.DatabaseDAO.find_by_id",
+        "axbi.commands.report.update.DatabaseDAO.find_by_id",
     )
     validate_chart_dashboard = mocker.patch.object(
         UpdateReportScheduleCommand,
@@ -473,11 +473,11 @@ def test_ownership_check_runs_before_payload_validation(
         "compute_owners",
     )
     raise_for_ownership = mocker.patch(
-        "superset.commands.report.update.security_manager.raise_for_ownership",
-        side_effect=SupersetSecurityException(
-            SupersetError(
+        "axbi.commands.report.update.security_manager.raise_for_ownership",
+        side_effect=AxBISecurityException(
+            AxBIError(
                 message="Forbidden",
-                error_type=SupersetErrorType.GENERIC_BACKEND_ERROR,
+                error_type=AxBIErrorType.GENERIC_BACKEND_ERROR,
                 level=ErrorLevel.ERROR,
             )
         ),
@@ -612,7 +612,7 @@ def test_alert_with_nonexistent_database_rejected(mocker: MockerFixture) -> None
     model = _make_model(mocker, model_type=ReportScheduleType.ALERT, database_id=None)
     _setup_mocks(mocker, model)
     mocker.patch(
-        "superset.commands.report.update.DatabaseDAO.find_by_id",
+        "axbi.commands.report.update.DatabaseDAO.find_by_id",
         return_value=None,
     )
 

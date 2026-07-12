@@ -18,16 +18,16 @@
  */
 import {
   type AnyThemeConfig,
-  type SupersetThemeConfig,
+  type AxBIThemeConfig,
   type ThemeControllerOptions,
   type ThemeStorage,
   isThemeConfigDark,
   Theme,
   ThemeMode,
-  themeObject as supersetThemeObject,
+  themeObject as axbiThemeObject,
   normalizeThemeConfig,
-} from '@apache-superset/core/theme';
-import { makeApi, SupersetClient } from '@superset-ui/core';
+} from '@ax-bi/core/theme';
+import { makeApi, AxBIClient } from '@ax-bi/ui-core';
 import type {
   BootstrapThemeData,
   BootstrapThemeDataConfig,
@@ -35,10 +35,10 @@ import type {
 import getBootstrapData from 'src/utils/getBootstrapData';
 
 const STORAGE_KEYS = {
-  THEME_MODE: 'superset-theme-mode',
-  CRUD_THEME_ID: 'superset-crud-theme-id',
-  DEV_THEME_OVERRIDE: 'superset-dev-theme-override',
-  APPLIED_THEME_ID: 'superset-applied-theme-id',
+  THEME_MODE: 'axbi-theme-mode',
+  CRUD_THEME_ID: 'axbi-crud-theme-id',
+  DEV_THEME_OVERRIDE: 'axbi-dev-theme-override',
+  APPLIED_THEME_ID: 'axbi-applied-theme-id',
 } as const;
 
 const MEDIA_QUERY_DARK_SCHEME = '(prefers-color-scheme: dark)';
@@ -112,8 +112,8 @@ export class ThemeController {
   constructor({
     storage = new LocalStorageAdapter(),
     modeStorageKey = STORAGE_KEYS.THEME_MODE,
-    themeObject = supersetThemeObject,
-    defaultTheme = (supersetThemeObject.theme as AnyThemeConfig) ?? {},
+    themeObject = axbiThemeObject,
+    defaultTheme = (axbiThemeObject.theme as AnyThemeConfig) ?? {},
     onChange = undefined,
     initialMode = undefined,
   }: ThemeControllerOptions & { initialMode?: ThemeMode } = {}) {
@@ -191,7 +191,7 @@ export class ThemeController {
 
     // Clean up injected font styles
     document
-      .querySelectorAll('style[data-superset-fonts]')
+      .querySelectorAll('style[data-axbi-fonts]')
       .forEach(el => el.remove());
     this.loadedFontUrls.clear();
   }
@@ -267,7 +267,7 @@ export class ThemeController {
 
       if (themeConfig) {
         // Controller creates and owns the dashboard theme
-        const { Theme } = await import('@apache-superset/core/theme');
+        const { Theme } = await import('@ax-bi/core/theme');
         const normalizedConfig = this.normalizeTheme(themeConfig);
 
         // Determine if this is a dark theme and get appropriate base
@@ -530,7 +530,7 @@ export class ThemeController {
    * dynamically from external sources.
    * @param config - The complete theme configuration object
    */
-  public setThemeConfig(config: SupersetThemeConfig): void {
+  public setThemeConfig(config: AxBIThemeConfig): void {
     this.defaultTheme = config.theme_default;
     this.darkTheme = config.theme_dark || null;
     this.themeConfigOverride = true;
@@ -915,7 +915,7 @@ export class ThemeController {
       .join('\n');
 
     const style = document.createElement('style');
-    style.setAttribute('data-superset-fonts', 'true');
+    style.setAttribute('data-axbi-fonts', 'true');
     style.textContent = css;
     document.head.appendChild(style);
 
@@ -1021,7 +1021,7 @@ export class ThemeController {
     themeId: string,
   ): Promise<AnyThemeConfig | null> {
     try {
-      // Use SupersetClient for proper authentication handling
+      // Use AxBIClient for proper authentication handling
       const getTheme = makeApi<
         void,
         { result: { json_data: string; theme_name?: string } }
@@ -1053,17 +1053,17 @@ export class ThemeController {
 
   /**
    * Constructs the guest token authorization header using the configured
-   * header name from SupersetClient or bootstrap config, falling back to 'X-GuestToken'.
+   * header name from AxBIClient or bootstrap config, falling back to 'X-GuestToken'.
    */
   private getGuestTokenHeader(): Record<string, string> {
     const headers: Record<string, string> = {};
     try {
-      const guestToken = SupersetClient.getGuestToken();
+      const guestToken = AxBIClient.getGuestToken();
       if (guestToken) {
         let headerName = 'X-GuestToken';
         try {
-          if (SupersetClient.guestTokenHeaderName) {
-            headerName = SupersetClient.guestTokenHeaderName;
+          if (AxBIClient.guestTokenHeaderName) {
+            headerName = AxBIClient.guestTokenHeaderName;
           }
         } catch {
           const bootstrapData = getBootstrapData();
@@ -1082,18 +1082,18 @@ export class ThemeController {
    * Fetches a fresh system default theme from the API for runtime recovery.
    * Tries multiple fallback strategies to find a valid theme.
    *
-   * Note: First tries to use SupersetClient. If SupersetClient is not yet
+   * Note: First tries to use AxBIClient. If AxBIClient is not yet
    * fully configured/initialized or if the request fails (e.g. in embedded
-   * guest-token environments where SupersetClient bootstrap is still in progress),
+   * guest-token environments where AxBIClient bootstrap is still in progress),
    * it falls back to using raw fetch() with custom guest token headers.
    *
    * @returns The system default theme configuration or null if not found
    */
   private async fetchSystemDefaultTheme(): Promise<AnyThemeConfig | null> {
     try {
-      // Try to use SupersetClient first if it has been configured
+      // Try to use AxBIClient first if it has been configured
       try {
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint:
             '/api/v1/theme/?q=(filters:!((col:is_system_default,opr:eq,value:!t)))',
         });
@@ -1105,7 +1105,7 @@ export class ThemeController {
           if (themeConfig) return themeConfig;
         }
       } catch (clientError) {
-        // If SupersetClient is not configured yet or request fails, fall back to native fetch
+        // If AxBIClient is not configured yet or request fails, fall back to native fetch
         const headers = this.getGuestTokenHeader();
 
         const defaultResponse = await fetch(
@@ -1126,7 +1126,7 @@ export class ThemeController {
 
       // Fallback: Try to fetch system theme named 'THEME_DEFAULT'
       try {
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint:
             '/api/v1/theme/?q=(filters:!((col:theme_name,opr:eq,value:THEME_DEFAULT),(col:is_system,opr:eq,value:!t)))',
         });

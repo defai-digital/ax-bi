@@ -22,7 +22,7 @@ import userEvent from '@testing-library/user-event';
 import SouthPane from 'src/SqlLab/components/SouthPane';
 import { STATUS_OPTIONS } from 'src/SqlLab/constants';
 import { initialState, table, defaultQueryEditor } from 'src/SqlLab/fixtures';
-import { denormalizeTimestamp } from '@superset-ui/core';
+import { denormalizeTimestamp } from '@ax-bi/ui-core';
 import { ViewLocations } from 'src/SqlLab/contributions';
 import {
   registerTestView,

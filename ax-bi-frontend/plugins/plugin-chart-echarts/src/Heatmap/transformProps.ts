@@ -28,9 +28,9 @@ import {
   addAlpha,
   tooltipHtml,
   DataRecordValue,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
+import { GenericDataType } from '@ax-bi/core/common';
 import memoizeOne from 'memoize-one';
 import { maxBy, minBy } from 'lodash';
 import type { ComposeOption } from 'echarts/core';

@@ -20,7 +20,7 @@ import {
   DataMaskStateWithId,
   DataRecordValue,
   PartialFilters,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { ChartConfiguration, ActiveFilters } from 'src/dashboard/types';
 
 export interface DashboardContextForExplore {

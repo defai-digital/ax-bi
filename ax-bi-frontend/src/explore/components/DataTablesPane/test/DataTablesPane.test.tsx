@@ -17,10 +17,10 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import { FeatureFlag } from '@superset-ui/core';
+import { FeatureFlag } from '@ax-bi/ui-core';
 import * as copyUtils from 'src/utils/copy';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { setItem, LocalStorageKeys } from 'src/utils/localStorageHelpers';
 import { DataTablesPane } from '..';
 import { createDataTablesPaneProps } from './fixture';
@@ -115,7 +115,7 @@ describe('DataTablesPane', () => {
       initialState: {
         user: {
           roles: {
-            gamma: [['can_copy_clipboard', 'Superset']],
+            gamma: [['can_copy_clipboard', 'AxBI']],
           },
         },
       },
@@ -162,7 +162,7 @@ describe('DataTablesPane', () => {
       initialState: {
         user: {
           roles: {
-            gamma: [['can_export_data', 'Superset']],
+            gamma: [['can_export_data', 'AxBI']],
           },
         },
       },

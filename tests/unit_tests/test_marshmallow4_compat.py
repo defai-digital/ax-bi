@@ -39,7 +39,7 @@ def test_validates_kwargs_database_schema() -> None:
     """
     from flask import Flask
 
-    from superset.databases.schemas import BaseUploadFilePostSchemaMixin
+    from axbi.databases.schemas import BaseUploadFilePostSchemaMixin
 
     app = Flask(__name__)
     app.config["ALLOWED_EXTENSIONS"] = {"csv", "json", "parquet", "zip"}
@@ -68,7 +68,7 @@ def test_patch_marshmallow_for_flask_appbuilder_idempotent() -> None:
     """
     import marshmallow as mm
 
-    from superset.marshmallow_compatibility import (
+    from axbi.marshmallow_compatibility import (
         patch_marshmallow_for_flask_appbuilder,
     )
 
@@ -107,7 +107,7 @@ def test_fab_field_stubbing_is_single_pass() -> None:
     """
     import marshmallow as mm
 
-    from superset.marshmallow_compatibility import (
+    from axbi.marshmallow_compatibility import (
         patch_marshmallow_for_flask_appbuilder,
     )
 

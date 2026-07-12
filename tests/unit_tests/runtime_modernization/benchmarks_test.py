@@ -18,13 +18,13 @@ from __future__ import annotations
 
 import pytest
 
-from superset.runtime_modernization.benchmarks import (
+from axbi.runtime_modernization.benchmarks import (
     benchmark_sql_parsing_normalization,
     benchmark_sql_whitespace_kernel,
 )
 
 
-def test_benchmark_sql_parsing_normalization_runs_superset_parser_path() -> None:
+def test_benchmark_sql_parsing_normalization_runs_axbi_parser_path() -> None:
     """SQL benchmark exercises parse, format, table check, and mutation check."""
 
     result = benchmark_sql_parsing_normalization(iterations=1)
@@ -54,7 +54,7 @@ def test_benchmark_sql_whitespace_kernel_reports_python_baseline(
     """Rust kernel benchmark reports the Python baseline without requiring Rust."""
 
     monkeypatch.setattr(
-        "superset.runtime_modernization.benchmarks.rust_sql_kernel_available",
+        "axbi.runtime_modernization.benchmarks.rust_sql_kernel_available",
         lambda: False,
     )
 

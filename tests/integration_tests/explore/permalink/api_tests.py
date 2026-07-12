@@ -21,14 +21,14 @@ from uuid import uuid3
 import pytest
 from sqlalchemy.orm import Session  # noqa: F401
 
-from superset import db
-from superset.explore.permalink.schemas import ExplorePermalinkSchema
-from superset.key_value.models import KeyValueEntry
-from superset.key_value.types import KeyValueResource, MarshmallowKeyValueCodec
-from superset.key_value.utils import decode_permalink_id, encode_permalink_key
-from superset.models.slice import Slice
-from superset.utils import json
-from superset.utils.core import DatasourceType
+from axbi import db
+from axbi.explore.permalink.schemas import ExplorePermalinkSchema
+from axbi.key_value.models import KeyValueEntry
+from axbi.key_value.types import KeyValueResource, MarshmallowKeyValueCodec
+from axbi.key_value.utils import decode_permalink_id, encode_permalink_key
+from axbi.models.slice import Slice
+from axbi.utils import json
+from axbi.utils.core import DatasourceType
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
     load_world_bank_data,  # noqa: F401
@@ -53,8 +53,8 @@ def form_data(chart) -> dict[str, Any]:
 
 @pytest.fixture
 def permalink_salt() -> Iterator[str]:
-    from superset.key_value.shared_entries import get_permalink_salt, get_uuid_namespace
-    from superset.key_value.types import SharedKey
+    from axbi.key_value.shared_entries import get_permalink_salt, get_uuid_namespace
+    from axbi.key_value.types import SharedKey
 
     key = SharedKey.EXPLORE_PERMALINK_SALT
     salt = get_permalink_salt(key)
@@ -90,7 +90,7 @@ def test_post_access_denied(form_data, test_client, login_as):
 def test_get_missing_chart(
     chart, permalink_salt: str, test_client, login_as_admin
 ) -> None:
-    from superset.key_value.models import KeyValueEntry
+    from axbi.key_value.models import KeyValueEntry
 
     chart_id = 1234
     entry = KeyValueEntry(

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
-import { HandlebarsChartPlugin } from '@superset-ui/plugin-chart-handlebars';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
+import { HandlebarsChartPlugin } from '@ax-bi/plugin-chart-handlebars';
 import { kpiData, leaderboardData, timelineData } from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 

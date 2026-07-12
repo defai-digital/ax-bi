@@ -50,10 +50,10 @@ def test_dashboard_import_with_overwrite_replaces_charts(
     2. Re-import the same dashboard (same UUID) with only 1 chart
     3. The dashboard should have only 1 chart (replaced), not 3 (merged)
     """
-    from superset import db, security_manager
-    from superset.commands.dashboard.importers.v1 import ImportDashboardsCommand
-    from superset.models.dashboard import dashboard_slices
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.dashboard.importers.v1 import ImportDashboardsCommand
+    from axbi.models.dashboard import dashboard_slices
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
@@ -108,8 +108,8 @@ def test_dashboard_import_tolerates_missing_or_malformed_position(
     dashboard_config: dict[str, object],
 ) -> None:
     """Dashboard import should not require optional layout data."""
-    from superset.commands.dashboard import importers as dashboard_importers
-    from superset.commands.dashboard.importers.v1 import ImportDashboardsCommand
+    from axbi.commands.dashboard import importers as dashboard_importers
+    from axbi.commands.dashboard.importers.v1 import ImportDashboardsCommand
 
     dashboard = mocker.Mock()
     dashboard.id = 1
@@ -134,10 +134,10 @@ def test_dashboard_import_without_overwrite_merges_charts(
 
     When overwrite=False, new chart associations should be added to existing ones.
     """
-    from superset import db, security_manager
-    from superset.commands.dashboard.importers.v1 import ImportDashboardsCommand
-    from superset.models.dashboard import dashboard_slices
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.dashboard.importers.v1 import ImportDashboardsCommand
+    from axbi.models.dashboard import dashboard_slices
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
@@ -182,10 +182,10 @@ def test_dashboard_import_with_overwrite_adds_new_charts(
     This verifies that overwrite mode not only removes old charts but also
     properly adds the new charts from the import.
     """
-    from superset import db, security_manager
-    from superset.commands.dashboard.importers.v1 import ImportDashboardsCommand
-    from superset.models.dashboard import dashboard_slices
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.dashboard.importers.v1 import ImportDashboardsCommand
+    from axbi.models.dashboard import dashboard_slices
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
@@ -225,10 +225,10 @@ def test_dashboard_import_new_dashboard(
     """
     Test that importing a new dashboard works correctly.
     """
-    from superset import db, security_manager
-    from superset.commands.dashboard.importers.v1 import ImportDashboardsCommand
-    from superset.models.dashboard import dashboard_slices
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.dashboard.importers.v1 import ImportDashboardsCommand
+    from axbi.models.dashboard import dashboard_slices
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 

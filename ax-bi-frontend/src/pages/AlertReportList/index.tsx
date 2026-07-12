@@ -19,20 +19,16 @@
 
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useState, useMemo, useEffect, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  SupersetClient,
-  makeApi,
-  getExtensionsRegistry,
-} from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, makeApi, getExtensionsRegistry } from '@ax-bi/ui-core';
+import { css, styled } from '@ax-bi/core/theme';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import {
   Tooltip,
   ConfirmStatusChange,
   DeleteModal,
   LastUpdated,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   FacePile,
   ModifiedInfo,
@@ -44,7 +40,7 @@ import {
   type ListViewFilters,
 } from 'src/components';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
-import { Switch } from '@superset-ui/core/components/Switch';
+import { Switch } from '@ax-bi/ui-core/components/Switch';
 import { DATETIME_WITH_TIME_ZONE } from 'src/constants';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import AlertStatusIcon from 'src/features/alerts/components/AlertStatusIcon';
@@ -65,7 +61,7 @@ import Owner from 'src/types/Owner';
 import AlertReportModal from 'src/features/alerts/AlertReportModal';
 import { AlertObject, AlertState } from 'src/features/alerts/types';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 
 const extensionsRegistry = getExtensionsRegistry();
@@ -188,7 +184,7 @@ function AlertList({
   }, [isReportEnabled]);
 
   const handleAlertDelete = ({ id, name }: AlertObject) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/report/${id}`,
     }).then(
       () => {

@@ -17,11 +17,11 @@
  * under the License.
  */
 import { render, waitFor } from 'spec/helpers/testing-library';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import DatasetPanelWrapper from 'src/features/datasets/AddDataset/DatasetPanel';
 
 jest.mock(
-  '@superset-ui/core/components/Icons/AsyncIcon',
+  '@ax-bi/ui-core/components/Icons/AsyncIcon',
   () =>
     ({ fileName }: { fileName: string }) => (
       <span role="img" aria-label={fileName.replace('_', '-')} />
@@ -33,7 +33,7 @@ afterEach(() => {
 });
 
 test('fetches table metadata for schema-less database without schema', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {
       name: 'my_table',
       columns: [{ name: 'id', type: 'INTEGER', longType: 'INTEGER' }],

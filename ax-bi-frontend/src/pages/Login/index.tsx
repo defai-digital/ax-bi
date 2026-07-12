@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { styled, css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { styled, css } from '@ax-bi/core/theme';
 import {
   Button,
   Card,
@@ -28,7 +28,7 @@ import {
   Input,
   Typography,
   Icons,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { useState, useEffect, useMemo } from 'react';
 import { capitalize } from 'lodash/fp';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
@@ -132,7 +132,7 @@ export default function Login() {
     sessionStorage.setItem('login_attempted', 'true');
 
     // Use standard form submission for Flask-AppBuilder compatibility
-    SupersetClient.postForm(loginEndpoint, values, '');
+    AxBIClient.postForm(loginEndpoint, values, '');
   };
 
   const getAuthIconElement = (

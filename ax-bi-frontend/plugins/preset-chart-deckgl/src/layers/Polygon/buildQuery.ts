@@ -25,7 +25,7 @@ import {
   QueryObject,
   QueryFormColumn,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { addTooltipColumnsToQuery } from '../buildQueryUtils';
 
 export interface DeckPolygonFormData extends SqlaFormData {

@@ -18,7 +18,7 @@
 import pytest
 from wtforms.form import Form
 
-from superset.forms import JsonListField
+from axbi.forms import JsonListField
 
 
 def test_json_list_field_accepts_lists() -> None:

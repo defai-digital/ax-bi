@@ -18,9 +18,9 @@
  */
 import { useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { MenuItem } from '@superset-ui/core/components/Menu';
-import { DataMaskStateWithId } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { MenuItem } from '@ax-bi/ui-core/components/Menu';
+import { DataMaskStateWithId } from '@ax-bi/ui-core';
 import { RootState } from 'src/dashboard/types';
 import { updateDataMask } from 'src/dataMask/actions';
 import {

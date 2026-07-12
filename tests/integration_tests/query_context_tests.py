@@ -25,25 +25,25 @@ import pandas as pd
 import pytest
 from pandas import DateOffset
 
-from superset import db
-from superset.charts.schemas import ChartDataQueryContextSchema
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
-from superset.common.query_context import QueryContext
-from superset.common.query_context_factory import QueryContextFactory
-from superset.common.query_object import QueryObject
-from superset.daos.dataset import DatasetDAO
-from superset.daos.datasource import DatasourceDAO
-from superset.extensions import cache_manager
-from superset.superset_typing import AdhocColumn
-from superset.utils.core import (
+from axbi import db
+from axbi.axbi_typing import AdhocColumn
+from axbi.charts.schemas import ChartDataQueryContextSchema
+from axbi.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from axbi.common.query_context import QueryContext
+from axbi.common.query_context_factory import QueryContextFactory
+from axbi.common.query_object import QueryObject
+from axbi.daos.dataset import DatasetDAO
+from axbi.daos.datasource import DatasourceDAO
+from axbi.extensions import cache_manager
+from axbi.utils.core import (
     AdhocMetricExpressionType,
     backend,
     DatasourceType,
     QueryStatus,
 )
-from superset.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
+from axbi.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
 from tests.conftest import with_config
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import (
     only_postgresql,
     only_sqlite,
@@ -88,7 +88,7 @@ def _time_comparison_offset_queries_payload() -> dict[str, Any]:
 
 
 @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-@patch("superset.common.query_context.QueryContext.get_query_result")
+@patch("axbi.common.query_context.QueryContext.get_query_result")
 def test_time_offset_comparison_queries_use_chart_row_limit(
     query_result_mock: Mock,
 ) -> None:
@@ -139,7 +139,7 @@ def test_time_offset_comparison_queries_use_chart_row_limit(
 
 @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
 @with_config({"ROW_LIMIT": 4242})
-@patch("superset.common.query_context.QueryContext.get_query_result")
+@patch("axbi.common.query_context.QueryContext.get_query_result")
 def test_time_offset_comparison_queries_use_config_row_limit_without_chart_limit(
     query_result_mock: Mock,
 ) -> None:
@@ -198,7 +198,7 @@ def test_time_offset_comparison_queries_use_config_row_limit_without_chart_limit
         "Birth names fixture conflicts with new example data structure."
     )
 )
-class TestQueryContext(SupersetTestCase):
+class TestQueryContext(AxBITestCase):
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_schema_deserialization(self):
         """
@@ -917,7 +917,7 @@ class TestQueryContext(SupersetTestCase):
                 )
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-    @patch("superset.common.query_context.QueryContext.get_query_result")
+    @patch("axbi.common.query_context.QueryContext.get_query_result")
     def test_time_offsets_in_query_object_uses_chart_row_limit(self, query_result_mock):
         """
         Subquery honors the chart's row_limit (widened by row_offset so the
@@ -978,7 +978,7 @@ class TestQueryContext(SupersetTestCase):
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_config({"ROW_LIMIT": 4242})
-    @patch("superset.common.query_context.QueryContext.get_query_result")
+    @patch("axbi.common.query_context.QueryContext.get_query_result")
     def test_time_offsets_use_config_row_limit_when_chart_has_offset_only(
         self, query_result_mock
     ):
@@ -1559,7 +1559,7 @@ def test_date_range_timeshift_disabled(app_context, physical_dataset):
     )
 
     # Should raise QueryObjectValidationError
-    from superset.exceptions import QueryObjectValidationError
+    from axbi.exceptions import QueryObjectValidationError
 
     with pytest.raises(
         QueryObjectValidationError, match="Date range timeshifts are not enabled"
@@ -1662,7 +1662,7 @@ def test_date_range_timeshift_invalid_format(app_context, physical_dataset):
     )
 
     # Should raise an error for invalid date range format
-    from superset.commands.chart.exceptions import TimeDeltaAmbiguousError
+    from axbi.commands.chart.exceptions import TimeDeltaAmbiguousError
 
     with pytest.raises(TimeDeltaAmbiguousError):
         qc.get_df_payload(qc.queries[0])

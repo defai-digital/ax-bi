@@ -18,9 +18,9 @@
  */
 
 import { forwardRef, RefObject, MouseEvent } from 'react';
-import { Button } from '@superset-ui/core/components';
+import { Button } from '@ax-bi/ui-core/components';
 import { ErrorAlert } from 'src/components';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 
 interface ControlPanelAlertProps {
   title: string;

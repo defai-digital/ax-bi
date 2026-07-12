@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getChartControlPanelRegistry } from '@superset-ui/core';
+import { getChartControlPanelRegistry } from '@ax-bi/ui-core';
 import {
   applyDefaultFormData,
   getControlsState,
@@ -82,7 +82,7 @@ test('applyDefaultFormData keeps null if key is defined with null', () => {
 
 // ============================================================
 // Migration tests: handleDeprecatedControls normalizes stale matrixify modes
-// (fix for apache/superset#38519 regression — guards validators AND
+// (fix for https://github.com/defai-digital/ax-bi/issues/38519 regression — guards validators AND
 // downstream UI consumers that infer matrixify state from mode values)
 // ============================================================
 

@@ -21,7 +21,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from superset.mcp_service.chart.chart_utils import (
+from axbi.mcp_service.chart.chart_utils import (
     _resolve_viz_type,
     analyze_chart_capabilities,
     analyze_chart_semantics,
@@ -29,12 +29,12 @@ from superset.mcp_service.chart.chart_utils import (
     map_config_to_form_data,
     map_handlebars_config,
 )
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     ColumnRef,
     FilterConfig,
     HandlebarsChartConfig,
 )
-from superset.mcp_service.chart.validation.schema_validator import SchemaValidator
+from axbi.mcp_service.chart.validation.schema_validator import SchemaValidator
 
 
 class TestHandlebarsChartConfig:

@@ -20,14 +20,14 @@ from collections.abc import Iterator
 import pytest
 from sqlalchemy.orm.session import Session
 
-from superset.daos.dashboard import DashboardDAO
-from superset.models.dashboard import Dashboard
-from superset.utils import json
+from axbi.daos.dashboard import DashboardDAO
+from axbi.models.dashboard import Dashboard
+from axbi.utils import json
 
 
 @pytest.fixture
 def dashboard_with_customizations(session: Session) -> Iterator[Dashboard]:
-    from superset.models.dashboard import Dashboard
+    from axbi.models.dashboard import Dashboard
 
     engine = session.get_bind()
     Dashboard.metadata.create_all(engine)
@@ -64,7 +64,7 @@ def dashboard_with_customizations(session: Session) -> Iterator[Dashboard]:
 
 @pytest.fixture
 def dashboard_without_customizations(session: Session) -> Iterator[Dashboard]:
-    from superset.models.dashboard import Dashboard
+    from axbi.models.dashboard import Dashboard
 
     engine = session.get_bind()
     Dashboard.metadata.create_all(engine)

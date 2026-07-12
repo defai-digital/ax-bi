@@ -1,4 +1,4 @@
-name: supersetbot orglabel based on author
+name: axbibot orglabel based on author
 
 on:
   issues:
@@ -20,14 +20,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Setup supersetbot
-        uses: ./.github/actions/setup-supersetbot/
+      - name: Setup axbibot
+        uses: ./.github/actions/setup-axbibot/
 
-      - name: Execute supersetbot orglabel command
+      - name: Execute axbibot orglabel command
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Label the issue with the appropriate org using supersetbot
+          # Label the issue with the appropriate org using axbibot
           # - this requires for the author to be publicly associated with their org
-          # - and for the org to be listed in `supersetbot/src/metadata.js`
-          supersetbot orglabel --issue ${{ github.event.number }} --repo ${{ github.repository }} || true
+          # - and for the org to be listed in `axbibot/src/metadata.js`
+          axbibot orglabel --issue ${{ github.event.number }} --repo ${{ github.repository }} || true

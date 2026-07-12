@@ -17,9 +17,9 @@
 import pandas as pd
 import pytest
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils import pandas_postprocessing as pp
-from superset.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils import pandas_postprocessing as pp
+from axbi.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
 from tests.unit_tests.fixtures.dataframes import (
     multiple_metrics_df,
     single_metric_df,

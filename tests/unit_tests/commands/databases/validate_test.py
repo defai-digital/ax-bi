@@ -18,13 +18,13 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.database.exceptions import (
+from axbi.commands.database.exceptions import (
     DatabaseOfflineError,
     DatabaseTestConnectionFailedError,
     InvalidParametersError,
 )
-from superset.commands.database.validate import ValidateDatabaseParametersCommand
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
+from axbi.commands.database.validate import ValidateDatabaseParametersCommand
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
 
 
 def test_command(mocker: MockerFixture) -> None:
@@ -33,14 +33,14 @@ def test_command(mocker: MockerFixture) -> None:
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.return_value = True
 
-    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.validate.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     properties = {
@@ -60,18 +60,18 @@ def test_command_ignores_malformed_masked_encrypted_extra(
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.return_value = True
 
-    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.validate.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     build_sqlalchemy_uri = mocker.patch(
-        "superset.db_engine_specs.gsheets.GSheetsEngineSpec.build_sqlalchemy_uri",
+        "axbi.db_engine_specs.gsheets.GSheetsEngineSpec.build_sqlalchemy_uri",
         return_value="gsheets://",
     )
 
@@ -96,18 +96,18 @@ def test_command_ignores_non_object_masked_encrypted_extra(
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.return_value = True
 
-    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.validate.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     build_sqlalchemy_uri = mocker.patch(
-        "superset.db_engine_specs.gsheets.GSheetsEngineSpec.build_sqlalchemy_uri",
+        "axbi.db_engine_specs.gsheets.GSheetsEngineSpec.build_sqlalchemy_uri",
         return_value="gsheets://",
     )
 
@@ -130,14 +130,14 @@ def test_command_invalid(mocker: MockerFixture) -> None:
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.return_value = True
 
-    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.validate.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     properties = {
@@ -149,9 +149,9 @@ def test_command_invalid(mocker: MockerFixture) -> None:
     with pytest.raises(InvalidParametersError) as excinfo:
         command.run()
     assert excinfo.value.errors == [
-        SupersetError(
+        AxBIError(
             message="Sheet name is required",
-            error_type=SupersetErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
+            error_type=AxBIErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
             level=ErrorLevel.WARNING,
             extra={
                 "catalog": {"idx": 0, "name": True},
@@ -175,14 +175,14 @@ def test_command_no_ping(mocker: MockerFixture) -> None:
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.return_value = False
 
-    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.validate.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     properties = {
@@ -193,9 +193,9 @@ def test_command_no_ping(mocker: MockerFixture) -> None:
     command = ValidateDatabaseParametersCommand(properties)
     with pytest.raises(DatabaseOfflineError) as excinfo:
         command.run()
-    assert excinfo.value.error == SupersetError(
+    assert excinfo.value.error == AxBIError(
         message="Database is offline.",
-        error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+        error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
         level=ErrorLevel.ERROR,
         extra={
             "issue_codes": [
@@ -214,8 +214,8 @@ def test_command_with_oauth2(mocker: MockerFixture) -> None:
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     database.is_oauth2_enabled.return_value = True
@@ -223,7 +223,7 @@ def test_command_with_oauth2(mocker: MockerFixture) -> None:
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.side_effect = Exception("OAuth2 needed")
 
-    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.validate.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     properties = {
@@ -241,15 +241,15 @@ def test_command_with_oauth2_not_configured(mocker: MockerFixture) -> None:
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     database.is_oauth2_enabled.return_value = False
     database.db_engine_spec.needs_oauth2.return_value = True
     database.db_engine_spec.extract_errors.return_value = [
-        SupersetError(
-            error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+        AxBIError(
+            error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
             message="OAuth2 is needed but not configured.",
             level=ErrorLevel.ERROR,
             extra={"engine_name": "gsheets"},
@@ -258,7 +258,7 @@ def test_command_with_oauth2_not_configured(mocker: MockerFixture) -> None:
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.side_effect = Exception("OAuth2 needed")
 
-    DatabaseDAO = mocker.patch("superset.commands.database.validate.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.validate.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     properties = {
@@ -270,8 +270,8 @@ def test_command_with_oauth2_not_configured(mocker: MockerFixture) -> None:
     with pytest.raises(DatabaseTestConnectionFailedError) as excinfo:
         command.run()
     assert excinfo.value.errors == [
-        SupersetError(
-            error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+        AxBIError(
+            error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
             message="OAuth2 is needed but not configured.",
             level=ErrorLevel.ERROR,
             extra={"engine_name": "gsheets"},

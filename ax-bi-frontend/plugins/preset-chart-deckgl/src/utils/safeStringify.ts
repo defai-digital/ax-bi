@@ -18,7 +18,7 @@
  * under the License.
  */
 
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 
 /**
  * A Stringify function that will not crash when it runs into circular JSON references,

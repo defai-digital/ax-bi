@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { makeApi } from '@superset-ui/core';
+import { makeApi } from '@ax-bi/ui-core';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 export enum ResourceStatus {
@@ -173,7 +173,7 @@ const extractInnerResult = <T>(responseBody: { result: T }) =>
   responseBody.result;
 
 /**
- * A general-purpose hook to fetch a Superset resource from a v1 API endpoint.
+ * A general-purpose hook to fetch a AxBI resource from a v1 API endpoint.
  * Handles request lifecycle and async logic so you don't have to.
  *
  * This returns the data under the "result" field in the API response body.

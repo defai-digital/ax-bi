@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart, VizType } from '@superset-ui/core';
-import HorizonChartPlugin from '@superset-ui/legacy-plugin-chart-horizon';
+import { SuperChart, VizType } from '@ax-bi/ui-core';
+import HorizonChartPlugin from '@ax-bi/legacy-plugin-chart-horizon';
 import { withResizableChartDemo } from '@storybook-shared';
 import data from './data';
 

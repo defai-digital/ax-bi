@@ -26,8 +26,8 @@ import pytest
 from freezegun import freeze_time
 from pytest_mock import MockerFixture
 
-from superset.superset_typing import OAuth2ClientConfig
-from superset.utils.oauth2 import (
+from axbi.axbi_typing import OAuth2ClientConfig
+from axbi.utils.oauth2 import (
     decode_oauth2_state,
     encode_oauth2_state,
     generate_code_challenge,
@@ -44,7 +44,7 @@ def test_get_oauth2_access_token_base_no_token(mocker: MockerFixture) -> None:
     """
     Test `get_oauth2_access_token` when there's no token.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
+    db = mocker.patch("axbi.utils.oauth2.db")
     db_engine_spec = mocker.MagicMock()
     db.session.query().filter_by().one_or_none.return_value = None
 
@@ -55,7 +55,7 @@ def test_get_oauth2_access_token_base_token_valid(mocker: MockerFixture) -> None
     """
     Test `get_oauth2_access_token` when the token is valid.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
+    db = mocker.patch("axbi.utils.oauth2.db")
     db_engine_spec = mocker.MagicMock()
     token = mocker.MagicMock()
     token.access_token = "access-token"  # noqa: S105
@@ -70,7 +70,7 @@ def test_get_oauth2_access_token_base_refresh(mocker: MockerFixture) -> None:
     """
     Test `get_oauth2_access_token` when the token needs to be refreshed.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
+    db = mocker.patch("axbi.utils.oauth2.db")
     db_engine_spec = mocker.MagicMock()
     db_engine_spec.get_oauth2_fresh_token.return_value = {
         "access_token": "new-token",
@@ -95,7 +95,7 @@ def test_get_oauth2_access_token_base_no_refresh(mocker: MockerFixture) -> None:
     """
     Test `get_oauth2_access_token` when token is expired and there's no refresh.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
+    db = mocker.patch("axbi.utils.oauth2.db")
     db_engine_spec = mocker.MagicMock()
     token = mocker.MagicMock()
     token.access_token = "access-token"  # noqa: S105
@@ -119,8 +119,8 @@ def test_refresh_oauth2_token_deletes_token_on_oauth2_exception(
     When the token refresh fails with an OAuth2-specific exception (e.g., token
     was revoked), the invalid token should be deleted and the exception re-raised.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
 
     class OAuth2ExceptionError(Exception):
         pass
@@ -152,8 +152,8 @@ def test_refresh_oauth2_token_keeps_token_on_other_exception(
     the token should be kept (refresh token may still be valid) and the
     exception re-raised.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
 
     class OAuth2ExceptionError(Exception):
         pass
@@ -180,8 +180,8 @@ def test_refresh_oauth2_token_no_access_token_in_response(
 
     This can happen when the refresh token was revoked.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
     db_engine_spec = mocker.MagicMock()
     db_engine_spec.get_oauth2_fresh_token.return_value = {
         "error": "invalid_grant",
@@ -205,8 +205,8 @@ def test_refresh_oauth2_token_updates_refresh_token(
     Some OAuth2 providers issue single-use refresh tokens, where each token refresh
     response includes a new refresh token that replaces the previous one.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
     db_engine_spec = mocker.MagicMock()
     db_engine_spec.get_oauth2_fresh_token.return_value = {
         "access_token": "new-access-token",
@@ -236,8 +236,8 @@ def test_refresh_oauth2_token_keeps_refresh_token(
     When the OAuth2 provider does not issue a new refresh token in the response,
     the original refresh token should be preserved.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
     db_engine_spec = mocker.MagicMock()
     db_engine_spec.get_oauth2_fresh_token.return_value = {
         "access_token": "new-access-token",
@@ -266,8 +266,8 @@ def test_refresh_oauth2_token_refreshes_when_access_token_expired_under_lock(
     but a refresh_token is available, the function should call the token endpoint
     and persist the new access_token.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
     db_engine_spec = mocker.MagicMock()
     db_engine_spec.get_oauth2_fresh_token.return_value = {
         "access_token": "new-access-token",
@@ -300,8 +300,8 @@ def test_refresh_oauth2_token_returns_existing_token_when_still_valid_under_lock
     request should pick up the already-refreshed access_token instead of refreshing
     it again.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
     db_engine_spec = mocker.MagicMock()
     token = mocker.MagicMock()
     token.access_token = "fresh-access-token"  # noqa: S105
@@ -327,8 +327,8 @@ def test_refresh_oauth2_token_deletes_when_no_refresh_token_under_lock(
     is available, the row should be deleted and None returned so the caller can
     trigger the OAuth2 dance.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
     db_engine_spec = mocker.MagicMock()
     token = mocker.MagicMock()
     token.access_token = "expired-token"  # noqa: S105
@@ -354,8 +354,8 @@ def test_refresh_oauth2_token_returns_none_when_row_deleted_under_lock(
     releases the lock before the second one gets to `refresh_oauth2_token`, the token
     is queried again to avoid a stale reference.
     """
-    db = mocker.patch("superset.utils.oauth2.db")
-    mocker.patch("superset.utils.oauth2.DistributedLock")
+    db = mocker.patch("axbi.utils.oauth2.db")
+    mocker.patch("axbi.utils.oauth2.DistributedLock")
     db_engine_spec = mocker.MagicMock()
     db.session.query().filter_by().one_or_none.return_value = None
 
@@ -432,7 +432,7 @@ def test_encode_decode_oauth2_state(
     """
     Test that encode/decode cycle preserves state fields.
     """
-    from superset.superset_typing import OAuth2State
+    from axbi.axbi_typing import OAuth2State
 
     mocker.patch(
         "flask.current_app.config",
@@ -472,11 +472,11 @@ def test_get_oauth2_access_token_lock_not_acquired_no_error_log(
     """
     import logging
 
-    from superset.exceptions import AcquireDistributedLockFailedException
+    from axbi.exceptions import AcquireDistributedLockFailedException
 
     mocker.patch("time.sleep")  # avoid backoff delays in tests
 
-    db = mocker.patch("superset.utils.oauth2.db")
+    db = mocker.patch("axbi.utils.oauth2.db")
     db_engine_spec = mocker.MagicMock()
     token = mocker.MagicMock()
     token.access_token = "access-token"  # noqa: S105
@@ -485,7 +485,7 @@ def test_get_oauth2_access_token_lock_not_acquired_no_error_log(
     db.session.query().filter_by().one_or_none.return_value = token
 
     mocker.patch(
-        "superset.utils.oauth2.refresh_oauth2_token",
+        "axbi.utils.oauth2.refresh_oauth2_token",
         side_effect=AcquireDistributedLockFailedException("Lock not available"),
     )
 
@@ -516,7 +516,7 @@ def test_get_oauth2_redirect_uri_falls_back_to_url_for(mocker: MockerFixture) ->
     fallback_uri = "http://localhost:8088/api/v1/database/oauth2/"
     mocker.patch("flask.current_app.config", {})
     mocker.patch(
-        "superset.utils.oauth2.url_for",
+        "axbi.utils.oauth2.url_for",
         return_value=fallback_uri,
     )
     assert get_oauth2_redirect_uri() == fallback_uri
@@ -531,11 +531,11 @@ def test_get_oauth2_redirect_uri_raises_on_build_error(
     """
     from werkzeug.routing import BuildError
 
-    from superset.exceptions import OAuth2Error
+    from axbi.exceptions import OAuth2Error
 
     mocker.patch("flask.current_app.config", {})
     mocker.patch(
-        "superset.utils.oauth2.url_for",
+        "axbi.utils.oauth2.url_for",
         side_effect=BuildError("DatabaseRestApi.oauth2", {}, ("GET",)),
     )
     with pytest.raises(OAuth2Error):
@@ -549,11 +549,11 @@ def test_get_oauth2_redirect_uri_raises_on_runtime_error(
     Test that get_oauth2_redirect_uri raises OAuth2Error when url_for raises
     RuntimeError (e.g. no request context and no SERVER_NAME).
     """
-    from superset.exceptions import OAuth2Error
+    from axbi.exceptions import OAuth2Error
 
     mocker.patch("flask.current_app.config", {})
     mocker.patch(
-        "superset.utils.oauth2.url_for",
+        "axbi.utils.oauth2.url_for",
         side_effect=RuntimeError("Unable to build URL outside of request context"),
     )
     with pytest.raises(OAuth2Error):

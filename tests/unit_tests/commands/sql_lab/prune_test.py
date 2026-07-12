@@ -24,7 +24,7 @@ def test_query_prune_cutoff_is_naive_utc() -> None:
     Query.changed_on defaults to datetime.utcnow, so the retention cutoff should
     use the shared naive UTC clock instead of local server time.
     """
-    from superset.commands.sql_lab.query import QueryPruneCommand
+    from axbi.commands.sql_lab.query import QueryPruneCommand
 
     captured: dict[str, datetime] = {}
 
@@ -39,7 +39,7 @@ def test_query_prune_cutoff_is_naive_utc() -> None:
     session = MagicMock()
     session.execute.side_effect = fake_execute
 
-    with patch("superset.commands.sql_lab.query.db") as mock_db:
+    with patch("axbi.commands.sql_lab.query.db") as mock_db:
         mock_db.session = session
         QueryPruneCommand(retention_period_days=30).run()
 

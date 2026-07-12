@@ -26,12 +26,8 @@ import {
   waitFor,
   within,
 } from '@testing-library/react';
-import {
-  ThemeProvider,
-  themeObject,
-  supersetTheme,
-} from '@apache-superset/core/theme';
-import { SupersetThemeProvider } from 'src/theme/ThemeProvider';
+import { ThemeProvider, themeObject, axbiTheme } from '@ax-bi/core/theme';
+import { AxBIThemeProvider } from 'src/theme/ThemeProvider';
 import { ThemeController } from 'src/theme/ThemeController';
 import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
@@ -86,15 +82,13 @@ export function createWrapper(options?: Options) {
   } = options || {};
 
   return ({ children }: { children?: ReactNode }) => {
-    let result = (
-      <ThemeProvider theme={supersetTheme}>{children}</ThemeProvider>
-    );
+    let result = <ThemeProvider theme={axbiTheme}>{children}</ThemeProvider>;
 
     if (useTheme) {
       result = (
-        <SupersetThemeProvider themeController={themeController}>
+        <AxBIThemeProvider themeController={themeController}>
           {result}
-        </SupersetThemeProvider>
+        </AxBIThemeProvider>
       );
     }
 

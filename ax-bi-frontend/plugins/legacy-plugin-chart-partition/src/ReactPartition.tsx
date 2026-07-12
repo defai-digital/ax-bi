@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { reactify } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { reactify } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import Component from './Partition';
 
 // Type-erase the render function to allow flexible prop spreading in the wrapper.
@@ -43,17 +43,17 @@ const Partition = ({ className, ...otherProps }: PartitionWrapperProps) => (
 
 export default styled(Partition)`
   ${({ theme }) => `
-    .superset-legacy-chart-partition {
+    .axbi-legacy-chart-partition {
       position: relative;
     }
 
-    .superset-legacy-chart-partition .chart {
+    .axbi-legacy-chart-partition .chart {
       display: block;
       margin: auto;
       font-size: ${theme.fontSizeSM}px;
     }
 
-    .superset-legacy-chart-partition rect {
+    .axbi-legacy-chart-partition rect {
       stroke: ${theme.colorBorderSecondary};
       fill: ${theme.colorBgLayout};
       fill-opacity: 80%;
@@ -61,20 +61,20 @@ export default styled(Partition)`
       cursor: pointer;
     }
 
-    .superset-legacy-chart-partition rect:hover {
+    .axbi-legacy-chart-partition rect:hover {
       fill-opacity: 1;
     }
 
-    .superset-legacy-chart-partition g text {
+    .axbi-legacy-chart-partition g text {
       font-weight: ${theme.fontWeightStrong};
       fill: ${theme.colorText};
     }
 
-    .superset-legacy-chart-partition g:hover text {
+    .axbi-legacy-chart-partition g:hover text {
       fill: ${theme.colorTextHeading};
     }
 
-    .superset-legacy-chart-partition .partition-tooltip {
+    .axbi-legacy-chart-partition .partition-tooltip {
       position: absolute;
       top: 0;
       left: 0;

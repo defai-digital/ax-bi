@@ -17,13 +17,13 @@
  * under the License.
  */
 import cx from 'classnames';
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
 import backgroundStyleOptions from 'src/dashboard/util/backgroundStyleOptions';
 import PopoverDropdown, {
   OptionProps,
   OnChangeHandler,
-} from '@superset-ui/core/components/PopoverDropdown';
+} from '@ax-bi/ui-core/components/PopoverDropdown';
 
 interface BackgroundStyleDropdownProps {
   id: string;

@@ -23,10 +23,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.mcp_service.app import get_default_instructions, init_fastmcp_server, mcp
+from axbi.mcp_service.app import get_default_instructions, init_fastmcp_server, mcp
 
 # Patch target for the feature_flag_manager imported inside _apply_config_guards
-_FFM_PATH = "superset.extensions.feature_flag_manager"
+_FFM_PATH = "axbi.extensions.feature_flag_manager"
 
 
 @pytest.fixture(autouse=True)
@@ -76,11 +76,11 @@ def test_mcp_resources_registered():
     resource_uris = {str(r.uri) for r in resources}
     assert "chart://configs" in resource_uris, (
         "chart://configs resource not registered - "
-        "check superset/mcp_service/chart/__init__.py exists"
+        "check axbi/mcp_service/chart/__init__.py exists"
     )
     assert "instance://metadata" in resource_uris, (
         "instance://metadata resource not registered - "
-        "check superset/mcp_service/system/resources/ imports"
+        "check axbi/mcp_service/system/resources/ imports"
     )
 
 
@@ -93,7 +93,7 @@ def test_mcp_packages_discoverable_by_setuptools():
     """
     from pathlib import Path
 
-    mcp_root = Path(__file__).parents[3] / "superset" / "mcp_service"
+    mcp_root = Path(__file__).parents[3] / "axbi" / "mcp_service"
     assert mcp_root.is_dir(), f"MCP service root not found: {mcp_root}"
 
     # All immediate sub-directories that contain Python files should be packages
@@ -139,7 +139,7 @@ def test_disabled_tools_are_removed_from_mcp_server() -> None:
 
     with (
         patch(
-            "superset.mcp_service.flask_singleton.app",
+            "axbi.mcp_service.flask_singleton.app",
             flask_app,
         ),
         patch.object(mcp.local_provider, "remove_tool") as mock_remove,
@@ -158,7 +158,7 @@ def test_unknown_disabled_tool_logs_warning_not_raises(caplog) -> None:
 
     with (
         patch(
-            "superset.mcp_service.flask_singleton.app",
+            "axbi.mcp_service.flask_singleton.app",
             flask_app,
         ),
         patch.object(
@@ -166,7 +166,7 @@ def test_unknown_disabled_tool_logs_warning_not_raises(caplog) -> None:
             "remove_tool",
             side_effect=KeyError("nonexistent_tool_xyz"),
         ),
-        caplog.at_level(logging.WARNING, logger="superset.mcp_service.app"),
+        caplog.at_level(logging.WARNING, logger="axbi.mcp_service.app"),
     ):
         # Must not raise
         init_fastmcp_server()
@@ -182,7 +182,7 @@ def test_empty_disabled_tools_removes_nothing() -> None:
 
     with (
         patch(
-            "superset.mcp_service.flask_singleton.app",
+            "axbi.mcp_service.flask_singleton.app",
             flask_app,
         ),
         patch.object(mcp.local_provider, "remove_tool") as mock_remove,
@@ -194,13 +194,13 @@ def test_empty_disabled_tools_removes_nothing() -> None:
 
 def test_disabled_tools_read_from_flask_app_config() -> None:
     """MCP_DISABLED_TOOLS is read from flask_app.config, matching the standard
-    Superset pattern where users set overrides in superset_config.py, which
+    AxBI pattern where users set overrides in axbi_config.py, which
     create_app() loads into Flask config before any command runs."""
     flask_app = _make_flask_app_mock({"health_check"})
 
     with (
         patch(
-            "superset.mcp_service.flask_singleton.app",
+            "axbi.mcp_service.flask_singleton.app",
             flask_app,
         ),
         patch.object(mcp.local_provider, "remove_tool") as mock_remove,
@@ -292,7 +292,7 @@ def test_task_tools_removed_when_global_task_framework_disabled(
     flask_app = _make_flask_app_mock(set())
 
     with (
-        patch("superset.mcp_service.flask_singleton.app", flask_app),
+        patch("axbi.mcp_service.flask_singleton.app", flask_app),
         patch.object(mcp.local_provider, "remove_tool") as mock_remove,
     ):
         init_fastmcp_server()
@@ -313,17 +313,17 @@ def test_config_guard_tools_excluded_from_instructions(
     captured: list[str] = []
 
     def fake_get_instructions(
-        branding: str = "Apache Superset",
+        branding: str = "AX BI",
         disabled_tools: set[str] | None = None,
     ) -> str:
         captured.append(str(disabled_tools))
         return f"instructions for {branding}"
 
     with (
-        patch("superset.mcp_service.flask_singleton.app", flask_app),
+        patch("axbi.mcp_service.flask_singleton.app", flask_app),
         patch.object(mcp.local_provider, "remove_tool"),
         patch(
-            "superset.mcp_service.app.get_default_instructions",
+            "axbi.mcp_service.app.get_default_instructions",
             fake_get_instructions,
         ),
     ):
@@ -342,17 +342,17 @@ def test_instructions_generated_after_disabled_tools_removed() -> None:
     captured: list[str] = []
 
     def fake_get_instructions(
-        branding: str = "Apache Superset",
+        branding: str = "AX BI",
         disabled_tools: set[str] | None = None,
     ) -> str:
         captured.append(str(disabled_tools))
         return f"instructions for {branding}"
 
     with (
-        patch("superset.mcp_service.flask_singleton.app", flask_app),
+        patch("axbi.mcp_service.flask_singleton.app", flask_app),
         patch.object(mcp.local_provider, "remove_tool"),
         patch(
-            "superset.mcp_service.app.get_default_instructions",
+            "axbi.mcp_service.app.get_default_instructions",
             fake_get_instructions,
         ),
     ):

@@ -27,25 +27,26 @@ module.exports = {
     '\\.svg$': '<rootDir>/spec/__mocks__/svgrMock.tsx',
     '^src/(.*)$': '<rootDir>/src/$1',
     '^spec/(.*)$': '<rootDir>/spec/$1',
-    // mapping plugins of superset-ui to source code
-    '^@superset-ui/([^/]+)/(.*)$':
-      '<rootDir>/node_modules/@superset-ui/$1/src/$2',
-    '^@superset-ui/([^/]+)$': '<rootDir>/node_modules/@superset-ui/$1/src',
-    // mapping @apache-superset/core to local package
-    '^@apache-superset/core$': '<rootDir>/packages/superset-core/src',
-    '^@apache-superset/core/(.*)$': '<rootDir>/packages/superset-core/src/$1',
+    // Map AX BI workspaces directly to source so tests do not depend on
+    // package-manager symlinks left over from a previous checkout layout.
+    '^@ax-bi/(core|ui-core|chart-controls|switchboard)/(.*)$':
+      '<rootDir>/packages/ax-bi-$1/src/$2',
+    '^@ax-bi/(core|ui-core|chart-controls|switchboard)$':
+      '<rootDir>/packages/ax-bi-$1/src',
+    '^@ax-bi/([^/]+)/(.*)$': '<rootDir>/plugins/$1/src/$2',
+    '^@ax-bi/([^/]+)$': '<rootDir>/plugins/$1/src',
   },
   testEnvironment: '<rootDir>/spec/helpers/jsDomWithFetchAPI.ts',
   modulePathIgnorePatterns: [
-    '<rootDir>/packages/generator-superset',
+    '<rootDir>/packages/generator-axbi',
     '<rootDir>/packages/.*/esm',
     '<rootDir>/packages/.*/lib',
     '<rootDir>/plugins/.*/esm',
     '<rootDir>/plugins/.*/lib',
     // Ignore build artifacts that contain duplicate package.json or mock files
     '<rootDir>/storybook-static',
-    // Ignore duplicate __mocks__ at package root level (e.g., packages/superset-ui-core/__mocks__)
-    // but not test __mocks__ directories (e.g., packages/superset-ui-core/test/__mocks/)
+    // Ignore duplicate __mocks__ at package root level (e.g., packages/ax-bi-ui-core/__mocks__)
+    // but not test __mocks__ directories (e.g., packages/ax-bi-ui-core/test/__mocks/)
     '<rootDir>/packages/[^/]+/__mocks__',
   ],
   setupFilesAfterEnv: ['<rootDir>/spec/helpers/setup.ts'],

@@ -21,7 +21,7 @@ import {
   ControlSetItem,
   ControlState,
   sharedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { isAggMode, validateAggControlValues } from './shared';
 
 export const groupByControlSetItem: ControlSetItem = {

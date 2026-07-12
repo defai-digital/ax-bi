@@ -18,9 +18,9 @@
  */
 import { useState, useCallback, memo } from 'react';
 import cx from 'classnames';
-import { css, styled } from '@apache-superset/core/theme';
-import PopoverDropdown from '@superset-ui/core/components/PopoverDropdown';
-import { EditableTitle } from '@superset-ui/core/components';
+import { css, styled } from '@ax-bi/core/theme';
+import PopoverDropdown from '@ax-bi/ui-core/components/PopoverDropdown';
+import { EditableTitle } from '@ax-bi/ui-core/components';
 import { Draggable } from 'src/dashboard/components/dnd/DragDroppable';
 import DragHandle from 'src/dashboard/components/dnd/DragHandle';
 import AnchorLink from 'src/dashboard/components/AnchorLink';
@@ -43,13 +43,10 @@ export type ComponentType =
   (typeof componentTypes)[keyof typeof componentTypes];
 
 export type HeaderStyleValue =
-  | typeof SMALL_HEADER
-  | typeof MEDIUM_HEADER
-  | typeof LARGE_HEADER;
+  typeof SMALL_HEADER | typeof MEDIUM_HEADER | typeof LARGE_HEADER;
 
 export type BackgroundStyleValue =
-  | typeof BACKGROUND_TRANSPARENT
-  | typeof BACKGROUND_WHITE;
+  typeof BACKGROUND_TRANSPARENT | typeof BACKGROUND_WHITE;
 
 export interface ComponentMeta {
   width?: number;

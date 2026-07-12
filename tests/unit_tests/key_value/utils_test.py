@@ -22,8 +22,8 @@ from uuid import UUID
 
 import pytest
 
-from superset.key_value.exceptions import KeyValueParseKeyError
-from superset.key_value.types import KeyValueResource
+from axbi.key_value.exceptions import KeyValueParseKeyError
+from axbi.key_value.types import KeyValueResource
 
 RESOURCE = KeyValueResource.APP
 UUID_KEY = UUID("3e7a2ab8-bcaf-49b0-a5df-dfb432f291cc")
@@ -38,7 +38,7 @@ def _decoded_byte_length(key: str) -> int:
 
 def test_random_key_default_entropy() -> None:
     """random_key defaults to at least 128 bits (16 bytes) of entropy."""
-    from superset.key_value.utils import MIN_KEY_NBYTES, random_key
+    from axbi.key_value.utils import MIN_KEY_NBYTES, random_key
 
     assert MIN_KEY_NBYTES == 16
     key = random_key()
@@ -47,7 +47,7 @@ def test_random_key_default_entropy() -> None:
 
 def test_random_key_explicit_nbytes() -> None:
     """random_key honors an explicit nbytes value at or above the minimum."""
-    from superset.key_value.utils import random_key
+    from axbi.key_value.utils import random_key
 
     key = random_key(48)
     assert _decoded_byte_length(key) == 48
@@ -56,7 +56,7 @@ def test_random_key_explicit_nbytes() -> None:
 @pytest.mark.parametrize("nbytes", [0, 8, 15])
 def test_random_key_rejects_weak_entropy(nbytes: int) -> None:
     """random_key rejects requests for fewer than 16 bytes of entropy."""
-    from superset.key_value.utils import random_key
+    from axbi.key_value.utils import random_key
 
     with pytest.raises(ValueError, match="at least"):
         random_key(nbytes)
@@ -66,7 +66,7 @@ def test_uuid_namespace_from_md5_warns(caplog) -> None:
     """The deprecated MD5 namespace path emits a deprecation warning."""
     import logging
 
-    from superset.key_value.utils import _uuid_namespace_from_md5
+    from axbi.key_value.utils import _uuid_namespace_from_md5
 
     with caplog.at_level(logging.WARNING):
         _uuid_namespace_from_md5("seed")
@@ -84,14 +84,14 @@ def test_uuid_namespace_from_md5_warns(caplog) -> None:
 )
 def test_get_filter(key, expected_filter) -> None:
     """Test get_filter with different key types."""
-    from superset.key_value.utils import get_filter
+    from axbi.key_value.utils import get_filter
 
     assert get_filter(resource=RESOURCE, key=key) == expected_filter
 
 
 def test_encode_permalink_id_valid() -> None:
     """Test encoding permalink ID with valid input."""
-    from superset.key_value.utils import encode_permalink_key
+    from axbi.key_value.utils import encode_permalink_key
 
     salt = "abc"
     assert encode_permalink_key(1, salt) == "AyBn4lm9qG8"
@@ -99,7 +99,7 @@ def test_encode_permalink_id_valid() -> None:
 
 def test_decode_permalink_id_invalid() -> None:
     """Test decoding permalink ID with invalid input."""
-    from superset.key_value.utils import decode_permalink_id
+    from axbi.key_value.utils import decode_permalink_id
 
     with pytest.raises(KeyValueParseKeyError):
         decode_permalink_id("foo", "bar")
@@ -115,7 +115,7 @@ def test_decode_permalink_id_invalid() -> None:
 )
 def test_get_uuid_namespace(algorithm, seed, expected_uuid) -> None:
     """Test UUID namespace generation with different algorithms."""
-    from superset.key_value.utils import get_uuid_namespace
+    from axbi.key_value.utils import get_uuid_namespace
 
     mock_app = MagicMock()
     mock_app.config = {"HASH_ALGORITHM": algorithm}
@@ -127,7 +127,7 @@ def test_get_uuid_namespace(algorithm, seed, expected_uuid) -> None:
 
 def test_get_uuid_namespace_deterministic() -> None:
     """Test that UUID namespace generation is deterministic."""
-    from superset.key_value.utils import get_uuid_namespace
+    from axbi.key_value.utils import get_uuid_namespace
 
     mock_app = MagicMock()
     mock_app.config = {"HASH_ALGORITHM": "sha256"}
@@ -138,7 +138,7 @@ def test_get_uuid_namespace_deterministic() -> None:
 
 def test_get_uuid_namespace_different_seeds() -> None:
     """Test that different seeds produce different UUID namespaces."""
-    from superset.key_value.utils import get_uuid_namespace
+    from axbi.key_value.utils import get_uuid_namespace
 
     mock_app = MagicMock()
     mock_app.config = {"HASH_ALGORITHM": "sha256"}
@@ -157,7 +157,7 @@ def test_get_uuid_namespace_different_seeds() -> None:
 )
 def test_get_uuid_namespace_with_algorithm(algorithm, seed, expected_uuid) -> None:
     """Test UUID namespace generation with explicit algorithm."""
-    from superset.key_value.utils import get_uuid_namespace_with_algorithm
+    from axbi.key_value.utils import get_uuid_namespace_with_algorithm
 
     namespace = get_uuid_namespace_with_algorithm(seed, algorithm)
     assert isinstance(namespace, UUID)
@@ -166,7 +166,7 @@ def test_get_uuid_namespace_with_algorithm(algorithm, seed, expected_uuid) -> No
 
 def test_get_uuid_namespace_with_algorithm_different_results() -> None:
     """Test that MD5 and SHA-256 produce different UUIDs for same seed."""
-    from superset.key_value.utils import get_uuid_namespace_with_algorithm
+    from axbi.key_value.utils import get_uuid_namespace_with_algorithm
 
     namespace_md5 = get_uuid_namespace_with_algorithm("test_seed", "md5")
     namespace_sha256 = get_uuid_namespace_with_algorithm("test_seed", "sha256")
@@ -180,7 +180,7 @@ def test_get_uuid_namespace_with_algorithm_different_results() -> None:
 )
 def test_get_deterministic_uuid_with_algorithm(algorithm) -> None:
     """Test deterministic UUID generation with explicit algorithm."""
-    from superset.key_value.utils import get_deterministic_uuid_with_algorithm
+    from axbi.key_value.utils import get_deterministic_uuid_with_algorithm
 
     payload = {"key": "value", "number": 123}
 
@@ -192,7 +192,7 @@ def test_get_deterministic_uuid_with_algorithm(algorithm) -> None:
 
 def test_get_deterministic_uuid_different_algorithms() -> None:
     """Test that different algorithms produce different UUIDs."""
-    from superset.key_value.utils import get_deterministic_uuid_with_algorithm
+    from axbi.key_value.utils import get_deterministic_uuid_with_algorithm
 
     payload = {"key": "value", "number": 123}
 
@@ -212,7 +212,7 @@ def test_get_deterministic_uuid_different_algorithms() -> None:
 )
 def test_get_fallback_algorithms(config_value, expected_fallbacks) -> None:
     """Test getting fallback algorithms from config."""
-    from superset.key_value.utils import get_fallback_algorithms
+    from axbi.key_value.utils import get_fallback_algorithms
 
     mock_app = MagicMock()
     mock_app.config = {"HASH_ALGORITHM_FALLBACKS": config_value}
@@ -223,7 +223,7 @@ def test_get_fallback_algorithms(config_value, expected_fallbacks) -> None:
 
 def test_get_fallback_algorithms_default() -> None:
     """Test fallback algorithms default to empty list if not configured."""
-    from superset.key_value.utils import get_fallback_algorithms
+    from axbi.key_value.utils import get_fallback_algorithms
 
     mock_app = MagicMock()
     mock_app.config = {}  # No HASH_ALGORITHM_FALLBACKS key

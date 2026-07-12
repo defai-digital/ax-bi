@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import unittest
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -32,19 +32,19 @@ from tests.integration_tests.fixtures.energy_dashboard import (
     load_energy_table_data,  # noqa: F401
 )
 from tests.integration_tests.test_app import app
-from superset.commands.dashboard.importers.v0 import decode_dashboards
-from superset import db, security_manager
+from axbi.commands.dashboard.importers.v0 import decode_dashboards
+from axbi import db, security_manager
 
-from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-from superset.commands.dashboard.importers.v0 import import_chart, import_dashboard
-from superset.commands.dataset.importers.v0 import import_dataset
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.utils.core import DatasourceType, get_example_default_schema
-from superset.utils.database import get_example_database
-from superset.utils import json
+from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+from axbi.commands.dashboard.importers.v0 import import_chart, import_dashboard
+from axbi.commands.dataset.importers.v0 import import_dataset
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.utils.core import DatasourceType, get_example_default_schema
+from axbi.utils.database import get_example_database
+from axbi.utils import json
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
@@ -73,7 +73,7 @@ def clean_imports():
     delete_imports()
 
 
-class TestImportExport(SupersetTestCase):
+class TestImportExport(AxBITestCase):
     """Testing export import functionality for dashboards"""
 
     def create_slice(

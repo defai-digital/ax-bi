@@ -24,8 +24,8 @@ import {
   isValidElement,
 } from 'react';
 import { nanoid } from 'nanoid';
-import { SupersetClient } from '@superset-ui/core';
-import { tn } from '@apache-superset/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { tn } from '@ax-bi/core/translation';
 import rison from 'rison';
 
 // Type definitions
@@ -245,6 +245,6 @@ export async function fetchSyncedColumns(
   const endpoint = `/datasource/external_metadata_by_name/?q=${rison.encode_uri(
     params,
   )}`;
-  const { json } = await SupersetClient.get({ endpoint, signal });
+  const { json } = await AxBIClient.get({ endpoint, signal });
   return json as ColumnMetadata[];
 }

@@ -21,8 +21,8 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.constants import CHANGE_ME_GLOBAL_ASYNC_QUERIES_JWT_SECRET
-from superset.initialization import SupersetAppInitializer
+from axbi.constants import CHANGE_ME_GLOBAL_ASYNC_QUERIES_JWT_SECRET
+from axbi.initialization import AxBIAppInitializer
 
 
 def _make_initializer(
@@ -30,15 +30,15 @@ def _make_initializer(
     *,
     debug: bool = False,
     testing: bool = False,
-) -> SupersetAppInitializer:
-    initializer = SupersetAppInitializer.__new__(SupersetAppInitializer)
+) -> AxBIAppInitializer:
+    initializer = AxBIAppInitializer.__new__(AxBIAppInitializer)
     app = MagicMock()
     app.debug = debug
     app.config = {
         "GLOBAL_ASYNC_QUERIES_JWT_SECRET": secret,
         "TESTING": testing,
     }
-    initializer.superset_app = app
+    initializer.axbi_app = app
     initializer.config = app.config
     return initializer
 
@@ -48,10 +48,10 @@ def test_check_async_query_secret_rejects_default_in_production(
 ) -> None:
     """A default async secret with GAQ enabled refuses to start in production."""
     mocker.patch(
-        "superset.initialization.feature_flag_manager.is_feature_enabled",
+        "axbi.initialization.feature_flag_manager.is_feature_enabled",
         return_value=True,
     )
-    mocker.patch("superset.initialization.is_test", return_value=False)
+    mocker.patch("axbi.initialization.is_test", return_value=False)
     initializer = _make_initializer(CHANGE_ME_GLOBAL_ASYNC_QUERIES_JWT_SECRET)
 
     with pytest.raises(SystemExit):
@@ -63,10 +63,10 @@ def test_check_async_query_secret_allows_overridden_secret(
 ) -> None:
     """A non-default async secret does not block startup."""
     mocker.patch(
-        "superset.initialization.feature_flag_manager.is_feature_enabled",
+        "axbi.initialization.feature_flag_manager.is_feature_enabled",
         return_value=True,
     )
-    mocker.patch("superset.initialization.is_test", return_value=False)
+    mocker.patch("axbi.initialization.is_test", return_value=False)
     initializer = _make_initializer("a-strong-random-secret-value-1234567890")
 
     # Should not raise.
@@ -78,10 +78,10 @@ def test_check_async_query_secret_skipped_when_gaq_disabled(
 ) -> None:
     """The check is a no-op when GLOBAL_ASYNC_QUERIES is disabled."""
     mocker.patch(
-        "superset.initialization.feature_flag_manager.is_feature_enabled",
+        "axbi.initialization.feature_flag_manager.is_feature_enabled",
         return_value=False,
     )
-    mocker.patch("superset.initialization.is_test", return_value=False)
+    mocker.patch("axbi.initialization.is_test", return_value=False)
     initializer = _make_initializer(CHANGE_ME_GLOBAL_ASYNC_QUERIES_JWT_SECRET)
 
     # Should not raise even with the default secret.
@@ -93,10 +93,10 @@ def test_check_async_query_secret_warns_only_in_debug(
 ) -> None:
     """In debug the default secret warns but does not exit (matches SECRET_KEY)."""
     mocker.patch(
-        "superset.initialization.feature_flag_manager.is_feature_enabled",
+        "axbi.initialization.feature_flag_manager.is_feature_enabled",
         return_value=True,
     )
-    mocker.patch("superset.initialization.is_test", return_value=False)
+    mocker.patch("axbi.initialization.is_test", return_value=False)
     initializer = _make_initializer(
         CHANGE_ME_GLOBAL_ASYNC_QUERIES_JWT_SECRET, debug=True
     )
@@ -111,10 +111,10 @@ def test_configure_async_queries_skips_init_with_default_secret(
     """In warn-only modes, async init is skipped so the short default secret cannot
     crash startup via AsyncQueryManager.init_app()'s length check."""
     mocker.patch(
-        "superset.initialization.feature_flag_manager.is_feature_enabled",
+        "axbi.initialization.feature_flag_manager.is_feature_enabled",
         return_value=True,
     )
-    factory = mocker.patch("superset.initialization.async_query_manager_factory")
+    factory = mocker.patch("axbi.initialization.async_query_manager_factory")
     initializer = _make_initializer(
         CHANGE_ME_GLOBAL_ASYNC_QUERIES_JWT_SECRET, debug=True
     )
@@ -129,12 +129,12 @@ def test_configure_async_queries_inits_with_overridden_secret(
 ) -> None:
     """A non-default secret proceeds to initialize the async query manager."""
     mocker.patch(
-        "superset.initialization.feature_flag_manager.is_feature_enabled",
+        "axbi.initialization.feature_flag_manager.is_feature_enabled",
         return_value=True,
     )
-    factory = mocker.patch("superset.initialization.async_query_manager_factory")
+    factory = mocker.patch("axbi.initialization.async_query_manager_factory")
     initializer = _make_initializer("a-strong-random-secret-value-1234567890")
 
     initializer.configure_async_queries()
 
-    factory.init_app.assert_called_once_with(initializer.superset_app)
+    factory.init_app.assert_called_once_with(initializer.axbi_app)

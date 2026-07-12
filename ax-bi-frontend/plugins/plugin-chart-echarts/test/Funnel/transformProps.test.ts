@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, getNumberFormatter } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps, getNumberFormatter } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import transformProps, { parseParams } from '../../src/Funnel/transformProps';
 import {
   EchartsFunnelChartProps,
@@ -44,7 +44,7 @@ const chartProps = new ChartProps({
   width: 800,
   height: 600,
   queriesData,
-  theme: supersetTheme,
+  theme: axbiTheme,
 });
 
 describe('Funnel transformProps', () => {
@@ -77,7 +77,7 @@ describe('Funnel transformProps', () => {
     // A white textBorder washes out the dark text on light-colored segments.
     const result = transformProps(chartProps as EchartsFunnelChartProps);
     const { label } = (result.echartOptions.series as any)[0];
-    expect(label.color).toBe(supersetTheme.colorText);
+    expect(label.color).toBe(axbiTheme.colorText);
     expect(label.textBorderColor).toBeUndefined();
     expect(label.textBorderWidth).toBeUndefined();
   });

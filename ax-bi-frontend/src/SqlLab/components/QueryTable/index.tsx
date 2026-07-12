@@ -25,11 +25,11 @@ import {
   Icons,
   ModalTrigger,
   TableView,
-} from '@superset-ui/core/components';
-import ProgressBar from '@superset-ui/core/components/ProgressBar';
-import { t } from '@apache-superset/core/translation';
-import { QueryResponse, QueryState } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core/components';
+import ProgressBar from '@ax-bi/ui-core/components/ProgressBar';
+import { t } from '@ax-bi/core/translation';
+import { QueryResponse, QueryState } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import { shallowEqual, useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 
@@ -41,7 +41,7 @@ import {
   removeQuery,
   startQuery,
 } from 'src/SqlLab/actions/sqlLab';
-import { fDuration, extendedDayjs } from '@superset-ui/core/utils/dates';
+import { fDuration, extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import { SqlLabRootState } from 'src/SqlLab/types';
 import { UserWithPermissionsAndRoles as User } from 'src/types/bootstrapTypes';
 import { makeUrl } from 'src/utils/pathUtils';

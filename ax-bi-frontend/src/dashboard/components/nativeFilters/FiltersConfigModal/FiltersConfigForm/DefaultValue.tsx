@@ -17,14 +17,14 @@
  * under the License.
  */
 import { FC, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   Behavior,
   SetDataMaskHook,
   SuperChart,
   AppSection,
-} from '@superset-ui/core';
-import { Loading, type FormInstance } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { Loading, type FormInstance } from '@ax-bi/ui-core/components';
 import { NativeFiltersForm } from '../types';
 import { getFormData } from '../../utils';
 import {

@@ -18,26 +18,26 @@
  */
 import { connect } from 'react-redux';
 import { PureComponent } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   HandlerFunction,
   JsonObject,
   Payload,
   QueryFormData,
-} from '@superset-ui/core';
-import { SupersetTheme, withTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { AxBITheme, withTheme } from '@ax-bi/core/theme';
 import {
   AsyncEsmComponent,
   List,
   InfoTooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { getChartKey } from 'src/explore/exploreUtils';
 import { runAnnotationQuery } from 'src/components/Chart/chartAction';
 import CustomListItem from 'src/explore/components/controls/CustomListItem';
 import { ChartState, ExplorePageState } from 'src/explore/types';
 import { AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import ControlPopover, {
   getSectionContainerElement,
 } from '../ControlPopover/ControlPopover';
@@ -72,7 +72,7 @@ export interface Props {
   value: Annotation[];
   onChange: (annotations: Annotation[]) => void;
   refreshAnnotationData: (payload: Payload) => void;
-  theme: SupersetTheme;
+  theme: AxBITheme;
 }
 
 export interface PopoverState {

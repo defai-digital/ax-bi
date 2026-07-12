@@ -19,20 +19,20 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.commands.theme.exceptions import (
+from axbi.commands.theme.exceptions import (
     SystemThemeProtectedError,
     ThemeNotFoundError,
 )
-from superset.commands.theme.seed import SeedSystemThemesCommand
-from superset.commands.theme.update import UpdateThemeCommand
-from superset.models.core import Theme
+from axbi.commands.theme.seed import SeedSystemThemesCommand
+from axbi.commands.theme.update import UpdateThemeCommand
+from axbi.models.core import Theme
 from tests.conftest import with_config
 
 
 class TestUpdateThemeCommand:
     """Unit tests for UpdateThemeCommand"""
 
-    @patch("superset.commands.theme.update.ThemeDAO")
+    @patch("axbi.commands.theme.update.ThemeDAO")
     def test_validate_theme_not_found(self, mock_theme_dao):
         """Test validation fails when theme doesn't exist"""
         # Arrange
@@ -43,7 +43,7 @@ class TestUpdateThemeCommand:
         with pytest.raises(ThemeNotFoundError):
             command.validate()
 
-    @patch("superset.commands.theme.update.ThemeDAO")
+    @patch("axbi.commands.theme.update.ThemeDAO")
     def test_validate_system_theme_protection(self, mock_theme_dao):
         """Test validation fails when trying to update system theme"""
         # Arrange
@@ -56,7 +56,7 @@ class TestUpdateThemeCommand:
         with pytest.raises(SystemThemeProtectedError):
             command.validate()
 
-    @patch("superset.commands.theme.update.ThemeDAO")
+    @patch("axbi.commands.theme.update.ThemeDAO")
     def test_validate_regular_theme_success(self, mock_theme_dao):
         """Test validation succeeds for regular (non-system) themes"""
         # Arrange
@@ -71,7 +71,7 @@ class TestUpdateThemeCommand:
         # Assert
         assert command._model == mock_theme
 
-    @patch("superset.commands.theme.update.ThemeDAO")
+    @patch("axbi.commands.theme.update.ThemeDAO")
     def test_run_success(self, mock_theme_dao):
         """Test successful theme update"""
         # Arrange
@@ -116,7 +116,7 @@ class TestSeedSystemThemesCommand:
             "THEME_DARK": None,
         }
     )
-    @patch("superset.commands.theme.seed.db")
+    @patch("axbi.commands.theme.seed.db")
     def test_run_with_theme_default_only(self, mock_db, app):
         """Test run when only THEME_DEFAULT is configured"""
         # Arrange
@@ -139,7 +139,7 @@ class TestSeedSystemThemesCommand:
             "THEME_DARK": None,
         }
     )
-    @patch("superset.commands.theme.seed.db")
+    @patch("axbi.commands.theme.seed.db")
     def test_run_update_existing_theme(self, mock_db, app):
         """Test run when theme already exists and needs updating"""
         # Arrange
@@ -169,8 +169,8 @@ class TestSeedSystemThemesCommand:
             "THEME_DARK": None,
         }
     )
-    @patch("superset.commands.theme.seed.db")
-    @patch("superset.commands.theme.seed.logger")
+    @patch("axbi.commands.theme.seed.db")
+    @patch("axbi.commands.theme.seed.logger")
     def test_run_handles_database_error(self, mock_logger, mock_db, app):
         """Test run handles database errors gracefully"""
         # Arrange
@@ -190,7 +190,7 @@ class TestSeedSystemThemesCommand:
             "THEME_DARK": {"algorithm": "dark", "token": {}},
         }
     )
-    @patch("superset.commands.theme.seed.db")
+    @patch("axbi.commands.theme.seed.db")
     def test_run_with_both_themes(self, mock_db, app):
         """Test run when both THEME_DEFAULT and THEME_DARK are configured"""
         # Arrange
@@ -213,9 +213,9 @@ class TestSeedSystemThemesCommand:
             "THEME_DARK": None,
         }
     )
-    @patch("superset.commands.theme.seed.logger")
-    @patch("superset.commands.theme.seed.ThemeDAO")
-    @patch("superset.commands.theme.seed.db")
+    @patch("axbi.commands.theme.seed.logger")
+    @patch("axbi.commands.theme.seed.ThemeDAO")
+    @patch("axbi.commands.theme.seed.db")
     def test_run_skips_uuid_reference_with_non_object_json(
         self,
         mock_db,

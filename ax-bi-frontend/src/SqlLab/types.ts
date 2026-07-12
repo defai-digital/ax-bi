@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryResponse } from '@superset-ui/core';
+import { QueryResponse } from '@ax-bi/ui-core';
 import {
   CommonBootstrapData,
   UserWithPermissionsAndRoles,
@@ -25,7 +25,7 @@ import { ToastType } from 'src/components/MessageToasts/types';
 import type {
   ButtonProps,
   DropdownButtonProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import type { TableMetaData } from 'src/hooks/apiResources';
 
 export type QueryButtonProps = DropdownButtonProps | ButtonProps;

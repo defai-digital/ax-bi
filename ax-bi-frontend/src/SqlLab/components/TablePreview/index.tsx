@@ -20,22 +20,22 @@ import { type FC, useCallback, useMemo, useRef, useState } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 import { nanoid } from 'nanoid';
-import { t } from '@apache-superset/core/translation';
-import { ClientErrorObject, getExtensionsRegistry } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { ClientErrorObject, getExtensionsRegistry } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import {
   SafeMarkdown,
   Breadcrumb,
   Card,
   Skeleton,
   Flex,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import type { SqlLabRootState } from 'src/SqlLab/types';
 import { CopyToClipboard, FilterableTable } from 'src/components';
-import Tabs from '@superset-ui/core/components/Tabs';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import {
   tableApiUtil,
   TableMetaData,
@@ -44,7 +44,7 @@ import {
 } from 'src/hooks/apiResources';
 import { runTablePreviewQuery } from 'src/SqlLab/actions/sqlLab';
 import { PREVIEW_QUERY_LIMIT } from 'src/SqlLab/constants';
-import { ActionButton } from '@superset-ui/core/components/ActionButton';
+import { ActionButton } from '@ax-bi/ui-core/components/ActionButton';
 import ResultSet from '../ResultSet';
 import ShowSQL from '../ShowSQL';
 

@@ -32,16 +32,16 @@ import {
   NumberFormats,
   SMART_DATE_VERBOSE_ID,
   VizType,
-} from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+} from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 
 import 'nvd3-fork/build/nv.d3.css';
 
 /* eslint-disable-next-line */
 import ANNOTATION_TYPES, {
   applyNativeColumns,
-} from './vendor/superset/AnnotationTypes';
+} from './vendor/ax-bi/AnnotationTypes';
 import isTruthy from './utils/isTruthy';
 import {
   cleanColorInput,
@@ -316,8 +316,8 @@ function nvd3Vis(element, props) {
 
   const drawGraph = function drawGraph() {
     const d3Element = d3.select(element);
-    d3Element.classed('superset-legacy-chart-nvd3', true);
-    d3Element.classed(`superset-legacy-chart-nvd3-${kebabCase(vizType)}`, true);
+    d3Element.classed('axbi-legacy-chart-nvd3', true);
+    d3Element.classed(`axbi-legacy-chart-nvd3-${kebabCase(vizType)}`, true);
     let svg = d3Element.select('svg');
     if (svg.empty()) {
       svg = d3Element.append('svg');

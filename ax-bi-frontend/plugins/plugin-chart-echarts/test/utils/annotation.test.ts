@@ -26,7 +26,7 @@ import {
   DataRecord,
   FormulaAnnotationLayer,
   TimeseriesDataRecord,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   evalFormula,
   extractAnnotationLabels,

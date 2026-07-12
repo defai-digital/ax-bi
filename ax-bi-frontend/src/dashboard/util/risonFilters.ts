@@ -21,7 +21,7 @@ import {
   QueryObjectFilterClause,
   PartialFilters,
   DataMaskStateWithId,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import rison from 'rison';
 
 /**
@@ -175,7 +175,7 @@ export function parseRisonFilters(risonString: string): RisonFilter[] {
 }
 
 /**
- * Convert Rison filters to Superset adhoc filter format
+ * Convert Rison filters to AxBI adhoc filter format
  */
 export function risonToAdhocFilters(
   risonFilters: RisonFilter[],
@@ -262,11 +262,7 @@ export function risonFiltersToString(filters: RisonFilter[]): string {
   }
 
   type RisonValue =
-    | string
-    | number
-    | boolean
-    | (string | number)[]
-    | Record<string, unknown>;
+    string | number | boolean | (string | number)[] | Record<string, unknown>;
   const risonObject: Record<string, RisonValue> = {};
   const notObject: Record<string, RisonValue> = {};
 

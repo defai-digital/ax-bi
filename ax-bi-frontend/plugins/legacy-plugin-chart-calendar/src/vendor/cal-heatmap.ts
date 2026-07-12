@@ -10,8 +10,8 @@
 /* eslint-disable */
 
 import d3tip from 'd3-tip';
-import { t } from '@apache-superset/core/translation';
-import { getContrastingColor } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { getContrastingColor } from '@ax-bi/ui-core';
 
 var d3 = typeof require === 'function' ? require('d3') : window.d3;
 

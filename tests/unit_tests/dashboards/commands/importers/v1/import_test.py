@@ -26,14 +26,14 @@ from flask_appbuilder.security.sqla.models import Role, User
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import security_manager
-from superset.commands.dashboard.importers.v1.utils import import_dashboard
-from superset.commands.exceptions import ImportFailedError
-from superset.commands.importers.v1.utils import import_tag
-from superset.extensions import feature_flag_manager
-from superset.models.dashboard import Dashboard
-from superset.tags.models import TaggedObject
-from superset.utils.core import override_user
+from axbi import security_manager
+from axbi.commands.dashboard.importers.v1.utils import import_dashboard
+from axbi.commands.exceptions import ImportFailedError
+from axbi.commands.importers.v1.utils import import_tag
+from axbi.extensions import feature_flag_manager
+from axbi.models.dashboard import Dashboard
+from axbi.tags.models import TaggedObject
+from axbi.utils.core import override_user
 from tests.integration_tests.fixtures.importexport import dashboard_config
 
 

@@ -23,7 +23,7 @@ import {
   QueryObject,
   QueryObjectFilterClause,
   SqlaFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   addJsColumnsToColumns,
   addTooltipColumnsToQuery,

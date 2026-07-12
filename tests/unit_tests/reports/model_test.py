@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset.reports.models import ReportSchedule
+from axbi.reports.models import ReportSchedule
 
 
 def test_get_native_filters_params():

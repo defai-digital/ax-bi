@@ -19,7 +19,7 @@
 
 /**
  * Stable icon keys for Settings dropdown items. Keys match
- * `@superset-ui/core/components/Icons` exports so RightMenu can render
+ * `@ax-bi/ui-core/components/Icons` exports so RightMenu can render
  * `<Icons[key] />` without stringly-typed React nodes in this module.
  */
 export type SettingsMenuIconName =

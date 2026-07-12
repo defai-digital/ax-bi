@@ -27,13 +27,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.utils.screenshots import (
+from axbi.utils.screenshots import (
     BaseScreenshot,
     ScreenshotCachePayload,
     StatusValues,
 )
 
-BASE_SCREENSHOT_PATH = "superset.utils.screenshots.BaseScreenshot"
+BASE_SCREENSHOT_PATH = "axbi.utils.screenshots.BaseScreenshot"
 
 
 class MockCache:
@@ -190,7 +190,7 @@ class TestCacheOnlyOnSuccess:
 class TestShouldTriggerTask:
     """Test the should_trigger_task method improvements."""
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_trigger_on_stale_computing_status(self, mock_app):
         """Test that stale COMPUTING status triggers recomputation."""
         # Set TTL to 300 seconds
@@ -205,7 +205,7 @@ class TestShouldTriggerTask:
         # Should trigger task because COMPUTING is stale
         assert payload.should_trigger_task(force=False) is True
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_no_trigger_on_fresh_computing_status(self, mock_app):
         """Test that fresh COMPUTING status does not trigger recomputation."""
         # Set TTL to 300 seconds
@@ -243,7 +243,7 @@ class TestShouldTriggerTask:
 
         assert payload.should_trigger_task(force=False) is True
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_trigger_on_expired_error(self, mock_app):
         """Test that expired ERROR status triggers task."""
         # Set TTL to 300 seconds
@@ -257,7 +257,7 @@ class TestShouldTriggerTask:
 
         assert payload.should_trigger_task(force=False) is True
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_no_trigger_on_fresh_error(self, mock_app):
         """Test that fresh ERROR status does not trigger task."""
         # Set TTL to 300 seconds
@@ -285,7 +285,7 @@ class TestShouldTriggerTask:
 class TestIsComputingStale:
     """Test the is_computing_stale method."""
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_computing_is_stale(self, mock_app):
         """Test that old COMPUTING status is detected as stale."""
         mock_app.config = {"THUMBNAIL_ERROR_CACHE_TTL": 300}
@@ -298,7 +298,7 @@ class TestIsComputingStale:
 
         assert payload.is_computing_stale() is True
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_computing_is_not_stale(self, mock_app):
         """Test that fresh COMPUTING status is not stale."""
         mock_app.config = {"THUMBNAIL_ERROR_CACHE_TTL": 300}
@@ -311,7 +311,7 @@ class TestIsComputingStale:
 
         assert payload.is_computing_stale() is False
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_computing_exactly_at_ttl(self, mock_app):
         """Test boundary condition at exactly TTL."""
         mock_app.config = {"THUMBNAIL_ERROR_CACHE_TTL": 300}
@@ -325,7 +325,7 @@ class TestIsComputingStale:
         # At exactly TTL, should be stale (>= TTL)
         assert payload.is_computing_stale() is True
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_computing_just_past_ttl(self, mock_app):
         """Test boundary condition just past TTL."""
         mock_app.config = {"THUMBNAIL_ERROR_CACHE_TTL": 300}
@@ -371,7 +371,7 @@ class TestIntegrationCacheBugFix:
         assert cached_payload is not None
         assert cached_payload.should_trigger_task(force=False) is False
 
-    @patch("superset.utils.screenshots.app")
+    @patch("axbi.utils.screenshots.app")
     def test_stale_computing_triggers_retry(
         self, mock_app, mocker: MockerFixture, screenshot_obj, mock_user
     ):

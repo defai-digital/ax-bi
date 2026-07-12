@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlHeader } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
-import { Form } from '@superset-ui/core/components';
+import { ControlHeader } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
+import { Form } from '@ax-bi/ui-core/components';
 import { Tag } from 'src/components';
 import { FC, useState } from 'react';
 import { isZoomConfigsLinear, isZoomConfigsExp } from './typeguards';

@@ -17,8 +17,8 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { css, styled } from '@apache-superset/core/theme';
-import { InfoTooltip } from '@superset-ui/core/components';
+import { css, styled } from '@ax-bi/core/theme';
+import { InfoTooltip } from '@ax-bi/ui-core/components';
 
 interface ModalFormFieldProps {
   label: string;

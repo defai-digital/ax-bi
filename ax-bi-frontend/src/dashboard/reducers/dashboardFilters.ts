@@ -17,7 +17,7 @@
  * under the License.
  */
 /* eslint-disable camelcase */
-import { JsonValue } from '@superset-ui/core';
+import { JsonValue } from '@ax-bi/ui-core';
 import {
   CHANGE_FILTER,
   UPDATE_DIRECT_PATH_TO_FILTER,

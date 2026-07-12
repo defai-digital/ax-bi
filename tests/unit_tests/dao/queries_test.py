@@ -21,13 +21,13 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset.exceptions import QueryNotFoundException, SupersetCancelQueryException
+from axbi.exceptions import AxBICancelQueryException, QueryNotFoundException
 
 
 def test_query_dao_save_metadata(session: Session) -> None:
-    from superset import db
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi import db
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     engine = db.session.get_bind()
     Query.metadata.create_all(engine)  # pylint: disable=no-member
@@ -52,7 +52,7 @@ def test_query_dao_save_metadata(session: Session) -> None:
     db.session.add(database)
     db.session.add(query_obj)
 
-    from superset.daos.query import QueryDAO
+    from axbi.daos.query import QueryDAO
 
     query = db.session.query(Query).one()
     QueryDAO.save_metadata(query=query, payload={"columns": []})
@@ -60,9 +60,9 @@ def test_query_dao_save_metadata(session: Session) -> None:
 
 
 def test_query_dao_get_queries_changed_after(session: Session) -> None:
-    from superset import db
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi import db
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     engine = db.session.get_bind()
     Query.metadata.create_all(engine)  # pylint: disable=no-member
@@ -107,7 +107,7 @@ def test_query_dao_get_queries_changed_after(session: Session) -> None:
     db.session.add(old_query_obj)
     db.session.add(updated_query_obj)
 
-    from superset.daos.query import QueryDAO
+    from axbi.daos.query import QueryDAO
 
     timestamp = datetime.timestamp(now - timedelta(days=2)) * 1000
     result = QueryDAO.get_queries_changed_after(timestamp)
@@ -118,10 +118,10 @@ def test_query_dao_get_queries_changed_after(session: Session) -> None:
 def test_query_dao_stop_query_not_found(
     mocker: MockerFixture, app: Any, session: Session
 ) -> None:
-    from superset import db
-    from superset.common.db_query_status import QueryStatus
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi import db
+    from axbi.common.db_query_status import QueryStatus
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     engine = db.session.get_bind()
     Query.metadata.create_all(engine)  # pylint: disable=no-member
@@ -147,9 +147,9 @@ def test_query_dao_stop_query_not_found(
     db.session.add(database)
     db.session.add(query_obj)
 
-    mocker.patch("superset.sql_lab.cancel_query", return_value=False)
+    mocker.patch("axbi.sql_lab.cancel_query", return_value=False)
 
-    from superset.daos.query import QueryDAO
+    from axbi.daos.query import QueryDAO
 
     with pytest.raises(QueryNotFoundException):
         QueryDAO.stop_query("foo2")
@@ -161,10 +161,10 @@ def test_query_dao_stop_query_not_found(
 def test_query_dao_stop_query_not_running(
     mocker: MockerFixture, app: Any, session: Session
 ) -> None:
-    from superset import db
-    from superset.common.db_query_status import QueryStatus
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi import db
+    from axbi.common.db_query_status import QueryStatus
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     engine = db.session.get_bind()
     Query.metadata.create_all(engine)  # pylint: disable=no-member
@@ -190,7 +190,7 @@ def test_query_dao_stop_query_not_running(
     db.session.add(database)
     db.session.add(query_obj)
 
-    from superset.daos.query import QueryDAO
+    from axbi.daos.query import QueryDAO
 
     QueryDAO.stop_query(query_obj.client_id)
     query = db.session.query(Query).one()
@@ -200,10 +200,10 @@ def test_query_dao_stop_query_not_running(
 def test_query_dao_stop_query_failed(
     mocker: MockerFixture, app: Any, session: Session
 ) -> None:
-    from superset import db
-    from superset.common.db_query_status import QueryStatus
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi import db
+    from axbi.common.db_query_status import QueryStatus
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     engine = db.session.get_bind()
     Query.metadata.create_all(engine)  # pylint: disable=no-member
@@ -229,11 +229,11 @@ def test_query_dao_stop_query_failed(
     db.session.add(database)
     db.session.add(query_obj)
 
-    mocker.patch("superset.sql_lab.cancel_query", return_value=False)
+    mocker.patch("axbi.sql_lab.cancel_query", return_value=False)
 
-    from superset.daos.query import QueryDAO
+    from axbi.daos.query import QueryDAO
 
-    with pytest.raises(SupersetCancelQueryException):
+    with pytest.raises(AxBICancelQueryException):
         QueryDAO.stop_query(query_obj.client_id)
 
     query = db.session.query(Query).one()
@@ -243,10 +243,10 @@ def test_query_dao_stop_query_failed(
 def test_query_dao_stop_query(
     mocker: MockerFixture, app: Any, session: Session
 ) -> None:
-    from superset import db
-    from superset.common.db_query_status import QueryStatus
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi import db
+    from axbi.common.db_query_status import QueryStatus
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     engine = db.session.get_bind()
     Query.metadata.create_all(engine)  # pylint: disable=no-member
@@ -272,9 +272,9 @@ def test_query_dao_stop_query(
     db.session.add(database)
     db.session.add(query_obj)
 
-    mocker.patch("superset.sql_lab.cancel_query", return_value=True)
+    mocker.patch("axbi.sql_lab.cancel_query", return_value=True)
 
-    from superset.daos.query import QueryDAO
+    from axbi.daos.query import QueryDAO
 
     QueryDAO.stop_query(query_obj.client_id)
     query = db.session.query(Query).one()
@@ -285,10 +285,10 @@ def test_query_dao_stop_query_wrong_user(
     mocker: MockerFixture, app: Any, session: Session
 ) -> None:
     """A user cannot stop a query that belongs to a different user."""
-    from superset import db
-    from superset.common.db_query_status import QueryStatus
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi import db
+    from axbi.common.db_query_status import QueryStatus
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     engine = db.session.get_bind()
     Query.metadata.create_all(engine)  # pylint: disable=no-member
@@ -316,9 +316,9 @@ def test_query_dao_stop_query_wrong_user(
     db.session.add(query_obj)
 
     # Simulate a different user (user 2) attempting to stop user 1's query
-    mocker.patch("superset.daos.query.get_user_id", return_value=2)
+    mocker.patch("axbi.daos.query.get_user_id", return_value=2)
 
-    from superset.daos.query import QueryDAO
+    from axbi.daos.query import QueryDAO
 
     with pytest.raises(QueryNotFoundException):
         QueryDAO.stop_query(query_obj.client_id)

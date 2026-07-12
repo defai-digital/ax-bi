@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useCallback, useEffect, useMemo, useState, MouseEvent } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
-import Tabs from '@superset-ui/core/components/Tabs';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import {
   getItem,
   setItem,

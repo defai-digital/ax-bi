@@ -17,12 +17,12 @@
  * under the License.
  */
 import {
-  SupersetClient,
+  AxBIClient,
   getTimeFormatter,
   TimeFormats,
   ensureIsArray,
   JsonObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 // ATTENTION: If you change any constants, make sure to also change constants.py
 
@@ -53,7 +53,7 @@ export type TabularDataRow = Record<string, unknown>;
 export type OSType = 'Windows' | 'MacOS' | 'UNIX' | 'Linux' | 'Unknown OS';
 
 export function storeQuery(query: JsonObject): Promise<string> {
-  return SupersetClient.post({
+  return AxBIClient.post({
     endpoint: '/kv/store/',
     postPayload: { data: query },
   }).then(response => {

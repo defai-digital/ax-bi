@@ -25,28 +25,28 @@ import pytest
 from flask_appbuilder.security.sqla.models import Role, User
 from pytest_mock import MockerFixture
 
-from superset.common.query_object import QueryObject
-from superset.connectors.sqla.models import Database, SqlaTable
-from superset.exceptions import SupersetSecurityException
-from superset.extensions import appbuilder
-from superset.models.slice import Slice
-from superset.security.manager import (
+from axbi.axbi_typing import AdhocColumn, AdhocMetric
+from axbi.common.query_object import QueryObject
+from axbi.connectors.sqla.models import Database, SqlaTable
+from axbi.exceptions import AxBISecurityException
+from axbi.extensions import appbuilder
+from axbi.models.slice import Slice
+from axbi.security.manager import (
     _collect_sortable_identifiers,
     _dashboard_native_filter_has_datasource,
+    AxBISecurityManager,
     freeze_value,
     query_context_modified,
-    SupersetSecurityManager,
 )
-from superset.sql.parse import Table
-from superset.superset_typing import AdhocColumn, AdhocMetric
-from superset.utils.core import DatasourceName, override_user
+from axbi.sql.parse import Table
+from axbi.utils.core import DatasourceName, override_user
 
 
 def test_security_manager(app_context: None) -> None:
     """
     Test that the security manager can be built.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     assert sm
 
 
@@ -88,7 +88,7 @@ def test_raise_for_access_guest_user_ok(
     """
     Test that guest user can submit an unmodified chart payload.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -118,7 +118,7 @@ def test_raise_for_access_guest_user_ok_subset(
     """
     Test that guest user can submit a request of a subset of the metrics/columns.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -147,7 +147,7 @@ def test_raise_for_access_guest_user_tampered_id(
     """
     Test that guest user cannot modify the chart ID.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -163,7 +163,7 @@ def test_raise_for_access_guest_user_tampered_id(
         "metrics": stored_metrics,
     }
     query_context.queries = [QueryObject(metrics=stored_metrics)]  # type: ignore
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         sm.raise_for_access(query_context=query_context)
 
 
@@ -175,7 +175,7 @@ def test_raise_for_access_guest_user_tampered_form_data_metrics(
     """
     Test that guest user cannot modify metrics in the form data.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -200,7 +200,7 @@ def test_raise_for_access_guest_user_tampered_form_data_metrics(
         "slice_id": 42,
         "metrics": tampered_metrics,
     }
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         sm.raise_for_access(query_context=query_context)
 
 
@@ -212,7 +212,7 @@ def test_raise_for_access_guest_user_tampered_form_data_columns(
     """
     Test that guest user cannot modify columns in the form data.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -235,7 +235,7 @@ def test_raise_for_access_guest_user_tampered_form_data_columns(
         "slice_id": 42,
         "columns": tampered_columns,
     }
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         sm.raise_for_access(query_context=query_context)
 
 
@@ -247,7 +247,7 @@ def test_raise_for_access_guest_user_tampered_form_data_groupby(
     """
     Test that guest user cannot modify groupby in the form data.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -270,7 +270,7 @@ def test_raise_for_access_guest_user_tampered_form_data_groupby(
         "slice_id": 42,
         "columns": tampered_columns,
     }
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         sm.raise_for_access(query_context=query_context)
 
 
@@ -282,7 +282,7 @@ def test_raise_for_access_guest_user_tampered_queries_metrics(
     """
     Test that guest user cannot modify metrics in the queries.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -308,7 +308,7 @@ def test_raise_for_access_guest_user_tampered_queries_metrics(
         "metrics": stored_metrics,
     }
     query_context.queries = [QueryObject(metrics=tampered_metrics)]  # type: ignore
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         sm.raise_for_access(query_context=query_context)
 
 
@@ -320,7 +320,7 @@ def test_raise_for_access_guest_user_tampered_queries_columns(
     """
     Test that guest user cannot modify columns in the queries.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mocker.patch.object(sm, "can_access", return_value=True)
 
@@ -344,7 +344,7 @@ def test_raise_for_access_guest_user_tampered_queries_columns(
         "columns": stored_columns,
     }
     query_context.queries = [QueryObject(metrics=tampered_columns)]  # type: ignore
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         sm.raise_for_access(query_context=query_context)
 
 
@@ -362,11 +362,11 @@ def test_raise_for_access_query_default_schema(
     We should check that the user has access to the `public` schema, regardless of the
     schema set in the query.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "can_access_database", return_value=False)
     mocker.patch.object(sm, "get_schema_perm", return_value="[PostgreSQL].[public]")
     mocker.patch.object(sm, "is_guest_user", return_value=False)
-    SqlaTable = mocker.patch("superset.connectors.sqla.models.SqlaTable")  # noqa: N806
+    SqlaTable = mocker.patch("axbi.connectors.sqla.models.SqlaTable")  # noqa: N806
     SqlaTable.query_datasources_by_name.return_value = []
 
     database = mocker.MagicMock()
@@ -394,7 +394,7 @@ def test_raise_for_access_query_default_schema(
 
     # user has only access to `secret` schema
     mocker.patch.object(sm, "can_access", return_value=False)
-    with pytest.raises(SupersetSecurityException) as excinfo:
+    with pytest.raises(AxBISecurityException) as excinfo:
         sm.raise_for_access(
             database=None,
             datasource=None,
@@ -414,7 +414,7 @@ def test_raise_for_access_jinja_sql(mocker: MockerFixture, app_context: None) ->
     """
     Test that Jinja gets rendered to SQL.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "can_access_database", return_value=False)
     mocker.patch.object(sm, "get_schema_perm", return_value="[PostgreSQL].[public]")
     mocker.patch.object(sm, "can_access", return_value=False)
@@ -422,7 +422,7 @@ def test_raise_for_access_jinja_sql(mocker: MockerFixture, app_context: None) ->
     get_table_access_error_object = mocker.patch.object(
         sm, "get_table_access_error_object"
     )
-    SqlaTable = mocker.patch("superset.connectors.sqla.models.SqlaTable")  # noqa: N806
+    SqlaTable = mocker.patch("axbi.connectors.sqla.models.SqlaTable")  # noqa: N806
     SqlaTable.query_datasources_by_name.return_value = []
 
     database = mocker.MagicMock()
@@ -433,7 +433,7 @@ def test_raise_for_access_jinja_sql(mocker: MockerFixture, app_context: None) ->
     query.database = database
     query.sql = "SELECT * FROM {% if True %}ab_user{% endif %} WHERE 1=1"
 
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         sm.raise_for_access(
             database=None,
             datasource=None,
@@ -454,7 +454,7 @@ def test_raise_for_access_chart_for_datasource_permission(
     Test that the security manager can raise an exception for chart access,
     when the user does not have access to the chart datasource
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     session = sm.session
 
     engine = session.get_bind()
@@ -489,7 +489,7 @@ def test_raise_for_access_chart_for_datasource_permission(
 
     mocker.patch.object(sm, "can_access_datasource", return_value=False)
     with override_user(alpha):
-        with pytest.raises(SupersetSecurityException) as excinfo:
+        with pytest.raises(AxBISecurityException) as excinfo:
             sm.raise_for_access(
                 chart=slice,
             )
@@ -511,10 +511,10 @@ def test_raise_for_access_chart_on_admin(
     """
     from flask_appbuilder.security.sqla.models import Role, User
 
-    from superset.models.slice import Slice
-    from superset.utils.core import override_user
+    from axbi.models.slice import Slice
+    from axbi.utils.core import override_user
 
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     session = sm.session
 
     engine = session.get_bind()
@@ -551,7 +551,7 @@ def test_raise_for_access_chart_owner(
     Test that the security manager can raise an exception for chart access,
     when the user does not have access to the chart datasource
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     session = sm.session
 
     engine = session.get_bind()
@@ -726,7 +726,7 @@ def _native_filter_ctx(
             ]
         }
     )
-    query_chain = mocker.patch("superset.db.session.query")
+    query_chain = mocker.patch("axbi.db.session.query")
     query_chain.return_value.filter.return_value.one_or_none.return_value = dash
     return qc
 
@@ -1119,7 +1119,7 @@ def test_query_context_modified_sankey_tampered(mocker: MockerFixture) -> None:
             }
         ],
         "row_limit": 10000,
-        "color_scheme": "supersetColors",
+        "color_scheme": "axbiColors",
         "dashboards": [11],
         "extra_form_data": {},
         "label_colors": {},
@@ -1149,7 +1149,7 @@ def test_query_context_modified_sankey_tampered(mocker: MockerFixture) -> None:
             }
         ],
         "row_limit": 10000,
-        "color_scheme": "supersetColors",
+        "color_scheme": "axbiColors",
         "extra_form_data": {},
         "dashboards": [11],
     }
@@ -1197,7 +1197,7 @@ def test_query_context_modified_sankey_tampered(mocker: MockerFixture) -> None:
                     }
                 ],
                 "row_limit": 10000,
-                "color_scheme": "supersetColors",
+                "color_scheme": "axbiColors",
                 "extra_form_data": {},
                 "dashboards": [11],
                 "force": False,
@@ -1529,7 +1529,7 @@ def test_query_context_modified_time_grain_native_filter(
     """
     Test `query_context_modified` when a guest applies a Time Grain native filter.
 
-    Reproduces https://github.com/apache/superset/issues/32768.
+    Reproduces https://github.com/defai-digital/ax-bi/issues/32768.
 
     On a chart that uses a generic x-axis, the selected time grain is baked into the
     ``BASE_AXIS`` adhoc column as a ``timeGrain`` property (see
@@ -1703,7 +1703,7 @@ def test_get_catalog_perm() -> None:
     """
     Test the `get_catalog_perm` method.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     assert sm.get_catalog_perm("my_db", None) is None
     assert sm.get_catalog_perm("my_db", "my_catalog") == "[my_db].[my_catalog]"
@@ -1713,7 +1713,7 @@ def test_get_schema_perm() -> None:
     """
     Test the `get_schema_perm` method.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     assert sm.get_schema_perm("my_db", None, "my_schema") == "[my_db].[my_schema]"
     assert (
@@ -1731,7 +1731,7 @@ def test_raise_for_access_catalog(
     """
     Test catalog-level permissions.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "can_access_database", return_value=False)
     mocker.patch.object(
         sm,
@@ -1739,7 +1739,7 @@ def test_raise_for_access_catalog(
         return_value="[PostgreSQL].[db1]",
     )
     mocker.patch.object(sm, "is_guest_user", return_value=False)
-    SqlaTable = mocker.patch("superset.connectors.sqla.models.SqlaTable")  # noqa: N806
+    SqlaTable = mocker.patch("axbi.connectors.sqla.models.SqlaTable")  # noqa: N806
     SqlaTable.query_datasources_by_name.return_value = []
 
     database = mocker.MagicMock()
@@ -1755,7 +1755,7 @@ def test_raise_for_access_catalog(
     can_access.assert_called_with("catalog_access", "[PostgreSQL].[db1]")
 
     mocker.patch.object(sm, "can_access", return_value=False)
-    with pytest.raises(SupersetSecurityException) as excinfo:
+    with pytest.raises(AxBISecurityException) as excinfo:
         sm.raise_for_access(query=query)
     assert (
         str(excinfo.value)
@@ -1764,7 +1764,7 @@ def test_raise_for_access_catalog(
     )
 
     query.sql = "SELECT * FROM db2.public.ab_user"
-    with pytest.raises(SupersetSecurityException) as excinfo:
+    with pytest.raises(AxBISecurityException) as excinfo:
         sm.raise_for_access(query=query)
     assert (
         str(excinfo.value)
@@ -1780,7 +1780,7 @@ def test_get_datasources_accessible_by_user_schema_access(
     """
     Test that `get_datasources_accessible_by_user` works with schema permissions.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "can_access_database", return_value=False)
 
     database = mocker.MagicMock()
@@ -1822,7 +1822,7 @@ def test_get_catalogs_accessible_by_user_schema_access(
     """
     Test that `get_catalogs_accessible_by_user` works with schema permissions.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mocker.patch.object(sm, "can_access_database", return_value=False)
     mocker.patch.object(
         sm,
@@ -1857,7 +1857,7 @@ def test_get_rls_filters_uses_table_id_directly(
     This test ensures we use the direct .id attribute and never access .data,
     preventing regressions that would break dashboard loading when DBs are unavailable.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     # Create a mock table where .data raises an exception if accessed
     table = mocker.MagicMock()
@@ -1871,7 +1871,7 @@ def test_get_rls_filters_uses_table_id_directly(
     # Mock user context
     mock_user = mocker.MagicMock()
     mock_user.roles = [mocker.MagicMock(id=1)]
-    mocker.patch("superset.security.manager.g", user=mock_user)
+    mocker.patch("axbi.security.manager.g", user=mock_user)
     mocker.patch.object(sm, "get_user_roles", return_value=mock_user.roles)
 
     # Call get_rls_filters - if it accesses table.data, the PropertyMock will raise
@@ -1888,15 +1888,15 @@ def test_get_rls_filters_returns_cached_result(
     Test that get_rls_filters() returns cached results on subsequent calls
     for the same user and table, avoiding redundant DB queries.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     mock_user = mocker.MagicMock()
     mock_user.id = 1
     mock_user.username = "admin"
     mock_user.roles = [mocker.MagicMock(id=1)]
     mock_g = SimpleNamespace(user=mock_user)
-    mocker.patch("superset.security.manager.g", new=mock_g)
-    mocker.patch("superset.security.manager.get_username", return_value="admin")
+    mocker.patch("axbi.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.get_username", return_value="admin")
     mocker.patch.object(sm, "get_user_roles", return_value=mock_user.roles)
 
     table = mocker.MagicMock()
@@ -1928,15 +1928,15 @@ def test_prefetch_rls_filters_populates_cache(
     Test that prefetch_rls_filters() populates the cache for all provided
     table_ids, including empty results for tables with no matching filters.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     mock_user = mocker.MagicMock()
     mock_user.id = 1
     mock_user.username = "admin"
     mock_user.roles = [mocker.MagicMock(id=10)]
     mock_g = SimpleNamespace(user=mock_user)
-    mocker.patch("superset.security.manager.g", new=mock_g)
-    mocker.patch("superset.security.manager.get_username", return_value="admin")
+    mocker.patch("axbi.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.get_username", return_value="admin")
     mocker.patch.object(sm, "get_user_roles", return_value=mock_user.roles)
 
     # Mock the batch query to return filters for table 1 but not table 2
@@ -1972,7 +1972,7 @@ def test_prefetch_rls_filters_skips_cached_ids(
     Test that prefetch_rls_filters() skips table_ids already in cache
     and returns early when all ids are cached.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     mock_user = mocker.MagicMock()
     mock_user.id = 1
@@ -1982,8 +1982,8 @@ def test_prefetch_rls_filters_skips_cached_ids(
         user=mock_user,
         _rls_filter_cache={("admin", 1): [(100, "group_a", "id > 0")]},
     )
-    mocker.patch("superset.security.manager.g", new=mock_g)
-    mocker.patch("superset.security.manager.get_username", return_value="admin")
+    mocker.patch("axbi.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.get_username", return_value="admin")
     mocker.patch.object(sm, "get_user_roles", return_value=mock_user.roles)
 
     # If it queries the DB, this will fail
@@ -2004,8 +2004,8 @@ def test_prefetch_rls_filters_no_user(
     """
     Test that prefetch_rls_filters() returns early when no user is present.
     """
-    sm = SupersetSecurityManager(appbuilder)
-    mocker.patch("superset.security.manager.g", new=SimpleNamespace())
+    sm = AxBISecurityManager(appbuilder)
+    mocker.patch("axbi.security.manager.g", new=SimpleNamespace())
 
     # Should not attempt any DB queries
     mocker.patch.object(
@@ -2024,15 +2024,15 @@ def test_get_rls_filters_cache_works_for_guest_user(
     Test that get_rls_filters() caches results for guest users
     using the same (username, table_id) cache key as regular users.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     mock_guest = mocker.MagicMock()
     mock_guest.username = "guest_user"
     mock_guest.roles = [mocker.MagicMock(id=99)]
 
     mock_g = SimpleNamespace(user=mock_guest)
-    mocker.patch("superset.security.manager.g", new=mock_g)
-    mocker.patch("superset.security.manager.get_username", return_value="guest_user")
+    mocker.patch("axbi.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.get_username", return_value="guest_user")
     mocker.patch.object(sm, "get_user_roles", return_value=mock_guest.roles)
 
     table = mocker.MagicMock()
@@ -2064,15 +2064,15 @@ def test_prefetch_rls_filters_works_for_guest_user(
     Test that prefetch_rls_filters() works for guest users using the
     same (username, table_id) cache key as regular users.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     mock_guest = mocker.MagicMock()
     mock_guest.username = "guest_user"
     mock_guest.roles = [mocker.MagicMock(id=99)]
 
     mock_g = SimpleNamespace(user=mock_guest)
-    mocker.patch("superset.security.manager.g", new=mock_g)
-    mocker.patch("superset.security.manager.get_username", return_value="guest_user")
+    mocker.patch("axbi.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.get_username", return_value="guest_user")
     mocker.patch.object(sm, "get_user_roles", return_value=mock_guest.roles)
 
     # Mock the batch query returning no filters
@@ -2093,7 +2093,7 @@ def test_validate_child_in_parent_multilayer_valid(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation succeeds for valid multi-layer child"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = json.dumps(
@@ -2110,7 +2110,7 @@ def test_validate_child_in_parent_multilayer_invalid_child(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails for child not in parent config"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = json.dumps(
@@ -2127,7 +2127,7 @@ def test_validate_child_in_parent_multilayer_wrong_viz_type(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails for non-multilayer charts"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = json.dumps(
@@ -2146,7 +2146,7 @@ def test_validate_child_in_parent_multilayer_empty_deck_slices(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails when deck_slices is empty"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = json.dumps({"viz_type": "deck_multi", "deck_slices": []})
@@ -2160,7 +2160,7 @@ def test_validate_child_in_parent_multilayer_no_deck_slices(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails when deck_slices is missing"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = json.dumps(
@@ -2179,7 +2179,7 @@ def test_validate_child_in_parent_multilayer_malformed_json(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails gracefully with malformed JSON"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = "not valid json {{"
@@ -2193,7 +2193,7 @@ def test_validate_child_in_parent_multilayer_scalar_params(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails gracefully with non-object JSON params"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = json.dumps(["not", "an", "object"])
@@ -2207,7 +2207,7 @@ def test_validate_child_in_parent_multilayer_scalar_deck_slices(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails gracefully with non-list deck_slices"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = json.dumps(
@@ -2223,7 +2223,7 @@ def test_validate_child_in_parent_multilayer_null_params(
     app_context: None, mocker: MockerFixture
 ) -> None:
     """Test validation fails gracefully with null params"""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     parent_slice = mocker.MagicMock(spec=Slice)
     parent_slice.params = None
@@ -2241,7 +2241,7 @@ def test_user_view_menu_names_for_guest_user(
     Test that user_view_menu_names resolves permissions from the guest
     user's roles instead of querying by user_id (which is None for guests).
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     mock_role = mocker.MagicMock(spec=Role)
     mock_role.id = 99
@@ -2251,12 +2251,12 @@ def test_user_view_menu_names_for_guest_user(
     mock_guest.roles = [mock_role]
 
     mock_g = SimpleNamespace(user=mock_guest)
-    mocker.patch("superset.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.g", new=mock_g)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     # The regression: guest path must NEVER fall through to get_user_id().
     # Patching it as an error means an accidental fall-through fails loudly.
     mock_get_user_id = mocker.patch(
-        "superset.security.manager.get_user_id",
+        "axbi.security.manager.get_user_id",
         side_effect=AssertionError("get_user_id must not be called for guest users"),
     )
 
@@ -2282,7 +2282,7 @@ def test_user_view_menu_names_for_guest_user_no_roles(
     Test that user_view_menu_names returns empty set when guest user has
     no roles with valid IDs.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
 
     mock_role = mocker.MagicMock(spec=Role)
     mock_role.id = None
@@ -2292,10 +2292,10 @@ def test_user_view_menu_names_for_guest_user_no_roles(
     mock_guest.roles = [mock_role]
 
     mock_g = SimpleNamespace(user=mock_guest)
-    mocker.patch("superset.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.g", new=mock_g)
     mocker.patch.object(sm, "is_guest_user", return_value=True)
     mock_get_user_id = mocker.patch(
-        "superset.security.manager.get_user_id",
+        "axbi.security.manager.get_user_id",
         side_effect=AssertionError("get_user_id must not be called for guest users"),
     )
 
@@ -2310,17 +2310,17 @@ def test_reset_password_self_service_clears_flag(
     app_context: None,
 ) -> None:
     """A user resetting their own password clears the forced-change flag."""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     # The target user (id 5) is the same as the acting user -> self-service.
     mock_g = SimpleNamespace(user=SimpleNamespace(id=5))
-    mocker.patch("superset.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.g", new=mock_g)
     # Avoid touching the real DB in the FAB base implementation.
     mocker.patch(
         "flask_appbuilder.security.manager.BaseSecurityManager.reset_password",
         return_value=None,
     )
     mock_clear = mocker.patch(
-        "superset.security.password_change.clear_password_must_change"
+        "axbi.security.password_change.clear_password_must_change"
     )
 
     sm.reset_password(5, "new-password")
@@ -2338,17 +2338,17 @@ def test_reset_password_admin_does_not_clear_flag(
     string while ``g.user`` remains the admin, so the acting user differs from
     the target and the flag must NOT be cleared.
     """
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     # Acting user is admin (id 1); target is a different user ("5" as a string,
     # as FAB passes it from request args).
     mock_g = SimpleNamespace(user=SimpleNamespace(id=1))
-    mocker.patch("superset.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.g", new=mock_g)
     mocker.patch(
         "flask_appbuilder.security.manager.BaseSecurityManager.reset_password",
         return_value=None,
     )
     mock_clear = mocker.patch(
-        "superset.security.password_change.clear_password_must_change"
+        "axbi.security.password_change.clear_password_must_change"
     )
 
     sm.reset_password("5", "temp-password")
@@ -2361,15 +2361,15 @@ def test_reset_password_self_service_pk_string_clears_flag(
     app_context: None,
 ) -> None:
     """Self-service identity holds even if ids arrive as mixed int/str types."""
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     mock_g = SimpleNamespace(user=SimpleNamespace(id=5))
-    mocker.patch("superset.security.manager.g", new=mock_g)
+    mocker.patch("axbi.security.manager.g", new=mock_g)
     mocker.patch(
         "flask_appbuilder.security.manager.BaseSecurityManager.reset_password",
         return_value=None,
     )
     mock_clear = mocker.patch(
-        "superset.security.password_change.clear_password_must_change"
+        "axbi.security.password_change.clear_password_must_change"
     )
 
     sm.reset_password("5", "new-password")

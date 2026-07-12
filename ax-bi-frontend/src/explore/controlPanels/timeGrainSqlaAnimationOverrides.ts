@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { ControlPanelState, Dataset } from '@superset-ui/chart-controls';
+import type { ControlPanelState, Dataset } from '@ax-bi/chart-controls';
 
 interface TimeGrainOverrideState {
   choices: [string, string][] | null;

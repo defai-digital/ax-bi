@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { ChartProps, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import {
   getChartConfigs,
   parseSelectedChart,

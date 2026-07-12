@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled, css } from '@apache-superset/core/theme';
-import { Comparator } from '@superset-ui/chart-controls';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { styled, css } from '@ax-bi/core/theme';
+import { Comparator } from '@ax-bi/chart-controls';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import ControlHeader from 'src/explore/components/ControlHeader';
 import { FormattingPopover } from './FormattingPopover';
 import {

@@ -34,8 +34,8 @@ from sqlalchemy.types import (
 from urllib3.connection import HTTPConnection
 from urllib3.exceptions import NewConnectionError
 
-from superset.db_engine_specs.base import BasicParametersType
-from superset.utils.core import GenericDataType
+from axbi.db_engine_specs.base import BasicParametersType
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -56,7 +56,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.clickhouse import (
+    from axbi.db_engine_specs.clickhouse import (
         ClickHouseEngineSpec as spec,  # noqa: N813
     )
 
@@ -64,15 +64,15 @@ def test_convert_dttm(
 
 
 def test_execute_connection_error() -> None:
-    from superset.db_engine_specs.clickhouse import ClickHouseEngineSpec
-    from superset.db_engine_specs.exceptions import SupersetDBAPIDatabaseError
+    from axbi.db_engine_specs.clickhouse import ClickHouseEngineSpec
+    from axbi.db_engine_specs.exceptions import AxBIDBAPIDatabaseError
 
     database = Mock()
     cursor = Mock()
     cursor.execute.side_effect = NewConnectionError(
         HTTPConnection("localhost"), "Exception with sensitive data"
     )
-    with pytest.raises(SupersetDBAPIDatabaseError) as excinfo:
+    with pytest.raises(AxBIDBAPIDatabaseError) as excinfo:
         ClickHouseEngineSpec.execute(cursor, "SELECT col1 from table1", database)
     assert str(excinfo.value) == "Connection failed"
 
@@ -90,7 +90,7 @@ def test_connect_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.clickhouse import (
+    from axbi.db_engine_specs.clickhouse import (
         ClickHouseEngineSpec as spec,  # noqa: N813
     )
 
@@ -206,7 +206,7 @@ def test_connect_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.clickhouse import (
+    from axbi.db_engine_specs.clickhouse import (
         ClickHouseConnectEngineSpec as spec,  # noqa: N813
     )
 
@@ -214,7 +214,7 @@ def test_connect_get_column_spec(
 
 
 def test_connect_build_sqlalchemy_uri_ignores_malformed_query_params() -> None:
-    from superset.db_engine_specs.clickhouse import ClickHouseConnectEngineSpec
+    from axbi.db_engine_specs.clickhouse import ClickHouseConnectEngineSpec
 
     parameters = cast(
         BasicParametersType,
@@ -235,7 +235,7 @@ def test_connect_build_sqlalchemy_uri_ignores_malformed_query_params() -> None:
 def test_connect_build_sqlalchemy_uri_encryption_ignores_malformed_query_params() -> (
     None
 ):
-    from superset.db_engine_specs.clickhouse import ClickHouseConnectEngineSpec
+    from axbi.db_engine_specs.clickhouse import ClickHouseConnectEngineSpec
 
     parameters = cast(
         BasicParametersType,
@@ -267,7 +267,7 @@ def test_connect_build_sqlalchemy_uri_encryption_ignores_malformed_query_params(
 def test_adjust_engine_params_fully_qualified(
     schema: str, expected_result: str
 ) -> None:
-    from superset.db_engine_specs.clickhouse import (
+    from axbi.db_engine_specs.clickhouse import (
         ClickHouseConnectEngineSpec as spec,  # noqa: N813
     )
 

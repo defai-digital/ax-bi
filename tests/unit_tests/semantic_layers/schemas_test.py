@@ -18,7 +18,7 @@
 import pytest
 from marshmallow import ValidationError
 
-from superset.semantic_layers.schemas import (
+from axbi.semantic_layers.schemas import (
     SemanticLayerPostSchema,
     SemanticLayerPutSchema,
     SemanticViewPostSchema,

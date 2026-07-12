@@ -19,7 +19,7 @@ from unittest.mock import patch
 
 from rich.console import Console
 
-from superset.cli.test_db import collect_connection_info
+from axbi.cli.test_db import collect_connection_info
 
 
 def test_collect_connection_info_masking() -> None:

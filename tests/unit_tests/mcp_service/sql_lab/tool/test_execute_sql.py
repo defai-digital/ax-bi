@@ -29,17 +29,17 @@ from unittest.mock import call, MagicMock, Mock, patch
 
 import pandas as pd
 import pytest
+from axbi_core.queries.types import QueryResult, QueryStatus, StatementResult
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
-from superset_core.queries.types import QueryResult, QueryStatus, StatementResult
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.sql_lab.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.sql_lab.schemas import (
     ColumnInfo,
     ExecuteSqlResponse,
     StatementInfo,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     sanitize_for_llm_context,
 )
@@ -55,7 +55,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -144,8 +144,8 @@ def _mock_database(
 class TestExecuteSql:
     """Tests for execute_sql MCP tool."""
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_basic_select(
         self, mock_db, mock_security_manager, mcp_server
@@ -191,8 +191,8 @@ class TestExecuteSql:
             # Caching is enabled by default (force_refresh=False means cache=None)
             assert options.cache is None
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_with_template_params(
         self, mock_db, mock_security_manager, mcp_server
@@ -236,9 +236,9 @@ class TestExecuteSql:
             assert "{{ table }}" in data["statements"][0]["original_sql"]
             assert "orders" in data["statements"][0]["executed_sql"]
 
-    @patch("superset.is_feature_enabled")
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.is_feature_enabled")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_template_warning_when_flag_disabled(
         self, mock_db, mock_security_manager, mock_is_feature_enabled, mcp_server
@@ -272,9 +272,9 @@ class TestExecuteSql:
             assert "ENABLE_TEMPLATE_PROCESSING" in data["template_warning"]
             mock_is_feature_enabled.assert_called_with("ENABLE_TEMPLATE_PROCESSING")
 
-    @patch("superset.is_feature_enabled")
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.is_feature_enabled")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_no_template_warning_when_flag_enabled(
         self, mock_db, mock_security_manager, mock_is_feature_enabled, mcp_server
@@ -306,9 +306,9 @@ class TestExecuteSql:
             assert data["success"] is True
             assert data["template_warning"] is None
 
-    @patch("superset.is_feature_enabled")
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.is_feature_enabled")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_no_template_warning_without_template_params(
         self, mock_db, mock_security_manager, mock_is_feature_enabled, mcp_server
@@ -337,8 +337,8 @@ class TestExecuteSql:
                 mock_is_feature_enabled.call_args_list
             )
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_database_not_found(
         self,
@@ -363,8 +363,8 @@ class TestExecuteSql:
             assert data["success"] is False
             assert "Database with ID 999 not found" in data["error"]
 
-    @patch("superset.security_manager", new_callable=MagicMock)
-    @patch("superset.db")
+    @patch("axbi.security_manager", new_callable=MagicMock)
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_access_denied(
         self, mock_db, mock_security_manager, mcp_server
@@ -388,8 +388,8 @@ class TestExecuteSql:
             assert data["success"] is False
             assert "Access denied to database" in data["error"]
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_dml_success(
         self, mock_db, mock_security_manager, mcp_server
@@ -423,8 +423,8 @@ class TestExecuteSql:
             assert data["rows"] is None  # None for DML
             assert data["row_count"] is None
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_empty_results(
         self, mock_db, mock_security_manager, mcp_server
@@ -457,8 +457,8 @@ class TestExecuteSql:
             assert len(data["rows"]) == 0
             assert len(data["columns"]) == 2  # Column metadata still returned
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_with_schema_and_catalog(
         self, mock_db, mock_security_manager, mcp_server
@@ -495,8 +495,8 @@ class TestExecuteSql:
             assert options.schema == "sales"
             assert options.catalog == "prod_catalog"
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_dry_run(
         self, mock_db, mock_security_manager, mcp_server
@@ -548,8 +548,8 @@ class TestExecuteSql:
             assert "{{ table }}" in data["statements"][0]["original_sql"]
             assert "users" in data["statements"][0]["executed_sql"]
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_timeout_error(
         self, mock_db, mock_security_manager, mcp_server
@@ -588,8 +588,8 @@ class TestExecuteSql:
             )
             assert data["error_type"] == "timed_out"
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_multi_statement(
         self, mock_db, mock_security_manager, mcp_server
@@ -666,8 +666,8 @@ class TestExecuteSql:
             assert data["multi_statement_warning"] is not None
             assert "2 data-bearing statements" in data["multi_statement_warning"]
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_multi_statement_set_then_select(
         self, mock_db, mock_security_manager, mcp_server
@@ -753,8 +753,8 @@ class TestExecuteSql:
             # No warning since only one data-bearing statement
             assert data["multi_statement_warning"] is None
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_multi_statement_all_dml(
         self, mock_db, mock_security_manager, mcp_server
@@ -815,8 +815,8 @@ class TestExecuteSql:
             # No warning for DML-only queries
             assert data["multi_statement_warning"] is None
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_multi_statement_preserves_all_data(
         self, mock_db, mock_security_manager, mcp_server
@@ -934,8 +934,8 @@ class TestExecuteSql:
             with pytest.raises(ToolError, match="less than or equal to 10000"):
                 await client.call_tool("execute_sql", {"request": request})
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_no_limit_respects_sql(
         self, mock_db, mock_security_manager, mcp_server
@@ -969,8 +969,8 @@ class TestExecuteSql:
             options = call_args[0][1]
             assert options.limit is None
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_force_refresh(
         self, mock_db, mock_security_manager, mcp_server
@@ -1005,8 +1005,8 @@ class TestExecuteSql:
             assert options.cache is not None
             assert options.cache.force_refresh is True
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_bytes_in_dataframe(
         self, mock_db, mock_security_manager, mcp_server
@@ -1065,8 +1065,8 @@ class TestExecuteSql:
             # Non-UTF-8 bytes should become hex
             assert row["binary_data"] == sanitize_for_llm_context("000102ff")
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_decimal_in_dataframe(
         self, mock_db, mock_security_manager, mcp_server
@@ -1128,28 +1128,28 @@ class TestSanitizeRowValues:
     """Unit tests for _sanitize_row_values helper function."""
 
     def test_sanitize_utf8_bytes(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         rows = [{"data": b"hello"}]
         _sanitize_row_values(rows)
         assert rows[0]["data"] == "hello"
 
     def test_sanitize_non_utf8_bytes(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         rows = [{"data": b"\x00\xff"}]
         _sanitize_row_values(rows)
         assert rows[0]["data"] == "00ff"
 
     def test_sanitize_memoryview(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         rows = [{"data": memoryview(b"test")}]
         _sanitize_row_values(rows)
         assert rows[0]["data"] == "test"
 
     def test_sanitize_decimal(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         rows = [{"price": Decimal("19.99"), "count": Decimal("42")}]
         _sanitize_row_values(rows)
@@ -1158,7 +1158,7 @@ class TestSanitizeRowValues:
         assert rows[0]["count"] == 42.0
 
     def test_sanitize_custom_type_uses_str(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         class CustomType:
             def __str__(self):
@@ -1169,7 +1169,7 @@ class TestSanitizeRowValues:
         assert rows[0]["data"] == "custom_value"
 
     def test_preserves_json_serializable_types(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         rows = [
             {
@@ -1187,14 +1187,14 @@ class TestSanitizeRowValues:
         assert rows == original
 
     def test_sanitize_empty_rows(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         rows: list[dict[str, Any]] = []
         _sanitize_row_values(rows)
         assert rows == []
 
     def test_sanitize_mixed_types_in_single_row(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
+        from axbi.mcp_service.sql_lab.tool.execute_sql import _sanitize_row_values
 
         rows = [
             {
@@ -1215,7 +1215,7 @@ class TestDataToStatementData:
     """Unit tests for SQL result conversion into statement data."""
 
     def test_sanitizes_dataframe_row_values_and_delimiter_keys(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import (
+        from axbi.mcp_service.sql_lab.tool.execute_sql import (
             _data_to_statement_data,
         )
 
@@ -1240,7 +1240,7 @@ class TestDataToStatementData:
         assert result.columns[0].name == escaped_key
 
     def test_coerces_cached_scalar_list_rows(self):
-        from superset.mcp_service.sql_lab.tool.execute_sql import (
+        from axbi.mcp_service.sql_lab.tool.execute_sql import (
             _data_to_statement_data,
         )
 
@@ -1256,20 +1256,20 @@ class TestDataToStatementData:
 class TestExecuteSqlOAuth2:
     """Tests for OAuth2 error handling in execute_sql."""
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_oauth2_redirect_error(
         self, mock_db, mock_security_manager, mcp_server
     ):
         """Test that OAuth2RedirectError is caught and returns a clear message."""
-        from superset.exceptions import OAuth2RedirectError
+        from axbi.exceptions import OAuth2RedirectError
 
         mock_database = _mock_database()
         mock_database.execute.side_effect = OAuth2RedirectError(
             url="https://oauth.example.com/authorize",
             tab_id="test-tab-id",
-            redirect_uri="https://superset.example.com/callback",
+            redirect_uri="https://ax-bi.example.com/callback",
         )
         mock_db.session.query.return_value.filter_by.return_value.first.return_value = (
             mock_database
@@ -1291,14 +1291,14 @@ class TestExecuteSqlOAuth2:
             assert "https://oauth.example.com/authorize" in data["error"]
             assert data["error_type"] == "OAUTH2_REDIRECT"
 
-    @patch("superset.security_manager")
-    @patch("superset.db")
+    @patch("axbi.security_manager")
+    @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_oauth2_error(
         self, mock_db, mock_security_manager, mcp_server
     ):
         """Test that OAuth2Error is caught and returns a clear message."""
-        from superset.exceptions import OAuth2Error
+        from axbi.exceptions import OAuth2Error
 
         mock_database = _mock_database()
         mock_database.execute.side_effect = OAuth2Error(
@@ -1423,8 +1423,8 @@ class TestDestructiveDDLBlocking:
     def ddl_mocks(self):
         """Common mock wiring for DDL blocking tests."""
         with (
-            patch("superset.db") as mock_db,
-            patch("superset.security_manager") as mock_sm,
+            patch("axbi.db") as mock_db,
+            patch("axbi.security_manager") as mock_sm,
         ):
             mock_database = _mock_database()
             mock_database.db_engine_spec.engine = "postgresql"
@@ -1534,7 +1534,7 @@ class TestDestructiveDDLBlocking:
         """When SQL parsing fails, the query is blocked (fail-closed)."""
         import sys
 
-        execute_sql_mod = sys.modules["superset.mcp_service.sql_lab.tool.execute_sql"]
+        execute_sql_mod = sys.modules["axbi.mcp_service.sql_lab.tool.execute_sql"]
         with patch.object(
             execute_sql_mod,
             "SQLScript",
@@ -1572,7 +1572,7 @@ class TestDestructiveDDLBlocking:
         mock_template_processor.process_template.return_value = "DROP TABLE users"
 
         with patch(
-            "superset.jinja_context.get_template_processor",
+            "axbi.jinja_context.get_template_processor",
             return_value=mock_template_processor,
         ):
             async with Client(mcp_server) as client:

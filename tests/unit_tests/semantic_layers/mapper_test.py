@@ -23,8 +23,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import pyarrow as pa
 import pytest
-from pytest_mock import MockerFixture
-from superset_core.semantic_layers.types import (
+from axbi_core.semantic_layers.types import (
     AdhocExpression,
     Dimension,
     Filter,
@@ -39,9 +38,11 @@ from superset_core.semantic_layers.types import (
     SemanticRequest,
     SemanticResult,
 )
-from superset_core.semantic_layers.view import SemanticViewFeature
+from axbi_core.semantic_layers.view import SemanticViewFeature
+from pytest_mock import MockerFixture
 
-from superset.semantic_layers.mapper import (
+from axbi.axbi_typing import AdhocColumn
+from axbi.semantic_layers.mapper import (
     _coerce_scalar_filter_value,
     _convert_query_object_filter,
     _convert_time_grain,
@@ -63,8 +64,7 @@ from superset.semantic_layers.mapper import (
     ValidatedQueryObject,
     ValidatedQueryObjectFilterClause,
 )
-from superset.superset_typing import AdhocColumn
-from superset.utils.core import FilterOperator
+from axbi.utils.core import FilterOperator
 
 # Alias for convenience
 Feature = SemanticViewFeature
@@ -1932,7 +1932,7 @@ def test_get_time_bounds_with_offset_fallback_to_time_range(
     Test _get_time_bounds falls back to time_range parsing when bounds missing.
     """
     mocker.patch(
-        "superset.semantic_layers.mapper.get_since_until_from_query_object",
+        "axbi.semantic_layers.mapper.get_since_until_from_query_object",
         return_value=(datetime(2025, 10, 1), datetime(2025, 10, 15)),
     )
 
@@ -1960,7 +1960,7 @@ def test_get_time_bounds_with_offset_no_bounds(
     Test _get_time_bounds returns None when no bounds available.
     """
     mocker.patch(
-        "superset.semantic_layers.mapper.get_since_until_from_query_object",
+        "axbi.semantic_layers.mapper.get_since_until_from_query_object",
         return_value=(None, None),
     )
 

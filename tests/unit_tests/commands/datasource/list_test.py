@@ -19,7 +19,7 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import literal, select
 
-from superset.commands.datasource.list import GetCombinedDatasourceListCommand
+from axbi.commands.datasource.list import GetCombinedDatasourceListCommand
 
 
 def test_parse_filters_semantic_view_requires_dataset_operator() -> None:
@@ -146,15 +146,15 @@ def test_run_raises_for_invalid_sort_column(order_column: str) -> None:
 
     with (
         patch(
-            "superset.commands.datasource.list.DatasourceDAO.build_dataset_query",
+            "axbi.commands.datasource.list.DatasourceDAO.build_dataset_query",
             return_value=ds_q,
         ),
         patch(
-            "superset.commands.datasource.list.DatasourceDAO.build_semantic_view_query",
+            "axbi.commands.datasource.list.DatasourceDAO.build_semantic_view_query",
             return_value=sv_q,
         ),
         patch(
-            "superset.commands.datasource.list.DatasourceDAO.paginate_combined_query",
+            "axbi.commands.datasource.list.DatasourceDAO.paginate_combined_query",
             side_effect=ValueError(f"Invalid order column: {order_column}"),
         ),
     ):

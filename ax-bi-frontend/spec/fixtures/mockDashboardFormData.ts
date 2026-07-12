@@ -17,7 +17,7 @@
  * under the License.
  */
 /* eslint-disable theme-colors/no-literal-colors */
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 
 export const getDashboardFormData = (overrides: JsonObject = {}) => ({
   label_colors: {

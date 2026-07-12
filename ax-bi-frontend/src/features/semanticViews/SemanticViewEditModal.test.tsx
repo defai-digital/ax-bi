@@ -18,22 +18,22 @@
  */
 import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from 'spec/helpers/testing-library';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
 
 import SemanticViewEditModal from './SemanticViewEditModal';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
-    ...jest.requireActual('@superset-ui/core').SupersetClient,
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
+    ...jest.requireActual('@ax-bi/ui-core').AxBIClient,
     put: jest.fn(),
     get: jest.fn(),
   },
   getClientErrorObject: jest.fn(() => Promise.resolve({ error: '' })),
 }));
 
-const mockedPut = SupersetClient.put as jest.Mock;
-const mockedGet = SupersetClient.get as jest.Mock;
+const mockedPut = AxBIClient.put as jest.Mock;
+const mockedGet = AxBIClient.get as jest.Mock;
 const mockedGetClientErrorObject = getClientErrorObject as jest.Mock;
 
 const MOCK_STRUCTURE = {

@@ -18,13 +18,13 @@
 
 from uuid import uuid4
 
-from superset_core.tasks.types import TaskScope, TaskStatus
+from axbi_core.tasks.types import TaskScope, TaskStatus
 
-from superset import db
-from superset.commands.tasks import SubmitTaskCommand
-from superset.commands.tasks.cancel import CancelTaskCommand
-from superset.daos.tasks import TaskDAO
-from superset.utils.core import override_user
+from axbi import db
+from axbi.commands.tasks import SubmitTaskCommand
+from axbi.commands.tasks.cancel import CancelTaskCommand
+from axbi.daos.tasks import TaskDAO
+from axbi.utils.core import override_user
 from tests.integration_tests.test_app import app
 
 

@@ -18,7 +18,7 @@ from click.testing import CliRunner
 from flask import current_app
 from pytest_mock import MockerFixture
 
-from superset.cli.guest_token import revoke_guest_tokens
+from axbi.cli.guest_token import revoke_guest_tokens
 
 
 def test_revoke_guest_tokens_reports_new_version(
@@ -27,7 +27,7 @@ def test_revoke_guest_tokens_reports_new_version(
     """The command bumps the version and reports it on success (exit 0)."""
     current_app.config["GUEST_TOKEN_REVOCATION_ENABLED"] = True
     bump = mocker.patch(
-        "superset.security.guest_token.bump_guest_token_revocation_version",
+        "axbi.security.guest_token.bump_guest_token_revocation_version",
         return_value=7,
     )
 
@@ -45,7 +45,7 @@ def test_revoke_guest_tokens_warns_when_feature_disabled(
     """With the feature off, the command still bumps but emits a warning."""
     current_app.config["GUEST_TOKEN_REVOCATION_ENABLED"] = False
     bump = mocker.patch(
-        "superset.security.guest_token.bump_guest_token_revocation_version",
+        "axbi.security.guest_token.bump_guest_token_revocation_version",
         return_value=1,
     )
 

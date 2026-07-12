@@ -22,12 +22,12 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
+from axbi_core.tasks.types import TaskScope
 from flask_appbuilder.security.sqla.models import User
-from superset_core.tasks.types import TaskScope
 
-from superset.tasks.exceptions import ExecutorNotFoundError, InvalidExecutorError
-from superset.tasks.types import Executor, ExecutorType, FixedExecutor
-from superset.tasks.utils import (
+from axbi.tasks.exceptions import ExecutorNotFoundError, InvalidExecutorError
+from axbi.tasks.types import Executor, ExecutorType, FixedExecutor
+from axbi.tasks.utils import (
     error_update,
     fetch_csrf_token,
     get_active_dedup_key,
@@ -37,7 +37,7 @@ from superset.tasks.utils import (
     progress_update,
     serialize_properties,
 )
-from superset.utils.hashing import hash_from_str
+from axbi.utils.hashing import hash_from_str
 
 FIXED_USER_ID = 1234
 FIXED_USERNAME = "admin"
@@ -325,10 +325,10 @@ def test_get_executor(
     current_user: int | None,
     expected_result: tuple[ExecutorType, int] | Exception,
 ) -> None:
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.reports.models import ReportSchedule
-    from superset.tasks.utils import get_executor
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.reports.models import ReportSchedule
+    from axbi.tasks.utils import get_executor
 
     model: type[Dashboard | ReportSchedule | Slice]
     model_kwargs: dict[str, Any] = {}
@@ -595,7 +595,7 @@ def test_parse_properties(json_str, expected):
 )
 def test_serialize_properties(props, expected_contains):
     """Test serialize_properties converts TaskProperties to JSON."""
-    from superset.utils import json
+    from axbi.utils import json
 
     result = serialize_properties(props)
     parsed = json.loads(result)
@@ -617,9 +617,9 @@ def test_properties_roundtrip():
 def test_fetch_csrf_token_skips_malformed_cookie_headers() -> None:
     """Malformed Set-Cookie values should not hide a valid session cookie."""
     with (
-        patch("superset.tasks.utils.get_url_path", return_value="http://example/csrf"),
+        patch("axbi.tasks.utils.get_url_path", return_value="http://example/csrf"),
         patch(
-            "superset.tasks.utils.request.urlopen",
+            "axbi.tasks.utils.request.urlopen",
             return_value=_FakeResponse(
                 ["malformed-cookie", "session=session-value; Path=/"]
             ),
@@ -646,9 +646,9 @@ def test_fetch_csrf_token_skips_malformed_cookie_headers() -> None:
 def test_fetch_csrf_token_ignores_malformed_response_body(body: bytes) -> None:
     """Malformed CSRF responses should return empty headers."""
     with (
-        patch("superset.tasks.utils.get_url_path", return_value="http://example/csrf"),
+        patch("axbi.tasks.utils.get_url_path", return_value="http://example/csrf"),
         patch(
-            "superset.tasks.utils.request.urlopen",
+            "axbi.tasks.utils.request.urlopen",
             return_value=_FakeResponse(body=body),
         ),
     ):
@@ -662,16 +662,16 @@ class TestGetCurrentUser:
 
     def test_returns_none_when_g_has_no_user_attribute(self) -> None:
         """Return None when g has no 'user' attribute."""
-        with patch("superset.tasks.utils.g", MagicMock(spec=[])):
+        with patch("axbi.tasks.utils.g", MagicMock(spec=[])):
             assert get_current_user() is None
 
-    @patch("superset.tasks.utils.g")
+    @patch("axbi.tasks.utils.g")
     def test_returns_none_when_g_user_is_none(self, mock_g: MagicMock) -> None:
         """Return None when g.user is None."""
         mock_g.user = None
         assert get_current_user() is None
 
-    @patch("superset.tasks.utils.g")
+    @patch("axbi.tasks.utils.g")
     def test_returns_none_when_user_is_anonymous(self, mock_g: MagicMock) -> None:
         """Return None when g.user is anonymous."""
         mock_user = MagicMock()
@@ -679,7 +679,7 @@ class TestGetCurrentUser:
         mock_g.user = mock_user
         assert get_current_user() is None
 
-    @patch("superset.tasks.utils.g")
+    @patch("axbi.tasks.utils.g")
     def test_returns_username_when_user_is_authenticated(
         self, mock_g: MagicMock
     ) -> None:

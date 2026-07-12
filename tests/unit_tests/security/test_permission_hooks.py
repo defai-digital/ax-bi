@@ -24,13 +24,13 @@ from unittest.mock import Mock
 
 import pytest
 
-from superset import db
+from axbi import db
 
 
 @pytest.fixture
 def sample_chart(app_context: None):
     """Create a minimal chart for testing."""
-    from superset.models.slice import Slice
+    from axbi.models.slice import Slice
 
     chart = Slice(
         slice_name="test_permission_hooks_chart",
@@ -106,7 +106,7 @@ def test_raise_for_access_bypass_skips_checks(app_context: None, monkeypatch):
     """EXTRA_RAISE_FOR_ACCESS_BYPASS returning True skips all permission checks."""
     from flask import current_app
 
-    from superset import security_manager
+    from axbi import security_manager
 
     bypass_mock = Mock(return_value=True)
     monkeypatch.setitem(
@@ -121,7 +121,7 @@ def test_raise_for_access_no_bypass_without_config(app_context: None, monkeypatc
     """Without EXTRA_RAISE_FOR_ACCESS_BYPASS, normal checks proceed."""
     from flask import current_app
 
-    from superset import security_manager
+    from axbi import security_manager
 
     monkeypatch.setitem(current_app.config, "EXTRA_RAISE_FOR_ACCESS_BYPASS", None)
     security_manager.raise_for_access(dashboard=None, chart=None)
@@ -131,7 +131,7 @@ def test_ownership_check_allows_non_owner(sample_chart, sample_user, monkeypatch
     """EXTRA_OWNERS_RESOLVER returning the user allows a non-owner to pass."""
     from flask import current_app, g
 
-    from superset import security_manager
+    from axbi import security_manager
 
     resolver_mock = Mock(return_value=[sample_user])
     monkeypatch.setitem(current_app.config, "EXTRA_OWNERS_RESOLVER", resolver_mock)
@@ -148,7 +148,7 @@ def test_owner_auto_add_skipped_with_resolver(
     from flask import current_app, g
     from flask_appbuilder.security.sqla.models import User
 
-    from superset.commands.utils import populate_owner_list
+    from axbi.commands.utils import populate_owner_list
 
     other_user = User(
         first_name="other",
@@ -179,7 +179,7 @@ def test_owner_auto_add_without_resolver(sample_user, app_context: None, monkeyp
     from flask import current_app, g
     from flask_appbuilder.security.sqla.models import User
 
-    from superset.commands.utils import populate_owner_list
+    from axbi.commands.utils import populate_owner_list
 
     other_user = User(
         first_name="other",

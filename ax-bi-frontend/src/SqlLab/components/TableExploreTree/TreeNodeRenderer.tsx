@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import type { NodeRendererProps } from 'react-arborist';
-import { Icons, Typography } from '@superset-ui/core/components';
+import { Icons, Typography } from '@ax-bi/ui-core/components';
 import ColumnElement from 'src/SqlLab/components/ColumnElement';
-import { ActionButton } from '@superset-ui/core/components/ActionButton';
+import { ActionButton } from '@ax-bi/ui-core/components/ActionButton';
 import copyTextToClipboard from 'src/utils/copy';
 import type { TreeNodeData } from './types';
 
@@ -348,9 +348,9 @@ const TreeNodeRenderer: React.FC<TreeNodeRendererProps> = ({
                     <Icons.SortAscendingOutlined
                       iconSize="m"
                       css={css`
-                        color: ${sortedTables[data.id]
-                          ? theme.colorPrimary
-                          : 'inherit'};
+                        color: ${
+                          sortedTables[data.id] ? theme.colorPrimary : 'inherit'
+                        };
                       `}
                     />
                   }

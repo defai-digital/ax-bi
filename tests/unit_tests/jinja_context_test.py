@@ -31,15 +31,15 @@ from pytest_mock import MockerFixture
 from sqlalchemy.dialects import mysql
 from sqlalchemy.dialects.postgresql import dialect
 
-from superset.commands.dataset.exceptions import DatasetNotFoundError
-from superset.connectors.sqla.models import (
+from axbi.commands.dataset.exceptions import DatasetNotFoundError
+from axbi.connectors.sqla.models import (
     RowLevelSecurityFilter,
     SqlaTable,
     SqlMetric,
     TableColumn,
 )
-from superset.exceptions import SupersetTemplateException
-from superset.jinja_context import (
+from axbi.exceptions import AxBITemplateException
+from axbi.jinja_context import (
     dataset_macro,
     ExtraCache,
     get_template_processor,
@@ -49,9 +49,9 @@ from superset.jinja_context import (
     to_datetime,
     WhereInMacro,
 )
-from superset.models.core import Database
-from superset.models.slice import Slice
-from superset.utils import json
+from axbi.models.core import Database
+from axbi.models.slice import Slice
+from axbi.utils import json
 from tests.unit_tests.conftest import with_feature_flags
 
 
@@ -663,26 +663,26 @@ def test_safe_proxy_dict() -> None:
 def test_safe_proxy_lambda() -> None:
     """
     Test the ``safe_proxy`` helper with a function returning a ``lambda``.
-    Should raise ``SupersetTemplateException``.
+    Should raise ``AxBITemplateException``.
     """
 
     def func(input_: Any) -> Any:
         return input_
 
-    with pytest.raises(SupersetTemplateException):
+    with pytest.raises(AxBITemplateException):
         safe_proxy(func, lambda: "bar")
 
 
 def test_safe_proxy_nested_lambda() -> None:
     """
     Test the ``safe_proxy`` helper with a function returning a ``dict``
-    containing ``lambda`` value. Should raise ``SupersetTemplateException``.
+    containing ``lambda`` value. Should raise ``AxBITemplateException``.
     """
 
     def func(input_: Any) -> Any:
         return input_
 
-    with pytest.raises(SupersetTemplateException):
+    with pytest.raises(AxBITemplateException):
         safe_proxy(func, {"foo": lambda: "bar"})
 
 
@@ -706,11 +706,11 @@ def test_user_macros(
         - ``current_user_roles``
         - ``current_user_rls_rules``
     """
-    mock_g = mocker.patch("superset.utils.core.g")
-    mock_get_user_roles = mocker.patch("superset.security_manager.get_user_roles")
-    mock_get_user_rls = mocker.patch("superset.security_manager.get_rls_filters")
+    mock_g = mocker.patch("axbi.utils.core.g")
+    mock_get_user_roles = mocker.patch("axbi.security_manager.get_user_roles")
+    mock_get_user_rls = mocker.patch("axbi.security_manager.get_rls_filters")
     mock_cache_key_wrapper = mocker.patch(
-        "superset.jinja_context.ExtraCache.cache_key_wrapper"
+        "axbi.jinja_context.ExtraCache.cache_key_wrapper"
     )
     mock_g.user.id = 1
     mock_g.user.username = "my_username"
@@ -736,7 +736,7 @@ def test_user_macros_without_user_info(mocker: MockerFixture):
     """
     Test all user macros when no user info is available.
     """
-    mock_g = mocker.patch("superset.utils.core.g")
+    mock_g = mocker.patch("axbi.utils.core.g")
     mock_g.user = None
     cache = ExtraCache(table=mocker.MagicMock())
     assert cache.current_user_id() is None
@@ -750,11 +750,11 @@ def test_current_user_rls_rules_with_no_table(mocker: MockerFixture):
     """
     Test the ``current_user_rls_rules`` macro when no table is provided.
     """
-    mock_g = mocker.patch("superset.utils.core.g")
-    mock_get_user_rls = mocker.patch("superset.security_manager.get_rls_filters")
-    mock_is_guest_user = mocker.patch("superset.security_manager.is_guest_user")
+    mock_g = mocker.patch("axbi.utils.core.g")
+    mock_get_user_rls = mocker.patch("axbi.security_manager.get_rls_filters")
+    mock_is_guest_user = mocker.patch("axbi.security_manager.is_guest_user")
     mock_cache_key_wrapper = mocker.patch(
-        "superset.jinja_context.ExtraCache.cache_key_wrapper"
+        "axbi.jinja_context.ExtraCache.cache_key_wrapper"
     )
     mock_g.user.id = 1
     mock_g.user.username = "my_username"
@@ -766,15 +766,15 @@ def test_current_user_rls_rules_with_no_table(mocker: MockerFixture):
     assert mock_is_guest_user.call_count == 0
 
 
-@with_feature_flags(EMBEDDED_SUPERSET=True)
+@with_feature_flags(EMBEDDED_AXBI=True)
 def test_current_user_rls_rules_guest_user(mocker: MockerFixture):
     """
     Test the ``current_user_rls_rules`` with an embedded user.
     """
-    mock_g = mocker.patch("superset.utils.core.g")
-    mock_gg = mocker.patch("superset.tasks.utils.g")
-    mock_ggg = mocker.patch("superset.security.manager.g")
-    mock_get_user_rls = mocker.patch("superset.security_manager.get_guest_rls_filters")
+    mock_g = mocker.patch("axbi.utils.core.g")
+    mock_gg = mocker.patch("axbi.tasks.utils.g")
+    mock_ggg = mocker.patch("axbi.security.manager.g")
+    mock_get_user_rls = mocker.patch("axbi.security_manager.get_guest_rls_filters")
     mock_user = mocker.MagicMock()
     mock_user.username = "my_username"
     mock_user.is_guest_user = True
@@ -873,7 +873,7 @@ def test_dataset_macro(mocker: MockerFixture) -> None:
     Test the ``dataset_macro`` macro.
     """
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+        "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
         return_value=[],
     )
 
@@ -918,10 +918,10 @@ def test_dataset_macro(mocker: MockerFixture) -> None:
         schema_perm=None,
         extra=json.dumps({"warning_markdown": "*WARNING*"}),
     )
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = dataset
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+        "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
         return_value=[],
     )
 
@@ -968,7 +968,7 @@ def test_dataset_macro_mutator_with_comments(mocker: MockerFixture) -> None:
         """
         return f"-- begin\n{sql}\n-- end"
 
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id().get_query_str_extended().sql = mutator("SELECT 1")
     assert (
         dataset_macro(1)
@@ -984,8 +984,8 @@ def test_metric_macro_with_dataset_id(mocker: MockerFixture) -> None:
     """
     Test the ``metric_macro`` when passing a dataset ID.
     """
-    mock_get_form_data = mocker.patch("superset.views.utils.get_form_data")
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    mock_get_form_data = mocker.patch("axbi.views.utils.get_form_data")
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1018,9 +1018,9 @@ def test_metric_macro_recursive(mocker: MockerFixture) -> None:
         sql=None,
     )
 
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"datasource": {"id": 1}}
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = dataset
 
     processor = get_template_processor(database=database)
@@ -1045,10 +1045,10 @@ def test_metric_macro_expansion(mocker: MockerFixture) -> None:
         sql=None,
     )
 
-    mocker.patch("superset.jinja_context.get_user_id", return_value=42)
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mocker.patch("axbi.jinja_context.get_user_id", return_value=42)
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"datasource": {"id": 1}}
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = dataset
 
     processor = get_template_processor(database=database)
@@ -1061,7 +1061,7 @@ def test_metric_macro_does_not_expose_environment(mocker: MockerFixture) -> None
     ``metric`` macro's bound arguments.
     """
     database = Database(id=1, database_name="my_database", sqlalchemy_uri="sqlite://")
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"datasource": {"id": 1}}
     processor = get_template_processor(database=database)
     # Attribute access on the macro's partial is denied, so a reference to its
@@ -1075,13 +1075,13 @@ def test_metric_macro_does_not_expose_environment(mocker: MockerFixture) -> None
         )
 
 
-def test_supersetsandboxedenvironment_denies_unsafe_attributes() -> None:
+def test_axbisandboxedenvironment_denies_unsafe_attributes() -> None:
     """is_safe_attribute denies env/template class attrs and all attrs on partials."""
     from functools import partial
 
-    from superset.jinja_context import SupersetSandboxedEnvironment
+    from axbi.jinja_context import AxBISandboxedEnvironment
 
-    env = SupersetSandboxedEnvironment()
+    env = AxBISandboxedEnvironment()
     assert env.is_safe_attribute(env, "environment_class", None) is False
     assert env.is_safe_attribute(env, "template_class", None) is False
     macro = partial(lambda value: value, 1)
@@ -1110,9 +1110,9 @@ def test_metric_macro_recursive_compound(mocker: MockerFixture) -> None:
         sql=None,
     )
 
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"datasource": {"id": 1}}
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = dataset
 
     processor = get_template_processor(database=database)
@@ -1139,13 +1139,13 @@ def test_metric_macro_recursive_cyclic(mocker: MockerFixture) -> None:
         sql=None,
     )
 
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"datasource": {"id": 1}}
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = dataset
 
     processor = get_template_processor(database=database)
-    with pytest.raises(SupersetTemplateException) as excinfo:
+    with pytest.raises(AxBITemplateException) as excinfo:
         processor.process_template("{{ metric('c') }}")
     assert str(excinfo.value) == "Infinite recursion detected in template"
 
@@ -1168,13 +1168,13 @@ def test_metric_macro_recursive_infinite(mocker: MockerFixture) -> None:
         sql=None,
     )
 
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"datasource": {"id": 1}}
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = dataset
 
     processor = get_template_processor(database=database)
-    with pytest.raises(SupersetTemplateException) as excinfo:
+    with pytest.raises(AxBITemplateException) as excinfo:
         processor.process_template("{{ metric('a') }}")
     assert str(excinfo.value) == "Infinite recursion detected in template"
 
@@ -1183,8 +1183,8 @@ def test_metric_macro_with_dataset_id_invalid_key(mocker: MockerFixture) -> None
     """
     Test the ``metric_macro`` when passing a dataset ID and an invalid key.
     """
-    mock_get_form_data = mocker.patch("superset.views.utils.get_form_data")
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    mock_get_form_data = mocker.patch("axbi.views.utils.get_form_data")
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1195,7 +1195,7 @@ def test_metric_macro_with_dataset_id_invalid_key(mocker: MockerFixture) -> None
         sql=None,
     )
     env = SandboxedEnvironment(undefined=DebugUndefined)
-    with pytest.raises(SupersetTemplateException) as excinfo:
+    with pytest.raises(AxBITemplateException) as excinfo:
         metric_macro(env, {}, "blah", 1)
     assert str(excinfo.value) == "Metric ``blah`` not found in test_dataset."
     mock_get_form_data.assert_not_called()
@@ -1205,8 +1205,8 @@ def test_metric_macro_invalid_dataset_id(mocker: MockerFixture) -> None:
     """
     Test the ``metric_macro`` when specifying a dataset that doesn't exist.
     """
-    mock_get_form_data = mocker.patch("superset.views.utils.get_form_data")
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    mock_get_form_data = mocker.patch("axbi.views.utils.get_form_data")
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = None
     env = SandboxedEnvironment(undefined=DebugUndefined)
     with pytest.raises(DatasetNotFoundError) as excinfo:
@@ -1220,12 +1220,12 @@ def test_metric_macro_no_dataset_id_no_context(mocker: MockerFixture) -> None:
     Test the ``metric_macro`` when not specifying a dataset ID and it's
     not available in the context.
     """
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
-    mock_g = mocker.patch("superset.jinja_context.g")
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
     env = SandboxedEnvironment(undefined=DebugUndefined)
     with current_app.test_request_context():
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1240,8 +1240,8 @@ def test_metric_macro_no_dataset_id_with_context_missing_info(
     Test the ``metric_macro`` when not specifying a dataset ID and request
     has context but no dataset/chart ID.
     """
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
-    mock_g = mocker.patch("superset.jinja_context.g")
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"queries": []}
 
     env = SandboxedEnvironment(undefined=DebugUndefined)
@@ -1262,7 +1262,7 @@ def test_metric_macro_no_dataset_id_with_context_missing_info(
             ),
         }
     ):
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1274,9 +1274,9 @@ def test_metric_macro_no_dataset_id_ignores_malformed_context_shapes(
     mocker: MockerFixture,
 ) -> None:
     """Malformed context containers should raise the normal template error."""
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
-    ChartDAO = mocker.patch("superset.daos.chart.ChartDAO")  # noqa: N806
-    mock_g = mocker.patch("superset.jinja_context.g")
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
+    ChartDAO = mocker.patch("axbi.daos.chart.ChartDAO")  # noqa: N806
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {"queries": [], "datasource": []}
 
     env = SandboxedEnvironment(undefined=DebugUndefined)
@@ -1284,7 +1284,7 @@ def test_metric_macro_no_dataset_id_ignores_malformed_context_shapes(
         data={"form_data": json.dumps([])},
         query_string={"form_data": json.dumps("not-an-object")},
     ):
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
 
     assert str(excinfo.value) == (
@@ -1294,7 +1294,7 @@ def test_metric_macro_no_dataset_id_ignores_malformed_context_shapes(
     ChartDAO.find_by_id.assert_not_called()
 
     with current_app.test_request_context(json=["not-an-object"]):
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
 
     assert str(excinfo.value) == (
@@ -1305,7 +1305,7 @@ def test_metric_macro_no_dataset_id_ignores_malformed_context_shapes(
         data="{malformed",
         content_type="application/json",
     ):
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
 
     assert str(excinfo.value) == (
@@ -1320,7 +1320,7 @@ def test_metric_macro_no_dataset_id_with_context_datasource_id(
     Test the ``metric_macro`` when not specifying a dataset ID and it's
     available in the context (url_params.datasource_id).
     """
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1330,7 +1330,7 @@ def test_metric_macro_no_dataset_id_with_context_datasource_id(
         schema="my_schema",
         sql=None,
     )
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
 
     # Getting the data from the request context
@@ -1370,7 +1370,7 @@ def test_metric_macro_no_dataset_id_with_request_datasource_string(
     mocker: MockerFixture,
 ) -> None:
     """The metric macro accepts the combined datasource string in JSON bodies."""
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1380,7 +1380,7 @@ def test_metric_macro_no_dataset_id_with_request_datasource_string(
         schema="my_schema",
         sql=None,
     )
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
 
     env = SandboxedEnvironment(undefined=DebugUndefined)
@@ -1395,7 +1395,7 @@ def test_metric_macro_no_dataset_id_with_context_datasource_id_none(
     Test the ``metric_macro`` when not specifying a dataset ID and it's
     set to None in the context (url_params.datasource_id).
     """
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
 
     # Getting the data from the request context
@@ -1415,7 +1415,7 @@ def test_metric_macro_no_dataset_id_with_context_datasource_id_none(
             )
         }
     ):
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1432,7 +1432,7 @@ def test_metric_macro_no_dataset_id_with_context_datasource_id_none(
         ],
     }
     with current_app.test_request_context():
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1446,11 +1446,11 @@ def test_metric_macro_no_dataset_id_with_context_chart_id(
     Test the ``metric_macro`` when not specifying a dataset ID and context
     includes an existing chart ID (url_params.slice_id).
     """
-    ChartDAO = mocker.patch("superset.daos.chart.ChartDAO")  # noqa: N806
+    ChartDAO = mocker.patch("axbi.daos.chart.ChartDAO")  # noqa: N806
     ChartDAO.find_by_id.return_value = Slice(
         datasource_id=1,
     )
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1461,7 +1461,7 @@ def test_metric_macro_no_dataset_id_with_context_chart_id(
         sql=None,
     )
 
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
 
     # Getting the data from the request context
@@ -1504,7 +1504,7 @@ def test_metric_macro_no_dataset_id_with_context_slice_id_none(
     Test the ``metric_macro`` when not specifying a dataset ID and context
     includes slice_id set to None (url_params.slice_id).
     """
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
 
     # Getting the data from the request context
@@ -1524,7 +1524,7 @@ def test_metric_macro_no_dataset_id_with_context_slice_id_none(
             )
         }
     ):
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1541,7 +1541,7 @@ def test_metric_macro_no_dataset_id_with_context_slice_id_none(
         ],
     }
     with current_app.test_request_context():
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1555,9 +1555,9 @@ def test_metric_macro_no_dataset_id_with_context_deleted_chart(
     Test the ``metric_macro`` when not specifying a dataset ID and context
     includes a deleted chart ID.
     """
-    ChartDAO = mocker.patch("superset.daos.chart.ChartDAO")  # noqa: N806
+    ChartDAO = mocker.patch("axbi.daos.chart.ChartDAO")  # noqa: N806
     ChartDAO.find_by_id.return_value = None
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
 
     # Getting the data from the request context
@@ -1577,7 +1577,7 @@ def test_metric_macro_no_dataset_id_with_context_deleted_chart(
             )
         }
     ):
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1594,7 +1594,7 @@ def test_metric_macro_no_dataset_id_with_context_deleted_chart(
         ],
     }
     with current_app.test_request_context():
-        with pytest.raises(SupersetTemplateException) as excinfo:
+        with pytest.raises(AxBITemplateException) as excinfo:
             metric_macro(env, {}, "macro_key")
         assert str(excinfo.value) == (
             "Please specify the Dataset ID for the ``macro_key`` metric in the Jinja macro."  # noqa: E501
@@ -1608,7 +1608,7 @@ def test_metric_macro_no_dataset_id_available_in_request_form_data(
     Test the ``metric_macro`` when not specifying a dataset ID and context
     includes an existing dataset ID (datasource.id).
     """
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1619,7 +1619,7 @@ def test_metric_macro_no_dataset_id_available_in_request_form_data(
         sql=None,
     )
 
-    mock_g = mocker.patch("superset.jinja_context.g")
+    mock_g = mocker.patch("axbi.jinja_context.g")
     mock_g.form_data = {}
 
     # Getting the data from the request context
@@ -1652,10 +1652,10 @@ def test_metric_macro_regular_user_uses_base_filter(mocker: MockerFixture) -> No
 
     Regular users should have standard RBAC/RLS filters applied when accessing datasets.
     """
-    mock_is_guest_user = mocker.patch("superset.security_manager.is_guest_user")
+    mock_is_guest_user = mocker.patch("axbi.security_manager.is_guest_user")
     mock_is_guest_user.return_value = False
 
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1677,10 +1677,10 @@ def test_metric_macro_regular_user_raises_no_access(mocker: MockerFixture) -> No
     """
     Test that the ``metric_macro`` raises for regular user without dataset access.
     """
-    mock_is_guest_user = mocker.patch("superset.security_manager.is_guest_user")
+    mock_is_guest_user = mocker.patch("axbi.security_manager.is_guest_user")
     mock_is_guest_user.return_value = False
 
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = None
 
     env = SandboxedEnvironment(undefined=DebugUndefined)
@@ -1698,10 +1698,10 @@ def test_metric_macro_embedded_user_skips_base_filter(mocker: MockerFixture) -> 
     Embedded users have dashboard-level access control via their embedding token,
     so we bypass the regular dataset DAO filters for them.
     """
-    mock_is_guest_user = mocker.patch("superset.security_manager.is_guest_user")
+    mock_is_guest_user = mocker.patch("axbi.security_manager.is_guest_user")
     mock_is_guest_user.return_value = True
 
-    DatasetDAO = mocker.patch("superset.daos.dataset.DatasetDAO")  # noqa: N806
+    DatasetDAO = mocker.patch("axbi.daos.dataset.DatasetDAO")  # noqa: N806
     DatasetDAO.find_by_id.return_value = SqlaTable(
         table_name="test_dataset",
         metrics=[
@@ -1946,20 +1946,20 @@ def test_get_time_filter_ignores_malformed_adhoc_filter_container() -> None:
 
 def test_jinja2_template_syntax_error_handling(mocker: MockerFixture) -> None:
     """Test TemplateSyntaxError handling with proper error message and 422 status"""
-    from superset.errors import SupersetErrorType
-    from superset.exceptions import SupersetSyntaxErrorException
+    from axbi.errors import AxBIErrorType
+    from axbi.exceptions import AxBISyntaxErrorException
 
     database = mocker.MagicMock()
     database.db_engine_spec = mocker.MagicMock()
 
-    from superset.jinja_context import BaseTemplateProcessor
+    from axbi.jinja_context import BaseTemplateProcessor
 
     processor = BaseTemplateProcessor(database=database)
 
     # Test with invalid Jinja2 syntax
     template = "SELECT * WHERE column = {{ variable such as 'default' }}"
 
-    with pytest.raises(SupersetSyntaxErrorException) as exc_info:
+    with pytest.raises(AxBISyntaxErrorException) as exc_info:
         processor.process_template(template)
 
     exception = exc_info.value
@@ -1972,7 +1972,7 @@ def test_jinja2_template_syntax_error_handling(mocker: MockerFixture) -> None:
     assert "expected token" in error.message
 
     # Verify error type and status
-    assert error.error_type == SupersetErrorType.GENERIC_COMMAND_ERROR
+    assert error.error_type == AxBIErrorType.GENERIC_COMMAND_ERROR
     assert exception.status == 422
 
     # Verify extra data includes template snippet
@@ -1986,12 +1986,12 @@ def test_jinja2_undefined_error_handling(mocker: MockerFixture) -> None:
 
     from jinja2.exceptions import UndefinedError
 
-    from superset.exceptions import SupersetSyntaxErrorException
+    from axbi.exceptions import AxBISyntaxErrorException
 
     database = mocker.MagicMock()
     database.db_engine_spec = mocker.MagicMock()
 
-    from superset.jinja_context import BaseTemplateProcessor
+    from axbi.jinja_context import BaseTemplateProcessor
 
     processor = BaseTemplateProcessor(database=database)
     template = "SELECT * FROM table"
@@ -2000,7 +2000,7 @@ def test_jinja2_undefined_error_handling(mocker: MockerFixture) -> None:
     with patch.object(
         processor.env, "from_string", side_effect=UndefinedError("Variable not defined")
     ):
-        with pytest.raises(SupersetSyntaxErrorException) as exc_info:
+        with pytest.raises(AxBISyntaxErrorException) as exc_info:
             processor.process_template(template)
 
         exception = exc_info.value
@@ -2019,12 +2019,12 @@ def test_jinja2_security_error_handling(mocker: MockerFixture) -> None:
 
     from jinja2.exceptions import SecurityError
 
-    from superset.exceptions import SupersetSyntaxErrorException
+    from axbi.exceptions import AxBISyntaxErrorException
 
     database = mocker.MagicMock()
     database.db_engine_spec = mocker.MagicMock()
 
-    from superset.jinja_context import BaseTemplateProcessor
+    from axbi.jinja_context import BaseTemplateProcessor
 
     processor = BaseTemplateProcessor(database=database)
     template = "SELECT * FROM table"
@@ -2033,7 +2033,7 @@ def test_jinja2_security_error_handling(mocker: MockerFixture) -> None:
     with patch.object(
         processor.env, "from_string", side_effect=SecurityError("Access denied")
     ):
-        with pytest.raises(SupersetSyntaxErrorException) as exc_info:
+        with pytest.raises(AxBISyntaxErrorException) as exc_info:
             processor.process_template(template)
 
         exception = exc_info.value
@@ -2050,12 +2050,12 @@ def test_jinja2_server_error_handling(mocker: MockerFixture) -> None:
     """Test that server errors (like MemoryError) are handled with 500 status"""
     from unittest.mock import patch
 
-    from superset.exceptions import SupersetTemplateException
+    from axbi.exceptions import AxBITemplateException
 
     database = mocker.MagicMock()
     database.db_engine_spec = mocker.MagicMock()
 
-    from superset.jinja_context import BaseTemplateProcessor
+    from axbi.jinja_context import BaseTemplateProcessor
 
     processor = BaseTemplateProcessor(database=database)
     template = "SELECT * FROM table"
@@ -2064,7 +2064,7 @@ def test_jinja2_server_error_handling(mocker: MockerFixture) -> None:
     with patch.object(
         processor.env, "from_string", side_effect=MemoryError("Out of memory")
     ):
-        with pytest.raises(SupersetTemplateException) as exc_info:
+        with pytest.raises(AxBITemplateException) as exc_info:
             processor.process_template(template)
 
         exception = exc_info.value
@@ -2077,7 +2077,7 @@ def test_jinja2_server_error_handling(mocker: MockerFixture) -> None:
 
 def test_undefined_template_function_exception(mocker: MockerFixture) -> None:
     """Test UndefinedTemplateFunctionException for undefined function identifiers."""
-    from superset.jinja_context import (
+    from axbi.jinja_context import (
         BaseTemplateProcessor,
         UndefinedTemplateFunctionException,
     )
@@ -2102,7 +2102,7 @@ def test_undefined_template_function_exception_with_namespace(
     """Test namespaced undefined functions raise UndefinedError (not converted)."""
     from jinja2.exceptions import UndefinedError
 
-    from superset.jinja_context import BaseTemplateProcessor
+    from axbi.jinja_context import BaseTemplateProcessor
 
     database = mocker.MagicMock()
     database.db_engine_spec = mocker.MagicMock()
@@ -2117,7 +2117,7 @@ def test_undefined_template_variable_not_function(mocker: MockerFixture) -> None
     """Test undefined variables with method calls raise UndefinedError."""
     from jinja2.exceptions import UndefinedError
 
-    from superset.jinja_context import BaseTemplateProcessor
+    from axbi.jinja_context import BaseTemplateProcessor
 
     database = mocker.MagicMock()
     database.db_engine_spec = mocker.MagicMock()

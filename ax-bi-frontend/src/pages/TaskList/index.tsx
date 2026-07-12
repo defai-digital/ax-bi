@@ -17,16 +17,12 @@
  * under the License.
  */
 
-import {
-  FeatureFlag,
-  isFeatureEnabled,
-  SupersetClient,
-} from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { FeatureFlag, isFeatureEnabled, AxBIClient } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import { useMemo, useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Tooltip, Label, Modal, Checkbox } from '@superset-ui/core/components';
+import { Tooltip, Label, Modal, Checkbox } from '@ax-bi/ui-core/components';
 import {
   CreatedInfo,
   ListView,
@@ -34,7 +30,7 @@ import {
   type ListViewFilters,
   FacePile,
 } from 'src/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import SubMenu from 'src/features/home/SubMenu';
@@ -189,7 +185,7 @@ function TaskListContent({
 
   const handleTaskCancel = useCallback(
     (task: Task, force: boolean = false) => {
-      SupersetClient.post({
+      AxBIClient.post({
         endpoint: `/api/v1/task/${task.uuid}/cancel`,
         jsonPayload: force ? { force: true } : {},
       }).then(

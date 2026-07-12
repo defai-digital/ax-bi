@@ -16,10 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type {
-  ControlPanelState,
-  ControlState,
-} from '@superset-ui/chart-controls';
+import type { ControlPanelState, ControlState } from '@ax-bi/chart-controls';
 import Separator from './Separator';
 
 function getCodeControlMapStateToProps() {

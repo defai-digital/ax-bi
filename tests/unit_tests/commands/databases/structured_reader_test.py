@@ -28,8 +28,8 @@ import pandas as pd
 import pytest
 from werkzeug.datastructures import FileStorage
 
-from superset.commands.database.exceptions import DatabaseUploadFailed
-from superset.commands.database.uploaders.structured_reader import StructuredReader
+from axbi.commands.database.exceptions import DatabaseUploadFailed
+from axbi.commands.database.uploaders.structured_reader import StructuredReader
 
 
 def make_file(content: bytes, filename: str) -> FileStorage:

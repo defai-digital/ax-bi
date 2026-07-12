@@ -26,7 +26,7 @@ def test_epoch_to_dttm() -> None:
     """
     DB Eng Specs (parseable): Test epoch to dttm
     """
-    from superset.db_engine_specs.parseable import ParseableEngineSpec
+    from axbi.db_engine_specs.parseable import ParseableEngineSpec
 
     assert ParseableEngineSpec.epoch_to_dttm() == "to_timestamp({col})"
 
@@ -35,7 +35,7 @@ def test_epoch_ms_to_dttm() -> None:
     """
     DB Eng Specs (parseable): Test epoch ms to dttm
     """
-    from superset.db_engine_specs.parseable import ParseableEngineSpec
+    from axbi.db_engine_specs.parseable import ParseableEngineSpec
 
     assert ParseableEngineSpec.epoch_ms_to_dttm() == "to_timestamp({col} / 1000)"
 
@@ -44,9 +44,9 @@ def test_alter_new_orm_column() -> None:
     """
     DB Eng Specs (parseable): Test alter orm column
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.db_engine_specs.parseable import ParseableEngineSpec
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.db_engine_specs.parseable import ParseableEngineSpec
+    from axbi.models.core import Database
 
     database = Database(database_name="parseable", sqlalchemy_uri="parseable://db")
     tbl = SqlaTable(table_name="tbl", database=database)
@@ -71,6 +71,6 @@ def test_convert_dttm(
     """
     DB Eng Specs (parseable): Test conversion to date time
     """
-    from superset.db_engine_specs.parseable import ParseableEngineSpec
+    from axbi.db_engine_specs.parseable import ParseableEngineSpec
 
     assert_convert_dttm(ParseableEngineSpec, target_type, expected_result, dttm)

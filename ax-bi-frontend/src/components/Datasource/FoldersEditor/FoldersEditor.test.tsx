@@ -24,7 +24,7 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
-import { Metric, ColumnMeta } from '@superset-ui/chart-controls';
+import { Metric, ColumnMeta } from '@ax-bi/chart-controls';
 import { DatasourceFolder } from 'src/explore/components/DatasourcePanel/types';
 import FoldersEditor from '.';
 import {

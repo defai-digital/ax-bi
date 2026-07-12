@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ensureIsArray } from '@superset-ui/core';
+import { ensureIsArray } from '@ax-bi/ui-core';
 import {
   LocalStorageKeys,
   setItem,

@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for ``superset/views/upload.py``."""
+"""Tests for ``axbi/views/upload.py``."""
 
 from unittest.mock import MagicMock, patch
 
@@ -27,7 +27,7 @@ def test_upload_data_view_uses_database_upload_permission() -> None:
     The zero-config upload page must be reachable to roles granted
     ``can_upload`` on Database, matching the upload REST APIs.
     """
-    from superset.views.upload import UploadDataView
+    from axbi.views.upload import UploadDataView
 
     assert UploadDataView.class_permission_name == "Database"
     assert UploadDataView.index._permission_name == "upload"  # pylint: disable=protected-access
@@ -39,12 +39,12 @@ def test_upload_data_view_returns_404_when_feature_disabled(
     """
     The upload page should fail closed when local upload is disabled.
     """
-    from superset.views.upload import UploadDataView
+    from axbi.views.upload import UploadDataView
 
     view = UploadDataView()
     view.appbuilder = MagicMock()
     view.appbuilder.sm.has_access.return_value = True
 
-    with patch("superset.views.upload.is_feature_enabled", return_value=False):
+    with patch("axbi.views.upload.is_feature_enabled", return_value=False):
         with pytest.raises(NotFound):
             view.index()

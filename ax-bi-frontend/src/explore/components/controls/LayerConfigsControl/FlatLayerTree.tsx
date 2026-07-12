@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Icons } from '@superset-ui/core/components/Icons';
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
-import { Button } from '@superset-ui/core/components';
-import Tree, { TreeProps } from '@superset-ui/core/components/Tree';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
+import { Button } from '@ax-bi/ui-core/components';
+import Tree, { TreeProps } from '@ax-bi/ui-core/components/Tree';
 import { forwardRef } from 'react';
 import { FlatLayerDataNode, FlatLayerTreeProps, LayerConf } from './types';
 import { handleDrop } from './dragDropUtil';

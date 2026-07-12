@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { formatSelectOptions } from '@superset-ui/chart-controls';
+import { formatSelectOptions } from '@ax-bi/chart-controls';
 
 export const SERVER_PAGE_SIZE_OPTIONS = formatSelectOptions<number>([
   10, 20, 50, 100, 200,

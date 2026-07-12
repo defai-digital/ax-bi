@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ChartProps } from '@superset-ui/core';
+import { ChartProps } from '@ax-bi/ui-core';
 
 const NOOP = () => {};
 

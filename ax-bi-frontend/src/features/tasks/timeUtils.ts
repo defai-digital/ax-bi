@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { parseMilliseconds } from '@superset-ui/core/number-format/utils/parseMilliseconds';
+import { parseMilliseconds } from '@ax-bi/ui-core/number-format/utils/parseMilliseconds';
 
 /**
  * Maximum ETA to display (24 hours in seconds).

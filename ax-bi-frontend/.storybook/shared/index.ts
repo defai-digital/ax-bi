@@ -22,7 +22,7 @@ export { default as Expandable } from './Expandable';
 export { default as ResizablePanel, type Size } from './ResizablePanel';
 export {
   default as ResizableChartDemo,
-  SupersetBody,
+  AxBIBody,
   withResizableChartDemo,
 } from './ResizableChartDemo';
 export {

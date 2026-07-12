@@ -15,15 +15,15 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset import db
-from superset.models.user_attributes import UserAttribute
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.models.user_attributes import UserAttribute
+from tests.integration_tests.base_tests import AxBITestCase
 
 USERNAME = "session_invalidation_user"
 PASSWORD = "general"  # noqa: S105
 
 
-class TestSessionInvalidation(SupersetTestCase):
+class TestSessionInvalidation(AxBITestCase):
     def setUp(self) -> None:
         self.create_user(
             USERNAME,

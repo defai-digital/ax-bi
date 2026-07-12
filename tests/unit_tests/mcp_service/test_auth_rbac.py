@@ -22,7 +22,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import g
 
-from superset.mcp_service.auth import (
+from axbi.mcp_service.auth import (
     check_tool_permission,
     CLASS_PERMISSION_ATTR,
     is_tool_visible_to_current_user,
@@ -121,7 +121,7 @@ def test_check_tool_permission_granted(app_context) -> None:
     func = _make_tool_func(class_perm="Chart", method_perm="read")
 
     with patch(
-        "superset.mcp_service.auth.current_user_can_access",
+        "axbi.mcp_service.auth.current_user_can_access",
         return_value=True,
     ) as can_access:
         result = check_tool_permission(func)
@@ -136,7 +136,7 @@ def test_check_tool_permission_denied(app_context) -> None:
     func = _make_tool_func(class_perm="Dashboard", method_perm="write")
 
     with patch(
-        "superset.mcp_service.auth.current_user_can_access",
+        "axbi.mcp_service.auth.current_user_can_access",
         return_value=False,
     ) as can_access:
         result = check_tool_permission(func)
@@ -152,7 +152,7 @@ def test_check_tool_permission_default_method_is_read(app_context) -> None:
     # No method_perm set - should default to "read"
 
     with patch(
-        "superset.mcp_service.auth.current_user_can_access",
+        "axbi.mcp_service.auth.current_user_can_access",
         return_value=True,
     ) as can_access:
         result = check_tool_permission(func)
@@ -299,7 +299,7 @@ def test_visibility_allowed_tool(app_context) -> None:
     tool = MagicMock()
     tool.fn = func
 
-    with patch("superset.mcp_service.auth.current_user_can_access", return_value=True):
+    with patch("axbi.mcp_service.auth.current_user_can_access", return_value=True):
         result = is_tool_visible_to_current_user(tool)
 
     assert result is True
@@ -312,7 +312,7 @@ def test_visibility_denied_tool(app_context) -> None:
     tool = MagicMock()
     tool.fn = func
 
-    with patch("superset.mcp_service.auth.current_user_can_access", return_value=False):
+    with patch("axbi.mcp_service.auth.current_user_can_access", return_value=False):
         result = is_tool_visible_to_current_user(tool)
 
     assert result is False
@@ -327,9 +327,9 @@ def test_visibility_data_model_metadata_denied(app_context) -> None:
     tool.fn = func
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
         patch(
-            "superset.mcp_service.privacy.user_can_view_data_model_metadata",
+            "axbi.mcp_service.privacy.user_can_view_data_model_metadata",
             return_value=False,
         ),
     ):
@@ -347,9 +347,9 @@ def test_visibility_data_model_metadata_allowed(app_context) -> None:
     tool.fn = func
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
         patch(
-            "superset.mcp_service.privacy.user_can_view_data_model_metadata",
+            "axbi.mcp_service.privacy.user_can_view_data_model_metadata",
             return_value=True,
         ),
     ):
@@ -367,8 +367,8 @@ def test_scope_denies_when_token_lacks_required_scope(app_context) -> None:
     func = _make_tool_func(class_perm="Chart", method_perm="write")
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
-        _patch_token_scopes(["superset:read"]),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
+        _patch_token_scopes(["axbi:read"]),
     ):
         result = check_tool_permission(func)
 
@@ -381,8 +381,8 @@ def test_scope_allows_when_token_has_required_scope(app_context) -> None:
     func = _make_tool_func(class_perm="Chart", method_perm="write")
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
-        _patch_token_scopes(["superset:read", "superset:write"]),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
+        _patch_token_scopes(["axbi:read", "axbi:write"]),
     ):
         result = check_tool_permission(func)
 
@@ -395,7 +395,7 @@ def test_scope_falls_back_to_rbac_when_token_has_no_scopes(app_context) -> None:
     func = _make_tool_func(class_perm="Chart", method_perm="write")
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
         _patch_token_scopes([]),
     ):
         result = check_tool_permission(func)
@@ -410,7 +410,7 @@ def test_scope_falls_back_to_rbac_when_no_jwt_context(app_context) -> None:
     func = _make_tool_func(class_perm="Chart", method_perm="read")
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
         _patch_token_scopes(None),
     ):
         result = check_tool_permission(func)
@@ -424,7 +424,7 @@ def test_scope_read_denied_when_token_lacks_read_scope(app_context) -> None:
     func = _make_tool_func(class_perm="Chart", method_perm="read")
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
         _patch_token_scopes(["some:other-scope"]),
     ):
         result = check_tool_permission(func)
@@ -440,8 +440,8 @@ def test_scope_denies_unmapped_method_for_scoped_token(app_context) -> None:
     func = _make_tool_func(class_perm="Chart", method_perm="some_custom_perm")
 
     with (
-        patch("superset.mcp_service.auth.current_user_can_access", return_value=True),
-        _patch_token_scopes(["superset:read", "superset:write"]),
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
+        _patch_token_scopes(["axbi:read", "axbi:write"]),
     ):
         result = check_tool_permission(func)
 
@@ -454,8 +454,8 @@ def test_scope_execute_sql_query_requires_write_scope(app_context) -> None:
     g.user = MagicMock(username="analyst")
     func = _make_tool_func(class_perm="SQLLab", method_perm="execute_sql_query")
 
-    with patch("superset.mcp_service.auth.current_user_can_access", return_value=True):
-        with _patch_token_scopes(["superset:read"]):
+    with patch("axbi.mcp_service.auth.current_user_can_access", return_value=True):
+        with _patch_token_scopes(["axbi:read"]):
             assert check_tool_permission(func) is False
-        with _patch_token_scopes(["superset:write"]):
+        with _patch_token_scopes(["axbi:write"]):
             assert check_tool_permission(func) is True

@@ -18,13 +18,9 @@
  */
 
 import { useHistory } from 'src/hooks/useAppHistory';
-import { t } from '@apache-superset/core/translation';
-import {
-  FeatureFlag,
-  isFeatureEnabled,
-  SupersetClient,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { FeatureFlag, isFeatureEnabled, AxBIClient } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { useCallback, useMemo, useState, MouseEvent } from 'react';
 import { Link } from 'react-router-dom';
 import rison from 'rison';
@@ -40,7 +36,7 @@ import {
   Loading,
   Popover,
   Tooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import {
@@ -62,7 +58,7 @@ import { QueryObjectColumns, SavedQueryObject } from 'src/views/CRUD/types';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { TagTypeEnum } from 'src/components/Tag/TagType';
 import { loadTags } from 'src/components/Tag/utils';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import copyTextToClipboard from 'src/utils/copy';
 import type Owner from 'src/types/Owner';
 import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
@@ -181,7 +177,7 @@ function SavedQueryList({
 
   const handleSavedQueryPreview = useCallback(
     (id: number) => {
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/saved_query/${id}`,
       }).then(
         ({ json = {} }) => {
@@ -282,7 +278,7 @@ function SavedQueryList({
           templateParams: null,
         };
 
-        const response = await SupersetClient.post({
+        const response = await AxBIClient.post({
           endpoint: '/api/v1/sqllab/permalink',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -300,7 +296,7 @@ function SavedQueryList({
   );
 
   const handleQueryDelete = ({ id, label }: SavedQueryObject) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/saved_query/${id}`,
     }).then(
       () => {
@@ -331,7 +327,7 @@ function SavedQueryList({
   );
 
   const handleBulkQueryDelete = (queriesToDelete: SavedQueryObject[]) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/saved_query/?q=${rison.encode(
         queriesToDelete.map(({ id }) => id),
       )}`,

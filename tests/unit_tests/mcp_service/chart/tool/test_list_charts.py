@@ -26,28 +26,26 @@ import pytest
 from fastmcp import Client
 from flask import current_app
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.schemas import (
     ChartFilter,
     ListChartsRequest,
 )
-from superset.mcp_service.constants import MAX_PAGE_SIZE
-from superset.mcp_service.privacy import (
+from axbi.mcp_service.constants import MAX_PAGE_SIZE
+from axbi.mcp_service.privacy import (
     DATA_MODEL_METADATA_ERROR_TYPE,
     remove_chart_data_model_columns,
     request_uses_chart_data_model_filter,
     user_can_view_data_model_metadata,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
-list_charts_module = importlib.import_module(
-    "superset.mcp_service.chart.tool.list_charts"
-)
+list_charts_module = importlib.import_module("axbi.mcp_service.chart.tool.list_charts")
 
 
 def _wrapped(value: str) -> str:
@@ -62,7 +60,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for client-based tool tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -231,7 +229,7 @@ class TestChartDefaultColumnFiltering:
 
     def test_minimal_default_columns_constant(self):
         """Test that minimal default columns are properly defined."""
-        from superset.mcp_service.common.schema_discovery import CHART_DEFAULT_COLUMNS
+        from axbi.mcp_service.common.schema_discovery import CHART_DEFAULT_COLUMNS
 
         assert set(CHART_DEFAULT_COLUMNS) == {
             "id",
@@ -293,7 +291,7 @@ class TestChartDataModelMetadataPrivacy:
         assert request_uses_chart_data_model_filter(request.filters) is True
 
     def test_user_can_view_data_model_metadata_uses_dataset_permission(self):
-        with patch("superset.security_manager", new_callable=Mock) as security_manager:
+        with patch("axbi.security_manager", new_callable=Mock) as security_manager:
             security_manager.can_access.side_effect = [False, True, False]
 
             assert user_can_view_data_model_metadata() is True
@@ -330,7 +328,7 @@ class TestChartDataModelMetadataPrivacy:
         assert data["error_type"] == DATA_MODEL_METADATA_ERROR_TYPE
 
 
-@patch("superset.daos.chart.ChartDAO.list")
+@patch("axbi.daos.chart.ChartDAO.list")
 @pytest.mark.asyncio
 async def test_list_charts_no_arguments(mock_list, mcp_server, app_context: None):
     """Regression test: list_charts must accept zero arguments without raising
@@ -351,7 +349,7 @@ async def test_list_charts_no_arguments(mock_list, mcp_server, app_context: None
     )
 
 
-@patch("superset.daos.chart.ChartDAO.list")
+@patch("axbi.daos.chart.ChartDAO.list")
 @pytest.mark.asyncio
 async def test_list_charts_shadows_ax_services_when_enabled(
     mock_list,
@@ -419,7 +417,7 @@ async def test_list_charts_shadows_ax_services_when_enabled(
     )
 
 
-@patch("superset.daos.chart.ChartDAO.list")
+@patch("axbi.daos.chart.ChartDAO.list")
 @pytest.mark.asyncio
 async def test_list_charts_serves_ax_services_when_enabled(
     mock_list,
@@ -492,7 +490,7 @@ async def test_list_charts_serves_ax_services_when_enabled(
     )
 
 
-@patch("superset.daos.chart.ChartDAO.list")
+@patch("axbi.daos.chart.ChartDAO.list")
 @pytest.mark.asyncio
 async def test_list_charts_serving_falls_back_on_invalid_candidate(
     mock_list,

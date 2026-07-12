@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetTheme, css } from '@apache-superset/core/theme';
+import { AxBITheme, css } from '@ax-bi/core/theme';
 import { ReactElement } from 'react';
-import { Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { NotificationMethodOption } from '../types';
 
-const notificationStyledIcon = (theme: SupersetTheme) => css`
+const notificationStyledIcon = (theme: AxBITheme) => css`
   color: ${theme.colorIcon};
   margin-right: ${theme.sizeUnit * 2}px;
   vertical-align: middle;

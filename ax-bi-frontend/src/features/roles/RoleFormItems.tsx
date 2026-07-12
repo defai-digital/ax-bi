@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useCallback } from 'react';
-import { FormItem, Input, AsyncSelect } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+import { FormItem, Input, AsyncSelect } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 import { fetchUserOptions } from '../groups/utils';
 import { fetchGroupOptions, fetchPermissionOptions } from './utils';
 

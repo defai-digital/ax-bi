@@ -18,8 +18,8 @@
  */
 import { MouseEventHandler, FC } from 'react';
 
-import { Icons } from '@superset-ui/core/components/Icons';
-import type { IconType } from '@superset-ui/core/components/Icons/types';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import type { IconType } from '@ax-bi/ui-core/components/Icons/types';
 import IconButton from './IconButton';
 
 type DeleteComponentButtonProps = {

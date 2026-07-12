@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { common as coreType } from '@apache-superset/core';
+import { common as coreType } from '@ax-bi/core';
 import { Disposable } from './models';
 
 const { GenericDataType } = coreType;

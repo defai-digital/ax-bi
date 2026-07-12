@@ -18,11 +18,11 @@
  */
 import { useRef, FC } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { NativeFilterType } from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/theme';
-import { Button } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { NativeFilterType } from '@ax-bi/ui-core';
+import { styled, useTheme } from '@ax-bi/core/theme';
+import { Button } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 import FilterTitleContainer from './FilterTitleContainer';
 import { FilterRemoval } from './types';

@@ -24,13 +24,13 @@ import {
   memo,
   ReactElement,
 } from 'react';
-import { usePrevious } from '@superset-ui/core';
-import { useTheme, styled } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { usePrevious } from '@ax-bi/ui-core';
+import { useTheme, styled } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import { useSelector } from 'react-redux';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { LOG_ACTIONS_SELECT_DASHBOARD_TAB } from 'src/logger/LogUtils';
-import { Modal } from '@superset-ui/core/components';
+import { Modal } from '@ax-bi/ui-core/components';
 import { DROP_LEFT, DROP_RIGHT } from 'src/dashboard/util/getDropPosition';
 import { Draggable } from '../../dnd/DragDroppable';
 import DashboardComponent from '../../../containers/DashboardComponent';

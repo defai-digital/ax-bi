@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ControlPanelConfig,
   ControlPanelsContainerProps,
@@ -27,7 +27,7 @@ import {
   D3_TIME_FORMAT_OPTIONS,
   getStandardizedControls,
   DEFAULT_TIME_FORMAT,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { DEFAULT_FORM_DATA } from './types';
 
 const { labelType, numberFormat, showLabels } = DEFAULT_FORM_DATA;

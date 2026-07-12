@@ -52,7 +52,7 @@ def test_elasticsearch_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.elasticsearch import (
+    from axbi.db_engine_specs.elasticsearch import (
         ElasticSearchEngineSpec as spec,  # noqa: N813
     )
 
@@ -71,7 +71,7 @@ def test_opendistro_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.elasticsearch import (
+    from axbi.db_engine_specs.elasticsearch import (
         OpenDistroEngineSpec as spec,  # noqa: N813
     )
 
@@ -89,6 +89,6 @@ def test_opendistro_sqla_column_label(original: str, expected: str) -> None:
     """
     DB Eng Specs (opendistro): Test column label
     """
-    from superset.db_engine_specs.elasticsearch import OpenDistroEngineSpec
+    from axbi.db_engine_specs.elasticsearch import OpenDistroEngineSpec
 
     assert OpenDistroEngineSpec.make_label_compatible(original) == expected

@@ -17,18 +17,18 @@
  * under the License.
  */
 import { useState, useEffect } from 'react';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import { ensureStaticPrefix } from 'src/utils/assetUrl';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 import { getUrlParam, isUrlExternal } from 'src/utils/urlUtils';
-import { MainNav, MenuItem } from '@superset-ui/core/components/Menu';
-import { Tooltip, Grid, Row, Col, Image } from '@superset-ui/core/components';
+import { MainNav, MenuItem } from '@ax-bi/ui-core/components/Menu';
+import { Tooltip, Grid, Row, Col, Image } from '@ax-bi/ui-core/components';
 import { GenericLink } from 'src/components';
 import { NavLink, useLocation } from 'react-router-dom';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { useUiConfig } from 'src/components/UiConfigContext';
 import { URL_PARAMS } from 'src/constants';
 import {
@@ -247,7 +247,11 @@ export function Menu({
       return {
         key: label,
         label: (
-          <NavLink role="button" to={url} className={({ isActive }) => (isActive ? 'is-active' : undefined)}>
+          <NavLink
+            role="button"
+            to={url}
+            className={({ isActive }) => (isActive ? 'is-active' : undefined)}
+          >
             {label}
           </NavLink>
         ),
@@ -270,7 +274,11 @@ export function Menu({
         childItems.push({
           key: `${child.label}`,
           label: child.isFrontendRoute ? (
-            <NavLink to={child.url || ''} end className={({ isActive }) => (isActive ? 'is-active' : undefined)}>
+            <NavLink
+              to={child.url || ''}
+              end
+              className={({ isActive }) => (isActive ? 'is-active' : undefined)}
+            >
               {child.label}
             </NavLink>
           ) : (
@@ -316,7 +324,7 @@ export function Menu({
     } else if (isFrontendRoute(window.location.pathname)) {
       // ---------------------------------------------------------------------------------
       // TODO: deprecate this once Theme is fully rolled out
-      // Kept as is for backwards compatibility with the old theme system / superset_config.py
+      // Kept as is for backwards compatibility with the old theme system / axbi_config.py
       link = (
         <GenericLink className="navbar-brand" to={brand.path}>
           <StyledImage

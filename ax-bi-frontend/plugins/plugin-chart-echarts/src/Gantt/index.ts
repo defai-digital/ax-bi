@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { Behavior } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { Behavior } from '@ax-bi/ui-core';
 import controlPanel from './controlPanel';
 import { EchartsChartPlugin } from '../types';
 import thumbnail from './images/thumbnail.png';

@@ -18,7 +18,7 @@
  */
 
 /**
- * Types mirroring enums in `superset/reports/models.py`:
+ * Types mirroring enums in `axbi/reports/models.py`:
  */
 export type ReportScheduleType = 'Alert' | 'Report';
 export type ReportCreationMethod = 'charts' | 'dashboards' | 'alerts_reports';

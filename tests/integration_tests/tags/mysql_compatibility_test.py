@@ -20,12 +20,12 @@ import pytest
 from markupsafe import Markup
 from sqlalchemy.exc import ProgrammingError
 
-from superset import db
-from superset.tags.models import get_tag, Tag, TagType
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.tags.models import get_tag, Tag, TagType
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestTagCreationMySQLCompatibility(SupersetTestCase):
+class TestTagCreationMySQLCompatibility(AxBITestCase):
     """Test suite to verify the MySQL compatibility fix for tag creation."""
 
     def setUp(self) -> None:

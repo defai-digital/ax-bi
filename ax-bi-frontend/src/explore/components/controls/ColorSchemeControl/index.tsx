@@ -18,23 +18,23 @@
  */
 import { useMemo, ReactNode } from 'react';
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ColorScheme,
   ColorSchemeGroup,
   SequentialScheme,
   getLabelsColorMap,
   CategoricalColorNamespace,
-} from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
 import { sortBy } from 'lodash';
 import ControlHeader from 'src/explore/components/ControlHeader';
 import {
   Tooltip,
   Select,
   type SelectOptionsType,
-} from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { getColorNamespace } from 'src/utils/colorScheme';
 import ColorSchemeLabel from './ColorSchemeLabel';
 
@@ -164,9 +164,9 @@ const ColorSchemeControl = ({
       return 'dashboard';
     }
     let result = value || defaultScheme;
-    if (result === 'SUPERSET_DEFAULT') {
+    if (result === 'AXBI_DEFAULT') {
       const schemesObject = typeof schemes === 'function' ? schemes() : schemes;
-      result = schemesObject?.SUPERSET_DEFAULT?.id;
+      result = schemesObject?.AXBI_DEFAULT?.id;
     }
     return result;
   }, [defaultScheme, schemes, showDashboardLockedOption, value]);
@@ -190,7 +190,7 @@ const ColorSchemeControl = ({
     const filteredColorOptions = controlChoices.filter(o => {
       const option = o[0];
       const isValidColorOption =
-        option !== 'SUPERSET_DEFAULT' && !allColorOptions.includes(option);
+        option !== 'AXBI_DEFAULT' && !allColorOptions.includes(option);
       allColorOptions.push(option);
       return isValidColorOption;
     });

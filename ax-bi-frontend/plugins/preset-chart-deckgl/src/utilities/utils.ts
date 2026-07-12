@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlStateMapping } from '@superset-ui/chart-controls';
+import { ControlStateMapping } from '@ax-bi/chart-controls';
 
 export const COLOR_SCHEME_TYPES = {
   fixed_color: 'fixed_color',

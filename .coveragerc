@@ -1,12 +1,12 @@
 # .coveragerc to control coverage.py
 [run]
 branch = True
-source = superset
+source = axbi
 # omit = bad_file.py
 
 [paths]
 source =
-    superset/
+    axbi/
     */site-packages/
 
 [report]

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Behavior, getChartMetadataRegistry, VizType } from '@superset-ui/core';
+import { Behavior, getChartMetadataRegistry, VizType } from '@ax-bi/ui-core';
 import { getCrossFiltersConfiguration } from './crossFilters';
 import { DEFAULT_CROSS_FILTER_SCOPING } from '../constants';
 
@@ -56,7 +56,7 @@ const CHARTS = {
       datasource: '2__table',
       viz_type: VizType.Line,
       slice_id: 1,
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
     },
     chartAlert: null,
     chartStatus: 'rendered' as const,
@@ -75,7 +75,7 @@ const CHARTS = {
   '2': {
     id: 2,
     form_data: {
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
       datasource: '2__table',
       viz_type: VizType.Line,
       slice_id: 2,
@@ -126,8 +126,8 @@ const CHART_CONFIG_METADATA = {
   global_chart_configuration: GLOBAL_CHART_CONFIG,
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getChartMetadataRegistry: jest.fn(),
 }));
 
@@ -239,7 +239,7 @@ test('Recalculate charts in global filter scope when charts change', () => {
             slice_id: 3,
             datasource: '3__table',
             viz_type: VizType.Line,
-            color_scheme: 'supersetColors',
+            color_scheme: 'axbiColors',
           },
           chartAlert: null,
           chartStatus: 'rendered' as const,

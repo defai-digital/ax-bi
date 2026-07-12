@@ -17,13 +17,13 @@
  * under the License.
  */
 import memoizeOne from 'memoize-one';
-import { getChartControlPanelRegistry } from '@superset-ui/core';
+import { getChartControlPanelRegistry } from '@ax-bi/ui-core';
 import {
   ControlPanelConfig,
   ControlPanelSectionConfig,
   expandControlConfig,
   isControlPanelSectionConfig,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 /**
  * Find control item from control panel config.

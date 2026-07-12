@@ -21,8 +21,8 @@ import {
   buildQueryContext,
   ensureIsArray,
   isPhysicalColumn,
-} from '@superset-ui/core';
-import { boxplotOperator } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { boxplotOperator } from '@ax-bi/chart-controls';
 import { BoxPlotQueryFormData } from './types';
 
 export default function buildQuery(formData: BoxPlotQueryFormData) {

@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ColumnMeta, isColumnMeta } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { ColumnMeta, isColumnMeta } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import {
   AdhocColumn,
   ensureIsArray,
   QueryFormColumn,
   isPhysicalColumn,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 const getColumnNameOrAdhocColumn = (
   column: ColumnMeta | AdhocColumn,

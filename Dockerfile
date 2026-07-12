@@ -27,9 +27,9 @@ ARG BUILDPLATFORM=${BUILDPLATFORM:-amd64}
 ARG BUILD_TRANSLATIONS="false"
 
 ######################################################################
-# superset-node-ci used as a base for building frontend assets and CI
+# axbi-node-ci used as a base for building frontend assets and CI
 ######################################################################
-FROM --platform=${BUILDPLATFORM} node:24-trixie-slim AS superset-node-ci
+FROM --platform=${BUILDPLATFORM} node:24-trixie-slim AS axbi-node-ci
 ARG BUILD_TRANSLATIONS
 ENV BUILD_TRANSLATIONS=${BUILD_TRANSLATIONS}
 ARG DEV_MODE="false"           # Skip frontend build in dev mode
@@ -52,8 +52,8 @@ RUN /app/docker/frontend-mem-nag.sh
 WORKDIR /app/ax-bi-frontend
 
 # Create necessary folders to avoid errors in subsequent steps
-RUN mkdir -p /app/superset/static/assets \
-             /app/superset/translations
+RUN mkdir -p /app/axbi/static/assets \
+             /app/axbi/translations
 
 # Harden `npm ci` against transient npm-registry network blips (e.g. ECONNRESET),
 # which otherwise fail the entire multi-platform image build with no retry.
@@ -81,9 +81,9 @@ RUN --mount=type=bind,source=./ax-bi-frontend/package.json,target=./package.json
 COPY ax-bi-frontend /app/ax-bi-frontend
 
 ######################################################################
-# superset-node is used for compiling frontend assets
+# axbi-node is used for compiling frontend assets
 ######################################################################
-FROM superset-node-ci AS superset-node
+FROM axbi-node-ci AS axbi-node
 
 # Build the frontend if not in dev mode
 RUN --mount=type=cache,target=/root/.npm \
@@ -95,13 +95,13 @@ RUN --mount=type=cache,target=/root/.npm \
     fi;
 
 # Copy translation files
-COPY superset/translations /app/superset/translations
+COPY axbi/translations /app/axbi/translations
 
 # Build translations if enabled, then cleanup localization files
 RUN if [ "${BUILD_TRANSLATIONS}" = "true" ]; then \
         npm run build-translation; \
     fi; \
-    rm -rf /app/superset/translations/*/*/*.po /app/superset/translations/*/*/*.mo;
+    rm -rf /app/axbi/translations/*/*/*.po /app/axbi/translations/*/*/*.mo;
 
 
 ######################################################################
@@ -109,13 +109,13 @@ RUN if [ "${BUILD_TRANSLATIONS}" = "true" ]; then \
 ######################################################################
 FROM python:${PY_VER} AS python-base
 
-ARG SUPERSET_HOME="/app/superset_home"
-ENV SUPERSET_HOME=${SUPERSET_HOME}
+ARG AXBI_HOME="/app/axbi_home"
+ENV AXBI_HOME=${AXBI_HOME}
 
-RUN mkdir -p ${SUPERSET_HOME}
-RUN useradd --user-group -d ${SUPERSET_HOME} -m --no-log-init --shell /bin/bash superset \
-    && chmod -R 1777 ${SUPERSET_HOME} \
-    && chown -R superset:superset ${SUPERSET_HOME}
+RUN mkdir -p ${AXBI_HOME}
+RUN useradd --user-group -d ${AXBI_HOME} -m --no-log-init --shell /bin/bash axbi \
+    && chmod -R 1777 ${AXBI_HOME} \
+    && chown -R axbi:axbi ${AXBI_HOME}
 
 # Some bash scripts needed throughout the layers
 COPY --chmod=755 docker/*.sh /app/docker/
@@ -139,7 +139,7 @@ COPY requirements/translations.txt requirements/
 RUN --mount=type=cache,target=/root/.cache/uv \
     . /app/.venv/bin/activate && /app/docker/pip-install.sh --requires-build-essential -r requirements/translations.txt
 
-COPY superset/translations/ /app/translations_mo/
+COPY axbi/translations/ /app/translations_mo/
 RUN if [ "${BUILD_TRANSLATIONS}" = "true" ]; then \
         pybabel compile -d /app/translations_mo | true; \
     fi; \
@@ -150,12 +150,12 @@ RUN if [ "${BUILD_TRANSLATIONS}" = "true" ]; then \
 ######################################################################
 FROM python-base AS python-common
 
-ENV SUPERSET_HOME="/app/superset_home" \
-    HOME="/app/superset_home" \
-    SUPERSET_ENV="production" \
-    FLASK_APP="superset.app:create_app()" \
+ENV AXBI_HOME="/app/axbi_home" \
+    HOME="/app/axbi_home" \
+    AXBI_ENV="production" \
+    FLASK_APP="axbi.app:create_app()" \
     PYTHONPATH="/app/pythonpath" \
-    SUPERSET_PORT="8088"
+    AXBI_PORT="8088"
 
 # Copy the entrypoints, make them executable in userspace
 COPY --chmod=755 docker/entrypoints /app/docker/entrypoints
@@ -164,19 +164,19 @@ WORKDIR /app
 # Set up necessary directories
 RUN mkdir -p \
       ${PYTHONPATH} \
-      superset/static \
+      axbi/static \
       requirements \
       ax-bi-frontend \
-      apache_superset.egg-info \
+      axbi.egg-info \
       requirements \
-    && touch superset/static/version_info.json
+    && touch axbi/static/version_info.json
 
 # Install Playwright and optionally setup headless browsers
 ENV PLAYWRIGHT_BROWSERS_PATH=/usr/local/share/playwright-browsers
 
 ARG INCLUDE_CHROMIUM="false"
 ARG INCLUDE_FIREFOX="false"
-RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
+RUN --mount=type=cache,target=${AXBI_HOME}/.cache/uv \
     if [ "${INCLUDE_CHROMIUM}" = "true" ] || [ "${INCLUDE_FIREFOX}" = "true" ]; then \
         uv pip install playwright && \
         playwright install-deps && \
@@ -204,33 +204,33 @@ RUN /app/docker/apt-install.sh \
       libldap2-dev
 
 # Create runtime data directories. Zero-config upload DuckDB files live under
-# SUPERSET_HOME so named volumes persist them across container restarts.
-RUN mkdir -p /app/data /app/superset_home/uploads \
-    && chown -R superset:superset /app/data /app/superset_home/uploads
+# AXBI_HOME so named volumes persist them across container restarts.
+RUN mkdir -p /app/data /app/axbi_home/uploads \
+    && chown -R axbi:axbi /app/data /app/axbi_home/uploads
 
 # Copy compiled things from previous stages
-COPY --from=superset-node /app/superset/static/assets superset/static/assets
+COPY --from=axbi-node /app/axbi/static/assets axbi/static/assets
 # Copy service.worker.js optionall as it doesn't exist when DEV_MODE=true
-COPY --from=superset-node /app/superset/static/service-worker.j[s] superset/static/service-worker.js
+COPY --from=axbi-node /app/axbi/static/service-worker.j[s] axbi/static/service-worker.js
 
-# TODO, when the next version comes out, use --exclude superset/translations
-COPY superset superset
+# TODO, when the next version comes out, use --exclude axbi/translations
+COPY axbi axbi
 # Remove .po source files (only compiled .mo are needed at runtime) and
 # create runtime upload directories in a single layer.
-RUN rm -f superset/translations/*/*/*.po \
-    && mkdir -p /app/superset_home/uploads superset/static/uploads \
-    && chown -R superset:superset \
+RUN rm -f axbi/translations/*/*/*.po \
+    && mkdir -p /app/axbi_home/uploads axbi/static/uploads \
+    && chown -R axbi:axbi \
         /app/data \
-        /app/superset_home/uploads \
-        superset/static/uploads
+        /app/axbi_home/uploads \
+        axbi/static/uploads
 
 # Merging translations from backend and frontend stages
-COPY --from=superset-node /app/superset/translations superset/translations
-COPY --from=python-translation-compiler /app/translations_mo superset/translations
+COPY --from=axbi-node /app/axbi/translations axbi/translations
+COPY --from=python-translation-compiler /app/translations_mo axbi/translations
 
 HEALTHCHECK CMD /app/docker/docker-healthcheck.sh
 CMD ["/app/docker/entrypoints/run-server.sh"]
-EXPOSE ${SUPERSET_PORT}
+EXPOSE ${AXBI_PORT}
 
 ######################################################################
 # Final lean image...
@@ -246,18 +246,18 @@ LABEL org.opencontainers.image.licenses="Apache-2.0"
 # Install Python dependencies using docker/pip-install.sh
 COPY requirements/base.txt requirements/
 
-# Copy superset-core package needed for editable install in base.txt
-COPY superset-core superset-core
-COPY docker/pythonpath_axbi/superset_config.py /app/docker/pythonpath_axbi/superset_config.py
+# Copy ax-bi-core package needed for editable install in base.txt
+COPY ax-bi-core ax-bi-core
+COPY docker/pythonpath_axbi/axbi_config.py /app/docker/pythonpath_axbi/axbi_config.py
 
-RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
+RUN --mount=type=cache,target=${AXBI_HOME}/.cache/uv \
     /app/docker/pip-install.sh --requires-build-essential -r requirements/base.txt
-# Install the superset package
-RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
+# Install the axbi package
+RUN --mount=type=cache,target=${AXBI_HOME}/.cache/uv \
     uv pip install -e .[duckdb,fastmcp,postgres]
-RUN python -m compileall /app/superset
+RUN python -m compileall /app/axbi
 
-USER superset
+USER axbi
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD /app/docker/docker-healthcheck.sh
@@ -277,20 +277,20 @@ RUN /app/docker/apt-install.sh \
 COPY requirements/*.txt requirements/
 
 # Copy local packages needed for editable installs in development.txt
-COPY superset-core superset-core
-COPY superset-extensions-cli superset-extensions-cli
+COPY ax-bi-core ax-bi-core
+COPY ax-bi-extensions-cli ax-bi-extensions-cli
 
 # Install Python dependencies using docker/pip-install.sh
-RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
+RUN --mount=type=cache,target=${AXBI_HOME}/.cache/uv \
     /app/docker/pip-install.sh --requires-build-essential -r requirements/development.txt
-# Install the superset package
-RUN --mount=type=cache,target=${SUPERSET_HOME}/.cache/uv \
+# Install the axbi package
+RUN --mount=type=cache,target=${AXBI_HOME}/.cache/uv \
     uv pip install -e .
 
 RUN uv pip install .[postgres]
-RUN python -m compileall /app/superset
+RUN python -m compileall /app/axbi
 
-USER superset
+USER axbi
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD /app/docker/docker-healthcheck.sh
@@ -301,7 +301,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 FROM lean AS ci
 USER root
 RUN uv pip install .[postgres,duckdb]
-USER superset
+USER axbi
 CMD ["/app/docker/entrypoints/docker-ci.sh"]
 
 ######################################################################
@@ -310,5 +310,5 @@ CMD ["/app/docker/entrypoints/docker-ci.sh"]
 FROM lean AS showtime
 USER root
 RUN uv pip install .[duckdb]
-USER superset
+USER axbi
 CMD ["/app/docker/entrypoints/docker-ci.sh"]

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, DatasourceType } from '@superset-ui/core';
+import { ChartProps, DatasourceType } from '@ax-bi/ui-core';
 import transformProps from './transformProps';
 
 interface PathFeature {

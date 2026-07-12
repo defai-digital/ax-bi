@@ -16,7 +16,7 @@
 # under the License.
 # pylint: disable=consider-using-transaction
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from datetime import datetime
 from io import BytesIO
@@ -29,15 +29,15 @@ import rison
 from freezegun import freeze_time
 from sqlalchemy.sql import func, and_
 
-from superset import db
-from superset.models.core import Database
-from superset.models.core import FavStar
-from superset.models.sql_lab import SavedQuery
-from superset.tags.models import ObjectType, Tag, TaggedObject
-from superset.utils.database import get_example_database
-from superset.utils import json
+from axbi import db
+from axbi.models.core import Database
+from axbi.models.core import FavStar
+from axbi.models.sql_lab import SavedQuery
+from axbi.tags.models import ObjectType, Tag, TaggedObject
+from axbi.utils.database import get_example_database
+from axbi.utils import json
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_SQLLAB_USERNAME
 from tests.integration_tests.fixtures.importexport import (
     database_config,
@@ -53,7 +53,7 @@ from tests.integration_tests.fixtures.tags import (
 SAVED_QUERIES_FIXTURE_COUNT = 10
 
 
-class TestSavedQueryApi(SupersetTestCase):
+class TestSavedQueryApi(AxBITestCase):
     def insert_saved_query(
         self,
         label: str,
@@ -796,9 +796,7 @@ class TestSavedQueryApi(SupersetTestCase):
         assert rv.status_code == 400
 
     @pytest.mark.usefixtures("create_saved_queries")
-    @patch(
-        "superset.queries.saved_queries.filters.security_manager.can_access_all_queries"
-    )
+    @patch("axbi.queries.saved_queries.filters.security_manager.can_access_all_queries")
     def test_delete_bulk_saved_query_all_query_access_keeps_owner_filter(
         self, mock_can_access_all_queries: Mock
     ) -> None:
@@ -933,7 +931,7 @@ class TestSavedQueryApi(SupersetTestCase):
         buf.seek(0)
         return buf
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_saved_queries(self, mock_add_permissions):
         """
         Saved Query API: Test import

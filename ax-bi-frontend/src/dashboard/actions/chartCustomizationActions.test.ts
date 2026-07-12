@@ -17,7 +17,7 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import { ChartCustomization, ChartCustomizationType } from '@superset-ui/core';
+import { ChartCustomization, ChartCustomizationType } from '@ax-bi/ui-core';
 import {
   setInScopeStatusOfCustomizations,
   saveChartCustomization,

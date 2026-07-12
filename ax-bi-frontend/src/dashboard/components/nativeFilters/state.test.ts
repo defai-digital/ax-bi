@@ -25,7 +25,7 @@ import {
   Divider,
   ChartCustomizationType,
   type ChartCustomization,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   useChartCustomizationConfiguration,
   useIsFilterInScope,

@@ -17,7 +17,7 @@
 
 from pytest_mock import MockerFixture
 
-from superset.commands.database.utils import add_permissions
+from axbi.commands.database.utils import add_permissions
 
 
 def test_add_permissions(mocker: MockerFixture) -> None:
@@ -30,7 +30,7 @@ def test_add_permissions(mocker: MockerFixture) -> None:
     database.get_all_catalog_names.return_value = ["catalog1", "catalog2"]
     database.get_all_schema_names.side_effect = [["schema1"], ["schema2"]]
     add_permission_view_menu = mocker.patch(
-        "superset.commands.database.importers.v1.utils.security_manager."
+        "axbi.commands.database.importers.v1.utils.security_manager."
         "add_permission_view_menu"
     )
 
@@ -60,7 +60,7 @@ def test_add_permissions_get_default_catalog(mocker: MockerFixture):
     database.get_default_catalog.return_value = "catalog1"
     database.get_all_schema_names.side_effect = [["schema1"], ["schema2"]]
     add_permission_view_menu = mocker.patch(
-        "superset.commands.database.importers.v1.utils.security_manager."
+        "axbi.commands.database.importers.v1.utils.security_manager."
         "add_permission_view_menu"
     )
 
@@ -87,7 +87,7 @@ def test_add_permissions_handle_failures(mocker: MockerFixture) -> None:
     database.get_all_catalog_names.return_value = ["catalog1", "catalog2", "catalog3"]
     database.get_all_schema_names.side_effect = [["schema1"], Exception, ["schema3"]]
     add_permission_view_menu = mocker.patch(
-        "superset.commands.database.importers.v1.utils.security_manager."
+        "axbi.commands.database.importers.v1.utils.security_manager."
         "add_permission_view_menu"
     )
 

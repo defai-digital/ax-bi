@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 
 const StyledLabelContainer = styled.div`
   overflow: hidden;

@@ -18,11 +18,11 @@
  */
 import { useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { Currency, ensureIsArray, getCurrencySymbol } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Currency, ensureIsArray, getCurrencySymbol } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import { CSSObject } from '@emotion/react';
-import { Select, type SelectProps } from '@superset-ui/core/components';
+import { Select, type SelectProps } from '@ax-bi/ui-core/components';
 import { ViewState } from 'src/views/types';
 import { ExplorePageState } from 'src/explore/types';
 import ControlHeader from '../../ControlHeader';

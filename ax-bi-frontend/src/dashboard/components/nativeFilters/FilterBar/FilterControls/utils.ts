@@ -26,7 +26,7 @@ import {
   setHoveredChartCustomization,
   unsetHoveredChartCustomization,
 } from 'src/dashboard/actions/nativeFilters';
-import { Constants } from '@superset-ui/core/components';
+import { Constants } from '@ax-bi/ui-core/components';
 
 export const dispatchHoverAction = debounce(
   (dispatch: Dispatch<any>, id?: string) => {

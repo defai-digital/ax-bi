@@ -20,8 +20,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.importers.v1.examples import transpile_virtual_dataset_sql
-from superset.examples.utils import _normalize_dataset_schema
+from axbi.commands.importers.v1.examples import transpile_virtual_dataset_sql
+from axbi.examples.utils import _normalize_dataset_schema
 
 
 def test_transpile_virtual_dataset_sql_no_sql():
@@ -38,10 +38,10 @@ def test_transpile_virtual_dataset_sql_empty_sql():
     assert config["sql"] == ""
 
 
-@patch("superset.commands.importers.v1.examples.load_dataset_data")
+@patch("axbi.commands.importers.v1.examples.load_dataset_data")
 def test_load_example_data_file_loads_missing_table(mock_load_dataset_data):
     """Bundled data_file_uri content is loaded when the table is absent."""
-    from superset.commands.importers.v1.examples import load_example_data_file
+    from axbi.commands.importers.v1.examples import load_example_data_file
 
     dataset = MagicMock()
     dataset.table_name = "example_table"
@@ -58,10 +58,10 @@ def test_load_example_data_file_loads_missing_table(mock_load_dataset_data):
     )
 
 
-@patch("superset.commands.importers.v1.examples.load_dataset_data")
+@patch("axbi.commands.importers.v1.examples.load_dataset_data")
 def test_load_example_data_file_skips_existing_table(mock_load_dataset_data):
     """Existing example tables are preserved unless force_data is true."""
-    from superset.commands.importers.v1.examples import load_example_data_file
+    from axbi.commands.importers.v1.examples import load_example_data_file
 
     dataset = MagicMock()
     dataset.table_name = "example_table"
@@ -74,7 +74,7 @@ def test_load_example_data_file_skips_existing_table(mock_load_dataset_data):
     mock_load_dataset_data.assert_not_called()
 
 
-@patch("superset.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.db")
 def test_transpile_virtual_dataset_sql_database_not_found(mock_db):
     """Test graceful handling when database is not found."""
     mock_db.session.get.return_value = None
@@ -88,8 +88,8 @@ def test_transpile_virtual_dataset_sql_database_not_found(mock_db):
     assert config["sql"] == original_sql
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_success(mock_transpile, mock_db):
     """Test successful SQL transpilation with source engine."""
     mock_database = MagicMock()
@@ -109,8 +109,8 @@ def test_transpile_virtual_dataset_sql_success(mock_transpile, mock_db):
     mock_transpile.assert_called_once_with("SELECT * FROM foo", "mysql", "postgresql")
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_no_source_engine(mock_transpile, mock_db):
     """Test transpilation when source_db_engine is not specified (legacy)."""
     mock_database = MagicMock()
@@ -127,8 +127,8 @@ def test_transpile_virtual_dataset_sql_no_source_engine(mock_transpile, mock_db)
     mock_transpile.assert_called_once_with("SELECT * FROM foo", "mysql", None)
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_no_change(mock_transpile, mock_db):
     """Test when transpilation returns same SQL (no dialect differences)."""
     mock_database = MagicMock()
@@ -148,11 +148,11 @@ def test_transpile_virtual_dataset_sql_no_change(mock_transpile, mock_db):
     assert config["sql"] == original_sql
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_error_fallback(mock_transpile, mock_db):
     """Test graceful fallback when transpilation fails."""
-    from superset.exceptions import QueryClauseValidationException
+    from axbi.exceptions import QueryClauseValidationException
 
     mock_database = MagicMock()
     mock_database.db_engine_spec.engine = "mysql"
@@ -172,8 +172,8 @@ def test_transpile_virtual_dataset_sql_error_fallback(mock_transpile, mock_db):
     assert config["sql"] == original_sql
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_postgres_to_duckdb(mock_transpile, mock_db):
     """Test transpilation from PostgreSQL to DuckDB."""
     mock_database = MagicMock()
@@ -201,8 +201,8 @@ def test_transpile_virtual_dataset_sql_postgres_to_duckdb(mock_transpile, mock_d
     mock_transpile.assert_called_once_with(original_sql, "duckdb", "postgresql")
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_postgres_to_clickhouse(mock_transpile, mock_db):
     """Test transpilation from PostgreSQL to ClickHouse.
 
@@ -230,8 +230,8 @@ def test_transpile_virtual_dataset_sql_postgres_to_clickhouse(mock_transpile, mo
     mock_transpile.assert_called_once_with(original_sql, "clickhouse", "postgresql")
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_postgres_to_mysql(mock_transpile, mock_db):
     """Test transpilation from PostgreSQL to MySQL.
 
@@ -258,8 +258,8 @@ def test_transpile_virtual_dataset_sql_postgres_to_mysql(mock_transpile, mock_db
     mock_transpile.assert_called_once_with(original_sql, "mysql", "postgresql")
 
 
-@patch("superset.commands.importers.v1.examples.db")
-@patch("superset.commands.importers.v1.examples.transpile_to_dialect")
+@patch("axbi.commands.importers.v1.examples.db")
+@patch("axbi.commands.importers.v1.examples.transpile_to_dialect")
 def test_transpile_virtual_dataset_sql_postgres_to_sqlite(mock_transpile, mock_db):
     """Test transpilation from PostgreSQL to SQLite."""
     mock_database = MagicMock()
@@ -283,13 +283,11 @@ def test_transpile_virtual_dataset_sql_postgres_to_sqlite(mock_transpile, mock_d
     mock_transpile.assert_called_once_with(original_sql, "sqlite", "postgresql")
 
 
-@patch(
-    "superset.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships"
-)
-@patch("superset.commands.importers.v1.examples.import_dashboard")
-@patch("superset.commands.importers.v1.examples.import_chart")
-@patch("superset.commands.importers.v1.examples.import_dataset")
-@patch("superset.commands.importers.v1.examples.import_database")
+@patch("axbi.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships")
+@patch("axbi.commands.importers.v1.examples.import_dashboard")
+@patch("axbi.commands.importers.v1.examples.import_chart")
+@patch("axbi.commands.importers.v1.examples.import_dataset")
+@patch("axbi.commands.importers.v1.examples.import_database")
 def test_import_passes_ignore_permissions_to_all_importers(
     mock_import_db,
     mock_import_dataset,
@@ -304,7 +302,7 @@ def test_import_passes_ignore_permissions_to_all_importers(
     sub-importer. Without this, SQLite example databases are blocked
     by PREVENT_UNSAFE_DB_CONNECTIONS.
     """
-    from superset.commands.importers.v1.examples import ImportExamplesCommand
+    from axbi.commands.importers.v1.examples import ImportExamplesCommand
 
     db_uuid = "a2dc77af-e654-49bb-b321-40f6b559a1ee"
     dataset_uuid = "14f48794-ebfa-4f60-a26a-582c49132f1b"
@@ -359,15 +357,15 @@ def test_import_passes_ignore_permissions_to_all_importers(
     }
 
     with patch(
-        "superset.commands.importers.v1.examples.get_example_default_schema",
+        "axbi.commands.importers.v1.examples.get_example_default_schema",
         return_value=None,
     ):
         with patch(
-            "superset.commands.importers.v1.examples.find_chart_uuids",
+            "axbi.commands.importers.v1.examples.find_chart_uuids",
             return_value=[],
         ):
             with patch(
-                "superset.commands.importers.v1.examples.update_id_refs",
+                "axbi.commands.importers.v1.examples.update_id_refs",
                 return_value=configs["dashboards/test.yaml"],
             ):
                 ImportExamplesCommand._import(configs)
@@ -386,14 +384,12 @@ def test_import_passes_ignore_permissions_to_all_importers(
     assert mock_import_dashboard.call_args[1].get("ignore_permissions") is True
 
 
+@patch("axbi.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships")
+@patch("axbi.commands.importers.v1.examples.transpile_virtual_dataset_sql")
+@patch("axbi.commands.importers.v1.examples.import_dataset")
+@patch("axbi.commands.importers.v1.examples.import_database")
 @patch(
-    "superset.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships"
-)
-@patch("superset.commands.importers.v1.examples.transpile_virtual_dataset_sql")
-@patch("superset.commands.importers.v1.examples.import_dataset")
-@patch("superset.commands.importers.v1.examples.import_database")
-@patch(
-    "superset.commands.importers.v1.examples.get_example_default_schema",
+    "axbi.commands.importers.v1.examples.get_example_default_schema",
     return_value="public",
 )
 def test_import_defaults_missing_dataset_schema(
@@ -404,7 +400,7 @@ def test_import_defaults_missing_dataset_schema(
     mock_safe_insert,
 ):
     """Dataset configs without a schema key use the example default schema."""
-    from superset.commands.importers.v1.examples import ImportExamplesCommand
+    from axbi.commands.importers.v1.examples import ImportExamplesCommand
 
     db_uuid = "a2dc77af-e654-49bb-b321-40f6b559a1ee"
     dataset_uuid = "14f48794-ebfa-4f60-a26a-582c49132f1b"
@@ -459,17 +455,15 @@ def test_import_defaults_missing_dataset_schema(
         },
     ],
 )
-@patch(
-    "superset.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships"
-)
-@patch("superset.commands.importers.v1.examples.import_dashboard")
+@patch("axbi.commands.importers.v1.examples.safe_insert_dashboard_chart_relationships")
+@patch("axbi.commands.importers.v1.examples.import_dashboard")
 def test_import_examples_tolerates_missing_or_malformed_dashboard_position(
     mock_import_dashboard,
     mock_safe_insert,
     dashboard_config,
 ):
     """Optional dashboard layout data should not break example imports."""
-    from superset.commands.importers.v1.examples import ImportExamplesCommand
+    from axbi.commands.importers.v1.examples import ImportExamplesCommand
 
     dashboard = MagicMock()
     dashboard.id = 1

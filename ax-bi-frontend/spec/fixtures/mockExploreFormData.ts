@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject, VizType } from '@superset-ui/core';
+import { JsonObject, VizType } from '@ax-bi/ui-core';
 
 export const getExploreFormData = (overrides: JsonObject = {}) => ({
   adhoc_filters: [
@@ -67,7 +67,7 @@ export const getExploreFormData = (overrides: JsonObject = {}) => ({
     },
   ],
   applied_time_extras: {},
-  color_scheme: 'supersetColors',
+  color_scheme: 'axbiColors',
   datasource: '2__table',
   granularity_sqla: 'ds',
   groupby: ['gender'],

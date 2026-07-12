@@ -17,7 +17,7 @@
 
 import uuid
 
-from superset.commands.dashboard import export as export_module
+from axbi.commands.dashboard import export as export_module
 
 
 class DummySlice:

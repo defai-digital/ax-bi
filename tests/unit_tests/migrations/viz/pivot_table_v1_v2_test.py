@@ -16,7 +16,7 @@
 # under the License.
 from typing import Any
 
-from superset.migrations.shared.migrate_viz import MigratePivotTable
+from axbi.migrations.shared.migrate_viz import MigratePivotTable
 from tests.unit_tests.migrations.viz.utils import migrate_and_assert
 
 SOURCE_FORM_DATA: dict[str, Any] = {

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { AppSection } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { AppSection } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import userEvent from '@testing-library/user-event';
 import { render, screen } from 'spec/helpers/testing-library';
 import RangeFilterPlugin, { calculateStep } from './RangeFilterPlugin';

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { ensureIsArray } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { ensureIsArray } from '@ax-bi/ui-core';
 import { cloneDeep } from 'lodash';
 import {
   ControlPanelsContainerProps,
@@ -31,7 +31,7 @@ import {
   sharedControls,
   DEFAULT_SORT_SERIES_DATA,
   SORT_SERIES_CHOICES,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 import { DEFAULT_FORM_DATA } from './types';
 import { EchartsTimeseriesSeriesType } from '../Timeseries/types';

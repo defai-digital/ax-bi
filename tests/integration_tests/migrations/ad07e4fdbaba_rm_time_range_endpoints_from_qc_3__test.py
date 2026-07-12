@@ -16,10 +16,10 @@
 # under the License.
 from importlib import import_module
 
-from superset.utils import json
+from axbi.utils import json
 
 rm_time_range_endpoints_from_qc_3 = import_module(
-    "superset.migrations.versions."
+    "axbi.migrations.versions."
     "2022-04-18_11-20_ad07e4fdbaba_rm_time_range_endpoints_from_qc_3",
 )
 Slice = rm_time_range_endpoints_from_qc_3.Slice

@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    // syntax rules
+    "strict": true,
+
+    "moduleResolution": "node",
+
+    // environment
+    "target": "es6",
+    "lib": ["DOM", "ESNext"],
+    "module": "esnext",
+    "baseUrl": ".",
+    "paths": {
+      "@ax-bi/switchboard": [
+        "../ax-bi-frontend/packages/ax-bi-switchboard/src"
+      ]
+    },
+
+    // output
+    "outDir": "./dist",
+    "emitDeclarationOnly": true,
+    "declaration": true
+  },
+
+  "include": [
+    "src/**/*"
+  ],
+
+  "exclude": [
+    "src/**/*.test.ts",
+    "tests",
+    "dist",
+    "lib",
+    "node_modules"
+  ]
+}

@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { Filter, ChartCustomization } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+import { Filter, ChartCustomization } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import { useSelector } from 'react-redux';
 import { RootState } from 'src/dashboard/types';
 import { useChartCustomizationFromRedux } from 'src/dashboard/components/nativeFilters/state';

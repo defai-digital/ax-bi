@@ -19,8 +19,8 @@
 
 from unittest.mock import MagicMock, patch
 
-from superset.connectors.sqla.models import SqlaTable
-from superset.utils.core import SqlExpressionType
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.utils.core import SqlExpressionType
 
 
 class TestValidateExpression:
@@ -46,7 +46,7 @@ class TestValidateExpression:
         # Mock get_template_processor
         self.table.get_template_processor = MagicMock(return_value=None)
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_column_expression(self, mock_execute):
         """Test validation of column expressions"""
         # Mock _execute_validation_query to return success
@@ -61,7 +61,7 @@ class TestValidateExpression:
         assert result["errors"] == []
         mock_execute.assert_called_once()
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_metric_expression(self, mock_execute):
         """Test validation of metric expressions"""
         # Mock _execute_validation_query to return success
@@ -75,7 +75,7 @@ class TestValidateExpression:
         assert result["valid"] is True
         assert result["errors"] == []
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_where_expression(self, mock_execute):
         """Test validation of WHERE clause expressions"""
         # Mock _execute_validation_query to return success
@@ -89,7 +89,7 @@ class TestValidateExpression:
         assert result["valid"] is True
         assert result["errors"] == []
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_having_expression(self, mock_execute):
         """Test validation of HAVING clause expressions"""
         # Mock _execute_validation_query to return success
@@ -103,7 +103,7 @@ class TestValidateExpression:
         assert result["valid"] is True
         assert result["errors"] == []
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_invalid_expression(self, mock_execute):
         """Test validation of invalid SQL expressions"""
         # Mock _execute_validation_query to raise an exception
@@ -118,7 +118,7 @@ class TestValidateExpression:
         assert len(result["errors"]) == 1
         assert "Invalid SQL syntax" in result["errors"][0]["message"]
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_having_with_non_aggregated_column(self, mock_execute):
         """Test that HAVING clause properly detects non-aggregated columns"""
         # Simulate database error for non-aggregated column in HAVING
@@ -136,7 +136,7 @@ class TestValidateExpression:
         assert len(result["errors"]) == 1
         assert "must appear in the GROUP BY clause" in result["errors"][0]["message"]
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_empty_expression(self, mock_execute):
         """Test validation of empty expressions"""
         # Mock _execute_validation_query to raise exception for empty expression
@@ -152,7 +152,7 @@ class TestValidateExpression:
         # The actual error message will come from the exception
         assert "empty" in result["errors"][0]["message"].lower()
 
-    @patch("superset.connectors.sqla.models.SqlaTable._execute_validation_query")
+    @patch("axbi.connectors.sqla.models.SqlaTable._execute_validation_query")
     def test_validate_expression_with_rls(self, mock_execute):
         """Test that RLS filters are applied during validation"""
         # Mock _execute_validation_query to return success

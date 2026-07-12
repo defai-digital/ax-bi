@@ -35,7 +35,7 @@ from fastmcp.exceptions import ToolError
 from fastmcp.tools.tool import ToolResult
 from mcp import types as mt
 
-from superset.mcp_service.middleware import LoggingMiddleware
+from axbi.mcp_service.middleware import LoggingMiddleware
 
 
 def _make_context(
@@ -62,8 +62,8 @@ def _make_context(
 class TestLoggingMiddlewareOnCallTool:
     """Tests for LoggingMiddleware.on_call_tool()."""
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_logs_duration_and_success(
         self, mock_get_user_id, mock_event_logger
@@ -88,8 +88,8 @@ class TestLoggingMiddlewareOnCallTool:
         assert call_kwargs["curated_payload"]["success"] is True
         assert call_kwargs["curated_payload"]["tool"] == "list_charts"
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_logs_failure_on_exception(
         self, mock_get_user_id, mock_event_logger
@@ -109,8 +109,8 @@ class TestLoggingMiddlewareOnCallTool:
         assert call_kwargs["curated_payload"]["error_type"] == "ValueError"
         assert call_kwargs["duration_ms"] >= 0
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_logs_failure_on_tool_error(
         self, mock_get_user_id, mock_event_logger
@@ -135,8 +135,8 @@ class TestLoggingMiddlewareOnCallTool:
         assert call_kwargs["curated_payload"]["tool"] == "get_chart_info"
         assert call_kwargs["duration_ms"] >= 0
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_includes_mcp_call_id_in_curated_payload(
         self, mock_get_user_id, mock_event_logger
@@ -153,8 +153,8 @@ class TestLoggingMiddlewareOnCallTool:
         assert isinstance(mcp_call_id, str)
         assert len(mcp_call_id) == 32
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_injects_mcp_call_id_into_tool_result_meta(
         self, mock_get_user_id, mock_event_logger
@@ -171,8 +171,8 @@ class TestLoggingMiddlewareOnCallTool:
         assert "mcp_call_id" in result.meta
         assert len(result.meta["mcp_call_id"]) == 32
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_preserves_existing_meta(
         self, mock_get_user_id, mock_event_logger
@@ -191,8 +191,8 @@ class TestLoggingMiddlewareOnCallTool:
         assert result.meta["existing_key"] == "existing_value"
         assert "mcp_call_id" in result.meta
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_extracts_entity_ids(
         self, mock_get_user_id, mock_event_logger
@@ -220,8 +220,8 @@ class TestLoggingMiddlewareOnCallTool:
 class TestLoggingMiddlewareOnMessage:
     """Tests for LoggingMiddleware.on_message()."""
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=1)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=1)
     @pytest.mark.asyncio
     async def test_on_message_logs_without_duration(
         self, mock_get_user_id, mock_event_logger
@@ -243,8 +243,8 @@ class TestLoggingMiddlewareOnMessage:
         # on_message should NOT have success field
         assert "success" not in call_kwargs["curated_payload"]
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_no_error_type_on_success(
         self, mock_get_user_id: MagicMock, mock_event_logger: MagicMock
@@ -259,8 +259,8 @@ class TestLoggingMiddlewareOnMessage:
         payload = mock_event_logger.log.call_args[1]["curated_payload"]
         assert "error_type" not in payload
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_resolves_call_tool_proxy(
         self, mock_get_user_id: MagicMock, mock_event_logger: MagicMock
@@ -279,8 +279,8 @@ class TestLoggingMiddlewareOnMessage:
         assert payload["tool"] == "call_tool"
         assert payload["mcp_tool"] == "list_datasets"
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_no_mcp_tool_for_direct_calls(
         self, mock_get_user_id: MagicMock, mock_event_logger: MagicMock
@@ -296,8 +296,8 @@ class TestLoggingMiddlewareOnMessage:
         assert payload["tool"] == "list_charts"
         assert "mcp_tool" not in payload
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_proxy_failure_captures_both_fields(
         self, mock_get_user_id: MagicMock, mock_event_logger: MagicMock
@@ -359,7 +359,7 @@ class TestResolveToolName:
 class TestExtractContextInfo:
     """Tests for LoggingMiddleware._extract_context_info()."""
 
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=99)
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=99)
     def test_extract_with_metadata_agent_id(self, mock_get_user_id) -> None:
         """Extracts agent_id from context.metadata."""
         middleware = LoggingMiddleware()
@@ -373,7 +373,7 @@ class TestExtractContextInfo:
         assert user_id == 99
 
     @patch(
-        "superset.mcp_service.middleware.get_user_id",
+        "axbi.mcp_service.middleware.get_user_id",
         side_effect=RuntimeError("no Flask request context"),
     )
     def test_extract_handles_missing_user(self, mock_get_user_id) -> None:
@@ -387,7 +387,7 @@ class TestExtractContextInfo:
 
         assert user_id is None
 
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=1)
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=1)
     def test_extract_slice_id_from_chart_id(self, mock_get_user_id) -> None:
         """Extracts slice_id from chart_id param (alias)."""
         middleware = LoggingMiddleware()
@@ -397,7 +397,7 @@ class TestExtractContextInfo:
 
         assert slice_id == 55
 
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=1)
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=1)
     def test_extract_slice_id_from_slice_id(self, mock_get_user_id) -> None:
         """Extracts slice_id from slice_id param (fallback)."""
         middleware = LoggingMiddleware()
@@ -436,8 +436,8 @@ class TestIsErrorResponse:
         middleware = LoggingMiddleware()
         assert middleware._is_error_response(ToolResult(content=[])) is False
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_on_call_tool_logs_failure_for_error_schema(
         self, mock_get_user_id, mock_event_logger
@@ -476,15 +476,15 @@ class TestMiddlewareChainOrder:
     causing success=True for failures.
     """
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_real_middleware_chain_logs_exception_as_failure(
         self, mock_get_user_id, mock_event_logger
     ) -> None:
         """Tool exception is logged as success=False through the
         real middleware chain from build_middleware_list()."""
-        from superset.mcp_service.server import build_middleware_list
+        from axbi.mcp_service.server import build_middleware_list
 
         middleware_list = build_middleware_list()
 
@@ -523,15 +523,15 @@ class TestMiddlewareChainOrder:
             "(first added) in build_middleware_list()."
         )
 
-    @patch("superset.mcp_service.middleware.event_logger")
-    @patch("superset.mcp_service.middleware.get_user_id", return_value=42)
+    @patch("axbi.mcp_service.middleware.event_logger")
+    @patch("axbi.mcp_service.middleware.get_user_id", return_value=42)
     @pytest.mark.asyncio
     async def test_real_middleware_chain_error_result_has_mcp_call_id(
         self, mock_get_user_id, mock_event_logger
     ) -> None:
         """When a tool raises, the error ToolResult from
         StructuredContentStripper still carries mcp_call_id in meta."""
-        from superset.mcp_service.server import build_middleware_list
+        from axbi.mcp_service.server import build_middleware_list
 
         middleware_list = build_middleware_list()
 
@@ -560,7 +560,7 @@ class TestMiddlewareChainOrder:
         a string argument". StructuredContentStripperMiddleware.on_list_tools
         must catch it and return an empty list.
         """
-        from superset.mcp_service.server import build_middleware_list
+        from axbi.mcp_service.server import build_middleware_list
 
         middleware_list = build_middleware_list()
 

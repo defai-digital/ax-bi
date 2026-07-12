@@ -17,11 +17,11 @@
 
 
 import pytest
-from superset_core.tasks.types import TaskStatus
+from axbi_core.tasks.types import TaskStatus
 
-from superset import db
-from superset.commands.tasks import SubmitTaskCommand
-from superset.commands.tasks.exceptions import (
+from axbi import db
+from axbi.commands.tasks import SubmitTaskCommand
+from axbi.commands.tasks.exceptions import (
     TaskInvalidError,
 )
 

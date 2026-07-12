@@ -19,7 +19,7 @@
 
 import pytest
 
-from superset.mcp_service.chart.tool.get_chart_type_schema import (
+from axbi.mcp_service.chart.tool.get_chart_type_schema import (
     _CHART_EXAMPLES,
     _get_chart_type_schema_impl as _call_schema,
     VALID_CHART_TYPES,

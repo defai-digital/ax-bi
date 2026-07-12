@@ -21,13 +21,13 @@ import { render, screen } from 'spec/helpers/testing-library';
 import { CustomDocLink } from './CustomDocLink';
 
 const mockedProps = {
-  url: 'https://superset.apache.org/docs/',
-  label: 'Superset Docs',
+  url: 'https://github.com/defai-digital/ax-bi/docs/',
+  label: 'AxBI Docs',
 };
 
 test('should render the label', () => {
   render(<CustomDocLink {...mockedProps} />);
-  expect(screen.getByText('Superset Docs')).toBeInTheDocument();
+  expect(screen.getByText('AxBI Docs')).toBeInTheDocument();
 });
 
 test('should render the link with correct attributes', () => {

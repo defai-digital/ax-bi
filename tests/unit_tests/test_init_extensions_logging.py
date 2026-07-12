@@ -19,7 +19,7 @@
 from contextlib import nullcontext
 from unittest.mock import MagicMock, patch
 
-from superset.initialization import SupersetAppInitializer
+from axbi.initialization import AxBIAppInitializer
 
 
 def _extension_that_fails_to_init() -> MagicMock:
@@ -32,21 +32,21 @@ def _extension_that_fails_to_init() -> MagicMock:
 
 def test_init_extensions_logs_exception_instead_of_printing() -> None:
     """An extension entrypoint failure is routed through logger.exception."""
-    initializer = object.__new__(SupersetAppInitializer)
+    initializer = object.__new__(AxBIAppInitializer)
     extension = _extension_that_fails_to_init()
 
     with (
         patch(
-            "superset.extensions.utils.get_extensions",
+            "axbi.extensions.utils.get_extensions",
             return_value={"acme.broken_extension": extension},
         ),
-        patch("superset.extensions.utils.install_in_memory_importer"),
+        patch("axbi.extensions.utils.install_in_memory_importer"),
         patch(
-            "superset.extensions.utils.eager_import",
+            "axbi.extensions.utils.eager_import",
             side_effect=RuntimeError("boom"),
         ),
-        patch("superset.initialization.extension_context", return_value=nullcontext()),
-        patch("superset.initialization.logger") as mock_logger,
+        patch("axbi.initialization.extension_context", return_value=nullcontext()),
+        patch("axbi.initialization.logger") as mock_logger,
     ):
         initializer.init_extensions()
 

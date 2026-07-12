@@ -16,8 +16,8 @@
 # under the License.
 from pytest_mock import MockerFixture
 
-from superset import is_feature_enabled
-from superset.config import (
+from axbi import is_feature_enabled
+from axbi.config import (
     AX_SERVICES_BASE_URL,
     AX_SERVICES_INTERNAL_TOKEN,
     AX_SERVICES_TIMEOUT_SECONDS,
@@ -34,7 +34,7 @@ def test_existing_feature_flags(mocker: MockerFixture) -> None:
     Test that ``is_feature_enabled`` reads flags correctly.
     """
     mocker.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"FOO": True},
         clear=True,
     )
@@ -46,7 +46,7 @@ def test_nonexistent_feature_flags(mocker: MockerFixture) -> None:
     Test that ``is_feature_enabled`` returns ``False`` when flag not set.
     """
     mocker.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags", {}, clear=True
+        "axbi.extensions.feature_flag_manager._feature_flags", {}, clear=True
     )
     assert is_feature_enabled("FOO") is False
 
@@ -56,12 +56,12 @@ def test_is_feature_enabled(mocker: MockerFixture) -> None:
     Test ``_is_feature_enabled_func``.
     """
     mocker.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"True_Flag1": False, "True_Flag2": True, "Flag3": False, "Flag4": True},
         clear=True,
     )
     mocker.patch(
-        "superset.extensions.feature_flag_manager._is_feature_enabled_func",
+        "axbi.extensions.feature_flag_manager._is_feature_enabled_func",
         dummy_is_feature_enabled,
     )
 

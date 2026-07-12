@@ -23,18 +23,18 @@ import {
   useMemo,
   useEffect,
 } from 'react';
-import type { SelectValue } from '@superset-ui/core/components';
+import type { SelectValue } from '@ax-bi/ui-core/components';
 
-import { t } from '@apache-superset/core/translation';
-import { SupersetError } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { CertifiedBadge, Select } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBIError } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { CertifiedBadge, Select } from '@ax-bi/ui-core/components';
 import { DatabaseSelector, ErrorMessageWithStackTrace } from 'src/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import type { DatabaseObject } from 'src/components/DatabaseSelector/types';
 import { StyledFormLabel } from 'src/components/DatabaseSelector/styles';
-import RefreshLabel from '@superset-ui/core/components/RefreshLabel';
-import WarningIconWithTooltip from '@superset-ui/core/components/WarningIconWithTooltip';
+import RefreshLabel from '@ax-bi/ui-core/components/RefreshLabel';
+import WarningIconWithTooltip from '@ax-bi/ui-core/components/WarningIconWithTooltip';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { useTables, Table } from 'src/hooks/apiResources';
 
@@ -181,7 +181,7 @@ const TableSelector: FunctionComponent<TableSelectorProps> = ({
   const [tableSelectValue, setTableSelectValue] = useState<
     SelectValue | undefined
   >(undefined);
-  const [errorPayload, setErrorPayload] = useState<SupersetError | null>(null);
+  const [errorPayload, setErrorPayload] = useState<AxBIError | null>(null);
   const {
     currentData: data,
     isFetching: loadingTables,

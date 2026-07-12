@@ -17,7 +17,7 @@
  * under the License.
  */
 // @ts-nocheck -- legacy transformProps with loosely-typed formData from ChartProps
-import { ChartProps, VizType } from '@superset-ui/core';
+import { ChartProps, VizType } from '@ax-bi/ui-core';
 import isTruthy from './utils/isTruthy';
 import {
   tokenizeToNumericArray,

@@ -22,7 +22,7 @@ import { Tabs } from './Tabs';
 /**
  * EditableTabs component for Ant Design editable-card tabs.
  *
- * Mirrors the Superset EditableTabs component (type="editable-card")
+ * Mirrors the AxBI EditableTabs component (type="editable-card")
  * which adds add/remove tab functionality to the base Tabs component.
  *
  * The add button (.ant-tabs-nav-add) is only rendered when

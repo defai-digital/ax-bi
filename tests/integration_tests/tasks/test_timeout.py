@@ -30,16 +30,16 @@ import uuid
 from typing import Any
 
 import pytest
-from superset_core.tasks.types import TaskScope, TaskStatus
+from axbi_core.tasks.types import TaskScope, TaskStatus
 
-from superset.commands.tasks.cancel import CancelTaskCommand
-from superset.daos.tasks import TaskDAO
-from superset.extensions import db
-from superset.models.tasks import Task
-from superset.tasks.ambient_context import get_context
-from superset.tasks.registry import TaskRegistry
-from superset.tasks.scheduler import execute_task
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.tasks.cancel import CancelTaskCommand
+from axbi.daos.tasks import TaskDAO
+from axbi.extensions import db
+from axbi.models.tasks import Task
+from axbi.tasks.ambient_context import get_context
+from axbi.tasks.registry import TaskRegistry
+from axbi.tasks.scheduler import execute_task
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 
@@ -132,7 +132,7 @@ def _register_test_tasks() -> None:
             TaskRegistry.register(name, func)
 
 
-class TestTimeoutHandling(SupersetTestCase):
+class TestTimeoutHandling(AxBITestCase):
     """E2E tests for task timeout functionality."""
 
     def setUp(self) -> None:

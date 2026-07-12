@@ -23,11 +23,11 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import fetchMock from 'fetch-mock';
-import { Column, JsonObject, getClientErrorObject } from '@superset-ui/core';
+import { Column, JsonObject, getClientErrorObject } from '@ax-bi/ui-core';
 import { ColumnSelect } from './ColumnSelect';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getClientErrorObject: jest.fn(() => Promise.resolve({ error: 'Error' })),
 }));
 

@@ -25,7 +25,7 @@ import {
   userEvent,
 } from 'spec/helpers/testing-library';
 import DashboardComponent from 'src/dashboard/containers/DashboardComponent';
-import { EditableTitle } from '@superset-ui/core/components';
+import { EditableTitle } from '@ax-bi/ui-core/components';
 import { setEditMode, onRefresh } from 'src/dashboard/actions/dashboardState';
 
 import type { FC } from 'react';
@@ -42,7 +42,7 @@ jest.mock('src/dashboard/util/getChartIdsFromComponent', () =>
 jest.mock('src/dashboard/containers/DashboardComponent', () =>
   jest.fn(() => <div data-test="DashboardComponent" />),
 );
-jest.mock('@superset-ui/core/components/EditableTitle', () => ({
+jest.mock('@ax-bi/ui-core/components/EditableTitle', () => ({
   __esModule: true,
   EditableTitle: jest.fn(props => (
     <button type="button" data-test="EditableTitle" onClick={props.onSaveTitle}>

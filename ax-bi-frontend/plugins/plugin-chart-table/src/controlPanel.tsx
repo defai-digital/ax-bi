@@ -42,8 +42,8 @@ import {
   ConditionalFormattingConfig,
   ObjectFormattingEnum,
   ColorSchemeEnum,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   isAdhocColumn,
@@ -55,8 +55,8 @@ import {
   validateMaxValue,
   validateServerPagination,
   withLabel,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { isEmpty, last } from 'lodash';
 import { PAGE_SIZE_OPTIONS, SERVER_PAGE_SIZE_OPTIONS } from './consts';
 
@@ -66,8 +66,7 @@ function getQueryMode(controls: ControlStateMapping): QueryMode {
     return mode as QueryMode;
   }
   const rawColumns = controls?.all_columns?.value as
-    | QueryFormColumn[]
-    | undefined;
+    QueryFormColumn[] | undefined;
   const hasRawColumns = rawColumns && rawColumns.length > 0;
   return hasRawColumns ? QueryMode.Raw : QueryMode.Aggregate;
 }

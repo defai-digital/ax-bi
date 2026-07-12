@@ -21,8 +21,8 @@ import warnings
 import pandas as pd
 import pytest
 
-from superset.utils.core import DateColumn, normalize_dttm_col
-from superset.utils.pandas import detect_datetime_format
+from axbi.utils.core import DateColumn, normalize_dttm_col
+from axbi.utils.pandas import detect_datetime_format
 
 
 def capture_warnings(func, *args, **kwargs):

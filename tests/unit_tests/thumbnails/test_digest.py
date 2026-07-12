@@ -24,14 +24,14 @@ import pytest
 from flask import current_app
 from flask_appbuilder.security.sqla.models import User
 
-from superset.connectors.sqla.models import BaseDatasource, SqlaTable
-from superset.tasks.exceptions import InvalidExecutorError
-from superset.tasks.types import Executor, ExecutorType, FixedExecutor
-from superset.utils.core import DatasourceType, override_user
+from axbi.connectors.sqla.models import BaseDatasource, SqlaTable
+from axbi.tasks.exceptions import InvalidExecutorError
+from axbi.tasks.types import Executor, ExecutorType, FixedExecutor
+from axbi.utils.core import DatasourceType, override_user
 
 if TYPE_CHECKING:
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
 
 _DEFAULT_DASHBOARD_KWARGS: dict[str, Any] = {
     "id": 1,
@@ -247,10 +247,10 @@ def test_dashboard_digest(
     expected_result: str | Exception,
     app_context: None,
 ) -> None:
-    from superset import security_manager
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.thumbnails.digest import get_dashboard_digest
+    from axbi import security_manager
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.thumbnails.digest import get_dashboard_digest
 
     # Prepare dashboard and slices
     kwargs = {
@@ -392,9 +392,9 @@ def test_chart_digest(
     expected_result: str | Exception,
     app_context: None,
 ) -> None:
-    from superset import security_manager
-    from superset.models.slice import Slice
-    from superset.thumbnails.digest import get_chart_digest
+    from axbi import security_manager
+    from axbi.models.slice import Slice
+    from axbi.thumbnails.digest import get_chart_digest
 
     # Mock datasource with RLS if provided
     datasource = None
@@ -445,10 +445,10 @@ def test_dashboard_digest_deterministic_datasource_order(
     non-deterministic across Python processes (due to PYTHONHASHSEED).
     The digest must sort datasources by ID to ensure stability.
     """
-    from superset import security_manager
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.thumbnails.digest import get_dashboard_digest
+    from axbi import security_manager
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.thumbnails.digest import get_dashboard_digest
 
     kwargs = {**_DEFAULT_DASHBOARD_KWARGS}
     slices = [Slice(**slice_kwargs) for slice_kwargs in kwargs.pop("slices")]
@@ -501,10 +501,10 @@ def test_dashboard_digest_prefetches_rls_filters(
     Test that _adjust_string_with_rls calls prefetch_rls_filters with
     table IDs from RLS-supporting datasources before iterating.
     """
-    from superset import security_manager
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.thumbnails.digest import get_dashboard_digest
+    from axbi import security_manager
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.thumbnails.digest import get_dashboard_digest
 
     kwargs = {**_DEFAULT_DASHBOARD_KWARGS}
     slices = [Slice(**slice_kwargs) for slice_kwargs in kwargs.pop("slices")]

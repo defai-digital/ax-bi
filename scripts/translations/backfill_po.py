@@ -68,7 +68,7 @@ except ImportError:
 _POEntry = Any
 _POFile = Any
 
-TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "superset" / "translations"
+TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "axbi" / "translations"
 DEFAULT_INDEX = TRANSLATIONS_DIR / "translation_index.json"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 DEFAULT_BATCH_SIZE = 50

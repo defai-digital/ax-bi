@@ -81,7 +81,7 @@ test('useThemeValidation skips validation for empty string', () => {
   expect(result.current.annotations).toHaveLength(0);
 });
 
-test('useThemeValidation validates Superset custom tokens', () => {
+test('useThemeValidation validates AxBI custom tokens', () => {
   const themeWithCustomToken = JSON.stringify({
     token: {
       brandLogoUrl: '/static/logo.png',

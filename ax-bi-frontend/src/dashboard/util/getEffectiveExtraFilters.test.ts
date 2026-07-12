@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataRecordFilters } from '@superset-ui/core';
+import { DataRecordFilters } from '@ax-bi/ui-core';
 import getEffectiveExtraFilters from 'src/dashboard/util/charts/getEffectiveExtraFilters';
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks

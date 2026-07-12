@@ -18,8 +18,8 @@
  */
 import { useState, useEffect, useMemo, ChangeEvent } from 'react';
 import type { DatabaseObject } from 'src/features/databases/types';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import {
   Input,
   Button,
@@ -29,7 +29,7 @@ import {
   Row,
   Col,
   Icons,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import SaveDatasetActionButton from 'src/SqlLab/components/SaveDatasetActionButton';
 import {
   SaveDatasetModal,

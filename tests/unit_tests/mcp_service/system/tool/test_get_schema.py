@@ -26,8 +26,8 @@ import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.common.schema_discovery import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.common.schema_discovery import (
     CHART_DEFAULT_COLUMNS,
     CHART_SEARCH_COLUMNS,
     CHART_SORTABLE_COLUMNS,
@@ -40,11 +40,9 @@ from superset.mcp_service.common.schema_discovery import (
     GetSchemaRequest,
     ModelSchemaInfo,
 )
-from superset.utils import json
+from axbi.utils import json
 
-get_schema_module = importlib.import_module(
-    "superset.mcp_service.system.tool.get_schema"
-)
+get_schema_module = importlib.import_module("axbi.mcp_service.system.tool.get_schema")
 
 
 @pytest.fixture
@@ -57,7 +55,7 @@ def mock_auth():
     """Mock authentication for all tests."""
     from unittest.mock import Mock
 
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -105,7 +103,7 @@ class TestModelSchemaInfo:
 
     def test_chart_schema_info(self):
         """Test chart schema info structure."""
-        from superset.mcp_service.common.schema_discovery import (
+        from axbi.mcp_service.common.schema_discovery import (
             ColumnMetadata,
         )
 
@@ -189,7 +187,7 @@ class TestModelSchemaInfo:
 class TestGetSchemaToolViaClient:
     """Test the get_schema tool via MCP client."""
 
-    @patch("superset.daos.chart.ChartDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.chart.ChartDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_chart(self, mock_filters, mcp_server):
         """Test get_schema for chart model type."""
@@ -226,7 +224,7 @@ class TestGetSchemaToolViaClient:
             }
             assert required_columns.issubset(set(info["default_select"]))
 
-    @patch("superset.daos.dataset.DatasetDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.dataset.DatasetDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_dataset(self, mock_filters, mcp_server):
         """Test get_schema for dataset model type."""
@@ -254,7 +252,7 @@ class TestGetSchemaToolViaClient:
             assert "table_name" in info["search_columns"]
             assert "description" in info["search_columns"]
 
-    @patch("superset.daos.dashboard.DashboardDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.dashboard.DashboardDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_dashboard(self, mock_filters, mcp_server):
         """Test get_schema for dashboard model type."""
@@ -288,7 +286,7 @@ class TestGetSchemaToolViaClient:
             assert "dashboard_title" in info["sortable_columns"]
             assert "changed_on" in info["sortable_columns"]
 
-    @patch("superset.daos.chart.ChartDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.chart.ChartDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_select_columns_have_metadata(
         self, mock_filters, mcp_server
@@ -322,7 +320,7 @@ class TestGetSchemaToolViaClient:
             assert uuid_col is not None
             assert uuid_col["is_default"] is False
 
-    @patch("superset.daos.dashboard.DashboardDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.dashboard.DashboardDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_omits_user_directory_columns(
         self, mock_filters, mcp_server
@@ -371,7 +369,7 @@ class TestGetSchemaToolViaClient:
         assert "created_by_fk" in info["filter_columns"]
         assert "changed_by_fk" in info["filter_columns"]
 
-    @patch("superset.daos.chart.ChartDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.chart.ChartDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_chart_omits_self_referencing_filter_columns(
         self, mock_filters, mcp_server
@@ -401,7 +399,7 @@ class TestGetSchemaToolViaClient:
         for field in ("owner", "created_by_fk_or_owner"):
             assert field not in info["filter_columns"]
 
-    @patch("superset.daos.dataset.DatasetDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.dataset.DatasetDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_dataset_omits_self_referencing_filter_columns(
         self, mock_filters, mcp_server
@@ -431,7 +429,7 @@ class TestGetSchemaToolViaClient:
         for field in ("owner", "created_by_fk_or_owner"):
             assert field not in info["filter_columns"]
 
-    @patch("superset.daos.dashboard.DashboardDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.dashboard.DashboardDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_dashboard_omits_self_referencing_filter_columns(
         self, mock_filters, mcp_server
@@ -461,9 +459,7 @@ class TestGetSchemaToolViaClient:
         for field in ("owner", "created_by_fk_or_owner"):
             assert field not in info["filter_columns"]
 
-    @patch(
-        "superset.daos.report.ReportScheduleDAO.get_filterable_columns_and_operators"
-    )
+    @patch("axbi.daos.report.ReportScheduleDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_report_omits_self_referencing_filter_columns(
         self, mock_filters, mcp_server
@@ -484,7 +480,7 @@ class TestGetSchemaToolViaClient:
             "created_by_fk_or_owner": ["eq"],
         }
 
-        with patch("superset.is_feature_enabled", return_value=True):
+        with patch("axbi.is_feature_enabled", return_value=True):
             async with Client(mcp_server) as client:
                 result = await client.call_tool(
                     "get_schema", {"request": {"model_type": "report"}}
@@ -506,7 +502,7 @@ class TestGetSchemaToolViaClient:
         self, mcp_server
     ):
         """Report schema discovery is gated by the ALERT_REPORTS feature flag."""
-        with patch("superset.is_feature_enabled", return_value=False):
+        with patch("axbi.is_feature_enabled", return_value=False):
             async with Client(mcp_server) as client:
                 with pytest.raises(ToolError, match="Alerts & Reports"):
                     await client.call_tool(
@@ -517,7 +513,7 @@ class TestGetSchemaToolViaClient:
 class TestGetSchemaEdgeCases:
     """Test edge cases for get_schema tool."""
 
-    @patch("superset.daos.chart.ChartDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.chart.ChartDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_dao_exception_returns_empty_filters(
         self, mock_filters, mcp_server
@@ -541,7 +537,7 @@ class TestGetSchemaEdgeCases:
             assert len(info["select_columns"]) > 0
             assert len(info["sortable_columns"]) > 0
 
-    @patch("superset.daos.dataset.DatasetDAO.get_filterable_columns_and_operators")
+    @patch("axbi.daos.dataset.DatasetDAO.get_filterable_columns_and_operators")
     @pytest.mark.asyncio
     async def test_get_schema_default_sort_values(self, mock_filters, mcp_server):
         """Test that default sort values are returned correctly."""

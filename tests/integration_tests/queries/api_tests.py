@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from datetime import datetime, timedelta
 import random
@@ -26,20 +26,20 @@ import rison
 from sqlalchemy.sql import func
 
 import tests.integration_tests.test_app  # noqa: F401
-from superset import db, security_manager
-from superset.common.db_query_status import QueryStatus
-from superset.models.core import Database
-from superset.utils.database import get_example_database, get_main_database
-from superset.utils import json
-from superset.models.sql_lab import Query
+from axbi import db, security_manager
+from axbi.common.db_query_status import QueryStatus
+from axbi.models.core import Database
+from axbi.utils.database import get_example_database, get_main_database
+from axbi.utils import json
+from axbi.models.sql_lab import Query
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_SQLLAB_USERNAME
 
 QUERIES_FIXTURE_COUNT = 10
 
 
-class TestQueryApi(SupersetTestCase):
+class TestQueryApi(AxBITestCase):
     def insert_query(
         self,
         database_id: int,
@@ -204,10 +204,10 @@ class TestQueryApi(SupersetTestCase):
         Query API: Test get query without data access
         """
         gamma1 = self.create_user(
-            "gamma_1", "password", "Gamma", email="gamma1@superset.org"
+            "gamma_1", "password", "Gamma", email="gamma1@axbi.org"
         )
         gamma2 = self.create_user(
-            "gamma_2", "password", "Gamma", email="gamma2@superset.org"
+            "gamma_2", "password", "Gamma", email="gamma2@axbi.org"
         )
         # Add SQLLab role to these gamma users, so they have access to queries
         sqllab_role = self.get_role("sql_lab")
@@ -549,7 +549,7 @@ class TestQueryApi(SupersetTestCase):
         data = json.loads(rv.data.decode("utf-8"))
         assert data["message"] == "Query with client_id foo2 not found"
 
-    # @mock.patch("superset.sql_lab.cancel_query")
+    # @mock.patch("axbi.sql_lab.cancel_query")
     def test_stop_query(self):
         """
         Handles stop query when the DB engine spec does not

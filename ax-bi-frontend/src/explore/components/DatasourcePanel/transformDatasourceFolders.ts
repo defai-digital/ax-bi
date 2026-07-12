@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { Metric } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { Metric } from '@ax-bi/ui-core';
 import { FoldersEditorItemType } from 'src/components/Datasource/types';
 import {
   DEFAULT_METRICS_FOLDER_UUID,

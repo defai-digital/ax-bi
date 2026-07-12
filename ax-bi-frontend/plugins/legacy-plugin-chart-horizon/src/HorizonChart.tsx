@@ -19,8 +19,8 @@
 /* eslint-disable react/jsx-sort-default-props, react/sort-prop-types */
 import { PureComponent } from 'react';
 import { extent as d3Extent } from 'd3-array';
-import { ensureIsArray } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { ensureIsArray } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import HorizonRow, { DEFAULT_COLORS } from './HorizonRow';
 
 interface DataValue {
@@ -59,19 +59,19 @@ const defaultProps: Partial<HorizonChartProps> = {
 
 const StyledDiv = styled.div`
   ${({ theme }) => `
-    .superset-legacy-chart-horizon {
+    .axbi-legacy-chart-horizon {
       overflow: auto;
       position: relative;
     }
 
-    .superset-legacy-chart-horizon .horizon-row {
+    .axbi-legacy-chart-horizon .horizon-row {
       border-bottom: solid 1px ${theme.colorBorderSecondary};
       border-top: 0;
       padding: 0;
       margin: 0;
     }
 
-    .superset-legacy-chart-horizon .horizon-row span.title {
+    .axbi-legacy-chart-horizon .horizon-row span.title {
       position: absolute;
       color: ${theme.colorText};
       font-size: ${theme.fontSizeSM}px;
@@ -113,7 +113,7 @@ class HorizonChart extends PureComponent<HorizonChartProps> {
     return (
       <StyledDiv>
         <div
-          className={`superset-legacy-chart-horizon ${className}`}
+          className={`axbi-legacy-chart-horizon ${className}`}
           style={{ height }}
         >
           {data.map(row => (

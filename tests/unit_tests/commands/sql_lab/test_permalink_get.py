@@ -20,12 +20,12 @@ from types import SimpleNamespace
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.sql_lab.permalink.get import GetSqlLabPermalinkCommand
-from superset.sqllab.permalink.exceptions import SqlLabPermalinkGetFailedError
+from axbi.commands.sql_lab.permalink.get import GetSqlLabPermalinkCommand
+from axbi.sqllab.permalink.exceptions import SqlLabPermalinkGetFailedError
 
 
 def _mock_legacy_kv(mocker: MockerFixture, value: str) -> None:
-    db = mocker.patch("superset.commands.sql_lab.permalink.get.db")
+    db = mocker.patch("axbi.commands.sql_lab.permalink.get.db")
     db.session.query.return_value.filter_by.return_value.scalar.return_value = (
         SimpleNamespace(value=value)
     )

@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 import { AlteredSliceTag } from '.';
 import { defaultProps, expectedDiffs } from './AlteredSliceTagMocks';
 

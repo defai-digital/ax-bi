@@ -21,12 +21,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.sql_lab.estimate import (
+from axbi.commands.sql_lab.estimate import (
     EstimateQueryCostType,
     QueryEstimationCommand,
 )
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetErrorException, SupersetSecurityException
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBIErrorException, AxBISecurityException
 
 
 def _make_params(**kwargs: object) -> EstimateQueryCostType:
@@ -41,11 +41,11 @@ def _make_params(**kwargs: object) -> EstimateQueryCostType:
     return base
 
 
-def _security_exception() -> SupersetSecurityException:
-    return SupersetSecurityException(
-        SupersetError(
+def _security_exception() -> AxBISecurityException:
+    return AxBISecurityException(
+        AxBIError(
             message="Access denied",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.WARNING,
         )
     )
@@ -56,8 +56,8 @@ def _security_exception() -> SupersetSecurityException:
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
-@patch("superset.commands.sql_lab.estimate.db")
+@patch("axbi.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
+@patch("axbi.commands.sql_lab.estimate.db")
 def test_validate_raises_when_database_not_found(
     mock_db: MagicMock,
     mock_security_manager: MagicMock,
@@ -66,10 +66,10 @@ def test_validate_raises_when_database_not_found(
     mock_db.session.get.return_value = None
 
     command = QueryEstimationCommand(_make_params())
-    with pytest.raises(SupersetErrorException) as exc_info:
+    with pytest.raises(AxBIErrorException) as exc_info:
         command.validate()
 
-    assert exc_info.value.error.error_type == SupersetErrorType.RESULTS_BACKEND_ERROR
+    assert exc_info.value.error.error_type == AxBIErrorType.RESULTS_BACKEND_ERROR
     mock_security_manager.raise_for_access.assert_not_called()
 
 
@@ -78,19 +78,19 @@ def test_validate_raises_when_database_not_found(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
-@patch("superset.commands.sql_lab.estimate.db")
+@patch("axbi.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
+@patch("axbi.commands.sql_lab.estimate.db")
 def test_validate_raises_when_database_access_denied(
     mock_db: MagicMock,
     mock_security_manager: MagicMock,
 ) -> None:
-    """SupersetSecurityException propagates when raise_for_access denies access."""
+    """AxBISecurityException propagates when raise_for_access denies access."""
     mock_database = MagicMock()
     mock_db.session.get.return_value = mock_database
     mock_security_manager.raise_for_access.side_effect = _security_exception()
 
     command = QueryEstimationCommand(_make_params())
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         command.validate()
 
     mock_security_manager.raise_for_access.assert_called_once_with(
@@ -103,8 +103,8 @@ def test_validate_raises_when_database_access_denied(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
-@patch("superset.commands.sql_lab.estimate.db")
+@patch("axbi.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
+@patch("axbi.commands.sql_lab.estimate.db")
 def test_validate_succeeds_for_authorised_user(
     mock_db: MagicMock,
     mock_security_manager: MagicMock,
@@ -127,8 +127,8 @@ def test_validate_succeeds_for_authorised_user(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
-@patch("superset.commands.sql_lab.estimate.db")
+@patch("axbi.commands.sql_lab.estimate.security_manager", new_callable=MagicMock)
+@patch("axbi.commands.sql_lab.estimate.db")
 def test_raise_for_access_called_with_correct_database(
     mock_db: MagicMock,
     mock_security_manager: MagicMock,
@@ -163,17 +163,17 @@ def _make_command_with_db(
     return command
 
 
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_blocks_dml_when_not_allowed(mock_app: MagicMock) -> None:
     mock_app.config = {"DISALLOWED_SQL_FUNCTIONS": {}, "DISALLOWED_SQL_TABLES": {}}
-    from superset.exceptions import SupersetDMLNotAllowedException
+    from axbi.exceptions import AxBIDMLNotAllowedException
 
     command = _make_command_with_db("INSERT INTO t VALUES (1)", allow_dml=False)
-    with pytest.raises(SupersetDMLNotAllowedException):
+    with pytest.raises(AxBIDMLNotAllowedException):
         command._apply_sql_security("INSERT INTO t VALUES (1)")
 
 
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_allows_dml_when_enabled(mock_app: MagicMock) -> None:
     mock_app.config = {"DISALLOWED_SQL_FUNCTIONS": {}, "DISALLOWED_SQL_TABLES": {}}
     command = _make_command_with_db("INSERT INTO t VALUES (1)", allow_dml=True)
@@ -181,34 +181,34 @@ def test_apply_sql_security_allows_dml_when_enabled(mock_app: MagicMock) -> None
     assert command._apply_sql_security("INSERT INTO t VALUES (1)")
 
 
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_blocks_disallowed_table(mock_app: MagicMock) -> None:
     mock_app.config = {
         "DISALLOWED_SQL_FUNCTIONS": {},
         "DISALLOWED_SQL_TABLES": {"postgresql": {"secrets"}},
     }
-    from superset.exceptions import SupersetDisallowedSQLTableException
+    from axbi.exceptions import AxBIDisallowedSQLTableException
 
     command = _make_command_with_db("SELECT * FROM secrets", allow_dml=True)
-    with pytest.raises(SupersetDisallowedSQLTableException):
+    with pytest.raises(AxBIDisallowedSQLTableException):
         command._apply_sql_security("SELECT * FROM secrets")
 
 
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_blocks_disallowed_function(mock_app: MagicMock) -> None:
     """A disallowed function cannot be probed via cost estimation either."""
     mock_app.config = {
         "DISALLOWED_SQL_FUNCTIONS": {"postgresql": {"PG_SLEEP"}},
         "DISALLOWED_SQL_TABLES": {},
     }
-    from superset.exceptions import SupersetDisallowedSQLFunctionException
+    from axbi.exceptions import AxBIDisallowedSQLFunctionException
 
     command = _make_command_with_db("SELECT pg_sleep(1)", allow_dml=True)
-    with pytest.raises(SupersetDisallowedSQLFunctionException):
+    with pytest.raises(AxBIDisallowedSQLFunctionException):
         command._apply_sql_security("SELECT pg_sleep(1)")
 
 
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_allows_benign_select(mock_app: MagicMock) -> None:
     """A benign statement passes through unchanged (no false positives)."""
     mock_app.config = {"DISALLOWED_SQL_FUNCTIONS": {}, "DISALLOWED_SQL_TABLES": {}}
@@ -217,11 +217,11 @@ def test_apply_sql_security_allows_benign_select(mock_app: MagicMock) -> None:
     assert command._apply_sql_security("SELECT 1") == "SELECT 1"
 
 
-@patch("superset.commands.sql_lab.estimate.apply_rls")
-@patch("superset.commands.sql_lab.estimate.Query")
-@patch("superset.commands.sql_lab.estimate.object_session")
-@patch("superset.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.apply_rls")
+@patch("axbi.commands.sql_lab.estimate.Query")
+@patch("axbi.commands.sql_lab.estimate.object_session")
+@patch("axbi.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_injects_rls_when_enabled(
     mock_app: MagicMock,
     mock_is_feature_enabled: MagicMock,
@@ -248,11 +248,11 @@ def test_apply_sql_security_injects_rls_when_enabled(
     assert isinstance(result, str)
 
 
-@patch("superset.commands.sql_lab.estimate.Query")
-@patch("superset.commands.sql_lab.estimate.db")
-@patch("superset.commands.sql_lab.estimate.apply_rls")
-@patch("superset.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.Query")
+@patch("axbi.commands.sql_lab.estimate.db")
+@patch("axbi.commands.sql_lab.estimate.apply_rls")
+@patch("axbi.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_resolves_default_schema_for_rls(
     mock_app: MagicMock,
     mock_is_feature_enabled: MagicMock,
@@ -291,11 +291,11 @@ def test_apply_sql_security_resolves_default_schema_for_rls(
     assert call_args[2] == "public"
 
 
-@patch("superset.commands.sql_lab.estimate.Query")
-@patch("superset.commands.sql_lab.estimate.db")
-@patch("superset.commands.sql_lab.estimate.apply_rls")
-@patch("superset.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.Query")
+@patch("axbi.commands.sql_lab.estimate.db")
+@patch("axbi.commands.sql_lab.estimate.apply_rls")
+@patch("axbi.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_respects_explicit_catalog_schema(
     mock_app: MagicMock,
     mock_is_feature_enabled: MagicMock,
@@ -327,11 +327,11 @@ def test_apply_sql_security_respects_explicit_catalog_schema(
     assert call_args[2] == "my_schema"
 
 
-@patch("superset.commands.sql_lab.estimate.Query")
-@patch("superset.commands.sql_lab.estimate.db")
-@patch("superset.commands.sql_lab.estimate.apply_rls")
-@patch("superset.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
-@patch("superset.commands.sql_lab.estimate.app")
+@patch("axbi.commands.sql_lab.estimate.Query")
+@patch("axbi.commands.sql_lab.estimate.db")
+@patch("axbi.commands.sql_lab.estimate.apply_rls")
+@patch("axbi.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
+@patch("axbi.commands.sql_lab.estimate.app")
 def test_apply_sql_security_propagates_engine_schema_gate(
     mock_app: MagicMock,
     mock_is_feature_enabled: MagicMock,
@@ -354,7 +354,7 @@ def test_apply_sql_security_propagates_engine_schema_gate(
     database.get_default_catalog.return_value = "default_catalog"
     database.get_default_schema_for_query.side_effect = _security_exception()
 
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         command._apply_sql_security("SET search_path = secret; SELECT * FROM t")
 
     # RLS injection must not happen once the schema gate has rejected the query.

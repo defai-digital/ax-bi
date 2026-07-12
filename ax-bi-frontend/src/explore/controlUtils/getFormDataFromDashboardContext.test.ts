@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { JsonObject, VizType } from '@superset-ui/core';
+import { JsonObject, VizType } from '@ax-bi/ui-core';
 import { getExploreFormData } from 'spec/fixtures/mockExploreFormData';
 import { getDashboardFormData } from 'spec/fixtures/mockDashboardFormData';
 import { getFormDataWithDashboardContext } from './getFormDataWithDashboardContext';
@@ -152,7 +152,7 @@ const getExpectedResultFormData = (overrides: JsonObject = {}) => ({
     boy: '#ADD8E6',
   },
   shared_label_colors: ['boy', 'girl'],
-  own_color_scheme: 'supersetColors',
+  own_color_scheme: 'axbiColors',
   dashboard_color_scheme: 'd3Category20b',
   extra_filters: [
     {

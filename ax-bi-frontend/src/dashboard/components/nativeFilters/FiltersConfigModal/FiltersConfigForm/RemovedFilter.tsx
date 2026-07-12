@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Button, type OnClickHandler } from '@superset-ui/core/components';
+import { Button, type OnClickHandler } from '@ax-bi/ui-core/components';
 import { FC } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 
 const RemovedContent = styled.div`
   display: flex;

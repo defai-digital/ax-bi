@@ -16,32 +16,27 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  isFeatureEnabled,
-  FeatureFlag,
-  Preset,
-  VizType,
-} from '@superset-ui/core';
-import CalendarChartPlugin from '@superset-ui/legacy-plugin-chart-calendar';
-import ChordChartPlugin from '@superset-ui/legacy-plugin-chart-chord';
-import CountryMapChartPlugin from '@superset-ui/legacy-plugin-chart-country-map';
-import HorizonChartPlugin from '@superset-ui/legacy-plugin-chart-horizon';
-import PairedTTestChartPlugin from '@superset-ui/legacy-plugin-chart-paired-t-test';
-import ParallelCoordinatesChartPlugin from '@superset-ui/legacy-plugin-chart-parallel-coordinates';
-import PartitionChartPlugin from '@superset-ui/legacy-plugin-chart-partition';
-import RoseChartPlugin from '@superset-ui/legacy-plugin-chart-rose';
-import TableChartPlugin from '@superset-ui/plugin-chart-table';
-import { WordCloudChartPlugin } from '@superset-ui/plugin-chart-word-cloud';
-import WorldMapChartPlugin from '@superset-ui/legacy-plugin-chart-world-map';
+import { isFeatureEnabled, FeatureFlag, Preset, VizType } from '@ax-bi/ui-core';
+import CalendarChartPlugin from '@ax-bi/legacy-plugin-chart-calendar';
+import ChordChartPlugin from '@ax-bi/legacy-plugin-chart-chord';
+import CountryMapChartPlugin from '@ax-bi/legacy-plugin-chart-country-map';
+import HorizonChartPlugin from '@ax-bi/legacy-plugin-chart-horizon';
+import PairedTTestChartPlugin from '@ax-bi/legacy-plugin-chart-paired-t-test';
+import ParallelCoordinatesChartPlugin from '@ax-bi/legacy-plugin-chart-parallel-coordinates';
+import PartitionChartPlugin from '@ax-bi/legacy-plugin-chart-partition';
+import RoseChartPlugin from '@ax-bi/legacy-plugin-chart-rose';
+import TableChartPlugin from '@ax-bi/plugin-chart-table';
+import { WordCloudChartPlugin } from '@ax-bi/plugin-chart-word-cloud';
+import WorldMapChartPlugin from '@ax-bi/legacy-plugin-chart-world-map';
 import {
   BubbleChartPlugin,
   BulletChartPlugin,
   CompareChartPlugin,
   TimePivotChartPlugin,
-} from '@superset-ui/legacy-preset-chart-nvd3';
-import { DeckGLChartPreset } from '@superset-ui/preset-chart-deckgl';
-import ScatterMapChartPlugin from '@superset-ui/plugin-chart-point-cluster-map';
-import { CartodiagramPlugin } from '@superset-ui/plugin-chart-cartodiagram';
+} from '@ax-bi/legacy-preset-chart-nvd3';
+import { DeckGLChartPreset } from '@ax-bi/preset-chart-deckgl';
+import ScatterMapChartPlugin from '@ax-bi/plugin-chart-point-cluster-map';
+import { CartodiagramPlugin } from '@ax-bi/plugin-chart-cartodiagram';
 import {
   BigNumberChartPlugin,
   BigNumberTotalChartPlugin,
@@ -69,7 +64,7 @@ import {
   BigNumberPeriodOverPeriodChartPlugin,
   EchartsHeatmapChartPlugin,
   EchartsGanttChartPlugin,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import {
   SelectFilterPlugin,
   RangeFilterPlugin,
@@ -83,10 +78,10 @@ import {
   ChartCustomizationTimeColumnPlugin,
   DeckglLayerVisibilityCustomizationPlugin,
 } from 'src/chartCustomizations/components';
-import { PivotTableChartPlugin as PivotTableChartPluginV2 } from '@superset-ui/plugin-chart-pivot-table';
-import { HandlebarsChartPlugin } from '@superset-ui/plugin-chart-handlebars';
+import { PivotTableChartPlugin as PivotTableChartPluginV2 } from '@ax-bi/plugin-chart-pivot-table';
+import { HandlebarsChartPlugin } from '@ax-bi/plugin-chart-handlebars';
 import { ChartCustomizationPlugins, FilterPlugins } from 'src/constants';
-import AgGridTableChartPlugin from '@superset-ui/plugin-chart-ag-grid-table';
+import AgGridTableChartPlugin from '@ax-bi/plugin-chart-ag-grid-table';
 import TimeTableChartPlugin from '../TimeTable';
 
 export default class MainPreset extends Preset {

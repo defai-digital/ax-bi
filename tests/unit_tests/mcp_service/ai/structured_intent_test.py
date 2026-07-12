@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from superset.mcp_service.ai.structured_intent import (
+from axbi.mcp_service.ai.structured_intent import (
     chart_config_from_structured_intent,
     has_structured_chart_fields,
     resolve_metric_ref,

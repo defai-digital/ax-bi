@@ -22,7 +22,7 @@ import {
   QueryMode,
   TimeGranularity,
   TimeseriesDataRecord,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export interface HandlebarsStylesProps {
   height: number;

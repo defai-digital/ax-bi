@@ -24,9 +24,9 @@ import pytest
 from freezegun import freeze_time
 from sqlalchemy.orm.session import Session
 
-from superset.daos.base import BaseDAO
-from superset.daos.dataset import DatasetDAO
-from superset.sql.parse import Table
+from axbi.daos.base import BaseDAO
+from axbi.daos.dataset import DatasetDAO
+from axbi.sql.parse import Table
 
 
 def test_validate_update_uniqueness(session: Session) -> None:
@@ -36,9 +36,9 @@ def test_validate_update_uniqueness(session: Session) -> None:
     In particular, allow datasets with the same name in the same database as long as they
     are in different schemas
     """  # noqa: E501
-    from superset import db
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
+    from axbi import db
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
 
     SqlaTable.metadata.create_all(session.get_bind())
 

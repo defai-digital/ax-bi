@@ -18,32 +18,29 @@
  */
 import { renderHook, waitFor } from '@testing-library/react';
 import { Dataset } from 'src/components/Chart/types';
-import {
-  cachedSupersetGet,
-  supersetGetCache,
-} from 'src/utils/cachedSupersetGet';
+import { cachedAxBIGet, axbiGetCache } from 'src/utils/cachedAxBIGet';
 import {
   getDatasetId,
   createVerboseMap,
   useDatasetDrillInfo,
 } from './datasets';
 
-jest.mock('src/utils/cachedSupersetGet', () => ({
-  cachedSupersetGet: jest.fn(),
-  supersetGetCache: {
+jest.mock('src/utils/cachedAxBIGet', () => ({
+  cachedAxBIGet: jest.fn(),
+  axbiGetCache: {
     delete: jest.fn(),
   },
 }));
 
 // Mock getExtensionsRegistry at module level - returns undefined by default
 const mockGetExtensionsRegistry = jest.fn(() => ({ get: () => undefined }));
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getExtensionsRegistry: () => mockGetExtensionsRegistry(),
 }));
 
-const mockedCachedSupersetGet = jest.mocked(cachedSupersetGet);
-const mockedSupersetGetCacheDelete = jest.mocked(supersetGetCache.delete);
+const mockedCachedAxBIGet = jest.mocked(cachedAxBIGet);
+const mockedAxBIGetCacheDelete = jest.mocked(axbiGetCache.delete);
 const mockExtension = jest.fn();
 
 // Helper to configure extension mock for extension path tests
@@ -153,7 +150,7 @@ test('useDatasetDrillInfo fetches dataset drill info successfully', async () => 
     metrics: [{ metric_name: 'metric1', verbose_name: 'Metric 1' }],
   };
 
-  mockedCachedSupersetGet.mockResolvedValue({
+  mockedCachedAxBIGet.mockResolvedValue({
     json: {
       result: mockDataset,
     },
@@ -178,7 +175,7 @@ test('useDatasetDrillInfo fetches dataset drill info successfully', async () => 
 });
 
 test('useDatasetDrillInfo handles network errors', async () => {
-  mockedCachedSupersetGet.mockRejectedValue(new Error('Network error'));
+  mockedCachedAxBIGet.mockRejectedValue(new Error('Network error'));
 
   const { result } = renderHook(() => useDatasetDrillInfo(123, 456));
 
@@ -188,7 +185,7 @@ test('useDatasetDrillInfo handles network errors', async () => {
   expect(result.current.result).toBeNull();
   expect(result.current.error).toBeInstanceOf(Error);
   expect(result.current.error?.message).toBe('Network error');
-  expect(mockedSupersetGetCacheDelete).toHaveBeenCalled();
+  expect(mockedAxBIGetCacheDelete).toHaveBeenCalled();
 });
 
 test('useDatasetDrillInfo skips fetch when skip is true', async () => {
@@ -202,7 +199,7 @@ test('useDatasetDrillInfo skips fetch when skip is true', async () => {
   expect(result.current.error).toBeNull();
 
   // Verify no API call was made
-  expect(mockedCachedSupersetGet).not.toHaveBeenCalled();
+  expect(mockedCachedAxBIGet).not.toHaveBeenCalled();
 });
 
 test('useDatasetDrillInfo extracts dataset ID from string format', async () => {
@@ -212,7 +209,7 @@ test('useDatasetDrillInfo extracts dataset ID from string format', async () => {
     metrics: [],
   };
 
-  mockedCachedSupersetGet.mockResolvedValue({
+  mockedCachedAxBIGet.mockResolvedValue({
     json: {
       result: mockDataset,
     },
@@ -223,7 +220,7 @@ test('useDatasetDrillInfo extracts dataset ID from string format', async () => {
   await waitFor(() => {
     expect(result.current.status).toBe('complete');
   });
-  expect(mockedCachedSupersetGet).toHaveBeenCalledWith({
+  expect(mockedCachedAxBIGet).toHaveBeenCalledWith({
     endpoint: '/api/v1/dataset/123/drill_info/?q=(dashboard_id:456)',
   });
 });
@@ -235,7 +232,7 @@ test('useDatasetDrillInfo does not clear cache on successful fetch', async () =>
     metrics: [],
   };
 
-  mockedCachedSupersetGet.mockResolvedValue({
+  mockedCachedAxBIGet.mockResolvedValue({
     json: {
       result: mockDataset,
     },
@@ -248,7 +245,7 @@ test('useDatasetDrillInfo does not clear cache on successful fetch', async () =>
   });
 
   // Cache should NOT be deleted on success
-  expect(mockedSupersetGetCacheDelete).not.toHaveBeenCalled();
+  expect(mockedAxBIGetCacheDelete).not.toHaveBeenCalled();
 });
 
 test('useDatasetDrillInfo creates new verbose_map from columns and metrics', async () => {
@@ -259,7 +256,7 @@ test('useDatasetDrillInfo creates new verbose_map from columns and metrics', asy
     metrics: [{ metric_name: 'metric1', verbose_name: 'Metric 1' }],
   };
 
-  mockedCachedSupersetGet.mockResolvedValue({
+  mockedCachedAxBIGet.mockResolvedValue({
     json: {
       result: mockDataset,
     },
@@ -281,7 +278,7 @@ test('useDatasetDrillInfo creates new verbose_map from columns and metrics', asy
 });
 
 test('useDatasetDrillInfo handles NaN datasource ID from malformed string', async () => {
-  mockedCachedSupersetGet.mockResolvedValue({
+  mockedCachedAxBIGet.mockResolvedValue({
     json: {
       result: { id: NaN, columns: [], metrics: [] },
     },
@@ -294,7 +291,7 @@ test('useDatasetDrillInfo handles NaN datasource ID from malformed string', asyn
   });
 
   // Verify hook calls endpoint with NaN (API will handle validation)
-  expect(mockedCachedSupersetGet).toHaveBeenCalledWith({
+  expect(mockedCachedAxBIGet).toHaveBeenCalledWith({
     endpoint: '/api/v1/dataset/NaN/drill_info/?q=(dashboard_id:456)',
   });
   expect(result.current.status).toBe('complete');
@@ -342,8 +339,8 @@ test('useDatasetDrillInfo fetches dataset via extension when extension and formD
   });
   expect(result.current.error).toBeNull();
 
-  // Verify cachedSupersetGet was NOT called (extension path bypasses REST API)
-  expect(mockedCachedSupersetGet).not.toHaveBeenCalled();
+  // Verify cachedAxBIGet was NOT called (extension path bypasses REST API)
+  expect(mockedCachedAxBIGet).not.toHaveBeenCalled();
 });
 
 test('useDatasetDrillInfo handles extension throwing error', async () => {
@@ -366,10 +363,10 @@ test('useDatasetDrillInfo handles extension throwing error', async () => {
   expect(result.current.error?.message).toBe('Extension failed');
 
   // Verify REST API was not called
-  expect(mockedCachedSupersetGet).not.toHaveBeenCalled();
+  expect(mockedCachedAxBIGet).not.toHaveBeenCalled();
 
   // Verify cache is NOT deleted for extension errors (extensions don't use cache)
-  expect(mockedSupersetGetCacheDelete).not.toHaveBeenCalled();
+  expect(mockedAxBIGetCacheDelete).not.toHaveBeenCalled();
 });
 
 test('useDatasetDrillInfo handles extension returning malformed payload with undefined result', async () => {
@@ -425,7 +422,7 @@ test('useDatasetDrillInfo falls back to REST API when extension exists but formD
     metrics: [],
   };
 
-  mockedCachedSupersetGet.mockResolvedValue({
+  mockedCachedAxBIGet.mockResolvedValue({
     json: { result: mockDataset },
   } as any);
 
@@ -438,7 +435,7 @@ test('useDatasetDrillInfo falls back to REST API when extension exists but formD
   });
 
   // Should use REST API, NOT extension
-  expect(mockedCachedSupersetGet).toHaveBeenCalledWith({
+  expect(mockedCachedAxBIGet).toHaveBeenCalledWith({
     endpoint: '/api/v1/dataset/123/drill_info/?q=(dashboard_id:456)',
   });
   expect(mockExtension).not.toHaveBeenCalled();

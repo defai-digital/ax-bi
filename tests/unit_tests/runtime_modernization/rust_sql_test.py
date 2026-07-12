@@ -16,8 +16,8 @@
 # under the License.
 from __future__ import annotations
 
-from superset.runtime_modernization import rust_sql
-from superset.runtime_modernization.rust_sql import normalize_sql_whitespace
+from axbi.runtime_modernization import rust_sql
+from axbi.runtime_modernization.rust_sql import normalize_sql_whitespace
 
 
 def test_normalize_sql_whitespace_python_fallback_collapses_outer_whitespace() -> None:

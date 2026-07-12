@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Preset } from '@superset-ui/core';
-import type { DataMaskStateWithId } from '@superset-ui/core';
+import { Preset } from '@ax-bi/ui-core';
+import type { DataMaskStateWithId } from '@ax-bi/ui-core';
 import type {
   DropdownContainerProps,
   DropdownItem,
-} from '@superset-ui/core/components/DropdownContainer';
+} from '@ax-bi/ui-core/components/DropdownContainer';
 import { SelectFilterPlugin } from 'src/filters/components';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { act, render, waitFor, within } from 'spec/helpers/testing-library';
@@ -37,17 +37,16 @@ import FilterControls from './FilterControls';
 const dropdownContainerProps: DropdownContainerProps[] = [];
 const callbackRef: {
   current:
-    | ((s: { overflowed: string[]; notOverflowed: string[] }) => void)
-    | null;
+    ((s: { overflowed: string[]; notOverflowed: string[] }) => void) | null;
 } = { current: null };
 
 // Mock the DropdownContainer subpath rather than the barrel
-// `@superset-ui/core/components` — mocking the barrel triggers a
+// `@ax-bi/ui-core/components` — mocking the barrel triggers a
 // circular re-export chain at requireActual time
 // (LabeledErrorBoundInput → ActionButton is undefined at that point).
 // The barrel's `export { DropdownContainer } from './DropdownContainer'`
 // resolves to this subpath, so the mock is picked up transparently.
-jest.mock('@superset-ui/core/components/DropdownContainer', () => {
+jest.mock('@ax-bi/ui-core/components/DropdownContainer', () => {
   const React = jest.requireActual('react');
   const MockDropdownContainer = React.forwardRef(
     (props: DropdownContainerProps, ref: React.Ref<unknown>) => {

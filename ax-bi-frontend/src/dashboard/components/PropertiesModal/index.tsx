@@ -23,19 +23,19 @@ import {
   Form,
   Collapse,
   CollapseLabelInModal,
-} from '@superset-ui/core/components';
-import { useJsonValidation } from '@superset-ui/core/components/AsyncAceEditor';
+} from '@ax-bi/ui-core/components';
+import { useJsonValidation } from '@ax-bi/ui-core/components/AsyncAceEditor';
 import { type TagType } from 'src/components';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   isFeatureEnabled,
   FeatureFlag,
   getCategoricalSchemeRegistry,
-  SupersetClient,
+  AxBIClient,
   getClientErrorObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { fetchTags, OBJECT_TYPES } from 'src/features/tags/tags';
@@ -94,7 +94,7 @@ type DashboardInfo = {
   metadata: Record<string, any>;
   common?: {
     conf?: {
-      SUPERSET_DASHBOARD_PERIODICAL_REFRESH_LIMIT?: number;
+      AXBI_DASHBOARD_PERIODICAL_REFRESH_LIMIT?: number;
     };
   };
 };
@@ -235,7 +235,7 @@ const PropertiesModal = ({
     // that renders this component have all the values we need.
     // At some point when we have a more consistent frontend
     // datamodel, the dashboard could probably just be passed as a prop.
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/dashboard/${dashboardId}`,
     }).then(response => {
       const dashboard = response.json.result;
@@ -445,7 +445,7 @@ const PropertiesModal = ({
         ...morePutProps,
       };
 
-      SupersetClient.put({
+      AxBIClient.put({
         endpoint: `/api/v1/dashboard/${dashboardId}`,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(saveData),
@@ -489,7 +489,7 @@ const PropertiesModal = ({
           },
         ],
       });
-      SupersetClient.get({ endpoint: `/api/v1/theme/?q=${themeQuery}` })
+      AxBIClient.get({ endpoint: `/api/v1/theme/?q=${themeQuery}` })
         .then(({ json }) => {
           const fetchedThemes = json.result;
           setThemes(fetchedThemes);
@@ -597,7 +597,7 @@ const PropertiesModal = ({
         validator: () => {
           const refreshLimit =
             dashboardInfo?.common?.conf
-              ?.SUPERSET_DASHBOARD_PERIODICAL_REFRESH_LIMIT;
+              ?.AXBI_DASHBOARD_PERIODICAL_REFRESH_LIMIT;
           return validateRefreshFrequency(refreshFrequency, refreshLimit);
         },
       },
@@ -696,7 +696,7 @@ const PropertiesModal = ({
       errorTooltip={
         dashboardInfo?.isManagedExternally
           ? t(
-              "This dashboard is managed externally, and can't be edited in Superset",
+              "This dashboard is managed externally, and can't be edited in AxBI",
             )
           : errorTooltip
       }

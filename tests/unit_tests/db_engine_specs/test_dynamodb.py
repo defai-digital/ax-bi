@@ -36,7 +36,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.dynamodb import (
+    from axbi.db_engine_specs.dynamodb import (
         DynamoDBEngineSpec as spec,  # noqa: N813
     )
 

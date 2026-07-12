@@ -23,7 +23,7 @@ import {
   SqlaFormData,
   QueryFormColumn,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { addNullFilters, addTooltipColumnsToQuery } from '../buildQueryUtils';
 import { isMetricValue } from '../utils/metricUtils';
 
@@ -36,8 +36,7 @@ export interface DeckPathFormData extends SqlaFormData {
   tooltip_contents?: unknown[];
   tooltip_template?: string;
   line_width?:
-    | string
-    | { type?: 'fix' | 'metric'; value?: QueryFormMetric | number };
+    string | { type?: 'fix' | 'metric'; value?: QueryFormMetric | number };
   line_width_multiplier?: number;
   min_width?: number;
   max_width?: number;

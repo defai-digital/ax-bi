@@ -17,10 +17,10 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Dropdown, Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Dropdown, Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 interface DownloadDropdownProps {
   onDownloadCSV: () => void;

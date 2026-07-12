@@ -23,9 +23,9 @@ from datetime import datetime, timezone
 from flask import Flask
 from pytest_mock import MockerFixture
 
-from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-from superset.models.core import Database
-from superset.superset_typing import QueryObjectDict
+from axbi.axbi_typing import QueryObjectDict
+from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+from axbi.models.core import Database
 
 
 def _make_dataset(mocker: MockerFixture) -> SqlaTable:
@@ -46,11 +46,11 @@ def _make_dataset(mocker: MockerFixture) -> SqlaTable:
         metrics=[SqlMetric(metric_name="count", expression="COUNT(*)")],
     )
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+        "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
         return_value=[],
     )
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.is_guest_user",
+        "axbi.connectors.sqla.models.security_manager.is_guest_user",
         return_value=False,
     )
     return dataset
@@ -236,11 +236,11 @@ def test_series_limit_with_time_filter_includes_time_in_inner_subquery(
         metrics=[SqlMetric(metric_name="count", expression="COUNT(*)")],
     )
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+        "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
         return_value=[],
     )
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.is_guest_user",
+        "axbi.connectors.sqla.models.security_manager.is_guest_user",
         return_value=False,
     )
 

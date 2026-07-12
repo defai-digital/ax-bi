@@ -17,7 +17,7 @@
  * under the License.
  */
 import { act } from 'react';
-import { QueryState } from '@superset-ui/core';
+import { QueryState } from '@ax-bi/ui-core';
 import fetchMock from 'fetch-mock';
 import configureStore from 'redux-mock-store';
 import { thunk } from 'redux-thunk';

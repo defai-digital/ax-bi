@@ -22,11 +22,11 @@ import freezegun
 import pytest
 from dateutil.relativedelta import relativedelta
 
-from superset.commands.chart.exceptions import (
+from axbi.commands.chart.exceptions import (
     TimeRangeAmbiguousError,
     TimeRangeParseFailError,
 )
-from superset.utils.date_parser import (
+from axbi.utils.date_parser import (
     DateRangeMigration,
     datetime_eval,
     get_past_or_future,
@@ -75,7 +75,7 @@ def mock_parse_human_datetime(s: str) -> datetime | None:  # noqa: C901
         return None
 
 
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_get_since_until() -> None:
     result: tuple[datetime | None, datetime | None]
     expected: tuple[datetime | None, datetime | None]
@@ -284,7 +284,7 @@ def test_get_since_until() -> None:
 
 
 @with_feature_flags(CHART_PLUGINS_EXPERIMENTAL=True)
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_get_since_until_instant_time_comparison_enabled() -> None:
     result: tuple[datetime | None, datetime | None]
     expected: tuple[datetime | None, datetime | None]
@@ -352,7 +352,7 @@ def test_previous_calendar_quarter():
         assert result == expected
 
 
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_datetime_eval() -> None:
     result = datetime_eval("datetime('now')")
     expected = datetime(2016, 11, 7, 9, 30, 10)
@@ -527,7 +527,7 @@ def test_datetime_eval() -> None:
     assert result == expected
 
 
-@patch("superset.utils.date_parser.datetime")
+@patch("axbi.utils.date_parser.datetime")
 def test_parse_human_timedelta(mock_datetime: Mock) -> None:
     mock_datetime.now.return_value = datetime(2019, 4, 1)
     mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
@@ -541,7 +541,7 @@ def test_parse_human_timedelta(mock_datetime: Mock) -> None:
     assert parse_human_timedelta("-1 month", datetime(2019, 2, 1)) == timedelta(-31)
 
 
-@patch("superset.utils.date_parser.datetime")
+@patch("axbi.utils.date_parser.datetime")
 def test_parse_past_timedelta(mock_datetime: Mock) -> None:
     mock_datetime.now.return_value = datetime(2019, 4, 1)
     mock_datetime.side_effect = lambda *args, **kw: datetime(*args, **kw)
@@ -612,7 +612,7 @@ def test_date_range_migration() -> None:
     assert not re.search(DateRangeMigration.x_dateunit, field)
 
 
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_first_of_with_explicit_scope() -> None:
     """Test 'first of [scope] [unit]' expressions that return a single date."""
     result = get_since_until("first of this month : ")
@@ -637,7 +637,7 @@ def test_first_of_with_explicit_scope() -> None:
     assert result == (datetime(2016, 11, 7), None)
 
 
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_first_of_with_default_scope() -> None:
     """Test 'first of the [unit]' expressions that default to 'this'."""
     result = get_since_until("first of the month : ")
@@ -653,7 +653,7 @@ def test_first_of_with_default_scope() -> None:
     assert result == (datetime(2016, 11, 7), None)
 
 
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_first_subunit_of_with_explicit_scope() -> None:
     """Test 'first [subunit] of [scope] [unit]' expressions that return a range."""
     result = get_since_until("first week of this year")
@@ -666,7 +666,7 @@ def test_first_subunit_of_with_explicit_scope() -> None:
     assert result == (datetime(2016, 10, 1), datetime(2016, 10, 8))
 
 
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_first_subunit_of_with_default_scope() -> None:
     """Test 'first [subunit] of the [unit]' expressions that default to 'this'."""
     result = get_since_until("first week of the year")
@@ -698,7 +698,7 @@ def test_first_subunit_of_with_default_scope() -> None:
         "last 7days : ",  # \s{0,5} allows 0 spaces after number - valid
     ],
 )
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_time_range_bounded_whitespace_regex_valid(time_range: str) -> None:
     """Match expressions with 1-5 spaces between tokens."""
     result = get_since_until(time_range)
@@ -716,7 +716,7 @@ def test_time_range_bounded_whitespace_regex_valid(time_range: str) -> None:
         "last 7 days extra : ",
     ],
 )
-@patch("superset.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
+@patch("axbi.utils.date_parser.parse_human_datetime", mock_parse_human_datetime)
 def test_time_range_bounded_whitespace_regex_invalid(time_range: str) -> None:
     """Reject expressions with 0 or 6+ spaces (fall back to DATETIME wrapping)."""
     result = get_since_until(time_range)
@@ -736,9 +736,9 @@ def test_datetime_eval_does_not_emit_parsedatetime_debug_logs(
     with that in it."
 
     The fix is to silence the ``parsedatetime`` logger at module load
-    in ``superset/utils/date_parser.py`` (e.g.
+    in ``axbi/utils/date_parser.py`` (e.g.
     ``logging.getLogger("parsedatetime").setLevel(logging.WARNING)``).
-    Their own DEBUG output is internal library chatter that Superset
+    Their own DEBUG output is internal library chatter that AxBI
     does not surface to operators in any actionable way.
 
     This test captures all log records at DEBUG level during a single

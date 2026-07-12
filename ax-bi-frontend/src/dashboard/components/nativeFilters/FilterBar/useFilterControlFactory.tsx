@@ -24,7 +24,7 @@ import {
   Divider,
   Filter,
   isFilterDivider,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import FilterControl from './FilterControls/FilterControl';
 import { useFilters } from './state';

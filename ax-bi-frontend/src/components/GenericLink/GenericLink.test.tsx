@@ -37,22 +37,23 @@ test('navigates to internal URL', () => {
 
 test('navigates to external URL', () => {
   render(
-    <GenericLink to="https://superset.apache.org/">
+    <GenericLink to="https://github.com/defai-digital/ax-bi/">
       Link to external website
     </GenericLink>,
     { useRouter: true },
   );
   const externalLink = screen.getByTestId('external-link');
-  expect(externalLink).toHaveAttribute('href', 'https://superset.apache.org/');
+  expect(externalLink).toHaveAttribute(
+    'href',
+    'https://github.com/defai-digital/ax-bi/',
+  );
 });
 
 test('navigates to external URL without host', () => {
   render(
-    <GenericLink to="superset.apache.org/">
-      Link to external website
-    </GenericLink>,
+    <GenericLink to="axbi.example.test/">Link to external website</GenericLink>,
     { useRouter: true },
   );
   const externalLink = screen.getByTestId('external-link');
-  expect(externalLink).toHaveAttribute('href', '//superset.apache.org/');
+  expect(externalLink).toHaveAttribute('href', '//axbi.example.test/');
 });

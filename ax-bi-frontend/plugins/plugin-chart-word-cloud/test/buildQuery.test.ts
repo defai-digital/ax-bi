@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { VizType } from '@superset-ui/core';
+import { VizType } from '@ax-bi/ui-core';
 import { WordCloudFormData } from '../src';
 import buildQuery from '../src/plugin/buildQuery';
 

@@ -23,9 +23,9 @@ import { WebMercatorViewport } from '@math.gl/web-mercator';
 import {
   resolveMapStyle,
   type ResolvedMapStyle,
-} from '@superset-ui/core/utils/mapStyles';
-import { useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core/utils/mapStyles';
+import { useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import ScatterPlotOverlay from './components/ScatterPlotOverlay';
 import { getMapboxApiKey } from './utils/mapbox';
 import 'maplibre-gl/dist/maplibre-gl.css';

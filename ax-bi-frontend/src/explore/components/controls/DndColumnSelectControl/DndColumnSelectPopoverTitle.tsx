@@ -17,10 +17,10 @@
  * under the License.
  */
 import { ChangeEvent, useCallback, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled, useTheme } from '@apache-superset/core/theme';
-import { Input, Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { styled, useTheme } from '@ax-bi/core/theme';
+import { Input, Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 interface DndColumnSelectPopoverTitleProps {
   title: string;

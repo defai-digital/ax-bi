@@ -24,16 +24,16 @@ import {
   Collapse,
   CollapseLabelInModal,
   type SelectValue,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
-  SupersetClient,
+  AxBIClient,
   isFeatureEnabled,
   FeatureFlag,
   getClientErrorObject,
   ensureIsArray,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import Chart, { Slice } from 'src/types/Chart';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { type TagType } from 'src/components';
@@ -166,7 +166,7 @@ function PropertiesModal({
         ],
       });
       try {
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint: `/api/v1/chart/${slice.slice_id}?q=${queryParams}`,
         });
         const chart = response.json.result;
@@ -213,7 +213,7 @@ function PropertiesModal({
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/chart/related/owners?q=${query}`,
         }).then(response => ({
           data: response.json.result
@@ -268,12 +268,12 @@ function PropertiesModal({
 
     try {
       const chartEndpoint = `/api/v1/chart/${slice.slice_id}`;
-      let res = await SupersetClient.put({
+      let res = await AxBIClient.put({
         endpoint: chartEndpoint,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      res = await SupersetClient.get({
+      res = await AxBIClient.get({
         endpoint: chartEndpoint,
       });
       onSave(res.json.result);
@@ -332,9 +332,7 @@ function PropertiesModal({
       }
       errorTooltip={
         slice.is_managed_externally
-          ? t(
-              "This chart is managed externally, and can't be edited in Superset",
-            )
+          ? t("This chart is managed externally, and can't be edited in AxBI")
           : errorTooltip
       }
       wrapProps={{ 'data-test': 'properties-edit-modal' }}

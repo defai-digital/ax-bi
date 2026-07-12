@@ -16,11 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  buildQueryContext,
-  ensureIsArray,
-  SqlaFormData,
-} from '@superset-ui/core';
+import { buildQueryContext, ensureIsArray, SqlaFormData } from '@ax-bi/ui-core';
 import {
   getSpatialColumns,
   addSpatialNullFilters,

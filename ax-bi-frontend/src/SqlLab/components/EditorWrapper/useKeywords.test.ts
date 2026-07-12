@@ -18,7 +18,7 @@
  */
 import fetchMock from 'fetch-mock';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { getExtensionsRegistry } from '@superset-ui/core';
+import { getExtensionsRegistry } from '@ax-bi/ui-core';
 import {
   createWrapper,
   defaultStore as store,

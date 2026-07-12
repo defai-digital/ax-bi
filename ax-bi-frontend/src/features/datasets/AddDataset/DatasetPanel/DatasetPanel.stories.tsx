@@ -22,7 +22,7 @@ import DatasetPanel from './DatasetPanel';
 import { exampleColumns } from './fixtures';
 
 export default {
-  title: 'Superset App/views/CRUD/data/dataset/DatasetPanel',
+  title: 'AxBI App/views/CRUD/data/dataset/DatasetPanel',
   component: DatasetPanel,
 } as Meta<typeof DatasetPanel>;
 

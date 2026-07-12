@@ -44,12 +44,12 @@ import {
   AgGridChartState,
   ContextMenuFilters,
   DataRecordFilters,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
 import { Logger, LOG_ACTIONS_RENDER_CHART } from 'src/logger/LogUtils';
-import { EmptyState } from '@superset-ui/core/components';
+import { EmptyState } from '@ax-bi/ui-core/components';
 import { ChartSource } from 'src/types/ChartSource';
 import type { Datasource, ChartStatus } from 'src/explore/types';
 import type { Dispatch } from 'redux';
@@ -424,12 +424,12 @@ function ChartRendererComponent({
 
   // It's bad practice to use unprefixed `vizType` as classnames for chart
   // container. It may cause css conflicts as in the case of legacy table chart.
-  // When migrating charts, we should gradually add a `superset-chart-` prefix
+  // When migrating charts, we should gradually add a `axbi-chart-` prefix
   // to each one of them.
   const snakeCaseVizType = snakeCase(vizType);
   const chartClassName =
     vizType === VizType.Table
-      ? `superset-chart-${snakeCaseVizType}`
+      ? `axbi-chart-${snakeCaseVizType}`
       : snakeCaseVizType;
 
   const webpackHash =

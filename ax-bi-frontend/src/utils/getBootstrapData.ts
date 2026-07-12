@@ -47,7 +47,7 @@ const normalizePathWithFallback = (
 const SAFE_APPLICATION_ROOT_RE = /^(\/[\w\-.][\w\-./]*)?$/;
 
 /**
- * The application root (SUPERSET_APP_ROOT) is reflected into links and
+ * The application root (AXBI_APP_ROOT) is reflected into links and
  * navigation, so constrain it to a plain absolute path before use. Anything
  * that isn't a simple "/path" prefix falls back to the default root so a
  * malformed value can't be reinterpreted as HTML or redirect off-origin. This

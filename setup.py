@@ -43,7 +43,7 @@ print("VERSION: " + version_string)
 print("GIT SHA: " + GIT_SHA)
 print("-==-" * 15)
 
-VERSION_INFO_FILE = os.path.join(BASE_DIR, "superset", "static", "version_info.json")
+VERSION_INFO_FILE = os.path.join(BASE_DIR, "axbi", "static", "version_info.json")
 
 with open(VERSION_INFO_FILE, "w") as version_file:
     json.dump(version_info, version_file)
@@ -52,25 +52,25 @@ with open(VERSION_INFO_FILE, "w") as version_file:
 version_string = version_string.replace("-dev", ".dev0")
 
 setup(
-    name="apache_superset",
+    name="ax-bi",
     version=version_string,
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
     entry_points={
         "console_scripts": [
-            "ax-bi=superset.cli.main:superset",
+            "ax-bi=axbi.cli.main:axbi",
         ],
         # the `postgres` and `postgres+psycopg2://` schemes were removed in SQLAlchemy 1.4  # noqa: E501
         # add an alias here to prevent breaking existing databases
         "sqlalchemy.dialects": [
             "postgres.psycopg2 = sqlalchemy.dialects.postgresql:dialect",
             "postgres = sqlalchemy.dialects.postgresql:dialect",
-            "superset = superset.extensions.metadb:SupersetAPSWDialect",
+            "axbi = axbi.extensions.metadb:AxBIAPSWDialect",
         ],
-        "shillelagh.adapter": [
-            "superset=superset.extensions.metadb:SupersetShillelaghAdapter"
-        ],
+        "shillelagh.adapter": ["axbi=axbi.extensions.metadb:AxBIShillelaghAdapter"],
     },
-    download_url="https://www.apache.org/dist/superset/" + version_string,
+    download_url=(
+        "https://github.com/defai-digital/ax-bi/releases/tag/" + version_string
+    ),
 )

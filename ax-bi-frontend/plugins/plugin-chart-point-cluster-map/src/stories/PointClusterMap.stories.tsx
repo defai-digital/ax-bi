@@ -18,9 +18,9 @@
  */
 
 /* eslint-disable sort-keys, no-magic-numbers */
-import { SuperChart } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
-import ScatterMapChartPlugin from '@superset-ui/plugin-chart-point-cluster-map';
+import { SuperChart } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
+import ScatterMapChartPlugin from '@ax-bi/plugin-chart-point-cluster-map';
 import { withResizableChartDemo } from '@storybook-shared';
 import { generateData } from './data';
 

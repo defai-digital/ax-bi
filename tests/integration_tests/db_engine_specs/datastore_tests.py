@@ -26,19 +26,19 @@ pytest.importorskip("sqlalchemy_datastore")
 
 from sqlalchemy.engine.url import make_url
 
-from superset.connectors.sqla.models import TableColumn
-from superset.db_engine_specs.base import BaseEngineSpec
-from superset.db_engine_specs.datastore import DatastoreEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.superset_typing import ResultSetColumnType
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.axbi_typing import ResultSetColumnType
+from axbi.connectors.sqla.models import TableColumn
+from axbi.db_engine_specs.base import BaseEngineSpec
+from axbi.db_engine_specs.datastore import DatastoreEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
 )
 
 
-class TestDatastoreDbEngineSpec(SupersetTestCase):
+class TestDatastoreDbEngineSpec(AxBITestCase):
     def test_datastore_sqla_column_label(self):
         """
         DB Eng Specs (datastore): Test column label
@@ -122,11 +122,11 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         msg = "403 POST https://datastore.googleapis.com/: Access Denied: Project my-project: User does not have datastore.databases.create permission in project my-project"  # noqa: E501
         result = DatastoreEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message="Unable to connect. Verify that the following roles are set "
                 'on the service account: "Cloud Datastore Viewer", '
                 '"Cloud Datastore User", "Cloud Datastore Creator"',
-                error_type=SupersetErrorType.CONNECTION_DATABASE_PERMISSIONS_ERROR,
+                error_type=AxBIErrorType.CONNECTION_DATABASE_PERMISSIONS_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google Datastore",
@@ -143,9 +143,9 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         msg = "datastore error: 404 Not found: Dataset fakeDataset:bogusSchema was not found in location"  # noqa: E501
         result = DatastoreEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='The schema "bogusSchema" does not exist. A valid schema must be used to run this query.',  # noqa: E501
-                error_type=SupersetErrorType.SCHEMA_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.SCHEMA_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google Datastore",
@@ -166,9 +166,9 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         msg = 'Table name "badtable" missing dataset while no default dataset is set in the request'  # noqa: E501
         result = DatastoreEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='The table "badtable" does not exist. A valid table must be used to run this query.',  # noqa: E501
-                error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google Datastore",
@@ -189,9 +189,9 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         msg = "Unrecognized name: badColumn at [1:8]"
         result = DatastoreEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='We can\'t seem to resolve column "badColumn" at line 1:8.',
-                error_type=SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google Datastore",
@@ -212,9 +212,9 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         msg = 'Syntax error: Expected end of input but got identifier "from_"'
         result = DatastoreEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Please check your query for syntax errors at or near "from_". Then, try running your query again.',  # noqa: E501
-                error_type=SupersetErrorType.SYNTAX_ERROR,
+                error_type=AxBIErrorType.SYNTAX_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google Datastore",
@@ -228,7 +228,7 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
             )
         ]
 
-    @mock.patch("superset.models.core.Database.db_engine_spec", DatastoreEngineSpec)
+    @mock.patch("axbi.models.core.Database.db_engine_spec", DatastoreEngineSpec)
     @mock.patch(
         "sqlalchemy_datastore.base.create_datastore_client",
         mock.Mock(return_value=(mock.Mock(), mock.Mock())),
@@ -413,7 +413,7 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         DB Eng Specs (datastore): Test DBAPI exception mapping includes
         DefaultCredentialsError
         """
-        from superset.db_engine_specs.exceptions import SupersetDBAPIConnectionError
+        from axbi.db_engine_specs.exceptions import AxBIDBAPIConnectionError
 
         pytest.importorskip("google.auth")
 
@@ -423,7 +423,7 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         # Verify the mapping key is DefaultCredentialsError
         exception_class = list(mapping.keys())[0]
         assert exception_class.__name__ == "DefaultCredentialsError"
-        assert mapping[exception_class] is SupersetDBAPIConnectionError
+        assert mapping[exception_class] is AxBIDBAPIConnectionError
 
     def test_extract_errors_unmatched(self):
         """
@@ -433,14 +433,14 @@ class TestDatastoreDbEngineSpec(SupersetTestCase):
         msg = "Some completely unknown error message"
         result = DatastoreEngineSpec.extract_errors(Exception(msg))
         assert len(result) == 1
-        assert result[0].error_type == SupersetErrorType.GENERIC_DB_ENGINE_ERROR
+        assert result[0].error_type == AxBIErrorType.GENERIC_DB_ENGINE_ERROR
 
     def test_build_sqlalchemy_uri_string_credentials(self):
         """
         DB Eng Specs (datastore): Test building URI when credentials_info is a
         JSON string instead of a dict
         """
-        from superset.utils import json
+        from axbi.utils import json
 
         parameters: dict[str, Any] = {"query": {}}
         encrypted_extra = {

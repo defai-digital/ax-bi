@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ensureIsArray, Filter } from '@superset-ui/core';
+import { ensureIsArray, Filter } from '@ax-bi/ui-core';
 import { useSelector } from 'react-redux';
 import { useMemo } from 'react';
 import { createSelector } from '@reduxjs/toolkit';

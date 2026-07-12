@@ -1,0 +1,24 @@
+{
+  "name": "ax-bi-desktop",
+  "version": "0.1.0",
+  "description": "AX BI Desktop Client - A thin shell for the AX BI analytics platform",
+  "private": true,
+  "scripts": {
+    "tauri": "npx tauri",
+    "type": "tsc --noEmit",
+    "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "dev": "npx tauri dev",
+    "build": "npx tauri build",
+    "build:debug": "npx tauri build --debug"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.0.0",
+    "@tauri-apps/plugin-shell": "^2.0.0",
+    "@tauri-apps/plugin-notification": "^2.0.0",
+    "@tauri-apps/plugin-deep-link": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}

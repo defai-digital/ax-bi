@@ -26,8 +26,8 @@ from unittest.mock import patch
 import pytest
 import rison
 
-from superset.security import SupersetSecurityManager
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.security import AxBISecurityManager
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -37,22 +37,22 @@ from tests.integration_tests.fixtures.birth_names_dashboard import (
 
 
 def _deny_can_export_image(perm: str, view: str) -> bool:
-    """Return False only for can_export_image on Superset, allow everything else."""
-    return perm != "can_export_image" or view != "Superset"
+    """Return False only for can_export_image on AxBI, allow everything else."""
+    return perm != "can_export_image" or view != "AxBI"
 
 
 def _deny_can_export_data(perm: str, view: str) -> bool:
-    """Return False only for can_export_data on Superset, allow everything else."""
-    return perm != "can_export_data" or view != "Superset"
+    """Return False only for can_export_data on AxBI, allow everything else."""
+    return perm != "can_export_data" or view != "AxBI"
 
 
-class TestGranularExportChartAPI(SupersetTestCase):
+class TestGranularExportChartAPI(AxBITestCase):
     """Test granular export controls on chart screenshot endpoints."""
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(GRANULAR_EXPORT_CONTROLS=True, THUMBNAILS=True)
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_image,
     )
@@ -71,7 +71,7 @@ class TestGranularExportChartAPI(SupersetTestCase):
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(GRANULAR_EXPORT_CONTROLS=True, THUMBNAILS=True)
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_image,
     )
@@ -89,7 +89,7 @@ class TestGranularExportChartAPI(SupersetTestCase):
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(GRANULAR_EXPORT_CONTROLS=True, THUMBNAILS=True)
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_image,
     )
@@ -129,7 +129,7 @@ class TestGranularExportChartAPI(SupersetTestCase):
         assert rv.status_code != 403
 
 
-class TestGranularExportDashboardAPI(SupersetTestCase):
+class TestGranularExportDashboardAPI(AxBITestCase):
     """Test granular export controls on dashboard screenshot endpoints."""
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
@@ -139,7 +139,7 @@ class TestGranularExportDashboardAPI(SupersetTestCase):
         ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True,
     )
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_image,
     )
@@ -167,7 +167,7 @@ class TestGranularExportDashboardAPI(SupersetTestCase):
         ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True,
     )
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_image,
     )
@@ -191,7 +191,7 @@ class TestGranularExportDashboardAPI(SupersetTestCase):
         ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True,
     )
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_image,
     )
@@ -210,12 +210,12 @@ class TestGranularExportDashboardAPI(SupersetTestCase):
         assert rv.status_code == 202
 
 
-class TestGranularExportSqlLabAPI(SupersetTestCase):
+class TestGranularExportSqlLabAPI(AxBITestCase):
     """Test granular export controls on SQL Lab export endpoints."""
 
     @with_feature_flags(GRANULAR_EXPORT_CONTROLS=True)
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_data,
     )
@@ -229,7 +229,7 @@ class TestGranularExportSqlLabAPI(SupersetTestCase):
 
     @with_feature_flags(GRANULAR_EXPORT_CONTROLS=True)
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_data,
     )
@@ -245,7 +245,7 @@ class TestGranularExportSqlLabAPI(SupersetTestCase):
 
     @with_feature_flags(GRANULAR_EXPORT_CONTROLS=False)
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_data,
     )
@@ -260,7 +260,7 @@ class TestGranularExportSqlLabAPI(SupersetTestCase):
 
     @with_feature_flags(GRANULAR_EXPORT_CONTROLS=False)
     @patch.object(
-        SupersetSecurityManager,
+        AxBISecurityManager,
         "can_access",
         side_effect=_deny_can_export_data,
     )

@@ -17,18 +17,12 @@
  * under the License.
  */
 import { useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import {
-  Form,
-  FormLabel,
-  Col,
-  Row,
-  Tooltip,
-} from '@superset-ui/core/components';
-import { Input } from '@superset-ui/core/components/Input';
-import { Radio } from '@superset-ui/core/components/Radio';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { Form, FormLabel, Col, Row, Tooltip } from '@ax-bi/ui-core/components';
+import { Input } from '@ax-bi/ui-core/components/Input';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { DatabaseObject, FieldPropTypes } from '../types';
 import { AuthType } from '.';
 

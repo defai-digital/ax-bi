@@ -17,8 +17,8 @@
 
 import pytest
 
-from superset.commands.explore.permalink.create import CreateExplorePermalinkCommand
-from superset.explore.permalink.exceptions import ExplorePermalinkInvalidStateError
+from axbi.commands.explore.permalink.create import CreateExplorePermalinkCommand
+from axbi.explore.permalink.exceptions import ExplorePermalinkInvalidStateError
 
 
 def test_create_explore_permalink_validates_datasource_key() -> None:

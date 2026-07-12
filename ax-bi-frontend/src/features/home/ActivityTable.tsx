@@ -17,12 +17,12 @@
  * under the License.
  */
 import { useEffect, useState } from 'react';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { setItem, LocalStorageKeys } from 'src/utils/localStorageHelpers';
 import { Link } from 'react-router-dom';
-import { ListViewCard } from '@superset-ui/core/components';
+import { ListViewCard } from '@ax-bi/ui-core/components';
 import { Dashboard, SavedQueryObject, TableTab } from 'src/views/CRUD/types';
 import { ActivityData, LoadingCards } from 'src/pages/Home';
 import {
@@ -31,7 +31,7 @@ import {
   getEditedObjects,
 } from 'src/views/CRUD/utils';
 import { Chart } from 'src/types/Chart';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import SubMenu from './SubMenu';
 import EmptyState from './EmptyState';
 import { WelcomeTable, RecentActivity } from './types';
@@ -48,11 +48,7 @@ interface RecentDashboard extends RecentActivity {
  * Recent activity objects fetched by `getRecentActivityObjs`.
  */
 type ActivityObject =
-  | RecentSlice
-  | RecentDashboard
-  | Chart
-  | Dashboard
-  | SavedQueryObject;
+  RecentSlice | RecentDashboard | Chart | Dashboard | SavedQueryObject;
 
 interface ActivityProps {
   user: {

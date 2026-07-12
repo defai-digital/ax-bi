@@ -22,8 +22,8 @@ import pytest
 from sqlalchemy import column, types
 from sqlalchemy.engine.url import make_url
 
-from superset.db_engine_specs.denodo import DenodoEngineSpec as spec  # noqa: N813
-from superset.utils.core import GenericDataType
+from axbi.db_engine_specs.denodo import DenodoEngineSpec as spec  # noqa: N813
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -114,7 +114,7 @@ def test_get_default_catalog() -> None:
     Test ``get_default_catalog``.
     Should return None.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     database = Database(
         database_name="denodo",

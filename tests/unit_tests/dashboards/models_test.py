@@ -14,8 +14,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from superset.models.dashboard import Dashboard
-from superset.utils import json
+from axbi.models.dashboard import Dashboard
+from axbi.utils import json
 
 
 def test_dashboard_tabs_skips_malformed_layout_references() -> None:

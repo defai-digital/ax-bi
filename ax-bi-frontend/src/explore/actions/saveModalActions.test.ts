@@ -24,7 +24,7 @@ import {
   QueryFormData,
   SimpleAdhocFilter,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   createDashboard,
   createSlice,

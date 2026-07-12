@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { useTheme, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { useTheme, styled } from '@ax-bi/core/theme';
 import cx from 'classnames';
-import { Button, Modal } from '@superset-ui/core/components';
+import { Button, Modal } from '@ax-bi/ui-core/components';
 import withToasts, {
   ToastProps,
 } from 'src/components/MessageToasts/withToasts';

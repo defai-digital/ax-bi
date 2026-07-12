@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { SelectOption } from 'src/components/ListView';
 import { FormValues } from './types';
 
@@ -26,21 +26,21 @@ export const createUser = async (values: FormValues) => {
   if (payload.active == null) {
     payload.active = false;
   }
-  await SupersetClient.post({
+  await AxBIClient.post({
     endpoint: '/api/v1/security/users/',
     jsonPayload: { ...payload },
   });
 };
 
 export const updateUser = async (user_Id: number, values: FormValues) => {
-  await SupersetClient.put({
+  await AxBIClient.put({
     endpoint: `/api/v1/security/users/${user_Id}`,
     jsonPayload: { ...values },
   });
 };
 
 export const deleteUser = async (userId: number) =>
-  SupersetClient.delete({
+  AxBIClient.delete({
     endpoint: `/api/v1/security/users/${userId}`,
   });
 

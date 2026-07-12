@@ -19,7 +19,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from superset.mcp_service.caching import _build_caching_settings
+from axbi.mcp_service.caching import _build_caching_settings
 
 
 def test_build_caching_settings_empty_config():
@@ -74,11 +74,11 @@ def test_create_response_caching_middleware_returns_none_when_disabled():
     mock_flask_app.config.get.return_value = {"enabled": False}
 
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app",
+        "axbi.mcp_service.flask_singleton.get_flask_app",
         return_value=mock_flask_app,
     ):
         with patch("flask.has_app_context", return_value=True):
-            from superset.mcp_service.caching import create_response_caching_middleware
+            from axbi.mcp_service.caching import create_response_caching_middleware
 
             result = create_response_caching_middleware()
 
@@ -99,7 +99,7 @@ def test_create_response_caching_middleware_falls_back_to_memory_when_no_prefix(
     mock_middleware = MagicMock()
 
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app",
+        "axbi.mcp_service.flask_singleton.get_flask_app",
         return_value=mock_flask_app,
     ):
         with patch("flask.has_app_context", return_value=True):
@@ -107,7 +107,7 @@ def test_create_response_caching_middleware_falls_back_to_memory_when_no_prefix(
                 "fastmcp.server.middleware.caching.ResponseCachingMiddleware",
                 return_value=mock_middleware,
             ) as mock_middleware_class:
-                from superset.mcp_service.caching import (
+                from axbi.mcp_service.caching import (
                     create_response_caching_middleware,
                 )
 
@@ -134,7 +134,7 @@ def test_create_response_caching_middleware_uses_memory_store_when_store_disable
     mock_middleware = MagicMock()
 
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app",
+        "axbi.mcp_service.flask_singleton.get_flask_app",
         return_value=mock_flask_app,
     ):
         with patch("flask.has_app_context", return_value=True):
@@ -142,7 +142,7 @@ def test_create_response_caching_middleware_uses_memory_store_when_store_disable
                 "fastmcp.server.middleware.caching.ResponseCachingMiddleware",
                 return_value=mock_middleware,
             ) as mock_middleware_class:
-                from superset.mcp_service.caching import (
+                from axbi.mcp_service.caching import (
                     create_response_caching_middleware,
                 )
 
@@ -168,18 +168,18 @@ def test_create_response_caching_middleware_creates_middleware():
     mock_middleware = MagicMock()
 
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app",
+        "axbi.mcp_service.flask_singleton.get_flask_app",
         return_value=mock_flask_app,
     ):
         with patch("flask.has_app_context", return_value=True):
             with patch(
-                "superset.mcp_service.caching.get_mcp_store", return_value=mock_store
+                "axbi.mcp_service.caching.get_mcp_store", return_value=mock_store
             ):
                 with patch(
                     "fastmcp.server.middleware.caching.ResponseCachingMiddleware",
                     return_value=mock_middleware,
                 ) as mock_middleware_class:
-                    from superset.mcp_service.caching import (
+                    from axbi.mcp_service.caching import (
                         create_response_caching_middleware,
                     )
 

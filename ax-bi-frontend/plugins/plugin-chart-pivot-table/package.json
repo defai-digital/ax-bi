@@ -1,7 +1,7 @@
 {
-  "name": "@superset-ui/plugin-chart-pivot-table",
+  "name": "@ax-bi/plugin-chart-pivot-table",
   "version": "0.20.3",
-  "description": "Superset Chart - Pivot Table",
+  "description": "AxBI Chart - Pivot Table",
   "sideEffects": false,
   "main": "lib/index.js",
   "module": "esm/index.js",
@@ -11,16 +11,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/plugin-chart-pivot-table"
   },
   "keywords": [
-    "superset"
+    "axbi"
   ],
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/plugin-chart-pivot-table#readme",
   "publishConfig": {
@@ -28,9 +28,9 @@
   },
   "peerDependencies": {
     "@ant-design/icons": "^5.6.1",
-    "@apache-superset/core": "*",
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
     "lodash": "^4.18.1",
     "prop-types": "*",
     "react": "^18.3.0 || ^19.0.0",

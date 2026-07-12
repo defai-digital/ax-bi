@@ -14,11 +14,11 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from superset.db_engine_specs.ascend import AscendEngineSpec
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs.ascend import AscendEngineSpec
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestAscendDbEngineSpec(SupersetTestCase):
+class TestAscendDbEngineSpec(AxBITestCase):
     def test_convert_dttm(self):
         dttm = self.get_dttm()
 

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonPrimitive } from '@superset-ui/core';
+import { JsonPrimitive } from '@ax-bi/ui-core';
 
 export type NaNTreatment = 'alwaysLast' | 'asSmallest' | 'asLargest';
 

@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 
 from flask import current_app
 
-from superset.extensions.utils import (
+from axbi.extensions.utils import (
     get_extension_rejection_reason,
     is_extension_below_min_version,
     is_extension_denied,

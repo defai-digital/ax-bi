@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartCustomizationType } from '@superset-ui/core';
+import { ChartCustomizationType } from '@ax-bi/ui-core';
 import { ChartCustomizationPlugins } from 'src/constants';
 import {
   isLegacyChartCustomizationFormat,

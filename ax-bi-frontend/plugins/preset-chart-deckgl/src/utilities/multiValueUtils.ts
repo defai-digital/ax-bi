@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 
 interface TooltipItem {
   item_type?: string;

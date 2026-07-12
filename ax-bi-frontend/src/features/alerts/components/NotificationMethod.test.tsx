@@ -28,9 +28,9 @@ import {
 import {
   FeatureFlag,
   JsonResponse,
-  SupersetClient,
+  AxBIClient,
   TextResponse,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { NotificationMethod, mapSlackValues } from './NotificationMethod';
 import { NotificationMethodOption, NotificationSetting } from '../types';
 
@@ -320,8 +320,8 @@ describe('NotificationMethod', () => {
     // Mock the feature flag to be false
     window.featureFlags = { [FeatureFlag.AlertReportSlackV2]: false };
 
-    // Mock the SupersetClient.get to simulate an error
-    jest.spyOn(SupersetClient, 'get').mockImplementation(() => {
+    // Mock the AxBIClient.get to simulate an error
+    jest.spyOn(AxBIClient, 'get').mockImplementation(() => {
       throw new Error('Error fetching Slack channels');
     });
 
@@ -356,8 +356,8 @@ describe('NotificationMethod', () => {
     // Mock the feature flag to be false
     window.featureFlags = { [FeatureFlag.AlertReportSlackV2]: false };
 
-    // Mock the SupersetClient.get to simulate an error
-    jest.spyOn(SupersetClient, 'get').mockImplementation(() => {
+    // Mock the AxBIClient.get to simulate an error
+    jest.spyOn(AxBIClient, 'get').mockImplementation(() => {
       throw new Error('Error fetching Slack channels');
     });
 
@@ -391,9 +391,9 @@ describe('NotificationMethod', () => {
     // Mock the feature flag to be false
     window.featureFlags = { [FeatureFlag.AlertReportSlackV2]: true };
 
-    // Mock the SupersetClient.get to simulate an error
+    // Mock the AxBIClient.get to simulate an error
     jest
-      .spyOn(SupersetClient, 'get')
+      .spyOn(AxBIClient, 'get')
       .mockImplementation(
         () =>
           Promise.resolve({ json: { result: [] } }) as unknown as Promise<
@@ -430,8 +430,8 @@ describe('NotificationMethod', () => {
     // Mock the feature flag to be false
     window.featureFlags = { [FeatureFlag.AlertReportSlackV2]: true };
 
-    // Mock the SupersetClient.get to simulate an error
-    jest.spyOn(SupersetClient, 'get').mockImplementation(() => {
+    // Mock the AxBIClient.get to simulate an error
+    jest.spyOn(AxBIClient, 'get').mockImplementation(() => {
       throw new Error('Error fetching Slack channels');
     });
 
@@ -464,8 +464,8 @@ describe('NotificationMethod', () => {
     // Mock the feature flag to be false
     window.featureFlags = { [FeatureFlag.AlertReportSlackV2]: true };
 
-    // Mock the SupersetClient.get to simulate an error
-    jest.spyOn(SupersetClient, 'get').mockImplementation(() => {
+    // Mock the AxBIClient.get to simulate an error
+    jest.spyOn(AxBIClient, 'get').mockImplementation(() => {
       throw new Error('Error fetching Slack channels');
     });
 
@@ -494,7 +494,7 @@ describe('NotificationMethod', () => {
 
   test('shows the textarea when ff is true, slackChannels fail and slack is selected', async () => {
     window.featureFlags = { [FeatureFlag.AlertReportSlackV2]: true };
-    jest.spyOn(SupersetClient, 'get').mockImplementation(() => {
+    jest.spyOn(AxBIClient, 'get').mockImplementation(() => {
       throw new Error('Error fetching Slack channels');
     });
 
@@ -524,9 +524,9 @@ describe('NotificationMethod', () => {
     test('should call updateSlackOptions with force true when RefreshLabel is clicked', async () => {
       // Set feature flag so that SlackV2 branch renders RefreshLabel
       window.featureFlags = { [FeatureFlag.AlertReportSlackV2]: true };
-      // Spy on SupersetClient.get which is called by updateSlackOptions
-      const supersetClientSpy = jest
-        .spyOn(SupersetClient, 'get')
+      // Spy on AxBIClient.get which is called by updateSlackOptions
+      const axbiClientSpy = jest
+        .spyOn(AxBIClient, 'get')
         .mockImplementation(
           () =>
             Promise.resolve({ json: { result: [] } }) as unknown as Promise<
@@ -551,9 +551,9 @@ describe('NotificationMethod', () => {
       const refreshLabel = await waitFor(() => screen.getByLabelText('sync'));
       // Simulate a click on the RefreshLabel
       userEvent.click(refreshLabel);
-      // Verify that the SupersetClient.get was called indicating that updateSlackOptions executed
+      // Verify that the AxBIClient.get was called indicating that updateSlackOptions executed
       await waitFor(() => {
-        expect(supersetClientSpy).toHaveBeenCalled();
+        expect(axbiClientSpy).toHaveBeenCalled();
       });
     });
   });

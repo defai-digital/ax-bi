@@ -18,11 +18,11 @@ from unittest.mock import patch
 
 from flask import current_app
 
-from superset.commands.explore.form_data.delete import DeleteFormDataCommand
-from superset.commands.explore.form_data.get import GetFormDataCommand
-from superset.commands.explore.form_data.parameters import CommandParameters
-from superset.commands.explore.form_data.update import UpdateFormDataCommand
-from superset.utils.core import DatasourceType
+from axbi.commands.explore.form_data.delete import DeleteFormDataCommand
+from axbi.commands.explore.form_data.get import GetFormDataCommand
+from axbi.commands.explore.form_data.parameters import CommandParameters
+from axbi.commands.explore.form_data.update import UpdateFormDataCommand
+from axbi.utils.core import DatasourceType
 
 
 def test_get_form_data_ignores_malformed_cache_state() -> None:
@@ -30,11 +30,9 @@ def test_get_form_data_ignores_malformed_cache_state() -> None:
     cmd_params = CommandParameters(key="key")
 
     with (
+        patch("axbi.commands.explore.form_data.get.check_access") as mock_check_access,
         patch(
-            "superset.commands.explore.form_data.get.check_access"
-        ) as mock_check_access,
-        patch(
-            "superset.commands.explore.form_data.get.cache_manager"
+            "axbi.commands.explore.form_data.get.cache_manager"
         ) as mock_cache_manager,
     ):
         mock_cache_manager.explore_form_data_cache.get.return_value = "not-a-state"
@@ -57,12 +55,12 @@ def test_update_form_data_ignores_malformed_cache_state() -> None:
 
     with (
         current_app.test_request_context(),
-        patch("superset.commands.explore.form_data.update.check_access"),
+        patch("axbi.commands.explore.form_data.update.check_access"),
         patch(
-            "superset.commands.explore.form_data.update.cache_manager"
+            "axbi.commands.explore.form_data.update.cache_manager"
         ) as mock_cache_manager,
         patch(
-            "superset.commands.explore.form_data.update.get_user_id",
+            "axbi.commands.explore.form_data.update.get_user_id",
             return_value=1,
         ),
     ):
@@ -79,10 +77,10 @@ def test_delete_form_data_ignores_malformed_cache_state() -> None:
     with (
         current_app.test_request_context(),
         patch(
-            "superset.commands.explore.form_data.delete.check_access"
+            "axbi.commands.explore.form_data.delete.check_access"
         ) as mock_check_access,
         patch(
-            "superset.commands.explore.form_data.delete.cache_manager"
+            "axbi.commands.explore.form_data.delete.cache_manager"
         ) as mock_cache_manager,
     ):
         mock_cache_manager.explore_form_data_cache.get.return_value = "not-a-state"

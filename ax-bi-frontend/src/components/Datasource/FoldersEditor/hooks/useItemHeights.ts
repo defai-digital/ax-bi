@@ -18,7 +18,7 @@
  */
 
 import { useMemo } from 'react';
-import { useTheme, SupersetTheme } from '@apache-superset/core/theme';
+import { useTheme, AxBITheme } from '@ax-bi/core/theme';
 import {
   FOLDER_INDENTATION_WIDTH,
   ITEM_INDENTATION_WIDTH,
@@ -50,7 +50,7 @@ export interface ItemHeights {
  * The spacing is built into the height calculation, NOT the CSS margins,
  * to avoid double-spacing issues with absolute positioning.
  */
-export function calculateItemHeights(theme: SupersetTheme): ItemHeights {
+export function calculateItemHeights(theme: AxBITheme): ItemHeights {
   // Regular item height - just the row height, minimal spacing
   // The OptionControlContainer sets the actual content height
   const regularItem = ITEM_BASE_HEIGHT;

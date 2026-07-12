@@ -16,15 +16,15 @@
 # under the License.
 import pytest
 
-from superset.commands.dashboard.importers.v0 import (
+from axbi.commands.dashboard.importers.v0 import (
     _validate_dashboard_bundle_shape,
     import_dashboards,
     ImportDashboardsCommand,
 )
-from superset.connectors.sqla.models import SqlaTable
-from superset.exceptions import DashboardImportException
-from superset.models.dashboard import Dashboard
-from superset.utils import json
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.exceptions import DashboardImportException
+from axbi.models.dashboard import Dashboard
+from axbi.utils import json
 
 
 @pytest.mark.parametrize(

@@ -26,7 +26,7 @@ from flask_appbuilder.const import (
     AUTH_SAML,
 )
 
-from superset.views.base import cached_common_bootstrap_data
+from axbi.views.base import cached_common_bootstrap_data
 
 
 @pytest.fixture(autouse=True)
@@ -35,7 +35,7 @@ def mock_user() -> None:
 
 
 def _get_bootstrap(user_id: int = 1) -> dict[str, Any]:
-    with patch("superset.views.base.menu_data", return_value={}):
+    with patch("axbi.views.base.menu_data", return_value={}):
         return cached_common_bootstrap_data(user_id=user_id, locale=None)
 
 

@@ -19,9 +19,9 @@ under the License.
 
 # Installing AX BI
 
-AX BI is a Superset-based BI application with an MCP service for AI-assisted
-analytics workflows. The recommended install path is Docker Compose. Local
-source runs are useful for development and Ax Studio MCP testing.
+AX BI is an independently maintained BI application with an MCP service for
+AI-assisted analytics workflows. The recommended install path is Docker
+Compose. Local source runs are useful for development and AX Studio MCP testing.
 
 ## Docker Quick Start
 
@@ -79,20 +79,20 @@ From a prepared checkout with dependencies installed:
 ```shell
 cd /path/to/ax-bi
 source venv/bin/activate
-FLASK_DEBUG=1 SUPERSET_ENV=development \
-  venv/bin/superset run -h 127.0.0.1 -p 8080 --with-threads --no-reload
+FLASK_DEBUG=1 AXBI_ENV=development \
+  venv/bin/ax-bi run -h 127.0.0.1 -p 8080 --with-threads --no-reload
 ```
 
-In a second terminal, start MCP for local Ax Studio testing:
+In a second terminal, start MCP for local AX Studio testing:
 
 ```shell
 cd /path/to/ax-bi
 source venv/bin/activate
 MCP_DEV_USERNAME=admin \
-SUPERSET_WEBSERVER_ADDRESS=http://127.0.0.1:8080 \
+AXBI_WEBSERVER_ADDRESS=http://127.0.0.1:8080 \
 WEBDRIVER_BASEURL=http://127.0.0.1:8080/ \
 WEBDRIVER_BASEURL_USER_FRIENDLY=http://127.0.0.1:8080/ \
-  venv/bin/superset mcp run --host 127.0.0.1 --port 5008 --debug
+  venv/bin/ax-bi mcp run --host 127.0.0.1 --port 5008 --debug
 ```
 
 Open the web app at:
@@ -101,7 +101,7 @@ Open the web app at:
 http://127.0.0.1:8080/ax-bi/welcome/
 ```
 
-Connect Ax Studio to:
+Connect AX Studio to:
 
 ```text
 http://127.0.0.1:5008/mcp
@@ -109,11 +109,10 @@ http://127.0.0.1:5008/mcp
 
 ## Notes
 
-- The technical route prefix remains `/ax-bi`.
-- Legacy `/superset` links redirect to `/ax-bi` for compatibility with
-  upstream Superset routes.
+- The application route prefix is `/ax-bi`; no former-name redirect is
+  registered.
 - MCP chart and dashboard URLs should use `127.0.0.1` or your real host, not
   `0.0.0.0`, because `0.0.0.0` is only a bind address.
-- The underlying Superset documentation remains useful for advanced database,
-  Helm, and production architecture topics:
+- The upstream documentation remains useful as historical background for some
+  database connectors:
   [Superset installation docs](https://superset.apache.org/docs/installation/installation-methods).

@@ -23,8 +23,8 @@ import {
   within,
   screen,
 } from 'spec/helpers/testing-library';
-import { FeatureFlag } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { FeatureFlag } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import {
   OPEN_FILTER_BAR_WIDTH,
   CLOSED_FILTER_BAR_WIDTH,
@@ -59,17 +59,17 @@ jest.mock('src/dashboard/actions/dashboardState', () => ({
 jest.mock('src/components/ResizableSidebar/useStoredSidebarWidth');
 
 // mock following dependent components to fix the prop warnings
-jest.mock('@superset-ui/core/components/Select/Select', () => {
+jest.mock('@ax-bi/ui-core/components/Select/Select', () => {
   const MockSelect = () => <div data-test="mock-select" />;
   MockSelect.displayName = 'MockSelect';
   return MockSelect;
 });
-jest.mock('@superset-ui/core/components/Select/AsyncSelect', () => {
+jest.mock('@ax-bi/ui-core/components/Select/AsyncSelect', () => {
   const MockAsyncSelect = () => <div data-test="mock-async-select" />;
   MockAsyncSelect.displayName = 'MockAsyncSelect';
   return MockAsyncSelect;
 });
-jest.mock('@superset-ui/core/components/PageHeaderWithActions', () => {
+jest.mock('@ax-bi/ui-core/components/PageHeaderWithActions', () => {
   const MockPageHeaderWithActions = () => (
     <div data-test="mock-page-header-with-actions" />
   );
@@ -581,7 +581,7 @@ test('should apply min-height to the top-level tab drop target so tabs can be dr
   // with the source rule in DashboardBuilder.tsx.
   expect(headerWrapper).toHaveStyleRule(
     'min-height',
-    `${supersetTheme.sizeUnit * 4}px`,
+    `${axbiTheme.sizeUnit * 4}px`,
     {
       target: '.empty-droptarget',
     },
@@ -697,47 +697,44 @@ test('should use theme tokens instead of hardcoded hex colors for the dashboard 
   // StyledContent wraps dashboard-content-wrapper directly.
   expect(dashboardContentWrapper.parentElement).toHaveStyleRule(
     'background-color',
-    supersetTheme.colorBgLayout,
+    axbiTheme.colorBgLayout,
   );
 
   // .background--white is one of the row background style options; it must
   // resolve to a real (themeable) surface color, not a hardcoded dark navy.
   expect(dashboardContentWrapper).toHaveStyleRule(
     'background-color',
-    supersetTheme.colorBgContainer,
+    axbiTheme.colorBgContainer,
     { target: '.background--white' },
   );
 
-  const dashboardContent = dashboardContentWrapper.querySelector(
-    '.dashboard-content',
+  const dashboardContent =
+    dashboardContentWrapper.querySelector('.dashboard-content');
+  expect(dashboardContent).toHaveStyleRule(
+    'background-color',
+    axbiTheme.colorBgLayout,
   );
   expect(dashboardContent).toHaveStyleRule(
     'background-color',
-    supersetTheme.colorBgLayout,
-  );
-  expect(dashboardContent).toHaveStyleRule(
-    'background-color',
-    supersetTheme.colorBgLayout,
+    axbiTheme.colorBgLayout,
     { target: '.grid-container' },
   );
   expect(dashboardContent).toHaveStyleRule(
     'background-color',
-    supersetTheme.colorBgLayout,
+    axbiTheme.colorBgLayout,
     { target: '.dashboard-grid' },
   );
   expect(dashboardContent).toHaveStyleRule(
     'background-color',
-    supersetTheme.colorBgContainer,
+    axbiTheme.colorBgContainer,
     { target: '.dashboard-component-chart-holder' },
   );
   expect(dashboardContent).toHaveStyleRule(
     'border',
-    `1px solid ${supersetTheme.colorBorderSecondary}`,
+    `1px solid ${axbiTheme.colorBorderSecondary}`,
     { target: '.dashboard-component-chart-holder' },
   );
-  expect(dashboardContent).toHaveStyleRule(
-    'color',
-    supersetTheme.colorText,
-    { target: '.dashboard-component-chart-holder' },
-  );
+  expect(dashboardContent).toHaveStyleRule('color', axbiTheme.colorText, {
+    target: '.dashboard-component-chart-holder',
+  });
 });

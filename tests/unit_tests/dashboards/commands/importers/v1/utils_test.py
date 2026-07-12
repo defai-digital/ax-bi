@@ -18,7 +18,7 @@
 
 from typing import Any
 
-from superset.utils import json
+from axbi.utils import json
 
 
 def test_update_id_refs_immune_missing(  # pylint: disable=invalid-name
@@ -31,7 +31,7 @@ def test_update_id_refs_immune_missing(  # pylint: disable=invalid-name
     immune to filters. The missing chart ID should be simply ignored when the
     dashboard is imported.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config = {
         "position": {
@@ -88,7 +88,7 @@ def test_update_id_refs_ignores_malformed_metadata_entries(app_context: None):
     """
     Malformed or stale dashboard metadata should not abort dashboard import.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config = {
         "position": {
@@ -142,7 +142,7 @@ def test_update_id_refs_ignores_malformed_metadata_entries(app_context: None):
 
 def test_update_id_refs_ignores_scalar_metadata_containers(app_context: None):
     """Scalar metadata containers should not abort dashboard import."""
-    from superset.commands.dashboard.importers.v1.utils import (
+    from axbi.commands.dashboard.importers.v1.utils import (
         find_native_filter_datasets,
         update_id_refs,
     )
@@ -206,7 +206,7 @@ def test_update_id_refs_ignores_scalar_metadata_containers(app_context: None):
 
 
 def test_find_native_filter_datasets_ignores_malformed_entries():
-    from superset.commands.dashboard.importers.v1.utils import (
+    from axbi.commands.dashboard.importers.v1.utils import (
         find_native_filter_datasets,
     )
 
@@ -227,7 +227,7 @@ def test_find_native_filter_datasets_ignores_malformed_entries():
 
 
 def test_update_native_filter_config_scope_excluded():
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config = {
         "position": {
@@ -284,7 +284,7 @@ def test_update_native_filter_config_preserves_rootpath_and_remaps_excluded():
     everywhere"). This test pins the post-refactor contract: the import path
     must not mutate or drop ``rootPath``.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -352,7 +352,7 @@ def test_update_native_filter_config_default_rootpath_preserved():
     on import, since downstream consumers treat a missing rootPath as empty
     rather than as the default.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -395,7 +395,7 @@ def test_update_id_refs_remaps_charts_in_scope():
     and breaks ``filtersInScope`` / ``filtersOutScope`` computation —
     filters end up applied to the wrong charts (or none at all).
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -439,7 +439,7 @@ def test_update_id_refs_remaps_cross_filter_charts_in_scope():
     config also stores ``chartsInScope`` (under ``crossFilters`` per chart)
     and must be remapped on import for the same reason.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -482,7 +482,7 @@ def test_update_id_refs_remaps_global_chart_configuration_charts_in_scope():
     ``global_chart_configuration.scope.excluded`` and needs the same treatment
     so the global cross-filter scope cache doesn't keep stale source-env IDs.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -513,7 +513,7 @@ def test_update_id_refs_remaps_global_chart_configuration_charts_in_scope():
 
 
 def test_update_id_refs_cross_filter_chart_configuration_key_and_excluded_mapping():
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     # Build a minimal dashboard position with uuids -> old ids
     config: dict[str, Any] = {
@@ -565,7 +565,7 @@ def test_update_id_refs_cross_filter_chart_configuration_key_and_excluded_mappin
 
 
 def test_update_id_refs_cross_filter_handles_string_excluded():
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -591,7 +591,7 @@ def test_update_id_refs_cross_filter_handles_string_excluded():
 
 
 def test_update_id_refs_ignores_non_object_chart_configuration():
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -618,7 +618,7 @@ def test_update_id_refs_preserves_time_grains_in_native_filters():
     The time_grains field is a top-level filter configuration key that should
     survive the update_id_refs transformation without modification.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -659,7 +659,7 @@ def test_find_native_filter_datasets_includes_display_controls():
     Test that find_native_filter_datasets also returns dataset UUIDs
     from chart_customization_config (display controls).
     """
-    from superset.commands.dashboard.importers.v1.utils import (
+    from axbi.commands.dashboard.importers.v1.utils import (
         find_native_filter_datasets,
     )
 
@@ -683,7 +683,7 @@ def test_update_id_refs_fixes_display_control_dataset_references():
     Test that update_id_refs converts datasetUuid back to datasetId in
     chart_customization_config (display controls) during import.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -738,7 +738,7 @@ def test_update_id_refs_removes_stale_dataset_id_when_uuid_unresolvable():
     broken control is safer than one silently bound to whatever dataset
     happens to own that integer ID in the destination environment.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {},
@@ -768,7 +768,7 @@ def test_update_id_refs_skips_display_control_target_on_missing_uuid():
     silently rather than raising KeyError — the datasetUuid is popped and no
     datasetId is written, leaving the target without a dataset reference.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {},
@@ -797,7 +797,7 @@ def test_update_id_refs_handles_missing_time_grains():
 
     Existing filters without time_grains should not break during import.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -842,7 +842,7 @@ def test_update_id_refs_cross_filter_uuid_keyed_config_remapped() -> None:
     export_example.remap_chart_configuration produces chart_configuration keyed by
     chart UUIDs with UUID values in crossFilters.chartsInScope.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {
@@ -902,7 +902,7 @@ def test_update_id_refs_cross_filter_uuid_keyed_unknown_preserved() -> None:
     Test that UUID-keyed chart_configuration entries with no matching position
     entry are preserved unchanged rather than silently dropped.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     unknown_uuid = "ffffffff-0000-0000-0000-000000000000"
     config: dict[str, Any] = {
@@ -941,7 +941,7 @@ def test_update_id_refs_cross_filter_charts_in_scope() -> None:
     This is a fix for issue #26338 - chartsInScope references in chart_configuration
     and global_chart_configuration were not being updated during dashboard import.
     """
-    from superset.commands.dashboard.importers.v1.utils import update_id_refs
+    from axbi.commands.dashboard.importers.v1.utils import update_id_refs
 
     config: dict[str, Any] = {
         "position": {

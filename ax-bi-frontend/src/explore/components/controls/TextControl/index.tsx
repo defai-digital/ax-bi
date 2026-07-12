@@ -17,10 +17,10 @@
  * under the License.
  */
 import { Component, ChangeEvent } from 'react';
-import { legacyValidateNumber, legacyValidateInteger } from '@superset-ui/core';
+import { legacyValidateNumber, legacyValidateInteger } from '@ax-bi/ui-core';
 import { debounce } from 'lodash';
 import ControlHeader from 'src/explore/components/ControlHeader';
-import { Constants, Input } from '@superset-ui/core/components';
+import { Constants, Input } from '@ax-bi/ui-core/components';
 
 type InputValueType = string | number;
 

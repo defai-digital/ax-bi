@@ -19,7 +19,7 @@
 import copy
 from typing import Any
 
-from superset.legacy import update_time_range
+from axbi.legacy import update_time_range
 from tests.unit_tests.conftest import with_feature_flags  # noqa: F401
 
 original_form_data = {

@@ -21,19 +21,19 @@ import pytest
 from flask.ctx import AppContext
 from sqlalchemy import text
 
-from superset import db, security_manager
-from superset.commands.database.exceptions import (
+from axbi import db, security_manager
+from axbi.commands.database.exceptions import (
     DatabaseNotFoundError,
     DatabaseSchemaUploadNotAllowed,
     DatabaseUploadNotSupported,
 )
-from superset.commands.database.uploaders.base import UploadCommand
-from superset.commands.database.uploaders.csv_reader import CSVReader
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import Database
-from superset.utils import json
-from superset.utils.core import override_user
-from superset.utils.database import get_or_create_db
+from axbi.commands.database.uploaders.base import UploadCommand
+from axbi.commands.database.uploaders.csv_reader import CSVReader
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.core import Database
+from axbi.utils import json
+from axbi.utils.core import override_user
+from axbi.utils.database import get_or_create_db
 from tests.integration_tests.conftest import only_postgresql
 from tests.integration_tests.test_app import app
 from tests.unit_tests.fixtures.common import create_csv_file

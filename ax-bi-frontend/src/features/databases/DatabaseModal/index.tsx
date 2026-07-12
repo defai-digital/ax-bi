@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { t } from '@apache-superset/core/translation';
-import { getExtensionsRegistry } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled, SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { getExtensionsRegistry } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled, AxBITheme } from '@ax-bi/core/theme';
 
 import {
   FunctionComponent,
@@ -32,10 +32,10 @@ import {
   useCallback,
   ChangeEvent,
 } from 'react';
-import { CheckboxChangeEvent } from '@superset-ui/core/components/Checkbox/types';
+import { CheckboxChangeEvent } from '@ax-bi/ui-core/components/Checkbox/types';
 
 import { setItem, LocalStorageKeys } from 'src/utils/localStorageHelpers';
-import Tabs from '@superset-ui/core/components/Tabs';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import {
   Button,
   Icons,
@@ -49,7 +49,7 @@ import {
   type UploadChangeParam,
   type UploadFile,
   FormLabel,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { ErrorAlert, ErrorMessageWithStackTrace } from 'src/components';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import {
@@ -1215,7 +1215,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
       <Alert
         showIcon
         closable={false}
-        css={(theme: SupersetTheme) => antDAlertStyles(theme)}
+        css={(theme: AxBITheme) => antDAlertStyles(theme)}
         type="info"
         message={
           connectionAlert?.ADD_DATABASE?.message ||
@@ -1413,7 +1413,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
         tooltip={
           db?.is_managed_externally
             ? t(
-                "This database is managed externally, and can't be edited in Superset",
+                "This database is managed externally, and can't be edited in AxBI",
               )
             : ''
         }
@@ -1582,7 +1582,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
         <StyledAlertMargin>
           <Alert
             closable={false}
-            css={(theme: SupersetTheme) => antDAlertStyles(theme)}
+            css={(theme: AxBITheme) => antDAlertStyles(theme)}
             type="info"
             showIcon
             message="Database passwords"
@@ -1678,7 +1678,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
         <StyledAlertMargin>
           <Alert
             closable={false}
-            css={(theme: SupersetTheme) => antDAlertStyles(theme)}
+            css={(theme: AxBITheme) => antDAlertStyles(theme)}
             type="info"
             showIcon
             message={t('Encrypted extra fields')}
@@ -1737,7 +1737,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
         <StyledAlertMargin>
           <Alert
             closable={false}
-            css={(theme: SupersetTheme) => antdWarningAlertStyles(theme)}
+            css={(theme: AxBITheme) => antdWarningAlertStyles(theme)}
             type="warning"
             showIcon
             message=""
@@ -1776,7 +1776,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
         <StyledAlertMargin>
           <Alert
             closable={false}
-            css={(theme: SupersetTheme) => antDAlertStyles(theme)}
+            css={(theme: AxBITheme) => antDAlertStyles(theme)}
             type="info"
             showIcon
             message={
@@ -2004,7 +2004,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
     return (
       <Modal
         centered
-        css={(theme: SupersetTheme) => [
+        css={(theme: AxBITheme) => [
           antDModalNoPaddingStyles,
           antDModalStyles(theme),
           formHelperStyles(theme),
@@ -2047,7 +2047,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
     : renderModalFooter();
   return useTabLayout ? (
     <Modal
-      css={(theme: SupersetTheme) => [
+      css={(theme: AxBITheme) => [
         antDTabsStyles,
         antDModalNoPaddingStyles,
         antDModalStyles(theme),
@@ -2134,7 +2134,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
                       {useSSHTunneling && renderSSHTunnelForm()}
                     </SqlAlchemyForm>
                     {isDynamic(db?.backend || db?.engine) && !isEditMode && (
-                      <div css={(theme: SupersetTheme) => infoTooltip(theme)}>
+                      <div css={(theme: AxBITheme) => infoTooltip(theme)}>
                         <Button
                           buttonStyle="link"
                           onClick={() =>
@@ -2169,7 +2169,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
                   <StyledAlertMargin>
                     <Alert
                       closable={false}
-                      css={(theme: SupersetTheme) => antDAlertStyles(theme)}
+                      css={(theme: AxBITheme) => antDAlertStyles(theme)}
                       message={t('Additional fields may be required')}
                       showIcon
                       description={
@@ -2246,7 +2246,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
     </Modal>
   ) : (
     <Modal
-      css={(theme: SupersetTheme) => [
+      css={(theme: AxBITheme) => [
         antDModalNoPaddingStyles,
         antDModalStyles(theme),
         formHelperStyles(theme),
@@ -2334,7 +2334,7 @@ const DatabaseModal: FunctionComponent<DatabaseModalProps> = ({
                 />
                 {hasAlert && renderStepTwoAlert()}
                 {renderDatabaseConnectionForm()}
-                <div css={(theme: SupersetTheme) => infoTooltip(theme)}>
+                <div css={(theme: AxBITheme) => infoTooltip(theme)}>
                   {dbModel.engine !== Engines.GSheet && (
                     <>
                       <Button

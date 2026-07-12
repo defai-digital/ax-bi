@@ -37,8 +37,8 @@ import { GRID_COLUMN_COUNT } from 'src/dashboard/util/constants';
 // Cast PureSaveModal to `any` to allow instantiation with partial props in tests
 const TestSaveModal = PureSaveModal as any;
 
-jest.mock('@superset-ui/core/components/Select', () => ({
-  ...jest.requireActual('@superset-ui/core/components/Select/AsyncSelect'),
+jest.mock('@ax-bi/ui-core/components/Select', () => ({
+  ...jest.requireActual('@ax-bi/ui-core/components/Select/AsyncSelect'),
   AsyncSelect: ({ onChange }: { onChange: (val: any) => void }) => (
     <input
       data-test="mock-async-select"
@@ -47,7 +47,7 @@ jest.mock('@superset-ui/core/components/Select', () => ({
   ),
 }));
 
-jest.mock('@superset-ui/core/components/TreeSelect', () => ({
+jest.mock('@ax-bi/ui-core/components/TreeSelect', () => ({
   TreeSelect: ({
     onChange,
     disabled,
@@ -331,7 +331,7 @@ test('disables overwrite option for externally managed slice', () => {
   expect(getByRole('radio', { name: 'Save (Overwrite)' })).toBeDisabled();
   expect(
     getByText(
-      "This chart is managed externally and can't be overwritten in Superset.",
+      "This chart is managed externally and can't be overwritten in AxBI.",
     ),
   ).toBeInTheDocument();
 });
@@ -914,15 +914,15 @@ test('addChartToDashboardTab successfully adds chart to existing row with space'
     position_json: JSON.stringify(positionJson),
   };
 
-  const { SupersetClient } = require('@superset-ui/core');
-  const originalGet = SupersetClient.get;
-  const originalPut = SupersetClient.put;
+  const { AxBIClient } = require('@ax-bi/ui-core');
+  const originalGet = AxBIClient.get;
+  const originalPut = AxBIClient.put;
 
-  SupersetClient.get = jest.fn().mockResolvedValueOnce({
+  AxBIClient.get = jest.fn().mockResolvedValueOnce({
     json: { result: mockDashboard },
   });
 
-  SupersetClient.put = jest.fn().mockResolvedValueOnce({
+  AxBIClient.put = jest.fn().mockResolvedValueOnce({
     json: { result: mockDashboard },
   });
 
@@ -939,17 +939,17 @@ test('addChartToDashboardTab successfully adds chart to existing row with space'
       sliceName,
     );
 
-    expect(SupersetClient.get).toHaveBeenCalledWith({
+    expect(AxBIClient.get).toHaveBeenCalledWith({
       endpoint: `/api/v1/dashboard/${dashboardId}`,
     });
 
-    expect(SupersetClient.put).toHaveBeenCalledWith({
+    expect(AxBIClient.put).toHaveBeenCalledWith({
       endpoint: `/api/v1/dashboard/${dashboardId}`,
       headers: { 'Content-Type': 'application/json' },
       body: expect.stringContaining('position_json'),
     });
 
-    const putCall = SupersetClient.put.mock.calls[0][0];
+    const putCall = AxBIClient.put.mock.calls[0][0];
     const body = JSON.parse(putCall.body);
     const updatedPositionJson = JSON.parse(body.position_json);
 
@@ -957,8 +957,8 @@ test('addChartToDashboardTab successfully adds chart to existing row with space'
     expect(updatedPositionJson[`CHART-${chartId}`].meta.chartId).toBe(chartId);
     expect(updatedPositionJson.row1.children).toContain(`CHART-${chartId}`);
   } finally {
-    SupersetClient.get = originalGet;
-    SupersetClient.put = originalPut;
+    AxBIClient.get = originalGet;
+    AxBIClient.put = originalPut;
     mockNanoid.mockRestore();
   }
 });
@@ -1001,16 +1001,16 @@ test('addChartToDashboardTab creates new row when no existing row has space', as
     position_json: JSON.stringify(positionJson),
   };
 
-  const { SupersetClient } = require('@superset-ui/core');
-  const originalGet = SupersetClient.get;
-  const originalPut = SupersetClient.put;
+  const { AxBIClient } = require('@ax-bi/ui-core');
+  const originalGet = AxBIClient.get;
+  const originalPut = AxBIClient.put;
 
-  SupersetClient.get = jest.fn().mockResolvedValueOnce({
+  AxBIClient.get = jest.fn().mockResolvedValueOnce({
     json: { result: mockDashboard },
   });
 
   let putRequestBody: any = null;
-  SupersetClient.put = jest.fn().mockImplementationOnce((request: any) => {
+  AxBIClient.put = jest.fn().mockImplementationOnce((request: any) => {
     putRequestBody = request;
     return Promise.resolve({
       json: { result: mockDashboard },
@@ -1031,7 +1031,7 @@ test('addChartToDashboardTab creates new row when no existing row has space', as
       sliceName,
     );
 
-    expect(SupersetClient.put).toHaveBeenCalled();
+    expect(AxBIClient.put).toHaveBeenCalled();
     const body = JSON.parse(putRequestBody.body);
     const updatedPositionJson = JSON.parse(body.position_json);
 
@@ -1045,8 +1045,8 @@ test('addChartToDashboardTab creates new row when no existing row has space', as
       `CHART-${chartId}`,
     );
   } finally {
-    SupersetClient.get = originalGet;
-    SupersetClient.put = originalPut;
+    AxBIClient.get = originalGet;
+    AxBIClient.put = originalPut;
     mockNanoid.mockRestore();
   }
 });
@@ -1062,15 +1062,15 @@ test('addChartToDashboardTab handles empty position_json', async () => {
     position_json: null,
   };
 
-  const { SupersetClient } = require('@superset-ui/core');
-  const originalGet = SupersetClient.get;
-  const originalPut = SupersetClient.put;
+  const { AxBIClient } = require('@ax-bi/ui-core');
+  const originalGet = AxBIClient.get;
+  const originalPut = AxBIClient.put;
 
-  SupersetClient.get = jest.fn().mockResolvedValueOnce({
+  AxBIClient.get = jest.fn().mockResolvedValueOnce({
     json: { result: mockDashboard },
   });
 
-  SupersetClient.put = jest.fn().mockResolvedValueOnce({
+  AxBIClient.put = jest.fn().mockResolvedValueOnce({
     json: { result: mockDashboard },
   });
 
@@ -1084,8 +1084,8 @@ test('addChartToDashboardTab handles empty position_json', async () => {
       component.addChartToDashboardTab(dashboardId, chartId, tabId, sliceName),
     ).rejects.toThrow(`Tab ${tabId} not found in positionJson`);
   } finally {
-    SupersetClient.get = originalGet;
-    SupersetClient.put = originalPut;
+    AxBIClient.get = originalGet;
+    AxBIClient.put = originalPut;
     mockNanoid.mockRestore();
   }
 });

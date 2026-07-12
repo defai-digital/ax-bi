@@ -21,11 +21,11 @@ from unittest.mock import call, patch
 
 import pytest
 
-from superset.mcp_service.chart.schemas import ChartInfo
-from superset.mcp_service.dashboard.schemas import DashboardInfo
-from superset.mcp_service.database.schemas import DatabaseInfo
-from superset.mcp_service.dataset.schemas import DatasetInfo
-from superset.mcp_service.privacy import (
+from axbi.mcp_service.chart.schemas import ChartInfo
+from axbi.mcp_service.dashboard.schemas import DashboardInfo
+from axbi.mcp_service.database.schemas import DatabaseInfo
+from axbi.mcp_service.dataset.schemas import DatasetInfo
+from axbi.mcp_service.privacy import (
     is_data_model_metadata_error,
     redact_chart_data_model_fields,
     user_can_view_data_model_metadata,
@@ -78,8 +78,7 @@ def test_redact_chart_data_model_fields_removes_restricted_fields() -> None:
 
 def test_user_can_view_data_model_metadata_checks_dataset_permissions() -> None:
     with patch(
-        "superset.mcp_service.utils.permissions_utils."
-        "user_can_access_dataset_permission",
+        "axbi.mcp_service.utils.permissions_utils.user_can_access_dataset_permission",
         side_effect=[False, True],
     ) as can_access_dataset_permission:
         assert user_can_view_data_model_metadata() is True
@@ -92,8 +91,7 @@ def test_user_can_view_data_model_metadata_checks_dataset_permissions() -> None:
 
 def test_user_can_view_data_model_metadata_fails_closed() -> None:
     with patch(
-        "superset.mcp_service.utils.permissions_utils."
-        "user_can_access_dataset_permission",
+        "axbi.mcp_service.utils.permissions_utils.user_can_access_dataset_permission",
         side_effect=RuntimeError("permission backend unavailable"),
     ):
         assert user_can_view_data_model_metadata() is False

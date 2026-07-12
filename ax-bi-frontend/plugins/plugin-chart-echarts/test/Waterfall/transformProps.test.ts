@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import {
   EchartsWaterfallChartProps,
   WaterfallChartTransformedProps,
@@ -68,7 +68,7 @@ test('should tranform chart props for viz when breakdown not exist', () => {
         data,
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
   const transformedProps = transformProps(
     chartProps as unknown as EchartsWaterfallChartProps,
@@ -91,7 +91,7 @@ test('should tranform chart props for viz when breakdown exist', () => {
         data,
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
   const transformedProps = transformProps(
     chartProps as unknown as EchartsWaterfallChartProps,
@@ -119,7 +119,7 @@ test('renaming series names, checking legend and X axis labels', () => {
         data,
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
   const transformedProps = transformProps(
     chartProps as unknown as EchartsWaterfallChartProps,
@@ -154,7 +154,7 @@ test('hide totals', () => {
         data,
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
   const transformedProps = transformProps(
     chartProps as unknown as EchartsWaterfallChartProps,

@@ -19,15 +19,12 @@
 
 import { useCallback, useMemo } from 'react';
 import { Tag } from 'src/components/Tag';
-import { t } from '@apache-superset/core/translation';
-import {
-  BinaryQueryObjectFilterClause,
-  isAdhocColumn,
-} from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { BinaryQueryObjectFilterClause, isAdhocColumn } from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
 import RowCountLabel from 'src/components/RowCountLabel';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Tooltip } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { CopyToClipboardButton } from 'src/explore/components/DataTableControl';
 import { TabularDataRow } from 'src/utils/common';
 import { usePermissions } from 'src/hooks/usePermissions';

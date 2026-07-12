@@ -21,7 +21,7 @@ import pytest
 from pytest_mock import MockerFixture
 from werkzeug.test import Client
 
-from superset.utils.profiler import SupersetProfiler
+from axbi.utils.profiler import AxBIProfiler
 
 
 def simple_app(
@@ -37,7 +37,7 @@ def test_profiler_passthrough_without_instrument_flag() -> None:
     Without ``?_instrument=1`` the middleware must transparently return the
     wrapped app's response and not invoke pyinstrument at all.
     """
-    client = Client(SupersetProfiler(simple_app))
+    client = Client(AxBIProfiler(simple_app))
     response = client.get("/")
 
     assert response.status_code == 200
@@ -48,12 +48,12 @@ def test_profiler_returns_html_when_instrumented() -> None:
     """
     With ``?_instrument=1`` the middleware profiles the wrapped call and
     returns an HTML report. This exercises the three pyinstrument API
-    surfaces ``SupersetProfiler`` depends on -- ``Profiler(interval=...)``,
+    surfaces ``AxBIProfiler`` depends on -- ``Profiler(interval=...)``,
     the context-manager protocol, and ``output_html()`` -- so a breaking
     change in any of them (e.g. across a major pyinstrument bump) fails here
     instead of silently breaking the profiling endpoint in production.
     """
-    client = Client(SupersetProfiler(simple_app, interval=0.001))
+    client = Client(AxBIProfiler(simple_app, interval=0.001))
     response = client.get("/?_instrument=1")
 
     assert response.status_code == 200
@@ -68,8 +68,8 @@ def test_profiler_raises_when_pyinstrument_missing(mocker: MockerFixture) -> Non
     When pyinstrument is not installed the instrumented path must fail loudly
     rather than silently skip profiling.
     """
-    mocker.patch("superset.utils.profiler.Profiler", None)
-    client = Client(SupersetProfiler(simple_app))
+    mocker.patch("axbi.utils.profiler.Profiler", None)
+    client = Client(AxBIProfiler(simple_app))
 
     with pytest.raises(Exception, match="pyinstrument is not installed"):
         client.get("/?_instrument=1")

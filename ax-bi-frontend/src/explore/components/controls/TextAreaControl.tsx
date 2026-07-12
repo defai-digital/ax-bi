@@ -24,9 +24,9 @@ import {
   Button,
   TextAreaEditor,
   ModalTrigger,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { withTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { withTheme } from '@ax-bi/core/theme';
 
 import 'ace-builds/src-min-noconflict/mode-handlebars';
 
@@ -53,23 +53,11 @@ interface TextAreaControlProps {
   maxLines?: number;
   offerEditInModal?: boolean;
   language?:
-    | 'json'
-    | 'html'
-    | 'sql'
-    | 'markdown'
-    | 'javascript'
-    | 'handlebars'
-    | null;
+    'json' | 'html' | 'sql' | 'markdown' | 'javascript' | 'handlebars' | null;
   aboveEditorSection?: React.ReactNode;
   readOnly?: boolean;
   resize?:
-    | 'block'
-    | 'both'
-    | 'horizontal'
-    | 'inline'
-    | 'none'
-    | 'vertical'
-    | null;
+    'block' | 'both' | 'horizontal' | 'inline' | 'none' | 'vertical' | null;
   textAreaStyles?: React.CSSProperties;
   tooltipOptions?: Record<string, unknown>;
   hotkeys?: HotkeyConfig[];
@@ -98,8 +86,7 @@ class TextAreaControl extends Component<TextAreaControlProps> {
   static defaultProps = defaultProps;
 
   debouncedOnChange:
-    | ReturnType<typeof debounce<(value: string) => void>>
-    | undefined;
+    ReturnType<typeof debounce<(value: string) => void>> | undefined;
 
   constructor(props: TextAreaControlProps) {
     super(props);

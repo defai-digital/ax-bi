@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { HeatmapChartProps, HeatmapFormData } from '../../src/Heatmap/types';
 import transformProps from '../../src/Heatmap/transformProps';
 
@@ -69,7 +69,7 @@ describe('Heatmap transformProps', () => {
           coltypes: [0, 0, 0],
         },
       ],
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
   test('should sort axes alphabetically in both directions', () => {

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { ExplorePageState } from 'src/explore/types';

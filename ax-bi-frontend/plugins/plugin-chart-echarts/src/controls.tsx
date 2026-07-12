@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { VizType } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { VizType } from '@ax-bi/ui-core';
 import {
   ControlPanelsContainerProps,
   ControlSetItem,
@@ -27,7 +27,7 @@ import {
   DEFAULT_SORT_SERIES_DATA,
   SORT_SERIES_CHOICES,
   sharedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   DEFAULT_LEGEND_FORM_DATA,
   StackControlOptions,

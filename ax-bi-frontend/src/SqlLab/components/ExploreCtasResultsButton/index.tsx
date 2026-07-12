@@ -18,15 +18,15 @@
  */
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { t } from '@apache-superset/core/translation';
-import { VizType } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { VizType } from '@ax-bi/ui-core';
 import {
   createCtasDatasource,
   addInfoToast,
   addDangerToast,
 } from 'src/SqlLab/actions/sqlLab';
-import { Button, IconTooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Button, IconTooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { exploreChart } from 'src/explore/exploreUtils';
 import { SqlLabRootState } from 'src/SqlLab/types';
 

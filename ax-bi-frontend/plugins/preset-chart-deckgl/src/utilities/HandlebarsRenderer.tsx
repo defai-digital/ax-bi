@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useEffect, useState, memo, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { sanitizeHtml } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { sanitizeHtml } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 import Handlebars from 'handlebars';
 import { isPlainObject } from 'lodash';
 

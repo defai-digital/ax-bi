@@ -17,18 +17,11 @@
  * under the License.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  ensureIsArray,
-  fetchTimeRange,
-  getTimeOffset,
-} from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { Tooltip } from '@superset-ui/core/components';
-import {
-  DEFAULT_DATE_PATTERN,
-  ColorSchemeEnum,
-} from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { ensureIsArray, fetchTimeRange, getTimeOffset } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { Tooltip } from '@ax-bi/ui-core/components';
+import { DEFAULT_DATE_PATTERN, ColorSchemeEnum } from '@ax-bi/chart-controls';
 import { isEmpty } from 'lodash';
 import {
   PopKPIComparisonSymbolStyleProps,

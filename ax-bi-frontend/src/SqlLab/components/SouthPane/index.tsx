@@ -20,14 +20,14 @@ import { createRef, useCallback, useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 import { nanoid } from 'nanoid';
-import Tabs from '@superset-ui/core/components/Tabs';
-import { t } from '@apache-superset/core/translation';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
+import { t } from '@ax-bi/core/translation';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 
 import { removeTables, setActiveSouthPaneTab } from 'src/SqlLab/actions/sqlLab';
 
-import { Flex, Label } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Flex, Label } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { SqlLabRootState } from 'src/SqlLab/types';
 import { ViewLocations } from 'src/SqlLab/contributions';
 import PanelToolbar from 'src/components/PanelToolbar';

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, getChartTransformPropsRegistry } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { LayerConf, MapViewConfigs, ZoomConfigs } from '../../src/types';
 import transformProps from '../../src/plugin/transformProps';
 import {
@@ -91,7 +91,7 @@ describe('CartodiagramPlugin transformProps', () => {
         label_map: groupedTimeseriesLabelMap,
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   let chartTransformPropsPieMock: jest.MockedFunction<any>;

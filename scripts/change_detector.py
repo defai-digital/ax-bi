@@ -27,7 +27,7 @@ PATTERNS = {
     "python": [
         r"^\.github/workflows/.*python",
         r"^tests/",
-        r"^superset/",
+        r"^axbi/",
         r"^scripts/",
         r"^setup\.py",
         r"^pyproject\.toml$",
@@ -54,13 +54,13 @@ PATTERNS = {
         r"^packages/ax-sdk/",
         r"^scripts/change_detector\.py",
     ],
-    "superset-rust": [
-        r"^\.github/workflows/superset-rust\.yml",
+    "ax-bi-rust": [
+        r"^\.github/workflows/ax-bi-rust\.yml",
         r"^\.github/actions/change-detector/",
-        r"^superset-rust/",
+        r"^ax-bi-rust/",
         r"^scripts/change_detector\.py",
-        r"^superset/sql/parse\.py",
-        r"^superset/runtime_modernization/rust_sql\.py",
+        r"^axbi/sql/parse\.py",
+        r"^axbi/runtime_modernization/rust_sql\.py",
         r"^tests/unit_tests/sql/parse_tests\.py",
         r"^tests/unit_tests/runtime_modernization/rust_sql_test\.py",
     ],
@@ -70,16 +70,16 @@ PATTERNS = {
         r"^docker.*",
         r"^pyproject\.toml$",
         r"^requirements/(base|development)\.(in|txt)$",
-        r"^superset-core/",
-        r"^superset/mcp_service/",
+        r"^ax-bi-core/",
+        r"^axbi/mcp_service/",
     ],
     "docs": [
         r"^docs/",
     ],
-    "superset-extensions-cli": [
-        r"^\.github/workflows/superset-extensions-cli\.yml",
-        r"^superset-extensions-cli/",
-        r"^superset-core/",
+    "ax-bi-extensions-cli": [
+        r"^\.github/workflows/ax-bi-extensions-cli\.yml",
+        r"^ax-bi-extensions-cli/",
+        r"^ax-bi-core/",
     ],
 }
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN")
@@ -210,7 +210,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--repo",
-        default=os.getenv("GITHUB_REPOSITORY") or "apache/superset",
+        default=os.getenv("GITHUB_REPOSITORY") or "ghcr.io/defai-digital/ax-bi",
         help="GitHub repository in the format owner/repo",
     )
     args = parser.parse_args()

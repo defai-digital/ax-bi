@@ -17,14 +17,14 @@
 """Integration tests asserting the password-complexity policy is wired into
 Flask-AppBuilder's User REST API (not just the validator function itself)."""
 
-from superset import db, security_manager
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 USERS_API_URI = "/api/v1/security/users/"
 
 
-class TestPasswordComplexityUserApi(SupersetTestCase):
+class TestPasswordComplexityUserApi(AxBITestCase):
     """Exercise the real FAB ``/api/v1/security/users/`` path so that a future
     Flask-AppBuilder bump that drops enforcement fails these tests."""
 

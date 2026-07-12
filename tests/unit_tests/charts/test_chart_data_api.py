@@ -21,33 +21,33 @@ from unittest.mock import MagicMock
 
 from flask import Flask, g
 
-from superset.charts.data.dashboard_filter_context import (
+from axbi.charts.data.dashboard_filter_context import (
     apply_dashboard_filter_context,
 )
-from superset.jinja_context import ExtraCache
-from superset.utils import json
+from axbi.jinja_context import ExtraCache
+from axbi.utils import json
 
 if TYPE_CHECKING:
-    from superset.app import SupersetApp
+    from axbi.app import AxBIApp
 
 
 def test_load_json_object_accepts_json_objects() -> None:
     """Saved chart payload parsing accepts object JSON."""
-    from superset.charts.data.api import _load_json_object
+    from axbi.charts.data.api import _load_json_object
 
     assert _load_json_object('{"queries": []}') == {"queries": []}
 
 
 def test_load_json_object_rejects_non_object_json() -> None:
     """Saved chart payload parsing rejects non-object JSON."""
-    from superset.charts.data.api import _load_json_object
+    from axbi.charts.data.api import _load_json_object
 
     assert _load_json_object("[]") is None
 
 
 def test_load_json_object_rejects_malformed_json() -> None:
     """Saved chart payload parsing rejects malformed JSON."""
-    from superset.charts.data.api import _load_json_object
+    from axbi.charts.data.api import _load_json_object
 
     assert _load_json_object("{malformed") is None
 
@@ -69,7 +69,7 @@ def test_chart_data_post_rejects_malformed_json_body(
 
 def test_map_form_data_datasource_to_dataset_id_extracts_context() -> None:
     """Chart data log context extracts dashboard, dataset, and chart IDs."""
-    from superset.charts.data.api import ChartDataRestApi
+    from axbi.charts.data.api import ChartDataRestApi
 
     context = ChartDataRestApi._map_form_data_datasource_to_dataset_id(
         MagicMock(),
@@ -84,7 +84,7 @@ def test_map_form_data_datasource_to_dataset_id_extracts_context() -> None:
 
 def test_map_form_data_datasource_to_dataset_id_ignores_malformed_context() -> None:
     """Malformed chart data log context containers should not raise."""
-    from superset.charts.data.api import ChartDataRestApi
+    from axbi.charts.data.api import ChartDataRestApi
 
     context = ChartDataRestApi._map_form_data_datasource_to_dataset_id(
         MagicMock(),
@@ -148,7 +148,7 @@ def test_get_data_sets_g_form_data_without_dashboard_filter() -> None:
 
 
 def test_apply_dashboard_filter_context_does_not_duplicate_filters(
-    app: SupersetApp,
+    app: AxBIApp,
 ) -> None:
     """
     Regression test for the ``filters_dashboard_id`` parameter.
@@ -331,7 +331,7 @@ def test_apply_dashboard_filter_context_keeps_grain_when_no_grain_filter() -> No
 
 def _extract_filename(form_value: str) -> str | None:
     """Run _extract_export_params_from_request with a form filename value."""
-    from superset.charts.data.api import ChartDataRestApi
+    from axbi.charts.data.api import ChartDataRestApi
 
     app = Flask(__name__)
     with app.test_request_context("/", method="POST", data={"filename": form_value}):

@@ -17,7 +17,7 @@
  * under the License.
  */
 import { createRef, useState } from 'react';
-import { styled, useTheme } from '@apache-superset/core/theme';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import OlMap from 'ol/Map';
 import {
   CartodiagramPluginProps,
@@ -32,8 +32,8 @@ import 'ol/ol.css';
 // For docs, visit https://emotion.sh/docs/styled
 
 // Theming variables are provided for your use via a ThemeProvider
-// imported from @superset-ui/core. For variables available, please visit
-// https://github.com/apache-superset/superset-ui/blob/master/packages/superset-ui-core/src/style/index.ts
+// imported from @ax-bi/ui-core. For variables available, please visit
+// https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/packages/ax-bi-ui-core/src/style/index.ts
 
 const Styles = styled.div<CartodiagramPluginStylesProps>`
   height: ${({ height }) => height}px;

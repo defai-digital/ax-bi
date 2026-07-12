@@ -18,10 +18,10 @@
  */
 import { useMemo } from 'react';
 import { useMenu } from 'src/core';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Button, Divider, Dropdown } from '@superset-ui/core/components';
-import { Menu, MenuItemType } from '@superset-ui/core/components/Menu';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Button, Divider, Dropdown } from '@ax-bi/ui-core/components';
+import { Menu, MenuItemType } from '@ax-bi/ui-core/components/Menu';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { commands } from 'src/core';
 
 export interface PanelToolbarProps {
@@ -110,7 +110,7 @@ const PanelToolbar = ({
       margin: 0;
     }
 
-    & .superset-button {
+    & .axbi-button {
       margin-left: 0 !important;
       min-width: ${theme.sizeUnit * 8}px;
     }

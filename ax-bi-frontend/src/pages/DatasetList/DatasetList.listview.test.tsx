@@ -26,7 +26,7 @@ import {
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import rison from 'rison';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { selectPillOption } from 'spec/helpers/testing-library';
 import {
   setupMocks,
@@ -62,7 +62,7 @@ jest.mock('src/utils/export');
 // Increase default timeout for tests that involve multiple async operations
 jest.setTimeout(15000);
 
-const buildSupersetClientError = ({
+const buildAxBIClientError = ({
   status,
   message,
 }: {
@@ -87,7 +87,7 @@ const buildSupersetClientError = ({
 });
 
 /**
- * Helper to set up error test scenarios with SupersetClient spy
+ * Helper to set up error test scenarios with AxBIClient spy
  * Reduces boilerplate for error toast tests
  */
 const setupErrorTestScenario = ({
@@ -103,15 +103,15 @@ const setupErrorTestScenario = ({
   errorStatus: number;
   errorMessage: string;
 }) => {
-  // Spy on SupersetClient method and throw error for specific endpoint
+  // Spy on AxBIClient method and throw error for specific endpoint
   const originalMethod =
     method === 'get'
-      ? SupersetClient.get.bind(SupersetClient)
-      : SupersetClient.post.bind(SupersetClient);
+      ? AxBIClient.get.bind(AxBIClient)
+      : AxBIClient.post.bind(AxBIClient);
 
-  jest.spyOn(SupersetClient, method).mockImplementation(async request => {
+  jest.spyOn(AxBIClient, method).mockImplementation(async request => {
     if (request.endpoint?.includes(endpoint)) {
-      throw buildSupersetClientError({
+      throw buildAxBIClientError({
         status: errorStatus,
         message: errorMessage,
       });
@@ -1176,9 +1176,9 @@ test('delete action gracefully handles 403 forbidden error', async () => {
 
   await userEvent.click(deleteButton);
 
-  // Wait for SupersetClient.get to be called (deterministic anchor - API was attempted)
+  // Wait for AxBIClient.get to be called (deterministic anchor - API was attempted)
   await waitFor(() => {
-    expect(SupersetClient.get).toHaveBeenCalledWith(
+    expect(AxBIClient.get).toHaveBeenCalledWith(
       expect.objectContaining({
         endpoint: expect.stringContaining('/related_objects'),
       }),
@@ -1216,9 +1216,9 @@ test('delete action gracefully handles 500 internal server error', async () => {
 
   await userEvent.click(deleteButton);
 
-  // Wait for SupersetClient.get to be called (deterministic anchor - API was attempted)
+  // Wait for AxBIClient.get to be called (deterministic anchor - API was attempted)
   await waitFor(() => {
-    expect(SupersetClient.get).toHaveBeenCalledWith(
+    expect(AxBIClient.get).toHaveBeenCalledWith(
       expect.objectContaining({
         endpoint: expect.stringContaining('/related_objects'),
       }),
@@ -1720,10 +1720,10 @@ test('edit action shows error toast when dataset fetch fails', async () => {
 
   mockDatasetListEndpoints({ result: [ownedDataset], count: 1 });
 
-  // Mock SupersetClient.get to fail for the specific dataset endpoint
-  jest.spyOn(SupersetClient, 'get').mockImplementation(async request => {
+  // Mock AxBIClient.get to fail for the specific dataset endpoint
+  jest.spyOn(AxBIClient, 'get').mockImplementation(async request => {
     if (request.endpoint?.includes(`/api/v1/dataset/${dataset.id}`)) {
-      throw buildSupersetClientError({
+      throw buildAxBIClientError({
         status: 500,
         message: 'Failed to fetch dataset',
       });

@@ -25,13 +25,13 @@ from fastmcp import Client
 from fastmcp.exceptions import ToolError
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.user.schemas import ListUsersRequest, UserFilter
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.user.schemas import ListUsersRequest, UserFilter
+from axbi.utils import json
 
-list_users_module = importlib.import_module("superset.mcp_service.user.tool.list_users")
+list_users_module = importlib.import_module("axbi.mcp_service.user.tool.list_users")
 get_user_info_module = importlib.import_module(
-    "superset.mcp_service.user.tool.get_user_info"
+    "axbi.mcp_service.user.tool.get_user_info"
 )
 
 
@@ -73,7 +73,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -124,7 +124,7 @@ class TestUserFilterSchema:
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_basic(mock_list, mcp_server):
     """Basic user listing returns expected fields."""
@@ -144,7 +144,7 @@ async def test_list_users_basic(mock_list, mcp_server):
     assert data["users"][0]["active"] is True
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_with_request(mock_list, mcp_server):
     """list_users accepts an explicit request object."""
@@ -160,7 +160,7 @@ async def test_list_users_with_request(mock_list, mcp_server):
     assert data["users"][0]["username"] == "alice"
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_with_search(mock_list, mcp_server):
     """list_users passes search to the DAO."""
@@ -175,7 +175,7 @@ async def test_list_users_with_search(mock_list, mcp_server):
     assert data["users"][0]["username"] == "alice"
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_with_filter(mock_list, mcp_server):
     """list_users accepts column filters."""
@@ -192,7 +192,7 @@ async def test_list_users_with_filter(mock_list, mcp_server):
     assert len(data["users"]) == 1
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_includes_email_when_allowed_and_requested(
     mock_list, mcp_server
@@ -216,7 +216,7 @@ async def test_list_users_includes_email_when_allowed_and_requested(
     assert data["users"][0]["email"] == "admin@example.com"
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_redacts_email_when_denied(mock_list, mcp_server):
     """email is null when caller lacks metadata access, even when explicitly
@@ -239,7 +239,7 @@ async def test_list_users_redacts_email_when_denied(mock_list, mcp_server):
     assert data["users"][0]["email"] is None
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_select_columns_filters_output(mock_list, mcp_server):
     """select_columns controls which fields appear in each user dict."""
@@ -259,7 +259,7 @@ async def test_list_users_select_columns_filters_output(mock_list, mcp_server):
     assert user_dict["username"] == "admin"
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_empty_result(mock_list, mcp_server):
     """list_users handles empty results gracefully."""
@@ -295,7 +295,7 @@ async def test_list_users_search_and_filters_mutually_exclusive(mcp_server):
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.user.UserDAO.find_by_id")
+@patch("axbi.daos.user.UserDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_user_info_success(mock_find, mcp_server):
     """get_user_info returns user details for a known ID."""
@@ -310,7 +310,7 @@ async def test_get_user_info_success(mock_find, mcp_server):
     assert data["username"] == "admin"
 
 
-@patch("superset.daos.user.UserDAO.find_by_id")
+@patch("axbi.daos.user.UserDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_user_info_not_found(mock_find, mcp_server):
     """get_user_info returns a not_found error for unknown IDs."""
@@ -325,7 +325,7 @@ async def test_get_user_info_not_found(mock_find, mcp_server):
     assert data["error_type"] == "not_found"
 
 
-@patch("superset.daos.user.UserDAO.find_by_id")
+@patch("axbi.daos.user.UserDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_user_info_includes_sensitive_when_allowed(mock_find, mcp_server):
     """email and roles are included when caller has metadata access."""
@@ -341,7 +341,7 @@ async def test_get_user_info_includes_sensitive_when_allowed(mock_find, mcp_serv
     assert "Alpha" in data["roles"][0]
 
 
-@patch("superset.daos.user.UserDAO.find_by_id")
+@patch("axbi.daos.user.UserDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_user_info_redacts_sensitive_when_denied(mock_find, mcp_server):
     """email and roles are redacted when caller lacks metadata access."""
@@ -363,7 +363,7 @@ async def test_get_user_info_redacts_sensitive_when_denied(mock_find, mcp_server
     assert data["roles"] is None
 
 
-@patch("superset.daos.user.UserDAO.find_by_id")
+@patch("axbi.daos.user.UserDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_user_info_always_returns_basic_fields_without_metadata_access(
     mock_find, mcp_server
@@ -393,7 +393,7 @@ async def test_get_user_info_always_returns_basic_fields_without_metadata_access
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.user.UserDAO.list")
+@patch("axbi.daos.user.UserDAO.list")
 @pytest.mark.asyncio
 async def test_list_users_user_controlled_fields_are_wrapped_in_untrusted_content(
     mock_list, mcp_server
@@ -424,7 +424,7 @@ async def test_list_users_user_controlled_fields_are_wrapped_in_untrusted_conten
     assert injected_last in entry["last_name"]
 
 
-@patch("superset.daos.user.UserDAO.find_by_id")
+@patch("axbi.daos.user.UserDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_user_info_user_controlled_fields_are_wrapped_in_untrusted_content(
     mock_find, mcp_server

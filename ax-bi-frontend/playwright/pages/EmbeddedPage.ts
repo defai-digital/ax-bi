@@ -24,8 +24,8 @@ import { EMBEDDED } from '../utils/constants';
  * Page object for the embedded dashboard test app.
  *
  * The test app runs on a separate origin (its origin is assigned per-suite
- * via an OS-allocated port) and uses the @superset-ui/embedded-sdk to render
- * a Superset dashboard in an iframe. Playwright's page.exposeFunction()
+ * via an OS-allocated port) and uses the @ax-bi/embedded-sdk to render
+ * a AxBI dashboard in an iframe. Playwright's page.exposeFunction()
  * bridges the guest token from Node.js into the browser page.
  */
 export class EmbeddedPage {
@@ -59,7 +59,7 @@ export class EmbeddedPage {
   async goto(params: {
     appUrl: string;
     uuid: string;
-    supersetDomain: string;
+    axbiDomain: string;
     hideTitle?: boolean;
     hideTab?: boolean;
     hideChartControls?: boolean;
@@ -67,7 +67,7 @@ export class EmbeddedPage {
   }): Promise<void> {
     const searchParams = new URLSearchParams({
       uuid: params.uuid,
-      supersetDomain: params.supersetDomain,
+      axbiDomain: params.axbiDomain,
     });
     if (params.hideTitle) searchParams.set('hideTitle', 'true');
     if (params.hideTab) searchParams.set('hideTab', 'true');

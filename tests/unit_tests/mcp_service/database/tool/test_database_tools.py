@@ -26,27 +26,27 @@ from fastmcp.exceptions import ToolError
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.database.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.database.schemas import (
     DatabaseFilter,
     DatabaseInfo,
     ListDatabasesRequest,
     serialize_database_object,
 )
-from superset.mcp_service.privacy import DATA_MODEL_METADATA_ERROR_TYPE
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.privacy import DATA_MODEL_METADATA_ERROR_TYPE
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     sanitize_for_llm_context,
 )
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 list_databases_module = importlib.import_module(
-    "superset.mcp_service.database.tool.list_databases"
+    "axbi.mcp_service.database.tool.list_databases"
 )
 get_database_info_module = importlib.import_module(
-    "superset.mcp_service.database.tool.get_database_info"
+    "axbi.mcp_service.database.tool.get_database_info"
 )
 
 
@@ -181,7 +181,7 @@ def mock_auth():
     """Mock authentication for all tests."""
     from unittest.mock import Mock, patch
 
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -252,7 +252,7 @@ async def test_list_databases_privacy_denial_does_not_call_sidecar(
     client_class.assert_not_called()
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_basic(mock_list, mcp_server):
     """Test basic database listing functionality."""
@@ -277,7 +277,7 @@ async def test_list_databases_basic(mock_list, mcp_server):
         assert data["databases"][0]["database_name"] == "examples"
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_with_search(mock_list, mcp_server):
     """Test database listing with search functionality."""
@@ -299,7 +299,7 @@ async def test_list_databases_with_search(mock_list, mcp_server):
         assert data["databases"][0]["database_name"] == "production_db"
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_with_filters(mock_list, mcp_server):
     """Test database listing with filters."""
@@ -327,7 +327,7 @@ async def test_list_databases_with_filters(mock_list, mcp_server):
         assert len(data["databases"]) == 1
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_does_not_expose_user_directory_fields(
     mock_list, mcp_server
@@ -393,7 +393,7 @@ def test_database_request_accepts_created_by_me() -> None:
     assert request.created_by_me is True
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_shadows_ax_services_when_enabled(
     mock_list,
@@ -460,7 +460,7 @@ async def test_list_databases_shadows_ax_services_when_enabled(
     )
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_serves_ax_services_when_enabled(
     mock_list,
@@ -527,7 +527,7 @@ async def test_list_databases_serves_ax_services_when_enabled(
     )
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_serving_falls_back_on_invalid_candidate(
     mock_list,
@@ -569,7 +569,7 @@ async def test_list_databases_serving_falls_back_on_invalid_candidate(
     )
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_api_error(mock_list, mcp_server):
     """Test error handling when DAO raises an exception."""
@@ -581,7 +581,7 @@ async def test_list_databases_api_error(mock_list, mcp_server):
         assert "Database error" in str(excinfo.value)
 
 
-@patch("superset.daos.database.DatabaseDAO.find_by_id")
+@patch("axbi.daos.database.DatabaseDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_database_info_basic(mock_find, mcp_server):
     """Test basic get database info functionality."""
@@ -600,7 +600,7 @@ async def test_get_database_info_basic(mock_find, mcp_server):
         assert "changed_by" not in data
 
 
-@patch("superset.daos.database.DatabaseDAO.find_by_id")
+@patch("axbi.daos.database.DatabaseDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_database_info_not_found(mock_find, mcp_server):
     """Test get database info when database does not exist."""
@@ -612,7 +612,7 @@ async def test_get_database_info_not_found(mock_find, mcp_server):
         assert result.data["error_type"] == "not_found"
 
 
-@patch("superset.daos.database.DatabaseDAO.list")
+@patch("axbi.daos.database.DatabaseDAO.list")
 @pytest.mark.asyncio
 async def test_list_databases_does_not_expose_sensitive_credential_columns(
     mock_list, mcp_server

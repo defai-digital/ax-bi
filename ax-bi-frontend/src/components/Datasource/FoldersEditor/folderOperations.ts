@@ -22,8 +22,8 @@
  * Handles creating, deleting, renaming, moving folders and items.
  */
 
-import { Metric, ColumnMeta } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { Metric, ColumnMeta } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import { v4 as uuidv4 } from 'uuid';
 import {
   DatasourceFolder,

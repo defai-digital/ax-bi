@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import type { CSSProperties, FC, ReactNode } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Icons } from '@superset-ui/core/components/Icons';
-import type { IconType } from '@superset-ui/core/components/Icons/types';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import type { IconType } from '@ax-bi/ui-core/components/Icons/types';
 import { isDivider } from './utils';
 
 interface TitleContainerProps {

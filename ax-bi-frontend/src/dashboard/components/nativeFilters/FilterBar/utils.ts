@@ -22,7 +22,7 @@ import {
   ExtraFormData,
   Filter,
   FilterState,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { isEqual } from 'lodash';
 import { useSelector } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';

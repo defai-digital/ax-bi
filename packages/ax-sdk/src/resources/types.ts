@@ -17,10 +17,10 @@
  * under the License.
  */
 
-// ---- Common Superset REST API response shapes ----
+// ---- Common AxBI REST API response shapes ----
 
-/** Standard envelope returned by Superset list endpoints. */
-export interface SupersetListEnvelope<T> {
+/** Standard envelope returned by AxBI list endpoints. */
+export interface AxBIListEnvelope<T> {
   count: number;
   ids: number[];
   result: T[];
@@ -32,8 +32,8 @@ export interface SupersetListEnvelope<T> {
   edit_columns?: unknown[];
 }
 
-/** Standard envelope returned by Superset single-item endpoints. */
-export interface SupersetItemEnvelope<T> {
+/** Standard envelope returned by AxBI single-item endpoints. */
+export interface AxBIItemEnvelope<T> {
   id: number;
   result: T;
   show_title?: string;
@@ -43,7 +43,7 @@ export interface SupersetItemEnvelope<T> {
 }
 
 /** Standard delete response. */
-export interface SupersetDeleteEnvelope {
+export interface AxBIDeleteEnvelope {
   message: string;
 }
 

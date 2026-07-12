@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Column } from '@superset-ui/core';
+import { Column } from '@ax-bi/ui-core';
 
 export type ColumnType = Pick<Column, 'column_name' | 'type'>;
 

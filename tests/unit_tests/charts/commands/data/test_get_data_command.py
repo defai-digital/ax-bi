@@ -19,18 +19,18 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.commands.chart.data.get_data_command import ChartDataCommand
-from superset.commands.chart.exceptions import ChartDataQueryFailedError
-from superset.common.chart_data import ChartDataResultType
-from superset.common.db_query_status import QueryStatus
-from superset.common.query_context import QueryContext
+from axbi.commands.chart.data.get_data_command import ChartDataCommand
+from axbi.commands.chart.exceptions import ChartDataQueryFailedError
+from axbi.common.chart_data import ChartDataResultType
+from axbi.common.db_query_status import QueryStatus
+from axbi.common.query_context import QueryContext
 
 
 def test_get_full_tolerates_failed_payload_without_filter_metadata() -> None:
     """
     Failed dataframe payloads may omit optional applied/rejected filter metadata.
     """
-    from superset.common.query_actions import _get_full
+    from axbi.common.query_actions import _get_full
 
     mock_query_context = Mock(spec=QueryContext)
     mock_query_context.get_df_payload.return_value = {
@@ -43,7 +43,7 @@ def test_get_full_tolerates_failed_payload_without_filter_metadata() -> None:
     mock_query_obj.result_type = ChartDataResultType.FULL
     mock_query_obj.applied_time_extras = {}
 
-    with patch("superset.common.query_actions._get_datasource") as mock_get_datasource:
+    with patch("axbi.common.query_actions._get_datasource") as mock_get_datasource:
         mock_datasource = Mock()
         mock_datasource.columns = []
         mock_get_datasource.return_value = mock_datasource
@@ -66,7 +66,7 @@ def test_query_result_type_allows_validation_error_payload() -> None:
 
     Context:
     - GitHub Issue #35492
-    - Superset 4.1.3 allowed errors to pass through
+    - AxBI 4.1.3 allowed errors to pass through
     - Command reorganization in 2023 broke this behavior
     - This test ensures errors pass through for query-only requests
     """
@@ -278,23 +278,23 @@ def test_full_result_type_fails_fast_on_first_error_in_multiple_queries() -> Non
 
 def test_get_query_catches_parsing_error() -> None:
     """
-    Test that _get_query() catches SupersetParseError and returns both SQL and error.
+    Test that _get_query() catches AxBIParseError and returns both SQL and error.
 
     When SQL generation succeeds but optimization/parsing fails:
     - SQL has already been compiled (stored in error.extra['sql'])
     - Error message describes the parsing failure
     - Both should be returned to the frontend for display
     """
-    from superset.common.query_actions import _get_query
-    from superset.common.query_object import QueryObject
-    from superset.exceptions import SupersetParseError
+    from axbi.common.query_actions import _get_query
+    from axbi.common.query_object import QueryObject
+    from axbi.exceptions import AxBIParseError
 
     # Create mock query_context and query_obj
     mock_query_context = Mock()
     mock_query_obj = Mock(spec=QueryObject)
 
-    # Create SupersetParseError with SQL in error.extra
-    parse_error = SupersetParseError(
+    # Create AxBIParseError with SQL in error.extra
+    parse_error = AxBIParseError(
         sql="SELECT SUM ( Open",  # SQL was generated before parsing failed
         engine="postgresql",
         message="Error parsing near 'Open' at line 1:17",
@@ -303,7 +303,7 @@ def test_get_query_catches_parsing_error() -> None:
     )
 
     # Mock _get_datasource and datasource.get_query_str to raise the error
-    with patch("superset.common.query_actions._get_datasource") as mock_get_ds:
+    with patch("axbi.common.query_actions._get_datasource") as mock_get_ds:
         mock_datasource = Mock()
         mock_datasource.query_language = "sql"
         mock_datasource.get_query_str.side_effect = parse_error
@@ -328,21 +328,21 @@ def test_get_query_handles_parsing_error_with_missing_sql_key() -> None:
 
     Ensures defensive programming when extracting SQL from exception extra data.
     """
-    from superset.common.query_actions import _get_query
-    from superset.common.query_object import QueryObject
-    from superset.exceptions import SupersetParseError
+    from axbi.common.query_actions import _get_query
+    from axbi.common.query_object import QueryObject
+    from axbi.exceptions import AxBIParseError
 
     mock_query_context = Mock()
     mock_query_obj = Mock(spec=QueryObject)
 
-    parse_error = SupersetParseError(
+    parse_error = AxBIParseError(
         sql="SELECT * FROM table",
         message="Parsing error occurred",
     )
     # Mock error.extra to NOT have sql key
     parse_error.error.extra = {"other_field": "some_value"}
 
-    with patch("superset.common.query_actions._get_datasource") as mock_get_ds:
+    with patch("axbi.common.query_actions._get_datasource") as mock_get_ds:
         mock_datasource = Mock()
         mock_datasource.query_language = "sql"
         mock_datasource.get_query_str.side_effect = parse_error
@@ -365,21 +365,21 @@ def test_get_query_handles_parsing_error_with_null_sql_value() -> None:
 
     Ensures defensive programming when extracting SQL from exception extra data.
     """
-    from superset.common.query_actions import _get_query
-    from superset.common.query_object import QueryObject
-    from superset.exceptions import SupersetParseError
+    from axbi.common.query_actions import _get_query
+    from axbi.common.query_object import QueryObject
+    from axbi.exceptions import AxBIParseError
 
     mock_query_context = Mock()
     mock_query_obj = Mock(spec=QueryObject)
 
-    parse_error = SupersetParseError(
+    parse_error = AxBIParseError(
         sql="SELECT * FROM table",
         message="Parsing error occurred",
     )
     # Mock error.extra to have sql key with None value
     parse_error.error.extra = {"sql": None}
 
-    with patch("superset.common.query_actions._get_datasource") as mock_get_ds:
+    with patch("axbi.common.query_actions._get_datasource") as mock_get_ds:
         mock_datasource = Mock()
         mock_datasource.query_language = "sql"
         mock_datasource.get_query_str.side_effect = parse_error

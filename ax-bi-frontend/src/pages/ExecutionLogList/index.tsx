@@ -17,15 +17,12 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
-import {
-  extendedDayjs as dayjs,
-  fDuration,
-} from '@superset-ui/core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
+import { extendedDayjs as dayjs, fDuration } from '@ax-bi/ui-core/utils/dates';
 import { useEffect, useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Label, Tooltip } from '@superset-ui/core/components';
+import { Label, Tooltip } from '@ax-bi/ui-core/components';
 import { ListView } from 'src/components';
 import SubMenu from 'src/features/home/SubMenu';
 import withToasts from 'src/components/MessageToasts/withToasts';

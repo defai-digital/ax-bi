@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
-import { Button, Form } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
+import { Button, Form } from '@ax-bi/ui-core/components';
 import { FC, useEffect, useState } from 'react';
 import { MapViewConfigs, MapViewPopoverContentProps } from './types';
 import { ControlFormItem } from '../ColumnConfigControl/ControlForm';

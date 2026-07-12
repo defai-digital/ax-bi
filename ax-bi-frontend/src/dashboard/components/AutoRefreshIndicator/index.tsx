@@ -17,10 +17,10 @@
  * under the License.
  */
 import { FC, useMemo } from 'react';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { Label, Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Label, Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { useRealTimeDashboard } from '../../hooks/useRealTimeDashboard';
 import { useCurrentTime } from '../../hooks/useCurrentTime';
 import { StatusIndicatorDot } from '../AutoRefreshStatus/StatusIndicatorDot';

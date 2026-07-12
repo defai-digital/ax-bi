@@ -18,7 +18,7 @@ from datetime import datetime
 
 import pytest
 
-from superset.constants import TimeGrain
+from axbi.constants import TimeGrain
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -45,7 +45,7 @@ def test_convert_dttm(
     dttm: datetime,  # noqa: F811
 ) -> None:
     """Test datetime conversion for various MongoDB column types."""
-    from superset.db_engine_specs.mongodb import (
+    from axbi.db_engine_specs.mongodb import (
         MongoDBEngineSpec as spec,  # noqa: N813
     )
 
@@ -54,7 +54,7 @@ def test_convert_dttm(
 
 def test_epoch_to_dttm() -> None:
     """Test epoch to datetime conversion."""
-    from superset.db_engine_specs.mongodb import (
+    from axbi.db_engine_specs.mongodb import (
         MongoDBEngineSpec as spec,  # noqa: N813
     )
 
@@ -104,7 +104,7 @@ def test_time_grain_expressions(
     expected_expression: str,
 ) -> None:
     """Test time grain expressions for MongoDB."""
-    from superset.db_engine_specs.mongodb import (
+    from axbi.db_engine_specs.mongodb import (
         MongoDBEngineSpec as spec,  # noqa: N813
     )
 
@@ -115,7 +115,7 @@ def test_time_grain_expressions(
 
 def test_engine_metadata() -> None:
     """Test MongoDB engine specification metadata."""
-    from superset.db_engine_specs.mongodb import (
+    from axbi.db_engine_specs.mongodb import (
         MongoDBEngineSpec as spec,  # noqa: N813
     )
 

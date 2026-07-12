@@ -30,7 +30,7 @@ import pytest
 from flask import Flask
 from sqlalchemy.sql.elements import TextClause
 
-from superset.connectors.sqla.models import BaseDatasource
+from axbi.connectors.sqla.models import BaseDatasource
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def test_rls_filters_include_guest_when_enabled(
     """
     Test that RLS filters include guest filters when enabled.
 
-    When include_global_guest_rls=True and EMBEDDED_SUPERSET is enabled,
+    When include_global_guest_rls=True and EMBEDDED_AXBI is enabled,
     both regular and guest RLS filters should be returned.
     """
     regular_filter = MagicMock()
@@ -61,15 +61,15 @@ def test_rls_filters_include_guest_when_enabled(
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[regular_filter],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             return_value=[guest_rule],
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):
@@ -103,15 +103,15 @@ def test_rls_filters_exclude_guest_when_requested(
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[regular_filter],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             return_value=[guest_rule],
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):
@@ -145,15 +145,15 @@ def test_rls_filters_include_guest_by_default(
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[regular_filter],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             return_value=[guest_rule],
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):
@@ -180,15 +180,15 @@ def test_regular_rls_always_included(
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[regular_filter],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             return_value=[],
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):
@@ -207,7 +207,7 @@ def test_guest_rls_skipped_when_feature_disabled(
     app: Flask,
 ) -> None:
     """
-    Test that guest RLS is skipped when EMBEDDED_SUPERSET is disabled.
+    Test that guest RLS is skipped when EMBEDDED_AXBI is disabled.
 
     This verifies that the feature flag is respected regardless of
     the include_global_guest_rls parameter.
@@ -220,15 +220,15 @@ def test_guest_rls_skipped_when_feature_disabled(
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[regular_filter],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             return_value=[guest_rule],
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=False,  # Feature disabled
         ),
     ):
@@ -266,15 +266,15 @@ def test_filter_grouping_preserved(
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[filter1, filter2, filter3],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             return_value=[],
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=False,
         ),
     ):

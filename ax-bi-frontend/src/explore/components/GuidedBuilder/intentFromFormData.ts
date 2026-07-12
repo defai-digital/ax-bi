@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import { Operators } from 'src/explore/constants';
 import { GuidedFilter, GuidedIntent } from './types';
 import { getVizDescriptor } from './vizDescriptors';

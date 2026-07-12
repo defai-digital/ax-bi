@@ -20,8 +20,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.chart.exceptions import ChartInvalidError
-from superset.commands.chart.legacy import (
+from axbi.commands.chart.exceptions import ChartInvalidError
+from axbi.commands.chart.legacy import (
     is_legacy_viz_type,
     legacy_viz_type_message,
     LEGACY_VIZ_TYPE_REPLACEMENTS,
@@ -32,7 +32,7 @@ from superset.commands.chart.legacy import (
 def test_legacy_registry_matches_migration_processors() -> None:
     """The removed-legacy registry must stay in sync with the migration
     processors so the API/MCP ban and the data migration never drift apart."""
-    from superset.migrations.shared.migrate_viz.base import MigrateViz
+    from axbi.migrations.shared.migrate_viz.base import MigrateViz
 
     def _leaf_processors(cls: type) -> list[type]:
         subclasses = cls.__subclasses__()
@@ -44,7 +44,7 @@ def test_legacy_registry_matches_migration_processors() -> None:
         return leaves
 
     # Import processors so every subclass is registered.
-    import superset.migrations.shared.migrate_viz.processors  # noqa: F401
+    import axbi.migrations.shared.migrate_viz.processors  # noqa: F401
 
     migration_map = {}
     for proc in _leaf_processors(MigrateViz):
@@ -80,23 +80,23 @@ def test_legacy_viz_type_message_names_replacement() -> None:
 @pytest.mark.parametrize("viz_type", sorted(LEGACY_VIZ_TYPES))
 def test_create_chart_command_rejects_legacy_viz_type(viz_type: str) -> None:
     """CreateChartCommand.validate() must reject every removed legacy type."""
-    from superset.commands.chart.create import CreateChartCommand
+    from axbi.commands.chart.create import CreateChartCommand
 
     mock_datasource = MagicMock()
     mock_datasource.name = "test_table"
 
     with (
         patch(
-            "superset.commands.chart.create.get_datasource_by_id",
+            "axbi.commands.chart.create.get_datasource_by_id",
             return_value=mock_datasource,
         ),
-        patch("superset.commands.chart.create.security_manager.raise_for_access"),
+        patch("axbi.commands.chart.create.security_manager.raise_for_access"),
         patch(
-            "superset.commands.chart.create.CreateChartCommand.populate_owners",
+            "axbi.commands.chart.create.CreateChartCommand.populate_owners",
             return_value=[],
         ),
         patch(
-            "superset.commands.chart.create.DashboardDAO.find_by_ids",
+            "axbi.commands.chart.create.DashboardDAO.find_by_ids",
             return_value=[],
         ),
     ):
@@ -117,23 +117,23 @@ def test_create_chart_command_rejects_legacy_viz_type(viz_type: str) -> None:
 
 def test_create_chart_command_allows_modern_viz_type() -> None:
     """CreateChartCommand.validate() must not flag a modern replacement type."""
-    from superset.commands.chart.create import CreateChartCommand
+    from axbi.commands.chart.create import CreateChartCommand
 
     mock_datasource = MagicMock()
     mock_datasource.name = "test_table"
 
     with (
         patch(
-            "superset.commands.chart.create.get_datasource_by_id",
+            "axbi.commands.chart.create.get_datasource_by_id",
             return_value=mock_datasource,
         ),
-        patch("superset.commands.chart.create.security_manager.raise_for_access"),
+        patch("axbi.commands.chart.create.security_manager.raise_for_access"),
         patch(
-            "superset.commands.chart.create.CreateChartCommand.populate_owners",
+            "axbi.commands.chart.create.CreateChartCommand.populate_owners",
             return_value=[],
         ),
         patch(
-            "superset.commands.chart.create.DashboardDAO.find_by_ids",
+            "axbi.commands.chart.create.DashboardDAO.find_by_ids",
             return_value=[],
         ),
     ):
@@ -151,19 +151,19 @@ def test_create_chart_command_allows_modern_viz_type() -> None:
 
 def test_update_chart_command_rejects_legacy_viz_type() -> None:
     """UpdateChartCommand.validate() must reject setting a legacy type."""
-    from superset.commands.chart.update import UpdateChartCommand
+    from axbi.commands.chart.update import UpdateChartCommand
 
     mock_chart = MagicMock()
     mock_chart.owners = []
 
     with (
         patch(
-            "superset.commands.chart.update.ChartDAO.find_by_id",
+            "axbi.commands.chart.update.ChartDAO.find_by_id",
             return_value=mock_chart,
         ),
-        patch("superset.commands.chart.update.security_manager.raise_for_ownership"),
+        patch("axbi.commands.chart.update.security_manager.raise_for_ownership"),
         patch(
-            "superset.commands.chart.update.UpdateChartCommand.compute_owners",
+            "axbi.commands.chart.update.UpdateChartCommand.compute_owners",
             return_value=[],
         ),
     ):

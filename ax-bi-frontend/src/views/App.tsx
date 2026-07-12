@@ -25,9 +25,9 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
-import { css } from '@apache-superset/core/theme';
-import { Layout, Loading } from '@superset-ui/core/components';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { css } from '@ax-bi/core/theme';
+import { Layout, Loading } from '@ax-bi/ui-core/components';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { ErrorBoundary } from 'src/components';
 import { DesktopIntegration } from 'src/components/DesktopIntegration';
 import Menu from 'src/features/home/Menu';
@@ -121,7 +121,10 @@ const App = () => (
                 />
               ),
             )}
-            <Route path="/" element={<Navigate to="/ax-bi/welcome/" replace />} />
+            <Route
+              path="/"
+              element={<Navigate to="/ax-bi/welcome/" replace />}
+            />
           </Routes>
         </ExtensionsStartup>
         <ToastContainer />

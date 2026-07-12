@@ -17,8 +17,8 @@
  * under the License.
  */
 import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import Tabs from '@superset-ui/core/components/Tabs';
+import { t } from '@ax-bi/core/translation';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import { RoleObject } from 'src/pages/RolesList';
 import {
   EmptyWrapperType,
@@ -26,7 +26,7 @@ import {
   TableView,
   FormInstance,
   Icons,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   BaseModalProps,
   RoleForm,
@@ -34,7 +34,7 @@ import {
   SelectOption,
 } from 'src/features/roles/types';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { fetchPaginatedData } from 'src/utils/fetchOptions';
 import { type UserObject } from 'src/pages/UsersList/types';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
@@ -169,7 +169,7 @@ function RoleListEditModal({
     setLoadingRolePermissions(true);
     permissionFetchSucceeded.current = false;
 
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/security/roles/${id}/permissions/`,
     })
       .then(response => {

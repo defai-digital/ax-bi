@@ -26,7 +26,7 @@ import {
   useState,
 } from 'react';
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ChartDataResponseResult,
   Behavior,
@@ -40,14 +40,14 @@ import {
   ClientErrorObject,
   getClientErrorObject,
   isChartCustomization,
-} from '@superset-ui/core';
-import { styled, SupersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, AxBITheme } from '@ax-bi/core/theme';
 import { useTheme } from '@emotion/react';
 import { useDispatch, useSelector } from 'react-redux';
 import { isEqual, isEqualWith } from 'lodash';
 import { getChartDataRequest } from 'src/components/Chart/chartAction';
 import { ErrorAlert, ErrorMessageWithStackTrace } from 'src/components';
-import { Loading, Constants, Flex } from '@superset-ui/core/components';
+import { Loading, Constants, Flex } from '@ax-bi/ui-core/components';
 import { waitForAsyncData } from 'src/middleware/asyncEvent';
 import { FilterBarOrientation, RootState } from 'src/dashboard/types';
 import {
@@ -67,7 +67,7 @@ import { useFilterOutlined } from '../useFilterOutlined';
 
 const HEIGHT = 32;
 
-// Overrides superset-ui height with min-height
+// Overrides axbi-ui height with min-height
 const StyledDiv = styled.div<{
   orientation: FilterBarOrientation;
   overflow: boolean;
@@ -142,7 +142,7 @@ const FilterValue: FC<FilterValueProps> = ({
   clearAllTrigger,
   onClearAllComplete,
 }) => {
-  const theme = useTheme() as SupersetTheme;
+  const theme = useTheme() as AxBITheme;
   const { id, targets, filterType } = filter;
   const isCustomization = isChartCustomization(filter);
   const allowedTimeGrains = isCustomization

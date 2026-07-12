@@ -34,7 +34,7 @@ import {
   NativeFiltersState,
   ChartCustomization,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { HYDRATE_DASHBOARD } from '../actions/hydrate';
 
 interface ExtendedNativeFiltersState extends NativeFiltersState {
@@ -114,10 +114,7 @@ export default function nativeFilterReducer(
       const existingFilters = state.filters;
 
       type FilterType =
-        | Filter
-        | Divider
-        | ChartCustomization
-        | ChartCustomizationDivider;
+        Filter | Divider | ChartCustomization | ChartCustomizationDivider;
       const mergedFilters: Record<string, FilterType> = {};
 
       Object.entries(incomingFilters).forEach(([id, incomingFilter]) => {

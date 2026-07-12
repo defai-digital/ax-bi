@@ -18,12 +18,12 @@
  */
 import { useCallback, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { styled, useTheme, css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { styled, useTheme, css } from '@ax-bi/core/theme';
 import CodeSyntaxHighlighter, {
   preloadLanguages,
-} from '@superset-ui/core/components/CodeSyntaxHighlighter';
+} from '@ax-bi/ui-core/components/CodeSyntaxHighlighter';
 import { LoadingCards } from 'src/pages/Home';
 import { TableTab } from 'src/views/CRUD/types';
 import withToasts from 'src/components/MessageToasts/withToasts';
@@ -32,10 +32,10 @@ import {
   DeleteModal,
   Button,
   ListViewCard,
-} from '@superset-ui/core/components';
-import { MenuItem } from '@superset-ui/core/components/Menu';
+} from '@ax-bi/ui-core/components';
+import { MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { copyQueryLink, useListViewResource } from 'src/views/CRUD/hooks';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { User } from 'src/types/bootstrapTypes';
 import {
   CardContainer,
@@ -156,7 +156,7 @@ export const SavedQueries = ({
   }, [showThumbnails, featureFlag]);
 
   const handleQueryDelete = ({ id, label }: Query) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/saved_query/${id}`,
     }).then(
       () => {

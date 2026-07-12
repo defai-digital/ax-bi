@@ -17,12 +17,12 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { useCSSTextTruncation } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { Tooltip } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { useCSSTextTruncation } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { FilterBarOrientation } from 'src/dashboard/types';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { ellipsisCss } from './styles';
 
 const StyledCrossFilterTitle = styled.div`
@@ -63,9 +63,11 @@ const CrossFilterChartTitle = (props: {
       <Tooltip title={titleIsTruncated ? title : null}>
         <span
           css={css`
-            max-width: ${orientation === FilterBarOrientation.Vertical
-              ? `${theme.sizeUnit * 45}px`
-              : `${theme.sizeUnit * 15}px`};
+            max-width: ${
+              orientation === FilterBarOrientation.Vertical
+                ? `${theme.sizeUnit * 45}px`
+                : `${theme.sizeUnit * 15}px`
+            };
             line-height: 1.4;
             ${ellipsisCss}
           `}

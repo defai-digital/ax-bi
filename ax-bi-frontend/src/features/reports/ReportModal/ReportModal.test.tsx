@@ -25,7 +25,7 @@ import {
   createStore,
 } from 'spec/helpers/testing-library';
 import reducerIndex from 'spec/helpers/reducerIndex';
-import { FeatureFlag, VizType, isFeatureEnabled } from '@superset-ui/core';
+import { FeatureFlag, VizType, isFeatureEnabled } from '@ax-bi/ui-core';
 import ReportModal from '.';
 
 const REPORT_ENDPOINT = 'glob:*/api/v1/report*';
@@ -51,8 +51,8 @@ const defaultProps = {
   },
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

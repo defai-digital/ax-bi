@@ -21,9 +21,9 @@ from unittest.mock import patch
 import pandas as pd
 import pytest
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils.core import DTTM_ALIAS
-from superset.utils.pandas_postprocessing import prophet
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils.core import DTTM_ALIAS
+from axbi.utils.pandas_postprocessing import prophet
 from tests.unit_tests.fixtures.dataframes import prophet_df
 
 
@@ -208,7 +208,7 @@ def test_prophet_fit_error():
         pytest.skip("prophet not installed")
 
     with patch(
-        "superset.utils.pandas_postprocessing.prophet._prophet_fit_and_predict"
+        "axbi.utils.pandas_postprocessing.prophet._prophet_fit_and_predict"
     ) as mock_fit:
         mock_fit.side_effect = InvalidPostProcessingError(
             "Unable to generate forecast: Dataframe has fewer than 2 non-NaN rows."
@@ -228,12 +228,12 @@ def test_prophet_uncertainty_lower_bound_can_be_negative_for_negative_series():
     """
     Regression for #21734: when the input series contains negative values,
     the forecast's lower confidence bound (``__yhat_lower``) must be allowed
-    to go below zero. The original bug claimed Superset clipped the lower
+    to go below zero. The original bug claimed AxBI clipped the lower
     bound at 0, hiding the natural shape of the uncertainty interval for
     series like temperatures or signed deltas.
 
-    Superset's wrapper passes through Prophet's output unchanged (no
-    clipping in ``superset/utils/pandas_postprocessing/prophet.py``); this
+    AxBI's wrapper passes through Prophet's output unchanged (no
+    clipping in ``axbi/utils/pandas_postprocessing/prophet.py``); this
     test pins that contract end-to-end. If a future refactor introduces
     a ``max(0, lower)`` clamp, this test fails immediately.
     """

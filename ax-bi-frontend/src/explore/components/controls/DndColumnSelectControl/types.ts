@@ -17,9 +17,9 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { AdhocColumn, JsonValue } from '@superset-ui/core';
+import { AdhocColumn, JsonValue } from '@ax-bi/ui-core';
 import { ControlComponentProps } from 'src/explore/components/Control';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 
 export interface OptionProps {
   children?: ReactNode;

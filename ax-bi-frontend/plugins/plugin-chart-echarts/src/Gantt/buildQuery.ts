@@ -21,7 +21,7 @@ import {
   QueryObject,
   buildQueryContext,
   ensureIsArray,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export default function buildQuery(formData: QueryFormData) {
   const {

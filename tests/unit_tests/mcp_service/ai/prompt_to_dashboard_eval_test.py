@@ -23,17 +23,18 @@ prompts produce usable chart intents and valid generate_chart configs.
 from __future__ import annotations
 
 from types import SimpleNamespace
+from typing import Any
 
-from superset.mcp_service.ai.asset_search import _query_tokens, _score_result
-from superset.mcp_service.ai.grounding_utils import plan_should_block_compose
-from superset.mcp_service.ai.structured_intent import chart_config_from_structured_intent
-from superset.mcp_service.ai.tool.plan_dashboard import (
+from axbi.mcp_service.ai.asset_search import _query_tokens, _score_result
+from axbi.mcp_service.ai.grounding_utils import plan_should_block_compose
+from axbi.mcp_service.ai.structured_intent import chart_config_from_structured_intent
+from axbi.mcp_service.ai.tool.plan_dashboard import (
     _build_chart_intents_heuristic,
     _build_global_filters_heuristic,
 )
 
 
-def _sales_dataset_dict() -> dict:
+def _sales_dataset_dict() -> dict[str, Any]:
     return {
         "id": 42,
         "name": "sales_orders",
@@ -41,8 +42,18 @@ def _sales_dataset_dict() -> dict:
         "certified": True,
         "metrics": ["revenue", "order_count"],
         "columns": [
-            {"name": "order_date", "type": "DATE", "is_numeric": False, "is_dttm": True},
-            {"name": "region", "type": "VARCHAR", "is_numeric": False, "is_dttm": False},
+            {
+                "name": "order_date",
+                "type": "DATE",
+                "is_numeric": False,
+                "is_dttm": True,
+            },
+            {
+                "name": "region",
+                "type": "VARCHAR",
+                "is_numeric": False,
+                "is_dttm": False,
+            },
             {
                 "name": "product",
                 "type": "VARCHAR",
@@ -113,13 +124,15 @@ def test_eval_structured_intents_compile_to_chart_configs() -> None:
     )
     compiled = 0
     for intent in intents:
-        config, chart_type, confidence, _, warnings = chart_config_from_structured_intent(
-            chart_type=intent.chart_type,
-            metrics=intent.metrics,
-            dimensions=intent.dimensions,
-            filters=intent.filters,
-            time_range=intent.time_range,
-            dataset=ds,
+        config, chart_type, confidence, _, warnings = (
+            chart_config_from_structured_intent(
+                chart_type=intent.chart_type,
+                metrics=intent.metrics,
+                dimensions=intent.dimensions,
+                filters=intent.filters,
+                time_range=intent.time_range,
+                dataset=ds,
+            )
         )
         if config is None:
             continue

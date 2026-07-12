@@ -27,16 +27,16 @@ from fastmcp.exceptions import ToolError
 from pydantic import ValidationError
 from sqlalchemy.exc import OperationalError
 
-from superset.commands.exceptions import (
+from axbi.commands.exceptions import (
     CommandInvalidError,
     ForbiddenError,
     ObjectNotFoundError,
 )
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetException, SupersetSecurityException
-from superset.mcp_service.auth import MCPNoAuthSourceError, MCPPermissionDeniedError
-from superset.mcp_service.mcp_config import MCP_RESPONSE_SIZE_CONFIG
-from superset.mcp_service.middleware import (
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBIException, AxBISecurityException
+from axbi.mcp_service.auth import MCPNoAuthSourceError, MCPPermissionDeniedError
+from axbi.mcp_service.mcp_config import MCP_RESPONSE_SIZE_CONFIG
+from axbi.mcp_service.middleware import (
     _is_user_error,
     _sanitize_error_for_logging,
     _sanitize_params,
@@ -102,7 +102,7 @@ class TestStructuredContentStripperMiddleware:
         """Structured-only tool results must not become empty responses."""
         from fastmcp.tools.tool import ToolResult
 
-        from superset.utils.json import loads as json_loads
+        from axbi.utils.json import loads as json_loads
 
         middleware = StructuredContentStripperMiddleware()
         context = MagicMock()
@@ -198,8 +198,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=small_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -223,8 +223,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=large_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
             pytest.raises(ToolError) as exc_info,
         ):
             await middleware.on_call_tool(context, call_next)
@@ -275,13 +275,13 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
             patch(
-                "superset.mcp_service.middleware.estimate_response_tokens",
+                "axbi.mcp_service.middleware.estimate_response_tokens",
                 return_value=850,
             ),
-            patch("superset.mcp_service.middleware.logger") as mock_logger,
+            patch("axbi.mcp_service.middleware.logger") as mock_logger,
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -303,8 +303,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=large_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
             pytest.raises(ToolError) as exc_info,
         ):
             await middleware.on_call_tool(context, call_next)
@@ -328,8 +328,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=large_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger") as mock_event_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger") as mock_event_logger,
             pytest.raises(ToolError),
         ):
             await middleware.on_call_tool(context, call_next)
@@ -357,8 +357,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=large_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -385,8 +385,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=large_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -407,8 +407,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=large_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
             pytest.raises(ToolError),
         ):
             await middleware.on_call_tool(context, call_next)
@@ -429,8 +429,8 @@ class TestResponseSizeGuardMiddleware:
         call_next = AsyncMock(return_value=large_response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger") as mock_event_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger") as mock_event_logger,
         ):
             await middleware.on_call_tool(context, call_next)
 
@@ -451,11 +451,11 @@ class TestResponseSizeGuardMiddleware:
 
         with (
             patch(
-                "superset.mcp_service.middleware.truncate_oversized_response",
+                "axbi.mcp_service.middleware.truncate_oversized_response",
                 return_value=(truncated_payload, True, ["long truncation note"]),
             ),
             patch(
-                "superset.mcp_service.middleware.estimate_response_tokens",
+                "axbi.mcp_service.middleware.estimate_response_tokens",
                 side_effect=estimate_after_metadata,
             ),
         ):
@@ -478,7 +478,7 @@ class TestCreateResponseSizeGuardMiddleware:
         mock_flask_app.config.get.return_value = MCP_RESPONSE_SIZE_CONFIG
 
         with patch(
-            "superset.mcp_service.flask_singleton.get_flask_app",
+            "axbi.mcp_service.flask_singleton.get_flask_app",
             return_value=mock_flask_app,
         ):
             middleware = create_response_size_guard_middleware()
@@ -500,7 +500,7 @@ class TestCreateResponseSizeGuardMiddleware:
         mock_flask_app.config.get.return_value = mock_config
 
         with patch(
-            "superset.mcp_service.flask_singleton.get_flask_app",
+            "axbi.mcp_service.flask_singleton.get_flask_app",
             return_value=mock_flask_app,
         ):
             middleware = create_response_size_guard_middleware()
@@ -519,7 +519,7 @@ class TestCreateResponseSizeGuardMiddleware:
         mock_flask_app.config.get.return_value = mock_config
 
         with patch(
-            "superset.mcp_service.flask_singleton.get_flask_app",
+            "axbi.mcp_service.flask_singleton.get_flask_app",
             return_value=mock_flask_app,
         ):
             middleware = create_response_size_guard_middleware()
@@ -534,7 +534,7 @@ class TestCreateResponseSizeGuardMiddleware:
         mock_flask_app.config.get.return_value = mock_config
 
         with patch(
-            "superset.mcp_service.flask_singleton.get_flask_app",
+            "axbi.mcp_service.flask_singleton.get_flask_app",
             return_value=mock_flask_app,
         ):
             middleware = create_response_size_guard_middleware()
@@ -546,7 +546,7 @@ class TestCreateResponseSizeGuardMiddleware:
     def test_handles_exception_gracefully(self) -> None:
         """Should return None on expected configuration exceptions."""
         with patch(
-            "superset.mcp_service.flask_singleton.get_flask_app",
+            "axbi.mcp_service.flask_singleton.get_flask_app",
             side_effect=ImportError("Config error"),
         ):
             middleware = create_response_size_guard_middleware()
@@ -568,7 +568,7 @@ class TestExtractPayloadFromToolResult:
 
     def test_extracts_dict_payload(self) -> None:
         """Should parse the JSON text inside content[0] and return the dict."""
-        from superset.utils import json
+        from axbi.utils import json
 
         payload = {"id": 1, "name": "test", "charts": [1, 2, 3]}
         tool_result = self._make_tool_result(json.dumps(payload))
@@ -611,7 +611,7 @@ class TestExtractPayloadFromToolResult:
 
     def test_returns_none_when_payload_is_list(self) -> None:
         """Should return None when JSON payload is a list, not a dict."""
-        from superset.utils import json
+        from axbi.utils import json
 
         tool_result = self._make_tool_result(json.dumps([{"id": 1}, {"id": 2}]))
 
@@ -663,7 +663,7 @@ class TestRewrapAsToolResult:
         from fastmcp.tools.tool import ToolResult
         from mcp.types import TextContent
 
-        from superset.utils import json
+        from axbi.utils import json
 
         return ToolResult(
             content=[TextContent(type="text", text=json.dumps(payload))],
@@ -674,7 +674,7 @@ class TestRewrapAsToolResult:
         """Should return a ToolResult whose content[0].text is the JSON payload."""
         from fastmcp.tools.tool import ToolResult
 
-        from superset.utils import json
+        from axbi.utils import json
 
         original = self._make_tool_result({"old": "data"})
         new_payload = {"id": 1, "name": "truncated", "_response_truncated": True}
@@ -723,7 +723,7 @@ class TestToolResultWrapping:
         from fastmcp.tools.tool import ToolResult
         from mcp.types import TextContent
 
-        from superset.utils import json
+        from axbi.utils import json
 
         return ToolResult(
             content=[TextContent(type="text", text=json.dumps(payload))],
@@ -735,7 +735,7 @@ class TestToolResultWrapping:
         """Truncate a ToolResult-wrapped info response and return a ToolResult."""
         from fastmcp.tools.tool import ToolResult
 
-        from superset.utils import json
+        from axbi.utils import json
 
         middleware = ResponseSizeGuardMiddleware(token_limit=500)
         context = MagicMock()
@@ -747,8 +747,8 @@ class TestToolResultWrapping:
         call_next = AsyncMock(return_value=tool_result)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -773,8 +773,8 @@ class TestToolResultWrapping:
         call_next = AsyncMock(return_value=tool_result)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -795,8 +795,8 @@ class TestToolResultWrapping:
         call_next = AsyncMock(return_value=tool_result)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
             pytest.raises(ToolError),
         ):
             await middleware.on_call_tool(context, call_next)
@@ -806,7 +806,7 @@ class TestToolResultWrapping:
         """Should preserve the original ToolResult meta through truncation."""
         from fastmcp.tools.tool import ToolResult
 
-        from superset.utils import json
+        from axbi.utils import json
 
         middleware = ResponseSizeGuardMiddleware(token_limit=500)
         context = MagicMock()
@@ -819,8 +819,8 @@ class TestToolResultWrapping:
         call_next = AsyncMock(return_value=tool_result)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -852,8 +852,8 @@ class TestMiddlewareIntegration:
         call_next = AsyncMock(return_value=response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -872,8 +872,8 @@ class TestMiddlewareIntegration:
         call_next = AsyncMock(return_value=response)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
         ):
             result = await middleware.on_call_tool(context, call_next)
 
@@ -895,12 +895,12 @@ class TestMiddlewareIntegration:
         assert result == response
 
 
-def _make_security_exception(msg: str = "access denied") -> SupersetSecurityException:
-    """Helper to construct SupersetSecurityException with a proper SupersetError."""
-    return SupersetSecurityException(
-        SupersetError(
+def _make_security_exception(msg: str = "access denied") -> AxBISecurityException:
+    """Helper to construct AxBISecurityException with a proper AxBIError."""
+    return AxBISecurityException(
+        AxBIError(
             message=msg,
-            error_type=SupersetErrorType.GENERIC_BACKEND_ERROR,
+            error_type=AxBIErrorType.GENERIC_BACKEND_ERROR,
             level=ErrorLevel.ERROR,
         )
     )
@@ -932,7 +932,7 @@ class TestIsUserError:
             "PermissionError",
             "ObjectNotFoundError",
             "ForbiddenError",
-            "SupersetSecurityException",
+            "AxBISecurityException",
             "ValueError",  # user error — bad param from LLM
             "FileNotFoundError",
             "RuntimeError",
@@ -970,27 +970,27 @@ class TestIsUserError:
         error = OperationalError("db error", {}, Exception())
         assert _is_user_error(error) is False
 
-    def test_superset_exception_status_based(self) -> None:
-        """Test SupersetException classification is based on .status attribute."""
+    def test_axbi_exception_status_based(self) -> None:
+        """Test AxBIException classification is based on .status attribute."""
         # 4xx status → user error
-        error_400 = SupersetException("bad request")
+        error_400 = AxBIException("bad request")
         error_400.status = 400
         assert _is_user_error(error_400) is True
 
-        error_408 = SupersetException("timeout")
+        error_408 = AxBIException("timeout")
         error_408.status = 408
         assert _is_user_error(error_408) is True
 
-        error_422 = SupersetException("unprocessable")
+        error_422 = AxBIException("unprocessable")
         error_422.status = 422
         assert _is_user_error(error_422) is True
 
         # 5xx status → system error
-        error_500 = SupersetException("internal error")
+        error_500 = AxBIException("internal error")
         error_500.status = 500
         assert _is_user_error(error_500) is False
 
-        error_503 = SupersetException("unavailable")
+        error_503 = AxBIException("unavailable")
         error_503.status = 503
         assert _is_user_error(error_503) is False
 
@@ -1010,9 +1010,9 @@ class TestGlobalErrorHandlerLogLevels:
         call_next = AsyncMock(side_effect=ValueError("invalid page"))
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger") as mock_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger") as mock_logger,
             pytest.raises(ToolError),
         ):
             await middleware.on_message(context, call_next)
@@ -1033,9 +1033,9 @@ class TestGlobalErrorHandlerLogLevels:
         call_next = AsyncMock(side_effect=OperationalError("db error", {}, Exception()))
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger") as mock_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger") as mock_logger,
             pytest.raises(ToolError),
         ):
             await middleware.on_message(context, call_next)
@@ -1055,9 +1055,9 @@ class TestGlobalErrorHandlerLogLevels:
         call_next = AsyncMock(side_effect=RuntimeError("something broke"))
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger") as mock_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger") as mock_logger,
             pytest.raises(ToolError, match="Internal error"),
         ):
             await middleware.on_message(context, call_next)
@@ -1077,9 +1077,9 @@ class TestGlobalErrorHandlerLogLevels:
         call_next = AsyncMock(side_effect=ValueError("bad param"))
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger") as mock_event_logger,
-            patch("superset.mcp_service.middleware.logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger") as mock_event_logger,
+            patch("axbi.mcp_service.middleware.logger"),
             pytest.raises(ToolError),
         ):
             await middleware.on_message(context, call_next)
@@ -1101,9 +1101,9 @@ class TestGlobalErrorHandlerLogLevels:
         call_next = AsyncMock(side_effect=PermissionError("not allowed"))
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger") as mock_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger") as mock_logger,
             pytest.raises(ToolError, match="Permission denied"),
         ):
             await middleware.on_message(context, call_next)
@@ -1123,9 +1123,9 @@ class TestGlobalErrorHandlerLogLevels:
         call_next = AsyncMock(side_effect=ConnectionError("connection refused"))
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger") as mock_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger") as mock_logger,
             pytest.raises(ToolError, match="Connection error"),
         ):
             await middleware.on_message(context, call_next)
@@ -1133,22 +1133,22 @@ class TestGlobalErrorHandlerLogLevels:
         mock_logger.error.assert_called()
 
     @pytest.mark.asyncio
-    async def test_superset_exception_4xx_logs_warning(self) -> None:
-        """SupersetException with 4xx status should log at WARNING."""
+    async def test_axbi_exception_4xx_logs_warning(self) -> None:
+        """AxBIException with 4xx status should log at WARNING."""
         middleware = GlobalErrorHandlerMiddleware()
 
         context = MagicMock()
         context.message.name = "list_charts"
         context.method = "tools/call"
 
-        error = SupersetException("bad request")
+        error = AxBIException("bad request")
         error.status = 400
         call_next = AsyncMock(side_effect=error)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger") as mock_logger,
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger") as mock_logger,
             pytest.raises(ToolError, match="Invalid request"),
         ):
             await middleware.on_message(context, call_next)
@@ -1157,23 +1157,23 @@ class TestGlobalErrorHandlerLogLevels:
         mock_logger.error.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_superset_exception_5xx_logs_error(self) -> None:
-        """SupersetException with 5xx status should log at ERROR."""
+    async def test_axbi_exception_5xx_logs_error(self) -> None:
+        """AxBIException with 5xx status should log at ERROR."""
         middleware = GlobalErrorHandlerMiddleware()
 
         context = MagicMock()
         context.message.name = "list_charts"
         context.method = "tools/call"
 
-        error = SupersetException("internal failure")
+        error = AxBIException("internal failure")
         error.status = 500
         call_next = AsyncMock(side_effect=error)
 
         mock_logger = MagicMock()
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=1),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger", mock_logger),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=1),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger", mock_logger),
             pytest.raises(ToolError, match="Internal error"),
         ):
             await middleware.on_message(context, call_next)
@@ -1198,8 +1198,8 @@ class TestGlobalErrorHandlerLogLevels:
         call_next = AsyncMock(side_effect=error)
 
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=42),
-            patch("superset.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=42),
+            patch("axbi.mcp_service.middleware.event_logger"),
             pytest.raises(ToolError) as exc_info,
         ):
             await middleware.on_message(context, call_next)
@@ -1234,9 +1234,9 @@ class TestGlobalErrorHandlerLogLevels:
 
         mock_logger = MagicMock()
         with (
-            patch("superset.mcp_service.middleware.get_user_id", return_value=5),
-            patch("superset.mcp_service.middleware.event_logger"),
-            patch("superset.mcp_service.middleware.logger", mock_logger),
+            patch("axbi.mcp_service.middleware.get_user_id", return_value=5),
+            patch("axbi.mcp_service.middleware.event_logger"),
+            patch("axbi.mcp_service.middleware.logger", mock_logger),
             pytest.raises(ToolError),
         ):
             await middleware.on_message(context, call_next)
@@ -1262,7 +1262,7 @@ class TestRBACToolVisibilityMiddleware:
         middleware = RBACToolVisibilityMiddleware()
 
         with patch(
-            "superset.mcp_service.middleware._get_app_context_manager",
+            "axbi.mcp_service.middleware._get_app_context_manager",
             side_effect=RuntimeError("no app"),
         ):
             result = await middleware.on_list_tools(MagicMock(), call_next)
@@ -1277,11 +1277,9 @@ class TestRBACToolVisibilityMiddleware:
         middleware = RBACToolVisibilityMiddleware()
 
         with (
+            patch("axbi.mcp_service.flask_singleton.get_flask_app", return_value=app),
             patch(
-                "superset.mcp_service.flask_singleton.get_flask_app", return_value=app
-            ),
-            patch(
-                "superset.mcp_service.middleware.get_user_from_request",
+                "axbi.mcp_service.middleware.get_user_from_request",
                 return_value=None,
             ),
         ):
@@ -1304,15 +1302,13 @@ class TestRBACToolVisibilityMiddleware:
             return tool.name == "list_charts"
 
         with (
+            patch("axbi.mcp_service.flask_singleton.get_flask_app", return_value=app),
             patch(
-                "superset.mcp_service.flask_singleton.get_flask_app", return_value=app
-            ),
-            patch(
-                "superset.mcp_service.middleware.get_user_from_request",
+                "axbi.mcp_service.middleware.get_user_from_request",
                 return_value=mock_user,
             ),
             patch(
-                "superset.mcp_service.middleware.is_tool_visible_to_current_user",
+                "axbi.mcp_service.middleware.is_tool_visible_to_current_user",
                 side_effect=_visible,
             ),
         ):
@@ -1329,11 +1325,9 @@ class TestRBACToolVisibilityMiddleware:
         middleware = RBACToolVisibilityMiddleware()
 
         with (
+            patch("axbi.mcp_service.flask_singleton.get_flask_app", return_value=app),
             patch(
-                "superset.mcp_service.flask_singleton.get_flask_app", return_value=app
-            ),
-            patch(
-                "superset.mcp_service.middleware.get_user_from_request",
+                "axbi.mcp_service.middleware.get_user_from_request",
                 side_effect=PermissionError("Invalid API key"),
             ),
         ):
@@ -1349,11 +1343,9 @@ class TestRBACToolVisibilityMiddleware:
         middleware = RBACToolVisibilityMiddleware()
 
         with (
+            patch("axbi.mcp_service.flask_singleton.get_flask_app", return_value=app),
             patch(
-                "superset.mcp_service.flask_singleton.get_flask_app", return_value=app
-            ),
-            patch(
-                "superset.mcp_service.middleware.get_user_from_request",
+                "axbi.mcp_service.middleware.get_user_from_request",
                 side_effect=ValueError("User 'ghost' not found in database"),
             ),
         ):
@@ -1369,11 +1361,9 @@ class TestRBACToolVisibilityMiddleware:
         middleware = RBACToolVisibilityMiddleware()
 
         with (
+            patch("axbi.mcp_service.flask_singleton.get_flask_app", return_value=app),
             patch(
-                "superset.mcp_service.flask_singleton.get_flask_app", return_value=app
-            ),
-            patch(
-                "superset.mcp_service.middleware.get_user_from_request",
+                "axbi.mcp_service.middleware.get_user_from_request",
                 side_effect=MCPNoAuthSourceError(
                     "Authentication required. No valid credentials provided."
                 ),

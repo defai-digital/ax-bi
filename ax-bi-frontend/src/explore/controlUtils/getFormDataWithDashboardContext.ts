@@ -30,7 +30,7 @@ import {
   QueryFormData,
   QueryObjectFilterClause,
   SimpleAdhocFilter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { simpleFilterToAdhoc } from 'src/utils/simpleFilterToAdhoc';
 
 const removeExtraFieldForNewCharts = (

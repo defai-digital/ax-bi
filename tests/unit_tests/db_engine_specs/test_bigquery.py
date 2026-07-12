@@ -28,9 +28,9 @@ from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql import sqltypes
 from sqlalchemy_bigquery import BigQueryDialect
 
-from superset.sql.parse import Table
-from superset.superset_typing import ResultSetColumnType
-from superset.utils import json
+from axbi.axbi_typing import ResultSetColumnType
+from axbi.sql.parse import Table
+from axbi.utils import json
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -66,7 +66,7 @@ def test_get_fields() -> None:
             the_table
 
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     columns: list[ResultSetColumnType] = [
         {"column_name": "limit", "name": "limit", "type": "STRING", "is_dttm": False},
@@ -95,7 +95,7 @@ def test_select_star(mocker: MockerFixture) -> None:
     pseudo-columns show up as "columns" for metadata reasons, we can't select them
     in the query, as opposed to fields from non-array structures.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     cols: list[ResultSetColumnType] = [
         {
@@ -179,7 +179,7 @@ def test_get_parameters_from_uri_serializable() -> None:
     """
     Test that the result from ``get_parameters_from_uri`` is JSON serializable.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     parameters = BigQueryEngineSpec.get_parameters_from_uri(
         "bigquery://dbt-tutorial-347100/",
@@ -193,7 +193,7 @@ def test_build_sqlalchemy_uri_string_credentials() -> None:
     """
     Test building a URI when ``credentials_info`` is a JSON string.
     """
-    from superset.db_engine_specs.bigquery import (
+    from axbi.db_engine_specs.bigquery import (
         BigQueryEngineSpec,
         BigQueryParametersType,
     )
@@ -220,7 +220,7 @@ def test_build_sqlalchemy_uri_rejects_malformed_credentials_info(
     """
     from marshmallow.exceptions import ValidationError
 
-    from superset.db_engine_specs.bigquery import (
+    from axbi.db_engine_specs.bigquery import (
         BigQueryEngineSpec,
         BigQueryParametersType,
     )
@@ -235,7 +235,7 @@ def test_unmask_encrypted_extra() -> None:
     """
     Test that the private key can be reused from the previous `encrypted_extra`.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     old = json.dumps(
         {
@@ -268,7 +268,7 @@ def test_unmask_encrypted_extra_field_changeed() -> None:
     """
     Test that the private key is not reused when the field has changed.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     old = json.dumps(
         {
@@ -301,7 +301,7 @@ def test_unmask_encrypted_extra_when_old_is_none() -> None:
     """
     Test that a `None` value for the old field works for `encrypted_extra`.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     old = None
     new = json.dumps(
@@ -327,7 +327,7 @@ def test_unmask_encrypted_extra_when_new_is_none() -> None:
     """
     Test that a `None` value for the new field works for `encrypted_extra`.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     old = json.dumps(
         {
@@ -346,7 +346,7 @@ def test_mask_encrypted_extra() -> None:
     """
     Test that the private key is masked when the database is edited.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     config = json.dumps(
         {
@@ -371,7 +371,7 @@ def test_mask_encrypted_extra_when_empty() -> None:
     """
     Test that the encrypted extra will return a none value if the field is empty.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     assert BigQueryEngineSpec.mask_encrypted_extra(None) is None
 
@@ -387,7 +387,7 @@ def test_parse_error_message() -> None:
                                                 -----Query Job SQL Follows-----
     |    .    |    .    |    .    |\n   1:select * from case_detail_all_suites\n   2:LIMIT 1001\n    |    .    |    .    |    .    |
     """  # noqa: E501
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     message = 'bigquery error: 400 Syntax error: Table "case_detail_all_suites" must be qualified with a dataset (e.g. dataset.table).\n\n(job ID: ddf30b05-44e8-4fbf-aa29-40bfccaed886)\n\n     -----Query Job SQL Follows-----     \n\n    |    .    |    .    |    .    |\n   1:select * from case_detail_all_suites\n   2:LIMIT 1001\n    |    .    |    .    |    .    |'  # noqa: E501
     expected_result = 'bigquery error: 400 Syntax error: Table "case_detail_all_suites" must be qualified with a dataset (e.g. dataset.table).'  # noqa: E501
@@ -405,7 +405,7 @@ def test_parse_error_raises_exception() -> None:
     400 Syntax error: Expected "(" or keyword UNNEST but got "@" at [4:80]
     bigquery error: 400 Table \"case_detail_all_suites\" must be qualified with a dataset (e.g. dataset.table).
     """  # noqa: E501
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     message = 'bigquery error: 400 Syntax error: Table "case_detail_all_suites" must be qualified with a dataset (e.g. dataset.table).'  # noqa: E501
     message_2 = "6"
@@ -435,7 +435,7 @@ def test_convert_dttm(
     """
     DB Eng Specs (bigquery): Test conversion to date time
     """
-    from superset.db_engine_specs.bigquery import (
+    from axbi.db_engine_specs.bigquery import (
         BigQueryEngineSpec as spec,  # noqa: N813
     )
 
@@ -446,8 +446,8 @@ def test_get_default_catalog(mocker: MockerFixture) -> None:
     """
     Test that we get the default catalog from the connection URI.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.models.core import Database
 
     mocker.patch.object(Database, "get_sqla_engine")
     get_client = mocker.patch.object(BigQueryEngineSpec, "_get_client")
@@ -478,7 +478,7 @@ def test_get_time_partition_column_uses_catalog_in_table_reference(
     """
     Test that partition metadata lookup preserves the BigQuery project.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     database = mock.Mock()
     engine = mock.MagicMock()
@@ -502,7 +502,7 @@ def test_adjust_engine_params_catalog_as_host() -> None:
 
     In this test, the original URI has the catalog as the host.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     url = make_url("bigquery://project")
 
@@ -527,7 +527,7 @@ def test_adjust_engine_params_schema_as_dataset() -> None:
     is provided, the URL database should be updated so unqualified table names
     resolve to schema.table_name.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     url = make_url("bigquery://project")
 
@@ -569,7 +569,7 @@ def test_get_schema_from_engine_params() -> None:
     Test that get_schema_from_engine_params returns the dataset from
     bigquery://project/dataset URIs and None for all other URL forms.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     # Standard form: project in host, dataset in database
     assert (
@@ -606,7 +606,7 @@ def test_get_materialized_view_names() -> None:
     """
     Test get_materialized_view_names method.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     database = mock.Mock()
     database.get_default_catalog.return_value = "my_project"
@@ -644,7 +644,7 @@ def test_get_view_names_excludes_materialized_views() -> None:
     """
     Test get_view_names excludes materialized views.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     database = mock.Mock()
     database.get_default_catalog.return_value = "my_project"
@@ -686,15 +686,13 @@ def _patch_bq_fetch_deps(
 ) -> tuple[mock.MagicMock, mock.MagicMock]:
     """Helper to patch Flask g and current_app for BigQuery fetch_data tests."""
     flask_g = mocker.patch(
-        "superset.db_engine_specs.bigquery.g", new_callable=mock.MagicMock
+        "axbi.db_engine_specs.bigquery.g", new_callable=mock.MagicMock
     )
     app = mocker.patch(
-        "superset.db_engine_specs.bigquery.current_app", new_callable=mock.MagicMock
+        "axbi.db_engine_specs.bigquery.current_app", new_callable=mock.MagicMock
     )
-    mocker.patch("superset.db_engine_specs.bigquery.has_app_context", return_value=True)
-    mocker.patch(
-        "superset.db_engine_specs.bigquery.has_request_context", return_value=True
-    )
+    mocker.patch("axbi.db_engine_specs.bigquery.has_app_context", return_value=True)
+    mocker.patch("axbi.db_engine_specs.bigquery.has_request_context", return_value=True)
     # Make current_app truthy and .config.get() return a plain int
     app.__bool__ = mock.Mock(return_value=True)
     app.config = {"BQ_FETCH_MAX_MB": max_mb}
@@ -706,7 +704,7 @@ def test_fetch_data_within_memory_limit(mocker: MockerFixture) -> None:
     Test that fetch_data returns all rows when the result fits within the
     configured memory limit.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     rows = [(1, "a"), (2, "b"), (3, "c")]
 
@@ -731,7 +729,7 @@ def test_fetch_data_truncated_by_memory_limit(mocker: MockerFixture) -> None:
     We use a very small budget (1 MB) so that after the first batch the
     method computes ``remaining_rows <= 0``, hitting the truncation path.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     # 1000 rows of ~10KB each --> first batch ~10 MB >> 1 MB budget
     first_batch = [(i, "x" * 10_000) for i in range(1000)]
@@ -753,7 +751,7 @@ def test_fetch_data_empty_result(mocker: MockerFixture) -> None:
     """
     Test that fetch_data handles an empty result set gracefully.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     cursor = mock.MagicMock()
     cursor.fetchmany.return_value = []
@@ -772,7 +770,7 @@ def test_fetch_data_fallback_on_exception(mocker: MockerFixture) -> None:
     Test that fetch_data falls back to the parent implementation when the
     progressive fetch raises an exception.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     cursor = mock.MagicMock()
     cursor.fetchmany.side_effect = RuntimeError("cursor error")
@@ -792,7 +790,7 @@ def test_fetch_data_converts_bigquery_row_objects(mocker: MockerFixture) -> None
     """
     Test that BigQuery Row objects are converted to plain values.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     class FakeRow:
         """Mimics google.cloud.bigquery.table.Row"""

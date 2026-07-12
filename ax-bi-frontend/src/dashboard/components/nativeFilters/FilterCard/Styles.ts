@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { css, styled } from '@apache-superset/core/theme';
+import { css, styled } from '@ax-bi/core/theme';
 
 export const Row = styled.div`
   ${({ theme }) => css`

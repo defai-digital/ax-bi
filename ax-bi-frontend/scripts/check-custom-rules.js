@@ -19,7 +19,7 @@
  */
 
 /**
- * Custom rule checker for Superset-specific linting patterns
+ * Custom rule checker for AxBI-specific linting patterns
  * Runs as a separate check without needing custom binaries
  */
 
@@ -32,7 +32,7 @@ const traverse = require('@babel/traverse').default;
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
   console.log(`Usage: node scripts/check-custom-rules.js [files...]
 
-Run Superset-specific custom lint checks.
+Run AxBI-specific custom lint checks.
 
 Options:
   --help, -h  Show this help message`);
@@ -155,7 +155,7 @@ function checkNoFaIcons(ast, filepath) {
       if (source.includes('@fortawesome') || source.includes('font-awesome')) {
         // eslint-disable-next-line no-console
         console.error(
-          `${RED}✖${RESET} ${filepath}: FontAwesome import detected. Use @superset-ui/core/components/Icons instead.`,
+          `${RED}✖${RESET} ${filepath}: FontAwesome import detected. Use @ax-bi/ui-core/components/Icons instead.`,
         );
         errorCount += 1;
       }
@@ -358,7 +358,7 @@ const TECHNICAL_TERMS = new Set([
   'END',
   'CAST',
   'CONVERT',
-  // SQL date functions (common in Superset)
+  // SQL date functions (common in AxBI)
   'DATETIME',
   'DATEADD',
   'DATETRUNC',
@@ -710,7 +710,7 @@ function main() {
     /theme\/exampleThemes/, // Theme examples legitimately have colors
     /\/color\/utils/, // Color utility functions legitimately work with colors
     /\/theme\/utils/, // Theme utility functions legitimately work with colors
-    /packages\/superset-ui-core\/src\/color\/index\.ts/, // Core brand color constants
+    /packages\/ax-bi-ui-core\/src\/color\/index\.ts/, // Core brand color constants
   ];
 
   // Enforce TypeScript-only source. Run this on the raw file list (before the
@@ -755,7 +755,7 @@ function main() {
         '**/theme/exampleThemes/**',
         '**/color/utils/**',
         '**/theme/utils/**',
-        'packages/superset-ui-core/src/color/index.ts', // Core brand color constants
+        'packages/ax-bi-ui-core/src/color/index.ts', // Core brand color constants
       ],
     });
   } else {
@@ -772,9 +772,7 @@ function main() {
     console.log('No files to check.');
   } else {
     // eslint-disable-next-line no-console
-    console.log(
-      `Checking ${files.length} files for Superset custom rules...\n`,
-    );
+    console.log(`Checking ${files.length} files for AxBI custom rules...\n`);
 
     files.forEach(file => {
       // Resolve the file path

@@ -27,19 +27,19 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy.exc import ProgrammingError
 from sqlalchemy.orm.session import Session
 
-from superset import db
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
+from axbi import db
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
 from tests.conftest import with_config
 from tests.unit_tests.conftest import with_feature_flags
 
 if TYPE_CHECKING:
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
 
 @pytest.fixture
 def database1(session: Session) -> Iterator["Database"]:
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     engine = db.session.connection().engine
     Database.metadata.create_all(engine)  # pylint: disable=no-member
@@ -77,7 +77,7 @@ def table1(session: Session, database1: "Database") -> Iterator[None]:
 
 @pytest.fixture
 def database2(session: Session) -> Iterator["Database"]:
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     database = Database(
         database_name="database2",
@@ -112,14 +112,14 @@ def table2(session: Session, database2: "Database") -> Iterator[None]:
             conn.execute(text("DROP TABLE table2"))
 
 
-@with_feature_flags(ENABLE_SUPERSET_META_DB=True)
-def test_superset(mocker: MockerFixture, app_context: None, table1: None) -> None:
+@with_feature_flags(ENABLE_AXBI_META_DB=True)
+def test_axbi(mocker: MockerFixture, app_context: None, table1: None) -> None:
     """
     Simple test querying a table.
     """
     # Mock the security_manager.raise_for_access to allow access
     mocker.patch(
-        "superset.extensions.metadb.security_manager.raise_for_access",
+        "axbi.extensions.metadb.security_manager.raise_for_access",
         return_value=None,
     )
 
@@ -132,10 +132,10 @@ def test_superset(mocker: MockerFixture, app_context: None, table1: None) -> Non
     g.user.is_anonymous = False
 
     try:
-        engine = create_engine("superset://")
+        engine = create_engine("axbi://")
     except Exception as e:
-        # Skip test if superset:// dialect can't be loaded (common in Docker)
-        pytest.skip(f"Superset dialect not available: {e}")
+        # Skip test if axbi:// dialect can't be loaded (common in Docker)
+        pytest.skip(f"AxBI dialect not available: {e}")
 
     conn = engine.connect()
     results = conn.execute(text('SELECT * FROM "database1.table1"'))
@@ -145,13 +145,13 @@ def test_superset(mocker: MockerFixture, app_context: None, table1: None) -> Non
 @with_config(
     {
         "DB_SQLA_URI_VALIDATOR": None,
-        "SUPERSET_META_DB_LIMIT": 1,
+        "AXBI_META_DB_LIMIT": 1,
         "DATABASE_OAUTH2_CLIENTS": {},
         "SQLALCHEMY_CUSTOM_PASSWORD_STORE": None,
     }
 )
-@with_feature_flags(ENABLE_SUPERSET_META_DB=True)
-def test_superset_limit(mocker: MockerFixture, app_context: None, table1: None) -> None:
+@with_feature_flags(ENABLE_AXBI_META_DB=True)
+def test_axbi_limit(mocker: MockerFixture, app_context: None, table1: None) -> None:
     """
     Simple that limit is applied when querying a table.
     """
@@ -160,7 +160,7 @@ def test_superset_limit(mocker: MockerFixture, app_context: None, table1: None) 
 
     # Mock the security_manager.raise_for_access to allow access
     mocker.patch(
-        "superset.extensions.metadb.security_manager.raise_for_access",
+        "axbi.extensions.metadb.security_manager.raise_for_access",
         return_value=None,
     )
 
@@ -173,18 +173,18 @@ def test_superset_limit(mocker: MockerFixture, app_context: None, table1: None) 
     g.user.is_anonymous = False
 
     try:
-        engine = create_engine("superset://")
+        engine = create_engine("axbi://")
     except Exception as e:
-        # Skip test if superset:// dialect can't be loaded (common in Docker)
-        pytest.skip(f"Superset dialect not available: {e}")
+        # Skip test if axbi:// dialect can't be loaded (common in Docker)
+        pytest.skip(f"AxBI dialect not available: {e}")
 
     conn = engine.connect()
     results = conn.execute(text('SELECT * FROM "database1.table1"'))
     assert list(results) == [(1, 10)]
 
 
-@with_feature_flags(ENABLE_SUPERSET_META_DB=True)
-def test_superset_joins(
+@with_feature_flags(ENABLE_AXBI_META_DB=True)
+def test_axbi_joins(
     mocker: MockerFixture,
     app_context: None,
     table1: None,
@@ -195,7 +195,7 @@ def test_superset_joins(
     """
     # Mock the security_manager.raise_for_access to allow access
     mocker.patch(
-        "superset.extensions.metadb.security_manager.raise_for_access",
+        "axbi.extensions.metadb.security_manager.raise_for_access",
         return_value=None,
     )
 
@@ -208,10 +208,10 @@ def test_superset_joins(
     g.user.is_anonymous = False
 
     try:
-        engine = create_engine("superset://")
+        engine = create_engine("axbi://")
     except Exception as e:
-        # Skip test if superset:// dialect can't be loaded (common in Docker)
-        pytest.skip(f"Superset dialect not available: {e}")
+        # Skip test if axbi:// dialect can't be loaded (common in Docker)
+        pytest.skip(f"AxBI dialect not available: {e}")
 
     conn = engine.connect()
     results = conn.execute(
@@ -225,7 +225,7 @@ def test_superset_joins(
     assert list(results) == [(10, "ten"), (20, "twenty")]
 
 
-@with_feature_flags(ENABLE_SUPERSET_META_DB=True)
+@with_feature_flags(ENABLE_AXBI_META_DB=True)
 def test_dml(
     mocker: MockerFixture,
     app_context: None,
@@ -239,7 +239,7 @@ def test_dml(
     """
     # Mock the security_manager.raise_for_access to allow access
     mocker.patch(
-        "superset.extensions.metadb.security_manager.raise_for_access",
+        "axbi.extensions.metadb.security_manager.raise_for_access",
         return_value=None,
     )
 
@@ -252,10 +252,10 @@ def test_dml(
     g.user.is_anonymous = False
 
     try:
-        engine = create_engine("superset://")
+        engine = create_engine("axbi://")
     except Exception as e:
-        # Skip test if superset:// dialect can't be loaded (common in Docker)
-        pytest.skip(f"Superset dialect not available: {e}")
+        # Skip test if axbi:// dialect can't be loaded (common in Docker)
+        pytest.skip(f"AxBI dialect not available: {e}")
 
     conn = engine.connect()
 
@@ -284,7 +284,7 @@ def test_dml(
     )
 
 
-@with_feature_flags(ENABLE_SUPERSET_META_DB=True)
+@with_feature_flags(ENABLE_AXBI_META_DB=True)
 def test_security_manager(
     mocker: MockerFixture, app_context: None, table1: None
 ) -> None:
@@ -293,7 +293,7 @@ def test_security_manager(
     """
     # Skip this test if metadb dependencies are not available
     try:
-        import superset.extensions.metadb  # noqa: F401
+        import axbi.extensions.metadb  # noqa: F401
     except ImportError:
         pytest.skip("metadb dependencies not available")
 
@@ -301,18 +301,18 @@ def test_security_manager(
     # We need to mock the actual g object that's imported by security.manager
     mock_user = mocker.MagicMock()
     mock_user.is_anonymous = False
-    mocker.patch("superset.security.manager.g", mocker.MagicMock(user=mock_user))
+    mocker.patch("axbi.security.manager.g", mocker.MagicMock(user=mock_user))
 
     # Then patch the security_manager to raise an exception
     security_manager = mocker.MagicMock()
     # Patch it in the metadb module where it's actually used
     mocker.patch(
-        "superset.extensions.metadb.security_manager",
+        "axbi.extensions.metadb.security_manager",
         new=security_manager,
     )
-    security_manager.raise_for_access.side_effect = SupersetSecurityException(
-        SupersetError(
-            error_type=SupersetErrorType.TABLE_SECURITY_ACCESS_ERROR,
+    security_manager.raise_for_access.side_effect = AxBISecurityException(
+        AxBIError(
+            error_type=AxBIErrorType.TABLE_SECURITY_ACCESS_ERROR,
             message=(
                 "You need access to the following tables: `table1`,\n            "
                 "`all_database_access` or `all_datasource_access` permission"
@@ -322,13 +322,13 @@ def test_security_manager(
     )
 
     try:
-        engine = create_engine("superset://")
+        engine = create_engine("axbi://")
     except Exception as e:
-        # Skip test if superset:// dialect can't be loaded (common in Docker)
-        pytest.skip(f"Superset dialect not available: {e}")
+        # Skip test if axbi:// dialect can't be loaded (common in Docker)
+        pytest.skip(f"AxBI dialect not available: {e}")
 
     conn = engine.connect()
-    with pytest.raises(SupersetSecurityException) as excinfo:
+    with pytest.raises(AxBISecurityException) as excinfo:
         conn.execute(text('SELECT * FROM "database1.table1"'))
     assert str(excinfo.value) == (
         "You need access to the following tables: `table1`,\n            "
@@ -336,14 +336,14 @@ def test_security_manager(
     )
 
 
-@with_feature_flags(ENABLE_SUPERSET_META_DB=True)
+@with_feature_flags(ENABLE_AXBI_META_DB=True)
 def test_allowed_dbs(mocker: MockerFixture, app_context: None, table1: None) -> None:
     """
     Test that DBs can be restricted.
     """
     # Mock the security_manager.raise_for_access to allow access
     mocker.patch(
-        "superset.extensions.metadb.security_manager.raise_for_access",
+        "axbi.extensions.metadb.security_manager.raise_for_access",
         return_value=None,
     )
 
@@ -356,10 +356,10 @@ def test_allowed_dbs(mocker: MockerFixture, app_context: None, table1: None) -> 
     g.user.is_anonymous = False
 
     try:
-        engine = create_engine("superset://", allowed_dbs=["database1"])
+        engine = create_engine("axbi://", allowed_dbs=["database1"])
     except Exception as e:
-        # Skip test if superset:// dialect can't be loaded (common in Docker)
-        pytest.skip(f"Superset dialect not available: {e}")
+        # Skip test if axbi:// dialect can't be loaded (common in Docker)
+        pytest.skip(f"AxBI dialect not available: {e}")
 
     conn = engine.connect()
 

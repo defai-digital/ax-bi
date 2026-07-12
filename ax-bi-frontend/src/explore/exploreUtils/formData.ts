@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient, JsonObject, JsonResponse } from '@superset-ui/core';
+import { AxBIClient, JsonObject, JsonResponse } from '@ax-bi/ui-core';
 import { sanitizeFormData } from 'src/utils/sanitizeFormData';
 
 type Payload = {
@@ -59,7 +59,7 @@ export const postFormData = (
   chartId?: number,
   tabId?: string,
 ): Promise<string> =>
-  SupersetClient.post({
+  AxBIClient.post({
     endpoint: assembleEndpoint(undefined, tabId),
     jsonPayload: assemblePayload(
       datasourceId,
@@ -77,7 +77,7 @@ export const putFormData = (
   chartId?: number,
   tabId?: string,
 ): Promise<string> =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: assembleEndpoint(key, tabId),
     jsonPayload: assemblePayload(
       datasourceId,

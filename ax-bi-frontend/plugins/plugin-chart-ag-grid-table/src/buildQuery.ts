@@ -33,11 +33,8 @@ import {
   removeDuplicates,
   PostProcessingRule,
   BuildQuery,
-} from '@superset-ui/core';
-import {
-  isTimeComparison,
-  timeCompareOperator,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { isTimeComparison, timeCompareOperator } from '@ax-bi/chart-controls';
 import { isEmpty } from 'lodash';
 import { TableChartFormData } from './types';
 import { updateTableOwnState } from './utils/externalAPIs';
@@ -295,7 +292,7 @@ const buildQuery: BuildQuery<TableChartFormData> = (
       }
     }
 
-    // Note: In Superset, "columns" are dimensions and "metrics" are measures,
+    // Note: In AxBI, "columns" are dimensions and "metrics" are measures,
     // but AG Grid treats them all as "columns" in the UI
     let orderedColumns = columns;
     let orderedMetrics = metrics;

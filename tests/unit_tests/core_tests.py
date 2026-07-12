@@ -18,7 +18,7 @@ from copy import deepcopy
 
 import pytest
 
-from superset.utils.core import (
+from axbi.utils.core import (
     AdhocColumn,
     AdhocMetric,
     ExtraFiltersReasonType,

@@ -23,8 +23,8 @@ import {
   QueryObject,
   QueryObjectFilterClause,
   BuildQuery,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { DEFAULT_FORM_DATA, PluginFilterSelectQueryFormData } from './types';
 
 const buildQuery: BuildQuery<PluginFilterSelectQueryFormData> = (

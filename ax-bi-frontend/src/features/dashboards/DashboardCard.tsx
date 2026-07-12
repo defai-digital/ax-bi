@@ -18,9 +18,9 @@
  */
 import { useHistory } from 'src/hooks/useAppHistory';
 import { Link } from 'react-router-dom';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { css, styled } from '@ax-bi/core/theme';
 import { CardStyles } from 'src/views/CRUD/utils';
 import {
   Dropdown,
@@ -28,9 +28,9 @@ import {
   FaveStar,
   PublishedLabel,
   ListViewCard,
-} from '@superset-ui/core/components';
-import { MenuItem } from '@superset-ui/core/components/Menu';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components';
+import { MenuItem } from '@ax-bi/ui-core/components/Menu';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { Dashboard } from 'src/views/CRUD/types';
 import { assetUrl } from 'src/utils/assetUrl';
 import { FacePile } from 'src/components';

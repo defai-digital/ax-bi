@@ -27,18 +27,18 @@ from flask_appbuilder.models.sqla.interface import SQLAInterface
 import rison
 
 import tests.integration_tests.test_app  # noqa: F401
-from superset import db, security_manager
-from superset.extensions import appbuilder
-from superset.models.dashboard import Dashboard
-from superset.views.base_api import BaseSupersetModelRestApi, requires_json  # noqa: F401
-from superset.utils import json
+from axbi import db, security_manager
+from axbi.extensions import appbuilder
+from axbi.models.dashboard import Dashboard
+from axbi.views.base_api import BaseAxBIModelRestApi, requires_json  # noqa: F401
+from axbi.utils import json
 
 from tests.conftest import with_config
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 
-class Model1Api(BaseSupersetModelRestApi):
+class Model1Api(BaseAxBIModelRestApi):
     datamodel = SQLAInterface(Dashboard)
     allow_browser_login = True
     class_permission_name = "Dashboard"
@@ -55,7 +55,7 @@ class Model1Api(BaseSupersetModelRestApi):
     }
 
 
-class TestOpenApiSpec(SupersetTestCase):
+class TestOpenApiSpec(AxBITestCase):
     def setUp(self) -> None:
         appbuilder.add_api(Model1Api)
 
@@ -74,7 +74,7 @@ class TestOpenApiSpec(SupersetTestCase):
         validate_spec(response)
 
 
-class TestBaseModelRestApi(SupersetTestCase):
+class TestBaseModelRestApi(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     def test_default_missing_declaration_get(self):
         """
@@ -336,7 +336,7 @@ class ApiOwnersTestCaseMixin:
         assert "gamma user" not in response_users
 
     @patch(
-        "superset.security.SupersetSecurityManager.get_exclude_users_from_lists",
+        "axbi.security.AxBISecurityManager.get_exclude_users_from_lists",
         return_value=["gamma"],
     )
     def test_get_base_filter_related_owners_on_sm(

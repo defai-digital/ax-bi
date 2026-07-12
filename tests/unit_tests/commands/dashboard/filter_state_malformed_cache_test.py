@@ -18,10 +18,10 @@ from unittest.mock import patch
 
 from flask import current_app
 
-from superset.commands.dashboard.filter_state.delete import DeleteFilterStateCommand
-from superset.commands.dashboard.filter_state.get import GetFilterStateCommand
-from superset.commands.dashboard.filter_state.update import UpdateFilterStateCommand
-from superset.commands.temporary_cache.parameters import CommandParameters
+from axbi.commands.dashboard.filter_state.delete import DeleteFilterStateCommand
+from axbi.commands.dashboard.filter_state.get import GetFilterStateCommand
+from axbi.commands.dashboard.filter_state.update import UpdateFilterStateCommand
+from axbi.commands.temporary_cache.parameters import CommandParameters
 
 
 def test_get_filter_state_ignores_malformed_cache_entry() -> None:
@@ -29,13 +29,13 @@ def test_get_filter_state_ignores_malformed_cache_entry() -> None:
     cmd_params = CommandParameters(resource_id=1, key="key")
 
     with (
-        patch("superset.commands.dashboard.filter_state.get.check_access"),
+        patch("axbi.commands.dashboard.filter_state.get.check_access"),
         patch(
-            "superset.commands.dashboard.filter_state.get.cache_key",
+            "axbi.commands.dashboard.filter_state.get.cache_key",
             return_value="1:key",
         ),
         patch(
-            "superset.commands.dashboard.filter_state.get.cache_manager"
+            "axbi.commands.dashboard.filter_state.get.cache_manager"
         ) as mock_cache_manager,
     ):
         mock_cache_manager.filter_state_cache.get.return_value = "not-an-entry"
@@ -50,16 +50,16 @@ def test_update_filter_state_ignores_malformed_cache_entry() -> None:
 
     with (
         current_app.test_request_context(),
-        patch("superset.commands.dashboard.filter_state.update.check_access"),
+        patch("axbi.commands.dashboard.filter_state.update.check_access"),
         patch(
-            "superset.commands.dashboard.filter_state.update.cache_key",
+            "axbi.commands.dashboard.filter_state.update.cache_key",
             return_value="1:key",
         ),
         patch(
-            "superset.commands.dashboard.filter_state.update.cache_manager"
+            "axbi.commands.dashboard.filter_state.update.cache_manager"
         ) as mock_cache_manager,
         patch(
-            "superset.commands.dashboard.filter_state.update.get_user_id",
+            "axbi.commands.dashboard.filter_state.update.get_user_id",
             return_value=1,
         ),
     ):
@@ -75,16 +75,16 @@ def test_delete_filter_state_ignores_malformed_cache_entry() -> None:
 
     with (
         current_app.test_request_context(),
-        patch("superset.commands.dashboard.filter_state.delete.check_access"),
+        patch("axbi.commands.dashboard.filter_state.delete.check_access"),
         patch(
-            "superset.commands.dashboard.filter_state.delete.cache_key",
+            "axbi.commands.dashboard.filter_state.delete.cache_key",
             return_value="1:key",
         ),
         patch(
-            "superset.commands.dashboard.filter_state.delete.cache_manager"
+            "axbi.commands.dashboard.filter_state.delete.cache_manager"
         ) as mock_cache_manager,
         patch(
-            "superset.commands.dashboard.filter_state.delete.get_user_id",
+            "axbi.commands.dashboard.filter_state.delete.get_user_id",
             return_value=1,
         ),
     ):

@@ -31,7 +31,7 @@ import {
   TimeFormatter,
   TimeGranularity,
   ValueFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export const getSmartDateDetailedFormatter = () =>
   getTimeFormatter(SMART_DATE_DETAILED_ID);

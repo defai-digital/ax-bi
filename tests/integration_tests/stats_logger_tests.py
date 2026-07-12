@@ -14,12 +14,12 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from superset.stats_logger import StatsdStatsLogger
+from axbi.stats_logger import StatsdStatsLogger
 
 
 class TestStatsdStatsLogger(TestCase):
@@ -43,7 +43,7 @@ class TestStatsdStatsLogger(TestCase):
         self.verify_client_calls(stats_logger, client)
 
     def test_init_with_params(self):
-        with patch("superset.stats_logger.StatsClient") as MockStatsdClient:  # noqa: N806
+        with patch("axbi.stats_logger.StatsClient") as MockStatsdClient:  # noqa: N806
             mock_client = MockStatsdClient.return_value
 
             stats_logger = StatsdStatsLogger()

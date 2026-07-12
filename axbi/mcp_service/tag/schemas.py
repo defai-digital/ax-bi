@@ -1,0 +1,241 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+"""
+Pydantic schemas for tag-related responses
+"""
+
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Annotated, Any, Literal
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    field_validator,
+    model_serializer,
+    model_validator,
+    PositiveInt,
+)
+
+from axbi.daos.base import ColumnOperator, ColumnOperatorEnum
+from axbi.mcp_service.common.error_schemas import MCPResourceError
+from axbi.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from axbi.mcp_service.system.schemas import (
+    PaginationInfo,
+    TagInfo as BaseTagInfo,
+)
+from axbi.mcp_service.utils.response_utils import (
+    humanize_timestamp,
+    select_serialized_response_fields,
+)
+from axbi.mcp_service.utils.sanitization import sanitize_for_llm_context
+from axbi.mcp_service.utils.schema_utils import (
+    ensure_search_and_filters_not_combined,
+    parse_filters,
+    parse_select_columns,
+)
+
+
+class TagFilter(ColumnOperator):
+    """
+    Filter object for tag listing.
+    col: The column to filter on. Must be one of the allowed filter fields.
+    opr: The operator to use. Must be one of the supported operators.
+    value: The value to filter by (type depends on col and opr).
+    """
+
+    col: Literal["name", "type"] = Field(
+        ...,
+        description="Column to filter on. Supported: 'name' (string match), "
+        "'type' (tag type: custom, type, owner, favorited_by).",
+    )
+    opr: ColumnOperatorEnum = Field(
+        ...,
+        description="Operator to use. Common operators: 'eq' (equals), "
+        "'ct' (contains), 'sw' (starts with), 'ew' (ends with).",
+    )
+    value: str | int | float | bool | list[str | int | float | bool] = Field(
+        ..., description="Value to filter by (type depends on col and opr)"
+    )
+
+
+class TagInfo(BaseTagInfo):
+    """Extends the shared BaseTagInfo with audit timestamps for MCP list/get tools."""
+
+    changed_on: str | datetime | None = Field(
+        None, description="Last modification timestamp"
+    )
+    changed_on_humanized: str | None = Field(
+        None, description="Humanized modification time"
+    )
+    created_on: str | datetime | None = Field(None, description="Creation timestamp")
+    created_on_humanized: str | None = Field(
+        None, description="Humanized creation time"
+    )
+    model_config = ConfigDict(
+        from_attributes=True,
+        ser_json_timedelta="iso8601",
+        populate_by_name=True,
+    )
+
+    @model_serializer(mode="wrap")
+    def _filter_fields_by_context(self, serializer: Any, info: Any) -> dict[str, Any]:
+        """Filter serialized fields to those requested via select_columns context."""
+        data: dict[str, Any] = serializer(self)
+        return select_serialized_response_fields(data, info)
+
+
+class TagList(BaseModel):
+    tags: list[TagInfo]
+    count: int
+    total_count: int
+    page: int
+    page_size: int
+    total_pages: int
+    has_previous: bool
+    has_next: bool
+    columns_requested: list[str] = Field(default_factory=list)
+    columns_loaded: list[str] = Field(default_factory=list)
+    columns_available: list[str] = Field(default_factory=list)
+    sortable_columns: list[str] = Field(default_factory=list)
+    filters_applied: list[TagFilter] = Field(default_factory=list)
+    pagination: PaginationInfo | None = None
+    timestamp: datetime | None = None
+    model_config = ConfigDict(ser_json_timedelta="iso8601")
+
+
+class ListTagsRequest(BaseModel):
+    """Request schema for list_tags."""
+
+    filters: Annotated[
+        list[TagFilter],
+        Field(
+            default_factory=list,
+            description="List of filter objects (column, operator, value). Each "
+            "filter has 'col', 'opr', and 'value' properties. Cannot be used "
+            "together with 'search'.",
+        ),
+    ]
+    select_columns: Annotated[
+        list[str],
+        Field(
+            default_factory=list,
+            description="List of columns to select. Defaults to common columns if not "
+            "specified.",
+        ),
+    ]
+    search: Annotated[
+        str | None,
+        Field(
+            default=None,
+            description="Text search string to match against tag name. Cannot be used "
+            "together with 'filters'.",
+        ),
+    ]
+    order_column: Annotated[
+        str | None, Field(default=None, description="Column to order results by")
+    ]
+    order_direction: Annotated[
+        Literal["asc", "desc"],
+        Field(
+            default="desc",
+            description="Direction to order results ('asc' or 'desc')",
+        ),
+    ]
+    page: Annotated[
+        PositiveInt,
+        Field(default=1, description="Page number for pagination (1-based)"),
+    ]
+    page_size: Annotated[
+        int,
+        Field(
+            default=DEFAULT_PAGE_SIZE,
+            gt=0,
+            le=MAX_PAGE_SIZE,
+            description=f"Number of items per page (max {MAX_PAGE_SIZE})",
+        ),
+    ]
+
+    @field_validator("filters", mode="before")
+    @classmethod
+    def parse_filters(cls, v: Any) -> list[TagFilter]:
+        return parse_filters(v, TagFilter)
+
+    @field_validator("select_columns", mode="before")
+    @classmethod
+    def parse_columns(cls, v: Any) -> list[str]:
+        return parse_select_columns(v)
+
+    @model_validator(mode="after")
+    def validate_search_and_filters(self) -> ListTagsRequest:
+        ensure_search_and_filters_not_combined(
+            self.search,
+            self.filters,
+            "Cannot use both 'search' and 'filters' parameters simultaneously. "
+            "Use either 'search' for text-based searching or 'filters' for "
+            "precise column-based filtering, but not both.",
+        )
+        return self
+
+
+class TagError(MCPResourceError):
+    pass
+
+
+class GetTagInfoRequest(BaseModel):
+    """Request schema for get_tag_info with numeric ID."""
+
+    identifier: Annotated[
+        int,
+        Field(description="Tag identifier — numeric ID"),
+    ]
+
+
+def _sanitize_tag_info_for_llm_context(tag_info: TagInfo) -> TagInfo:
+    """Wrap user-controlled tag fields before LLM exposure."""
+    payload = tag_info.model_dump(mode="python")
+    for field_name in ("name", "description"):
+        payload[field_name] = sanitize_for_llm_context(
+            payload.get(field_name),
+            field_path=(field_name,),
+        )
+    return TagInfo(**payload)
+
+
+def serialize_tag_object(tag: Any) -> TagInfo | None:
+    if not tag:
+        return None
+
+    type_str: str | None = None
+    if (raw_type := getattr(tag, "type", None)) is not None:
+        type_str = raw_type.name if hasattr(raw_type, "name") else str(raw_type)
+
+    return _sanitize_tag_info_for_llm_context(
+        TagInfo(
+            id=getattr(tag, "id", None),
+            name=getattr(tag, "name", None),
+            type=type_str,
+            description=getattr(tag, "description", None),
+            changed_on=getattr(tag, "changed_on", None),
+            changed_on_humanized=humanize_timestamp(getattr(tag, "changed_on", None)),
+            created_on=getattr(tag, "created_on", None),
+            created_on_humanized=humanize_timestamp(getattr(tag, "created_on", None)),
+        )
+    )

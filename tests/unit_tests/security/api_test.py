@@ -19,8 +19,8 @@ from typing import Any
 import pytest
 from marshmallow import ValidationError
 
-from superset.extensions import csrf
-from superset.security.api import RlsRuleSchema
+from axbi.extensions import csrf
+from axbi.security.api import RlsRuleSchema
 
 
 @pytest.mark.parametrize(
@@ -34,13 +34,13 @@ def test_csrf_exempt_blueprints(app_context: None) -> None:
     are exempt from CSRF protection.
     """
     assert {blueprint.name for blueprint in csrf._exempt_blueprints} == {
-        "SupersetGroupApi",
+        "AxBIGroupApi",
         "MenuApi",
         "SecurityApi",
         "OpenApi",
-        "SupersetPermissionViewMenuApi",
-        "SupersetRoleApi",
-        "SupersetUserApi",
+        "AxBIPermissionViewMenuApi",
+        "AxBIRoleApi",
+        "AxBIUserApi",
         "PermissionApi",
         "ViewMenuApi",
     }

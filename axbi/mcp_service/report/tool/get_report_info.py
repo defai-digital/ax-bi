@@ -1,0 +1,114 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+"""
+Get report info FastMCP tool.
+"""
+
+import logging
+
+from axbi_core.mcp.decorators import tool, ToolAnnotations
+from fastmcp import Context
+
+from axbi.mcp_service.mcp_core import ModelGetInfoCore
+from axbi.mcp_service.report.schemas import (
+    GetReportInfoRequest,
+    ReportError,
+    ReportInfo,
+    serialize_report_object,
+)
+from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+
+logger = logging.getLogger(__name__)
+
+
+@tool(
+    tags=["discovery"],
+    class_permission_name="ReportSchedule",
+    annotations=ToolAnnotations(
+        title="Get report info",
+        readOnlyHint=True,
+        destructiveHint=False,
+    ),
+)
+async def get_report_info(
+    request: GetReportInfoRequest, ctx: Context
+) -> ReportInfo | ReportError:
+    """Get alert or report schedule metadata by numeric ID.
+
+    Returns schedule configuration including type (Alert/Report), active
+    status, cron expression, and associated dashboard or chart.
+
+    IMPORTANT FOR LLM CLIENTS:
+    - Use numeric ID (e.g., 123)
+    - To find a report ID, use the list_reports tool first
+    - The owners field is excluded by privacy controls and will not appear
+
+    Example usage:
+    ```json
+    {
+        "identifier": 1
+    }
+    ```
+    """
+    await ctx.info(f"Retrieving report information: identifier={request.identifier}")
+
+    try:
+        from axbi import is_feature_enabled
+        from axbi.daos.report import ReportScheduleDAO
+
+        if not is_feature_enabled("ALERT_REPORTS"):
+            return ReportError.create(
+                error="The Alerts & Reports feature is disabled on this instance.",
+                error_type="FeatureDisabled",
+            )
+
+        with mcp_event_log_context(action="mcp.get_report_info.lookup"):
+            get_tool = ModelGetInfoCore(
+                dao_class=ReportScheduleDAO,
+                output_schema=ReportInfo,
+                error_schema=ReportError,
+                serializer=serialize_report_object,
+                supports_slug=False,
+                logger=logger,
+            )
+
+            result = get_tool.run_tool(request.identifier)
+
+        if isinstance(result, ReportInfo):
+            await ctx.info(
+                "Report information retrieved successfully: "
+                f"report_id={result.id}, name={result.name}, type={result.type}"
+            )
+        else:
+            await ctx.warning(
+                f"Report retrieval failed: error_type={result.error_type}, "
+                f"error={result.error}"
+            )
+
+        return result
+
+    except Exception as exc:  # noqa: BLE001
+        await ctx.error(
+            "Report information retrieval failed: "
+            f"identifier={request.identifier}, error={str(exc)}, "
+            f"error_type={type(exc).__name__}"
+        )
+        return ReportError.create(
+            error=f"Failed to get report info: {str(exc)}",
+            error_type="InternalError",
+        )

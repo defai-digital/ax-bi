@@ -19,8 +19,8 @@ from unittest.mock import MagicMock
 import pandas as pd
 import pytest
 
-from superset.common.db_query_status import QueryStatus
-from superset.utils.currency import (
+from axbi.common.db_query_status import QueryStatus
+from axbi.utils.currency import (
     detect_currency,
     detect_currency_from_df,
     has_auto_currency_in_column_config,

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { DatasourceType } from '@superset-ui/core';
+import { DatasourceType } from '@ax-bi/ui-core';
 import { getDatasourceUid } from './getDatasourceUid';
 
 const TEST_DATASOURCE = {

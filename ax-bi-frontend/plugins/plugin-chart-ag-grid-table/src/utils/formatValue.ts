@@ -22,12 +22,12 @@ import {
   isDefined,
   isProbablyHTML,
   sanitizeHtml,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ValueFormatterParams,
   ValueGetterParams,
-} from '@superset-ui/core/components/ThemedAgGridReact';
+} from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { DataColumnMeta, InputColumn } from '../types';
 import DateWithFormatter from './DateWithFormatter';
 

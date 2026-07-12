@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen } from '@superset-ui/core/spec';
+import { render, screen } from '@ax-bi/ui-core/spec';
 import LeftCell from './LeftCell';
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks

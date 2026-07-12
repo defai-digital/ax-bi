@@ -29,23 +29,23 @@ import {
 
 import Fuse from 'fuse.js';
 import cx from 'classnames';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ChartMetadata,
   chartLabelWeight,
   chartLabelExplanations,
   FeatureFlag,
   isFeatureEnabled,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   styled,
   css,
-  SupersetTheme,
+  AxBITheme,
   useTheme,
   isThemeDark,
-} from '@apache-superset/core/theme';
-import { Input, Collapse, Tooltip, Label } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/core/theme';
+import { Input, Collapse, Tooltip, Label } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
 import { usePluginContext } from 'src/components';
 import scrollIntoView from 'scroll-into-view-if-needed';
@@ -86,8 +86,7 @@ const FEATURED = t('Featured');
 
 const RECOMMENDED_TAGS = [FEATURED, t('ECharts'), t('Advanced-Analytics')];
 
-const isCuratedGallery = () =>
-  isFeatureEnabled(FeatureFlag.CuratedVizGallery);
+const isCuratedGallery = () => isFeatureEnabled(FeatureFlag.CuratedVizGallery);
 
 export const VIZ_TYPE_CONTROL_TEST_ID = 'viz-type-control';
 
@@ -227,12 +226,12 @@ const IconsPane = styled.div`
   padding: ${({ theme }) => theme.sizeUnit * 2}px;
 `;
 
-const DetailsPane = (theme: SupersetTheme) => css`
+const DetailsPane = (theme: AxBITheme) => css`
   grid-area: details;
   border-top: 1px solid ${theme.colorBorder};
 `;
 
-const DetailsPopulated = (theme: SupersetTheme) => css`
+const DetailsPopulated = (theme: AxBITheme) => css`
   padding: ${theme.sizeUnit * 4}px;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -275,7 +274,7 @@ const Examples = styled.div`
   }
 `;
 
-const thumbnailContainerCss = (theme: SupersetTheme) => css`
+const thumbnailContainerCss = (theme: AxBITheme) => css`
   cursor: pointer;
   width: ${theme.sizeUnit * THUMBNAIL_GRID_UNITS}px;
   position: relative;
@@ -694,10 +693,7 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
     ) {
       return sortedMetadata;
     }
-    if (
-      activeSelector === FEATURED &&
-      activeSection === Sections.Featured
-    ) {
+    if (activeSelector === FEATURED && activeSection === Sections.Featured) {
       if (isCuratedGallery()) {
         return orderCuratedVizEntries(chartMetadata, selectedViz);
       }
@@ -716,7 +712,7 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
   };
 
   const allChartsSelector = isCuratedGallery() ? MORE_CHARTS : ALL_CHARTS;
-  const selectorChromeCss = ({ sizeUnit }: SupersetTheme) => css`
+  const selectorChromeCss = ({ sizeUnit }: AxBITheme) => css`
     margin: ${sizeUnit * 2}px;
     margin-bottom: 0;
   `;
@@ -836,7 +832,7 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
 
       {selectedVizMetadata ? (
         <div
-          css={(theme: SupersetTheme) => [
+          css={(theme: AxBITheme) => [
             DetailsPane(theme),
             DetailsPopulated(theme),
           ]}

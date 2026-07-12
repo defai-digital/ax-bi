@@ -14,8 +14,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# from superset import db
-# from superset.models.dashboard import Dashboard
+# from axbi import db
+# from axbi.models.dashboard import Dashboard
 
 import urllib.request
 from unittest import skipUnless
@@ -25,20 +25,20 @@ import pytest
 from flask_testing import LiveServerTestCase
 from sqlalchemy.sql import func
 
-from superset import db, is_feature_enabled, security_manager
-from superset.extensions import machine_auth_provider_factory
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.tasks.types import ExecutorType, FixedExecutor
-from superset.utils import json
-from superset.utils.screenshots import (
+from axbi import db, is_feature_enabled, security_manager
+from axbi.extensions import machine_auth_provider_factory
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.tasks.types import ExecutorType, FixedExecutor
+from axbi.utils import json
+from axbi.utils.screenshots import (
     ChartScreenshot,
     DashboardScreenshot,
     ScreenshotCachePayload,
 )
-from superset.utils.urls import get_url_path
-from superset.utils.webdriver import WebDriverSelenium
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.utils.urls import get_url_path
+from axbi.utils.webdriver import WebDriverSelenium
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import ADMIN_USERNAME, ALPHA_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -74,7 +74,7 @@ class TestThumbnailsSeleniumLive(LiveServerTestCase):
         resp = json.loads(rv.data.decode("utf-8"))
         thumbnail_url = resp["result"]["thumbnail_url"]
 
-        with patch("superset.dashboards.api.DashboardRestApi.get"):
+        with patch("axbi.dashboards.api.DashboardRestApi.get"):
             response = self.url_open_auth(
                 ADMIN_USERNAME,
                 thumbnail_url,
@@ -82,30 +82,30 @@ class TestThumbnailsSeleniumLive(LiveServerTestCase):
             assert response.getcode() == 202
 
 
-class TestWebDriverScreenshotErrorDetector(SupersetTestCase):
-    @patch("superset.utils.webdriver.WebDriverWait")
-    @patch("superset.utils.webdriver.firefox")
-    @patch("superset.utils.webdriver.WebDriverSelenium.find_unexpected_errors")
+class TestWebDriverScreenshotErrorDetector(AxBITestCase):
+    @patch("axbi.utils.webdriver.WebDriverWait")
+    @patch("axbi.utils.webdriver.firefox")
+    @patch("axbi.utils.webdriver.WebDriverSelenium.find_unexpected_errors")
     def test_not_call_find_unexpected_errors_if_feature_disabled(
         self, mock_find_unexpected_errors, mock_firefox, mock_webdriver_wait
     ):
         webdriver_proxy = WebDriverSelenium("firefox")
         user = security_manager.get_user_by_username(ADMIN_USERNAME)
-        url = get_url_path("Superset.dashboard", dashboard_id_or_slug=1)
+        url = get_url_path("AxBI.dashboard", dashboard_id_or_slug=1)
         webdriver_proxy.get_screenshot(url, "grid-container", user=user)
 
         assert not mock_find_unexpected_errors.called
 
-    @patch("superset.utils.webdriver.WebDriverWait")
-    @patch("superset.utils.webdriver.firefox")
-    @patch("superset.utils.webdriver.WebDriverSelenium.find_unexpected_errors")
+    @patch("axbi.utils.webdriver.WebDriverWait")
+    @patch("axbi.utils.webdriver.firefox")
+    @patch("axbi.utils.webdriver.WebDriverSelenium.find_unexpected_errors")
     def test_call_find_unexpected_errors_if_feature_enabled(
         self, mock_find_unexpected_errors, mock_firefox, mock_webdriver_wait
     ):
         app.config["SCREENSHOT_REPLACE_UNEXPECTED_ERRORS"] = True
         webdriver_proxy = WebDriverSelenium("firefox")
         user = security_manager.get_user_by_username(ADMIN_USERNAME)
-        url = get_url_path("Superset.dashboard", dashboard_id_or_slug=1)
+        url = get_url_path("AxBI.dashboard", dashboard_id_or_slug=1)
         webdriver_proxy.get_screenshot(url, "grid-container", user=user)
 
         assert mock_find_unexpected_errors.called
@@ -122,7 +122,7 @@ class TestWebDriverScreenshotErrorDetector(SupersetTestCase):
 
         assert "alert" in webdriver.find_elements.call_args_list[0][0][1]
 
-    @patch("superset.utils.webdriver.WebDriverWait")
+    @patch("axbi.utils.webdriver.WebDriverWait")
     def test_find_unexpected_errors(self, mock_webdriver_wait):
         webdriver = MagicMock()
         alert_div = MagicMock()
@@ -143,55 +143,55 @@ class TestWebDriverScreenshotErrorDetector(SupersetTestCase):
         assert alert_div == webdriver.execute_script.call_args_list[0][0][1]
 
 
-class TestWebDriverSelenium(SupersetTestCase):
-    @patch("superset.utils.webdriver.WebDriverWait")
-    @patch("superset.utils.webdriver.firefox")
-    @patch("superset.utils.webdriver.sleep")
+class TestWebDriverSelenium(AxBITestCase):
+    @patch("axbi.utils.webdriver.WebDriverWait")
+    @patch("axbi.utils.webdriver.firefox")
+    @patch("axbi.utils.webdriver.sleep")
     def test_screenshot_selenium_headstart(
         self, mock_sleep, mock_webdriver, mock_webdriver_wait
     ):
         user = security_manager.get_user_by_username(ADMIN_USERNAME)
         webdriver = WebDriverSelenium("firefox", user=user)
-        url = get_url_path("Superset.slice", slice_id=1, standalone="true")
+        url = get_url_path("AxBI.slice", slice_id=1, standalone="true")
         app.config["SCREENSHOT_SELENIUM_HEADSTART"] = 5
         webdriver.get_screenshot(url, "chart-container")
         assert mock_sleep.call_args_list[0] == call(5)
 
-    @patch("superset.utils.webdriver.WebDriverWait")
-    @patch("superset.utils.webdriver.firefox")
+    @patch("axbi.utils.webdriver.WebDriverWait")
+    @patch("axbi.utils.webdriver.firefox")
     def test_screenshot_selenium_locate_wait(self, mock_webdriver, mock_webdriver_wait):
         app.config["SCREENSHOT_LOCATE_WAIT"] = 15
         user = security_manager.get_user_by_username(ADMIN_USERNAME)
         webdriver = WebDriverSelenium("firefox", user=user)
-        url = get_url_path("Superset.slice", slice_id=1, standalone="true")
+        url = get_url_path("AxBI.slice", slice_id=1, standalone="true")
         webdriver.get_screenshot(url, "chart-container")
         assert mock_webdriver_wait.call_args_list[0] == call(ANY, 15)
 
-    @patch("superset.utils.webdriver.WebDriverWait")
-    @patch("superset.utils.webdriver.firefox")
+    @patch("axbi.utils.webdriver.WebDriverWait")
+    @patch("axbi.utils.webdriver.firefox")
     def test_screenshot_selenium_load_wait(self, mock_webdriver, mock_webdriver_wait):
         app.config["SCREENSHOT_LOAD_WAIT"] = 15
         user = security_manager.get_user_by_username(ADMIN_USERNAME)
         webdriver = WebDriverSelenium("firefox", user=user)
-        url = get_url_path("Superset.slice", slice_id=1, standalone="true")
+        url = get_url_path("AxBI.slice", slice_id=1, standalone="true")
         webdriver.get_screenshot(url, "chart-container")
         assert mock_webdriver_wait.call_args_list[2] == call(ANY, 15)
 
-    @patch("superset.utils.webdriver.WebDriverWait")
-    @patch("superset.utils.webdriver.firefox")
-    @patch("superset.utils.webdriver.sleep")
+    @patch("axbi.utils.webdriver.WebDriverWait")
+    @patch("axbi.utils.webdriver.firefox")
+    @patch("axbi.utils.webdriver.sleep")
     def test_screenshot_selenium_animation_wait(
         self, mock_sleep, mock_webdriver, mock_webdriver_wait
     ):
         user = security_manager.get_user_by_username(ADMIN_USERNAME)
         webdriver = WebDriverSelenium("firefox", user=user)
-        url = get_url_path("Superset.slice", slice_id=1, standalone="true")
+        url = get_url_path("AxBI.slice", slice_id=1, standalone="true")
         app.config["SCREENSHOT_SELENIUM_ANIMATION_WAIT"] = 4
         webdriver.get_screenshot(url, "chart-container")
         assert mock_sleep.call_args_list[1] == call(4)
 
 
-class TestThumbnails(SupersetTestCase):
+class TestThumbnails(AxBITestCase):
     mock_image = b"bytes mock image"
     digest_return_value = "foo_bar"
     # SHA-256 hash of "foo_bar" (default HASH_ALGORITHM is sha256)
@@ -260,7 +260,7 @@ class TestThumbnails(SupersetTestCase):
                 },
             ),
             patch(
-                "superset.thumbnails.digest._adjust_string_for_executor"
+                "axbi.thumbnails.digest._adjust_string_for_executor"
             ) as mock_adjust_string,
         ):
             mock_adjust_string.return_value = self.digest_return_value
@@ -288,7 +288,7 @@ class TestThumbnails(SupersetTestCase):
                 },
             ),
             patch(
-                "superset.thumbnails.digest._adjust_string_for_executor"
+                "axbi.thumbnails.digest._adjust_string_for_executor"
             ) as mock_adjust_string,
         ):
             mock_adjust_string.return_value = self.digest_return_value
@@ -338,7 +338,7 @@ class TestThumbnails(SupersetTestCase):
                 },
             ),
             patch(
-                "superset.thumbnails.digest._adjust_string_for_executor"
+                "axbi.thumbnails.digest._adjust_string_for_executor"
             ) as mock_adjust_string,
         ):
             mock_adjust_string.return_value = self.digest_return_value
@@ -366,7 +366,7 @@ class TestThumbnails(SupersetTestCase):
                 },
             ),
             patch(
-                "superset.thumbnails.digest._adjust_string_for_executor"
+                "axbi.thumbnails.digest._adjust_string_for_executor"
             ) as mock_adjust_string,
         ):
             mock_adjust_string.return_value = self.digest_return_value

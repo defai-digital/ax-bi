@@ -27,7 +27,7 @@ import {
   NativeFilterType,
   NO_TIME_RANGE,
   QueryFormColumn,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { TIME_FILTER_MAP } from 'src/explore/constants';
 import { getChartIdsInFilterScope } from 'src/dashboard/util/activeDashboardFilters';
 import { ChartConfiguration, LayoutItem } from 'src/dashboard/types';
@@ -42,7 +42,7 @@ export enum IndicatorStatus {
 
 const TIME_GRANULARITY_FIELDS = new Set(Object.values(TIME_FILTER_MAP));
 
-// As of 2020-09-28, the Dataset type in superset-ui is incorrect.
+// As of 2020-09-28, the Dataset type in axbi-ui is incorrect.
 // Should patch it here until the Dataset type is updated.
 type Datasource = {
   time_grain_sqla?: [string, string][];

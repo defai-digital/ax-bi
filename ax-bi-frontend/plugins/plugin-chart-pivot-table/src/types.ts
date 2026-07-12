@@ -29,8 +29,8 @@ import {
   TimeGranularity,
   ContextMenuFilters,
   Currency,
-} from '@superset-ui/core';
-import { ColorFormatters } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { ColorFormatters } from '@ax-bi/chart-controls';
 
 export interface PivotTableStylesProps {
   height: number;
@@ -42,9 +42,7 @@ export type FilterType = Record<string, DataRecordValue>;
 export type SelectedFiltersType = Record<string, DataRecordValue[]>;
 
 export type DateFormatter =
-  | TimeFormatter
-  | NumberFormatter
-  | ((value: DataRecordValue) => string);
+  TimeFormatter | NumberFormatter | ((value: DataRecordValue) => string);
 export enum MetricsLayoutEnum {
   ROWS = 'ROWS',
   COLUMNS = 'COLUMNS',

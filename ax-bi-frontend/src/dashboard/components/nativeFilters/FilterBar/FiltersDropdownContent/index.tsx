@@ -18,8 +18,8 @@
  */
 
 import { ReactNode } from 'react';
-import { Divider, Filter } from '@superset-ui/core';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import { Divider, Filter } from '@ax-bi/ui-core';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { FiltersOutOfScopeCollapsible } from '../FiltersOutOfScopeCollapsible';
 import { CrossFilterIndicator } from '../../selectors';
@@ -48,7 +48,7 @@ export const FiltersDropdownContent = ({
   forceRenderOutOfScope,
 }: FiltersDropdownContentProps) => (
   <div
-    css={(theme: SupersetTheme) => css`
+    css={(theme: AxBITheme) => css`
       width: ${theme.sizeUnit * 56}px;
       padding: ${theme.sizeUnit}px 0;
     `}

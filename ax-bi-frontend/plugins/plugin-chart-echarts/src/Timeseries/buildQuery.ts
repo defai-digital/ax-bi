@@ -24,7 +24,7 @@ import {
   normalizeOrderBy,
   PostProcessingPivot,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   contributionOperator,
   extractExtraMetrics,
@@ -38,7 +38,7 @@ import {
   sortOperator,
   timeComparePivotOperator,
   timeCompareOperator,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 export default function buildQuery(formData: QueryFormData) {
   const { groupby } = formData;

@@ -43,7 +43,7 @@ jest.mock('src/views/CRUD/hooks', () => ({
   }),
   getDatabaseDocumentationLinks: () => ({
     support:
-      'https://superset.apache.org/user-docs/databases/#installing-database-drivers',
+      'https://github.com/defai-digital/ax-bi/user-docs/databases/#installing-database-drivers',
   }),
 }));
 

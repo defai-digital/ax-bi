@@ -19,7 +19,7 @@ import pytest
 from flask import current_app
 from flask_appbuilder.exceptions import PasswordComplexityValidationError
 
-from superset.security.password_complexity import validate_password_complexity
+from axbi.security.password_complexity import validate_password_complexity
 
 
 def test_validate_password_complexity_accepts_strong_password() -> None:

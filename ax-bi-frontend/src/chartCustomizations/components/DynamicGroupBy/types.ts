@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FilterState, QueryFormData } from '@superset-ui/core';
+import { FilterState, QueryFormData } from '@ax-bi/ui-core';
 import { RefObject } from 'react';
-import type { RefSelectProps } from '@superset-ui/core/components';
+import type { RefSelectProps } from '@ax-bi/ui-core/components';
 import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
 
 export interface DatasetReference {

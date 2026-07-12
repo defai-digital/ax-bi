@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { css } from '@apache-superset/core/theme';
-import { List } from '@superset-ui/core/components';
+import { css } from '@ax-bi/core/theme';
+import { List } from '@ax-bi/ui-core/components';
 import { ValidationObject } from './types';
 import { TRANSLATIONS } from './AlertReportModal';
 

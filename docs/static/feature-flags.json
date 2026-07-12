@@ -1,6 +1,6 @@
 {
   "generated": true,
-  "source": "superset/config.py",
+  "source": "axbi/config.py",
   "flags": {
     "development": [
       {
@@ -55,7 +55,7 @@
         "name": "ENABLE_EXTENSIONS",
         "default": false,
         "lifecycle": "development",
-        "description": "Enable Superset extensions for custom functionality without modifying core"
+        "description": "Enable AxBI extensions for custom functionality without modifying core"
       },
       {
         "name": "FAB_API_KEY_ENABLED",
@@ -174,8 +174,8 @@
       {
         "name": "STARTER_DASHBOARD",
         "default": true,
-        "description": "One-click starter dashboard from a dataset (X-ray lite). Uses existing chart/dashboard create APIs.",
-        "lifecycle": "development"
+        "lifecycle": "development",
+        "description": "One-click starter dashboard from a dataset (big number + table + bar/line when dimensions exist). Presentation/workflow only; uses existing chart and dashboard create APIs. See .internal/docs/ui-ux-phase5-*."
       },
       {
         "name": "TABLE_V2_TIME_COMPARISON_ENABLED",
@@ -274,7 +274,7 @@
         "default": false,
         "lifecycle": "testing",
         "description": "Enables Alerts and Reports functionality",
-        "docs": "https://superset.apache.org/docs/configuration/alerts-reports"
+        "docs": "https://github.com/defai-digital/ax-bi/blob/main/docs/admin_docs/configuration/alerts-reports.mdx"
       },
       {
         "name": "ALERT_REPORTS_FILTER",
@@ -304,7 +304,7 @@
         "name": "AWS_DATABASE_IAM_AUTH",
         "default": false,
         "lifecycle": "testing",
-        "description": "Enable AWS IAM authentication for database connections (Aurora, Redshift). Allows cross-account role assumption via STS AssumeRole. Security note: When enabled, ensure Superset's IAM role has restricted sts:AssumeRole permissions to prevent unauthorized access."
+        "description": "Enable AWS IAM authentication for database connections (Aurora, Redshift). Allows cross-account role assumption via STS AssumeRole. Security note: When enabled, ensure AxBI's IAM role has restricted sts:AssumeRole permissions to prevent unauthorized access."
       },
       {
         "name": "CACHE_IMPERSONATION",
@@ -317,13 +317,20 @@
         "default": false,
         "lifecycle": "testing",
         "description": "Allow users to optionally specify date formats in email subjects",
-        "docs": "https://superset.apache.org/docs/configuration/alerts-reports"
+        "docs": "https://github.com/defai-digital/ax-bi/blob/main/docs/admin_docs/configuration/alerts-reports.mdx"
       },
       {
         "name": "DYNAMIC_PLUGINS",
         "default": false,
         "lifecycle": "testing",
         "description": "Enable dynamic plugin loading"
+      },
+      {
+        "name": "ENABLE_AXBI_META_DB",
+        "default": false,
+        "lifecycle": "testing",
+        "description": "Allows users to add a axbi:// DB that can query across databases. Experimental with potential security/performance risks. See AXBI_META_DB_LIMIT.",
+        "docs": "https://github.com/defai-digital/ax-bi/tree/main/docs/user_docs_versioned_docs/version-6.1.0/databases/supported"
       },
       {
         "name": "ENABLE_DASHBOARD_DOWNLOAD_WEBDRIVER_SCREENSHOT",
@@ -338,13 +345,6 @@
         "description": "Enables endpoints to cache and retrieve dashboard screenshots via webdriver. Requires Celery and THUMBNAIL_CACHE_CONFIG."
       },
       {
-        "name": "ENABLE_SUPERSET_META_DB",
-        "default": false,
-        "lifecycle": "testing",
-        "description": "Allows users to add a superset:// DB that can query across databases. Experimental with potential security/performance risks. See SUPERSET_META_DB_LIMIT.",
-        "docs": "https://superset.apache.org/user-docs/databases/supported/superset-meta-database"
-      },
-      {
         "name": "ESTIMATE_QUERY_COST",
         "default": false,
         "lifecycle": "testing",
@@ -355,7 +355,7 @@
         "default": false,
         "lifecycle": "testing",
         "description": "Enable async queries for dashboards and Explore via WebSocket. Requires Redis 5.0+ and Celery workers.",
-        "docs": "https://superset.apache.org/docs/contributing/misc#async-chart-queries"
+        "docs": "https://github.com/defai-digital/ax-bi/tree/main/docs/developer_docs/contributing"
       },
       {
         "name": "IMPERSONATE_WITH_EMAIL_PREFIX",
@@ -380,7 +380,7 @@
         "default": false,
         "lifecycle": "testing",
         "description": "Allow users to enable SSH tunneling when creating a DB connection. DB engine must support SSH Tunnels.",
-        "docs": "https://superset.apache.org/docs/configuration/setup-ssh-tunneling"
+        "docs": "https://github.com/defai-digital/ax-bi/tree/main/docs/admin_docs/configuration"
       },
       {
         "name": "USE_ANALOGOUS_COLORS",
@@ -408,7 +408,7 @@
         "name": "CACHE_QUERY_BY_USER",
         "default": false,
         "lifecycle": "stable",
-        "description": "Enable caching per user key for Superset cache",
+        "description": "Enable caching per user key for AxBI cache",
         "category": "runtime_config"
       },
       {
@@ -423,7 +423,7 @@
         "default": false,
         "lifecycle": "stable",
         "description": "Role-based access control for dashboards",
-        "docs": "https://superset.apache.org/docs/using-superset/creating-your-first-dashboard",
+        "docs": "https://github.com/defai-digital/ax-bi/tree/main/docs/docs",
         "category": "runtime_config"
       },
       {
@@ -448,11 +448,11 @@
         "category": "runtime_config"
       },
       {
-        "name": "DISABLE_EMBEDDED_SUPERSET_LOGOUT",
+        "name": "DISABLE_EMBEDDED_AXBI_LOGOUT",
         "default": false,
         "lifecycle": "stable",
         "description": "Hide the logout button in embedded contexts (e.g., when using SSO in iframes)",
-        "docs": "https://superset.apache.org/docs/configuration/networking-settings#hiding-the-logout-button-in-embedded-contexts",
+        "docs": "https://github.com/defai-digital/ax-bi/blob/main/docs/admin_docs/configuration/networking-settings.mdx",
         "category": "runtime_config"
       },
       {
@@ -477,10 +477,10 @@
         "category": "runtime_config"
       },
       {
-        "name": "EMBEDDED_SUPERSET",
+        "name": "EMBEDDED_AXBI",
         "default": false,
         "lifecycle": "stable",
-        "description": "Enable embedded Superset functionality",
+        "description": "Enable embedded AxBI functionality",
         "category": "runtime_config"
       },
       {
@@ -565,7 +565,7 @@
         "default": false,
         "lifecycle": "stable",
         "description": "Exposes API endpoint to compute thumbnails",
-        "docs": "https://superset.apache.org/docs/configuration/cache",
+        "docs": "https://github.com/defai-digital/ax-bi/blob/main/docs/admin_docs/configuration/cache.mdx",
         "category": "runtime_config"
       }
     ],

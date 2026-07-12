@@ -32,7 +32,7 @@ import {
   JsonValue,
   ContextMenuFilters,
   getMapProviderMapStyle,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 import {
   DeckGLContainerStyledWrapper,

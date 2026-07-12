@@ -38,7 +38,7 @@ def test_timegrain_expressions(time_grain: str, expected_result: str) -> None:
     """
     DB Eng Specs (pinot): Test time grain expressions
     """
-    from superset.db_engine_specs.pinot import PinotEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.pinot import PinotEngineSpec as spec  # noqa: N813
 
     actual = str(
         spec.get_timestamp_expr(col=column("col"), pdf=None, time_grain=time_grain)
@@ -47,7 +47,7 @@ def test_timegrain_expressions(time_grain: str, expected_result: str) -> None:
 
 
 def test_extras_without_ssl() -> None:
-    from superset.db_engine_specs.pinot import PinotEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.pinot import PinotEngineSpec as spec  # noqa: N813
     from tests.integration_tests.fixtures.database import default_db_extra
 
     database = mock.Mock()

@@ -15,14 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 #  type: ignore
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from unittest.mock import patch
 
-from superset import security_manager
-from superset.utils import json, slack  # noqa: F401
+from axbi import security_manager
+from axbi.utils import json, slack  # noqa: F401
 from tests.conftest import with_config
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import ADMIN_USERNAME
 
@@ -30,7 +30,7 @@ meUri = "/api/v1/me/"  # noqa: N816
 AVATAR_URL = "/internal/avatar.png"
 
 
-class TestCurrentUserApi(SupersetTestCase):
+class TestCurrentUserApi(AxBITestCase):
     def test_get_me_logged_in(self):
         self.login(ADMIN_USERNAME)
 
@@ -53,7 +53,7 @@ class TestCurrentUserApi(SupersetTestCase):
         assert "groups" in response["result"]
         assert isinstance(response["result"]["groups"], list)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_get_my_roles_anonymous(self, mock_g):
         mock_g.user = security_manager.get_anonymous_user
         rv = self.client.get(meUri + "roles/")
@@ -63,7 +63,7 @@ class TestCurrentUserApi(SupersetTestCase):
         rv = self.client.get(meUri)
         assert 401 == rv.status_code
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_get_me_anonymous(self, mock_g):
         mock_g.user = security_manager.get_anonymous_user
         rv = self.client.get(meUri)
@@ -101,7 +101,7 @@ class TestCurrentUserApi(SupersetTestCase):
         assert rv.status_code == 400
 
 
-class TestUserApi(SupersetTestCase):
+class TestUserApi(AxBITestCase):
     def test_avatar_with_invalid_user(self):
         self.login(ADMIN_USERNAME)
         response = self.client.get("/api/v1/user/NOT_A_USER/avatar.png")
@@ -117,7 +117,7 @@ class TestUserApi(SupersetTestCase):
 
     @with_config({"SLACK_API_TOKEN": "dummy"})
     @with_feature_flags(SLACK_ENABLE_AVATARS=True)
-    @patch("superset.views.users.api.get_user_avatar", return_value=AVATAR_URL)
+    @patch("axbi.views.users.api.get_user_avatar", return_value=AVATAR_URL)
     def test_avatar_with_valid_user(self, mock):
         self.login(ADMIN_USERNAME)
         response = self.client.get("/api/v1/user/1/avatar.png", follow_redirects=False)

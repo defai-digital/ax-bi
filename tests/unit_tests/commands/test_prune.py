@@ -19,8 +19,8 @@ from unittest.mock import MagicMock, patch
 
 
 def test_delete_model_ids_in_batches_commits_each_batch() -> None:
-    from superset.commands.prune import delete_model_ids_in_batches
-    from superset.models.core import Log
+    from axbi.commands.prune import delete_model_ids_in_batches
+    from axbi.models.core import Log
 
     session = MagicMock()
     session.execute.side_effect = [
@@ -29,7 +29,7 @@ def test_delete_model_ids_in_batches_commits_each_batch() -> None:
         MagicMock(rowcount=1),
     ]
 
-    with patch("superset.commands.prune.db") as mock_db:
+    with patch("axbi.commands.prune.db") as mock_db:
         mock_db.session = session
         total_deleted = delete_model_ids_in_batches(
             Log,

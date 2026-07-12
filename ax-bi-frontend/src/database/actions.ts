@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { SupersetClient, makeApi } from '@superset-ui/core';
+import { AxBIClient, makeApi } from '@ax-bi/ui-core';
 import { ThunkDispatch } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { QueryExecutePayload, QueryExecuteResponse } from './types';
@@ -76,7 +76,7 @@ export function executeQuery(payload: QueryExecutePayload) {
 
 export function formatQuery(sql: string, options?: { signal?: AbortSignal }) {
   return function (dispatch: ThunkDispatch<any, undefined, AnyAction>) {
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: `/api/v1/sqllab/format_sql/`,
       body: JSON.stringify({ sql }),
       headers: { 'Content-Type': 'application/json' },

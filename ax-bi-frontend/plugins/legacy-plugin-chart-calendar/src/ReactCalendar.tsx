@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { reactify } from '@superset-ui/core';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
+import { reactify } from '@ax-bi/ui-core';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
 import { Global } from '@emotion/react';
 import Component from './Calendar';
 
@@ -102,18 +102,18 @@ const Calendar = ({ className, ...otherProps }: CalendarWrapperProps) => {
 
 export default styled(Calendar)`
   ${({ theme }) => `
-    .superset-legacy-chart-calendar {
+    .axbi-legacy-chart-calendar {
       padding: ${theme.sizeUnit * 3}px;
       position: static !important;
       overflow: auto !important;
     }
 
-    .superset-legacy-chart-calendar .ch-tooltip {
+    .axbi-legacy-chart-calendar .ch-tooltip {
       margin-left: ${theme.sizeUnit * 5}px;
       margin-top: ${theme.sizeUnit}px;
     }
 
-    .superset-legacy-chart-calendar .d3-tip {
+    .axbi-legacy-chart-calendar .d3-tip {
       line-height: 1;
       padding: ${theme.sizeUnit * 3}px;
       background: ${theme.colorBgElevated};

@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
-import { FormModal, Icons } from '@superset-ui/core/components';
+import { FormModal, Icons } from '@ax-bi/ui-core/components';
 import { createRole, updateRolePermissions } from './utils';
 import { PermissionsField, RoleNameField } from './RoleFormItems';
 import { BaseModalProps, RoleForm } from './types';

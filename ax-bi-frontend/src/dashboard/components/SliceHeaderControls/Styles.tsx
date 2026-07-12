@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 
-export const fullscreenStyles = (theme: SupersetTheme) => css`
+export const fullscreenStyles = (theme: AxBITheme) => css`
   [data-test='dashboard-component-chart-holder']:fullscreen {
     background-color: ${theme.colorBgBase};
     width: 100vw;

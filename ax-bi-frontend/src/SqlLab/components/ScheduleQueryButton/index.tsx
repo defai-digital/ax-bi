@@ -21,13 +21,13 @@ import { FunctionComponent, useState, useRef, ChangeEvent } from 'react';
 import SchemaForm, { FormProps } from '@rjsf/core';
 import { FormValidation } from '@rjsf/utils';
 import validator from '@rjsf/validator-ajv8';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { parseDate } from 'chrono-node';
 import {
   ModalTrigger,
   ModalTriggerRef,
-} from '@superset-ui/core/components/ModalTrigger';
+} from '@ax-bi/ui-core/components/ModalTrigger';
 import {
   Input,
   Button,
@@ -35,7 +35,7 @@ import {
   FormItem,
   Row,
   Col,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import getBootstrapData from 'src/utils/getBootstrapData';
 
 const bootstrapData = getBootstrapData();

@@ -19,8 +19,8 @@ from unittest.mock import MagicMock
 
 import yaml
 
-from superset.commands.chart.export import ExportChartsCommand
-from superset.utils import json
+from axbi.commands.chart.export import ExportChartsCommand
+from axbi.utils import json
 
 
 def _chart_with_params(params: str | None) -> MagicMock:

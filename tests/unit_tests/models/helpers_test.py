@@ -31,41 +31,41 @@ from sqlalchemy.orm.session import Session
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.sql.elements import ColumnElement
 
-from superset.superset_typing import AdhocColumn, AdhocMetric, OrderBy
-from superset.utils.core import GenericDataType
+from axbi.axbi_typing import AdhocColumn, AdhocMetric, OrderBy
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.conftest import with_feature_flags
 
 if TYPE_CHECKING:
-    from superset.jinja_context import BaseTemplateProcessor
-    from superset.models.core import Database
+    from axbi.jinja_context import BaseTemplateProcessor
+    from axbi.models.core import Database
 
 
 def test_json_to_dict_returns_dict() -> None:
-    from superset.models.helpers import json_to_dict
+    from axbi.models.helpers import json_to_dict
 
     assert json_to_dict('{"metric": "sum__num"}') == {"metric": "sum__num"}
 
 
 def test_json_to_dict_tolerates_trailing_commas() -> None:
-    from superset.models.helpers import json_to_dict
+    from axbi.models.helpers import json_to_dict
 
     assert json_to_dict('{"metrics": ["count", ]\n}') == {"metrics": ["count"]}
 
 
 def test_json_to_dict_ignores_malformed_json() -> None:
-    from superset.models.helpers import json_to_dict
+    from axbi.models.helpers import json_to_dict
 
     assert json_to_dict("{malformed") == {}
 
 
 def test_json_to_dict_ignores_non_object_json() -> None:
-    from superset.models.helpers import json_to_dict
+    from axbi.models.helpers import json_to_dict
 
     assert json_to_dict('["count"]') == {}
 
 
 def test_extra_json_mixin_ignores_non_object_extra() -> None:
-    from superset.models.helpers import ExtraJSONMixin
+    from axbi.models.helpers import ExtraJSONMixin
 
     obj = ExtraJSONMixin()
     obj.extra_json = "[]"
@@ -74,8 +74,8 @@ def test_extra_json_mixin_ignores_non_object_extra() -> None:
 
 
 def test_extra_json_mixin_set_key_after_non_object_extra() -> None:
-    from superset.models.helpers import ExtraJSONMixin
-    from superset.utils import json
+    from axbi.models.helpers import ExtraJSONMixin
+    from axbi.utils import json
 
     obj = ExtraJSONMixin()
     obj.extra_json = "[]"
@@ -86,7 +86,7 @@ def test_extra_json_mixin_set_key_after_non_object_extra() -> None:
 
 
 def test_certification_mixin_ignores_non_object_extra() -> None:
-    from superset.models.helpers import CertificationMixin
+    from axbi.models.helpers import CertificationMixin
 
     obj = CertificationMixin()
     obj.extra = "[]"
@@ -96,7 +96,7 @@ def test_certification_mixin_ignores_non_object_extra() -> None:
 
 
 def test_certification_mixin_ignores_non_object_certification_details() -> None:
-    from superset.models.helpers import CertificationMixin
+    from axbi.models.helpers import CertificationMixin
 
     obj = CertificationMixin()
     obj.extra = '{"certification": 1}'
@@ -108,8 +108,8 @@ def test_certification_mixin_ignores_non_object_certification_details() -> None:
 
 @pytest.fixture
 def database(mocker: MockerFixture, session: Session) -> Database:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
 
     SqlaTable.metadata.create_all(session.get_bind())
 
@@ -151,7 +151,7 @@ def test_values_for_column(database: Database) -> None:
     import numpy as np
     import pandas as pd
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -179,8 +179,8 @@ def test_values_for_column_passes_catalog_and_schema(
     """
     import pandas as pd
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.models.core import Database
 
     SqlaTable.metadata.create_all(session.get_bind())
 
@@ -239,8 +239,8 @@ def test_values_for_column_passes_none_catalog_and_schema(
     """
     import pandas as pd
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.models.core import Database
 
     SqlaTable.metadata.create_all(session.get_bind())
 
@@ -294,7 +294,7 @@ def test_values_for_column_with_rls(database: Database) -> None:
     import pandas as pd
     from sqlalchemy.sql.elements import TextClause
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -329,7 +329,7 @@ def test_values_for_column_with_rls_no_values(database: Database) -> None:
     import pandas as pd
     from sqlalchemy.sql.elements import TextClause
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -366,7 +366,7 @@ def test_values_for_column_calculated(
     """
     import pandas as pd
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -397,7 +397,7 @@ def test_values_for_column_double_percents(
     """
     import pandas as pd
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     with database.get_sqla_engine() as engine:
         engine.dialect.identifier_preparer._double_percents = "pyformat"
@@ -445,7 +445,7 @@ def test_apply_series_others_grouping(database: Database) -> None:
     """
     from unittest.mock import Mock
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     # Create a mock table for testing
     table = SqlaTable(
@@ -537,7 +537,7 @@ def test_apply_series_others_grouping_with_false_condition(database: Database) -
     """
     from unittest.mock import Mock
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     # Create a mock table for testing
     table = SqlaTable(
@@ -600,7 +600,7 @@ def test_apply_series_others_grouping_sql_compilation(database: Database) -> Non
     """
     import sqlalchemy as sa
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     # Create a real table instance
     table = SqlaTable(
@@ -698,7 +698,7 @@ def test_apply_series_others_grouping_no_label_in_groupby(database: Database) ->
     """
     from unittest.mock import ANY, call, Mock, patch
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     # Create a table instance
     table = SqlaTable(
@@ -757,7 +757,7 @@ def test_process_orderby_expression_basic(
     """
     Test basic ORDER BY expression processing.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -790,7 +790,7 @@ def test_process_orderby_expression_with_case_insensitive_order_by(
     """
     Test ORDER BY expression processing with case-insensitive matching.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -823,7 +823,7 @@ def test_process_orderby_expression_complex(
     """
     Test ORDER BY expression with complex expressions.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -856,7 +856,7 @@ def test_process_orderby_expression_none(
     """
     Test ORDER BY expression processing with None expression.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -889,7 +889,7 @@ def test_process_orderby_expression_empty_string(
     """
     Test ORDER BY expression processing with empty string.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -922,7 +922,7 @@ def test_process_orderby_expression_strips_whitespace(
     """
     Test that ORDER BY expression processing strips leading/trailing whitespace.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -957,7 +957,7 @@ def test_process_orderby_expression_with_template_processor(
     """
     from unittest.mock import Mock
 
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1007,7 +1007,7 @@ def _assert_get_sqla_query_does_not_mutate_orderby(
     matched against the whitespace-stripped SQL, as sqlglot may normalize the
     output slightly.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1073,8 +1073,8 @@ def test_cache_key_stable_across_query_build(database: Database) -> None:
     """
     Test that `QueryObject.cache_key()` is unchanged by building the query.
     """
-    from superset.common.query_object import QueryObject
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.common.query_object import QueryObject
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1111,7 +1111,7 @@ def test_process_select_expression_basic(
     """
     Test basic SELECT expression processing.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1144,7 +1144,7 @@ def test_process_select_expression_with_case_insensitive_select(
     """
     Test SELECT expression processing with case-insensitive matching.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1177,7 +1177,7 @@ def test_process_select_expression_complex(
     """
     Test SELECT expression with complex expressions.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1210,7 +1210,7 @@ def test_process_select_expression_none(
     """
     Test SELECT expression processing with None expression.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1243,7 +1243,7 @@ def test_process_select_expression_empty_string(
     """
     Test SELECT expression processing with empty string.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1276,7 +1276,7 @@ def test_process_select_expression_strips_whitespace(
     """
     Test that SELECT expression processing strips leading/trailing whitespace.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1311,7 +1311,7 @@ def test_process_select_expression_with_template_processor(
     """
     from unittest.mock import Mock
 
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1356,7 +1356,7 @@ def test_process_select_expression_distinct_column(
     This test ensures that expressions like "distinct owners" used in adhoc
     metrics or columns are properly parsed and validated.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1389,7 +1389,7 @@ def test_process_select_expression_end_to_end(database: Database) -> None:
     This test does NOT mock _process_sql_expression, allowing the full flow
     through sqlglot parsing and validation to ensure the regex extraction works.
     """
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     table = SqlaTable(
         database=database,
@@ -1440,7 +1440,7 @@ def test_reapply_query_filters_with_granularity(database: Database) -> None:
     """
     import sqlalchemy as sa
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1496,7 +1496,7 @@ def test_reapply_query_filters_without_granularity(database: Database) -> None:
     """
     import sqlalchemy as sa
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1546,7 +1546,7 @@ def test_reapply_query_filters_with_having_clause(database: Database) -> None:
     """
     import sqlalchemy as sa
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1598,7 +1598,7 @@ def test_reapply_query_filters_with_fetch_values_predicate(database: Database) -
 
     import sqlalchemy as sa
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1652,7 +1652,7 @@ def test_reapply_query_filters_with_empty_filters(database: Database) -> None:
     """
     import sqlalchemy as sa
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1703,7 +1703,7 @@ def test_adhoc_column_to_sqla_with_column_reference(database: Database) -> None:
     This tests the fix for column names with spaces being properly handled
     without going through SQLGlot which could misinterpret "column AS alias" patterns.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         table_name="test_table",
@@ -1744,7 +1744,7 @@ def test_virtual_dataset_calculated_column_selected_via_templated_adhoc_dimensio
     execution because the calculated expression is not present in the virtual
     dataset's FROM subquery).
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -1821,7 +1821,7 @@ def test_adhoc_column_to_sqla_preserves_column_type_for_time_grain(
     2. The column type (DATE) is preserved when creating the SQLAlchemy column
     3. The get_timestamp_expr method is properly called with the column type info
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     # Create a table with a temporal column
     table = SqlaTable(
@@ -1865,7 +1865,7 @@ def test_adhoc_column_to_sqla_with_temporal_column_types(database: Database) -> 
     the column metadata is properly found and the column type is preserved,
     allowing time grain operations to work correctly.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     # Test different temporal types
     temporal_types = ["DATE", "DATETIME", "TIMESTAMP"]
@@ -1902,9 +1902,9 @@ def test_adhoc_column_to_sqla_with_temporal_column_types(database: Database) -> 
 
 def test_get_temporal_column_for_filter() -> None:
     """Test _get_temporal_column_for_filter method with multiple strategies."""
-    from superset.common.query_object import QueryObject
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.utils.core import FilterOperator
+    from axbi.common.query_object import QueryObject
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.utils.core import FilterOperator
 
     # Create a mock SqlaTable with columns
     table = SqlaTable()
@@ -1971,7 +1971,7 @@ def test_adhoc_column_with_spaces_generates_quoted_sql(database: Database) -> No
     spaces).
     """
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         table_name="test_table",
@@ -2034,7 +2034,7 @@ def test_adhoc_column_with_spaces_in_full_query(database: Database) -> None:
     """
     import sqlalchemy as sa
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         table_name="test_table",
@@ -2091,7 +2091,7 @@ def test_orderby_adhoc_column(database: Database) -> None:
     in the columns list, it should correctly convert to a SQLAlchemy column
     instead of raising QueryObjectValidationError.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2139,7 +2139,7 @@ def test_extras_where_is_parenthesized(
 
     from sqlalchemy import text as sa_text
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2196,7 +2196,7 @@ def test_extras_having_is_parenthesized(
     """
     from unittest.mock import patch
 
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2250,7 +2250,7 @@ def test_calculated_column_filter_is_parenthesized(
     and other filters. Same class of bug as fixed in PR #38183 for
     extras.where/having, but on the calculated column filter path.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2301,7 +2301,7 @@ def test_calculated_column_nested_or_and_is_parenthesized(
     Test that calculated column expressions with nested OR/AND combinations
     are correctly parenthesized as a single unit in WHERE filters.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2358,7 +2358,7 @@ def test_calculated_column_non_boolean_filter_is_parenthesized(
     Test that non-boolean calculated column expressions are parenthesized
     when used with IN filters.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2409,7 +2409,7 @@ def test_multiple_calculated_columns_each_parenthesized(
     Test that multiple calculated columns used as filters are each
     independently wrapped in parentheses.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2478,7 +2478,7 @@ def _run_probe(
     """
     from unittest.mock import patch
 
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2514,7 +2514,7 @@ def _run_probe(
     spec_cls = database.db_engine_spec
     with (
         patch(
-            "superset.connectors.sqla.models.get_columns_description",
+            "axbi.connectors.sqla.models.get_columns_description",
             side_effect=fake_get_columns_description,
         ),
         patch.object(spec_cls, "type_probe_needs_row", type_probe_needs_row),
@@ -2555,8 +2555,8 @@ def test_adhoc_column_type_probe_uses_limit_1_for_row_dependent_engines(
     row. WHERE FALSE yields no rows, so description stays None. These engines
     must fall back to LIMIT 1.
     """
-    from superset.db_engine_specs.druid import DruidEngineSpec
-    from superset.db_engine_specs.pinot import PinotEngineSpec
+    from axbi.db_engine_specs.druid import DruidEngineSpec
+    from axbi.db_engine_specs.pinot import PinotEngineSpec
 
     for spec_cls in (DruidEngineSpec, PinotEngineSpec):
         assert spec_cls.type_probe_needs_row is True, (
@@ -2586,7 +2586,7 @@ def _adhoc_col_with_probed_type(
     Uses an expression (not a bare column name) so the metadata-lookup branch
     is skipped and the probe branch runs.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2605,8 +2605,8 @@ def _adhoc_col_with_probed_type(
         schema: object,
         sql: str,
     ) -> list[dict[str, object]]:
-        """Return a single-column description mirroring SupersetResultSet output."""
-        # Mirror what SupersetResultSet.columns builds: it derives type_generic
+        """Return a single-column description mirroring AxBIResultSet output."""
+        # Mirror what AxBIResultSet.columns builds: it derives type_generic
         # from the native type via db_engine_spec.get_column_spec().
         spec = table.db_engine_spec.get_column_spec(native_type=probed_type)
         type_generic = spec.generic_type if spec else None
@@ -2621,7 +2621,7 @@ def _adhoc_col_with_probed_type(
         ]
 
     with patch(
-        "superset.connectors.sqla.models.get_columns_description",
+        "axbi.connectors.sqla.models.get_columns_description",
         side_effect=fake_get_columns_description,
     ):
         _, generic_type = table.adhoc_column_to_sqla(
@@ -2656,7 +2656,7 @@ def test_adhoc_column_to_sqla_skips_probe_when_not_forced(
     Without ``force_type_check`` and no time grain, the probe is skipped and
     the returned generic type is None (there's no cheap way to infer it).
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2674,7 +2674,7 @@ def test_adhoc_column_to_sqla_skips_probe_when_not_forced(
         raise AssertionError("probe should not run without force_type_check")
 
     with patch(
-        "superset.connectors.sqla.models.get_columns_description",
+        "axbi.connectors.sqla.models.get_columns_description",
         side_effect=_should_not_be_called,
     ):
         _, generic_type = table.adhoc_column_to_sqla(adhoc_col)
@@ -2686,8 +2686,8 @@ def test_adhoc_column_to_sqla_rejects_malformed_probe_metadata(
     database: Database,
 ) -> None:
     """Malformed DB probe metadata should raise the public column error."""
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.exceptions import ColumnNotFoundException
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.exceptions import ColumnNotFoundException
 
     table = SqlaTable(
         database=database,
@@ -2706,7 +2706,7 @@ def test_adhoc_column_to_sqla_rejects_malformed_probe_metadata(
         return [{"column_name": "a_bigint", "name": "a_bigint", "type": "BIGINT"}]
 
     with patch(
-        "superset.connectors.sqla.models.get_columns_description",
+        "axbi.connectors.sqla.models.get_columns_description",
         side_effect=malformed_column_description,
     ):
         with pytest.raises(ColumnNotFoundException):
@@ -2716,7 +2716,7 @@ def test_adhoc_column_to_sqla_rejects_malformed_probe_metadata(
 def _normalize_df_datasource(column: object) -> MagicMock:
     """Bind ``ExploreMixin.normalize_df`` to a minimal datasource exposing a
     single temporal ``column`` via ``get_column``."""
-    from superset.models.helpers import ExploreMixin
+    from axbi.models.helpers import ExploreMixin
 
     datasource = MagicMock()
     datasource.offset = 0
@@ -2837,7 +2837,7 @@ def test_normalize_df_without_get_column_is_a_noop() -> None:
     import pandas as pd
     from pandas.api.types import is_datetime64_any_dtype
 
-    from superset.models.helpers import ExploreMixin
+    from axbi.models.helpers import ExploreMixin
 
     class _NoGetColumnDatasource:
         """A datasource that does not implement ``get_column``."""
@@ -2923,7 +2923,7 @@ def test_normalize_df_normalizes_legacy_time_column() -> None:
     import pandas as pd
     from pandas.api.types import is_datetime64_any_dtype
 
-    from superset.utils.core import DTTM_ALIAS
+    from axbi.utils.core import DTTM_ALIAS
 
     ts_col = MagicMock(
         column_name="ts",
@@ -2954,7 +2954,7 @@ def test_adhoc_column_to_sqla_returns_type_from_column_metadata(
     the returned generic type comes from that column's ``type`` — not from a
     DB probe.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -2975,7 +2975,7 @@ def test_adhoc_column_to_sqla_returns_type_from_column_metadata(
         )
 
     with patch(
-        "superset.connectors.sqla.models.get_columns_description",
+        "axbi.connectors.sqla.models.get_columns_description",
         side_effect=_should_not_be_called,
     ):
         _, generic_type = table.adhoc_column_to_sqla(
@@ -2997,7 +2997,7 @@ def test_numeric_adhoc_filter_value_is_unquoted_in_where_clause(
     Before the fix, filter value coercion defaulted to STRING for adhoc
     columns because the filter path could not discover the column's type.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -3027,7 +3027,7 @@ def test_numeric_adhoc_filter_value_is_unquoted_in_where_clause(
         ]
 
     with patch(
-        "superset.connectors.sqla.models.get_columns_description",
+        "axbi.connectors.sqla.models.get_columns_description",
         side_effect=fake_get_columns_description,
     ):
         sqla_query = table.get_sqla_query(
@@ -3058,7 +3058,7 @@ def test_filter_by_verbose_name_resolves_to_column(
     (e.g. the label emitted by "Drill to detail by") must resolve to that
     column and produce a WHERE clause on the underlying column_name.
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
 
     table = SqlaTable(
         database=database,
@@ -3107,14 +3107,14 @@ def test_format_time_humanized_activates_non_english_locale(
     """
     from datetime import datetime, timedelta
 
-    from superset.models.helpers import AuditMixinNullable
+    from axbi.models.helpers import AuditMixinNullable
 
     mocker.patch(
-        "superset.models.helpers.get_locale",
+        "axbi.models.helpers.get_locale",
         return_value="es",  # Spanish
     )
-    mock_activate = mocker.patch("superset.models.helpers.humanize.i18n.activate")
-    mock_deactivate = mocker.patch("superset.models.helpers.humanize.i18n.deactivate")
+    mock_activate = mocker.patch("axbi.models.helpers.humanize.i18n.activate")
+    mock_deactivate = mocker.patch("axbi.models.helpers.humanize.i18n.deactivate")
 
     # Detached instance — we only need the method, not a session-bound row.
     instance = AuditMixinNullable()
@@ -3135,13 +3135,13 @@ def test_format_time_humanized_skips_activation_for_english(
     doesn't accidentally start calling activate('en') unconditionally."""
     from datetime import datetime, timedelta
 
-    from superset.models.helpers import AuditMixinNullable
+    from axbi.models.helpers import AuditMixinNullable
 
     mocker.patch(
-        "superset.models.helpers.get_locale",
+        "axbi.models.helpers.get_locale",
         return_value="en",
     )
-    mock_activate = mocker.patch("superset.models.helpers.humanize.i18n.activate")
+    mock_activate = mocker.patch("axbi.models.helpers.humanize.i18n.activate")
 
     instance = AuditMixinNullable()
     instance._format_time_humanized(datetime.now() - timedelta(hours=2))
@@ -3150,7 +3150,7 @@ def test_format_time_humanized_skips_activation_for_english(
 
 
 def test_audit_mixin_nullable_handles_missing_timestamps() -> None:
-    from superset.models.helpers import AuditMixinNullable
+    from axbi.models.helpers import AuditMixinNullable
 
     instance = AuditMixinNullable()
     instance.created_on = None
@@ -3194,12 +3194,12 @@ def test_process_sql_expression_rejects_disallowed_function(
     query via `literal_column(...)`. A function name on the operator's
     DISALLOWED_SQL_FUNCTIONS list must be rejected at validation time,
     before the rendered SQL is handed to the database."""
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.exceptions import SupersetDisallowedSQLFunctionException
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.exceptions import AxBIDisallowedSQLFunctionException
 
     _patch_disallowed(mocker, functions={"postgresql": {"version"}})
     table = SqlaTable(database=database, schema=None, table_name="t")
-    with pytest.raises(SupersetDisallowedSQLFunctionException):
+    with pytest.raises(AxBIDisallowedSQLFunctionException):
         table._process_sql_expression(
             expression="version()",
             database_id=database.id,
@@ -3215,12 +3215,12 @@ def test_process_sql_expression_rejects_disallowed_function_in_aggregate(
     """A denylisted function wrapped in a legitimate aggregate
     (`MAX(version())`) must still be rejected: the wrapper is the obvious
     bypass attempt."""
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.exceptions import SupersetDisallowedSQLFunctionException
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.exceptions import AxBIDisallowedSQLFunctionException
 
     _patch_disallowed(mocker, functions={"postgresql": {"version"}})
     table = SqlaTable(database=database, schema=None, table_name="t")
-    with pytest.raises(SupersetDisallowedSQLFunctionException):
+    with pytest.raises(AxBIDisallowedSQLFunctionException):
         table._process_sql_expression(
             expression="MAX(version())",
             database_id=database.id,
@@ -3237,17 +3237,17 @@ def test_process_sql_expression_rejects_disallowed_table(
     """Adhoc subqueries that reference a denylisted table must be rejected,
     and the raised exception must carry only the tables actually found in
     the expression (matching the canonical execution-time gate in
-    `superset.sql_lab._validate_query`). The branch is only reachable when
+    `axbi.sql_lab._validate_query`). The branch is only reachable when
     `ALLOW_ADHOC_SUBQUERY=True`; otherwise `validate_adhoc_subquery` rejects
     the subquery first."""
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.exceptions import SupersetDisallowedSQLTableException
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.exceptions import AxBIDisallowedSQLTableException
 
     _patch_disallowed(
         mocker, tables={"postgresql": {"pg_authid", "pg_shadow", "pg_stat_activity"}}
     )
     table = SqlaTable(database=database, schema=None, table_name="t")
-    with pytest.raises(SupersetDisallowedSQLTableException) as exc_info:
+    with pytest.raises(AxBIDisallowedSQLTableException) as exc_info:
         table._process_sql_expression(
             expression="(SELECT id FROM pg_authid)",
             database_id=database.id,
@@ -3268,7 +3268,7 @@ def test_process_sql_expression_allows_benign_expression(
 ) -> None:
     """Negative control: a benign aggregate over a regular column must pass
     even when denylists are configured."""
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     _patch_disallowed(
         mocker,
@@ -3294,7 +3294,7 @@ def test_process_sql_expression_no_gate_when_denylists_empty(
     entry for the engine, the new gate must not run an extra parse: any
     SQL that passes the pre-existing `sanitize_clause` validation is
     accepted."""
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     _patch_disallowed(mocker, functions={}, tables={})
     table = SqlaTable(database=database, schema=None, table_name="t")

@@ -17,8 +17,8 @@
  * under the License.
  */
 import { ReactNode, useCallback } from 'react';
-import { Divider, Form, Typography } from '@superset-ui/core/components';
-import { css } from '@apache-superset/core/theme';
+import { Divider, Form, Typography } from '@ax-bi/ui-core/components';
+import { css } from '@ax-bi/core/theme';
 import { recurseReactClone } from '../../utils';
 import Field from '../Field';
 

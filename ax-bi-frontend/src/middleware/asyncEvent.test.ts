@@ -18,11 +18,11 @@
  */
 import fetchMock from 'fetch-mock';
 import WS from 'jest-websocket-mock';
-import { parseErrorJson, isFeatureEnabled } from '@superset-ui/core';
+import { parseErrorJson, isFeatureEnabled } from '@ax-bi/ui-core';
 import * as asyncEvent from 'src/middleware/asyncEvent';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

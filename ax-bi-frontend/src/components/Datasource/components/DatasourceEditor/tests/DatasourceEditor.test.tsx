@@ -24,7 +24,7 @@ import {
   userEvent,
   within,
 } from 'spec/helpers/testing-library';
-import { DatasourceType, isFeatureEnabled } from '@superset-ui/core';
+import { DatasourceType, isFeatureEnabled } from '@ax-bi/ui-core';
 import {
   createProps,
   DATASOURCE_ENDPOINT,
@@ -36,8 +36,8 @@ import {
   createDeferredPromise,
 } from './DatasourceEditor.test.utils';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

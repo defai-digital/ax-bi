@@ -16,16 +16,16 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 import buildQuery from './buildQuery';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getXAxisColumn: jest.fn(() => 'order_date'),
   isXAxisSet: jest.fn(() => true),
 }));
 
-jest.mock('@superset-ui/chart-controls', () => ({
+jest.mock('@ax-bi/chart-controls', () => ({
   pivotOperator: jest.fn(() => ({ operation: 'pivot' })),
   aggregationOperator: jest.fn(formData => {
     if (formData.aggregation === 'LAST_VALUE' || !formData.aggregation) {

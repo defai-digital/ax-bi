@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useState, useCallback } from 'react';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import { GridTable } from 'src/components/GridTable';
 import { GridSize } from 'src/components/GridTable/constants';
 import {

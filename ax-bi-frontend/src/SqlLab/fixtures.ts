@@ -24,8 +24,8 @@ import {
   ErrorTypeEnum,
   QueryResponse,
   QueryState,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { LatestQueryEditorVersion } from 'src/SqlLab/types';
 import { ISaveableDatasource } from 'src/SqlLab/components/SaveDatasetModal';
 
@@ -232,7 +232,7 @@ export const extraQueryEditor3 = {
 export const queries = [
   {
     dbId: 1,
-    sql: 'SELECT * FROM superset.slices',
+    sql: 'SELECT * FROM axbi.slices',
     sqlEditorId: 'SJ8YO72R',
     tab: 'Demo',
     runAsync: false,
@@ -292,7 +292,7 @@ export const queries = [
   },
   {
     dbId: 1,
-    sql: 'SELECT *FROM superset.slices',
+    sql: 'SELECT *FROM axbi.slices',
     sqlEditorId: 'SJ8YO72R',
     tab: 'Demo',
     runAsync: true,
@@ -309,7 +309,7 @@ export const queries = [
       'SELECT * \nFROM (SELECT created_on, changed_on, id, slice_name, ' +
       'druid_datasource_id, table_id, datasource_type, datasource_name, ' +
       'viz_type, params, created_by_fk, changed_by_fk, description, ' +
-      'cache_timeout, perm\nFROM superset.slices) AS inner_qry \n LIMIT 1000',
+      'cache_timeout, perm\nFROM axbi.slices) AS inner_qry \n LIMIT 1000',
     changed_on: '2016-10-19T20:56:12',
     rows: 42,
     endDttm: 1476910579693,
@@ -327,7 +327,7 @@ export const queries = [
 ];
 export const queryWithNoQueryLimit = {
   dbId: 1,
-  sql: 'SELECT * FROM superset.slices',
+  sql: 'SELECT * FROM axbi.slices',
   sqlEditorId: 'SJ8YO72R',
   tab: 'Demo',
   runAsync: false,
@@ -587,7 +587,7 @@ export const failedQueryWithFrontendTimeoutErrors = {
 const baseQuery: QueryResponse = {
   queryId: 567,
   dbId: 1,
-  sql: 'SELECT * FROM superset.slices',
+  sql: 'SELECT * FROM axbi.slices',
   sqlEditorId: 'SJ8YO72R',
   tab: 'Demo',
   ctas: false,
@@ -600,7 +600,7 @@ const baseQuery: QueryResponse = {
   tempSchema: null,
   tempTable: 'temp',
   userId: 1,
-  executedSql: 'SELECT * FROM superset.slices',
+  executedSql: 'SELECT * FROM axbi.slices',
   rows: 42,
   started: 'started',
   queryLimit: 100,
@@ -733,7 +733,7 @@ export const initialState = {
       DISPLAY_MAX_ROW: 100,
       SQLALCHEMY_DOCS_URL: 'test_SQLALCHEMY_DOCS_URL',
       SQLALCHEMY_DISPLAY_TEXT: 'test_SQLALCHEMY_DISPLAY_TEXT',
-      SUPERSET_WEBSERVER_TIMEOUT: '300',
+      AXBI_WEBSERVER_TIMEOUT: '300',
     },
   },
 };

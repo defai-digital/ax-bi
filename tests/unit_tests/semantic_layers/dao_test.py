@@ -29,7 +29,7 @@ from sqlalchemy.orm.session import Session
 @pytest.fixture
 def session_with_semantic_view(session: Session) -> Iterator[Session]:
     """Create an in-memory DB with a SemanticLayer and one SemanticView."""
-    from superset.semantic_layers.models import SemanticLayer, SemanticView
+    from axbi.semantic_layers.models import SemanticLayer, SemanticView
 
     engine = session.get_bind()
     SemanticView.metadata.create_all(engine)  # pylint: disable=no-member
@@ -67,8 +67,8 @@ def test_find_by_id_uses_integer_id_column(
     which caused find_by_id(pk) to filter on the UUID column using an integer
     value, always returning None and making every PUT request return 404.
     """
-    from superset.daos.semantic_layer import SemanticViewDAO
-    from superset.semantic_layers.models import SemanticView
+    from axbi.daos.semantic_layer import SemanticViewDAO
+    from axbi.semantic_layers.models import SemanticView
 
     view = session_with_semantic_view.query(SemanticView).one()
 

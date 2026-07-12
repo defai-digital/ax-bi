@@ -52,7 +52,7 @@ jest.mock('react-virtualized-auto-sizer', () => {
     AutoSizer: MockAutoSizer,
   };
 });
-jest.mock('@superset-ui/core/components/IconTooltip', () => ({
+jest.mock('@ax-bi/ui-core/components/IconTooltip', () => ({
   IconTooltip: ({
     onClick,
     tooltip,

@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   getColumnLabel,
   JsonArray,
   QueryFormColumn,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   checkColumnType,
   ControlPanelConfig,
@@ -36,7 +36,7 @@ import {
   getStandardizedControls,
   sections,
   sharedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   legendSection,
   minorTicks,

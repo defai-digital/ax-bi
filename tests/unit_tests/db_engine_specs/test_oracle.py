@@ -39,7 +39,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 def test_oracle_sqla_column_name_length_exceeded(
     column_name: str, expected_result: str | quoted_name
 ) -> None:
-    from superset.db_engine_specs.oracle import OracleEngineSpec
+    from axbi.db_engine_specs.oracle import OracleEngineSpec
 
     label = OracleEngineSpec.make_label_compatible(column_name)
     assert isinstance(label, quoted_name)
@@ -48,7 +48,7 @@ def test_oracle_sqla_column_name_length_exceeded(
 
 
 def test_oracle_time_expression_reserved_keyword_1m_grain() -> None:
-    from superset.db_engine_specs.oracle import OracleEngineSpec
+    from axbi.db_engine_specs.oracle import OracleEngineSpec
 
     col = column("decimal")
     expr = OracleEngineSpec.get_timestamp_expr(col, None, "P1M")
@@ -68,7 +68,7 @@ def test_oracle_time_expression_reserved_keyword_1m_grain() -> None:
 def test_column_datatype_to_string(
     sqla_type: types.TypeEngine, expected_result: str
 ) -> None:
-    from superset.db_engine_specs.oracle import OracleEngineSpec
+    from axbi.db_engine_specs.oracle import OracleEngineSpec
 
     assert (
         OracleEngineSpec.column_datatype_to_string(sqla_type, oracle.dialect())
@@ -77,7 +77,7 @@ def test_column_datatype_to_string(
 
 
 def test_fetch_data_no_description() -> None:
-    from superset.db_engine_specs.oracle import OracleEngineSpec
+    from axbi.db_engine_specs.oracle import OracleEngineSpec
 
     cursor = mock.MagicMock()
     cursor.description = []
@@ -85,7 +85,7 @@ def test_fetch_data_no_description() -> None:
 
 
 def test_fetch_data() -> None:
-    from superset.db_engine_specs.oracle import OracleEngineSpec
+    from axbi.db_engine_specs.oracle import OracleEngineSpec
 
     cursor = mock.MagicMock()
     result = ["a", "b"]
@@ -110,7 +110,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.oracle import OracleEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.oracle import OracleEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -124,6 +124,6 @@ def test_convert_dttm(
     ],
 )
 def test_denormalize_name(name: str, expected_result: str):
-    from superset.db_engine_specs.oracle import OracleEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.oracle import OracleEngineSpec as spec  # noqa: N813
 
     assert spec.denormalize_name(oracle.dialect(), name) == expected_result

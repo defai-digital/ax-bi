@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, getValueFormatter } from '@superset-ui/core';
+import { ChartProps, getValueFormatter } from '@ax-bi/ui-core';
 
 export default function transformProps(chartProps: ChartProps) {
   const {

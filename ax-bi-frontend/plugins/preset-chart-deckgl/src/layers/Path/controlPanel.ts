@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlPanelConfig } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { ControlPanelConfig } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import {
   filterNulls,
   autozoom,
@@ -37,7 +37,7 @@ import {
   generateDeckGLColorSchemeControls,
 } from '../../utilities/Shared_DeckGL';
 import { dndLineColumn } from '../../utilities/sharedDndControls';
-import { validateNonEmpty } from '@superset-ui/core';
+import { validateNonEmpty } from '@ax-bi/ui-core';
 import { COLOR_SCHEME_TYPES } from '../../utilities/utils';
 
 const config: ControlPanelConfig = {

@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { ensureIsArray, validateNonEmpty } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { ensureIsArray, validateNonEmpty } from '@ax-bi/ui-core';
 import {
   ControlPanelConfig,
   getStandardizedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [

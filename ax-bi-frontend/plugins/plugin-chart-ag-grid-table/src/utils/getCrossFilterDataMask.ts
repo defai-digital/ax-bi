@@ -23,7 +23,7 @@ import {
   DTTM_ALIAS,
   ensureIsArray,
   TimeGranularity,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 type GetCrossFilterDataMaskProps = {
   key: string;

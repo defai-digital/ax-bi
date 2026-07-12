@@ -16,10 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  sqlLab as sqlLabType,
-  common as coreType,
-} from '@apache-superset/core';
+import { sqlLab as sqlLabType, common as coreType } from '@ax-bi/core';
 
 const { CTASMethod } = sqlLabType;
 
@@ -198,7 +195,7 @@ export class QueryErrorResultContext
 
   errorMessage: string;
 
-  errors: coreType.SupersetError[] | null;
+  errors: coreType.AxBIError[] | null;
 
   executedSql: string | null;
 
@@ -208,7 +205,7 @@ export class QueryErrorResultContext
     runAsync: boolean,
     startDttm: number,
     errorMessage: string,
-    errors: coreType.SupersetError[],
+    errors: coreType.AxBIError[],
     options: {
       ctasMethod?: string;
       executedSql?: string;

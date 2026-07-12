@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Column } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { Column } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ChartsState,
   DatasourcesState,

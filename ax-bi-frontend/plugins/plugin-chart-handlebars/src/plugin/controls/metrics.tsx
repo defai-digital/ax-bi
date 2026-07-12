@@ -22,8 +22,8 @@ import {
   ControlState,
   sharedControls,
   defineSavedMetrics,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import { getQueryMode, isAggMode, validateAggControlValues } from './shared';
 
 const percentMetrics: typeof sharedControls.metrics = {

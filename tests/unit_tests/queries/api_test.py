@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import Flask
 
-from superset.queries.api import QueryRestApi
+from axbi.queries.api import QueryRestApi
 
 
 @pytest.mark.parametrize("payload", [{}, {"client_id": ["foo"]}])
@@ -32,7 +32,7 @@ def test_stop_query_rejects_invalid_payload(payload: dict[str, object]) -> None:
     stop_query = inspect.unwrap(QueryRestApi.stop_query)
 
     with app.test_request_context(json=payload):
-        with patch("superset.queries.api.QueryDAO.stop_query") as stop_query_dao:
+        with patch("axbi.queries.api.QueryDAO.stop_query") as stop_query_dao:
             result = stop_query(api)
 
     assert result == ("bad request", {})
@@ -52,7 +52,7 @@ def test_stop_query_rejects_malformed_json_body() -> None:
         data="{malformed",
         content_type="application/json",
     ):
-        with patch("superset.queries.api.QueryDAO.stop_query") as stop_query_dao:
+        with patch("axbi.queries.api.QueryDAO.stop_query") as stop_query_dao:
             result = stop_query(api)
 
     assert result == ("bad request", {})

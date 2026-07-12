@@ -19,9 +19,9 @@ from unittest.mock import MagicMock, patch
 
 from marshmallow import ValidationError
 
-from superset.commands.report.create import CreateReportScheduleCommand
-from superset.commands.report.exceptions import ReportScheduleUserEmailNotFoundError
-from superset.reports.models import (
+from axbi.commands.report.create import CreateReportScheduleCommand
+from axbi.commands.report.exceptions import ReportScheduleUserEmailNotFoundError
+from axbi.reports.models import (
     ReportCreationMethod,
     ReportRecipientType,
 )
@@ -29,7 +29,7 @@ from superset.reports.models import (
 
 def test_populate_recipients_chart_creation_with_user_email() -> None:
     """Test that chart/dashboard creation methods use current user's email."""
-    with patch("superset.commands.report.create.g") as mock_g:
+    with patch("axbi.commands.report.create.g") as mock_g:
         # Setup user with email
         mock_user = MagicMock()
         mock_user.email = "user@example.com"
@@ -62,7 +62,7 @@ def test_populate_recipients_chart_creation_with_user_email() -> None:
 
 def test_populate_recipients_dashboard_creation_with_user_email() -> None:
     """Test that dashboard creation uses current user's email."""
-    with patch("superset.commands.report.create.g") as mock_g:
+    with patch("axbi.commands.report.create.g") as mock_g:
         # Setup user with email
         mock_user = MagicMock()
         mock_user.email = "dashboard_user@example.com"
@@ -116,7 +116,7 @@ def test_populate_recipients_alerts_reports_keeps_original() -> None:
 
 def test_populate_recipients_chart_creation_no_user_email() -> None:
     """Test that chart creation fails when user has no email."""
-    with patch("superset.commands.report.create.g") as mock_g:
+    with patch("axbi.commands.report.create.g") as mock_g:
         # Setup user without email
         mock_user = MagicMock()
         mock_user.email = None
@@ -142,7 +142,7 @@ def test_populate_recipients_chart_creation_no_user_email() -> None:
 
 def test_populate_recipients_dashboard_creation_no_user() -> None:
     """Test that dashboard creation fails when there's no user."""
-    with patch("superset.commands.report.create.g") as mock_g:
+    with patch("axbi.commands.report.create.g") as mock_g:
         # No user in context
         mock_g.user = None
 

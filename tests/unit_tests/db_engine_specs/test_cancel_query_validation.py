@@ -30,7 +30,7 @@ class TestValidateCancelQueryId:
 
     def test_validate_cancel_query_id_valid_numeric(self) -> None:
         """Test that valid numeric IDs pass validation"""
-        from superset.db_engine_specs.base import BaseEngineSpec
+        from axbi.db_engine_specs.base import BaseEngineSpec
 
         assert BaseEngineSpec.validate_cancel_query_id("12345") is True
         assert BaseEngineSpec.validate_cancel_query_id("1") is True
@@ -38,7 +38,7 @@ class TestValidateCancelQueryId:
 
     def test_validate_cancel_query_id_invalid_sql_injection(self) -> None:
         """Test that SQL injection payloads are rejected"""
-        from superset.db_engine_specs.base import BaseEngineSpec
+        from axbi.db_engine_specs.base import BaseEngineSpec
 
         # Common SQL injection payloads
         assert (
@@ -53,7 +53,7 @@ class TestValidateCancelQueryId:
 
     def test_validate_cancel_query_id_invalid_special_chars(self) -> None:
         """Test that special characters are rejected"""
-        from superset.db_engine_specs.base import BaseEngineSpec
+        from axbi.db_engine_specs.base import BaseEngineSpec
 
         assert BaseEngineSpec.validate_cancel_query_id("123&admin=true") is False
         assert BaseEngineSpec.validate_cancel_query_id("123#fragment") is False
@@ -62,19 +62,19 @@ class TestValidateCancelQueryId:
 
     def test_validate_cancel_query_id_none(self) -> None:
         """Test that None is rejected"""
-        from superset.db_engine_specs.base import BaseEngineSpec
+        from axbi.db_engine_specs.base import BaseEngineSpec
 
         assert BaseEngineSpec.validate_cancel_query_id(None) is False
 
     def test_validate_cancel_query_id_empty_string(self) -> None:
         """Test that empty string is rejected"""
-        from superset.db_engine_specs.base import BaseEngineSpec
+        from axbi.db_engine_specs.base import BaseEngineSpec
 
         assert BaseEngineSpec.validate_cancel_query_id("") is False
 
     def test_validate_cancel_query_id_custom_pattern(self) -> None:
         """Test custom regex patterns"""
-        from superset.db_engine_specs.base import BaseEngineSpec
+        from axbi.db_engine_specs.base import BaseEngineSpec
 
         # Hex pattern with exact length (for Impala - 16 hex chars per side)
         assert (
@@ -109,8 +109,8 @@ class TestMySQLCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_valid_id(self, engine_mock: Mock) -> None:
         """Test that valid MySQL connection ID works"""
-        from superset.db_engine_specs.mysql import MySQLEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.mysql import MySQLEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -120,8 +120,8 @@ class TestMySQLCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_sql_injection_blocked(self, engine_mock: Mock) -> None:
         """Test that SQL injection is blocked"""
-        from superset.db_engine_specs.mysql import MySQLEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.mysql import MySQLEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -136,8 +136,8 @@ class TestMySQLCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_non_numeric_blocked(self, engine_mock: Mock) -> None:
         """Test that non-numeric IDs are blocked"""
-        from superset.db_engine_specs.mysql import MySQLEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.mysql import MySQLEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -154,8 +154,8 @@ class TestSingleStoreCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_valid_id(self, engine_mock: Mock) -> None:
         """Test valid SingleStore connection ID format (two space-separated integers)"""
-        from superset.db_engine_specs.singlestore import SingleStoreSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.singlestore import SingleStoreSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -170,8 +170,8 @@ class TestSingleStoreCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_sql_injection_blocked(self, engine_mock: Mock) -> None:
         """Test that SQL injection is blocked"""
-        from superset.db_engine_specs.singlestore import SingleStoreSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.singlestore import SingleStoreSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -189,8 +189,8 @@ class TestPostgresCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_valid_id(self, engine_mock: Mock) -> None:
         """Test that valid PostgreSQL PID works"""
-        from superset.db_engine_specs.postgres import PostgresEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.postgres import PostgresEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -199,8 +199,8 @@ class TestPostgresCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_sql_injection_blocked(self, engine_mock: Mock) -> None:
         """Test that SQL injection is blocked"""
-        from superset.db_engine_specs.postgres import PostgresEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.postgres import PostgresEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -217,8 +217,8 @@ class TestRedshiftCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_valid_id(self, engine_mock: Mock) -> None:
         """Test that valid Redshift PID works"""
-        from superset.db_engine_specs.redshift import RedshiftEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.redshift import RedshiftEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -227,8 +227,8 @@ class TestRedshiftCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_sql_injection_blocked(self, engine_mock: Mock) -> None:
         """Test that SQL injection is blocked"""
-        from superset.db_engine_specs.redshift import RedshiftEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.redshift import RedshiftEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -246,8 +246,8 @@ class TestSnowflakeCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_valid_id(self, engine_mock: Mock) -> None:
         """Test that valid Snowflake session ID works"""
-        from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -264,8 +264,8 @@ class TestSnowflakeCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_sql_injection_blocked(self, engine_mock: Mock) -> None:
         """Test that SQL injection is blocked"""
-        from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -283,8 +283,8 @@ class TestTrinoCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_valid_id(self, engine_mock: Mock) -> None:
         """Test that valid Trino query ID works"""
-        from superset.db_engine_specs.trino import TrinoEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.trino import TrinoEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -300,8 +300,8 @@ class TestTrinoCancelQueryValidation:
     @patch("sqlalchemy.engine.Engine.connect")
     def test_cancel_query_sql_injection_blocked(self, engine_mock: Mock) -> None:
         """Test that SQL injection is blocked"""
-        from superset.db_engine_specs.trino import TrinoEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.trino import TrinoEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Query()
         cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -316,15 +316,15 @@ class TestTrinoCancelQueryValidation:
 class TestImpalaCancelQueryValidation:
     """Tests for Impala cancel_query input validation"""
 
-    @patch("superset.db_engine_specs.impala.is_safe_host", return_value=True)
+    @patch("axbi.db_engine_specs.impala.is_safe_host", return_value=True)
     @patch("requests.post")
     def test_cancel_query_valid_id(
         self, requests_mock: Mock, safe_host_mock: Mock
     ) -> None:
         """Test that valid Impala query ID works"""
-        from superset.db_engine_specs.impala import ImpalaEngineSpec
-        from superset.models.core import Database
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.impala import ImpalaEngineSpec
+        from axbi.models.core import Database
+        from axbi.models.sql_lab import Query
 
         # Mock the database and query. The host-safety check (added alongside
         # the cancel call) is mocked as allowed here so the test stays focused
@@ -355,9 +355,9 @@ class TestImpalaCancelQueryValidation:
     @patch("requests.post")
     def test_cancel_query_url_injection_blocked(self, requests_mock: Mock) -> None:
         """Test that URL injection is blocked"""
-        from superset.db_engine_specs.impala import ImpalaEngineSpec
-        from superset.models.core import Database
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.impala import ImpalaEngineSpec
+        from axbi.models.core import Database
+        from axbi.models.sql_lab import Query
 
         mock_db = Mock(spec=Database)
         mock_db.url_object.host = "impala-host"
@@ -377,9 +377,9 @@ class TestImpalaCancelQueryValidation:
     @patch("requests.post")
     def test_cancel_query_invalid_format_blocked(self, requests_mock: Mock) -> None:
         """Test that invalid format is blocked"""
-        from superset.db_engine_specs.impala import ImpalaEngineSpec
-        from superset.models.core import Database
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.impala import ImpalaEngineSpec
+        from axbi.models.core import Database
+        from axbi.models.sql_lab import Query
 
         mock_db = Mock(spec=Database)
         mock_db.url_object.host = "impala-host"
@@ -412,9 +412,9 @@ class TestImpalaCancelQueryValidation:
     @patch("requests.post")
     def test_cancel_query_null_host_blocked(self, requests_mock: Mock) -> None:
         """Test that missing host returns False"""
-        from superset.db_engine_specs.impala import ImpalaEngineSpec
-        from superset.models.core import Database
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.impala import ImpalaEngineSpec
+        from axbi.models.core import Database
+        from axbi.models.sql_lab import Query
 
         mock_db = Mock(spec=Database)
         mock_db.url_object.host = None  # Null host
@@ -447,8 +447,8 @@ class TestOcientCancelQueryValidation:
 
     def test_cancel_query_valid_id(self) -> None:
         """Test that a valid mapped Ocient query ID is cancelled"""
-        from superset.db_engine_specs.ocient import OcientEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.ocient import OcientEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Mock(spec=Query)
         query.id = "ocient-valid"
@@ -462,8 +462,8 @@ class TestOcientCancelQueryValidation:
 
     def test_cancel_query_sql_injection_blocked(self) -> None:
         """Test that a malicious mapped query ID is rejected before execute"""
-        from superset.db_engine_specs.ocient import OcientEngineSpec
-        from superset.models.sql_lab import Query
+        from axbi.db_engine_specs.ocient import OcientEngineSpec
+        from axbi.models.sql_lab import Query
 
         query = Mock(spec=Query)
         query.id = "ocient-injection"

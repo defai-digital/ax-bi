@@ -23,13 +23,13 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DatasourceType,
   getChartControlPanelRegistry,
   isFeatureEnabled,
   FeatureFlag,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { defaultControls, defaultState } from 'src/explore/store';
 import { ExplorePageState } from 'src/explore/types';
 import { getFormDataFromControls } from 'src/explore/controlUtils';
@@ -38,8 +38,8 @@ import {
   ControlPanelsContainerProps,
 } from 'src/explore/components/ControlPanelsContainer';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

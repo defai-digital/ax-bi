@@ -16,15 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Loading } from '@superset-ui/core/components';
-import Table, {
-  ColumnsType,
-  TableSize,
-} from '@superset-ui/core/components/Table';
+import { t } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Loading } from '@ax-bi/ui-core/components';
+import Table, { ColumnsType, TableSize } from '@ax-bi/ui-core/components/Table';
 import { DatasetObject } from 'src/features/datasets/AddDataset/types';
 import { ITableColumn } from './types';
 import MessageContent from './MessageContent';

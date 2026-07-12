@@ -27,9 +27,9 @@ import {
 } from 'react';
 import { useSelector } from 'react-redux';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import {
   Icons,
   Switch,
@@ -37,7 +37,7 @@ import {
   Skeleton,
   Card,
   Space,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { CopyToClipboard } from 'src/components';
 import { RootState } from 'src/dashboard/types';
 import { findPermission } from 'src/utils/findPermission';
@@ -45,7 +45,7 @@ import { makeUrl } from 'src/utils/pathUtils';
 import CodeSyntaxHighlighter, {
   SupportedLanguage,
   preloadLanguages,
-} from '@superset-ui/core/components/CodeSyntaxHighlighter';
+} from '@ax-bi/ui-core/components/CodeSyntaxHighlighter';
 import { ExplorePageState } from 'src/explore/types';
 
 export interface ViewQueryProps {
@@ -108,7 +108,7 @@ const ViewQuery: FC<ViewQueryProps> = props => {
       // Fetch backend info if not available in Redux state
       if (!backend) {
         const queryParams = rison.encode(DATASET_BACKEND_QUERY);
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint: `/api/v1/dataset/${datasetId}?q=${queryParams}`,
         });
         const { backend: datasetBackend } = response.json.result.database;
@@ -116,7 +116,7 @@ const ViewQuery: FC<ViewQueryProps> = props => {
       }
 
       // Format the SQL query
-      const formatResponse = await SupersetClient.post({
+      const formatResponse = await AxBIClient.post({
         endpoint: `/api/v1/sqllab/format_sql/`,
         body: JSON.stringify({
           sql,

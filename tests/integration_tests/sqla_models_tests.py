@@ -32,28 +32,28 @@ from pytest_mock import MockerFixture
 from sqlalchemy.sql import text
 from sqlalchemy.sql.elements import TextClause
 
-from superset import db
-from superset.connectors.sqla.models import SqlaTable, TableColumn, SqlMetric
-from superset.constants import EMPTY_STRING, NULL_STRING
-from superset.superset_typing import QueryObjectDict
-from superset.db_engine_specs.bigquery import BigQueryEngineSpec
-from superset.db_engine_specs.druid import DruidEngineSpec
-from superset.exceptions import (
+from axbi import db
+from axbi.connectors.sqla.models import SqlaTable, TableColumn, SqlMetric
+from axbi.constants import EMPTY_STRING, NULL_STRING
+from axbi.axbi_typing import QueryObjectDict
+from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
+from axbi.db_engine_specs.druid import DruidEngineSpec
+from axbi.exceptions import (
     QueryObjectValidationError,
 )  # noqa: F401
-from superset.models.core import Database
-from superset.utils.core import (
+from axbi.models.core import Database
+from axbi.utils.core import (
     AdhocMetricExpressionType,
     FilterOperator,
     GenericDataType,
 )
-from superset.utils.database import get_example_database
+from axbi.utils.database import get_example_database
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
 )
 
-from .base_tests import SupersetTestCase
+from .base_tests import AxBITestCase
 from .conftest import only_postgresql
 
 VIRTUAL_TABLE_INT_TYPES: dict[str, Pattern[str]] = {
@@ -80,7 +80,7 @@ class FilterTestCase(NamedTuple):
     expected: str | list[str]
 
 
-class TestDatabaseModel(SupersetTestCase):
+class TestDatabaseModel(AxBITestCase):
     def test_is_time_druid_time_col(self):
         """Druid has a special __time column"""
 
@@ -137,7 +137,7 @@ class TestDatabaseModel(SupersetTestCase):
             col = TableColumn(column_name="foo", type=str_type, table=tbl, is_dttm=True)
             assert col.is_temporal
 
-    @patch("superset.jinja_context.get_username", return_value="abc")
+    @patch("axbi.jinja_context.get_username", return_value="abc")
     def test_jinja_metrics_and_calc_columns(self, mock_username):
         base_query_obj = {
             "granularity": None,
@@ -206,7 +206,7 @@ class TestDatabaseModel(SupersetTestCase):
         db.session.delete(table)
         db.session.commit()
 
-    @patch("superset.jinja_context.get_dataset_id_from_context")
+    @patch("axbi.jinja_context.get_dataset_id_from_context")
     def test_jinja_metric_macro(self, mock_dataset_id_from_context):
         self.login(username="admin")
         table = self.get_table(name="birth_names")
@@ -496,7 +496,7 @@ class TestDatabaseModel(SupersetTestCase):
         assert VIRTUAL_TABLE_STRING_TYPES[backend].match(cols["mycase"].type)
         assert cols["expr"].expression == "case when 1 then 1 else 0 end"
 
-    @patch("superset.models.core.Database.db_engine_spec", BigQueryEngineSpec)
+    @patch("axbi.models.core.Database.db_engine_spec", BigQueryEngineSpec)
     def test_labels_expected_on_mutated_query(self):
         query_obj = {
             "granularity": None,
@@ -848,11 +848,11 @@ def test_none_operand_in_filter(login_as_admin, physical_dataset):
         ("test_has_no_extra_cache_keys_table", "SELECT 'abc' as user", [], False),
     ],
 )
-@patch("superset.jinja_context.get_user_id", return_value=1)
-@patch("superset.jinja_context.get_username", return_value="abc")
-@patch("superset.jinja_context.get_user_email", return_value="abc@test.com")
+@patch("axbi.jinja_context.get_user_id", return_value=1)
+@patch("axbi.jinja_context.get_username", return_value="abc")
+@patch("axbi.jinja_context.get_user_email", return_value="abc@test.com")
 @patch(
-    "superset.jinja_context.security_manager.get_user_roles",
+    "axbi.jinja_context.security_manager.get_user_roles",
     return_value=[Role(name="role1"), Role(name="role2")],
 )
 def test_extra_cache_keys(
@@ -895,11 +895,11 @@ def test_extra_cache_keys(
         ("(user != 'abc')", [], False),
     ],
 )
-@patch("superset.jinja_context.get_user_id", return_value=1)
-@patch("superset.jinja_context.get_username", return_value="abc")
-@patch("superset.jinja_context.get_user_email", return_value="abc@test.com")
+@patch("axbi.jinja_context.get_user_id", return_value=1)
+@patch("axbi.jinja_context.get_username", return_value="abc")
+@patch("axbi.jinja_context.get_user_email", return_value="abc@test.com")
 @patch(
-    "superset.jinja_context.security_manager.get_user_roles",
+    "axbi.jinja_context.security_manager.get_user_roles",
     return_value=[Role(name="role1"), Role(name="role2")],
 )
 def test_extra_cache_keys_in_sql_expression(
@@ -943,8 +943,8 @@ def test_extra_cache_keys_in_sql_expression(
         ("COUNT(*)", [], False, "metrics"),
     ],
 )
-@patch("superset.jinja_context.get_user_id", return_value=1)
-@patch("superset.jinja_context.get_username", return_value="abc")
+@patch("axbi.jinja_context.get_user_id", return_value=1)
+@patch("axbi.jinja_context.get_username", return_value="abc")
 def test_extra_cache_keys_in_adhoc_metrics_and_columns(
     mock_username: Mock,
     mock_user_id: Mock,
@@ -990,8 +990,8 @@ def test_extra_cache_keys_in_adhoc_metrics_and_columns(
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.jinja_context.get_user_id", return_value=1)
-@patch("superset.jinja_context.get_username", return_value="abc")
+@patch("axbi.jinja_context.get_user_id", return_value=1)
+@patch("axbi.jinja_context.get_username", return_value="abc")
 def test_extra_cache_keys_in_dataset_metrics_and_columns(
     mock_username: Mock,
     mock_user_id: Mock,
@@ -1152,9 +1152,9 @@ def test_generic_metric_filtering_without_chart_flag(login_as_admin):
 
     This ensures metric filtering is generic and works for any chart type.
     """
-    from superset import db
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-    from superset.utils.database import get_example_database
+    from axbi import db
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.utils.database import get_example_database
 
     database = get_example_database()
     table = SqlaTable(
@@ -1215,9 +1215,9 @@ def test_column_ordering_without_chart_flag(login_as_admin):
     This ensures column ordering is generic and works for any chart type.
     """
     from unittest.mock import patch
-    from superset import db
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-    from superset.utils.database import get_example_database
+    from axbi import db
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.utils.database import get_example_database
 
     database = get_example_database()
     table = SqlaTable(

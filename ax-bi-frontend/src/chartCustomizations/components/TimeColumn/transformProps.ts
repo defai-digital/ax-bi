@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
+import { ChartProps } from '@ax-bi/ui-core';
 import { noOp } from 'src/utils/common';
 import { DEFAULT_FORM_DATA } from './types';
 

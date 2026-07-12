@@ -26,9 +26,9 @@ import {
   useCallback,
   useRef,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { Icons, Modal } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { Icons, Modal } from '@ax-bi/ui-core/components';
 import Fuse from 'fuse.js';
 import {
   useCommandPalette,

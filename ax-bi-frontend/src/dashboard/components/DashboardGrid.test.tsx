@@ -17,7 +17,7 @@
  * under the License.
  */
 import { fireEvent, render } from 'spec/helpers/testing-library';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { axbiTheme } from '@ax-bi/core/theme';
 
 import DashboardGrid from 'src/dashboard/components/DashboardGrid';
 import newComponentFactory from 'src/dashboard/util/newComponentFactory';
@@ -237,7 +237,7 @@ test('should size the trailing empty-droptarget generously so a chart can be dro
   });
   expect(gridContent).toHaveStyleRule(
     'min-height',
-    `${supersetTheme.sizeUnit * 24}px`,
+    `${axbiTheme.sizeUnit * 24}px`,
     { target: '.empty-droptarget:last-child' },
   );
 });

@@ -19,8 +19,8 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import { RootState } from 'src/dashboard/types';
 import { useCommandPalette, Command } from 'src/components/CommandPalette';
 import { findPermission } from 'src/utils/findPermission';

@@ -16,28 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import rison from 'rison';
 import { getUserDisplayLabel } from 'src/features/users/utils';
 import { FormValues } from './types';
 
 export const createGroup = async (values: FormValues) => {
-  await SupersetClient.post({
+  await AxBIClient.post({
     endpoint: '/api/v1/security/groups/',
     jsonPayload: { ...values, users: values.users.map(user => user.value) },
   });
 };
 
 export const updateGroup = async (groupId: number, values: FormValues) => {
-  await SupersetClient.put({
+  await AxBIClient.put({
     endpoint: `/api/v1/security/groups/${groupId}`,
     jsonPayload: { ...values, users: values.users.map(user => user.value) },
   });
 };
 
 export const deleteGroup = async (groupId: number) =>
-  SupersetClient.delete({
+  AxBIClient.delete({
     endpoint: `/api/v1/security/groups/${groupId}`,
   });
 
@@ -56,7 +56,7 @@ export const fetchUserOptions = async (
   });
 
   try {
-    const response = await SupersetClient.get({
+    const response = await AxBIClient.get({
       endpoint: `/api/v1/security/users/?q=${query}`,
     });
 

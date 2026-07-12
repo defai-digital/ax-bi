@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ChartDataResponseResult } from '@superset-ui/core';
+import { ChartDataResponseResult } from '@ax-bi/ui-core';
 import { applyTimeGrainAllowlist } from './FilterValue';
 
 const baseResults = [

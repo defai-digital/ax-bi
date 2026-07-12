@@ -17,8 +17,8 @@
  * under the License.
  */
 import { memo, useMemo } from 'react';
-import { useTruncation } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { useTruncation } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { Link } from 'react-router-dom';
 import CrossLinksTooltip from './CrossLinksTooltip';
 

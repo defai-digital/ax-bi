@@ -22,9 +22,9 @@ import pandas as pd
 import pytest
 from slack_sdk.errors import SlackApiError
 
-from superset.reports.notifications.exceptions import NotificationParamException
-from superset.reports.notifications.slackv2 import SlackV2Notification
-from superset.utils.core import HeaderDataType
+from axbi.reports.notifications.exceptions import NotificationParamException
+from axbi.reports.notifications.slackv2 import SlackV2Notification
+from axbi.utils.core import HeaderDataType
 
 
 @pytest.fixture
@@ -46,9 +46,9 @@ def test_get_channel_with_multi_recipients(mock_header_data) -> None:
     Test the _get_channel function to ensure it will return a string
     with recipients separated by commas without interstitial spacing
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.slack import SlackNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.slack import SlackNotification
 
     content = NotificationContent(
         name="test alert",
@@ -80,9 +80,9 @@ def test_get_channel_with_multi_recipients(mock_header_data) -> None:
 def test_get_channel_malformed_recipient_config_raises_param_exception(
     mock_header_data,
 ) -> None:
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.slack import SlackNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.slack import SlackNotification
 
     notification = SlackNotification(
         recipient=ReportRecipients(
@@ -99,8 +99,8 @@ def test_get_channel_malformed_recipient_config_raises_param_exception(
 def test_get_channels_missing_slackv2_target_raises_param_exception(
     mock_header_data,
 ) -> None:
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     notification = SlackV2Notification(
         recipient=ReportRecipients(
@@ -118,9 +118,9 @@ def test_valid_recipient_config_json_slackv2(mock_header_data) -> None:
     """
     Test if the recipient configuration JSON is valid when using a SlackV2 recipient type
     """  # noqa: E501
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.slack import SlackNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.slack import SlackNotification
 
     content = NotificationContent(
         name="test alert",
@@ -154,9 +154,9 @@ def test_get_inline_files_with_screenshots(mock_header_data) -> None:
     Test the _get_inline_files function to ensure it will return the correct tuple
     when content has screenshots
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.slack import SlackNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.slack import SlackNotification
 
     content = NotificationContent(
         name="test alert",
@@ -191,9 +191,9 @@ def test_get_inline_files_with_no_screenshots_or_csv(mock_header_data) -> None:
     Test the _get_inline_files function to ensure it will return None
     when content has no screenshots or csv
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.slack import SlackNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.slack import SlackNotification
 
     content = NotificationContent(
         name="test alert",
@@ -220,19 +220,19 @@ def test_get_inline_files_with_no_screenshots_or_csv(mock_header_data) -> None:
     assert result == (None, [])
 
 
-@patch("superset.reports.notifications.slackv2.g")
-@patch("superset.reports.notifications.slackv2.logger")
-@patch("superset.reports.notifications.slackv2.get_slack_client")
+@patch("axbi.reports.notifications.slackv2.g")
+@patch("axbi.reports.notifications.slackv2.logger")
+@patch("axbi.reports.notifications.slackv2.get_slack_client")
 def test_send_slackv2(
     slack_client_mock: MagicMock,
     logger_mock: MagicMock,
     flask_global_mock: MagicMock,
     mock_header_data,
 ) -> None:
-    # `superset.models.helpers`, a dependency of following imports,
+    # `axbi.models.helpers`, a dependency of following imports,
     # requires app context
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     execution_id = uuid.uuid4()
     flask_global_mock.logs_context = {"execution_id": execution_id}
@@ -267,7 +267,7 @@ def test_send_slackv2(
 
 <p>This is <a href="#">a test</a> alert</p><br />
 
-<None|Explore in Superset>
+<None|Explore in AxBI>
 
 ```
 |    |   A |   B | C                                        |
@@ -280,10 +280,10 @@ def test_send_slackv2(
     )
 
 
-@patch("superset.reports.notifications.slack.g")
-@patch("superset.reports.notifications.slack.logger")
-@patch("superset.utils.slack.get_slack_client")
-@patch("superset.reports.notifications.slack.get_slack_client")
+@patch("axbi.reports.notifications.slack.g")
+@patch("axbi.reports.notifications.slack.logger")
+@patch("axbi.utils.slack.get_slack_client")
+@patch("axbi.reports.notifications.slack.get_slack_client")
 def test_send_slack(
     slack_client_mock: MagicMock,
     slack_client_mock_util: MagicMock,
@@ -291,11 +291,11 @@ def test_send_slack(
     flask_global_mock: MagicMock,
     mock_header_data,
 ) -> None:
-    # `superset.models.helpers`, a dependency of following imports,
+    # `axbi.models.helpers`, a dependency of following imports,
     # requires app context
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.slack import SlackNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.slack import SlackNotification
 
     execution_id = uuid.uuid4()
     flask_global_mock.logs_context = {"execution_id": execution_id}
@@ -335,7 +335,7 @@ def test_send_slack(
 
 <p>This is <a href="#">a test</a> alert</p><br />
 
-<None|Explore in Superset>
+<None|Explore in AxBI>
 
 ```
 |    |   A |   B | C                                        |
@@ -348,10 +348,10 @@ def test_send_slack(
     )
 
 
-@patch("superset.reports.notifications.slack.g")
-@patch("superset.reports.notifications.slack.logger")
-@patch("superset.utils.slack.get_slack_client")
-@patch("superset.reports.notifications.slack.get_slack_client")
+@patch("axbi.reports.notifications.slack.g")
+@patch("axbi.reports.notifications.slack.logger")
+@patch("axbi.utils.slack.get_slack_client")
+@patch("axbi.reports.notifications.slack.get_slack_client")
 def test_send_slack_no_feature_flag(
     slack_client_mock: MagicMock,
     slack_client_mock_util: MagicMock,
@@ -359,11 +359,11 @@ def test_send_slack_no_feature_flag(
     flask_global_mock: MagicMock,
     mock_header_data,
 ) -> None:
-    # `superset.models.helpers`, a dependency of following imports,
+    # `axbi.models.helpers`, a dependency of following imports,
     # requires app context
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.slack import SlackNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.slack import SlackNotification
 
     execution_id = uuid.uuid4()
     flask_global_mock.logs_context = {"execution_id": execution_id}
@@ -404,7 +404,7 @@ def test_send_slack_no_feature_flag(
 
 <p>This is <a href="#">a test</a> alert</p><br />
 
-<None|Explore in Superset>
+<None|Explore in AxBI>
 
 ```
 |    |   A |   B | C                                        |
@@ -417,16 +417,16 @@ def test_send_slack_no_feature_flag(
     )
 
 
-@patch("superset.reports.notifications.slackv2.g")
-@patch("superset.reports.notifications.slackv2.get_slack_client")
+@patch("axbi.reports.notifications.slackv2.g")
+@patch("axbi.reports.notifications.slackv2.get_slack_client")
 def test_slackv2_send_without_channels_raises(
     slack_client_mock: MagicMock,
     flask_global_mock: MagicMock,
     mock_header_data,
 ) -> None:
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.exceptions import NotificationParamException
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.exceptions import NotificationParamException
 
     flask_global_mock.logs_context = {}
     content = NotificationContent(name="test", header_data=mock_header_data)
@@ -441,15 +441,15 @@ def test_slackv2_send_without_channels_raises(
         notification.send()
 
 
-@patch("superset.reports.notifications.slackv2.g")
-@patch("superset.reports.notifications.slackv2.get_slack_client")
+@patch("axbi.reports.notifications.slackv2.g")
+@patch("axbi.reports.notifications.slackv2.get_slack_client")
 def test_slack_mixin_get_body_truncates_large_table(
     slack_client_mock: MagicMock,
     flask_global_mock: MagicMock,
     mock_header_data,
 ) -> None:
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     flask_global_mock.logs_context = {}
     # Create a large DataFrame that exceeds the 4000-char message limit

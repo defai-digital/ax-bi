@@ -17,7 +17,7 @@
 
 from sqlglot import parse_one
 
-from superset.sql.dialects.vertica import Vertica
+from axbi.sql.dialects.vertica import Vertica
 
 
 def test_last_day_round_trips_natively() -> None:

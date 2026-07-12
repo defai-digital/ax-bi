@@ -22,12 +22,12 @@ import 'regenerator-runtime/runtime';
 import jQuery from 'jquery';
 // https://jestjs.io/docs/jest-object#jestmockmodulename-factory-options
 // in order to mock modules in test case, so avoid absolute import module
-import { configure as configureTranslation } from '@apache-superset/core/translation';
+import { configure as configureTranslation } from '@ax-bi/core/translation';
 import fetchMock from 'fetch-mock';
 import { Worker } from './Worker';
 import { IntersectionObserver } from './IntersectionObserver';
 import { ResizeObserver } from './ResizeObserver';
-import setupSupersetClient from './setupSupersetClient';
+import setupAxBIClient from './setupAxBIClient';
 import CacheStorage from './CacheStorage';
 import { TextEncoder, TextDecoder } from 'util';
 
@@ -80,7 +80,7 @@ Object.defineProperty(window, 'matchMedia', {
 g.$ = jQuery(g.window);
 
 configureTranslation();
-setupSupersetClient();
+setupAxBIClient();
 
 // The useTabId hook depends on BroadcastChannel. Jest has a memory leak problem when
 // dealing with native modules. See https://chanind.github.io/javascript/2019/10/12/jest-tests-memory-leak.html
@@ -96,7 +96,7 @@ jest.mock('rehype-raw', () => () => jest.fn());
 
 // Mocks the Icon component due to its async nature
 // Tests should override this when needed
-jest.mock('@superset-ui/core/components/Icons/AsyncIcon', () => ({
+jest.mock('@ax-bi/ui-core/components/Icons/AsyncIcon', () => ({
   __esModule: true,
   // eslint-disable-next-line global-require
   default: require('react').forwardRef(

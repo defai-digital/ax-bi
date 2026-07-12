@@ -18,18 +18,18 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.commands.chart.warm_up_cache import ChartWarmUpCacheCommand
-from superset.models.slice import Slice
+from axbi.commands.chart.warm_up_cache import ChartWarmUpCacheCommand
+from axbi.models.slice import Slice
 
 
 @pytest.fixture(autouse=True)
 def mock_security_manager():
-    with patch("superset.commands.chart.warm_up_cache.security_manager"):
+    with patch("axbi.commands.chart.warm_up_cache.security_manager"):
         yield
 
 
-@patch("superset.commands.chart.warm_up_cache.get_dashboard_extra_filters")
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.get_dashboard_extra_filters")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_applies_dashboard_filters_to_non_legacy_chart(
     mock_chart_data_command, mock_get_dashboard_filters
 ):
@@ -58,7 +58,7 @@ def test_applies_dashboard_filters_to_non_legacy_chart(
     # Mock dependencies
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "echarts_timeseries_bar"}],
         ):
             mock_chart_data_command.return_value.run.return_value = {
@@ -86,7 +86,7 @@ def test_applies_dashboard_filters_to_non_legacy_chart(
             assert result["chart_id"] == 123
 
 
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_no_filters_applied_without_dashboard_id(mock_chart_data_command):
     """Verify no filters are added when dashboard_id is not provided"""
     chart = Slice(
@@ -105,7 +105,7 @@ def test_no_filters_applied_without_dashboard_id(mock_chart_data_command):
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "big_number"}],
         ):
             mock_chart_data_command.return_value.run.return_value = {
@@ -122,8 +122,8 @@ def test_no_filters_applied_without_dashboard_id(mock_chart_data_command):
             ], "Existing filters should be unchanged"
 
 
-@patch("superset.commands.chart.warm_up_cache.get_dashboard_extra_filters")
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.get_dashboard_extra_filters")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_extra_filters_parameter_takes_precedence(
     mock_chart_data_command, mock_get_dashboard_filters
 ):
@@ -143,7 +143,7 @@ def test_extra_filters_parameter_takes_precedence(
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "pie"}],
         ):
             mock_chart_data_command.return_value.run.return_value = {
@@ -162,8 +162,8 @@ def test_extra_filters_parameter_takes_precedence(
             assert mock_query.filter[0] == {"col": "state", "op": "==", "val": "CA"}
 
 
-@patch("superset.commands.chart.warm_up_cache.get_dashboard_extra_filters")
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.get_dashboard_extra_filters")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_handles_multiple_queries_in_query_context(
     mock_chart_data_command, mock_get_dashboard_filters
 ):
@@ -190,7 +190,7 @@ def test_handles_multiple_queries_in_query_context(
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "heatmap_v2"}],
         ):
             mock_chart_data_command.return_value.run.return_value = {
@@ -209,8 +209,8 @@ def test_handles_multiple_queries_in_query_context(
             assert mock_query2.filter[0]["col"] == "country"
 
 
-@patch("superset.commands.chart.warm_up_cache.get_dashboard_extra_filters")
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.get_dashboard_extra_filters")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_handles_empty_dashboard_filters(
     mock_chart_data_command, mock_get_dashboard_filters
 ):
@@ -233,7 +233,7 @@ def test_handles_empty_dashboard_filters(
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "echarts_area"}],
         ):
             mock_chart_data_command.return_value.run.return_value = {
@@ -251,7 +251,7 @@ def test_handles_empty_dashboard_filters(
             )
 
 
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
     """Verify that invalid JSON in extra_filters raises a controlled error."""
     chart = Slice(
@@ -272,7 +272,7 @@ def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "pie"}],
         ):
             result = ChartWarmUpCacheCommand(chart, 42, invalid_json).run()
@@ -280,7 +280,7 @@ def test_invalid_json_in_extra_filters_raises_error(mock_chart_data_command):
             assert result["viz_error"] == "Extra filters must be a list of objects"
 
 
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_non_list_extra_filters_raises_error(mock_chart_data_command):
     """Verify that non-list extra_filters JSON raises a controlled error."""
     chart = Slice(
@@ -298,7 +298,7 @@ def test_non_list_extra_filters_raises_error(mock_chart_data_command):
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "pie"}],
         ):
             result = ChartWarmUpCacheCommand(
@@ -311,7 +311,7 @@ def test_non_list_extra_filters_raises_error(mock_chart_data_command):
     assert mock_query.filter == []
 
 
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_extra_filters_with_non_object_entries_raises_error(mock_chart_data_command):
     """Verify that extra_filters list entries must be objects."""
     chart = Slice(
@@ -329,7 +329,7 @@ def test_extra_filters_with_non_object_entries_raises_error(mock_chart_data_comm
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "pie"}],
         ):
             result = ChartWarmUpCacheCommand(chart, 42, '["state"]').run()
@@ -338,7 +338,7 @@ def test_extra_filters_with_non_object_entries_raises_error(mock_chart_data_comm
     assert mock_query.filter == []
 
 
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_none_query_context_raises_chart_invalid_error(mock_chart_data_command):
     """Verify that None query context raises ChartInvalidError for non-legacy charts"""
     chart = Slice(
@@ -352,7 +352,7 @@ def test_none_query_context_raises_chart_invalid_error(mock_chart_data_command):
     # Mock get_query_context to return None (chart has no query_context)
     with patch.object(chart, "get_query_context", return_value=None):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "echarts_timeseries"}],
         ):
             result = ChartWarmUpCacheCommand(chart, None, None).run()
@@ -368,7 +368,7 @@ def test_none_query_context_raises_chart_invalid_error(mock_chart_data_command):
             )
 
 
-@patch("superset.commands.chart.warm_up_cache.viz_types", ["table"])
+@patch("axbi.commands.chart.warm_up_cache.viz_types", ["table"])
 def test_legacy_chart_without_datasource_raises_error():
     """Verify that legacy chart without datasource raises ChartInvalidError"""
     chart = Slice(
@@ -383,7 +383,7 @@ def test_legacy_chart_without_datasource_raises_error():
         type(chart), "datasource", new_callable=lambda: property(lambda self: None)
     ):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "table"}],
         ):
             result = ChartWarmUpCacheCommand(chart, None, None).run()
@@ -399,10 +399,10 @@ def test_legacy_chart_without_datasource_raises_error():
             )
 
 
-@patch("superset.commands.chart.warm_up_cache.get_dashboard_extra_filters")
-@patch("superset.commands.chart.warm_up_cache.get_viz")
-@patch("superset.commands.chart.warm_up_cache.viz_types", ["table"])
-@patch("superset.commands.chart.warm_up_cache.g")
+@patch("axbi.commands.chart.warm_up_cache.get_dashboard_extra_filters")
+@patch("axbi.commands.chart.warm_up_cache.get_viz")
+@patch("axbi.commands.chart.warm_up_cache.viz_types", ["table"])
+@patch("axbi.commands.chart.warm_up_cache.g")
 def test_legacy_chart_warm_up_with_dashboard(
     mock_g, mock_get_viz, mock_get_dashboard_filters
 ):
@@ -433,7 +433,7 @@ def test_legacy_chart_warm_up_with_dashboard(
         new_callable=lambda: property(lambda self: mock_datasource),
     ):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "table"}],
         ):
             result = ChartWarmUpCacheCommand(chart, 42, None).run()
@@ -445,9 +445,9 @@ def test_legacy_chart_warm_up_with_dashboard(
             mock_get_dashboard_filters.assert_called_once_with(131, 42)
 
 
-@patch("superset.commands.chart.warm_up_cache.get_viz")
-@patch("superset.commands.chart.warm_up_cache.viz_types", ["table"])
-@patch("superset.commands.chart.warm_up_cache.g")
+@patch("axbi.commands.chart.warm_up_cache.get_viz")
+@patch("axbi.commands.chart.warm_up_cache.viz_types", ["table"])
+@patch("axbi.commands.chart.warm_up_cache.g")
 def test_legacy_chart_warm_up_without_dashboard(mock_g, mock_get_viz):
     """Test successful legacy chart warm-up without dashboard"""
     chart = Slice(
@@ -472,7 +472,7 @@ def test_legacy_chart_warm_up_without_dashboard(mock_g, mock_get_viz):
         new_callable=lambda: property(lambda self: mock_datasource),
     ):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "table"}],
         ):
             result = ChartWarmUpCacheCommand(chart, None, None).run()
@@ -483,9 +483,9 @@ def test_legacy_chart_warm_up_without_dashboard(mock_g, mock_get_viz):
 
 
 @pytest.mark.parametrize("payload", [{}, {"errors": None}, []])
-@patch("superset.commands.chart.warm_up_cache.get_viz")
-@patch("superset.commands.chart.warm_up_cache.viz_types", ["table"])
-@patch("superset.commands.chart.warm_up_cache.g")
+@patch("axbi.commands.chart.warm_up_cache.get_viz")
+@patch("axbi.commands.chart.warm_up_cache.viz_types", ["table"])
+@patch("axbi.commands.chart.warm_up_cache.g")
 def test_legacy_chart_rejects_malformed_warm_up_payload(
     mock_g,
     mock_get_viz,
@@ -510,7 +510,7 @@ def test_legacy_chart_rejects_malformed_warm_up_payload(
         new_callable=lambda: property(lambda self: mock_datasource),
     ):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "table"}],
         ):
             result = ChartWarmUpCacheCommand(chart, None, None).run()
@@ -521,7 +521,7 @@ def test_legacy_chart_rejects_malformed_warm_up_payload(
     assert hasattr(mock_g, "form_data") is False
 
 
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_non_legacy_chart_returns_first_error(mock_chart_data_command):
     """Test that first query error is returned when multiple queries exist"""
     chart = Slice(
@@ -539,7 +539,7 @@ def test_non_legacy_chart_returns_first_error(mock_chart_data_command):
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "echarts_timeseries"}],
         ):
             mock_chart_data_command.return_value.run.return_value = {
@@ -564,7 +564,7 @@ def test_non_legacy_chart_returns_first_error(mock_chart_data_command):
         {"queries": ["not-a-query"]},
     ],
 )
-@patch("superset.commands.chart.warm_up_cache.ChartDataCommand")
+@patch("axbi.commands.chart.warm_up_cache.ChartDataCommand")
 def test_non_legacy_chart_rejects_malformed_warm_up_payload(
     mock_chart_data_command,
     payload,
@@ -584,7 +584,7 @@ def test_non_legacy_chart_rejects_malformed_warm_up_payload(
 
     with patch.object(chart, "get_query_context", return_value=mock_qc):
         with patch(
-            "superset.commands.chart.warm_up_cache.get_form_data",
+            "axbi.commands.chart.warm_up_cache.get_form_data",
             return_value=[{"viz_type": "echarts_timeseries"}],
         ):
             mock_chart_data_command.return_value.run.return_value = payload
@@ -596,7 +596,7 @@ def test_non_legacy_chart_rejects_malformed_warm_up_payload(
     assert result["viz_status"] is None
 
 
-@patch("superset.commands.chart.warm_up_cache.db")
+@patch("axbi.commands.chart.warm_up_cache.db")
 def test_validate_with_integer_chart_id(mock_db):
     """Test validation when passing integer chart ID instead of Slice object"""
     chart = Slice(id=133, slice_name="Test Chart")
@@ -611,10 +611,10 @@ def test_validate_with_integer_chart_id(mock_db):
     mock_db.session.query.assert_called_once()
 
 
-@patch("superset.commands.chart.warm_up_cache.db")
+@patch("axbi.commands.chart.warm_up_cache.db")
 def test_validate_with_nonexistent_chart_id(mock_db):
     """Test validation raises error when chart ID does not exist"""
-    from superset.commands.chart.exceptions import WarmUpCacheChartNotFoundError
+    from axbi.commands.chart.exceptions import WarmUpCacheChartNotFoundError
 
     mock_db.session.query.return_value.filter_by.return_value.scalar.return_value = None
 

@@ -19,17 +19,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { nanoid } from 'nanoid';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   isAdhocMetricSimple,
   isSavedMetric,
   Metric,
   QueryFormMetric,
-} from '@superset-ui/core';
-import { tn } from '@apache-superset/core/translation';
-import { GenericDataType } from '@apache-superset/core/common';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { tn } from '@ax-bi/core/translation';
+import { GenericDataType } from '@ax-bi/core/common';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import AdhocMetric from 'src/explore/components/controls/MetricControl/AdhocMetric';
 import AdhocMetricPopoverTrigger from 'src/explore/components/controls/MetricControl/AdhocMetricPopoverTrigger';
 import MetricDefinitionValue from 'src/explore/components/controls/MetricControl/MetricDefinitionValue';
@@ -93,14 +93,14 @@ const coerceMetrics = (
         col => col.column_name === metric.column.column_name,
       );
       if (column) {
-        // Cast entire config object to handle type mismatch between @superset-ui/core and local types
+        // Cast entire config object to handle type mismatch between @ax-bi/ui-core and local types
         return new AdhocMetric({
           ...(metric as unknown as Record<string, unknown>),
           column,
         } as Record<string, unknown>);
       }
     }
-    // Cast to unknown first to handle type mismatch between @superset-ui/core and local AdhocMetric
+    // Cast to unknown first to handle type mismatch between @ax-bi/ui-core and local AdhocMetric
     return new AdhocMetric(metric as unknown as Record<string, unknown>);
   });
 };

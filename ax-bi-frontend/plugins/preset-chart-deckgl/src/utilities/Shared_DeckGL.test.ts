@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { ControlPanelState } from '@superset-ui/chart-controls';
-import { OSM_TILE_STYLE_URL } from '@superset-ui/core/utils/mapStyles';
+import { ControlPanelState } from '@ax-bi/chart-controls';
+import { OSM_TILE_STYLE_URL } from '@ax-bi/ui-core/utils/mapStyles';
 import { mapProvider, maplibreStyle } from './Shared_DeckGL';
 
 const setBootstrap = ({
@@ -101,7 +101,7 @@ test('deck.gl map renderer enables Mapbox when a key exists', () => {
 
 test('deck.gl map renderer keeps the original explanatory description', () => {
   expect(mapProvider.config.description).toBe(
-    'Select the map tile provider. MapLibre is open-source and requires no API key. Mapbox requires MAPBOX_API_KEY to be configured in Superset.',
+    'Select the map tile provider. MapLibre is open-source and requires no API key. Mapbox requires MAPBOX_API_KEY to be configured in AxBI.',
   );
 });
 

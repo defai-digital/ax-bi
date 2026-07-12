@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Column, Metric } from '@superset-ui/core';
+import { Column, Metric } from '@ax-bi/ui-core';
 
 export enum DrillByType {
   Chart,

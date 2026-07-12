@@ -16,20 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DataRecord,
   DataRecordValue,
   getTimeFormatterForGranularity,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { isEqual } from 'lodash';
 
 import {
   CellClickedEvent,
   SelectionChangedEvent,
-} from '@superset-ui/core/components/ThemedAgGridReact';
+} from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import {
   AgGridTableChartTransformedProps,
   InputColumn,

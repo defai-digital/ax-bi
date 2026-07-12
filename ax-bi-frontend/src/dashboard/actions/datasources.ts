@@ -17,7 +17,7 @@
  * under the License.
  */
 import { Dispatch } from 'redux';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { Datasource, RootState } from 'src/dashboard/types';
 
 // update datasources index for Dashboard
@@ -61,7 +61,7 @@ export function fetchDatasourceMetadata(key: string) {
       return dispatch(setDatasource(datasource, key));
     }
 
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/ax-bi/fetch_datasource_metadata?datasourceKey=${key}`,
     }).then(({ json }) => dispatch(setDatasource(json as Datasource, key)));
   };

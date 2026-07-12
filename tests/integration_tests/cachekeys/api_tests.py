@@ -15,17 +15,17 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from typing import Any
 
 import pytest
 
-from superset.extensions import cache_manager, db
-from superset.models.cache import CacheKey
-from superset.utils.core import get_example_default_schema
+from axbi.extensions import cache_manager, db
+from axbi.models.cache import CacheKey
+from axbi.utils.core import get_example_default_schema
 from tests.integration_tests.base_tests import (
-    SupersetTestCase,
+    AxBITestCase,
     post_assert_metric,
 )
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -103,7 +103,7 @@ def test_invalidate_cache_bad_request(invalidate):
 @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
 def test_invalidate_existing_caches(invalidate):
     schema = get_example_default_schema() or ""
-    bn = SupersetTestCase.get_birth_names_dataset()
+    bn = AxBITestCase.get_birth_names_dataset()
 
     db.session.add(CacheKey(cache_key="cache_key1", datasource_uid="3__druid"))
     db.session.add(CacheKey(cache_key="cache_key2", datasource_uid="3__druid"))

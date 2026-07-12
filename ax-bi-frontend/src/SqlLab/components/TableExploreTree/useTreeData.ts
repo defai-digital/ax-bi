@@ -18,7 +18,7 @@
  */
 import { useMemo, useReducer, useCallback } from 'react';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   Table,
   type TableMetaData,
@@ -29,7 +29,7 @@ import {
 } from 'src/hooks/apiResources';
 import { addDangerToast } from 'src/SqlLab/actions/sqlLab';
 import type { TreeNodeData } from './types';
-import { SupersetError } from '@superset-ui/core';
+import { AxBIError } from '@ax-bi/ui-core';
 
 export const EMPTY_NODE_ID_PREFIX = 'empty:';
 
@@ -38,7 +38,7 @@ interface TreeDataState {
   tableData: Record<string, { options: Table[] }>;
   tableSchemaData: Record<string, TableMetaData>;
   loadingNodes: Record<string, boolean>;
-  errorPayload: SupersetError | null;
+  errorPayload: AxBIError | null;
 }
 
 type TreeDataAction =
@@ -46,7 +46,7 @@ type TreeDataAction =
   | { type: 'SET_TABLE_SCHEMA_DATA'; key: string; data: TableMetaData }
   | { type: 'CLEAR_TABLE_SCHEMA_DATA'; key: string }
   | { type: 'SET_LOADING_NODE'; nodeId: string; loading: boolean }
-  | { type: 'SET_ERROR'; errorPayload: SupersetError | null };
+  | { type: 'SET_ERROR'; errorPayload: AxBIError | null };
 
 const initialState: TreeDataState = {
   tableData: {},
@@ -116,7 +116,7 @@ interface UseTreeDataResult {
     schema: string;
   }) => void;
   refreshTableSchema: (id: string) => void;
-  errorPayload: SupersetError | null;
+  errorPayload: AxBIError | null;
 }
 
 const createEmptyNode = (parentId: string): TreeNodeData => ({

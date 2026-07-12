@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css } from '@ax-bi/core/theme';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
@@ -28,7 +28,7 @@ import {
   ListViewFilterOperator,
   type ListViewFilter,
 } from 'src/components/ListView';
-import { Typography } from '@superset-ui/core/components';
+import { Typography } from '@ax-bi/ui-core/components';
 import { fetchUserOptions } from 'src/features/groups/utils';
 
 export type ActionLogObject = {

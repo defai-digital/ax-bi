@@ -28,8 +28,8 @@ import {
   QueryFormMetric,
   SMART_DATE_ID,
   TimeGranularity,
-} from '@superset-ui/core';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+} from '@ax-bi/ui-core';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 
 export const parseMetricValue = (metricValue: number | string | null) => {
   if (typeof metricValue === 'string') {

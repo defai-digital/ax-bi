@@ -29,7 +29,7 @@ import {
 } from 'spec/helpers/testing-library';
 import chartQueries, { sliceId } from 'spec/fixtures/mockChartQueries';
 import mockState from 'spec/fixtures/mockState';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { DashboardPageIdContext } from 'src/dashboard/containers/DashboardPage';
 import DrillByModal, { DrillByModalProps } from './DrillByModal';
 
@@ -281,7 +281,7 @@ test('should render "Edit chart" as disabled without can_explore permission', as
     {
       user: {
         ...drillByModalState.user,
-        roles: { Admin: [['invalid_permission', 'Superset']] },
+        roles: { Admin: [['invalid_permission', 'AxBI']] },
       },
     },
   );
@@ -294,7 +294,7 @@ test('should render "Edit chart" enabled with can_explore permission', async () 
     {
       user: {
         ...drillByModalState.user,
-        roles: { Admin: [['can_explore', 'Superset']] },
+        roles: { Admin: [['can_explore', 'AxBI']] },
       },
     },
   );

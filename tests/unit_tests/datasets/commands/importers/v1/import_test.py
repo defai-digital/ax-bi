@@ -31,22 +31,22 @@ from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import db, security_manager
-from superset.commands.dataset.exceptions import (
+from axbi import db, security_manager
+from axbi.commands.dataset.exceptions import (
     DatasetAccessDeniedError,
     DatasetForbiddenDataURI,
     MultiCatalogDisabledValidationError,
 )
-from superset.commands.dataset.importers.v1.utils import (
+from axbi.commands.dataset.importers.v1.utils import (
     import_dataset,
     validate_data_uri,
 )
-from superset.commands.exceptions import ImportFailedError
-from superset.connectors.sqla.models import SqlaTable, TableColumn
-from superset.datasets.schemas import ImportV1DatasetSchema
-from superset.models.core import Database
-from superset.utils import json
-from superset.utils.core import override_user
+from axbi.commands.exceptions import ImportFailedError
+from axbi.connectors.sqla.models import SqlaTable, TableColumn
+from axbi.datasets.schemas import ImportV1DatasetSchema
+from axbi.models.core import Database
+from axbi.utils import json
+from axbi.utils.core import override_user
 from tests.integration_tests.fixtures.importexport import (
     database_config,
     dataset_config as dataset_fixture,
@@ -444,8 +444,8 @@ def test_import_command_surfaces_non_default_catalog_as_validation_error(
     The dataset import command surfaces a disallowed catalog as a 422
     CommandInvalidError carrying the catalog message, instead of a generic 500.
     """
-    from superset.commands.dataset.importers.v1 import ImportDatasetsCommand
-    from superset.commands.exceptions import CommandInvalidError
+    from axbi.commands.dataset.importers.v1 import ImportDatasetsCommand
+    from axbi.commands.exceptions import CommandInvalidError
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
@@ -908,8 +908,8 @@ def test_import_dataset_template_params_is_empty_string(
     assert sqla_table.template_params is None  # noqa: E711
 
 
-@patch("superset.commands.dataset.importers.v1.utils.is_safe_host", return_value=True)
-@patch("superset.commands.dataset.importers.v1.utils.request.build_opener")
+@patch("axbi.commands.dataset.importers.v1.utils.is_safe_host", return_value=True)
+@patch("axbi.commands.dataset.importers.v1.utils.request.build_opener")
 def test_import_column_allowed_data_url(
     mock_build_opener: Mock,
     mock_is_safe_host: Mock,
@@ -1113,16 +1113,16 @@ def test_import_dataset_access_check(
     Test that import_dataset raises DatasetAccessDeniedError when the user does not
     have datasource-level access to the target dataset.
     """
-    from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-    from superset.exceptions import SupersetSecurityException
+    from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+    from axbi.exceptions import AxBISecurityException
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     mocker.patch.object(
         security_manager,
         "raise_for_access",
-        side_effect=SupersetSecurityException(
-            SupersetError(
-                error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+        side_effect=AxBISecurityException(
+            AxBIError(
+                error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                 message="User does not have access to this datasource",
                 level=ErrorLevel.ERROR,
             )
@@ -1187,7 +1187,7 @@ def test_validate_data_uri(
     current_app.config["DATASET_IMPORT_ALLOWED_DATA_URLS"] = allowed_urls
     current_app.config["DATASET_IMPORT_ALLOW_INTERNAL_DATA_URLS"] = False
     with patch(
-        "superset.commands.dataset.importers.v1.utils.is_safe_host",
+        "axbi.commands.dataset.importers.v1.utils.is_safe_host",
         return_value=True,
     ):
         if expected:
@@ -1201,7 +1201,7 @@ def test_validate_data_uri_file_scheme_examples_allowed() -> None:
     """file:// URIs pointing inside the examples folder are permitted."""
     import os
 
-    from superset.examples.helpers import get_examples_folder
+    from axbi.examples.helpers import get_examples_folder
 
     examples_folder = get_examples_folder()
     uri_in_examples = (
@@ -1251,7 +1251,7 @@ def test_validate_data_uri_blocks_userinfo_ssrf_injection(data_uri: str) -> None
     current_app.config["DATASET_IMPORT_ALLOWED_DATA_URLS"] = [r".*"]
     current_app.config["DATASET_IMPORT_ALLOW_INTERNAL_DATA_URLS"] = False
     with patch(
-        "superset.commands.dataset.importers.v1.utils.is_safe_host",
+        "axbi.commands.dataset.importers.v1.utils.is_safe_host",
         return_value=False,
     ):
         with pytest.raises(DatasetForbiddenDataURI):
@@ -1264,7 +1264,7 @@ def test_validate_data_uri_allow_internal_flag_bypasses_host_check() -> None:
     current_app.config["DATASET_IMPORT_ALLOWED_DATA_URLS"] = [r".*"]
     current_app.config["DATASET_IMPORT_ALLOW_INTERNAL_DATA_URLS"] = True
     with patch(
-        "superset.commands.dataset.importers.v1.utils.is_safe_host",
+        "axbi.commands.dataset.importers.v1.utils.is_safe_host",
         return_value=False,
     ) as mock_check:
         validate_data_uri("http://10.0.0.5/data.csv")
@@ -1285,7 +1285,7 @@ def test_validate_data_uri_no_hostname_raises() -> None:
 def test_redirect_handler_blocks_disallowed_redirect_target() -> None:
     """The redirect handler must reject a redirect to a disallowed host by
     re-running validate_data_uri() on the new URL before following it."""
-    from superset.commands.dataset.importers.v1.utils import (
+    from axbi.commands.dataset.importers.v1.utils import (
         _ValidatingRedirectHandler,
     )
 
@@ -1294,7 +1294,7 @@ def test_redirect_handler_blocks_disallowed_redirect_target() -> None:
 
     handler = _ValidatingRedirectHandler()
     with patch(
-        "superset.commands.dataset.importers.v1.utils.is_safe_host",
+        "axbi.commands.dataset.importers.v1.utils.is_safe_host",
         return_value=False,
     ):
         with pytest.raises(DatasetForbiddenDataURI):

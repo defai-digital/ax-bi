@@ -18,8 +18,8 @@
  */
 
 import { useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 
 import rison from 'rison';
 import { useListViewResource } from 'src/views/CRUD/hooks';
@@ -27,7 +27,7 @@ import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { createErrorHandler, createFetchRelated } from 'src/views/CRUD/utils';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
-import { DeleteModal, ConfirmStatusChange } from '@superset-ui/core/components';
+import { DeleteModal, ConfirmStatusChange } from '@ax-bi/ui-core/components';
 import {
   ModifiedInfo,
   ListView,
@@ -41,7 +41,7 @@ import {
 import CssTemplateModal from 'src/features/cssTemplates/CssTemplateModal';
 import { TemplateObject } from 'src/features/cssTemplates/types';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
@@ -89,7 +89,7 @@ function CssTemplatesList({
     useState<TemplateObject | null>(null);
 
   const handleTemplateDelete = ({ id, template_name }: TemplateObject) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/css_template/${id}`,
     }).then(
       () => {
@@ -106,7 +106,7 @@ function CssTemplatesList({
   };
 
   const handleBulkTemplateDelete = (templatesToDelete: TemplateObject[]) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/css_template/?q=${rison.encode(
         templatesToDelete.map(({ id }) => id),
       )}`,

@@ -17,7 +17,7 @@
  * under the License.
  */
 import getInitialFilterModel from '../../src/utils/getInitialFilterModel';
-import type { AgGridChartState } from '@superset-ui/core';
+import type { AgGridChartState } from '@ax-bi/ui-core';
 
 describe('getInitialFilterModel', () => {
   describe('Priority: chartState > serverPaginationData', () => {

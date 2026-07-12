@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": "../..",
+    "outDir": "lib"
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx", "types/**/*"],
+  "exclude": [
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "src/**/*.test.*",
+    "src/**/*.stories.*"
+  ],
+  "references": [
+    { "path": "../../packages/ax-bi-core" },
+    { "path": "../../packages/ax-bi-ui-core" },
+    { "path": "../../packages/ax-bi-chart-controls" }
+  ]
+}

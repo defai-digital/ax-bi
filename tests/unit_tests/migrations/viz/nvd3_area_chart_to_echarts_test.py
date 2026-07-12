@@ -16,7 +16,7 @@
 # under the License.
 from typing import Any
 
-from superset.migrations.shared.migrate_viz import MigrateAreaChart
+from axbi.migrations.shared.migrate_viz import MigrateAreaChart
 from tests.unit_tests.migrations.viz.utils import (
     migrate_and_assert,
     TIMESERIES_SOURCE_FORM_DATA,

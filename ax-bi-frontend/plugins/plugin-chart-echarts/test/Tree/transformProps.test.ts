@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import transformProps from '../../src/Tree/transformProps';
 import { EchartsTreeChartProps } from '../../src/Tree/types';
 
@@ -36,7 +36,7 @@ describe('EchartsTree transformProps', () => {
     formData,
     width: 800,
     height: 600,
-    theme: supersetTheme,
+    theme: axbiTheme,
   };
   test('should transform when parent present before child', () => {
     const queriesData = [
@@ -190,7 +190,7 @@ describe('EchartsTree transformProps', () => {
       formData,
       width: 800,
       height: 600,
-      theme: supersetTheme,
+      theme: axbiTheme,
     };
     const queriesData = [
       {
@@ -270,7 +270,7 @@ describe('EchartsTree transformProps', () => {
       formData,
       width: 800,
       height: 600,
-      theme: supersetTheme,
+      theme: axbiTheme,
     };
     const queriesData = [
       {
@@ -352,7 +352,7 @@ describe('EchartsTree transformProps', () => {
       formData,
       width: 800,
       height: 600,
-      theme: supersetTheme,
+      theme: axbiTheme,
     };
     const queriesData = [
       {

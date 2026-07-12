@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import {
   UndefinedUser,
   UserWithPermissionsAndRoles,
@@ -98,8 +98,8 @@ const dashboard: Dashboard = {
   roles: [],
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

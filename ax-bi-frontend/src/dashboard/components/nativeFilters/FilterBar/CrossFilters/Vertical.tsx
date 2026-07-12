@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { DataMaskStateWithId } from '@superset-ui/core';
+import { DataMaskStateWithId } from '@ax-bi/ui-core';
 import { useSelector } from 'react-redux';
 import { RootState } from 'src/dashboard/types';
 import { useChartLayoutItems } from 'src/dashboard/util/useChartLayoutItems';

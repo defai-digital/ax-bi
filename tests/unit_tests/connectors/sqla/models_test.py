@@ -24,22 +24,22 @@ from sqlalchemy import create_engine
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm.session import Session
 
-from superset.connectors.sqla.models import (
+from axbi.axbi_typing import QueryObjectDict
+from axbi.connectors.sqla.models import (
     SqlaTable,
     TableColumn,
     validate_stored_expression,
 )
-from superset.daos.dataset import DatasetDAO
-from superset.daos.exceptions import DatasourceNotFound
-from superset.exceptions import (
+from axbi.daos.dataset import DatasetDAO
+from axbi.daos.exceptions import DatasourceNotFound
+from axbi.exceptions import (
+    AxBIDisallowedSQLFunctionException,
+    AxBIDisallowedSQLTableException,
+    AxBISecurityException,
     OAuth2RedirectError,
-    SupersetDisallowedSQLFunctionException,
-    SupersetDisallowedSQLTableException,
-    SupersetSecurityException,
 )
-from superset.models.core import Database
-from superset.sql.parse import Table
-from superset.superset_typing import QueryObjectDict
+from axbi.models.core import Database
+from axbi.sql.parse import Table
 
 
 def test_query_bubbles_errors(mocker: MockerFixture) -> None:
@@ -136,7 +136,7 @@ def test_extra_cache_key_detection_ignores_malformed_statements(
     mocker: MockerFixture,
     query_obj: dict[str, Any],
 ) -> None:
-    mocker.patch("superset.connectors.sqla.models.security_manager.get_rls_filters")
+    mocker.patch("axbi.connectors.sqla.models.security_manager.get_rls_filters")
     table = SqlaTable(table_name="my_sqla_table", sql=None)
 
     assert table.has_extra_cache_key_calls(cast(QueryObjectDict, query_obj)) is False
@@ -167,9 +167,9 @@ def test_query_blocks_disallowed_function_on_chart_data_path(
         clear=False,
     )
     sqla_table = _build_sqla_table_for_query(mocker, "SELECT version()")
-    with pytest.raises(SupersetDisallowedSQLFunctionException):
+    with pytest.raises(AxBIDisallowedSQLFunctionException):
         sqla_table.query(_query_obj())
-    sqla_table.database.get_df.assert_not_called()  # type: ignore[attr-defined]
+    sqla_table.database.get_df.assert_not_called()
 
 
 def test_query_blocks_disallowed_table_on_chart_data_path(
@@ -184,9 +184,9 @@ def test_query_blocks_disallowed_table_on_chart_data_path(
         clear=False,
     )
     sqla_table = _build_sqla_table_for_query(mocker, "SELECT rolname FROM pg_authid")
-    with pytest.raises(SupersetDisallowedSQLTableException):
+    with pytest.raises(AxBIDisallowedSQLTableException):
         sqla_table.query(_query_obj())
-    sqla_table.database.get_df.assert_not_called()  # type: ignore[attr-defined]
+    sqla_table.database.get_df.assert_not_called()
 
 
 def test_query_disallowed_table_error_reports_only_matched_tables(
@@ -203,7 +203,7 @@ def test_query_disallowed_table_error_reports_only_matched_tables(
         clear=False,
     )
     sqla_table = _build_sqla_table_for_query(mocker, "SELECT rolname FROM pg_authid")
-    with pytest.raises(SupersetDisallowedSQLTableException) as excinfo:
+    with pytest.raises(AxBIDisallowedSQLTableException) as excinfo:
         sqla_table.query(_query_obj())
     message = str(excinfo.value)
     assert "pg_authid" in message
@@ -221,9 +221,9 @@ def test_query_allows_benign_sql_on_chart_data_path(mocker: MockerFixture) -> No
         clear=False,
     )
     sqla_table = _build_sqla_table_for_query(mocker, "SELECT id FROM my_sqla_table")
-    sqla_table.database.get_df.return_value = pd.DataFrame()  # type: ignore[attr-defined]
+    sqla_table.database.get_df.return_value = pd.DataFrame()
     result = sqla_table.query(_query_obj())
-    sqla_table.database.get_df.assert_called_once()  # type: ignore[attr-defined]
+    sqla_table.database.get_df.assert_called_once()
     assert result is not None
 
 
@@ -271,7 +271,7 @@ def test_query_datasources_by_name(mocker: MockerFixture) -> None:
     """
     Test the `query_datasources_by_name` method.
     """
-    db = mocker.patch("superset.connectors.sqla.models.db")
+    db = mocker.patch("axbi.connectors.sqla.models.db")
 
     database = Database(database_name="my_db", id=1)
     sqla_table = SqlaTable(
@@ -300,7 +300,7 @@ def test_query_datasources_by_permissions(mocker: MockerFixture) -> None:
     """
     Test the `query_datasources_by_permissions` method.
     """
-    db = mocker.patch("superset.connectors.sqla.models.db")
+    db = mocker.patch("axbi.connectors.sqla.models.db")
 
     engine = create_engine("sqlite://")
     database = Database(database_name="my_db", id=1)
@@ -323,7 +323,7 @@ def test_query_datasources_by_permissions_with_catalog_schema(
     """
     Test the `query_datasources_by_permissions` method passing a catalog and schema.
     """
-    db = mocker.patch("superset.connectors.sqla.models.db")
+    db = mocker.patch("axbi.connectors.sqla.models.db")
 
     engine = create_engine("sqlite://")
     database = Database(database_name="my_db", id=1)
@@ -483,9 +483,9 @@ def test_fetch_metadata_with_comment_field_new_columns(mocker: MockerFixture) ->
 
     # Mock dependencies
     mocker.patch.object(table, "external_metadata", return_value=mock_columns)
-    mocker.patch("superset.connectors.sqla.models.db.session")
+    mocker.patch("axbi.connectors.sqla.models.db.session")
     mocker.patch(
-        "superset.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
+        "axbi.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
     )
 
     # Execute fetch_metadata
@@ -553,14 +553,14 @@ def test_fetch_metadata_with_comment_field_existing_columns(
     ]
 
     # Mock dependencies
-    mock_session = mocker.patch("superset.connectors.sqla.models.db.session")
+    mock_session = mocker.patch("axbi.connectors.sqla.models.db.session")
     mock_session.query.return_value.filter.return_value.all.return_value = [
         existing_col1,
         existing_col2,
     ]
     mocker.patch.object(table, "external_metadata", return_value=mock_columns)
     mocker.patch(
-        "superset.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
+        "axbi.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
     )
 
     # Execute fetch_metadata
@@ -624,13 +624,13 @@ def test_fetch_metadata_mixed_comment_scenarios(mocker: MockerFixture) -> None:
     ]
 
     # Mock dependencies
-    mock_session = mocker.patch("superset.connectors.sqla.models.db.session")
+    mock_session = mocker.patch("axbi.connectors.sqla.models.db.session")
     mock_session.query.return_value.filter.return_value.all.return_value = [
         existing_col
     ]
     mocker.patch.object(table, "external_metadata", return_value=mock_columns)
     mocker.patch(
-        "superset.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
+        "axbi.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
     )
 
     # Execute fetch_metadata
@@ -682,9 +682,9 @@ def test_fetch_metadata_no_comment_field_safe_handling(
 
     # Mock dependencies
     mocker.patch.object(table, "external_metadata", return_value=mock_columns)
-    mocker.patch("superset.connectors.sqla.models.db.session")
+    mocker.patch("axbi.connectors.sqla.models.db.session")
     mocker.patch(
-        "superset.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
+        "axbi.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
     )
 
     # Execute fetch_metadata - should not raise any exceptions
@@ -738,9 +738,9 @@ def test_fetch_metadata_empty_comment_field_handling(mocker: MockerFixture) -> N
 
     # Mock dependencies
     mocker.patch.object(table, "external_metadata", return_value=mock_columns)
-    mocker.patch("superset.connectors.sqla.models.db.session")
+    mocker.patch("axbi.connectors.sqla.models.db.session")
     mocker.patch(
-        "superset.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
+        "axbi.connectors.sqla.models.config", {"SQLA_TABLE_MUTATOR": lambda x: None}
     )
 
     # Execute fetch_metadata
@@ -1264,7 +1264,7 @@ def test_validate_stored_expression_rejects_multi_statement(
     mocker: MockerFixture,
 ) -> None:
     database = _database_for_expression(mocker)
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         validate_stored_expression(database, None, None, "1; DROP TABLE users")
 
 
@@ -1272,7 +1272,7 @@ def test_validate_stored_expression_rejects_set_operation(
     mocker: MockerFixture,
 ) -> None:
     database = _database_for_expression(mocker)
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         validate_stored_expression(
             database, None, None, "1 UNION SELECT password FROM ab_user"
         )
@@ -1298,8 +1298,8 @@ def test_validate_stored_expression_rejects_subquery(
     removes the ``validate_adhoc_subquery`` call gets a red test.
     """
     database = _database_for_expression(mocker)
-    mocker.patch("superset.models.helpers.is_feature_enabled", return_value=False)
-    with pytest.raises(SupersetSecurityException):
+    mocker.patch("axbi.models.helpers.is_feature_enabled", return_value=False)
+    with pytest.raises(AxBISecurityException):
         validate_stored_expression(
             database,
             None,
@@ -1337,7 +1337,7 @@ def test_validate_stored_expression_rejects_set_op_around_jinja(
     Jinja substitution leaves the set operator visible to the parser.
     """
     database = _database_for_expression(mocker)
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         validate_stored_expression(
             database,
             None,
@@ -1355,8 +1355,8 @@ def test_validate_stored_expression_rejects_subquery_around_jinja(
     ``validate_adhoc_subquery`` gate.
     """
     database = _database_for_expression(mocker)
-    mocker.patch("superset.models.helpers.is_feature_enabled", return_value=False)
-    with pytest.raises(SupersetSecurityException):
+    mocker.patch("axbi.models.helpers.is_feature_enabled", return_value=False)
+    with pytest.raises(AxBISecurityException):
         validate_stored_expression(
             database,
             None,

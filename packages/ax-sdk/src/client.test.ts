@@ -179,7 +179,7 @@ describe('AxBI', () => {
 
   test('preserves path-prefixed base URLs when building REST requests', async () => {
     const client = new AxBI({
-      baseUrl: ' http://localhost:8088/superset/ ',
+      baseUrl: ' http://localhost:8088/ax-bi/ ',
       mcpUrl: 'http://localhost:5008',
       auth: { type: 'token', accessToken: 'test-token' },
       retries: 0,
@@ -189,7 +189,7 @@ describe('AxBI', () => {
     await expect(client.health()).resolves.toEqual({ status: 'ok' });
 
     const [url] = mockFetch.mock.calls[0]!;
-    expect(url).toBe('http://localhost:8088/superset/health');
+    expect(url).toBe('http://localhost:8088/ax-bi/health');
   });
 
   test('rejects base URLs with query strings before requests are sent', () => {

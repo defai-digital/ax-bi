@@ -27,7 +27,7 @@
     }
   },
   "rules": {
-    // === Custom Superset rules are handled by scripts/check-custom-rules.js ===
+    // === Custom AxBI rules are handled by scripts/check-custom-rules.js ===
     // These rules check for:
     // - No literal colors (use theme colors)
     // - No FontAwesome icons (use Icons component)
@@ -285,7 +285,7 @@
     }
   ],
   "ignorePatterns": [
-    "packages/generator-superset/**/*",
+    "packages/generator-axbi/**/*",
     "cypress-base/**",
     "**/node_modules/**",
     "build/**",

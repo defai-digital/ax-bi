@@ -39,8 +39,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from superset.extensions import db
-from tests.integration_tests.test_app import app as superset_app
+from axbi.extensions import db
+from tests.integration_tests.test_app import app as axbi_app
 
 
 @pytest.fixture(scope="module", autouse=True)
@@ -56,8 +56,8 @@ def setup_sample_data() -> None:
 
 @pytest.fixture
 def app() -> Flask:
-    """Get the Superset Flask application instance."""
-    return superset_app
+    """Get the AxBI Flask application instance."""
+    return axbi_app
 
 
 @pytest.fixture
@@ -103,7 +103,7 @@ def app_context(app: Flask) -> Generator[Session, None, None]:
             # First create Flask-AppBuilder tables (User, Role, etc.)
             FABUser.metadata.create_all(engine)
 
-            # Then create Superset-specific tables
+            # Then create AxBI-specific tables
             db.metadata.create_all(engine)
 
             try:

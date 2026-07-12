@@ -17,11 +17,11 @@
 import pytest
 from marshmallow.exceptions import ValidationError
 
-from superset.annotation_layers.annotations.schemas import (
+from axbi.annotation_layers.annotations.schemas import (
     AnnotationPostSchema,
     AnnotationPutSchema,
 )
-from superset.annotation_layers.schemas import (
+from axbi.annotation_layers.schemas import (
     AnnotationLayerPostSchema,
     AnnotationLayerPutSchema,
 )

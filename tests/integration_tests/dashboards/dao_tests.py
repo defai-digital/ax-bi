@@ -21,21 +21,21 @@ from unittest.mock import patch
 import pytest
 
 import tests.integration_tests.test_app  # pylint: disable=unused-import  # noqa: F401
-from superset import db, security_manager
-from superset.utils import json
-from superset.daos.dashboard import DashboardDAO
-from superset.models.dashboard import Dashboard
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from axbi.utils import json
+from axbi.daos.dashboard import DashboardDAO
+from axbi.models.dashboard import Dashboard
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
     load_world_bank_data,  # noqa: F401
 )
 
 
-class TestDashboardDAO(SupersetTestCase):
+class TestDashboardDAO(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     def test_get_dashboard_changed_on(self, mock_sm_g, mock_g):
         mock_g.user = mock_sm_g.user = security_manager.find_user("admin")
         with self.client.application.test_request_context():
@@ -72,7 +72,7 @@ class TestDashboardDAO(SupersetTestCase):
             db.session.commit()
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.daos.dashboard.g")
+    @patch("axbi.daos.dashboard.g")
     def test_copy_dashboard(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
         original_dash = (
@@ -98,7 +98,7 @@ class TestDashboardDAO(SupersetTestCase):
         db.session.commit()
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.daos.dashboard.g")
+    @patch("axbi.daos.dashboard.g")
     def test_copy_dashboard_copies_native_filters(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
         original_dash = (
@@ -124,7 +124,7 @@ class TestDashboardDAO(SupersetTestCase):
         db.session.commit()
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.daos.dashboard.g")
+    @patch("axbi.daos.dashboard.g")
     def test_copy_dashboard_duplicate_slices(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
         original_dash = (

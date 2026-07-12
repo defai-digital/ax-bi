@@ -17,7 +17,7 @@
 
 import ast
 
-from superset.db_engine_specs import lint_metadata
+from axbi.db_engine_specs import lint_metadata
 
 
 def test_eval_ast_value_handles_removed_legacy_ast_aliases(monkeypatch):

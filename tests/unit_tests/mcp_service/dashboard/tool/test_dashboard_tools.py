@@ -28,23 +28,23 @@ from fastmcp import Client
 from fastmcp.exceptions import ToolError
 from flask import current_app, g
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.dashboard.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.dashboard.schemas import (
     ListDashboardsRequest,
 )
-from superset.mcp_service.dashboard.tool.get_dashboard_info import (
+from axbi.mcp_service.dashboard.tool.get_dashboard_info import (
     _refresh_request_user_for_permalink_access,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 get_dashboard_info_module = import_module(
-    "superset.mcp_service.dashboard.tool.get_dashboard_info"
+    "axbi.mcp_service.dashboard.tool.get_dashboard_info"
 )
 
 
@@ -60,7 +60,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -68,7 +68,7 @@ def mock_auth():
         yield mock_get_user
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_basic(mock_list, mcp_server):
     dashboard = Mock()
@@ -134,7 +134,7 @@ async def test_list_dashboards_basic(mock_list, mcp_server):
         assert "slug" in data["columns_loaded"]
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_with_filters(mock_list, mcp_server):
     dashboard = Mock()
@@ -203,7 +203,7 @@ async def test_list_dashboards_with_filters(mock_list, mcp_server):
         )
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_with_string_filters(mock_list, mcp_server):
     mock_list.return_value = ([], 0)
@@ -218,7 +218,7 @@ async def test_list_dashboards_with_string_filters(mock_list, mcp_server):
         assert request.filters[0].value == "Sales"
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_api_error(mock_list, mcp_server):
     mock_list.side_effect = ToolError("API request failed")
@@ -229,7 +229,7 @@ async def test_list_dashboards_api_error(mock_list, mcp_server):
         assert "API request failed" in str(excinfo.value)
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_with_search(mock_list, mcp_server):
     dashboard = Mock()
@@ -289,7 +289,7 @@ async def test_list_dashboards_with_search(mock_list, mcp_server):
         assert "slug" in kwargs["search_columns"]
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_with_simple_filters(mock_list, mcp_server):
     mock_list.return_value = ([], 0)
@@ -307,10 +307,10 @@ async def test_list_dashboards_with_simple_filters(mock_list, mcp_server):
 
 
 @patch(
-    "superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
+    "axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
     return_value=True,
 )
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_success(
     mock_info, mock_can_view_data_model_metadata, mcp_server
@@ -388,7 +388,7 @@ async def test_get_dashboard_info_success(
         ]
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_permalink_does_not_double_sanitize(
     mock_info, mcp_server
@@ -451,7 +451,7 @@ async def test_get_dashboard_info_permalink_does_not_double_sanitize(
 
     with (
         patch(
-            "superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
+            "axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
             return_value=True,
         ),
         patch.object(
@@ -489,7 +489,7 @@ async def test_get_dashboard_info_permalink_does_not_double_sanitize(
     assert result.data["filter_state"]["activeTabs"][0] == _wrapped("TAB-1")
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_permalink_key_includes_filter_state(
     mock_info, mcp_server
@@ -534,7 +534,7 @@ async def test_get_dashboard_info_permalink_key_includes_filter_state(
 
     with (
         patch(
-            "superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
+            "axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
             return_value=True,
         ),
         patch.object(
@@ -678,7 +678,7 @@ def test_refresh_request_user_for_permalink_access_keeps_user_when_reload_fails(
         assert g.user is current_user
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_not_found(mock_info, mcp_server):
     mock_info.return_value = None  # Not found returns None
@@ -689,7 +689,7 @@ async def test_get_dashboard_info_not_found(mock_info, mcp_server):
         assert result.data["error_type"] == "not_found"
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_access_denied(mock_info, mcp_server):
     mock_info.return_value = None  # Access denied returns None
@@ -700,7 +700,7 @@ async def test_get_dashboard_info_access_denied(mock_info, mcp_server):
         assert result.data["error_type"] == "not_found"
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_does_not_expose_access_list_or_roles(
     mock_info, mcp_server
@@ -785,7 +785,7 @@ async def test_get_dashboard_info_does_not_expose_access_list_or_roles(
     assert "owners" not in result.data["charts"][0]
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_restricted_user_redacts_data_model_metadata(
     mock_info,
@@ -842,7 +842,7 @@ async def test_get_dashboard_info_restricted_user_redacts_data_model_metadata(
     mock_info.return_value = dashboard
 
     with patch(
-        "superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
+        "axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
         return_value=False,
     ):
         async with Client(mcp_server) as client:
@@ -859,7 +859,7 @@ async def test_get_dashboard_info_restricted_user_redacts_data_model_metadata(
     assert result.data["native_filters"][0]["targets"] == []
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_restricted_user_redacts_permalink_filter_state(
     mock_info,
@@ -925,7 +925,7 @@ async def test_get_dashboard_info_restricted_user_redacts_permalink_filter_state
 
     with (
         patch(
-            "superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
+            "axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
             return_value=False,
         ),
         patch.object(
@@ -950,7 +950,7 @@ async def test_get_dashboard_info_restricted_user_redacts_permalink_filter_state
     assert result.data["filter_state"] == {"activeTabs": [_wrapped("TAB-products")]}
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_omits_requested_user_directory_fields(
     mock_list, mcp_server
@@ -1015,7 +1015,7 @@ async def test_list_dashboards_omits_requested_user_directory_fields(
 # TODO (Phase 3+): Add tests for get_dashboard_available_filters tool
 
 
-@patch("superset.mcp_service.mcp_core.ModelGetInfoCore._find_object")
+@patch("axbi.mcp_service.mcp_core.ModelGetInfoCore._find_object")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_by_uuid(mock_find_object, mcp_server):
     """Test getting dashboard info using UUID identifier."""
@@ -1054,7 +1054,7 @@ async def test_get_dashboard_info_by_uuid(mock_find_object, mcp_server):
         assert result.data["dashboard_title"] == _wrapped("Test Dashboard UUID")
 
 
-@patch("superset.mcp_service.mcp_core.ModelGetInfoCore._find_object")
+@patch("axbi.mcp_service.mcp_core.ModelGetInfoCore._find_object")
 @pytest.mark.asyncio
 async def test_get_dashboard_info_by_slug(mock_find_object, mcp_server):
     """Test getting dashboard info using slug identifier."""
@@ -1092,7 +1092,7 @@ async def test_get_dashboard_info_by_slug(mock_find_object, mcp_server):
         assert result.data["dashboard_title"] == _wrapped("Test Dashboard Slug")
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_custom_uuid_slug_columns(mock_list, mcp_server):
     """Test that custom column selection includes UUID and slug when explicitly
@@ -1159,10 +1159,10 @@ async def test_list_dashboards_custom_uuid_slug_columns(mock_list, mcp_server):
 
 
 @patch(
-    "superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
+    "axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata",
     return_value=True,
 )
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_sanitizes_dashboard_descriptions_and_filter_text(
     mock_list, mock_can_view_data_model_metadata, mcp_server
@@ -1275,7 +1275,7 @@ class TestDashboardDefaultColumnFiltering:
 
     def test_minimal_default_columns_constant(self):
         """Test that minimal default columns are properly defined."""
-        from superset.mcp_service.common.schema_discovery import (
+        from axbi.mcp_service.common.schema_discovery import (
             DASHBOARD_DEFAULT_COLUMNS,
         )
 
@@ -1314,7 +1314,7 @@ class TestDashboardDefaultColumnFiltering:
         # These are explicitly requested, not defaults
         assert len(request.select_columns) == 4
 
-    @patch("superset.daos.dashboard.DashboardDAO.list")
+    @patch("axbi.daos.dashboard.DashboardDAO.list")
     @pytest.mark.asyncio
     async def test_default_columns_in_response(self, mock_list, mcp_server):
         """Test that minimal default columns appear in response metadata."""
@@ -1370,7 +1370,7 @@ class TestDashboardSortableColumns:
 
     def test_dashboard_sortable_columns_definition(self):
         """Test that dashboard sortable columns are properly defined."""
-        from superset.mcp_service.dashboard.tool.list_dashboards import (
+        from axbi.mcp_service.dashboard.tool.list_dashboards import (
             SORTABLE_DASHBOARD_COLUMNS,
         )
 
@@ -1387,7 +1387,7 @@ class TestDashboardSortableColumns:
         assert "changed_by_name" not in SORTABLE_DASHBOARD_COLUMNS
         assert "uuid" not in SORTABLE_DASHBOARD_COLUMNS
 
-    @patch("superset.daos.dashboard.DashboardDAO.list")
+    @patch("axbi.daos.dashboard.DashboardDAO.list")
     @pytest.mark.asyncio
     async def test_list_dashboards_with_valid_order_column(self, mock_list, mcp_server):
         """Test list_dashboards with valid order column."""
@@ -1414,7 +1414,7 @@ class TestDashboardSortableColumns:
 
     def test_sortable_columns_in_docstring(self):
         """Test that sortable columns are documented in tool docstring."""
-        from superset.mcp_service.dashboard.tool.list_dashboards import (
+        from axbi.mcp_service.dashboard.tool.list_dashboards import (
             list_dashboards,
             SORTABLE_DASHBOARD_COLUMNS,
         )
@@ -1427,7 +1427,7 @@ class TestDashboardSortableColumns:
             assert col in list_dashboards.__doc__
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_no_arguments(mock_list, mcp_server):
     """Regression test: list_dashboards must accept zero arguments without raising
@@ -1448,7 +1448,7 @@ async def test_list_dashboards_no_arguments(mock_list, mcp_server):
     )
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_shadows_ax_services_when_enabled(
     mock_list,
@@ -1481,12 +1481,12 @@ async def test_list_dashboards_shadows_ax_services_when_enabled(
 
     with (
         patch(
-            "superset.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
+            "axbi.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
             side_effect=lambda flag: flag
             in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
         ),
         patch(
-            "superset.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
+            "axbi.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
         ) as client_class,
     ):
         client_class.return_value.list_dashboards.return_value = AxServicesResponse(
@@ -1522,7 +1522,7 @@ async def test_list_dashboards_shadows_ax_services_when_enabled(
     )
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_serves_ax_services_when_enabled(
     mock_list,
@@ -1535,12 +1535,12 @@ async def test_list_dashboards_serves_ax_services_when_enabled(
 
     with (
         patch(
-            "superset.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
+            "axbi.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
             side_effect=lambda flag: flag
             in {"TS_MCP_ORCHESTRATION", "TS_DASHBOARD_LIST_SERVING"},
         ),
         patch(
-            "superset.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
+            "axbi.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
         ) as client_class,
     ):
         client_class.return_value.list_dashboards.return_value = AxServicesResponse(
@@ -1590,7 +1590,7 @@ async def test_list_dashboards_serves_ax_services_when_enabled(
     )
 
 
-@patch("superset.daos.dashboard.DashboardDAO.list")
+@patch("axbi.daos.dashboard.DashboardDAO.list")
 @pytest.mark.asyncio
 async def test_list_dashboards_serving_falls_back_on_invalid_candidate(
     mock_list,
@@ -1604,12 +1604,12 @@ async def test_list_dashboards_serving_falls_back_on_invalid_candidate(
 
     with (
         patch(
-            "superset.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
+            "axbi.mcp_service.dashboard.tool.list_dashboards.is_feature_enabled",
             side_effect=lambda flag: flag
             in {"TS_MCP_ORCHESTRATION", "TS_DASHBOARD_LIST_SERVING"},
         ),
         patch(
-            "superset.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
+            "axbi.mcp_service.dashboard.tool.list_dashboards.AxServicesClient"
         ) as client_class,
     ):
         client_class.return_value.list_dashboards.return_value = AxServicesResponse(

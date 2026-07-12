@@ -16,11 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  DatasourceType,
-  JsonResponse,
-  SupersetClient,
-} from '@superset-ui/core';
+import { DatasourceType, JsonResponse, AxBIClient } from '@ax-bi/ui-core';
 import {
   ADD_SLICES,
   FETCH_ALL_SLICES_STARTED,
@@ -28,7 +24,7 @@ import {
 } from './sliceEntities';
 
 test('fetchSlices keeps charts with malformed params using datasource fallback', async () => {
-  const getStub = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getStub = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {
       result: [
         {

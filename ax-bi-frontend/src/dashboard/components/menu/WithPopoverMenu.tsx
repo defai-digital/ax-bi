@@ -26,8 +26,8 @@ import {
   memo,
 } from 'react';
 import cx from 'classnames';
-import { addAlpha } from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
+import { addAlpha } from '@ax-bi/ui-core';
+import { css, styled } from '@ax-bi/core/theme';
 
 type ShouldFocusContainer = HTMLDivElement & {
   contains: (event_target: EventTarget & HTMLElement) => boolean;

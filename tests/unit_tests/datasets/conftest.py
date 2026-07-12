@@ -19,7 +19,7 @@ from typing import Any, TYPE_CHECKING
 import pytest
 
 if TYPE_CHECKING:
-    from superset.connectors.sqla.models import SqlMetric, TableColumn
+    from axbi.connectors.sqla.models import SqlMetric, TableColumn
 
 
 @pytest.fixture
@@ -50,7 +50,7 @@ def columns_default() -> dict[str, Any]:
 
 @pytest.fixture
 def sample_columns() -> dict["TableColumn", dict[str, Any]]:
-    from superset.connectors.sqla.models import TableColumn
+    from axbi.connectors.sqla.models import TableColumn
 
     return {
         TableColumn(column_name="ds", is_dttm=1, type="TIMESTAMP"): {
@@ -94,7 +94,7 @@ def sample_columns() -> dict["TableColumn", dict[str, Any]]:
 
 @pytest.fixture
 def sample_metrics() -> dict["SqlMetric", dict[str, Any]]:
-    from superset.connectors.sqla.models import SqlMetric
+    from axbi.connectors.sqla.models import SqlMetric
 
     return {
         SqlMetric(metric_name="cnt", expression="COUNT(*)", metric_type="COUNT"): {

@@ -17,7 +17,7 @@
 import pytest
 from marshmallow import ValidationError
 
-from superset.views.datasource.schemas import (
+from axbi.views.datasource.schemas import (
     ExternalMetadataSchema,
     SamplesRequestSchema,
 )

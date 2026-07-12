@@ -34,7 +34,7 @@ def test_odbc_impersonation(mocker: MockerFixture) -> None:
     """
     from sqlalchemy.engine.url import URL
 
-    from superset.db_engine_specs.drill import DrillEngineSpec
+    from axbi.db_engine_specs.drill import DrillEngineSpec
 
     database = mocker.MagicMock()
 
@@ -58,7 +58,7 @@ def test_jdbc_impersonation(mocker: MockerFixture) -> None:
     """
     from sqlalchemy.engine.url import URL
 
-    from superset.db_engine_specs.drill import DrillEngineSpec
+    from axbi.db_engine_specs.drill import DrillEngineSpec
 
     database = mocker.MagicMock()
 
@@ -82,7 +82,7 @@ def test_sadrill_impersonation(mocker: MockerFixture) -> None:
     """
     from sqlalchemy.engine.url import URL
 
-    from superset.db_engine_specs.drill import DrillEngineSpec
+    from axbi.db_engine_specs.drill import DrillEngineSpec
 
     database = mocker.MagicMock()
 
@@ -107,15 +107,15 @@ def test_invalid_impersonation(mocker: MockerFixture) -> None:
     """
     from sqlalchemy.engine.url import URL
 
-    from superset.db_engine_specs.drill import DrillEngineSpec
-    from superset.db_engine_specs.exceptions import SupersetDBAPIProgrammingError
+    from axbi.db_engine_specs.drill import DrillEngineSpec
+    from axbi.db_engine_specs.exceptions import AxBIDBAPIProgrammingError
 
     database = mocker.MagicMock()
 
     url = URL.create("drill+foobar")
     username = "DoAsUser"
 
-    with pytest.raises(SupersetDBAPIProgrammingError):
+    with pytest.raises(AxBIDBAPIProgrammingError):
         DrillEngineSpec.impersonate_user(
             database=database,
             username=username,
@@ -138,7 +138,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.drill import DrillEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.drill import DrillEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -147,7 +147,7 @@ def test_get_schema_from_engine_params() -> None:
     """
     Test ``get_schema_from_engine_params``.
     """
-    from superset.db_engine_specs.drill import DrillEngineSpec
+    from axbi.db_engine_specs.drill import DrillEngineSpec
 
     assert (
         DrillEngineSpec.get_schema_from_engine_params(
@@ -167,7 +167,7 @@ def test_get_schema_from_engine_params() -> None:
     ],
 )
 def test_connect_make_label_compatible(column_name: str, expected_result: str) -> None:
-    from superset.db_engine_specs.drill import (
+    from axbi.db_engine_specs.drill import (
         DrillEngineSpec as spec,  # noqa: N813
     )
 

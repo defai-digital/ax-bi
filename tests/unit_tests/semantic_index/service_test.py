@@ -21,8 +21,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from superset.semantic_index.service import SemanticIndexService
-from superset.semantic_index.types import SemanticDocument, SemanticIndexSummary
+from axbi.semantic_index.service import SemanticIndexService
+from axbi.semantic_index.types import SemanticDocument, SemanticIndexSummary
 
 
 def _provider() -> SimpleNamespace:
@@ -61,9 +61,9 @@ def test_index_dataset_upserts_then_prunes() -> None:
     ]
 
     with (
-        patch("superset.semantic_index.service.db") as mock_db,
+        patch("axbi.semantic_index.service.db") as mock_db,
         patch(
-            "superset.semantic_index.service.build_dataset_semantic_documents",
+            "axbi.semantic_index.service.build_dataset_semantic_documents",
             return_value=documents,
         ),
     ):

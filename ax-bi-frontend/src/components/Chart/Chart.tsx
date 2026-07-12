@@ -17,8 +17,8 @@
  * under the License.
  */
 import { ErrorInfo, useCallback, useEffect, useRef } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { logging } from '@apache-superset/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { logging } from '@ax-bi/core/utils';
 import {
   ensureIsArray,
   FeatureFlag,
@@ -30,11 +30,11 @@ import {
   type FilterState,
   type JsonObject,
   type AgGridChartState,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import type { ChartState, Datasource, ChartStatus } from 'src/explore/types';
 import { PLACEHOLDER_DATASOURCE } from 'src/dashboard/constants';
-import { EmptyState, Loading } from '@superset-ui/core/components';
+import { EmptyState, Loading } from '@ax-bi/ui-core/components';
 import { ErrorBoundary } from 'src/components';
 import { Logger, LOG_ACTIONS_RENDER_CHART } from 'src/logger/LogUtils';
 import { URL_PARAMS } from 'src/constants';

@@ -24,15 +24,15 @@ import {
   Select,
   Tooltip,
   type SelectValue,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 import {
   isFeatureEnabled,
   FeatureFlag,
   isDefined,
-  SupersetClient,
-} from '@superset-ui/core';
-import { styled, useTheme, css } from '@apache-superset/core/theme';
+  AxBIClient,
+} from '@ax-bi/ui-core';
+import { styled, useTheme, css } from '@ax-bi/core/theme';
 import {
   Operators,
   OPERATORS_OPTIONS,
@@ -46,11 +46,7 @@ import {
 import FilterDefinitionOption from 'src/explore/components/controls/MetricControl/FilterDefinitionOption';
 import AdhocFilter from 'src/explore/components/controls/FilterControl/AdhocFilter';
 import { optionLabel } from 'src/utils/common';
-import {
-  ColumnMeta,
-  Dataset,
-  isTemporalColumn,
-} from '@superset-ui/chart-controls';
+import { ColumnMeta, Dataset, isTemporalColumn } from '@ax-bi/chart-controls';
 import useAdvancedDataTypes from './useAdvancedDataTypes';
 import { useDatePickerInAdhocFilter } from '../utils';
 import { useDefaultTimeFilter } from '../../DateFilterControl/utils';
@@ -83,10 +79,7 @@ export interface MetricColumnType {
 }
 
 export type ColumnType =
-  | ColumnMeta
-  | SimpleExpressionType
-  | SQLExpressionType
-  | MetricColumnType;
+  ColumnMeta | SimpleExpressionType | SQLExpressionType | MetricColumnType;
 
 export interface Props {
   adhocFilter: AdhocFilter;
@@ -434,7 +427,7 @@ const AdhocFilterEditPopoverSimpleTabContent: FC<Props> = props => {
           controller.abort();
         }
         setLoadingComparatorSuggestions(true);
-        SupersetClient.get({
+        AxBIClient.get({
           signal,
           endpoint: `/api/v1/datasource/${datasource.type}/${datasource.id}/column/${col}/values/`,
         })

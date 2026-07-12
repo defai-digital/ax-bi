@@ -24,7 +24,7 @@
  *
  * The gauge renders to a <canvas>, so this test reads pixels back from the
  * rendered gauge and asserts the configured interval colors are present in the
- * correct mapping. With `color_scheme: supersetColors` and
+ * correct mapping. With `color_scheme: axbiColors` and
  * `interval_color_indices: '1,2'`, the gauge axis must paint the scheme's 1st
  * and 2nd colors (#1FA8C9 and #454E7C) and must NOT paint the 3rd (#5AC189),
  * which would indicate a shifted / fallback palette.
@@ -42,7 +42,7 @@ import { DashboardPage } from '../../pages/DashboardPage';
 
 const DATASET_NAME = 'birth_names';
 
-// supersetColors palette (1-based, matching interval_color_indices):
+// axbiColors palette (1-based, matching interval_color_indices):
 // index 1 = #1FA8C9, index 2 = #454E7C, index 3 = #5AC189
 const COLOR_INTERVAL_1: [number, number, number] = [31, 168, 201];
 const COLOR_INTERVAL_2: [number, number, number] = [69, 78, 124];
@@ -64,7 +64,7 @@ testWithAssets(
       metric: 'count',
       adhoc_filters: [],
       row_limit: 10,
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
       min_val: 0,
       max_val: 100,
       start_angle: 225,
@@ -127,7 +127,7 @@ testWithAssets(
       dashboard_title: `gauge_interval_colors_${Date.now()}`,
       published: true,
       position_json: JSON.stringify(positionJson),
-      json_metadata: JSON.stringify({ color_scheme: 'supersetColors' }),
+      json_metadata: JSON.stringify({ color_scheme: 'axbiColors' }),
     });
     expect(dashResp.ok()).toBe(true);
     const dashBody = await dashResp.json();

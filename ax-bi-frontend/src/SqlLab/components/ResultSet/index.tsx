@@ -39,24 +39,24 @@ import {
   Tooltip,
   Input,
   Label,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   CopyToClipboard,
   FilterableTable,
   ErrorMessageWithStackTrace,
 } from 'src/components';
 import { nanoid } from 'nanoid';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   QueryState,
   usePrevious,
   getNumberFormatter,
   getExtensionsRegistry,
   ErrorTypeEnum,
-} from '@superset-ui/core';
-import { tn } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { styled, useTheme, css } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { tn } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { styled, useTheme, css } from '@ax-bi/core/theme';
 import {
   ISaveableDatasource,
   ISimpleColumn,
@@ -83,7 +83,7 @@ import {
   LOG_ACTIONS_SQLLAB_CREATE_CHART,
   LOG_ACTIONS_SQLLAB_DOWNLOAD_CSV,
 } from 'src/logger/LogUtils';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { usePermissions } from 'src/hooks/usePermissions';
 import { StreamingExportModal } from 'src/components/StreamingExportModal';
 import { useStreamingExport } from 'src/components/StreamingExportModal/useStreamingExport';

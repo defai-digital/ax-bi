@@ -25,7 +25,7 @@ under the License.
 
 # Embedding Superset
 
-Superset dashboards can be embedded directly in host applications using the `@superset-ui/embedded-sdk` package.
+Superset dashboards can be embedded directly in host applications using the `@ax-bi/embedded-sdk` package.
 
 :::info Prerequisites
 - The `EMBEDDED_SUPERSET` feature flag must be enabled.
@@ -37,13 +37,13 @@ Superset dashboards can be embedded directly in host applications using the `@su
 Install the SDK:
 
 ```bash
-npm install @superset-ui/embedded-sdk
+npm install @ax-bi/embedded-sdk
 ```
 
 Embed a dashboard:
 
 ```javascript
-import { embedDashboard } from '@superset-ui/embedded-sdk';
+import { embedDashboard } from '@ax-bi/embedded-sdk';
 
 embedDashboard({
   id: 'dashboard-uuid-here',          // from Dashboard → Embed

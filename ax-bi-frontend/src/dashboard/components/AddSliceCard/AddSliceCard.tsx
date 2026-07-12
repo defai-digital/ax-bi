@@ -29,10 +29,10 @@ import {
   FC,
 } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
-import { Tooltip, ImageLoader } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
+import { Tooltip, ImageLoader } from '@ax-bi/ui-core/components';
 import { GenericLink, usePluginContext } from 'src/components';
 import { assetUrl } from 'src/utils/assetUrl';
 import { Theme } from '@emotion/react';
@@ -174,8 +174,7 @@ const AddSliceCard: FC<{
   datasourceUrl?: string;
   datasourceName?: string;
   innerRef?:
-    | RefObject<HTMLDivElement>
-    | ((node: HTMLDivElement | null) => void);
+    RefObject<HTMLDivElement> | ((node: HTMLDivElement | null) => void);
   isSelected?: boolean;
   lastModified?: string;
   sliceName: string;

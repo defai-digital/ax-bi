@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Menu, MenuItem } from '@superset-ui/core/components/Menu';
+import { Menu, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import {
   render,
   screen,
@@ -44,7 +44,7 @@ const createProps = () => ({
   url: `/ax-bi/dashboard/${DASHBOARD_ID}`,
   copyMenuItemTitle: 'Copy dashboard URL',
   emailMenuItemTitle: 'Share dashboard by email',
-  emailSubject: 'Superset dashboard COVID Vaccine Dashboard',
+  emailSubject: 'AxBI dashboard COVID Vaccine Dashboard',
   emailBody: 'Check out this dashboard: ',
   dashboardId: DASHBOARD_ID,
   title: 'Test Dashboard',
@@ -194,7 +194,7 @@ test('Click on "Share dashboard by email" and succeed', async () => {
   await waitFor(() => {
     expect(props.addDangerToast).toHaveBeenCalledTimes(0);
     expect(window.location.href).toBe(
-      'mailto:?Subject=Superset%20dashboard%20COVID%20Vaccine%20Dashboard%20&Body=Check%20out%20this%20dashboard%3A%20http%3A%2F%2Flocalhost%2Fax-bi%2Fdashboard%2Fp%2F123%2F',
+      'mailto:?Subject=AxBI%20dashboard%20COVID%20Vaccine%20Dashboard%20&Body=Check%20out%20this%20dashboard%3A%20http%3A%2F%2Flocalhost%2Fax-bi%2Fdashboard%2Fp%2F123%2F',
     );
   });
 });

@@ -18,11 +18,11 @@
  */
 
 import type { ReactNode, ComponentType } from 'react';
-import type { ErrorSource, SupersetError } from '@superset-ui/core';
+import type { ErrorSource, AxBIError } from '@ax-bi/ui-core';
 
 export type ErrorMessageComponentProps<ExtraType = Record<string, any> | null> =
   {
-    error: SupersetError<ExtraType>;
+    error: AxBIError<ExtraType>;
     source?: ErrorSource;
     subtitle?: ReactNode;
     compact?: boolean;

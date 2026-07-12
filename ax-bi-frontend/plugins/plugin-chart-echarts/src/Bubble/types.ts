@@ -20,7 +20,7 @@ import {
   ChartProps,
   ChartDataResponseResult,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   LegendFormData,
   BaseTransformedProps,

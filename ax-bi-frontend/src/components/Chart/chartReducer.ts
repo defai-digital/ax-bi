@@ -17,14 +17,14 @@
  * under the License.
  */
 /* eslint camelcase: 0 */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { omit } from 'lodash';
 import { HYDRATE_DASHBOARD } from 'src/dashboard/actions/hydrate';
 import { DatasourcesAction } from 'src/dashboard/actions/datasources';
 import { ChartState } from 'src/explore/types';
 import { getFormDataFromControls } from 'src/explore/controlUtils';
 import { HYDRATE_EXPLORE } from 'src/explore/actions/hydrateExplore';
-import { now } from '@superset-ui/core/utils/dates';
+import { now } from '@ax-bi/ui-core/utils/dates';
 import * as actions from './chartAction';
 
 export const chart: ChartState = {

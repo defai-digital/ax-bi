@@ -17,7 +17,7 @@
  * under the License.
  */
 import { debounce } from 'lodash';
-import { Constants } from '@superset-ui/core/components';
+import { Constants } from '@ax-bi/ui-core/components';
 
 export const debounceFunc = debounce(
   (func: (val: string) => void, source: string) => func(source),

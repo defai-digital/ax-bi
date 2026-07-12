@@ -18,9 +18,9 @@
  */
 import { Fragment, useCallback, useState, useMemo, memo } from 'react';
 import cx from 'classnames';
-import { css, styled, SupersetTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { css, styled, AxBITheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import type { LayoutItem } from 'src/dashboard/types';
 import type { DropResult } from 'src/dashboard/components/dnd/dragDroppableConfig';
 import DashboardComponent from 'src/dashboard/containers/DashboardComponent';
@@ -124,7 +124,7 @@ const ColumnStyles = styled.div<{ editMode: boolean }>`
   `}
 `;
 
-const emptyColumnContentStyles = (theme: SupersetTheme) => css`
+const emptyColumnContentStyles = (theme: AxBITheme) => css`
   min-height: ${theme.sizeUnit * 25}px;
   width: 100%;
   height: 100%;

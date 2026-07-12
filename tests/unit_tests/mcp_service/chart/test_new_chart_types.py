@@ -27,7 +27,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from superset.mcp_service.chart.chart_utils import (
+from axbi.mcp_service.chart.chart_utils import (
     generate_chart_name,
     map_big_number_config,
     map_config_to_form_data,
@@ -36,7 +36,7 @@ from superset.mcp_service.chart.chart_utils import (
     map_pivot_table_config,
     map_table_config,
 )
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     AxisConfig,
     BigNumberChartConfig,
     ColumnRef,
@@ -47,7 +47,7 @@ from superset.mcp_service.chart.schemas import (
     PivotTableChartConfig,
     TableChartConfig,
 )
-from superset.mcp_service.chart.validation.schema_validator import SchemaValidator
+from axbi.mcp_service.chart.validation.schema_validator import SchemaValidator
 
 # ============================================================
 # Pie Chart Schema Tests
@@ -185,7 +185,7 @@ class TestMapPieConfig:
         assert result["sort_by_metric"] is True
         assert result["row_limit"] == 100
         assert result["donut"] is False
-        assert result["color_scheme"] == "supersetColors"
+        assert result["color_scheme"] == "axbiColors"
 
     def test_donut_form_data(self) -> None:
         config = PieChartConfig(
@@ -218,7 +218,7 @@ class TestMapPieConfig:
         assert result["adhoc_filters"][0]["comparator"] == "US"
 
     def test_pie_form_data_color_scheme_override(self) -> None:
-        """Explicit color_scheme overrides the supersetColors default."""
+        """Explicit color_scheme overrides the axbiColors default."""
         config = PieChartConfig(
             chart_type="pie",
             dimension=ColumnRef(name="product"),
@@ -557,7 +557,7 @@ class TestMixedTimeseriesChartConfigSchema:
 class TestMapMixedTimeseriesConfig:
     """Test map_mixed_timeseries_config form_data generation."""
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_basic_mixed_form_data(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -581,7 +581,7 @@ class TestMapMixedTimeseriesConfig:
         assert result["yAxisIndexB"] == 1
         assert result["show_legend"] is True
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_with_time_grain(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -596,7 +596,7 @@ class TestMapMixedTimeseriesConfig:
 
         assert result["time_grain_sqla"] == "P1W"
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_area_series(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -615,7 +615,7 @@ class TestMapMixedTimeseriesConfig:
         assert result["seriesTypeB"] == "line"
         assert result["areaB"] is True
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_with_groupby(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -632,7 +632,7 @@ class TestMapMixedTimeseriesConfig:
         assert result["groupby"] == ["region"]
         assert result["groupby_b"] == ["channel"]
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_groupby_same_as_x_ignored(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -649,7 +649,7 @@ class TestMapMixedTimeseriesConfig:
         assert "groupby" not in result
         assert "groupby_b" not in result
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_with_axis_config(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -672,7 +672,7 @@ class TestMapMixedTimeseriesConfig:
         assert result["y_axis_format_secondary"] == ",d"
         assert result["logAxisSecondary"] is True
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_row_limit(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -687,7 +687,7 @@ class TestMapMixedTimeseriesConfig:
 
         assert result["row_limit"] == 300
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_default_row_limit(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -701,7 +701,7 @@ class TestMapMixedTimeseriesConfig:
 
         assert result["row_limit"] == 10000
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_with_filters(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
 
@@ -717,7 +717,7 @@ class TestMapMixedTimeseriesConfig:
         assert "adhoc_filters" in result
         assert len(result["adhoc_filters"]) == 1
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_mixed_form_data_non_temporal_x(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = False
 
@@ -760,7 +760,7 @@ class TestMapConfigToFormDataDispatch:
         result = map_config_to_form_data(config)
         assert result["viz_type"] == "pivot_table_v2"
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_dispatches_mixed_timeseries_config(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
         config = MixedTimeseriesChartConfig(
@@ -1102,7 +1102,7 @@ class TestPivotTableFormattingOptions:
 class TestMixedTimeseriesFormattingOptions:
     """color scheme, currency format, legend orientation, data labels on Mixed."""
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_color_scheme_in_form_data(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
         config = MixedTimeseriesChartConfig(
@@ -1116,7 +1116,7 @@ class TestMixedTimeseriesFormattingOptions:
 
         assert result["color_scheme"] == "lyftColors"
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_currency_format_primary_and_secondary(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
         config = MixedTimeseriesChartConfig(
@@ -1138,7 +1138,7 @@ class TestMixedTimeseriesFormattingOptions:
             "symbolPosition": "prefix",
         }
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_legend_orientation_in_form_data(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
         config = MixedTimeseriesChartConfig(
@@ -1152,7 +1152,7 @@ class TestMixedTimeseriesFormattingOptions:
 
         assert result["legendOrientation"] == "left"
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_show_value_data_labels(self, mock_is_temporal) -> None:
         mock_is_temporal.return_value = True
         config = MixedTimeseriesChartConfig(

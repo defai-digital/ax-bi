@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import rison from 'rison';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import { DatasetObject } from 'src/features/datasets/AddDataset/types';
@@ -51,7 +51,7 @@ const useDatasetsList = (
       const queryParams = rison.encode_uri({ filters, page });
       try {
         // eslint-disable-next-line no-await-in-loop
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint: `/api/v1/dataset/?q=${queryParams}`,
         });
 

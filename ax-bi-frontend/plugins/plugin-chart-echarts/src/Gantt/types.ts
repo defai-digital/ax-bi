@@ -22,7 +22,7 @@ import {
   QueryFormColumn,
   QueryFormData,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   BaseTransformedProps,
   CrossFilterTransformedProps,

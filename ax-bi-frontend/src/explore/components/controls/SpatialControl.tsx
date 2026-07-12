@@ -17,16 +17,10 @@
  * under the License.
  */
 import { Component, type ReactNode } from 'react';
-import {
-  Row,
-  Col,
-  Checkbox,
-  Label,
-  Popover,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+import { Row, Col, Checkbox, Label, Popover } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 
-import PopoverSection from '@superset-ui/core/components/PopoverSection';
+import PopoverSection from '@ax-bi/ui-core/components/PopoverSection';
 import ControlHeader from '../ControlHeader';
 import SelectControl from './SelectControl';
 

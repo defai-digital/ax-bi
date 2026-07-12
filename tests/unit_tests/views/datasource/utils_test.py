@@ -14,18 +14,18 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for superset.views.datasource.utils module."""
+"""Tests for axbi.views.datasource.utils module."""
 
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.dataset.exceptions import DatasetSamplesFailedError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
+from axbi.commands.dataset.exceptions import DatasetSamplesFailedError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
 
 
-@patch("superset.views.datasource.utils.get_limit_clause")
+@patch("axbi.views.datasource.utils.get_limit_clause")
 def test_get_samples_raises_security_exception_when_access_denied(
     mock_get_limit_clause: MagicMock,
 ):
@@ -45,22 +45,20 @@ def test_get_samples_raises_security_exception_when_access_denied(
     mock_count_context = MagicMock()
 
     # Simulate security exception when raise_for_access is called
-    mock_samples_context.raise_for_access.side_effect = SupersetSecurityException(
-        SupersetError(
+    mock_samples_context.raise_for_access.side_effect = AxBISecurityException(
+        AxBIError(
             message="Access denied",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.WARNING,
         )
     )
 
     with (
         patch(
-            "superset.views.datasource.utils.DatasourceDAO.get_datasource",
+            "axbi.views.datasource.utils.DatasourceDAO.get_datasource",
             return_value=mock_datasource,
         ),
-        patch(
-            "superset.views.datasource.utils.QueryContextFactory"
-        ) as mock_factory_class,
+        patch("axbi.views.datasource.utils.QueryContextFactory") as mock_factory_class,
     ):
         mock_factory = MagicMock()
         mock_factory_class.return_value = mock_factory
@@ -68,9 +66,9 @@ def test_get_samples_raises_security_exception_when_access_denied(
         # Return different mock contexts for samples vs count queries
         mock_factory.create.side_effect = [mock_samples_context, mock_count_context]
 
-        from superset.views.datasource.utils import get_samples
+        from axbi.views.datasource.utils import get_samples
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             get_samples(
                 datasource_type="table",
                 datasource_id=1,
@@ -80,13 +78,13 @@ def test_get_samples_raises_security_exception_when_access_denied(
             )
 
         assert exc_info.value.error.error_type == (
-            SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
+            AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
         )
         # Verify raise_for_access was called on the samples context
         mock_samples_context.raise_for_access.assert_called_once()
 
 
-@patch("superset.views.datasource.utils.get_limit_clause")
+@patch("axbi.views.datasource.utils.get_limit_clause")
 def test_get_samples_calls_raise_for_access_on_both_contexts(
     mock_get_limit_clause: MagicMock,
 ):
@@ -124,12 +122,10 @@ def test_get_samples_calls_raise_for_access_on_both_contexts(
 
     with (
         patch(
-            "superset.views.datasource.utils.DatasourceDAO.get_datasource",
+            "axbi.views.datasource.utils.DatasourceDAO.get_datasource",
             return_value=mock_datasource,
         ),
-        patch(
-            "superset.views.datasource.utils.QueryContextFactory"
-        ) as mock_factory_class,
+        patch("axbi.views.datasource.utils.QueryContextFactory") as mock_factory_class,
     ):
         mock_factory = MagicMock()
         mock_factory_class.return_value = mock_factory
@@ -137,7 +133,7 @@ def test_get_samples_calls_raise_for_access_on_both_contexts(
         # Return different mock contexts for samples vs count queries
         mock_factory.create.side_effect = [mock_samples_context, mock_count_context]
 
-        from superset.views.datasource.utils import get_samples
+        from axbi.views.datasource.utils import get_samples
 
         result = get_samples(
             datasource_type="table",
@@ -156,7 +152,7 @@ def test_get_samples_calls_raise_for_access_on_both_contexts(
         assert result["total_count"] == 100
 
 
-@patch("superset.views.datasource.utils.get_limit_clause")
+@patch("axbi.views.datasource.utils.get_limit_clause")
 def test_get_samples_count_star_access_denied(mock_get_limit_clause: MagicMock):
     """
     Test that get_samples() raises security exception when access to count_star
@@ -176,31 +172,29 @@ def test_get_samples_count_star_access_denied(mock_get_limit_clause: MagicMock):
     mock_samples_context.raise_for_access.return_value = None
 
     # Count context denies access
-    mock_count_context.raise_for_access.side_effect = SupersetSecurityException(
-        SupersetError(
+    mock_count_context.raise_for_access.side_effect = AxBISecurityException(
+        AxBIError(
             message="Access denied to count query",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.WARNING,
         )
     )
 
     with (
         patch(
-            "superset.views.datasource.utils.DatasourceDAO.get_datasource",
+            "axbi.views.datasource.utils.DatasourceDAO.get_datasource",
             return_value=mock_datasource,
         ),
-        patch(
-            "superset.views.datasource.utils.QueryContextFactory"
-        ) as mock_factory_class,
+        patch("axbi.views.datasource.utils.QueryContextFactory") as mock_factory_class,
     ):
         mock_factory = MagicMock()
         mock_factory_class.return_value = mock_factory
 
         mock_factory.create.side_effect = [mock_samples_context, mock_count_context]
 
-        from superset.views.datasource.utils import get_samples
+        from axbi.views.datasource.utils import get_samples
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             get_samples(
                 datasource_type="table",
                 datasource_id=1,
@@ -210,7 +204,7 @@ def test_get_samples_count_star_access_denied(mock_get_limit_clause: MagicMock):
             )
 
         assert exc_info.value.error.error_type == (
-            SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
+            AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
         )
         # Verify samples context was checked first
         mock_samples_context.raise_for_access.assert_called_once()
@@ -227,7 +221,7 @@ def test_get_samples_count_star_access_denied(mock_get_limit_clause: MagicMock):
         [{"not_count": 100}],
     ],
 )
-@patch("superset.views.datasource.utils.get_limit_clause")
+@patch("axbi.views.datasource.utils.get_limit_clause")
 def test_get_samples_raises_dataset_error_for_malformed_count_data(
     mock_get_limit_clause: MagicMock,
     count_data: object,
@@ -253,18 +247,16 @@ def test_get_samples_raises_dataset_error_for_malformed_count_data(
 
     with (
         patch(
-            "superset.views.datasource.utils.DatasourceDAO.get_datasource",
+            "axbi.views.datasource.utils.DatasourceDAO.get_datasource",
             return_value=mock_datasource,
         ),
-        patch(
-            "superset.views.datasource.utils.QueryContextFactory"
-        ) as mock_factory_class,
+        patch("axbi.views.datasource.utils.QueryContextFactory") as mock_factory_class,
     ):
         mock_factory = MagicMock()
         mock_factory_class.return_value = mock_factory
         mock_factory.create.side_effect = [mock_samples_context, mock_count_context]
 
-        from superset.views.datasource.utils import get_samples
+        from axbi.views.datasource.utils import get_samples
 
         with pytest.raises(DatasetSamplesFailedError):
             get_samples(

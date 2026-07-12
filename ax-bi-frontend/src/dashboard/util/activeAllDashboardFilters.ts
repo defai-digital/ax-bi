@@ -21,7 +21,7 @@ import {
   DataMaskWithId,
   JsonObject,
   PartialFilters,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { omit } from 'lodash';
 import { ActiveFilters, ChartConfiguration } from '../types';
 

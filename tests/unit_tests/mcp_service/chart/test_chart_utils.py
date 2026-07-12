@@ -22,8 +22,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.constants import NO_TIME_RANGE
-from superset.mcp_service.chart.chart_utils import (
+from axbi.constants import NO_TIME_RANGE
+from axbi.mcp_service.chart.chart_utils import (
     _add_adhoc_filters,
     _ensure_temporal_adhoc_filter,
     _humanize_column,
@@ -40,7 +40,7 @@ from superset.mcp_service.chart.chart_utils import (
     map_xy_config,
     validate_chart_dataset,
 )
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     AxisConfig,
     ColumnRef,
     FilterConfig,
@@ -49,7 +49,7 @@ from superset.mcp_service.chart.schemas import (
     TableChartConfig,
     XYChartConfig,
 )
-from superset.utils.core import FilterOperator, GenericDataType
+from axbi.utils.core import FilterOperator, GenericDataType
 
 
 class TestGetTableChartTypeLabel:
@@ -612,7 +612,7 @@ class TestMapXYConfig:
         assert result["color_scheme"] == "lyftColors"
 
     def test_map_xy_config_without_color_scheme(self) -> None:
-        """color_scheme key omitted when not set, leaving Superset default."""
+        """color_scheme key omitted when not set, leaving AxBI default."""
         config = XYChartConfig(
             chart_type="xy",
             x=ColumnRef(name="date"),
@@ -778,7 +778,7 @@ class TestMapXYConfig:
         assert result["stack"] == "Stack"
         assert result["groupby"] == ["level"]
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_map_xy_config_with_filters(self, mock_is_temporal) -> None:
         """Test that filters are mapped to adhoc_filters in XY form_data."""
         mock_is_temporal.return_value = True
@@ -801,7 +801,7 @@ class TestMapXYConfig:
         assert result["adhoc_filters"][1]["operator"] == "TEMPORAL_RANGE"
         assert result["adhoc_filters"][1]["subject"] == "date"
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_map_xy_config_row_limit(self, mock_is_temporal) -> None:
         """Test that row_limit is mapped to form_data."""
         mock_is_temporal.return_value = True
@@ -817,7 +817,7 @@ class TestMapXYConfig:
 
         assert result["row_limit"] == 250
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_map_xy_config_default_row_limit(self, mock_is_temporal) -> None:
         """Test that default row_limit is mapped to form_data."""
         mock_is_temporal.return_value = True
@@ -832,7 +832,7 @@ class TestMapXYConfig:
 
         assert result["row_limit"] == 10000
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_map_xy_config_series_limit(self, mock_is_temporal) -> None:
         """Test that series_limit is mapped to form_data when set."""
         mock_is_temporal.return_value = True
@@ -849,7 +849,7 @@ class TestMapXYConfig:
 
         assert result["series_limit"] == 10
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_map_xy_config_no_series_limit_by_default(self, mock_is_temporal) -> None:
         """Test that series_limit is omitted from form_data when not set."""
         mock_is_temporal.return_value = True
@@ -864,7 +864,7 @@ class TestMapXYConfig:
 
         assert "series_limit" not in result
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_map_xy_config_saved_metric(self, mock_is_temporal: Any) -> None:
         """Test XY config with saved metric emits string in metrics list"""
         mock_is_temporal.return_value = True
@@ -879,7 +879,7 @@ class TestMapXYConfig:
 
         assert result["metrics"] == ["total_revenue"]
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_map_xy_config_mixed_saved_and_adhoc_metrics(
         self, mock_is_temporal: Any
     ) -> None:
@@ -929,10 +929,10 @@ class TestMapConfigToFormData:
             map_config_to_form_data("invalid_config")  # type: ignore
 
     @patch(
-        "superset.mcp_service.chart.chart_utils.is_column_truly_temporal",
+        "axbi.mcp_service.chart.chart_utils.is_column_truly_temporal",
         return_value=True,
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_map_xy_config_x_none_defaults_to_main_dttm_col(
         self, mock_find_by_id: Any, mock_is_temporal: Any
     ) -> None:
@@ -965,7 +965,7 @@ class TestMapConfigToFormData:
         with pytest.raises(ValueError, match="x-axis column is required"):
             map_xy_config(config, dataset_id=None)
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_map_xy_config_x_none_no_main_dttm_col_raises(
         self, mock_find_by_id: Any
     ) -> None:
@@ -1135,34 +1135,34 @@ class TestGenerateChartName:
 class TestGenerateExploreLink:
     """Test generate_explore_link function"""
 
-    @patch("superset.mcp_service.chart.chart_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.chart.chart_utils.get_axbi_base_url")
     def test_generate_explore_link_uses_base_url(self, mock_get_base_url) -> None:
         """Test that generate_explore_link uses the configured base URL"""
         from urllib.parse import urlparse
 
-        mock_get_base_url.return_value = "https://superset.example.com"
+        mock_get_base_url.return_value = "https://ax-bi.example.com"
         form_data = {"viz_type": "table", "metrics": ["count"]}
 
         # Mock dataset not found to trigger fallback URL
-        with patch("superset.daos.dataset.DatasetDAO.find_by_id", return_value=None):
+        with patch("axbi.daos.dataset.DatasetDAO.find_by_id", return_value=None):
             result = generate_explore_link("123", form_data)
 
         # Should use the configured base URL - use urlparse to avoid CodeQL warning
         parsed_url = urlparse(result)
-        expected_netloc = "superset.example.com"
+        expected_netloc = "axbi.example.com"
         assert parsed_url.scheme == "https"
         assert parsed_url.netloc == expected_netloc
         assert "/explore/" in parsed_url.path
         assert "datasource_id=123" in result
 
-    @patch("superset.mcp_service.chart.chart_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.chart.chart_utils.get_axbi_base_url")
     def test_generate_explore_link_fallback_url(self, mock_get_base_url) -> None:
         """Test generate_explore_link returns fallback URL when dataset not found"""
         mock_get_base_url.return_value = "http://localhost:9001"
         form_data = {"viz_type": "table"}
 
         # Mock dataset not found scenario
-        with patch("superset.daos.dataset.DatasetDAO.find_by_id", return_value=None):
+        with patch("axbi.daos.dataset.DatasetDAO.find_by_id", return_value=None):
             result = generate_explore_link("999", form_data)
 
         assert (
@@ -1170,13 +1170,13 @@ class TestGenerateExploreLink:
             == "http://localhost:9001/explore/?datasource_type=table&datasource_id=999"
         )
 
-    @patch("superset.mcp_service.chart.chart_utils.get_superset_base_url")
-    @patch("superset.mcp_service.commands.create_form_data.MCPCreateFormDataCommand")
+    @patch("axbi.mcp_service.chart.chart_utils.get_axbi_base_url")
+    @patch("axbi.mcp_service.commands.create_form_data.MCPCreateFormDataCommand")
     def test_generate_explore_link_with_form_data_key(
         self, mock_command, mock_get_base_url
     ) -> None:
         """Test generate_explore_link creates form_data_key when dataset exists"""
-        from superset.explore.permalink.exceptions import (
+        from axbi.explore.permalink.exceptions import (
             ExplorePermalinkCreateFailedError,
         )
 
@@ -1187,11 +1187,9 @@ class TestGenerateExploreLink:
         # function falls back to the ephemeral form_data_key.
         mock_dataset = type("Dataset", (), {"id": 123})()
         with (
+            patch("axbi.daos.dataset.DatasetDAO.find_by_id", return_value=mock_dataset),
             patch(
-                "superset.daos.dataset.DatasetDAO.find_by_id", return_value=mock_dataset
-            ),
-            patch(
-                "superset.commands.explore.permalink.create."
+                "axbi.commands.explore.permalink.create."
                 "CreateExplorePermalinkCommand.run",
                 side_effect=ExplorePermalinkCreateFailedError("permalink unavailable"),
             ),
@@ -1203,8 +1201,8 @@ class TestGenerateExploreLink:
         )
         mock_command.assert_called_once()
 
-    @patch("superset.mcp_service.chart.chart_utils.get_superset_base_url")
-    @patch("superset.mcp_service.commands.create_form_data.MCPCreateFormDataCommand")
+    @patch("axbi.mcp_service.chart.chart_utils.get_axbi_base_url")
+    @patch("axbi.mcp_service.commands.create_form_data.MCPCreateFormDataCommand")
     def test_generate_explore_link_prefer_permalink_false(
         self, mock_command, mock_get_base_url
     ) -> None:
@@ -1215,11 +1213,9 @@ class TestGenerateExploreLink:
 
         mock_dataset = type("Dataset", (), {"id": 123})()
         with (
+            patch("axbi.daos.dataset.DatasetDAO.find_by_id", return_value=mock_dataset),
             patch(
-                "superset.daos.dataset.DatasetDAO.find_by_id", return_value=mock_dataset
-            ),
-            patch(
-                "superset.commands.explore.permalink.create."
+                "axbi.commands.explore.permalink.create."
                 "CreateExplorePermalinkCommand.run"
             ) as mock_permalink,
         ):
@@ -1233,7 +1229,7 @@ class TestGenerateExploreLink:
         mock_command.assert_called_once()
         mock_permalink.assert_not_called()
 
-    @patch("superset.mcp_service.chart.chart_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.chart.chart_utils.get_axbi_base_url")
     def test_generate_explore_link_exception_handling(self, mock_get_base_url) -> None:
         """Test generate_explore_link handles SQLAlchemy exceptions gracefully"""
         from sqlalchemy.exc import SQLAlchemyError
@@ -1242,7 +1238,7 @@ class TestGenerateExploreLink:
 
         # Mock SQLAlchemy exception during dataset lookup
         with patch(
-            "superset.daos.dataset.DatasetDAO.find_by_id",
+            "axbi.daos.dataset.DatasetDAO.find_by_id",
             side_effect=SQLAlchemyError("DB error"),
         ):
             result = generate_explore_link("123", {"viz_type": "table"})
@@ -1353,7 +1349,7 @@ class TestCriticalBugFixes:
         assert metrics[1]["column"]["column_name"] == "profit"
 
     def test_chart_type_mapping_comprehensive(self) -> None:
-        """Test that chart types are mapped correctly to Superset viz types."""
+        """Test that chart types are mapped correctly to AxBI viz types."""
         test_cases = [
             ("line", "echarts_timeseries_line"),
             ("bar", "echarts_timeseries_bar"),
@@ -1385,7 +1381,7 @@ class TestIsColumnTrulyTemporal:
         """Helper to create a mock dataset with proper db_engine_spec"""
         from unittest.mock import MagicMock
 
-        from superset.utils.core import ColumnSpec
+        from axbi.utils.core import ColumnSpec
 
         mock_column = MagicMock()
         mock_column.column_name = column_name
@@ -1411,14 +1407,14 @@ class TestIsColumnTrulyTemporal:
         result = is_column_truly_temporal("year", None)
         assert result is True
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_returns_true_when_dataset_not_found(self, mock_dao) -> None:
         """Test returns True when dataset is not found"""
         mock_dao.find_by_id.return_value = None
         result = is_column_truly_temporal("year", 123)
         assert result is True
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_returns_false_for_numeric_column(self, mock_dao) -> None:
         """Test returns False for NUMERIC generic type (e.g., BIGINT)"""
         mock_dataset = self._create_mock_dataset(
@@ -1429,7 +1425,7 @@ class TestIsColumnTrulyTemporal:
         result = is_column_truly_temporal("year", 123)
         assert result is False
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_returns_false_for_integer_column(self, mock_dao) -> None:
         """Test returns False for INTEGER column (NUMERIC generic type)"""
         mock_dataset = self._create_mock_dataset(
@@ -1440,7 +1436,7 @@ class TestIsColumnTrulyTemporal:
         result = is_column_truly_temporal("month", 123)
         assert result is False
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_returns_true_for_temporal_column(self, mock_dao) -> None:
         """Test returns True for TEMPORAL generic type (e.g., TIMESTAMP)"""
         mock_dataset = self._create_mock_dataset(
@@ -1451,7 +1447,7 @@ class TestIsColumnTrulyTemporal:
         result = is_column_truly_temporal("created_at", 123)
         assert result is True
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_returns_true_for_date_column(self, mock_dao) -> None:
         """Test returns True for DATE column (TEMPORAL generic type)"""
         mock_dataset = self._create_mock_dataset(
@@ -1462,7 +1458,7 @@ class TestIsColumnTrulyTemporal:
         result = is_column_truly_temporal("order_date", 123)
         assert result is True
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_case_insensitive_column_name_lookup(self, mock_dao) -> None:
         """Test column name lookup is case insensitive"""
         mock_dataset = self._create_mock_dataset(
@@ -1473,21 +1469,21 @@ class TestIsColumnTrulyTemporal:
         result = is_column_truly_temporal("year", 123)
         assert result is False
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_returns_true_on_value_error(self, mock_dao) -> None:
         """Test returns True (default) when ValueError occurs"""
         mock_dao.find_by_id.side_effect = ValueError("Invalid ID")
         result = is_column_truly_temporal("year", 123)
         assert result is True
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_returns_true_on_attribute_error(self, mock_dao) -> None:
         """Test returns True (default) when AttributeError occurs"""
         mock_dao.find_by_id.side_effect = AttributeError("Missing attribute")
         result = is_column_truly_temporal("year", 123)
         assert result is True
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_handles_uuid_dataset_id(self, mock_dao) -> None:
         """Test handles UUID string as dataset_id"""
         mock_dataset = self._create_mock_dataset(
@@ -1499,7 +1495,7 @@ class TestIsColumnTrulyTemporal:
         assert result is False
         mock_dao.find_by_id.assert_called_with("abc-123-uuid", id_column="uuid")
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_falls_back_to_is_dttm_when_no_column_spec(self, mock_dao) -> None:
         """Test falls back to is_dttm flag when get_column_spec returns None"""
         from unittest.mock import MagicMock
@@ -1523,7 +1519,7 @@ class TestIsColumnTrulyTemporal:
         result = is_column_truly_temporal("year", 123)
         assert result is False
 
-    @patch("superset.daos.dataset.DatasetDAO")
+    @patch("axbi.daos.dataset.DatasetDAO")
     def test_falls_back_to_is_dttm_when_no_type(self, mock_dao) -> None:
         """Test falls back to is_dttm flag when column has no type"""
         from unittest.mock import MagicMock
@@ -1581,7 +1577,7 @@ class TestConfigureTemporalHandling:
 class TestMapXYConfigWithNonTemporalColumn:
     """Test map_xy_config with non-temporal columns (DATE_TRUNC fix)"""
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_non_temporal_column_disables_time_grain(self, mock_is_temporal) -> None:
         """Test non-temporal column sets categorical config"""
         mock_is_temporal.return_value = False
@@ -1601,7 +1597,7 @@ class TestMapXYConfigWithNonTemporalColumn:
         assert result["time_grain_sqla"] is None
         assert result["granularity_sqla"] is None
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_temporal_column_allows_time_grain(self, mock_is_temporal) -> None:
         """Test temporal column allows time_grain to be set"""
         mock_is_temporal.return_value = True
@@ -1629,7 +1625,7 @@ class TestMapXYConfigWithNonTemporalColumn:
         assert len(temporal_filters) == 1
         assert temporal_filters[0]["subject"] == "created_at"
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_non_temporal_ignores_time_grain_param(self, mock_is_temporal) -> None:
         """Test non-temporal column ignores time_grain even if specified"""
         mock_is_temporal.return_value = False
@@ -1737,7 +1733,7 @@ class TestEnsureTemporalAdhocFilter:
         assert len(form_data["adhoc_filters"]) == 1
         assert form_data["adhoc_filters"][0]["subject"] == "order_date"
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_temporal_x_axis_adds_filter_in_map_xy(self, mock_is_temporal) -> None:
         """Test map_xy_config adds TEMPORAL_RANGE filter for temporal x-axis"""
         mock_is_temporal.return_value = True
@@ -1759,7 +1755,7 @@ class TestEnsureTemporalAdhocFilter:
         assert temporal_filters[0]["subject"] == "order_date"
         assert temporal_filters[0]["comparator"] == NO_TIME_RANGE
 
-    @patch("superset.mcp_service.chart.chart_utils.is_column_truly_temporal")
+    @patch("axbi.mcp_service.chart.chart_utils.is_column_truly_temporal")
     def test_non_temporal_x_axis_no_temporal_filter(self, mock_is_temporal) -> None:
         """Test non-temporal x-axis skips TEMPORAL_RANGE filter"""
         mock_is_temporal.return_value = False
@@ -1846,8 +1842,8 @@ class TestFilterConfigValidation:
 class TestValidateChartDataset:
     """Test validate_chart_dataset function"""
 
-    @patch("superset.mcp_service.auth.has_dataset_access")
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.mcp_service.auth.has_dataset_access")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_validate_chart_dataset_no_datasource_id(
         self, mock_find: MagicMock, mock_access: MagicMock
     ) -> None:
@@ -1859,8 +1855,8 @@ class TestValidateChartDataset:
         assert "no dataset reference" in (result.error or "").lower()
         mock_find.assert_not_called()
 
-    @patch("superset.mcp_service.auth.has_dataset_access")
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id", return_value=None)
+    @patch("axbi.mcp_service.auth.has_dataset_access")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id", return_value=None)
     def test_validate_chart_dataset_deleted_dataset(
         self, mock_find: MagicMock, mock_access: MagicMock
     ) -> None:
@@ -1872,8 +1868,8 @@ class TestValidateChartDataset:
         assert result.dataset_id == 42
         assert "deleted" in (result.error or "").lower()
 
-    @patch("superset.mcp_service.auth.has_dataset_access", return_value=True)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.mcp_service.auth.has_dataset_access", return_value=True)
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_validate_chart_dataset_valid(
         self, mock_find: MagicMock, mock_access: MagicMock
     ) -> None:
@@ -1890,8 +1886,8 @@ class TestValidateChartDataset:
         assert result.dataset_name == "my_table"
         assert result.warnings == []
 
-    @patch("superset.mcp_service.auth.has_dataset_access", return_value=True)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.mcp_service.auth.has_dataset_access", return_value=True)
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_validate_chart_dataset_virtual_warns(
         self, mock_find: MagicMock, mock_access: MagicMock
     ) -> None:
@@ -1907,8 +1903,8 @@ class TestValidateChartDataset:
         assert len(result.warnings) == 1
         assert "virtual" in result.warnings[0].lower()
 
-    @patch("superset.mcp_service.auth.has_dataset_access")
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.mcp_service.auth.has_dataset_access")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_validate_chart_dataset_sqlalchemy_error(
         self, mock_find: MagicMock, mock_access: MagicMock
     ) -> None:
@@ -1924,10 +1920,10 @@ class TestValidateChartDataset:
         assert "error" in (result.error or "").lower()
 
     @patch(
-        "superset.mcp_service.chart.chart_utils.get_superset_base_url",
+        "axbi.mcp_service.chart.chart_utils.get_axbi_base_url",
         return_value="http://localhost:8088",
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_generate_explore_link_sqlalchemy_error(
         self,
         mock_find: MagicMock,
@@ -2064,7 +2060,7 @@ class TestSqlExpressionMetrics:
         # _metric_display_label lives in chart.schemas; import locally so the
         # red test fails for the right reason (sql_expression rejected) rather
         # than a top-level ImportError.
-        from superset.mcp_service.chart.schemas import _metric_display_label
+        from axbi.mcp_service.chart.schemas import _metric_display_label
 
         assert _metric_display_label(self._sql_metric()) == "Win Rate"
 
@@ -2105,8 +2101,8 @@ class TestSqlExpressionAcrossChartMappers:
         self._assert_sql_adhoc(form_data["metrics"][0])
 
     def test_map_pie_config(self) -> None:
-        from superset.mcp_service.chart.chart_utils import map_pie_config
-        from superset.mcp_service.chart.schemas import PieChartConfig
+        from axbi.mcp_service.chart.chart_utils import map_pie_config
+        from axbi.mcp_service.chart.schemas import PieChartConfig
 
         config = PieChartConfig(
             chart_type="pie",
@@ -2117,8 +2113,8 @@ class TestSqlExpressionAcrossChartMappers:
         self._assert_sql_adhoc(form_data["metric"])
 
     def test_map_big_number_config(self) -> None:
-        from superset.mcp_service.chart.chart_utils import map_big_number_config
-        from superset.mcp_service.chart.schemas import BigNumberChartConfig
+        from axbi.mcp_service.chart.chart_utils import map_big_number_config
+        from axbi.mcp_service.chart.schemas import BigNumberChartConfig
 
         config = BigNumberChartConfig(
             chart_type="big_number",
@@ -2128,8 +2124,8 @@ class TestSqlExpressionAcrossChartMappers:
         self._assert_sql_adhoc(form_data["metric"])
 
     def test_map_pivot_table_config(self) -> None:
-        from superset.mcp_service.chart.chart_utils import map_pivot_table_config
-        from superset.mcp_service.chart.schemas import PivotTableChartConfig
+        from axbi.mcp_service.chart.chart_utils import map_pivot_table_config
+        from axbi.mcp_service.chart.schemas import PivotTableChartConfig
 
         config = PivotTableChartConfig(
             chart_type="pivot_table",
@@ -2141,10 +2137,10 @@ class TestSqlExpressionAcrossChartMappers:
         self._assert_sql_adhoc(form_data["metrics"][0])
 
     def test_map_mixed_timeseries_config(self) -> None:
-        from superset.mcp_service.chart.chart_utils import (
+        from axbi.mcp_service.chart.chart_utils import (
             map_mixed_timeseries_config,
         )
-        from superset.mcp_service.chart.schemas import MixedTimeseriesChartConfig
+        from axbi.mcp_service.chart.schemas import MixedTimeseriesChartConfig
 
         config = MixedTimeseriesChartConfig(
             chart_type="mixed_timeseries",
@@ -2162,7 +2158,7 @@ class TestDatasetValidatorSkipsSqlMetrics:
 
     @staticmethod
     def _ctx():
-        from superset.mcp_service.common.error_schemas import DatasetContext
+        from axbi.mcp_service.common.error_schemas import DatasetContext
 
         return DatasetContext(
             id=1,
@@ -2173,7 +2169,7 @@ class TestDatasetValidatorSkipsSqlMetrics:
         )
 
     def test_validate_columns_exist_skips_sql_metric(self) -> None:
-        from superset.mcp_service.chart.validation.dataset_validator import (
+        from axbi.mcp_service.chart.validation.dataset_validator import (
             DatasetValidator,
         )
 
@@ -2181,12 +2177,12 @@ class TestDatasetValidatorSkipsSqlMetrics:
         # Would crash on col_ref.name.lower() if sql_expression weren't skipped.
         assert DatasetValidator._validate_columns_exist(refs, self._ctx()) is None
 
-    def test_superset_core_accepts_our_sql_adhoc_dict(self) -> None:
+    def test_axbi_core_accepts_our_sql_adhoc_dict(self) -> None:
         """The dict shape ``create_metric_object`` produces must satisfy
-        Superset core's ``is_adhoc_metric`` / ``get_metric_name`` helpers,
+        AxBI core's ``is_adhoc_metric`` / ``get_metric_name`` helpers,
         which the query engine uses to resolve the metric. Exercises the
         cross-module contract without needing a real database."""
-        from superset.utils.core import get_metric_name, is_adhoc_metric
+        from axbi.utils.core import get_metric_name, is_adhoc_metric
 
         adhoc = create_metric_object(
             ColumnRef(sql_expression=_SQL_EXPR, label="Win Rate")
@@ -2201,7 +2197,7 @@ class TestDatasetValidatorSkipsSqlMetrics:
     def test_normalize_column_names_skips_sql_metric_dicts(self) -> None:
         """A SQL-metric ColumnRef dumps to {name: None, sql_expression: ...};
         _get_canonical_column_name(None, ...) would crash without the guard."""
-        from superset.mcp_service.chart.validation.dataset_validator import (
+        from axbi.mcp_service.chart.validation.dataset_validator import (
             DatasetValidator,
         )
 

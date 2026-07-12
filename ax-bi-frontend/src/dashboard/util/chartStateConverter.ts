@@ -21,7 +21,7 @@ import type {
   ChartStateConverter,
   BackendOwnState,
   JsonObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 /**
  * Registry of chart-specific state converters.

@@ -23,7 +23,7 @@ import type { HttpClient } from '../transport/httpClient.js';
 import { BaseResource } from './baseResource.js';
 import { ChartsResource } from './charts.js';
 import { DashboardsResource } from './dashboards.js';
-import type { SupersetListEnvelope } from './types.js';
+import type { AxBIListEnvelope } from './types.js';
 
 interface TestItem {
   id: number;
@@ -40,7 +40,7 @@ class TestResource extends BaseResource<
 }
 
 test('BaseResource reports zero total pages for empty list responses', async () => {
-  const envelope: SupersetListEnvelope<TestItem> = {
+  const envelope: AxBIListEnvelope<TestItem> = {
     count: 0,
     ids: [],
     result: [],

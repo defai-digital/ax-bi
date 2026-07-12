@@ -39,8 +39,8 @@ jest.mock('src/dashboard/util/permissionUtils', () => ({
 }));
 
 // Mock JsonEditor to avoid direct DOM manipulation in tests
-jest.mock('@superset-ui/core/components/AsyncAceEditor', () => ({
-  ...jest.requireActual('@superset-ui/core/components/AsyncAceEditor'),
+jest.mock('@ax-bi/ui-core/components/AsyncAceEditor', () => ({
+  ...jest.requireActual('@ax-bi/ui-core/components/AsyncAceEditor'),
   JsonEditor: ({
     onChange,
     value,

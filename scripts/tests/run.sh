@@ -50,7 +50,7 @@ function test_init() {
   echo --------------------
   ax-bi db upgrade
   echo --------------------
-  echo Superset init
+  echo AxBI init
   echo --------------------
   ax-bi init
   echo Load test users
@@ -62,13 +62,13 @@ function test_init() {
 # Init global vars
 #
 DB_NAME="test"
-DB_USER="superset"
-DB_PASSWORD="superset"
+DB_USER="axbi"
+DB_PASSWORD="axbi"
 
 # Pointing to use the test database in local `docker compose` setup
-export SUPERSET__SQLALCHEMY_DATABASE_URI=${SUPERSET__SQLALCHEMY_DATABASE_URI:-postgresql+psycopg2://"${DB_USER}":"${DB_PASSWORD}"@localhost/"${DB_NAME}"}
+export AXBI__SQLALCHEMY_DATABASE_URI=${AXBI__SQLALCHEMY_DATABASE_URI:-postgresql+psycopg2://"${DB_USER}":"${DB_PASSWORD}"@localhost/"${DB_NAME}"}
 
-export SUPERSET_CONFIG=${SUPERSET_CONFIG:-tests.integration_tests.superset_test_config}
+export AXBI_CONFIG=${AXBI_CONFIG:-tests.integration_tests.axbi_test_config}
 RUN_INIT=1
 RUN_RESET_DB=1
 RUN_TESTS=1
@@ -129,8 +129,8 @@ while (( "$#" )); do
 done
 
 echo ------------------------------------
-echo DB_URI="${SUPERSET__SQLALCHEMY_DATABASE_URI}"
-echo Superset config module="${SUPERSET_CONFIG}"
+echo DB_URI="${AXBI__SQLALCHEMY_DATABASE_URI}"
+echo AxBI config module="${AXBI_CONFIG}"
 echo Run init procedures=$RUN_INIT
 echo Run reset DB=$RUN_RESET_DB
 echo Test to run:"${TEST_MODULE}"

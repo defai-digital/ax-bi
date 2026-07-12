@@ -25,10 +25,10 @@ from unittest.mock import patch
 from flask import current_app
 from flask_appbuilder.security.sqla.models import User
 
-from superset import viz
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import Database
-from superset.utils.core import override_user
+from axbi import viz
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.core import Database
+from axbi.utils.core import override_user
 
 QUERY_OBJ: dict[str, Any] = {"row_limit": 100, "from_dttm": None, "to_dttm": None}
 
@@ -114,7 +114,7 @@ def test_cache_timeout_without_database_falls_back_to_default(app_context):
         assert obj.cache_timeout == 300
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
 def test_cache_query_by_user_flag_yields_distinct_keys(feature_flag_mock):
     """
     Global ``CACHE_QUERY_BY_USER`` flag also reaches the legacy viz path.

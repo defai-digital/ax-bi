@@ -20,12 +20,12 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.semantic_layer.delete import DeleteSemanticLayerCommand
-from superset.commands.semantic_layer.exceptions import (
+from axbi.commands.semantic_layer.delete import DeleteSemanticLayerCommand
+from axbi.commands.semantic_layer.exceptions import (
     SemanticLayerForbiddenError,
     SemanticLayerNotFoundError,
 )
-from superset.exceptions import SupersetSecurityException
+from axbi.exceptions import AxBISecurityException
 
 
 def test_delete_semantic_layer_success(mocker: MockerFixture) -> None:
@@ -33,11 +33,11 @@ def test_delete_semantic_layer_success(mocker: MockerFixture) -> None:
     mock_model = MagicMock()
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.delete.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     raise_for_ownership = mocker.patch(
-        "superset.commands.semantic_layer.delete.security_manager.raise_for_ownership"
+        "axbi.commands.semantic_layer.delete.security_manager.raise_for_ownership"
     )
 
     DeleteSemanticLayerCommand("some-uuid").run()
@@ -50,7 +50,7 @@ def test_delete_semantic_layer_success(mocker: MockerFixture) -> None:
 def test_delete_semantic_layer_not_found(mocker: MockerFixture) -> None:
     """Test that SemanticLayerNotFoundError is raised when model is missing."""
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.delete.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = None
 
@@ -63,12 +63,12 @@ def test_delete_semantic_layer_forbidden(mocker: MockerFixture) -> None:
     mock_model = MagicMock()
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.delete.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     raise_for_ownership = mocker.patch(
-        "superset.commands.semantic_layer.delete.security_manager.raise_for_ownership",
-        side_effect=SupersetSecurityException(MagicMock()),
+        "axbi.commands.semantic_layer.delete.security_manager.raise_for_ownership",
+        side_effect=AxBISecurityException(MagicMock()),
     )
 
     with pytest.raises(SemanticLayerForbiddenError):
@@ -83,16 +83,16 @@ def test_delete_semantic_view_success(mocker: MockerFixture) -> None:
     mock_model = MagicMock()
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticViewDAO",
+        "axbi.commands.semantic_layer.delete.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
 
     # Admin is owner of everything — no exception raised
     mocker.patch(
-        "superset.commands.semantic_layer.delete.security_manager"
+        "axbi.commands.semantic_layer.delete.security_manager"
     ).raise_for_ownership.return_value = None
 
-    from superset.commands.semantic_layer.delete import DeleteSemanticViewCommand
+    from axbi.commands.semantic_layer.delete import DeleteSemanticViewCommand
 
     DeleteSemanticViewCommand(42).run()
 
@@ -102,18 +102,18 @@ def test_delete_semantic_view_success(mocker: MockerFixture) -> None:
 
 def test_delete_semantic_view_forbidden(mocker: MockerFixture) -> None:
     """Test that SemanticViewForbiddenError is raised for non-owners."""
-    from superset.commands.semantic_layer.delete import DeleteSemanticViewCommand
-    from superset.commands.semantic_layer.exceptions import SemanticViewForbiddenError
-    from superset.exceptions import SupersetSecurityException
+    from axbi.commands.semantic_layer.delete import DeleteSemanticViewCommand
+    from axbi.commands.semantic_layer.exceptions import SemanticViewForbiddenError
+    from axbi.exceptions import AxBISecurityException
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticViewDAO",
+        "axbi.commands.semantic_layer.delete.SemanticViewDAO",
     )
     dao.find_by_id.return_value = MagicMock()
 
     mocker.patch(
-        "superset.security_manager.raise_for_ownership",
-        side_effect=SupersetSecurityException(MagicMock()),
+        "axbi.security_manager.raise_for_ownership",
+        side_effect=AxBISecurityException(MagicMock()),
     )
 
     with pytest.raises(SemanticViewForbiddenError):
@@ -123,12 +123,12 @@ def test_delete_semantic_view_forbidden(mocker: MockerFixture) -> None:
 def test_delete_semantic_view_not_found(mocker: MockerFixture) -> None:
     """Test that SemanticViewNotFoundError is raised when view is missing."""
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticViewDAO",
+        "axbi.commands.semantic_layer.delete.SemanticViewDAO",
     )
     dao.find_by_id.return_value = None
 
-    from superset.commands.semantic_layer.delete import DeleteSemanticViewCommand
-    from superset.commands.semantic_layer.exceptions import (
+    from axbi.commands.semantic_layer.delete import DeleteSemanticViewCommand
+    from axbi.commands.semantic_layer.exceptions import (
         SemanticViewNotFoundError,
     )
 
@@ -141,15 +141,15 @@ def test_bulk_delete_semantic_view_success(mocker: MockerFixture) -> None:
     mock_models = [MagicMock(), MagicMock()]
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticViewDAO",
+        "axbi.commands.semantic_layer.delete.SemanticViewDAO",
     )
     dao.find_by_ids.return_value = mock_models
 
     mocker.patch(
-        "superset.commands.semantic_layer.delete.security_manager"
+        "axbi.commands.semantic_layer.delete.security_manager"
     ).raise_for_ownership.return_value = None
 
-    from superset.commands.semantic_layer.delete import BulkDeleteSemanticViewCommand
+    from axbi.commands.semantic_layer.delete import BulkDeleteSemanticViewCommand
 
     BulkDeleteSemanticViewCommand([1, 2]).run()
 
@@ -159,18 +159,18 @@ def test_bulk_delete_semantic_view_success(mocker: MockerFixture) -> None:
 
 def test_bulk_delete_semantic_view_forbidden(mocker: MockerFixture) -> None:
     """Test that SemanticViewForbiddenError is raised for non-owners."""
-    from superset.commands.semantic_layer.delete import BulkDeleteSemanticViewCommand
-    from superset.commands.semantic_layer.exceptions import SemanticViewForbiddenError
-    from superset.exceptions import SupersetSecurityException
+    from axbi.commands.semantic_layer.delete import BulkDeleteSemanticViewCommand
+    from axbi.commands.semantic_layer.exceptions import SemanticViewForbiddenError
+    from axbi.exceptions import AxBISecurityException
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticViewDAO",
+        "axbi.commands.semantic_layer.delete.SemanticViewDAO",
     )
     dao.find_by_ids.return_value = [MagicMock(), MagicMock()]
 
     mocker.patch(
-        "superset.security_manager.raise_for_ownership",
-        side_effect=SupersetSecurityException(MagicMock()),
+        "axbi.security_manager.raise_for_ownership",
+        side_effect=AxBISecurityException(MagicMock()),
     )
 
     with pytest.raises(SemanticViewForbiddenError):
@@ -180,13 +180,13 @@ def test_bulk_delete_semantic_view_forbidden(mocker: MockerFixture) -> None:
 def test_bulk_delete_semantic_view_not_found(mocker: MockerFixture) -> None:
     """Test that SemanticViewNotFoundError is raised when any id is missing."""
     dao = mocker.patch(
-        "superset.commands.semantic_layer.delete.SemanticViewDAO",
+        "axbi.commands.semantic_layer.delete.SemanticViewDAO",
     )
     # Only one model returned for two requested ids
     dao.find_by_ids.return_value = [MagicMock()]
 
-    from superset.commands.semantic_layer.delete import BulkDeleteSemanticViewCommand
-    from superset.commands.semantic_layer.exceptions import SemanticViewNotFoundError
+    from axbi.commands.semantic_layer.delete import BulkDeleteSemanticViewCommand
+    from axbi.commands.semantic_layer.exceptions import SemanticViewNotFoundError
 
     with pytest.raises(SemanticViewNotFoundError):
         BulkDeleteSemanticViewCommand([1, 2]).run()

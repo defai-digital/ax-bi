@@ -1,21 +1,21 @@
 {
-  "name": "@superset-ui/plugin-chart-ag-grid-table",
+  "name": "@ax-bi/plugin-chart-ag-grid-table",
   "version": "0.20.3",
-  "description": "Superset Chart - Table",
+  "description": "AxBI Chart - Table",
   "keywords": [
-    "superset"
+    "axbi"
   ],
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/plugin-chart-ag-grid-table#readme",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/plugin-chart-ag-grid-table"
   },
   "license": "Apache-2.0",
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "sideEffects": false,
   "main": "lib/index.js",
   "module": "esm/index.js",
@@ -36,9 +36,9 @@
   },
   "peerDependencies": {
     "@ant-design/icons": "^5.6.1",
-    "@apache-superset/core": "*",
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
     "@testing-library/dom": "^9.3.4",
     "@testing-library/jest-dom": "*",
     "@testing-library/react": "^14.0.0",

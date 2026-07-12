@@ -17,7 +17,7 @@
 
 from unittest.mock import MagicMock, patch
 
-from superset.mcp_service.chart.chart_helpers import (
+from axbi.mcp_service.chart.chart_helpers import (
     _deck_gl_null_filters,
     _is_metric_ref,
     _resolve_deck_gl_metrics,
@@ -62,7 +62,7 @@ def test_extract_form_data_key_from_url_multiple_params():
     assert extract_form_data_key_from_url(url) == "xyz789"
 
 
-@patch("superset.daos.chart.ChartDAO.find_by_id")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 def test_find_chart_by_identifier_int(mock_find):
     mock_chart = MagicMock()
     mock_chart.id = 42
@@ -73,7 +73,7 @@ def test_find_chart_by_identifier_int(mock_find):
     assert result == mock_chart
 
 
-@patch("superset.daos.chart.ChartDAO.find_by_id")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 def test_find_chart_by_identifier_str_digit(mock_find):
     mock_chart = MagicMock()
     mock_find.return_value = mock_chart
@@ -83,7 +83,7 @@ def test_find_chart_by_identifier_str_digit(mock_find):
     assert result == mock_chart
 
 
-@patch("superset.daos.chart.ChartDAO.find_by_id")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 def test_find_chart_by_identifier_uuid(mock_find):
     mock_chart = MagicMock()
     mock_find.return_value = mock_chart
@@ -94,7 +94,7 @@ def test_find_chart_by_identifier_uuid(mock_find):
     assert result == mock_chart
 
 
-@patch("superset.daos.chart.ChartDAO.find_by_id")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 def test_find_chart_by_identifier_not_found(mock_find):
     mock_find.return_value = None
     result = find_chart_by_identifier(999)
@@ -102,10 +102,10 @@ def test_find_chart_by_identifier_not_found(mock_find):
 
 
 @patch(
-    "superset.commands.explore.form_data.get.GetFormDataCommand.run",
+    "axbi.commands.explore.form_data.get.GetFormDataCommand.run",
     return_value='{"viz_type": "table"}',
 )
-@patch("superset.commands.explore.form_data.get.GetFormDataCommand.__init__")
+@patch("axbi.commands.explore.form_data.get.GetFormDataCommand.__init__")
 def test_get_cached_form_data_success(mock_init, mock_run):
     mock_init.return_value = None
     result = get_cached_form_data("test_key")
@@ -113,10 +113,10 @@ def test_get_cached_form_data_success(mock_init, mock_run):
 
 
 @patch(
-    "superset.commands.explore.form_data.get.GetFormDataCommand.run",
+    "axbi.commands.explore.form_data.get.GetFormDataCommand.run",
     side_effect=KeyError("not found"),
 )
-@patch("superset.commands.explore.form_data.get.GetFormDataCommand.__init__")
+@patch("axbi.commands.explore.form_data.get.GetFormDataCommand.__init__")
 def test_get_cached_form_data_key_error(mock_init, mock_run):
     mock_init.return_value = None
     result = get_cached_form_data("bad_key")
@@ -127,7 +127,7 @@ def test_prepare_form_data_for_query_preserves_existing_filters_with_adhoc(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -157,7 +157,7 @@ def test_prepare_form_data_for_query_ignores_malformed_legacy_filters(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -203,7 +203,7 @@ def test_prepare_form_data_for_query_merges_cached_and_request_extra_form_data(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -251,7 +251,7 @@ def test_prepare_form_data_for_query_merges_cached_and_request_extra_form_data(
 
 def test_build_query_dicts_from_form_data_uses_raw_all_columns(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -329,7 +329,7 @@ def test_merge_extra_form_data_filters_into_query_adds_only_extra_predicates(
     monkeypatch,
 ):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     query = {
@@ -454,7 +454,7 @@ def test_resolve_deck_gl_columns_ignores_non_string_js_columns():
 
 def test_build_query_dicts_deck_scatter_latlong(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -472,7 +472,7 @@ def test_build_query_dicts_deck_scatter_latlong(monkeypatch):
 
 def test_build_query_dicts_deck_scatter_with_size_metric(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     metric = {
@@ -496,7 +496,7 @@ def test_build_query_dicts_deck_scatter_with_size_metric(monkeypatch):
 
 def test_build_query_dicts_deck_arc(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -519,7 +519,7 @@ def test_build_query_dicts_deck_arc(monkeypatch):
 
 def test_build_query_dicts_deck_geojson(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -537,7 +537,7 @@ def test_build_query_dicts_deck_geojson(monkeypatch):
 
 def test_build_query_dicts_deck_hex_geohash(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -554,7 +554,7 @@ def test_build_query_dicts_deck_hex_geohash(monkeypatch):
 
 def test_build_query_dicts_deck_path_with_row_limit(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -776,7 +776,7 @@ def test_deck_gl_null_filters_geojson_column():
 
 def test_build_query_dicts_deck_scatter_adds_null_filters_by_default(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -793,7 +793,7 @@ def test_build_query_dicts_deck_scatter_adds_null_filters_by_default(monkeypatch
 
 def test_build_query_dicts_deck_scatter_filter_nulls_false(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -813,7 +813,7 @@ def test_build_query_dicts_deck_scatter_filter_nulls_false(monkeypatch):
 
 def test_build_query_dicts_deck_scatter_point_radius_fixed_metric(monkeypatch):
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     radius_metric = {
@@ -837,7 +837,7 @@ def test_build_query_dicts_deck_geojson_scalar_size_produces_no_metrics(monkeypa
     # Regression: deck_geojson fixture has size='100' (scalar, not a metric).
     # The fallback must produce metrics=[] to match DeckGeoJson.query_obj().
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -855,7 +855,7 @@ def test_build_query_dicts_deck_geojson_scalar_size_produces_no_metrics(monkeypa
 def test_build_query_dicts_deck_path_scalar_size_produces_no_metrics(monkeypatch):
     # deck_path fixture also has size='100' — scalar must not become a metric.
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -873,7 +873,7 @@ def test_build_query_dicts_deck_path_scalar_size_produces_no_metrics(monkeypatch
 def test_build_query_dicts_deck_geojson_adds_geojson_null_filter(monkeypatch):
     # deck_geojson should add IS NOT NULL on the geojson column when filter_nulls
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -892,7 +892,7 @@ def test_build_query_dicts_deck_geojson_adds_geojson_null_filter(monkeypatch):
 def test_build_query_dicts_deck_hex_string_metric(monkeypatch):
     # Non-numeric string size (saved metric key) must be included as a metric
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -910,7 +910,7 @@ def test_build_query_dicts_deck_hex_string_metric(monkeypatch):
 def test_build_query_dicts_deck_scatter_string_point_radius_fixed(monkeypatch):
     # Legacy deck_scatter with point_radius_fixed as a bare metric key string
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -928,7 +928,7 @@ def test_build_query_dicts_deck_scatter_string_point_radius_fixed(monkeypatch):
 def test_build_query_dicts_deck_hex_orderby_when_metrics_present(monkeypatch):
     # Mirrors BaseDeckGLViz.query_obj(): orderby set from first metric (desc by default)
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     metric = {"expressionType": "SIMPLE", "aggregate": "COUNT", "column": None}
@@ -947,7 +947,7 @@ def test_build_query_dicts_deck_hex_orderby_when_metrics_present(monkeypatch):
 def test_build_query_dicts_deck_scatter_no_orderby_without_metrics(monkeypatch):
     # No metrics → no orderby (pure spatial column query)
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -964,7 +964,7 @@ def test_build_query_dicts_deck_scatter_no_orderby_without_metrics(monkeypatch):
 def test_build_query_dicts_deck_arc_time_grain(monkeypatch):
     # deck_arc with time_grain_sqla → is_timeseries, granularity, extras set
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {
@@ -990,7 +990,7 @@ def test_build_query_dicts_deck_arc_time_grain(monkeypatch):
 def test_build_query_dicts_deck_geojson_ignores_time_grain(monkeypatch):
     # deck_geojson is not in _DECK_TIMESERIES_VIZ_TYPES; time grain fields not added
     monkeypatch.setattr(
-        "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+        "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
         lambda datasource_id, datasource_type: "base",
     )
     form_data = {

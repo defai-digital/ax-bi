@@ -18,7 +18,7 @@
  */
 import { useRef, FC } from 'react';
 
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 
 import ItemTitleContainer from './ItemTitleContainer';
 import { FilterRemoval } from './types';

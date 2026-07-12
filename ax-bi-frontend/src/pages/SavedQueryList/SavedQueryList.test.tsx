@@ -263,16 +263,16 @@ describe('SavedQueryList', () => {
   });
 
   test('"+ Query" button pushes a router-relative path (subdirectory deployment)', async () => {
-    // Simulate SUPERSET_APP_ROOT=/superset. ensureAppRoot/makeUrl read
+    // Simulate AXBI_APP_ROOT=/ax-bi. ensureAppRoot/makeUrl read
     // applicationRoot() dynamically, so mocking it here makes the buggy code
-    // path (makeUrl() around history.push) produce '/superset/sqllab?new=true'
+    // path (makeUrl() around history.push) produce '/ax-bi/sqllab?new=true'
     // instead of being a no-op. React Router's <Router basename> prefixes the
     // app root on its own, so history.push MUST receive a path without the
-    // app-root prefix — otherwise navigation lands at /superset/superset/sqllab
+    // app-root prefix — otherwise navigation lands at /ax-bi/ax-bi/sqllab
     // and shows a blank page (sc-103661).
     const applicationRootSpy = jest
       .spyOn(getBootstrapData, 'applicationRoot')
-      .mockReturnValue('/superset');
+      .mockReturnValue('/ax-bi');
 
     try {
       renderList();
@@ -288,7 +288,7 @@ describe('SavedQueryList', () => {
         // The MemoryRouter in renderList uses the default ('/') basename, so
         // useLocation reflects exactly what history.push received. A correct
         // router-relative push produces '/sqllab?new=true'; a buggy push that
-        // re-applied the app root would produce '/superset/sqllab?new=true'.
+        // re-applied the app root would produce '/ax-bi/sqllab?new=true'.
         const location = screen.getByTestId('location-display').textContent;
         expect(location).toBe('/sqllab?new=true');
       });

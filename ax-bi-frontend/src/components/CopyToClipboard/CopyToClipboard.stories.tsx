@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import ToastContainer from 'src/components/MessageToasts/ToastContainer';
-import { Button } from '@superset-ui/core/components';
+import { Button } from '@ax-bi/ui-core/components';
 import { CopyToClipboard } from '.';
 
 export default {
@@ -43,7 +43,7 @@ export const InteractiveCopyToClipboard = ({ copyNode, ...rest }: any) => {
 
 InteractiveCopyToClipboard.args = {
   shouldShowText: true,
-  text: 'http://superset.apache.org/',
+  text: 'https://axbi.example.test/',
   wrapped: true,
   tooltipText: 'Copy to clipboard',
   hideTooltip: false,

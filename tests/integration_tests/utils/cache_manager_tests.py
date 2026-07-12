@@ -16,12 +16,12 @@
 # under the License.
 import pytest  # noqa: F401
 
-from superset.extensions import cache_manager
-from superset.utils.core import backend, DatasourceType  # noqa: F401
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.extensions import cache_manager
+from axbi.utils.core import backend, DatasourceType  # noqa: F401
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class UtilsCacheManagerTests(SupersetTestCase):
+class UtilsCacheManagerTests(AxBITestCase):
     def test_get_set_explore_form_data_cache(self):
         key = "12345"
         data = {"foo": "bar", "datasource_type": "query"}

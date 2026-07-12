@@ -18,13 +18,8 @@
  */
 import { useCallback, ReactNode, ReactElement, cloneElement } from 'react';
 
-import { css, SupersetTheme, useTheme } from '@apache-superset/core/theme';
-import {
-  Icons,
-  Tooltip,
-  FormItem,
-  FormLabel,
-} from '@superset-ui/core/components';
+import { css, AxBITheme, useTheme } from '@ax-bi/core/theme';
+import { Icons, Tooltip, FormItem, FormLabel } from '@ax-bi/ui-core/components';
 
 export interface FieldProps<V> {
   fieldKey: string;
@@ -116,7 +111,7 @@ export default function Field<V>({
       </FormItem>
       {errorMessage && (
         <div
-          css={(theme: SupersetTheme) => ({
+          css={(theme: AxBITheme) => ({
             color: theme.colorText,
             [inline ? 'marginLeft' : 'marginTop']: theme.marginXXS,
           })}

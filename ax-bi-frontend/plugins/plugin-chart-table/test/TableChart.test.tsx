@@ -20,26 +20,26 @@ import '@testing-library/jest-dom';
 import {
   getTextColorForBackground,
   ObjectFormattingEnum,
-} from '@superset-ui/chart-controls';
-import { supersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/chart-controls';
+import { axbiTheme } from '@ax-bi/core/theme';
 import {
   render,
   screen,
   fireEvent,
   waitFor,
   within,
-} from '@superset-ui/core/spec';
+} from '@ax-bi/ui-core/spec';
 import { cloneDeep } from 'lodash';
 import {
   QueryMode,
   TimeGranularity,
   SMART_DATE_ID,
   getTimeFormatterForGranularity,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { CellProps, Column, HeaderProps } from 'react-table';
 import DataTable from '../src/DataTable/DataTable';
 import TableChart, { sanitizeHeaderId } from '../src/TableChart';
-import { GenericDataType } from '@apache-superset/core/common';
+import { GenericDataType } from '@ax-bi/core/common';
 import transformProps from '../src/transformProps';
 import DateWithFormatter from '../src/utils/DateWithFormatter';
 import testData from './testData';
@@ -448,7 +448,7 @@ describe('plugin-chart-table', () => {
         expect(cells[0]).toHaveTextContent('2020-01-01T12:34:56');
         expect(cells[1]).toHaveTextContent('Michael');
         // number is not in `metrics` list, so it should output raw value
-        // (in real world Superset, this would mean the column is used in GROUP BY)
+        // (in real world AxBI, this would mean the column is used in GROUP BY)
         expect(cells[2]).toHaveTextContent('2467063');
         // should not render column with `.` in name as `undefined`
         expect(cells[3]).toHaveTextContent('foo');
@@ -1583,11 +1583,11 @@ describe('plugin-chart-table', () => {
         ).find(candidate => {
           const baseColor = getTextColorForBackground(
             { backgroundColor: candidate },
-            supersetTheme.colorBgBase,
+            axbiTheme.colorBgBase,
           );
           const layoutColor = getTextColorForBackground(
             { backgroundColor: candidate },
-            supersetTheme.colorBgLayout,
+            axbiTheme.colorBgLayout,
           );
           return baseColor !== layoutColor;
         });
@@ -1621,14 +1621,11 @@ describe('plugin-chart-table', () => {
         expect(getComputedStyle(screen.getByTitle('2467063')).color).toBe(
           getTextColorForBackground(
             { backgroundColor },
-            supersetTheme.colorBgLayout,
+            axbiTheme.colorBgLayout,
           ),
         );
         expect(getComputedStyle(screen.getByTitle('2467')).color).toBe(
-          getTextColorForBackground(
-            { backgroundColor },
-            supersetTheme.colorBgBase,
-          ),
+          getTextColorForBackground({ backgroundColor }, axbiTheme.colorBgBase),
         );
       });
 

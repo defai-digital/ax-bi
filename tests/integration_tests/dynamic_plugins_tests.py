@@ -14,12 +14,12 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 
-class TestDynamicPlugins(SupersetTestCase):
+class TestDynamicPlugins(AxBITestCase):
     @with_feature_flags(DYNAMIC_PLUGINS=False)
     def test_dynamic_plugins_disabled(self):
         """

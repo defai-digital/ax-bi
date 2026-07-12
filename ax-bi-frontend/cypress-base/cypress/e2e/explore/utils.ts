@@ -76,5 +76,5 @@ export function saveChartToDashboard(chartName: string, dashboardName: string) {
 
 export function visitSampleChartFromList(chartName: string) {
   cy.getBySel('table-row').contains(chartName).click();
-  cy.intercept('POST', '**/superset/explore_json/**').as('getJson');
+  cy.intercept('POST', '**/ax-bi/explore_json/**').as('getJson');
 }

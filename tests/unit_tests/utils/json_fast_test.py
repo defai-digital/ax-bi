@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for superset.utils.json_fast (orjson-based fast serializer)."""
+"""Tests for axbi.utils.json_fast (orjson-based fast serializer)."""
 
 import time
 import uuid
@@ -23,8 +23,8 @@ from decimal import Decimal
 
 import numpy as np
 
-from superset.utils import json as sjson
-from superset.utils.json_fast import dumps_fast, dumps_fast_bytes
+from axbi.utils import json as sjson
+from axbi.utils.json_fast import dumps_fast, dumps_fast_bytes
 
 
 class TestDumpsFastPrimitives:

@@ -22,12 +22,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import g
 
-from superset.mcp_service.auth import (
+from axbi.mcp_service.auth import (
     _resolve_user_from_jwt_context,
     get_user_from_request,
     mcp_auth_hook,
 )
-from superset.mcp_service.mcp_config import default_user_resolver
+from axbi.mcp_service.mcp_config import default_user_resolver
 
 
 def _make_mock_user(username: str = "testuser") -> MagicMock:
@@ -68,7 +68,7 @@ def test_jwt_context_resolves_correct_user(app) -> None:
         with (
             patch("fastmcp.server.dependencies.get_access_token", return_value=token),
             patch(
-                "superset.mcp_service.auth.load_user_with_relationships",
+                "axbi.mcp_service.auth.load_user_with_relationships",
                 return_value=mock_user,
             ),
         ):
@@ -95,11 +95,11 @@ def test_jwt_context_raises_for_unknown_user(app) -> None:
         with (
             patch("fastmcp.server.dependencies.get_access_token", return_value=token),
             patch(
-                "superset.mcp_service.auth.load_user_with_relationships",
+                "axbi.mcp_service.auth.load_user_with_relationships",
                 return_value=None,
             ),
         ):
-            with pytest.raises(ValueError, match="not found in Superset database"):
+            with pytest.raises(ValueError, match="not found in AxBI database"):
                 _resolve_user_from_jwt_context(app)
 
 
@@ -127,7 +127,7 @@ def test_jwt_context_uses_custom_resolver(app) -> None:
                     "fastmcp.server.dependencies.get_access_token", return_value=token
                 ),
                 patch(
-                    "superset.mcp_service.auth.load_user_with_relationships",
+                    "axbi.mcp_service.auth.load_user_with_relationships",
                     return_value=mock_user,
                 ),
             ):
@@ -154,7 +154,7 @@ def test_jwt_context_email_fallback_lookup(app) -> None:
         with (
             patch("fastmcp.server.dependencies.get_access_token", return_value=token),
             patch(
-                "superset.mcp_service.auth.load_user_with_relationships",
+                "axbi.mcp_service.auth.load_user_with_relationships",
                 side_effect=_load_side_effect,
             ),
         ):
@@ -178,7 +178,7 @@ def test_jwt_takes_priority_over_stale_g_user(app) -> None:
         with (
             patch("fastmcp.server.dependencies.get_access_token", return_value=token),
             patch(
-                "superset.mcp_service.auth.load_user_with_relationships",
+                "axbi.mcp_service.auth.load_user_with_relationships",
                 return_value=jwt_user,
             ),
         ):
@@ -199,7 +199,7 @@ def test_dev_username_fallback_when_no_jwt(app) -> None:
                     "fastmcp.server.dependencies.get_access_token", return_value=None
                 ),
                 patch(
-                    "superset.mcp_service.auth.load_user_with_relationships",
+                    "axbi.mcp_service.auth.load_user_with_relationships",
                     return_value=mock_user,
                 ),
             ):
@@ -271,7 +271,7 @@ def test_dev_username_not_found_raises(app) -> None:
                     "fastmcp.server.dependencies.get_access_token", return_value=None
                 ),
                 patch(
-                    "superset.mcp_service.auth.load_user_with_relationships",
+                    "axbi.mcp_service.auth.load_user_with_relationships",
                     return_value=None,
                 ),
             ):
@@ -313,9 +313,9 @@ def test_mcp_auth_hook_clears_stale_g_user(app) -> None:
         # framework's autouse app_context fixture may implicitly provide
         # a request context in some CI environments.
         with (
-            patch("superset.mcp_service.auth.has_request_context", return_value=False),
+            patch("axbi.mcp_service.auth.has_request_context", return_value=False),
             patch(
-                "superset.mcp_service.auth.get_user_from_request",
+                "axbi.mcp_service.auth.get_user_from_request",
                 side_effect=lambda: _assert_cleared_then_return(),
             ),
         ):
@@ -352,9 +352,9 @@ def test_mcp_auth_hook_clears_stale_g_user_async(app) -> None:
     with app.app_context():
         g.user = stale_user
         with (
-            patch("superset.mcp_service.auth.has_request_context", return_value=False),
+            patch("axbi.mcp_service.auth.has_request_context", return_value=False),
             patch(
-                "superset.mcp_service.auth.get_user_from_request",
+                "axbi.mcp_service.auth.get_user_from_request",
                 side_effect=lambda: _assert_cleared_then_return(),
             ),
         ):
@@ -392,7 +392,7 @@ def test_mcp_auth_hook_preserves_g_user_in_request_context(app) -> None:
     with app.test_request_context():
         g.user = middleware_user
         with patch(
-            "superset.mcp_service.auth.get_user_from_request",
+            "axbi.mcp_service.auth.get_user_from_request",
             side_effect=lambda: _assert_preserved_then_return(),
         ):
             result = wrapped()
@@ -421,7 +421,7 @@ def test_mcp_auth_hook_removes_stale_db_session_in_sync_wrapper(app) -> None:
 
     with app.test_request_context():
         g.user = fresh_user
-        with patch("superset.extensions.db") as mock_db:
+        with patch("axbi.extensions.db") as mock_db:
 
             def _assert_remove_already_called() -> MagicMock:
                 """Verify remove() was called before user resolution runs."""
@@ -429,7 +429,7 @@ def test_mcp_auth_hook_removes_stale_db_session_in_sync_wrapper(app) -> None:
                 return fresh_user
 
             with patch(
-                "superset.mcp_service.auth.get_user_from_request",
+                "axbi.mcp_service.auth.get_user_from_request",
                 side_effect=_assert_remove_already_called,
             ):
                 result = wrapped()
@@ -460,7 +460,7 @@ def test_sync_wrapper_handles_ssl_error_on_pre_call_remove(app) -> None:
 
     with app.test_request_context():
         g.user = fresh_user
-        with patch("superset.extensions.db") as mock_db:
+        with patch("axbi.extensions.db") as mock_db:
             mock_db.session.remove.side_effect = [
                 SAOperationalError(
                     "SSL connection has been closed unexpectedly", None, None
@@ -469,7 +469,7 @@ def test_sync_wrapper_handles_ssl_error_on_pre_call_remove(app) -> None:
             ]
 
             with patch(
-                "superset.mcp_service.auth.get_user_from_request",
+                "axbi.mcp_service.auth.get_user_from_request",
                 return_value=fresh_user,
             ):
                 result = wrapped()
@@ -549,14 +549,14 @@ def test_setup_user_context_propagates_valueerror(app) -> None:
     the no-request-context guard), validating that the ValueError still
     propagates even when middleware has set g.user.
     """
-    from superset.mcp_service.auth import _setup_user_context
+    from axbi.mcp_service.auth import _setup_user_context
 
     fallback_user = _make_mock_user("middleware_user")
 
     with app.test_request_context():
         g.user = fallback_user
         with patch(
-            "superset.mcp_service.auth.get_user_from_request",
+            "axbi.mcp_service.auth.get_user_from_request",
             side_effect=ValueError("User 'ghost' not found"),
         ):
             with pytest.raises(ValueError, match="User 'ghost' not found"):
@@ -571,7 +571,7 @@ def test_setup_user_context_rejects_disabled_user(app) -> None:
     The MCP auth path does not go through Flask-Login's is_active check, so
     this guards that a disabled user (active=False) cannot authenticate.
     """
-    from superset.mcp_service.auth import _setup_user_context
+    from axbi.mcp_service.auth import _setup_user_context
 
     disabled_user = _make_mock_user("disabled_user")
     disabled_user.is_active = False
@@ -579,7 +579,7 @@ def test_setup_user_context_rejects_disabled_user(app) -> None:
 
     with app.test_request_context():
         with patch(
-            "superset.mcp_service.auth.get_user_from_request",
+            "axbi.mcp_service.auth.get_user_from_request",
             return_value=disabled_user,
         ):
             with pytest.raises(ValueError, match="disabled"):
@@ -589,7 +589,7 @@ def test_setup_user_context_rejects_disabled_user(app) -> None:
 
 def test_setup_user_context_allows_active_user(app) -> None:
     """An active account authenticates normally."""
-    from superset.mcp_service.auth import _setup_user_context
+    from axbi.mcp_service.auth import _setup_user_context
 
     active_user = _make_mock_user("active_user")
     active_user.is_active = True
@@ -597,7 +597,7 @@ def test_setup_user_context_allows_active_user(app) -> None:
 
     with app.test_request_context():
         with patch(
-            "superset.mcp_service.auth.get_user_from_request",
+            "axbi.mcp_service.auth.get_user_from_request",
             return_value=active_user,
         ):
             result = _setup_user_context()
@@ -625,7 +625,7 @@ def test_multi_issuer_warns_without_custom_resolver(app, caplog) -> None:
                     "fastmcp.server.dependencies.get_access_token", return_value=token
                 ),
                 patch(
-                    "superset.mcp_service.auth.load_user_with_relationships",
+                    "axbi.mcp_service.auth.load_user_with_relationships",
                     return_value=mock_user,
                 ),
             ):
@@ -654,7 +654,7 @@ def test_single_issuer_does_not_warn(app, caplog) -> None:
                     "fastmcp.server.dependencies.get_access_token", return_value=token
                 ),
                 patch(
-                    "superset.mcp_service.auth.load_user_with_relationships",
+                    "axbi.mcp_service.auth.load_user_with_relationships",
                     return_value=mock_user,
                 ),
             ):
@@ -684,7 +684,7 @@ def test_multi_issuer_no_warn_with_custom_resolver(app, caplog) -> None:
                     "fastmcp.server.dependencies.get_access_token", return_value=token
                 ),
                 patch(
-                    "superset.mcp_service.auth.load_user_with_relationships",
+                    "axbi.mcp_service.auth.load_user_with_relationships",
                     return_value=mock_user,
                 ),
             ):

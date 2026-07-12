@@ -27,8 +27,8 @@ import {
   RefObject,
 } from 'react';
 
-import { withTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { withTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 
 import type {
   ListViewFilterValue as FilterValue,
@@ -37,7 +37,7 @@ import type {
   SelectOption,
 } from '../types';
 import type { FilterHandler } from './types';
-import { NO_TIME_RANGE } from '@superset-ui/core';
+import { NO_TIME_RANGE } from '@ax-bi/ui-core';
 import SearchFilter from './Search';
 import NumericalRangeFilter from './NumericalRange';
 import TimeRangeFilter from './TimeRange';

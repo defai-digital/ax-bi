@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
-import { screen, userEvent, within, waitFor } from '@superset-ui/core/spec';
+import { screen, userEvent, within, waitFor } from '@ax-bi/ui-core/spec';
 import { ActionCreators as UndoActionCreators } from 'redux-undo';
 import fetchMock from 'fetch-mock';
-import { getExtensionsRegistry, JsonObject } from '@superset-ui/core';
+import { getExtensionsRegistry, JsonObject } from '@ax-bi/ui-core';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
 import getOwnerName from 'src/utils/getOwnerName';
 import { render, createStore } from 'spec/helpers/testing-library';

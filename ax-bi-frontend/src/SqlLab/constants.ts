@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import type { LabelType } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import type { LabelType } from '@ax-bi/ui-core/components';
 
 export const STATE_TYPE_MAP: Record<string, LabelType> = {
   offline: 'error',

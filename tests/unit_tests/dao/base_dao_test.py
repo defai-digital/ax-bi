@@ -22,13 +22,13 @@ Unit tests for BaseDAO functionality using mocks and no database operations.
 from unittest.mock import Mock, patch
 
 import pytest
+from axbi_core.common.models import CoreModel
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.declarative import declarative_base
-from superset_core.common.models import CoreModel
 
-from superset.daos.base import BaseDAO, ColumnOperatorEnum
-from superset.daos.exceptions import DAOFindFailedError
+from axbi.daos.base import BaseDAO, ColumnOperatorEnum
+from axbi.daos.exceptions import DAOFindFailedError
 
 
 class MockModel(CoreModel):
@@ -160,8 +160,8 @@ def test_find_by_ids_sqlalchemy_error_with_model_cls():
     when model_cls is set"""
 
     with (
-        patch("superset.daos.base.db") as mock_db,
-        patch("superset.daos.base.getattr") as mock_getattr,
+        patch("axbi.daos.base.db") as mock_db,
+        patch("axbi.daos.base.getattr") as mock_getattr,
     ):
         mock_session = Mock()
         mock_db.session = mock_session
@@ -186,8 +186,8 @@ def test_find_by_ids_sqlalchemy_error_with_none_model_cls():
     """Test SQLAlchemyError in find_by_ids shows 'Unknown' when model_cls is None"""
 
     with (
-        patch("superset.daos.base.db") as mock_db,
-        patch("superset.daos.base.getattr") as mock_getattr,
+        patch("axbi.daos.base.db") as mock_db,
+        patch("axbi.daos.base.getattr") as mock_getattr,
     ):
         mock_session = Mock()
         mock_db.session = mock_session
@@ -214,8 +214,8 @@ def test_find_by_ids_successful_execution():
     """Test that find_by_ids works normally when no SQLAlchemyError occurs"""
 
     with (
-        patch("superset.daos.base.db") as mock_db,
-        patch("superset.daos.base.getattr") as mock_getattr,
+        patch("axbi.daos.base.db") as mock_db,
+        patch("axbi.daos.base.getattr") as mock_getattr,
     ):
         mock_session = Mock()
         mock_db.session = mock_session
@@ -241,7 +241,7 @@ def test_find_by_ids_successful_execution():
 def test_find_by_ids_empty_list():
     """Test that find_by_ids returns empty list when model_ids is empty"""
 
-    with patch("superset.daos.base.getattr") as mock_getattr:
+    with patch("axbi.daos.base.getattr") as mock_getattr:
         mock_getattr.return_value = None
 
         results = TestDAO.find_by_ids([])
@@ -252,7 +252,7 @@ def test_find_by_ids_empty_list():
 def test_find_by_ids_none_id_column():
     """Test that find_by_ids returns empty list when id column doesn't exist"""
 
-    with patch("superset.daos.base.getattr") as mock_getattr:
+    with patch("axbi.daos.base.getattr") as mock_getattr:
         mock_getattr.return_value = None
 
         results = TestDAO.find_by_ids([1, 2, 3])
@@ -279,7 +279,7 @@ def _list_with_page_size(page_size: int) -> Mock:
     mock_data_model.session.query.return_value = mock_query
 
     with (
-        patch("superset.daos.base.SQLAInterface", return_value=mock_data_model),
+        patch("axbi.daos.base.SQLAInterface", return_value=mock_data_model),
         patch.object(TestDAO, "_apply_base_filter", side_effect=lambda q, **_: q),
     ):
         TestDAO.list(page=0, page_size=page_size)

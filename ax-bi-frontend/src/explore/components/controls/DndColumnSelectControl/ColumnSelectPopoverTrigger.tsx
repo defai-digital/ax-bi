@@ -19,14 +19,14 @@
 import { useCallback, useEffect, useMemo, useState, ReactNode } from 'react';
 import { useSelector } from 'react-redux';
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   AdhocColumn,
   isAdhocColumn,
   Metric,
   QueryFormMetric,
-} from '@superset-ui/core';
-import { ColumnMeta, isColumnMeta } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { ColumnMeta, isColumnMeta } from '@ax-bi/chart-controls';
 import { ExplorePopoverContent } from 'src/explore/components/ExploreContentPopover';
 import { SaveDatasetModal } from 'src/SqlLab/components/SaveDatasetModal';
 import ColumnSelectPopover from './ColumnSelectPopover';

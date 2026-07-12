@@ -25,16 +25,16 @@ from sqlalchemy import types  # noqa: F401
 from sqlalchemy.exc import NoSuchTableError
 from sqlalchemy.sql import select
 
-from superset.db_engine_specs.presto import PrestoEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.sql.parse import Table
-from superset.utils.database import get_example_database
+from axbi.db_engine_specs.presto import PrestoEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.sql.parse import Table
+from axbi.utils.database import get_example_database
 from tests.common.assert_utils import assert_called_once_with_text
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestPrestoDbEngineSpec(SupersetTestCase):
-    @skipUnless(SupersetTestCase.is_module_installed("pyhive"), "pyhive not installed")
+class TestPrestoDbEngineSpec(AxBITestCase):
+    @skipUnless(AxBITestCase.is_module_installed("pyhive"), "pyhive not installed")
     def test_get_datatype_presto(self):
         assert "STRING" == PrestoEngineSpec.get_datatype("string")
 
@@ -100,7 +100,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         self.verify_presto_column(presto_column, expected_results)
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -110,7 +110,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         self.verify_presto_column(presto_column, expected_results)
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -120,7 +120,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         self.verify_presto_column(presto_column, expected_results)
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -133,7 +133,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         self.verify_presto_column(presto_column, expected_results)
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -143,7 +143,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         self.verify_presto_column(presto_column, expected_results)
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -162,7 +162,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         self.verify_presto_column(presto_column, expected_results)
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -201,7 +201,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
             assert actual_result.name == expected_result["label"]
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -270,7 +270,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         assert actual_expanded_cols == expected_expanded_cols
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -353,7 +353,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         assert actual_expanded_cols == expected_expanded_cols
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -437,7 +437,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         assert actual_expanded_cols == expected_expanded_cols
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -587,9 +587,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         # Simulate that the table is not found
         database.get_df.side_effect = NoSuchTableError("Table not found")
 
-        from superset.db_engine_specs.exceptions import SupersetDBAPIProgrammingError
+        from axbi.db_engine_specs.exceptions import AxBIDBAPIProgrammingError
 
-        with pytest.raises(SupersetDBAPIProgrammingError):
+        with pytest.raises(AxBIDBAPIProgrammingError):
             PrestoEngineSpec.get_extra_table_metadata(
                 database, Table("test_table", "test_schema")
             )
@@ -674,7 +674,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         assert formatted_cost == expected
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"PRESTO_EXPAND_DATA": True},
         clear=True,
     )
@@ -782,8 +782,8 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         assert actual_data == expected_data
         assert actual_expanded_cols == expected_expanded_cols
 
-    @mock.patch("superset.db_engine_specs.base.BaseEngineSpec.get_table_names")
-    @mock.patch("superset.db_engine_specs.presto.PrestoEngineSpec.get_view_names")
+    @mock.patch("axbi.db_engine_specs.base.BaseEngineSpec.get_table_names")
+    @mock.patch("axbi.db_engine_specs.presto.PrestoEngineSpec.get_view_names")
     def test_get_table_names(
         self,
         mock_get_view_names,
@@ -872,7 +872,7 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         column_name = '"moc"k"'
         assert PrestoEngineSpec._is_column_name_quoted(column_name) is True
 
-    @mock.patch("superset.db_engine_specs.base.BaseEngineSpec.select_star")
+    @mock.patch("axbi.db_engine_specs.base.BaseEngineSpec.select_star")
     def test_select_star_no_presto_expand_data(self, mock_select_star):
         database = mock.Mock()
         table_name = "table_name"
@@ -893,8 +893,8 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
             cols,
         )
 
-    @mock.patch("superset.db_engine_specs.presto.is_feature_enabled")
-    @mock.patch("superset.db_engine_specs.base.BaseEngineSpec.select_star")
+    @mock.patch("axbi.db_engine_specs.presto.is_feature_enabled")
+    @mock.patch("axbi.db_engine_specs.base.BaseEngineSpec.select_star")
     def test_select_star_presto_expand_data(
         self, mock_select_star, mock_is_feature_enabled
     ):
@@ -1015,9 +1015,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         msg = "Generic Error"
         result = PrestoEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message="Generic Error",
-                error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1034,9 +1034,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         msg = "line 1:8: Column 'bogus' cannot be resolved"
         result = PrestoEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='We can\'t seem to resolve the column "bogus" at line 1:8.',
-                error_type=SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1057,9 +1057,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         msg = "line 1:15: Table 'tpch.tiny.region2' does not exist"
         result = PrestoEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message="The table \"'tpch.tiny.region2'\" does not exist. A valid table must be used to run this query.",  # noqa: E501
-                error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1080,9 +1080,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         msg = "line 1:15: Schema 'tin' does not exist"
         result = PrestoEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='The schema "tin" does not exist. A valid schema must be used to run this query.',  # noqa: E501
-                error_type=SupersetErrorType.SCHEMA_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.SCHEMA_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1103,9 +1103,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         msg = b"Access Denied: Invalid credentials"
         result = PrestoEngineSpec.extract_errors(Exception(msg), {"username": "alice"})
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Either the username "alice" or the password is incorrect.',
-                error_type=SupersetErrorType.CONNECTION_ACCESS_DENIED_ERROR,
+                error_type=AxBIErrorType.CONNECTION_ACCESS_DENIED_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1124,9 +1124,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
             Exception(msg), {"hostname": "badhost"}
         )
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='The hostname "badhost" cannot be resolved.',
-                error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+                error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1145,9 +1145,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
             Exception(msg), {"hostname": "badhost", "port": 12345}
         )
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='The host "badhost" might be down, and can\'t be reached on port 12345.',  # noqa: E501
-                error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+                error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1166,9 +1166,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
             Exception(msg), {"hostname": "badhost", "port": 12345}
         )
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Port 12345 on hostname "badhost" refused the connection.',
-                error_type=SupersetErrorType.CONNECTION_PORT_CLOSED_ERROR,
+                error_type=AxBIErrorType.CONNECTION_PORT_CLOSED_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",
@@ -1182,9 +1182,9 @@ class TestPrestoDbEngineSpec(SupersetTestCase):
         msg = "line 1:15: Catalog 'wrong' does not exist"
         result = PrestoEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Unable to connect to catalog named "wrong".',
-                error_type=SupersetErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
+                error_type=AxBIErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Presto",

@@ -18,9 +18,9 @@
  */
 import { ReactNode } from 'react';
 import { ClassNames } from '@emotion/react';
-import { t } from '@apache-superset/core/translation';
-import { styled, useTheme } from '@apache-superset/core/theme';
-import { Flex, Tooltip } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled, useTheme } from '@ax-bi/core/theme';
+import { Flex, Tooltip } from '@ax-bi/ui-core/components';
 
 const StyledTooltip = (props: any) => {
   const theme = useTheme();

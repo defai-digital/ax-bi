@@ -18,10 +18,10 @@ from unittest.mock import call, patch
 
 from flask_appbuilder.security.sqla.models import User
 
-from superset.common.query_object import QueryObject
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import Database
-from superset.utils.core import override_user
+from axbi.common.query_object import QueryObject
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.core import Database
+from axbi.utils.core import override_user
 
 
 def cache_impersonation_flag_side_effect(feature=None):
@@ -95,7 +95,7 @@ def test_cache_key_changes_for_new_query_object_same_params():
     assert query_object2.cache_key() == cache_key1
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
 def test_cache_key_cache_query_by_user_on_no_datasource(feature_flag_mock):
     """
     When CACHE_QUERY_BY_USER flag is on and there is no datasource,
@@ -112,8 +112,8 @@ def test_cache_key_cache_query_by_user_on_no_datasource(feature_flag_mock):
     assert query_object.cache_key() == cache_key
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
-@patch("superset.common.query_object.logger")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
+@patch("axbi.common.query_object.logger")
 def test_cache_key_cache_query_by_user_on_no_user(logger_mock, feature_flag_mock):
     """
     When CACHE_QUERY_BY_USER flag is on and there is no user,
@@ -140,8 +140,8 @@ def test_cache_key_cache_query_by_user_on_no_user(logger_mock, feature_flag_mock
     logger_mock.debug.assert_called()
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
-@patch("superset.utils.cache_keys.logger")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.logger")
 def test_cache_key_cache_query_by_user_on_with_user(logger_mock, feature_flag_mock):
     """
     When the same user is requesting a cache key with CACHE_QUERY_BY_USER
@@ -173,8 +173,8 @@ def test_cache_key_cache_query_by_user_on_with_user(logger_mock, feature_flag_mo
     )
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
-@patch("superset.utils.cache_keys.logger")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.logger")
 def test_cache_key_cache_query_by_user_on_with_different_user(
     logger_mock, feature_flag_mock
 ):
@@ -213,8 +213,8 @@ def test_cache_key_cache_query_by_user_on_with_different_user(
     )
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
-@patch("superset.common.query_object.logger")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
+@patch("axbi.common.query_object.logger")
 def test_cache_key_cache_impersonation_on_no_user(logger_mock, feature_flag_mock):
     """
     When CACHE_IMPERSONATION flag is on and there is no user,
@@ -241,8 +241,8 @@ def test_cache_key_cache_impersonation_on_no_user(logger_mock, feature_flag_mock
     logger_mock.debug.assert_called()
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
-@patch("superset.common.query_object.logger")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
+@patch("axbi.common.query_object.logger")
 def test_cache_key_cache_impersonation_on_with_user(logger_mock, feature_flag_mock):
     """
     When the same user is requesting a cache key with CACHE_IMPERSONATION
@@ -280,8 +280,8 @@ def test_cache_key_cache_impersonation_on_with_user(logger_mock, feature_flag_mo
     assert len(impersonation_calls) == 0
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
-@patch("superset.common.query_object.logger")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
+@patch("axbi.common.query_object.logger")
 def test_cache_key_cache_impersonation_on_with_different_user(
     logger_mock, feature_flag_mock
 ):
@@ -325,8 +325,8 @@ def test_cache_key_cache_impersonation_on_with_different_user(
     assert len(impersonation_calls) == 0
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
-@patch("superset.utils.cache_keys.logger")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.logger")
 def test_cache_key_cache_impersonation_on_with_different_user_and_db_impersonation(
     logger_mock,
     feature_flag_mock,

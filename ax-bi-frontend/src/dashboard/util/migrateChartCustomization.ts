@@ -21,7 +21,7 @@ import {
   ChartCustomizationType,
   LegacyChartCustomizationItem,
   LegacyChartCustomizationDataset,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { ChartCustomizationPlugins } from 'src/constants';
 import { DASHBOARD_ROOT_ID } from './constants';
 

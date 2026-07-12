@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { AsyncSelect } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { AsyncSelect } from '@ax-bi/ui-core/components';
 import { type TagType } from 'src/components';
 import { loadTags } from 'src/components/Tag/utils';
 import getOwnerName from 'src/utils/getOwnerName';

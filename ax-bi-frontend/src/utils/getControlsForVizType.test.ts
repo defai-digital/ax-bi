@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { getChartControlPanelRegistry, JsonObject } from '@superset-ui/core';
+import { getChartControlPanelRegistry, JsonObject } from '@ax-bi/ui-core';
 import getControlsForVizType from 'src/utils/getControlsForVizType';
 
 const fakePluginControls: JsonObject = {

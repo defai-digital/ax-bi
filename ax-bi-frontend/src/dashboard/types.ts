@@ -28,9 +28,9 @@ import {
   NativeFiltersState,
   NativeFilterTarget,
   ColumnOption,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { Dataset } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { Dataset } from '@ax-bi/chart-controls';
 import { chart } from 'src/components/Chart/chartReducer';
 import componentTypes from 'src/dashboard/util/componentTypes';
 import Database from 'src/types/Database';
@@ -187,8 +187,7 @@ export type DashboardInfo = {
     map_label_colors: JsonObject;
     cross_filters_enabled: boolean;
     chart_customization_config?: (
-      | ChartCustomization
-      | ChartCustomizationDivider
+      ChartCustomization | ChartCustomizationDivider
     )[];
     timed_refresh_immune_slices?: number[];
     refresh_frequency?: number;

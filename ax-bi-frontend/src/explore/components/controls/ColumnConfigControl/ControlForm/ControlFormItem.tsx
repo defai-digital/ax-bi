@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useState, FunctionComponentElement, ChangeEvent } from 'react';
-import { JsonValue } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+import { JsonValue } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import { ControlFormItemComponents } from './controls';
 import ControlHeader, { ControlHeaderProps } from '../../../ControlHeader';
 import { ControlFormItemDefaultSpec } from '../types';

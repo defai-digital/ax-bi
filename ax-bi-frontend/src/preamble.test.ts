@@ -29,19 +29,19 @@ const mockApplicationRoot = jest.fn(() => '/');
 const mockMakeUrl = jest.fn((url: string) => url);
 const mockDayjsLocale = jest.fn();
 
-jest.mock('@apache-superset/core/translation', () => ({
+jest.mock('@ax-bi/core/translation', () => ({
   configure: mockConfigure,
 }));
-jest.mock('@apache-superset/core/utils', () => ({
+jest.mock('@ax-bi/core/utils', () => ({
   logging: {
     warn: jest.fn(),
   },
 }));
-jest.mock('@superset-ui/core', () => ({
+jest.mock('@ax-bi/ui-core', () => ({
   initFeatureFlags: mockInitFeatureFlags,
   makeApi: mockMakeApi,
 }));
-jest.mock('@superset-ui/core/utils/dates', () => ({
+jest.mock('@ax-bi/ui-core/utils/dates', () => ({
   extendedDayjs: {
     locale: mockDayjsLocale,
   },

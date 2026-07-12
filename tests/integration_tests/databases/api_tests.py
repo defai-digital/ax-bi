@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import dataclasses
 from copy import deepcopy
@@ -34,24 +34,24 @@ from sqlalchemy.engine.url import make_url  # noqa: F401
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.sql import func
 
-from superset import db, security_manager
-from superset.commands.database.exceptions import MissingOAuth2TokenError
-from superset.connectors.sqla.models import SqlaTable
-from superset.databases.ssh_tunnel.models import SSHTunnel
-from superset.databases.utils import make_url_safe  # noqa: F401
-from superset.db_engine_specs.mysql import MySQLEngineSpec
-from superset.db_engine_specs.postgres import PostgresEngineSpec
-from superset.db_engine_specs.redshift import RedshiftEngineSpec
-from superset.db_engine_specs.bigquery import BigQueryEngineSpec
-from superset.db_engine_specs.gsheets import GSheetsEngineSpec
-from superset.db_engine_specs.hana import HanaEngineSpec
-from superset.errors import SupersetError
-from superset.models.core import Database, ConfigurationMethod
-from superset.reports.models import ReportSchedule, ReportScheduleType
-from superset.utils.database import get_example_database, get_main_database
-from superset.utils import json
+from axbi import db, security_manager
+from axbi.commands.database.exceptions import MissingOAuth2TokenError
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.databases.ssh_tunnel.models import SSHTunnel
+from axbi.databases.utils import make_url_safe  # noqa: F401
+from axbi.db_engine_specs.mysql import MySQLEngineSpec
+from axbi.db_engine_specs.postgres import PostgresEngineSpec
+from axbi.db_engine_specs.redshift import RedshiftEngineSpec
+from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
+from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
+from axbi.db_engine_specs.hana import HanaEngineSpec
+from axbi.errors import AxBIError
+from axbi.models.core import Database, ConfigurationMethod
+from axbi.reports.models import ReportSchedule, ReportScheduleType
+from axbi.utils.database import get_example_database, get_main_database
+from axbi.utils import json
 from tests.conftest import with_config
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_USERNAME
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -98,7 +98,7 @@ PRESTO_SQL_VALIDATORS_BY_ENGINE = {
 }
 
 
-class TestDatabaseApi(SupersetTestCase):
+class TestDatabaseApi(AxBITestCase):
     def insert_database(
         self,
         database_name: str,
@@ -294,10 +294,10 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_create_database_with_ssh_tunnel(
         self,
         mock_get_all_schema_names,
@@ -340,10 +340,10 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_create_database_with_ssh_tunnel_no_port(
         self,
         mock_get_all_schema_names,
@@ -389,8 +389,8 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.commit()
 
     @with_feature_flags(SSH_TUNNELING=True)
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_create_database_with_ssh_tunnel_no_port_no_default(
         self,
         mock_get_all_schema_names,
@@ -426,13 +426,13 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.sync_permissions.SyncPermissionsCommand.run",
+        "axbi.commands.database.sync_permissions.SyncPermissionsCommand.run",
     )
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_update_database_with_ssh_tunnel(
         self,
         mock_get_all_schema_names,
@@ -486,13 +486,13 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.sync_permissions.SyncPermissionsCommand.run",
+        "axbi.commands.database.sync_permissions.SyncPermissionsCommand.run",
     )
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_update_database_with_ssh_tunnel_no_port(
         self,
         mock_get_all_schema_names,
@@ -549,10 +549,10 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_update_database_no_port_no_default(
         self,
         mock_get_all_schema_names,
@@ -608,13 +608,13 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.sync_permissions.SyncPermissionsCommand.run",
+        "axbi.commands.database.sync_permissions.SyncPermissionsCommand.run",
     )
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_delete_ssh_tunnel(
         self,
         mock_get_all_schema_names,
@@ -688,13 +688,13 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.sync_permissions.SyncPermissionsCommand.run",
+        "axbi.commands.database.sync_permissions.SyncPermissionsCommand.run",
     )
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_update_ssh_tunnel_via_database_api(
         self,
         mock_get_all_schema_names,
@@ -765,10 +765,10 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_cascade_delete_ssh_tunnel(
         self,
         mock_get_all_schema_names,
@@ -817,11 +817,11 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
-    @mock.patch("superset.extensions.db.session.rollback")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.extensions.db.session.rollback")
     def test_do_not_create_database_if_ssh_tunnel_creation_fails(
         self,
         mock_get_all_schema_names,
@@ -886,10 +886,10 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_feature_flags(SSH_TUNNELING=True)
     @mock.patch(
-        "superset.commands.database.test_connection.TestConnectionDatabaseCommand.run",
+        "axbi.commands.database.test_connection.TestConnectionDatabaseCommand.run",
     )
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_get_database_returns_related_ssh_tunnel(
         self,
         mock_get_all_schema_names,
@@ -938,8 +938,8 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.commit()
 
     @with_feature_flags(SSH_TUNNELING=False)
-    @mock.patch("superset.models.core.Database.get_all_catalog_names")
-    @mock.patch("superset.models.core.Database.get_all_schema_names")
+    @mock.patch("axbi.models.core.Database.get_all_catalog_names")
+    @mock.patch("axbi.models.core.Database.get_all_schema_names")
     def test_if_ssh_tunneling_flag_is_not_active_it_raises_new_exception(
         self,
         mock_get_all_schema_names,
@@ -1264,8 +1264,8 @@ class TestDatabaseApi(SupersetTestCase):
         self.login(ADMIN_USERNAME)
         response = self.client.post(uri, json=database_data)
         response_data = json.loads(response.data.decode("utf-8"))
-        superset_error_mysql = SupersetError(
-            message='Either the username "superset" or the password is incorrect.',
+        axbi_error_mysql = AxBIError(
+            message='Either the username "axbi" or the password is incorrect.',
             error_type="CONNECTION_ACCESS_DENIED_ERROR",
             level="error",
             extra={
@@ -1287,8 +1287,8 @@ class TestDatabaseApi(SupersetTestCase):
                 ],
             },
         )
-        superset_error_postgres = SupersetError(
-            message='The password provided for username "superset" is incorrect.',
+        axbi_error_postgres = AxBIError(
+            message='The password provided for username "axbi" is incorrect.',
             error_type="CONNECTION_INVALID_PASSWORD_ERROR",
             level="error",
             extra={
@@ -1304,9 +1304,9 @@ class TestDatabaseApi(SupersetTestCase):
                 ],
             },
         )
-        expected_response_mysql = {"errors": [dataclasses.asdict(superset_error_mysql)]}
+        expected_response_mysql = {"errors": [dataclasses.asdict(axbi_error_mysql)]}
         expected_response_postgres = {
-            "errors": [dataclasses.asdict(superset_error_postgres)]
+            "errors": [dataclasses.asdict(axbi_error_postgres)]
         }
         assert response.status_code == 400
         if example_db.backend == "mysql":
@@ -1366,7 +1366,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.commit()
 
     @mock.patch(
-        "superset.commands.database.sync_permissions.SyncPermissionsCommand.run",
+        "axbi.commands.database.sync_permissions.SyncPermissionsCommand.run",
     )
     def test_update_database_missing_oauth2_token(self, mock_sync_perms):
         """
@@ -2179,14 +2179,14 @@ class TestDatabaseApi(SupersetTestCase):
             ]
             # Check that the count is reasonable (at least the expected core tables)
             # but allow for additional tables from other tests
-            assert response["count"] >= 40  # Core superset tables
+            assert response["count"] >= 40  # Core axbi tables
             assert response["count"] <= len(schemas) + 10  # Allow some variance
             for option in response["result"]:
                 assert option["extra"] is None
                 assert option["type"] == "table"
                 assert option["value"] in schemas
 
-    @patch("superset.utils.log.logger")
+    @patch("axbi.utils.log.logger")
     def test_database_tables_not_found(self, logger_mock):
         """
         Database API: Test database tables not found
@@ -2211,9 +2211,9 @@ class TestDatabaseApi(SupersetTestCase):
         )
         assert rv.status_code == 400
 
-    @mock.patch("superset.utils.log.logger")
-    @mock.patch("superset.security.manager.SupersetSecurityManager.can_access_database")
-    @mock.patch("superset.models.core.Database.get_all_table_names_in_schema")
+    @mock.patch("axbi.utils.log.logger")
+    @mock.patch("axbi.security.manager.AxBISecurityManager.can_access_database")
+    @mock.patch("axbi.models.core.Database.get_all_table_names_in_schema")
     def test_database_tables_unexpected_error(
         self, mock_get_all_table_names_in_schema, mock_can_access_database, logger_mock
     ):
@@ -2296,7 +2296,7 @@ class TestDatabaseApi(SupersetTestCase):
                         "issue_codes": [
                             {
                                 "code": 1010,
-                                "message": "Issue 1010 - Superset encountered an error while running a command.",  # noqa: E501
+                                "message": "Issue 1010 - AxBI encountered an error while running a command.",  # noqa: E501
                             }
                         ]
                     },
@@ -2325,7 +2325,7 @@ class TestDatabaseApi(SupersetTestCase):
                         "issue_codes": [
                             {
                                 "code": 1010,
-                                "message": "Issue 1010 - Superset encountered an error while running a command.",  # noqa: E501
+                                "message": "Issue 1010 - AxBI encountered an error while running a command.",  # noqa: E501
                             }
                         ]
                     },
@@ -2342,7 +2342,7 @@ class TestDatabaseApi(SupersetTestCase):
         self.login(ADMIN_USERNAME)
 
         data = {
-            "sqlalchemy_uri": "sqlite:///home/superset/unsafe.db",
+            "sqlalchemy_uri": "sqlite:///home/ax-bi/unsafe.db",
             "database_name": "unsafe",
             "impersonate_user": False,
             "server_cert": None,
@@ -2361,10 +2361,10 @@ class TestDatabaseApi(SupersetTestCase):
         assert response == expected_response
 
     @mock.patch(
-        "superset.commands.database.test_connection.DatabaseDAO.build_db_for_connection_test",
+        "axbi.commands.database.test_connection.DatabaseDAO.build_db_for_connection_test",
     )
     @mock.patch(
-        "superset.commands.database.test_connection.event_logger",
+        "axbi.commands.database.test_connection.event_logger",
     )
     def test_test_connection_failed_invalid_hostname(
         self, mock_event_logger, mock_build_db
@@ -2377,7 +2377,7 @@ class TestDatabaseApi(SupersetTestCase):
             msg, None, None
         )
         mock_build_db.return_value.db_engine_spec.__name__ = "Some name"
-        superset_error = SupersetError(
+        axbi_error = AxBIError(
             message='Unable to resolve hostname "localhost_".',
             error_type="CONNECTION_INVALID_HOSTNAME_ERROR",
             level="error",
@@ -2394,7 +2394,7 @@ class TestDatabaseApi(SupersetTestCase):
             },
         )
         mock_build_db.return_value.db_engine_spec.extract_errors.return_value = [
-            superset_error
+            axbi_error
         ]
 
         self.login(ADMIN_USERNAME)
@@ -2410,7 +2410,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert rv.status_code == 400
         assert rv.headers["Content-Type"] == "application/json; charset=utf-8"
         response = json.loads(rv.data.decode("utf-8"))
-        expected_response = {"errors": [dataclasses.asdict(superset_error)]}
+        expected_response = {"errors": [dataclasses.asdict(axbi_error)]}
         assert response == expected_response
 
     @pytest.mark.usefixtures(
@@ -2501,7 +2501,7 @@ class TestDatabaseApi(SupersetTestCase):
         rv = self.get_assert_metric(uri, "export")
         assert rv.status_code == 404
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database(self, mock_add_permissions):
         """
         Database API: Test import database
@@ -2534,7 +2534,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_overwrite(self, mock_add_permissions):
         """
         Database API: Test import existing database
@@ -2594,7 +2594,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_invalid(self, mock_add_permissions):
         """
         Database API: Test import invalid database
@@ -2621,7 +2621,7 @@ class TestDatabaseApi(SupersetTestCase):
         }
         assert error["extra"]["issue_codes"][0]["code"] == 1010
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_password(self, mock_add_permissions):
         """
         Database API: Test import database with masked password
@@ -2655,7 +2655,7 @@ class TestDatabaseApi(SupersetTestCase):
         # May get password validation or overwrite error
         assert error["extra"]["issue_codes"][0]["code"] == 1010
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_password_provided(self, mock_add_permissions):
         """
         Database API: Test import database with masked password provided
@@ -2696,8 +2696,8 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @mock.patch("superset.databases.schemas.is_feature_enabled")
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.databases.schemas.is_feature_enabled")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_password(
         self,
         mock_add_permissions,
@@ -2732,8 +2732,8 @@ class TestDatabaseApi(SupersetTestCase):
         # May get SSH tunnel validation or overwrite error
         assert error["extra"]["issue_codes"][0]["code"] == 1010
 
-    @mock.patch("superset.databases.schemas.is_feature_enabled")
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.databases.schemas.is_feature_enabled")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_password_provided(
         self,
         mock_add_permissions,
@@ -2776,8 +2776,8 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @mock.patch("superset.databases.schemas.is_feature_enabled")
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.databases.schemas.is_feature_enabled")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_private_key_and_password(
         self,
         mock_add_permissions,
@@ -2812,8 +2812,8 @@ class TestDatabaseApi(SupersetTestCase):
         # May get SSH tunnel validation or overwrite error
         assert error["extra"]["issue_codes"][0]["code"] == 1010
 
-    @mock.patch("superset.databases.schemas.is_feature_enabled")
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.databases.schemas.is_feature_enabled")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_private_key_and_password_provided(
         self,
         mock_add_permissions,
@@ -2861,7 +2861,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.commit()
 
     @with_feature_flags(SSH_TUNNELING=False)
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_feature_flag_disabled(
         self,
         mock_add_permissions,
@@ -2896,7 +2896,7 @@ class TestDatabaseApi(SupersetTestCase):
                             {
                                 "code": 1010,
                                 "message": (
-                                    "Issue 1010 - Superset encountered an "
+                                    "Issue 1010 - AxBI encountered an "
                                     "error while running a command."
                                 ),
                             }
@@ -2906,8 +2906,8 @@ class TestDatabaseApi(SupersetTestCase):
             ]
         }
 
-    @mock.patch("superset.databases.schemas.is_feature_enabled")
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.databases.schemas.is_feature_enabled")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_feature_no_credentials(
         self,
         mock_add_permissions,
@@ -2956,7 +2956,7 @@ class TestDatabaseApi(SupersetTestCase):
                             {
                                 "code": 1010,
                                 "message": (
-                                    "Issue 1010 - Superset encountered an error while "
+                                    "Issue 1010 - AxBI encountered an error while "
                                     "running a command."
                                 ),
                             }
@@ -2966,8 +2966,8 @@ class TestDatabaseApi(SupersetTestCase):
             ]
         }
 
-    @mock.patch("superset.databases.schemas.is_feature_enabled")
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.databases.schemas.is_feature_enabled")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_feature_mix_credentials(
         self,
         mock_add_permissions,
@@ -3005,7 +3005,7 @@ class TestDatabaseApi(SupersetTestCase):
                             {
                                 "code": 1010,
                                 "message": (
-                                    "Issue 1010 - Superset encountered an "
+                                    "Issue 1010 - AxBI encountered an "
                                     "error while running a command."
                                 ),
                             }
@@ -3015,8 +3015,8 @@ class TestDatabaseApi(SupersetTestCase):
             ]
         }
 
-    @mock.patch("superset.databases.schemas.is_feature_enabled")
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.databases.schemas.is_feature_enabled")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_ssh_tunnel_feature_only_pk_passwd(
         self,
         mock_add_permissions,
@@ -3054,7 +3054,7 @@ class TestDatabaseApi(SupersetTestCase):
         # May get SSH tunnel validation or overwrite error
         assert error["extra"]["issue_codes"][0]["code"] == 1010
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_row_expansion_enabled(self, mock_add_permissions):
         """
         Database API: Test import database with row expansion enabled.
@@ -3095,7 +3095,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_masked_encrypted_extra_missing_field(
         self, mock_add_permissions
     ):
@@ -3136,7 +3136,7 @@ class TestDatabaseApi(SupersetTestCase):
         )
         assert "$.credentials_info.private_key" in str(error["extra"])
 
-    @mock.patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @mock.patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_database_with_encrypted_extra_secrets(self, mock_add_permissions):
         """
         Database API: Test import database with encrypted_extra_secrets in form data.
@@ -3186,7 +3186,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.commit()
 
     @mock.patch(
-        "superset.db_engine_specs.base.BaseEngineSpec.get_function_names",
+        "axbi.db_engine_specs.base.BaseEngineSpec.get_function_names",
     )
     def test_function_names(self, mock_get_function_names):
         example_db = get_example_database()
@@ -3335,7 +3335,7 @@ class TestDatabaseApi(SupersetTestCase):
         }
 
     @with_config({"PREFERRED_DATABASES": ["PostgreSQL", "Google BigQuery"]})
-    @mock.patch("superset.databases.api.get_available_engine_specs")
+    @mock.patch("axbi.databases.api.get_available_engine_specs")
     def test_available(self, get_available_engine_specs):
         get_available_engine_specs.return_value = {
             PostgresEngineSpec: {"psycopg2"},
@@ -3625,7 +3625,7 @@ class TestDatabaseApi(SupersetTestCase):
         }
 
     @with_config({"PREFERRED_DATABASES": ["MySQL"]})
-    @mock.patch("superset.databases.api.get_available_engine_specs")
+    @mock.patch("axbi.databases.api.get_available_engine_specs")
     def test_available_no_default(self, get_available_engine_specs):
         get_available_engine_specs.return_value = {
             MySQLEngineSpec: {"mysqlconnector"},
@@ -3786,9 +3786,9 @@ class TestDatabaseApi(SupersetTestCase):
             ]
         }
 
-    @mock.patch("superset.db_engine_specs.base.is_hostname_valid")
-    @mock.patch("superset.db_engine_specs.base.is_port_open")
-    @mock.patch("superset.databases.api.ValidateDatabaseParametersCommand")
+    @mock.patch("axbi.db_engine_specs.base.is_hostname_valid")
+    @mock.patch("axbi.db_engine_specs.base.is_port_open")
+    @mock.patch("axbi.databases.api.ValidateDatabaseParametersCommand")
     def test_validate_parameters_valid_payload(
         self,
         ValidateDatabaseParametersCommand,  # noqa: N803
@@ -3809,7 +3809,7 @@ class TestDatabaseApi(SupersetTestCase):
             {
                 "host": "localhost",
                 "port": 6789,
-                "username": "superset",
+                "username": "axbi",
                 "password": "XXX",
                 "database": "test",
                 "query": {},
@@ -3833,7 +3833,7 @@ class TestDatabaseApi(SupersetTestCase):
             {
                 "host": "localhost",
                 "port": "string",
-                "username": "superset",
+                "username": "axbi",
                 "password": "XXX",
                 "database": "test",
                 "query": {},
@@ -3877,7 +3877,7 @@ class TestDatabaseApi(SupersetTestCase):
             ]
         }
 
-    @mock.patch("superset.db_engine_specs.base.is_hostname_valid")
+    @mock.patch("axbi.db_engine_specs.base.is_hostname_valid")
     def test_validate_parameters_invalid_host(self, is_hostname_valid):
         is_hostname_valid.return_value = False
 
@@ -3937,7 +3937,7 @@ class TestDatabaseApi(SupersetTestCase):
             ]
         }
 
-    @mock.patch("superset.db_engine_specs.base.is_hostname_valid")
+    @mock.patch("axbi.db_engine_specs.base.is_hostname_valid")
     def test_validate_parameters_invalid_port_range(self, is_hostname_valid):
         is_hostname_valid.return_value = True
 
@@ -4006,7 +4006,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert "sqllab_tab_states" in rv.json
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4032,7 +4032,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert response["result"] == []
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4065,7 +4065,7 @@ class TestDatabaseApi(SupersetTestCase):
         ]
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4086,7 +4086,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert rv.status_code == 404
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4109,7 +4109,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert response == {"message": {"sql": ["Field may not be null."]}}
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         {},
         clear=True,
     )
@@ -4150,9 +4150,9 @@ class TestDatabaseApi(SupersetTestCase):
             ]
         }
 
-    @mock.patch("superset.commands.database.validate_sql.get_validator_by_name")
+    @mock.patch("axbi.commands.database.validate_sql.get_validator_by_name")
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         PRESTO_SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4187,7 +4187,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert "Kaboom!" in response["errors"][0]["message"]
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4222,7 +4222,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert len(result) == 0
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4257,7 +4257,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert len(result) == 0
 
     @mock.patch.dict(
-        "superset.config.SQL_VALIDATORS_BY_ENGINE",
+        "axbi.config.SQL_VALIDATORS_BY_ENGINE",
         SQL_VALIDATORS_BY_ENGINE,
         clear=True,
     )
@@ -4338,7 +4338,7 @@ class TestDatabaseApi(SupersetTestCase):
 
         # The filter function
         def _base_filter(query):
-            from superset.models.core import Database
+            from axbi.models.core import Database
 
             return query.filter(Database.database_name.startswith("dyntest"))
 
@@ -4410,7 +4410,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.commit()
 
     @with_config({"SYNC_DB_PERMISSIONS_IN_ASYNC_MODE": False})
-    @mock.patch("superset.commands.database.sync_permissions.DatabaseDAO.find_by_id")
+    @mock.patch("axbi.commands.database.sync_permissions.DatabaseDAO.find_by_id")
     def test_sync_db_perms_sync_db_not_found(self, mock_find_db):
         """
         Database API: Test sync permissions in sync mode when the DB connection
@@ -4424,7 +4424,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert rv.status_code == 404
 
     @with_config({"SYNC_DB_PERMISSIONS_IN_ASYNC_MODE": False})
-    @mock.patch("superset.commands.database.sync_permissions.ping")
+    @mock.patch("axbi.commands.database.sync_permissions.ping")
     def test_sync_db_perms_sync_db_connection_failed(self, mock_ping):
         """
         Database API: Test sync permissions in sync mode when the DB connection
@@ -4448,7 +4448,7 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_config({"SYNC_DB_PERMISSIONS_IN_ASYNC_MODE": True})
     @mock.patch(
-        "superset.commands.database.sync_permissions.sync_database_permissions_task.delay"
+        "axbi.commands.database.sync_permissions.sync_database_permissions_task.delay"
     )
     def test_sync_db_perms_async(self, mock_task):
         """
@@ -4476,7 +4476,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.commit()
 
     @with_config({"SYNC_DB_PERMISSIONS_IN_ASYNC_MODE": True})
-    @mock.patch("superset.commands.database.sync_permissions.DatabaseDAO.find_by_id")
+    @mock.patch("axbi.commands.database.sync_permissions.DatabaseDAO.find_by_id")
     def test_sync_db_perms_async_db_not_found(self, mock_find_db):
         """
         Database API: Test sync permissions in async mode when the DB connection
@@ -4490,7 +4490,7 @@ class TestDatabaseApi(SupersetTestCase):
         assert rv.status_code == 404
 
     @with_config({"SYNC_DB_PERMISSIONS_IN_ASYNC_MODE": True})
-    @mock.patch("superset.commands.database.sync_permissions.ping")
+    @mock.patch("axbi.commands.database.sync_permissions.ping")
     def test_sync_db_perms_async_db_connection_failed(self, mock_ping):
         """
         Database API: Test sync permissions in async mode when the DB connection
@@ -4514,7 +4514,7 @@ class TestDatabaseApi(SupersetTestCase):
 
     @with_config({"SYNC_DB_PERMISSIONS_IN_ASYNC_MODE": True})
     @mock.patch(
-        "superset.commands.database.sync_permissions.security_manager.get_user_by_username"
+        "axbi.commands.database.sync_permissions.security_manager.get_user_by_username"
     )
     def test_sync_db_perms_async_user_not_found(self, mock_get_user):
         """
@@ -4537,9 +4537,7 @@ class TestDatabaseApi(SupersetTestCase):
         db.session.delete(model)
         db.session.commit()
 
-    @mock.patch(
-        "superset.commands.database.sync_permissions.SyncPermissionsCommand.run"
-    )
+    @mock.patch("axbi.commands.database.sync_permissions.SyncPermissionsCommand.run")
     def test_sync_db_perms_no_access(self, mock_cmmd):
         """
         Database API: Test sync permissions with a user without permission to do so.

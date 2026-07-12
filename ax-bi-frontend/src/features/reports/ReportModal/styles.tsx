@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { styled, css, SupersetTheme } from '@apache-superset/core/theme';
-import { Button, CronPicker, Modal } from '@superset-ui/core/components';
-import { Radio } from '@superset-ui/core/components/Radio';
+import { styled, css, AxBITheme } from '@ax-bi/core/theme';
+import { Button, CronPicker, Modal } from '@ax-bi/ui-core/components';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
 
 export const StyledModal = styled(Modal)`
   .ant-modal-body {
@@ -87,15 +87,15 @@ export const StyledFooterButton = styled(Button)`
   width: ${({ theme }) => theme.sizeUnit * 40}px;
 `;
 
-export const TimezoneHeaderStyle = (theme: SupersetTheme) => css`
+export const TimezoneHeaderStyle = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 3}px 0 ${theme.sizeUnit * 2}px;
 `;
 
-export const CustomWidthHeaderStyle = (theme: SupersetTheme) => css`
+export const CustomWidthHeaderStyle = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 3}px 0 ${theme.sizeUnit * 2}px;
 `;
 
-export const SectionHeaderStyle = (theme: SupersetTheme) => css`
+export const SectionHeaderStyle = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 3}px 0;
 `;
 
@@ -109,7 +109,7 @@ export const StyledRadio = styled(Radio)`
   line-height: ${({ theme }) => theme.sizeUnit * 8}px;
 `;
 
-export const antDErrorAlertStyles = (theme: SupersetTheme) => css`
+export const antDErrorAlertStyles = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 4}px;
   margin-top: 0;
 `;

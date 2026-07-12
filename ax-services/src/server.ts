@@ -124,7 +124,7 @@ import {
   taskListResponseSchema,
 } from './contracts/taskList';
 import { ServiceMetrics } from './metrics';
-import { SupersetDependencyClient } from './supersetClient';
+import { AxBIDependencyClient } from './axbiClient';
 
 export { normalizeRequestIdHeader } from './requestId';
 
@@ -154,7 +154,7 @@ function runtimeVersion(): string {
 
 export function buildServer(
   config: ServiceConfig,
-  supersetClient: SupersetDependencyClient,
+  axbiClient: AxBIDependencyClient,
 ): FastifyInstance {
   const metrics = new ServiceMetrics();
   const serviceStartTime = process.hrtime.bigint();
@@ -209,15 +209,15 @@ export function buildServer(
       },
     },
     async (request, reply): Promise<ReadinessResponseContract> => {
-      const superset = await supersetClient.checkHealth(request.id);
-      const ready = superset.ok;
+      const axbi = await axbiClient.checkHealth(request.id);
+      const ready = axbi.ok;
 
       return reply.status(ready ? 200 : 503).send({
         contractVersion: RUNTIME_CONTRACT_VERSION,
         service: 'ax-services',
         status: ready ? 'ready' : 'not_ready',
         dependencies: {
-          superset,
+          axbi,
         },
       });
     },
@@ -234,15 +234,15 @@ export function buildServer(
       },
     },
     async (request, reply): Promise<MetadataResponseContract> => {
-      const supersetMetadata = await supersetClient.probeMetadata(request.id);
-      const ready = supersetMetadata.ok;
+      const axbiMetadata = await axbiClient.probeMetadata(request.id);
+      const ready = axbiMetadata.ok;
 
       return reply.status(ready ? 200 : 503).send({
         contractVersion: RUNTIME_CONTRACT_VERSION,
         service: 'ax-services',
         status: ready ? 'ok' : 'not_ready',
         dependencies: {
-          supersetMetadata,
+          axbiMetadata,
         },
       });
     },
@@ -287,7 +287,7 @@ export function buildServer(
     '/mcp/annotations/list',
     annotationListRequestSchema,
     annotationListResponseSchema,
-    (body, requestId) => supersetClient.listAnnotations(body, requestId),
+    (body, requestId) => axbiClient.listAnnotations(body, requestId),
   );
 
   registerContractPostRoute<
@@ -297,98 +297,98 @@ export function buildServer(
     '/mcp/annotation-layers/list',
     annotationLayerListRequestSchema,
     annotationLayerListResponseSchema,
-    (body, requestId) => supersetClient.listAnnotationLayers(body, requestId),
+    (body, requestId) => axbiClient.listAnnotationLayers(body, requestId),
   );
 
   registerContractPostRoute<AssetSearchRequest, AssetSearchResponse>(
     '/mcp/assets/search',
     assetSearchRequestSchema,
     assetSearchResponseSchema,
-    (body, requestId) => supersetClient.searchAssets(body, requestId),
+    (body, requestId) => axbiClient.searchAssets(body, requestId),
   );
 
   registerContractPostRoute<PermissionCheckRequest, PermissionCheckResult>(
     '/mcp/permissions/check',
     permissionCheckRequestSchema,
     permissionCheckResponseSchema,
-    (body, requestId) => supersetClient.checkPermission(body, requestId),
+    (body, requestId) => axbiClient.checkPermission(body, requestId),
   );
 
   registerContractPostRoute<DashboardListRequest, DashboardListResponse>(
     '/mcp/dashboards/list',
     dashboardListRequestSchema,
     dashboardListResponseSchema,
-    (body, requestId) => supersetClient.listDashboards(body, requestId),
+    (body, requestId) => axbiClient.listDashboards(body, requestId),
   );
 
   registerContractPostRoute<ChartListRequest, ChartListResponse>(
     '/mcp/charts/list',
     chartListRequestSchema,
     chartListResponseSchema,
-    (body, requestId) => supersetClient.listCharts(body, requestId),
+    (body, requestId) => axbiClient.listCharts(body, requestId),
   );
 
   registerContractPostRoute<DatabaseListRequest, DatabaseListResponse>(
     '/mcp/databases/list',
     databaseListRequestSchema,
     databaseListResponseSchema,
-    (body, requestId) => supersetClient.listDatabases(body, requestId),
+    (body, requestId) => axbiClient.listDatabases(body, requestId),
   );
 
   registerContractPostRoute<DatasetListRequest, DatasetListResponse>(
     '/mcp/datasets/list',
     datasetListRequestSchema,
     datasetListResponseSchema,
-    (body, requestId) => supersetClient.listDatasets(body, requestId),
+    (body, requestId) => axbiClient.listDatasets(body, requestId),
   );
 
   registerContractPostRoute<QueryListRequest, QueryListResponse>(
     '/mcp/queries/list',
     queryListRequestSchema,
     queryListResponseSchema,
-    (body, requestId) => supersetClient.listQueries(body, requestId),
+    (body, requestId) => axbiClient.listQueries(body, requestId),
   );
 
   registerContractPostRoute<ReportListRequest, ReportListResponse>(
     '/mcp/reports/list',
     reportListRequestSchema,
     reportListResponseSchema,
-    (body, requestId) => supersetClient.listReports(body, requestId),
+    (body, requestId) => axbiClient.listReports(body, requestId),
   );
 
   registerContractPostRoute<RoleListRequest, RoleListResponse>(
     '/mcp/roles/list',
     roleListRequestSchema,
     roleListResponseSchema,
-    (body, requestId) => supersetClient.listRoles(body, requestId),
+    (body, requestId) => axbiClient.listRoles(body, requestId),
   );
 
   registerContractPostRoute<RlsListRequest, RlsListResponse>(
     '/mcp/rls-filters/list',
     rlsListRequestSchema,
     rlsListResponseSchema,
-    (body, requestId) => supersetClient.listRlsFilters(body, requestId),
+    (body, requestId) => axbiClient.listRlsFilters(body, requestId),
   );
 
   registerContractPostRoute<SavedQueryListRequest, SavedQueryListResponse>(
     '/mcp/saved-queries/list',
     savedQueryListRequestSchema,
     savedQueryListResponseSchema,
-    (body, requestId) => supersetClient.listSavedQueries(body, requestId),
+    (body, requestId) => axbiClient.listSavedQueries(body, requestId),
   );
 
   registerContractPostRoute<TagListRequest, TagListResponse>(
     '/mcp/tags/list',
     tagListRequestSchema,
     tagListResponseSchema,
-    (body, requestId) => supersetClient.listTags(body, requestId),
+    (body, requestId) => axbiClient.listTags(body, requestId),
   );
 
   registerContractPostRoute<TaskListRequest, TaskListResponse>(
     '/mcp/tasks/list',
     taskListRequestSchema,
     taskListResponseSchema,
-    (body, requestId) => supersetClient.listTasks(body, requestId),
+    (body, requestId) => axbiClient.listTasks(body, requestId),
   );
 
   return server;

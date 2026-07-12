@@ -18,38 +18,36 @@ from flask_appbuilder.security.sqla.models import User
 from pytest import raises  # noqa: PT013
 from pytest_mock import MockerFixture
 
-from superset.commands.chart.exceptions import (
+from axbi.commands.chart.exceptions import (
     ChartAccessDeniedError,
     ChartNotFoundError,
 )
-from superset.commands.dataset.exceptions import (
+from axbi.commands.dataset.exceptions import (
     DatasetAccessDeniedError,
     DatasetNotFoundError,
 )
-from superset.commands.exceptions import (
+from axbi.commands.exceptions import (
     DatasourceNotFoundValidationError,
     QueryNotFoundValidationError,
 )
-from superset.exceptions import SupersetSecurityException
-from superset.utils.core import DatasourceType, override_user
+from axbi.exceptions import AxBISecurityException
+from axbi.utils.core import DatasourceType, override_user
 
-dataset_find_by_id = "superset.daos.dataset.DatasetDAO.find_by_id"
-query_find_by_id = "superset.daos.query.QueryDAO.find_by_id"
-chart_find_by_id = "superset.daos.chart.ChartDAO.find_by_id"
-is_admin = "superset.security.SupersetSecurityManager.is_admin"
-is_owner = "superset.security.SupersetSecurityManager.is_owner"
-can_access_datasource = (
-    "superset.security.SupersetSecurityManager.can_access_datasource"
-)
-can_access = "superset.security.SupersetSecurityManager.can_access"
-raise_for_access = "superset.security.SupersetSecurityManager.raise_for_access"
+dataset_find_by_id = "axbi.daos.dataset.DatasetDAO.find_by_id"
+query_find_by_id = "axbi.daos.query.QueryDAO.find_by_id"
+chart_find_by_id = "axbi.daos.chart.ChartDAO.find_by_id"
+is_admin = "axbi.security.AxBISecurityManager.is_admin"
+is_owner = "axbi.security.AxBISecurityManager.is_owner"
+can_access_datasource = "axbi.security.AxBISecurityManager.can_access_datasource"
+can_access = "axbi.security.AxBISecurityManager.can_access"
+raise_for_access = "axbi.security.AxBISecurityManager.raise_for_access"
 query_datasources_by_name = (
-    "superset.connectors.sqla.models.SqlaTable.query_datasources_by_name"
+    "axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name"
 )
 
 
 def test_unsaved_chart_no_dataset_id() -> None:
-    from superset.explore.utils import check_access as check_chart_access
+    from axbi.explore.utils import check_access as check_chart_access
 
     with raises(DatasourceNotFoundValidationError):
         with override_user(User()):
@@ -61,7 +59,7 @@ def test_unsaved_chart_no_dataset_id() -> None:
 
 
 def test_unsaved_chart_unknown_dataset_id(mocker: MockerFixture) -> None:
-    from superset.explore.utils import check_access as check_chart_access
+    from axbi.explore.utils import check_access as check_chart_access
 
     with raises(DatasetNotFoundError):  # noqa: PT012
         mocker.patch(dataset_find_by_id, return_value=None)
@@ -75,7 +73,7 @@ def test_unsaved_chart_unknown_dataset_id(mocker: MockerFixture) -> None:
 
 
 def test_unsaved_chart_unknown_query_id(mocker: MockerFixture) -> None:
-    from superset.explore.utils import check_access as check_chart_access
+    from axbi.explore.utils import check_access as check_chart_access
 
     with raises(QueryNotFoundValidationError):  # noqa: PT012
         mocker.patch(query_find_by_id, return_value=None)
@@ -89,8 +87,8 @@ def test_unsaved_chart_unknown_query_id(mocker: MockerFixture) -> None:
 
 
 def test_unsaved_chart_unauthorized_dataset(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
 
     with raises(DatasetAccessDeniedError):  # noqa: PT012
         mocker.patch(dataset_find_by_id, return_value=SqlaTable())
@@ -105,8 +103,8 @@ def test_unsaved_chart_unauthorized_dataset(mocker: MockerFixture) -> None:
 
 
 def test_unsaved_chart_authorized_dataset(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
 
     mocker.patch(dataset_find_by_id, return_value=SqlaTable())
     mocker.patch(can_access_datasource, return_value=True)
@@ -120,8 +118,8 @@ def test_unsaved_chart_authorized_dataset(mocker: MockerFixture) -> None:
 
 
 def test_saved_chart_unknown_chart_id(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
 
     with raises(ChartNotFoundError):  # noqa: PT012
         mocker.patch(dataset_find_by_id, return_value=SqlaTable())
@@ -137,8 +135,8 @@ def test_saved_chart_unknown_chart_id(mocker: MockerFixture) -> None:
 
 
 def test_saved_chart_unauthorized_dataset(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
 
     with raises(DatasetAccessDeniedError):  # noqa: PT012
         mocker.patch(dataset_find_by_id, return_value=SqlaTable())
@@ -153,9 +151,9 @@ def test_saved_chart_unauthorized_dataset(mocker: MockerFixture) -> None:
 
 
 def test_saved_chart_is_admin(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
-    from superset.models.slice import Slice
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
+    from axbi.models.slice import Slice
 
     mocker.patch(dataset_find_by_id, return_value=SqlaTable())
     mocker.patch(can_access_datasource, return_value=True)
@@ -171,9 +169,9 @@ def test_saved_chart_is_admin(mocker: MockerFixture) -> None:
 
 
 def test_saved_chart_is_owner(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
-    from superset.models.slice import Slice
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
+    from axbi.models.slice import Slice
 
     mocker.patch(dataset_find_by_id, return_value=SqlaTable())
     mocker.patch(can_access_datasource, return_value=True)
@@ -190,9 +188,9 @@ def test_saved_chart_is_owner(mocker: MockerFixture) -> None:
 
 
 def test_saved_chart_has_access(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
-    from superset.models.slice import Slice
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
+    from axbi.models.slice import Slice
 
     mocker.patch(dataset_find_by_id, return_value=SqlaTable())
     mocker.patch(can_access_datasource, return_value=True)
@@ -210,9 +208,9 @@ def test_saved_chart_has_access(mocker: MockerFixture) -> None:
 
 
 def test_saved_chart_no_access(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_access as check_chart_access
-    from superset.models.slice import Slice
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_access as check_chart_access
+    from axbi.models.slice import Slice
 
     with raises(ChartAccessDeniedError):  # noqa: PT012
         mocker.patch(dataset_find_by_id, return_value=SqlaTable())
@@ -231,8 +229,8 @@ def test_saved_chart_no_access(mocker: MockerFixture) -> None:
 
 
 def test_dataset_has_access(mocker: MockerFixture) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_datasource_access
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_datasource_access
 
     mocker.patch(dataset_find_by_id, return_value=SqlaTable())
     mocker.patch(can_access_datasource, return_value=True)
@@ -249,8 +247,8 @@ def test_dataset_has_access(mocker: MockerFixture) -> None:
 
 
 def test_query_has_access(mocker: MockerFixture) -> None:
-    from superset.explore.utils import check_datasource_access
-    from superset.models.sql_lab import Query
+    from axbi.explore.utils import check_datasource_access
+    from axbi.models.sql_lab import Query
 
     mocker.patch(query_find_by_id, return_value=Query())
     mocker.patch(raise_for_access, return_value=True)
@@ -267,9 +265,9 @@ def test_query_has_access(mocker: MockerFixture) -> None:
 
 
 def test_query_no_access(mocker: MockerFixture, client) -> None:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.explore.utils import check_datasource_access
-    from superset.models.sql_lab import Query
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.explore.utils import check_datasource_access
+    from axbi.models.sql_lab import Query
 
     database = mocker.MagicMock()
     database.get_default_catalog.return_value = None
@@ -283,7 +281,7 @@ def test_query_no_access(mocker: MockerFixture, client) -> None:
     mocker.patch(is_owner, return_value=False)
     mocker.patch(can_access, return_value=False)
 
-    with raises(SupersetSecurityException):
+    with raises(AxBISecurityException):
         check_datasource_access(
             datasource_id=1,
             datasource_type=DatasourceType.QUERY,

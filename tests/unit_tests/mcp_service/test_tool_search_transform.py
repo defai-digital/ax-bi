@@ -23,10 +23,10 @@ from unittest.mock import MagicMock, Mock, patch
 from fastmcp.server.transforms.search import BM25SearchTransform, RegexSearchTransform
 from flask import Flask, g
 
-from superset.mcp_service.auth import CLASS_PERMISSION_ATTR, METHOD_PERMISSION_ATTR
-from superset.mcp_service.mcp_config import MCP_TOOL_SEARCH_CONFIG
-from superset.mcp_service.privacy import requires_data_model_metadata_access
-from superset.mcp_service.server import (
+from axbi.mcp_service.auth import CLASS_PERMISSION_ATTR, METHOD_PERMISSION_ATTR
+from axbi.mcp_service.mcp_config import MCP_TOOL_SEARCH_CONFIG
+from axbi.mcp_service.privacy import requires_data_model_metadata_access
+from axbi.mcp_service.server import (
     _apply_tool_search_transform,
     _compact_schema,
     _create_search_result_serializer,
@@ -37,7 +37,7 @@ from superset.mcp_service.server import (
     _serialize_tools_without_output_schema,
     _truncate_description,
 )
-from superset.utils import json
+from axbi.utils import json
 
 
 def test_tool_search_config_defaults():
@@ -869,7 +869,7 @@ def test_tool_search_permission_filter_hides_disallowed_tools():
     with app.app_context():
         g.user = SimpleNamespace(username="viewer")
         with patch(
-            "superset.mcp_service.auth.current_user_can_access",
+            "axbi.mcp_service.auth.current_user_can_access",
             new_callable=MagicMock,
         ) as can_access:
             can_access.side_effect = [True, False]
@@ -918,7 +918,7 @@ def test_tool_search_permission_filter_denies_all_on_invalid_credentials() -> No
 
     with app.app_context():
         with patch(
-            "superset.mcp_service.auth.get_user_from_request",
+            "axbi.mcp_service.auth.get_user_from_request",
             side_effect=PermissionError("Invalid API key"),
         ):
             result = _filter_tools_by_current_user_permission([protected, public])
@@ -941,7 +941,7 @@ def test_tool_search_filter_hides_metadata_tools_without_access() -> None:
     with app.app_context():
         g.user = SimpleNamespace(username="viewer")
         with patch(
-            "superset.mcp_service.privacy.user_can_view_data_model_metadata",
+            "axbi.mcp_service.privacy.user_can_view_data_model_metadata",
             return_value=False,
         ):
             result = _filter_tools_by_current_user_permission([metadata, public])
@@ -968,11 +968,11 @@ def test_tool_search_permission_filter_still_applies_rbac_to_metadata_tools() ->
         g.user = SimpleNamespace(username="viewer")
         with (
             patch(
-                "superset.mcp_service.privacy.user_can_view_data_model_metadata",
+                "axbi.mcp_service.privacy.user_can_view_data_model_metadata",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.auth.current_user_can_access",
+                "axbi.mcp_service.auth.current_user_can_access",
                 new_callable=Mock,
             ) as can_access,
         ):
@@ -998,11 +998,11 @@ def test_tool_search_permission_filter_resolves_user_from_request() -> None:
     with app.app_context():
         with (
             patch(
-                "superset.mcp_service.auth.get_user_from_request",
+                "axbi.mcp_service.auth.get_user_from_request",
                 return_value=SimpleNamespace(username="viewer"),
             ),
             patch(
-                "superset.mcp_service.auth.current_user_can_access",
+                "axbi.mcp_service.auth.current_user_can_access",
                 new_callable=Mock,
             ) as can_access,
         ):
@@ -1016,7 +1016,7 @@ def test_tool_search_permission_filter_keeps_get_schema_visible_without_metadata
     None
 ):
     """get_schema remains discoverable when only safe model types are available."""
-    from superset.mcp_service.system.tool.get_schema import get_schema
+    from axbi.mcp_service.system.tool.get_schema import get_schema
 
     app = Flask(__name__)
     app.config["MCP_RBAC_ENABLED"] = True
@@ -1027,11 +1027,11 @@ def test_tool_search_permission_filter_keeps_get_schema_visible_without_metadata
         g.user = SimpleNamespace(username="viewer")
         with (
             patch(
-                "superset.mcp_service.privacy.user_can_view_data_model_metadata",
+                "axbi.mcp_service.privacy.user_can_view_data_model_metadata",
                 return_value=False,
             ),
             patch(
-                "superset.mcp_service.auth.current_user_can_access",
+                "axbi.mcp_service.auth.current_user_can_access",
                 new_callable=Mock,
             ) as can_access,
         ):

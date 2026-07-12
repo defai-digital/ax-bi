@@ -17,7 +17,7 @@
  * under the License.
  */
 import URI from 'urijs';
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import { safeStringify } from './safeStringify';
 
 const MAX_URL_LENGTH = 8000;
@@ -26,7 +26,7 @@ export function getURIDirectory(endpointType = 'base') {
   // Building the directory part of the URI
   let directory = '/explore/';
   if (['json', 'csv', 'query', 'results', 'samples'].includes(endpointType)) {
-    directory = '/superset/explore_json/';
+    directory = '/ax-bi/explore_json/';
   }
 
   return directory;

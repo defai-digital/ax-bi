@@ -25,7 +25,7 @@ import {
   isAppliedNativeFilterType,
   isNativeFilter,
   ChartCustomization,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { Slice } from 'src/dashboard/types';
 
 function isGlobalScope(scope: number[], slices: Record<string, Slice>) {

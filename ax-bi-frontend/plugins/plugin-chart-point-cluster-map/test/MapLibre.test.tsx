@@ -23,7 +23,7 @@ import '@testing-library/jest-dom';
 import {
   OSM_TILE_ATTRIBUTION,
   OSM_TILE_STYLE_URL,
-} from '@superset-ui/core/utils/mapStyles';
+} from '@ax-bi/ui-core/utils/mapStyles';
 
 // Capture the most recent viewport props passed to the Map component
 let lastMapProps: Record<string, unknown> = {};
@@ -63,7 +63,7 @@ jest.mock('../src/components/ScatterPlotOverlay', () => {
   return { __esModule: true, default: MockOverlay };
 });
 
-jest.mock('@apache-superset/core/theme', () => ({
+jest.mock('@ax-bi/core/theme', () => ({
   useTheme: () => ({ colorTextSecondary: '#666' }),
 }));
 

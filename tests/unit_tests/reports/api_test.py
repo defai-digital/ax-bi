@@ -19,7 +19,7 @@ from unittest.mock import patch
 
 import rison
 
-from superset.exceptions import SupersetException
+from axbi.exceptions import AxBIException
 from tests.unit_tests.conftest import with_feature_flags
 
 
@@ -47,7 +47,7 @@ def test_json_body_handlers_reject_malformed_json_body(
 
 
 @with_feature_flags(ALERT_REPORTS=True)
-@patch("superset.reports.api.get_channels_with_search")
+@patch("axbi.reports.api.get_channels_with_search")
 def test_slack_channels_success(
     mock_search: Any,
     client: Any,
@@ -62,13 +62,13 @@ def test_slack_channels_success(
 
 
 @with_feature_flags(ALERT_REPORTS=True)
-@patch("superset.reports.api.get_channels_with_search")
-def test_slack_channels_handles_superset_exception(
+@patch("axbi.reports.api.get_channels_with_search")
+def test_slack_channels_handles_axbi_exception(
     mock_search: Any,
     client: Any,
     full_api_access: None,
 ) -> None:
-    mock_search.side_effect = SupersetException("Slack API error")
+    mock_search.side_effect = AxBIException("Slack API error")
     params = rison.dumps({})
     rv = client.get(f"/api/v1/report/slack_channels/?q={params}")
     assert rv.status_code == 422

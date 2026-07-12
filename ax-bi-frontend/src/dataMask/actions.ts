@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataMask, Filters } from '@superset-ui/core';
+import { DataMask, Filters } from '@ax-bi/ui-core';
 import { SaveFilterChangesType } from 'src/dashboard/components/nativeFilters/FiltersConfigModal/types';
 import { getInitialDataMask } from './reducer';
 

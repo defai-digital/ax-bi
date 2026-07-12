@@ -21,11 +21,11 @@ import { ComponentProps, createRef, ReactNode } from 'react';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import type { Layer } from '@deck.gl/core';
-import { supersetTheme, ThemeProvider } from '@apache-superset/core/theme';
+import { axbiTheme, ThemeProvider } from '@ax-bi/core/theme';
 import {
   OSM_TILE_ATTRIBUTION,
   OSM_TILE_STYLE_URL,
-} from '@superset-ui/core/utils/mapStyles';
+} from '@ax-bi/ui-core/utils/mapStyles';
 import mapboxgl from 'mapbox-gl';
 import { DeckGLContainer, DeckGLContainerHandle } from './DeckGLContainer';
 
@@ -96,7 +96,7 @@ const renderContainer = (
   props: Partial<ComponentProps<typeof DeckGLContainer>>,
 ) =>
   render(
-    <ThemeProvider theme={supersetTheme}>
+    <ThemeProvider theme={axbiTheme}>
       <DeckGLContainer {...baseProps} {...props} />
     </ThemeProvider>,
   );
@@ -219,7 +219,7 @@ test('DeckGLContainer renders default and custom tooltip variants through its re
   const ref = createRef<DeckGLContainerHandle>();
 
   render(
-    <ThemeProvider theme={supersetTheme}>
+    <ThemeProvider theme={axbiTheme}>
       <DeckGLContainer {...baseProps} mapProvider="maplibre" ref={ref} />
     </ThemeProvider>,
   );

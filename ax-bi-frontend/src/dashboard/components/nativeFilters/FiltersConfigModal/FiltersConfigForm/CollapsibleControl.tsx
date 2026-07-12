@@ -17,8 +17,8 @@
  * under the License.
  */
 import { ReactNode, useEffect, useState } from 'react';
-import { styled } from '@apache-superset/core/theme';
-import { Checkbox, InfoTooltip } from '@superset-ui/core/components';
+import { styled } from '@ax-bi/core/theme';
+import { Checkbox, InfoTooltip } from '@ax-bi/ui-core/components';
 
 interface CollapsibleControlProps {
   initialValue?: boolean;

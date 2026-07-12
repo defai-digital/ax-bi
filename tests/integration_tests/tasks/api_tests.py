@@ -20,19 +20,19 @@ from collections.abc import Generator
 from contextlib import contextmanager
 
 import rison
-from superset_core.tasks.types import TaskStatus
+from axbi_core.tasks.types import TaskStatus
 
-from superset import db
-from superset.models.tasks import Task
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.models.tasks import Task
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import (
     ADMIN_USERNAME,
     GAMMA_USERNAME,
 )
 
 
-class TestTaskApi(SupersetTestCase):
+class TestTaskApi(AxBITestCase):
     """Tests for Task REST API"""
 
     TASK_API_BASE = "api/v1/task"
@@ -49,9 +49,9 @@ class TestTaskApi(SupersetTestCase):
                 # Use tasks in test
                 # Cleanup happens automatically even if test fails
         """
-        from superset_core.tasks.types import TaskScope
+        from axbi_core.tasks.types import TaskScope
 
-        from superset.daos.tasks import TaskDAO
+        from axbi.daos.tasks import TaskDAO
 
         admin = self.get_user("admin")
         gamma = self.get_user("gamma")

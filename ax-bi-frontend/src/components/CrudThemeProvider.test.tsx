@@ -18,19 +18,19 @@
  */
 import { type ReactNode } from 'react';
 import { render, screen } from 'spec/helpers/testing-library';
-import { logging } from '@apache-superset/core/utils';
+import { logging } from '@ax-bi/core/utils';
 import {
   Theme,
   normalizeThemeConfig,
   isThemeConfigDark,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/core/theme';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { ThemeContext } from 'src/theme/ThemeProvider';
-import type { ThemeContextType } from '@apache-superset/core/theme';
+import type { ThemeContextType } from '@ax-bi/core/theme';
 import CrudThemeProvider from './CrudThemeProvider';
 
-jest.mock('@apache-superset/core/theme', () => ({
-  ...jest.requireActual('@apache-superset/core/theme'),
+jest.mock('@ax-bi/core/theme', () => ({
+  ...jest.requireActual('@ax-bi/core/theme'),
   normalizeThemeConfig: jest.fn((config: unknown) => config),
   isThemeConfigDark: jest.fn(() => false),
 }));
@@ -63,14 +63,14 @@ function mockBootstrap(themes: Partial<BootstrapThemes> = {}): BootstrapData {
   } as unknown as BootstrapData;
 }
 
-const MockSupersetThemeProvider = ({ children }: { children: ReactNode }) => (
+const MockAxBIThemeProvider = ({ children }: { children: ReactNode }) => (
   <div data-test="dashboard-theme-provider">{children}</div>
 );
 
 beforeEach(() => {
   jest.restoreAllMocks();
   jest.spyOn(Theme, 'fromConfig').mockReturnValue({
-    SupersetThemeProvider: MockSupersetThemeProvider,
+    AxBIThemeProvider: MockAxBIThemeProvider,
   } as unknown as Theme);
   mockNormalizeThemeConfig.mockImplementation(
     config => config as ReturnType<typeof normalizeThemeConfig>,
@@ -79,7 +79,7 @@ beforeEach(() => {
   mockGetBootstrapData.mockReturnValue(mockBootstrap());
   // Clean up font style elements from previous tests
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
 });
 
@@ -109,7 +109,7 @@ test('renders children directly when theme is null', () => {
   expect(Theme.fromConfig).not.toHaveBeenCalled();
 });
 
-test('wraps children with SupersetThemeProvider when valid theme data is provided', () => {
+test('wraps children with AxBIThemeProvider when valid theme data is provided', () => {
   const themeConfig = { token: { colorPrimary: '#ff0000' } };
   render(
     <CrudThemeProvider
@@ -141,7 +141,7 @@ test('creates theme from inline json_data via Theme.fromConfig', () => {
     </CrudThemeProvider>,
   );
   expect(screen.getByText('Dashboard Content')).toBeInTheDocument();
-  // No API call can happen — CrudThemeProvider has no fetch/SupersetClient imports.
+  // No API call can happen — CrudThemeProvider has no fetch/AxBIClient imports.
   // Theme is created synchronously from the inline json_data prop.
   expect(Theme.fromConfig).toHaveBeenCalledWith(themeConfig, expect.anything());
 });
@@ -254,7 +254,7 @@ test('injects font URLs as CSS @import rules', () => {
     </CrudThemeProvider>,
   );
 
-  const fontStyle = document.querySelector('style[data-superset-fonts]');
+  const fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).not.toBeNull();
   expect(fontStyle?.textContent).toContain(`@import url("${fontUrl}")`);
 });
@@ -282,7 +282,7 @@ test('does not inject fonts when Theme.fromConfig throws even if fontUrls are pr
     </CrudThemeProvider>,
   );
 
-  const fontStyle = document.querySelector('style[data-superset-fonts]');
+  const fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).toBeNull();
   expect(logging.warn).toHaveBeenCalled();
 });
@@ -305,7 +305,7 @@ test('ignores non-array fontUrls in theme config without throwing', () => {
 
   expect(screen.getByText('Dashboard Content')).toBeInTheDocument();
   expect(screen.getByTestId('dashboard-theme-provider')).toBeInTheDocument();
-  const fontStyle = document.querySelector('style[data-superset-fonts]');
+  const fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).toBeNull();
 });
 
@@ -369,7 +369,7 @@ test('does not inject font style element when no fontUrls in config', () => {
     </CrudThemeProvider>,
   );
 
-  const fontStyle = document.querySelector('style[data-superset-fonts]');
+  const fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).toBeNull();
 });
 
@@ -396,7 +396,7 @@ test('prevents font injection and cleans up fonts when hasThemeConfigOverride be
   );
 
   // Assert font is injected
-  let fontStyle = document.querySelector('style[data-superset-fonts]');
+  let fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).not.toBeNull();
   expect(fontStyle?.textContent).toContain(`@import url("${fontUrl}")`);
 
@@ -418,6 +418,6 @@ test('prevents font injection and cleans up fonts when hasThemeConfigOverride be
   );
 
   // Assert font is cleaned up and removed
-  fontStyle = document.querySelector('style[data-superset-fonts]');
+  fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).toBeNull();
 });

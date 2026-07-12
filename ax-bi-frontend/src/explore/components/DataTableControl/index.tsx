@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useMemo, useEffect, useRef, RefObject } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 
 import { debounce } from 'lodash';
-import { Constants, Button, Icons, Input } from '@superset-ui/core/components';
+import { Constants, Button, Icons, Input } from '@ax-bi/ui-core/components';
 import { CopyToClipboard } from 'src/components';
 import {
   prepareCopyToClipboardTabularData,

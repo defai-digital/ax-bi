@@ -17,8 +17,8 @@
  * under the License.
  */
 import { ReactElement, useMemo } from 'react';
-import { formatNumber, formatTime } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+import { formatNumber, formatTime } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import { GridRows } from '@visx/grid';
 import { scaleLinear } from '@visx/scale';
 import {
@@ -32,7 +32,7 @@ import {
   type SeriesProps,
   AxisScale,
 } from '@visx/xychart';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import {
   getSparklineTextWidth,
   createYScaleConfig,

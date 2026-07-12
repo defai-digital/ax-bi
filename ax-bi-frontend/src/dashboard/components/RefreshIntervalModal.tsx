@@ -18,9 +18,9 @@
  */
 import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { Form, Checkbox } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { Form, Checkbox } from '@ax-bi/ui-core/components';
 import { StandardModal } from 'src/components/Modal';
 import { RootState } from 'src/dashboard/types';
 import {
@@ -68,12 +68,12 @@ const RefreshIntervalModal = ({
   const refreshLimit = useSelector(
     (state: RootState) =>
       state.dashboardInfo?.common?.conf
-        ?.SUPERSET_DASHBOARD_PERIODICAL_REFRESH_LIMIT,
+        ?.AXBI_DASHBOARD_PERIODICAL_REFRESH_LIMIT,
   );
   const refreshWarning = useSelector(
     (state: RootState) =>
       state.dashboardInfo?.common?.conf
-        ?.SUPERSET_DASHBOARD_PERIODICAL_REFRESH_WARNING_MESSAGE,
+        ?.AXBI_DASHBOARD_PERIODICAL_REFRESH_WARNING_MESSAGE,
   );
   const refreshErrors = useMemo(
     () => validateRefreshFrequency(refreshFrequency, refreshLimit),

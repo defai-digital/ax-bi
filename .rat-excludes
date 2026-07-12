@@ -22,10 +22,10 @@ node_modules/*
 rat-results.txt
 babel-node
 dist
-superset/static/*
+axbi/static/*
 build
-superset.egg-info
-apache_superset.egg-info
+axbi.egg-info
+axbi.egg-info
 .idea
 .*sql
 .*zip
@@ -57,7 +57,7 @@ vendor/*
 .github/*
 .*mdx
 
-# skip license check in superset-ui
+# skip license check in axbi-ui
 tmp/*
 lib/*
 esm/*
@@ -67,8 +67,8 @@ tsconfig.tsbuildinfo
 .*iml
 .esprintrc
 .prettierignore
-generator-superset/*
-temporary_superset_ui/*
+generator-axbi/*
+temporary_axbi_ui/*
 
 # skip license checks for auto-generated test snapshots
 .*snap
@@ -102,6 +102,6 @@ GPT.md
 .env-axbi.example
 BOUNDARY_REPORT.md
 values-axbi.yaml
-# superset-desktop is a separate Tauri sub-app
+# ax-bi-desktop is a separate Tauri sub-app
 Cargo.toml
-superset-desktop/*
+ax-bi-desktop/*

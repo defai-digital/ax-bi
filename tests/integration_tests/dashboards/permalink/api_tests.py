@@ -22,14 +22,14 @@ import pytest
 from flask_appbuilder.security.sqla.models import User  # noqa: F401
 from sqlalchemy.orm import Session  # noqa: F401
 
-from superset import db
-from superset.commands.dashboard.exceptions import (
+from axbi import db
+from axbi.commands.dashboard.exceptions import (
     DashboardAccessDeniedError,  # noqa: F401
 )
-from superset.key_value.models import KeyValueEntry
-from superset.key_value.types import KeyValueResource
-from superset.key_value.utils import decode_permalink_id
-from superset.models.dashboard import Dashboard
+from axbi.key_value.models import KeyValueEntry
+from axbi.key_value.types import KeyValueResource
+from axbi.key_value.utils import decode_permalink_id
+from axbi.models.dashboard import Dashboard
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
     load_world_bank_data,  # noqa: F401
@@ -50,8 +50,8 @@ def dashboard_id(load_world_bank_dashboard_with_slices) -> int:  # noqa: F811
 
 @pytest.fixture
 def permalink_salt() -> Iterator[str]:
-    from superset.key_value.shared_entries import get_permalink_salt, get_uuid_namespace
-    from superset.key_value.types import SharedKey
+    from axbi.key_value.shared_entries import get_permalink_salt, get_uuid_namespace
+    from axbi.key_value.types import SharedKey
 
     key = SharedKey.DASHBOARD_PERMALINK_SALT
     salt = get_permalink_salt(key)

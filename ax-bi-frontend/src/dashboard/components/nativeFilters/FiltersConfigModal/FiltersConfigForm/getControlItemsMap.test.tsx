@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Filter, NativeFilterType } from '@superset-ui/core';
+import { Filter, NativeFilterType } from '@ax-bi/ui-core';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
-import type { FormInstance } from '@superset-ui/core/components';
+import type { FormInstance } from '@ax-bi/ui-core/components';
 import getControlItemsMap, { ControlItemsProps } from './getControlItemsMap';
 import {
   getControlItems,

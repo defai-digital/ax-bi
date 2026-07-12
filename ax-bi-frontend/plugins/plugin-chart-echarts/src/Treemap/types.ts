@@ -22,7 +22,7 @@ import {
   QueryFormColumn,
   QueryFormData,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import {
   BaseTransformedProps,

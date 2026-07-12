@@ -22,11 +22,7 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import {
-  SupersetApiError,
-  getExtensionsRegistry,
-  makeApi,
-} from '@superset-ui/core';
+import { AxBIApiError, getExtensionsRegistry, makeApi } from '@ax-bi/ui-core';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
 import DashboardEmbedModal from '.';
 
@@ -34,8 +30,8 @@ const defaultResponse = {
   result: { uuid: 'uuid', dashboard_id: '1', allowed_domains: ['example.com'] },
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual<any>('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual<any>('@ax-bi/ui-core'),
   makeApi: jest.fn(),
 }));
 
@@ -51,7 +47,7 @@ const resetMockApi = () => {
   );
 };
 const setMockApiNotFound = () => {
-  const notFound = new SupersetApiError({ message: 'Not found', status: 404 });
+  const notFound = new AxBIApiError({ message: 'Not found', status: 404 });
   (makeApi as any).mockReturnValue(jest.fn().mockRejectedValue(notFound));
 };
 

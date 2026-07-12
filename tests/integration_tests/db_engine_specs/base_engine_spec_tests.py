@@ -19,21 +19,21 @@ from unittest import mock
 
 import pytest
 
-from superset import db
-from superset.connectors.sqla.models import TableColumn
-from superset.db_engine_specs import load_engine_specs
-from superset.db_engine_specs.base import (
+from axbi import db
+from axbi.connectors.sqla.models import TableColumn
+from axbi.db_engine_specs import load_engine_specs
+from axbi.db_engine_specs.base import (
     BaseEngineSpec,
     BasicParametersMixin,
     builtin_time_grains,
 )
-from superset.db_engine_specs.mysql import MySQLEngineSpec
-from superset.db_engine_specs.odps import OdpsBaseEngineSpec, OdpsEngineSpec
-from superset.db_engine_specs.sqlite import SqliteEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.sql.parse import Table
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs.mysql import MySQLEngineSpec
+from axbi.db_engine_specs.odps import OdpsBaseEngineSpec, OdpsEngineSpec
+from axbi.db_engine_specs.sqlite import SqliteEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.sql.parse import Table
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.test_app import app
 
 from ..fixtures.birth_names_dashboard import (  # noqa: TID252
@@ -47,7 +47,7 @@ from ..fixtures.energy_dashboard import (  # noqa: TID252
 from ..fixtures.pyodbcRow import Row  # noqa: TID252
 
 
-class SupersetTestCases(SupersetTestCase):
+class AxBITestCases(AxBITestCase):
     def test_extract_limit_from_query(self, engine_spec_class=BaseEngineSpec):
         q0 = "select * from table"
         q1 = "select * from mytable limit 10"
@@ -174,7 +174,7 @@ class SupersetTestCases(SupersetTestCase):
         result = BaseEngineSpec.pyodbc_rows_to_tuples(data)
         self.assertListEqual(result, data)  # noqa: PT009
 
-    @mock.patch("superset.models.core.Database.db_engine_spec", BaseEngineSpec)
+    @mock.patch("axbi.models.core.Database.db_engine_spec", BaseEngineSpec)
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_calculated_column_in_order_by_base_engine_spec(self):
         table = self.get_table(name="birth_names")
@@ -292,8 +292,8 @@ def test_get_time_grain_with_unknown_values():
     app.config = config
 
 
-@mock.patch("superset.db_engine_specs.base.is_hostname_valid")
-@mock.patch("superset.db_engine_specs.base.is_port_open")
+@mock.patch("axbi.db_engine_specs.base.is_hostname_valid")
+@mock.patch("axbi.db_engine_specs.base.is_port_open")
 def test_validate(is_port_open, is_hostname_valid):
     is_hostname_valid.return_value = True
     is_port_open.return_value = True
@@ -326,18 +326,18 @@ def test_validate_parameters_missing():
     with app.app_context():
         errors = BasicParametersMixin.validate_parameters(properties)
         assert errors == [
-            SupersetError(
+            AxBIError(
                 message=(
                     "One or more parameters are missing: database, host, port, username"
                 ),
-                error_type=SupersetErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
+                error_type=AxBIErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
                 level=ErrorLevel.WARNING,
                 extra={"missing": ["database", "host", "port", "username"]},
             ),
         ]
 
 
-@mock.patch("superset.db_engine_specs.base.is_hostname_valid")
+@mock.patch("axbi.db_engine_specs.base.is_hostname_valid")
 def test_validate_parameters_invalid_host(is_hostname_valid):
     is_hostname_valid.return_value = False
 
@@ -354,23 +354,23 @@ def test_validate_parameters_invalid_host(is_hostname_valid):
     with app.app_context():
         errors = BasicParametersMixin.validate_parameters(properties)
         assert errors == [
-            SupersetError(
+            AxBIError(
                 message="One or more parameters are missing: port",
-                error_type=SupersetErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
+                error_type=AxBIErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
                 level=ErrorLevel.WARNING,
                 extra={"missing": ["port"]},
             ),
-            SupersetError(
+            AxBIError(
                 message="The hostname provided can't be resolved.",
-                error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+                error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={"invalid": ["host"]},
             ),
         ]
 
 
-@mock.patch("superset.db_engine_specs.base.is_hostname_valid")
-@mock.patch("superset.db_engine_specs.base.is_port_open")
+@mock.patch("axbi.db_engine_specs.base.is_hostname_valid")
+@mock.patch("axbi.db_engine_specs.base.is_port_open")
 def test_validate_parameters_port_closed(is_port_open, is_hostname_valid):
     is_hostname_valid.return_value = True
     is_port_open.return_value = False
@@ -388,9 +388,9 @@ def test_validate_parameters_port_closed(is_port_open, is_hostname_valid):
     with app.app_context():
         errors = BasicParametersMixin.validate_parameters(properties)
         assert errors == [
-            SupersetError(
+            AxBIError(
                 message="The port is closed.",
-                error_type=SupersetErrorType.CONNECTION_PORT_CLOSED_ERROR,
+                error_type=AxBIErrorType.CONNECTION_PORT_CLOSED_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "invalid": ["port"],

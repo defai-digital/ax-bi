@@ -22,43 +22,40 @@ import pytest
 from flask import current_app
 from flask_babel import gettext as __
 
-from superset import db, sql_lab
-from superset.commands.sql_lab import estimate, export, results
-from superset.common.db_query_status import QueryStatus
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import (
+from axbi import db, sql_lab
+from axbi.commands.sql_lab import estimate, export, results
+from axbi.common.db_query_status import QueryStatus
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import (
+    AxBIErrorException,
+    AxBISecurityException,
+    AxBITimeoutException,
     SerializationError,
-    SupersetErrorException,
-    SupersetSecurityException,
-    SupersetTimeoutException,
 )
-from superset.models.core import Database  # noqa: F401
-from superset.models.sql_lab import Query
-from superset.sqllab.limiting_factor import LimitingFactor
-from superset.sqllab.schemas import EstimateQueryCostSchema
-from superset.utils import core as utils
-from superset.utils.core import override_user
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.models.core import Database  # noqa: F401
+from axbi.models.sql_lab import Query
+from axbi.sqllab.limiting_factor import LimitingFactor
+from axbi.sqllab.schemas import EstimateQueryCostSchema
+from axbi.utils import core as utils
+from axbi.utils.core import override_user
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestQueryEstimationCommand(SupersetTestCase):
+class TestQueryEstimationCommand(AxBITestCase):
     def test_validation_no_database(self) -> None:
         params = {"database_id": 1, "sql": "SELECT 1"}
         schema = EstimateQueryCostSchema()
         data: EstimateQueryCostSchema = schema.dump(params)
         command = estimate.QueryEstimationCommand(data)
 
-        with mock.patch("superset.commands.sql_lab.estimate.db") as mock_superset_db:
-            mock_superset_db.session.get.return_value = None
-            with pytest.raises(SupersetErrorException) as ex_info:
+        with mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db:
+            mock_axbi_db.session.get.return_value = None
+            with pytest.raises(AxBIErrorException) as ex_info:
                 command.validate()
-            assert (
-                ex_info.value.error.error_type
-                == SupersetErrorType.RESULTS_BACKEND_ERROR
-            )
+            assert ex_info.value.error.error_type == AxBIErrorType.RESULTS_BACKEND_ERROR
 
-    @patch("superset.tasks.scheduler.is_feature_enabled")
+    @patch("axbi.tasks.scheduler.is_feature_enabled")
     def test_run_timeout(self, is_feature_enabled) -> None:
         params = {"database_id": 1, "sql": "SELECT 1", "template_params": {"temp": 123}}
         schema = EstimateQueryCostSchema()
@@ -68,8 +65,8 @@ class TestQueryEstimationCommand(SupersetTestCase):
         db_mock = mock.Mock()
         db_mock.db_engine_spec = mock.Mock()
         db_mock.db_engine_spec.estimate_query_cost = mock.Mock(
-            side_effect=SupersetTimeoutException(
-                error_type=SupersetErrorType.CONNECTION_DATABASE_TIMEOUT,
+            side_effect=AxBITimeoutException(
+                error_type=AxBIErrorType.CONNECTION_DATABASE_TIMEOUT,
                 message=(
                     "Please check your connection details and database settings, "
                     "and ensure that your database is accepting connections, "
@@ -81,13 +78,11 @@ class TestQueryEstimationCommand(SupersetTestCase):
         db_mock.db_engine_spec.query_cost_formatter = mock.Mock(return_value=None)
         is_feature_enabled.return_value = False
 
-        with mock.patch("superset.commands.sql_lab.estimate.db") as mock_superset_db:
-            mock_superset_db.session.get.return_value = db_mock
-            with pytest.raises(SupersetErrorException) as ex_info:
+        with mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db:
+            mock_axbi_db.session.get.return_value = db_mock
+            with pytest.raises(AxBIErrorException) as ex_info:
                 command.run()
-            assert (
-                ex_info.value.error.error_type == SupersetErrorType.SQLLAB_TIMEOUT_ERROR
-            )
+            assert ex_info.value.error.error_type == AxBIErrorType.SQLLAB_TIMEOUT_ERROR
             assert ex_info.value.error.message == __(
                 "The query estimation was killed after %(sqllab_timeout)s seconds. It might "  # noqa: E501
                 "be too complex, or the database might be under heavy load.",
@@ -107,12 +102,12 @@ class TestQueryEstimationCommand(SupersetTestCase):
         db_mock.db_engine_spec.estimate_query_cost = mock.Mock(return_value=100)
         db_mock.db_engine_spec.query_cost_formatter = mock.Mock(return_value=payload)
 
-        with mock.patch("superset.commands.sql_lab.estimate.db") as mock_superset_db:
-            mock_superset_db.session.get.return_value = db_mock
+        with mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db:
+            mock_axbi_db.session.get.return_value = db_mock
             result = command.run()
             assert result == payload
 
-    @patch("superset.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
+    @patch("axbi.commands.sql_lab.estimate.is_feature_enabled", return_value=True)
     def test_apply_sql_security_rls_does_not_pollute_session(
         self, mock_is_feature_enabled: Mock
     ) -> None:
@@ -142,7 +137,7 @@ class TestQueryEstimationCommand(SupersetTestCase):
         assert not any(isinstance(obj, Query) for obj in db.session.new)
 
 
-class TestSqlResultExportCommand(SupersetTestCase):
+class TestSqlResultExportCommand(AxBITestCase):
     @pytest.fixture
     def create_database_and_query(self):
         with self.create_app().app_context():
@@ -174,34 +169,34 @@ class TestSqlResultExportCommand(SupersetTestCase):
     def test_validation_query_not_found(self) -> None:
         command = export.SqlResultExportCommand("asdf")
 
-        with pytest.raises(SupersetErrorException) as ex_info:
+        with pytest.raises(AxBIErrorException) as ex_info:
             command.run()
-        assert ex_info.value.error.error_type == SupersetErrorType.RESULTS_BACKEND_ERROR
+        assert ex_info.value.error.error_type == AxBIErrorType.RESULTS_BACKEND_ERROR
 
     @pytest.mark.usefixtures("create_database_and_query")
     def test_validation_invalid_access(self) -> None:
         command = export.SqlResultExportCommand("test")
 
         with mock.patch(
-            "superset.security_manager.raise_for_access",
-            side_effect=SupersetSecurityException(
-                SupersetError(
+            "axbi.security_manager.raise_for_access",
+            side_effect=AxBISecurityException(
+                AxBIError(
                     "dummy",
-                    SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+                    AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                     ErrorLevel.ERROR,
                 )
             ),
         ):
-            with pytest.raises(SupersetErrorException) as ex_info:
+            with pytest.raises(AxBIErrorException) as ex_info:
                 command.run()
             assert (
                 ex_info.value.error.error_type
-                == SupersetErrorType.QUERY_SECURITY_ACCESS_ERROR
+                == AxBIErrorType.QUERY_SECURITY_ACCESS_ERROR
             )
 
     @pytest.mark.usefixtures("create_database_and_query")
-    @patch("superset.models.sql_lab.Query.raise_for_access", lambda _: None)
-    @patch("superset.models.core.Database.get_df")
+    @patch("axbi.models.sql_lab.Query.raise_for_access", lambda _: None)
+    @patch("axbi.models.core.Database.get_df")
     def test_run_no_results_backend_select_sql(self, get_df_mock: Mock) -> None:
         command = export.SqlResultExportCommand("test")
 
@@ -213,8 +208,8 @@ class TestSqlResultExportCommand(SupersetTestCase):
         assert result["query"].client_id == "test"
 
     @pytest.mark.usefixtures("create_database_and_query")
-    @patch("superset.models.sql_lab.Query.raise_for_access", lambda _: None)
-    @patch("superset.models.core.Database.get_df")
+    @patch("axbi.models.sql_lab.Query.raise_for_access", lambda _: None)
+    @patch("axbi.models.core.Database.get_df")
     def test_run_no_results_backend_executed_sql(self, get_df_mock: Mock) -> None:
         query_obj = db.session.query(Query).filter_by(client_id="test").one()
         query_obj.executed_sql = "select * from bar limit 2"
@@ -231,8 +226,8 @@ class TestSqlResultExportCommand(SupersetTestCase):
         assert result["query"].client_id == "test"
 
     @pytest.mark.usefixtures("create_database_and_query")
-    @patch("superset.models.sql_lab.Query.raise_for_access", lambda _: None)
-    @patch("superset.models.core.Database.get_df")
+    @patch("axbi.models.sql_lab.Query.raise_for_access", lambda _: None)
+    @patch("axbi.models.core.Database.get_df")
     def test_run_no_results_backend_executed_sql_limiting_factor(
         self, get_df_mock: Mock
     ) -> None:
@@ -253,8 +248,8 @@ class TestSqlResultExportCommand(SupersetTestCase):
         assert result["query"].client_id == "test"
 
     @pytest.mark.usefixtures("create_database_and_query")
-    @patch("superset.models.sql_lab.Query.raise_for_access", lambda _: None)
-    @patch("superset.commands.sql_lab.export.results_backend_use_msgpack", False)
+    @patch("axbi.models.sql_lab.Query.raise_for_access", lambda _: None)
+    @patch("axbi.commands.sql_lab.export.results_backend_use_msgpack", False)
     def test_run_with_results_backend(self) -> None:
         command = export.SqlResultExportCommand("test")
 
@@ -276,7 +271,7 @@ class TestSqlResultExportCommand(SupersetTestCase):
         assert result["query"].client_id == "test"
 
 
-class TestSqlExecutionResultsCommand(SupersetTestCase):
+class TestSqlExecutionResultsCommand(AxBITestCase):
     @pytest.fixture
     def create_database_and_query(self):
         with self.create_app().app_context():
@@ -306,30 +301,30 @@ class TestSqlExecutionResultsCommand(SupersetTestCase):
             db.session.delete(query_obj)
             db.session.commit()
 
-    @patch("superset.commands.sql_lab.results.results_backend_use_msgpack", False)
-    @patch("superset.commands.sql_lab.results.results_backend", None)
+    @patch("axbi.commands.sql_lab.results.results_backend_use_msgpack", False)
+    @patch("axbi.commands.sql_lab.results.results_backend", None)
     def test_validation_no_results_backend(self) -> None:
         command = results.SqlExecutionResultsCommand("test", 1000)
 
-        with pytest.raises(SupersetErrorException) as ex_info:
+        with pytest.raises(AxBIErrorException) as ex_info:
             command.run()
         assert (
             ex_info.value.error.error_type
-            == SupersetErrorType.RESULTS_BACKEND_NOT_CONFIGURED_ERROR
+            == AxBIErrorType.RESULTS_BACKEND_NOT_CONFIGURED_ERROR
         )
 
-    @patch("superset.commands.sql_lab.results.results_backend_use_msgpack", False)
+    @patch("axbi.commands.sql_lab.results.results_backend_use_msgpack", False)
     def test_validation_data_cannot_be_retrieved(self) -> None:
         results.results_backend = mock.Mock()
         results.results_backend.get.return_value = None
 
         command = results.SqlExecutionResultsCommand("test", 1000)
 
-        with pytest.raises(SupersetErrorException) as ex_info:
+        with pytest.raises(AxBIErrorException) as ex_info:
             command.run()
-        assert ex_info.value.error.error_type == SupersetErrorType.RESULTS_BACKEND_ERROR
+        assert ex_info.value.error.error_type == AxBIErrorType.RESULTS_BACKEND_ERROR
 
-    @patch("superset.commands.sql_lab.results.results_backend_use_msgpack", False)
+    @patch("axbi.commands.sql_lab.results.results_backend_use_msgpack", False)
     def test_validation_data_not_found(self) -> None:
         data = [{"col_0": i} for i in range(100)]
         payload = {
@@ -345,12 +340,12 @@ class TestSqlExecutionResultsCommand(SupersetTestCase):
 
         command = results.SqlExecutionResultsCommand("test", 1000)
 
-        with pytest.raises(SupersetErrorException) as ex_info:
+        with pytest.raises(AxBIErrorException) as ex_info:
             command.run()
-        assert ex_info.value.error.error_type == SupersetErrorType.RESULTS_BACKEND_ERROR
+        assert ex_info.value.error.error_type == AxBIErrorType.RESULTS_BACKEND_ERROR
 
     @pytest.mark.usefixtures("create_database_and_query")
-    @patch("superset.commands.sql_lab.results.results_backend_use_msgpack", False)
+    @patch("axbi.commands.sql_lab.results.results_backend_use_msgpack", False)
     def test_validation_query_not_found(self) -> None:
         data = [{"col_0": i} for i in range(104)]
         payload = {
@@ -365,42 +360,39 @@ class TestSqlExecutionResultsCommand(SupersetTestCase):
         results.results_backend.get.return_value = compressed
 
         with mock.patch(
-            "superset.views.utils._deserialize_results_payload",
+            "axbi.views.utils._deserialize_results_payload",
             side_effect=SerializationError(),
         ):
-            with pytest.raises(SupersetErrorException) as ex_info:  # noqa: PT012
+            with pytest.raises(AxBIErrorException) as ex_info:  # noqa: PT012
                 command = results.SqlExecutionResultsCommand("test_other", 1000)
                 command.run()
-            assert (
-                ex_info.value.error.error_type
-                == SupersetErrorType.RESULTS_BACKEND_ERROR
-            )
+            assert ex_info.value.error.error_type == AxBIErrorType.RESULTS_BACKEND_ERROR
 
     @pytest.mark.usefixtures("create_database_and_query")
-    @patch("superset.commands.sql_lab.results.results_backend_use_msgpack", False)
+    @patch("axbi.commands.sql_lab.results.results_backend_use_msgpack", False)
     def test_validation_unauthorized_access(self) -> None:
         command = results.SqlExecutionResultsCommand("abc_query", 1000)
 
         with mock.patch(
-            "superset.models.sql_lab.Query.raise_for_access",
-            side_effect=SupersetSecurityException(
-                SupersetError(
+            "axbi.models.sql_lab.Query.raise_for_access",
+            side_effect=AxBISecurityException(
+                AxBIError(
                     "dummy",
-                    SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+                    AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                     ErrorLevel.ERROR,
                 )
             ),
         ):
-            with pytest.raises(SupersetErrorException) as ex_info:
+            with pytest.raises(AxBIErrorException) as ex_info:
                 command.run()
             assert (
                 ex_info.value.error.error_type
-                == SupersetErrorType.QUERY_SECURITY_ACCESS_ERROR
+                == AxBIErrorType.QUERY_SECURITY_ACCESS_ERROR
             )
             assert ex_info.value.status == 403
 
     @pytest.mark.usefixtures("create_database_and_query")
-    @patch("superset.commands.sql_lab.results.results_backend_use_msgpack", False)
+    @patch("axbi.commands.sql_lab.results.results_backend_use_msgpack", False)
     def test_run_succeeds(self) -> None:
         data = [{"col_0": i} for i in range(104)]
         payload = {

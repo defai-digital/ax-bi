@@ -34,17 +34,12 @@ import {
   LatestQueryFormData,
   QueryFormData,
   Behavior,
-} from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import {
-  Icons,
-  ModalTrigger,
-  Button,
-  Input,
-} from '@superset-ui/core/components';
-import { getChartMetadataRegistry } from '@superset-ui/core';
-import { Menu, MenuProps } from '@superset-ui/core/components/Menu';
+} from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Icons, ModalTrigger, Button, Input } from '@ax-bi/ui-core/components';
+import { getChartMetadataRegistry } from '@ax-bi/ui-core';
+import { Menu, MenuProps } from '@ax-bi/ui-core/components/Menu';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { DEFAULT_CSV_STREAMING_ROW_THRESHOLD } from 'src/constants';
 import { exportChart, getChartKey } from 'src/explore/exploreUtils';
@@ -202,8 +197,7 @@ export const useExploreAdditionalActionsMenu = (
   onOpenPropertiesModal: () => void,
   ownState: OwnStateWithClientView | undefined,
   dashboards:
-    | NonNullable<ExplorePageInitialData['metadata']>['dashboards']
-    | undefined,
+    NonNullable<ExplorePageInitialData['metadata']>['dashboards'] | undefined,
   showReportModal: () => void,
   setCurrentReportDeleting: Dispatch<SetStateAction<ReportObject | null>>,
   ...rest: MenuProps[]

@@ -14,15 +14,15 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset with caching"""
+"""Unit tests for AxBI with caching"""
 
 import pytest
 from flask import current_app as app
 
-from superset.common.db_query_status import QueryStatus
-from superset.extensions import cache_manager
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.common.db_query_status import QueryStatus
+from axbi.extensions import cache_manager
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
@@ -30,7 +30,7 @@ from tests.integration_tests.fixtures.birth_names_dashboard import (
 )
 
 
-class TestCache(SupersetTestCase):
+class TestCache(AxBITestCase):
     def setUp(self):
         self.login(ADMIN_USERNAME)
         cache_manager.cache.clear()

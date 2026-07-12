@@ -25,9 +25,9 @@ import {
   QueryFormData,
   SMART_DATE_ID,
   TimeFormats,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { getColorFormatters } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { getColorFormatters } from '@ax-bi/chart-controls';
 import { DateFormatter } from '../types';
 
 const { DATABASE_DATETIME } = TimeFormats;

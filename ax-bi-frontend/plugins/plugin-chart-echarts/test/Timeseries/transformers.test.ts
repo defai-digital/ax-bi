@@ -20,9 +20,9 @@ import {
   CategoricalColorScale,
   ChartProps,
   TimeGranularity,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { supersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { axbiTheme } from '@ax-bi/core/theme';
 import type { SeriesOption } from 'echarts';
 import { EchartsTimeseriesSeriesType } from '../../src';
 import { TIMESERIES_CONSTANTS } from '../../src/constants';
@@ -259,7 +259,7 @@ function buildTimeseriesChartProps(
         coltypes: [GenericDataType.Numeric, GenericDataType.Temporal],
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   }) as unknown as EchartsTimeseriesChartProps;
 }
 
@@ -290,7 +290,7 @@ test('should configure time axis labels to show max label for last month visibil
     width: 800,
     height: 600,
     queriesData,
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const result = transformProps(

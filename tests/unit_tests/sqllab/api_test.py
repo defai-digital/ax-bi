@@ -26,13 +26,13 @@ from flask import Flask
 
 def _disposition_filename(form_filename: str | None) -> str:
     """Return the filename rendered into a streaming CSV Content-Disposition."""
-    from superset.sqllab.api import SqlLabRestApi
+    from axbi.sqllab.api import SqlLabRestApi
 
     app = Flask(__name__)
     app.config["CSV_EXPORT"] = {"encoding": "utf-8"}
     with (
         app.app_context(),
-        patch("superset.sqllab.api.StreamingSqlResultExportCommand") as command_cls,
+        patch("axbi.sqllab.api.StreamingSqlResultExportCommand") as command_cls,
     ):
         command = command_cls.return_value
         command.run.return_value = lambda: iter([b""])
@@ -81,7 +81,7 @@ def test_load_template_params_accepts_only_objects(
     expected: dict[str, object],
 ) -> None:
     """SQL formatting template params should only expand mapping values."""
-    from superset.sqllab.api import _load_template_params
+    from axbi.sqllab.api import _load_template_params
 
     assert _load_template_params(template_params) == expected
 
@@ -96,7 +96,7 @@ def test_load_template_params_accepts_only_objects(
 )
 def test_json_post_handlers_reject_malformed_json_body(method_name: str) -> None:
     """SQL Lab JSON handlers should reject parser failures as validation errors."""
-    from superset.sqllab.api import SqlLabRestApi
+    from axbi.sqllab.api import SqlLabRestApi
 
     app = Flask(__name__)
     api = SqlLabRestApi.__new__(SqlLabRestApi)

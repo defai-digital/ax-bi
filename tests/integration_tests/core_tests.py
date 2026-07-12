@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import datetime
 import doctest
@@ -32,26 +32,26 @@ import sqlalchemy as sqla
 from flask_babel import lazy_gettext as _
 from sqlalchemy.exc import SQLAlchemyError
 
-import superset.utils.database
-import superset.views.utils
-from superset import dataframe, db, security_manager, sql_lab
-from superset.commands.chart.data.get_data_command import ChartDataCommand
-from superset.commands.chart.exceptions import ChartDataQueryFailedError
-from superset.common.db_query_status import QueryStatus
-from superset.connectors.sqla.models import SqlaTable
-from superset.db_engine_specs.base import BaseEngineSpec
-from superset.db_engine_specs.mssql import MssqlEngineSpec
-from superset.exceptions import OAuth2RedirectError, SupersetException
-from superset.extensions import cache_manager
-from superset.models import core as models
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.models.sql_lab import Query
-from superset.result_set import SupersetResultSet
-from superset.sql.parse import Table
-from superset.utils import core as utils, json
-from superset.utils.core import backend
-from superset.utils.database import get_example_database
+import axbi.utils.database
+import axbi.views.utils
+from axbi import dataframe, db, security_manager, sql_lab
+from axbi.commands.chart.data.get_data_command import ChartDataCommand
+from axbi.commands.chart.exceptions import ChartDataQueryFailedError
+from axbi.common.db_query_status import QueryStatus
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.db_engine_specs.base import BaseEngineSpec
+from axbi.db_engine_specs.mssql import MssqlEngineSpec
+from axbi.exceptions import AxBIException, OAuth2RedirectError
+from axbi.extensions import cache_manager
+from axbi.models import core as models
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.models.sql_lab import Query
+from axbi.result_set import AxBIResultSet
+from axbi.sql.parse import Table
+from axbi.utils import core as utils, json
+from axbi.utils.core import backend
+from axbi.utils.database import get_example_database
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
@@ -67,7 +67,7 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 )
 from tests.integration_tests.test_app import app
 
-from .base_tests import SupersetTestCase
+from .base_tests import AxBITestCase
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ def cleanup():
     return
 
 
-class TestCore(SupersetTestCase):
+class TestCore(AxBITestCase):
     def setUp(self):
         self.table_ids = {
             tbl.table_name: tbl.id for tbl in (db.session.query(SqlaTable).all())
@@ -291,7 +291,7 @@ class TestCore(SupersetTestCase):
         assert self.get_resp("/ping") == "OK"
 
     def test_custom_password_store(self):
-        database = superset.utils.database.get_example_database()
+        database = axbi.utils.database.get_example_database()
         conn_pre = sqla.engine.url.make_url(database.sqlalchemy_uri_decrypted)
 
         def custom_password_store(uri):
@@ -334,7 +334,7 @@ class TestCore(SupersetTestCase):
         assert "Dashboards" in self.get_resp("/dashboard/list/")
 
     def test_templated_sql_json(self):
-        if superset.utils.database.get_example_database().backend == "presto":
+        if axbi.utils.database.get_example_database().backend == "presto":
             # TODO: make it work for presto
             return
         self.login(ADMIN_USERNAME)
@@ -413,7 +413,7 @@ class TestCore(SupersetTestCase):
             (datetime.datetime(2017, 11, 18, 21, 53, 0, 219225, tzinfo=tz),),
             (datetime.datetime(2017, 11, 18, 22, 6, 30, tzinfo=tz),),
         ]
-        results = SupersetResultSet(list(data), [["data"]], BaseEngineSpec)
+        results = AxBIResultSet(list(data), [["data"]], BaseEngineSpec)
         df = results.to_pandas_df()
         data = dataframe.df_to_records(df)
         json_str = json.dumps(data, default=json.pessimistic_json_iso_dttm_ser)
@@ -434,7 +434,7 @@ class TestCore(SupersetTestCase):
             (1, 1, datetime.datetime(2017, 10, 19, 23, 39, 16, 660000)),
             (2, 2, datetime.datetime(2018, 10, 19, 23, 39, 16, 660000)),
         ]
-        results = SupersetResultSet(
+        results = AxBIResultSet(
             list(data), [["col1"], ["col2"], ["col3"]], MssqlEngineSpec
         )
         df = results.to_pandas_df()
@@ -485,17 +485,17 @@ class TestCore(SupersetTestCase):
         assert data["error"] == "Cached data not found"
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @mock.patch("superset.viz.BaseViz.get_df")
+    @mock.patch("axbi.viz.BaseViz.get_df")
     def test_explore_json_propagates_oauth2_redirect_error(
         self, mock_get_df: mock.Mock
     ) -> None:
         """
-        SupersetErrorException exceptions bubble up properly.
+        AxBIErrorException exceptions bubble up properly.
         """
         mock_get_df.side_effect = OAuth2RedirectError(
             url="https://accounts.example.com/o/oauth2/v2/auth?...",
             tab_id="tab-123",
-            redirect_uri="https://superset.example.com/oauth2/redirect",
+            redirect_uri="https://ax-bi.example.com/oauth2/redirect",
         )
 
         self.login(ADMIN_USERNAME)
@@ -511,16 +511,16 @@ class TestCore(SupersetTestCase):
         assert data["errors"][0]["extra"] == {
             "url": "https://accounts.example.com/o/oauth2/v2/auth?...",
             "tab_id": "tab-123",
-            "redirect_uri": "https://superset.example.com/oauth2/redirect",
+            "redirect_uri": "https://ax-bi.example.com/oauth2/redirect",
         }
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @mock.patch("superset.viz.BaseViz.get_df")
+    @mock.patch("axbi.viz.BaseViz.get_df")
     def test_explore_json_generic_exception_still_returns_viz_get_df_error(
         self, mock_get_df: mock.Mock
     ) -> None:
         """
-        Non-Superset exceptions raised by ``get_df`` are reported as the
+        Non-AxBI exceptions raised by ``get_df`` are reported as the
         generic ``VIZ_GET_DF_ERROR``.
         """
         mock_get_df.side_effect = RuntimeError("boom")
@@ -547,7 +547,7 @@ class TestCore(SupersetTestCase):
             ("d", "datetime"),
         )
         db_engine_spec = BaseEngineSpec()
-        results = SupersetResultSet(data, cursor_descr, db_engine_spec)
+        results = AxBIResultSet(data, cursor_descr, db_engine_spec)
         query = {
             "database_id": 1,
             "sql": "SELECT * FROM birth_names LIMIT 100",
@@ -578,7 +578,7 @@ class TestCore(SupersetTestCase):
         assert isinstance(serialized_payload, str)
 
         query_mock = mock.Mock()
-        deserialized_payload = superset.views.utils._deserialize_results_payload(
+        deserialized_payload = axbi.views.utils._deserialize_results_payload(
             serialized_payload, query_mock, use_new_deserialization
         )
 
@@ -595,7 +595,7 @@ class TestCore(SupersetTestCase):
             ("d", "datetime"),
         )
         db_engine_spec = BaseEngineSpec()
-        results = SupersetResultSet(data, cursor_descr, db_engine_spec)
+        results = AxBIResultSet(data, cursor_descr, db_engine_spec)
         query = {
             "database_id": 1,
             "sql": "SELECT * FROM birth_names LIMIT 100",
@@ -631,7 +631,7 @@ class TestCore(SupersetTestCase):
             query_mock = mock.Mock()
             query_mock.database.db_engine_spec.expand_data = expand_data
 
-            deserialized_payload = superset.views.utils._deserialize_results_payload(
+            deserialized_payload = axbi.views.utils._deserialize_results_payload(
                 serialized_payload, query_mock, use_new_deserialization
             )
             df = results.to_pandas_df()
@@ -641,7 +641,7 @@ class TestCore(SupersetTestCase):
             expand_data.assert_called_once()
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"FOO": lambda x: 1},
         clear=True,
     )
@@ -675,7 +675,7 @@ class TestCore(SupersetTestCase):
             assert html_string in data
 
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"SQLLAB_BACKEND_PERSISTENCE": True},
         clear=True,
     )
@@ -740,7 +740,7 @@ class TestCore(SupersetTestCase):
 
     def test_virtual_table_explore_visibility(self):
         # test that default visibility it set to True
-        database = superset.utils.database.get_example_database()
+        database = axbi.utils.database.get_example_database()
         assert database.allows_virtual_table_explore is True
 
         # test that visibility is disabled when extra is set to False
@@ -808,8 +808,8 @@ class TestCore(SupersetTestCase):
         assert database.disable_drill_to_detail is False
 
     def test_explore_database_id(self):
-        database = superset.utils.database.get_example_database()
-        explore_database = superset.utils.database.get_example_database()
+        database = axbi.utils.database.get_example_database()
+        explore_database = axbi.utils.database.get_example_database()
 
         # test that explore_database_id is the regular database
         # id if none is set in the extra
@@ -844,13 +844,13 @@ class TestCore(SupersetTestCase):
         "TODO This test was wrong - 'Error message' was in the language pack"
     )
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @mock.patch("superset.models.core.DB_CONNECTION_MUTATOR")
+    @mock.patch("axbi.models.core.DB_CONNECTION_MUTATOR")
     def test_explore_injected_exceptions(self, mock_db_connection_mutator):
         """
         Handle injected exceptions from the db mutator
         """
         # Assert we can handle a custom exception at the mutator level
-        exception = SupersetException("Error message")
+        exception = AxBIException("Error message")
         mock_db_connection_mutator.side_effect = exception
         slice = db.session.query(Slice).first()
         url = f"/explore/?form_data=%7B%22slice_id%22%3A%20{slice.id}%7D"
@@ -873,14 +873,14 @@ class TestCore(SupersetTestCase):
         "TODO This test was wrong - 'Error message' was in the language pack"
     )
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @mock.patch("superset.models.core.DB_CONNECTION_MUTATOR")
+    @mock.patch("axbi.models.core.DB_CONNECTION_MUTATOR")
     def test_dashboard_injected_exceptions(self, mock_db_connection_mutator):
         """
         Handle injected exceptions from the db mutator
         """
 
         # Assert we can handle a custom exception at the mutator level
-        exception = SupersetException("Error message")
+        exception = AxBIException("Error message")
         mock_db_connection_mutator.side_effect = exception
         dash = db.session.query(Dashboard).first()
         url = f"/ax-bi/dashboard/{dash.id}/"
@@ -900,7 +900,7 @@ class TestCore(SupersetTestCase):
         assert "Error message" in data
 
     @pytest.mark.usefixtures("load_energy_table_with_slice")
-    @mock.patch("superset.commands.explore.form_data.create.CreateFormDataCommand.run")
+    @mock.patch("axbi.commands.explore.form_data.create.CreateFormDataCommand.run")
     def test_explore_redirect(self, mock_command: mock.Mock):
         self.login(ADMIN_USERNAME)
         random_key = "random_key"
@@ -913,7 +913,7 @@ class TestCore(SupersetTestCase):
         )
         assert rv.headers["Location"] == f"/explore/?form_data_key={random_key}"
 
-    @mock.patch("superset.commands.explore.form_data.create.CreateFormDataCommand.run")
+    @mock.patch("axbi.commands.explore.form_data.create.CreateFormDataCommand.run")
     def test_explore_redirect_tolerates_malformed_datasource(
         self, mock_command: mock.Mock
     ):
@@ -931,12 +931,12 @@ class TestCore(SupersetTestCase):
     def test_has_table(self):
         if backend() in ("sqlite", "mysql"):
             return
-        example_db = superset.utils.database.get_example_database()
+        example_db = axbi.utils.database.get_example_database()
         assert example_db.has_table(Table("birth_names", "public")) is True
 
-    @mock.patch("superset.views.core.request")
+    @mock.patch("axbi.views.core.request")
     @mock.patch(
-        "superset.commands.dashboard.permalink.get.GetDashboardPermalinkCommand.run"
+        "axbi.commands.dashboard.permalink.get.GetDashboardPermalinkCommand.run"
     )
     def test_dashboard_permalink(self, get_dashboard_permalink_mock, request_mock):
         request_mock.query_string = b"standalone=3"
@@ -949,9 +949,9 @@ class TestCore(SupersetTestCase):
         assert resp.headers["Location"] == expected_url
         assert resp.status_code == 302
 
-    @mock.patch("superset.views.core.request")
+    @mock.patch("axbi.views.core.request")
     @mock.patch(
-        "superset.commands.dashboard.permalink.get.GetDashboardPermalinkCommand.run"
+        "axbi.commands.dashboard.permalink.get.GetDashboardPermalinkCommand.run"
     )
     def test_dashboard_permalink_native_filters_encoded(
         self, get_dashboard_permalink_mock, request_mock
@@ -978,7 +978,7 @@ class TestCore(SupersetTestCase):
         assert parsed["native_filters"] == [native_filters_value]
 
 
-class TestLocalePatch(SupersetTestCase):
+class TestLocalePatch(AxBITestCase):
     MOCK_LANGUAGES = (
         "flask.current_app.config",
         {

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import rison from 'rison';
 import { Dispatch, SetStateAction } from 'react';
 
@@ -27,7 +27,7 @@ interface FetchPaginatedOptions {
   pageSize?: number;
   setData: (data: any[]) => void;
   setLoadingState: Dispatch<SetStateAction<any>>;
-  filters?: SupersetFilter[];
+  filters?: AxBIFilter[];
   orderBy?: { column: string; direction: 'asc' | 'desc' };
   loadingKey: string;
   addDangerToast: (message: string) => void;
@@ -38,12 +38,12 @@ interface FetchPaginatedOptions {
 interface QueryObj {
   page_size: number;
   page: number;
-  filters?: SupersetFilter[];
+  filters?: AxBIFilter[];
   order_column?: string;
   order_direction?: 'asc' | 'desc';
 }
 
-interface SupersetFilter {
+interface AxBIFilter {
   col: string;
   opr: string;
   value: string | number | (string | number)[];
@@ -76,7 +76,7 @@ export const fetchPaginatedData = async ({
       }
       const encodedQuery = rison.encode(queryObj);
 
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: `${endpoint}?q=${encodedQuery}`,
       });
 

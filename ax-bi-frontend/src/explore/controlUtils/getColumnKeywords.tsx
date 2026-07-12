@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { ColumnMeta } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
-import { getTooltipHTML } from '@superset-ui/core/components/AsyncAceEditor';
+import { ColumnMeta } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { getTooltipHTML } from '@ax-bi/ui-core/components/AsyncAceEditor';
 import { COLUMN_AUTOCOMPLETE_SCORE } from 'src/SqlLab/constants';
 
 export function getColumnKeywords(columns: ColumnMeta[]) {

@@ -17,7 +17,7 @@
  * under the License.
  */
 import { action } from 'storybook/actions';
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import { mockQueryDataForCountries } from 'spec/fixtures/mockNativeFilters';
 import SelectFilterPlugin from './index';
 import transformProps from './transformProps';

@@ -29,8 +29,8 @@ import {
   IntervalAnnotationLayer,
   TimeseriesAnnotationLayer,
   TimeseriesDataRecord,
-} from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { OrientationType } from '../../src';
 import {
   transformEventAnnotation,
@@ -132,7 +132,7 @@ describe('transformIntervalAnnotation', () => {
       mockData,
       mockIntervalAnnotationData,
       CategoricalColorNamespace.getScale(''),
-      supersetTheme,
+      axbiTheme,
     );
 
     // Should return a single series with all intervals
@@ -183,7 +183,7 @@ describe('transformIntervalAnnotation', () => {
       mockData,
       duplicateStartDateData,
       CategoricalColorNamespace.getScale(''),
-      supersetTheme,
+      axbiTheme,
     );
 
     // Should return a single series
@@ -208,7 +208,7 @@ describe('transformIntervalAnnotation', () => {
       mockData,
       mockIntervalAnnotationData,
       CategoricalColorNamespace.getScale(''),
-      supersetTheme,
+      axbiTheme,
       undefined,
       OrientationType.Horizontal,
     );
@@ -268,7 +268,7 @@ describe('transformEventAnnotation', () => {
       mockData,
       mockEventAnnotationData,
       CategoricalColorNamespace.getScale(''),
-      supersetTheme,
+      axbiTheme,
     );
 
     // Should return a single series with all events
@@ -316,7 +316,7 @@ describe('transformEventAnnotation', () => {
       mockData,
       duplicateStartDateData,
       CategoricalColorNamespace.getScale(''),
-      supersetTheme,
+      axbiTheme,
     );
 
     // Should return a single series
@@ -340,7 +340,7 @@ describe('transformEventAnnotation', () => {
       mockData,
       mockEventAnnotationData,
       CategoricalColorNamespace.getScale(''),
-      supersetTheme,
+      axbiTheme,
       undefined,
       OrientationType.Horizontal,
     );

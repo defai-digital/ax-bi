@@ -19,9 +19,9 @@
 
 export const DASHBOARD_LIST = '/dashboard/list/';
 export const CHART_LIST = '/chart/list/';
-export const WORLD_HEALTH_DASHBOARD = '/superset/dashboard/world_health/';
-export const SAMPLE_DASHBOARD_1 = '/superset/dashboard/1-sample-dashboard/';
+export const WORLD_HEALTH_DASHBOARD = '/ax-bi/dashboard/world_health/';
+export const SAMPLE_DASHBOARD_1 = '/ax-bi/dashboard/1-sample-dashboard/';
 export const SUPPORTED_CHARTS_DASHBOARD =
-  '/superset/dashboard/supported_charts_dash/';
-export const TABBED_DASHBOARD = '/superset/dashboard/tabbed_dash/';
+  '/ax-bi/dashboard/supported_charts_dash/';
+export const TABBED_DASHBOARD = '/ax-bi/dashboard/tabbed_dash/';
 export const DATABASE_LIST = '/databaseview/list';

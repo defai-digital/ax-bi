@@ -21,22 +21,22 @@ import { createApi, BaseQueryFn } from '@reduxjs/toolkit/query/react';
 import {
   ClientErrorObject,
   getClientErrorObject,
-  SupersetClient,
+  AxBIClient,
   ParseMethod,
-  SupersetClientResponse,
+  AxBIClientResponse,
   JsonValue,
   RequestBase,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
-export type { JsonResponse, TextResponse } from '@superset-ui/core';
+export type { JsonResponse, TextResponse } from '@ax-bi/ui-core';
 
-export const supersetClientQuery: BaseQueryFn<
+export const axbiClientQuery: BaseQueryFn<
   Pick<RequestBase, 'method' | 'body' | 'jsonPayload' | 'postPayload'> & {
     endpoint: string;
     parseMethod?: ParseMethod;
     // Method syntax (not arrow property) so parameters are checked
     // bivariantly — endpoints narrow the response to JsonResponse etc.
-    transformResponse?(response: SupersetClientResponse): JsonValue;
+    transformResponse?(response: AxBIClientResponse): JsonValue;
     urlParams?: Record<string, number | string | undefined | boolean | object>;
   },
   JsonValue,
@@ -52,7 +52,7 @@ export const supersetClientQuery: BaseQueryFn<
   },
   api,
 ) =>
-  SupersetClient.request({
+  AxBIClient.request({
     ...rest,
     endpoint: `${endpoint}${urlParams ? `?q=${rison.encode(urlParams)}` : ''}`,
     method,
@@ -85,5 +85,5 @@ export const api = createApi({
     'EditorQueries',
   ],
   endpoints: () => ({}),
-  baseQuery: supersetClientQuery,
+  baseQuery: axbiClientQuery,
 });

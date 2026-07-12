@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DatasourceType, getClientErrorObject } from '@superset-ui/core';
+import { DatasourceType, getClientErrorObject } from '@ax-bi/ui-core';
 import fetchMock from 'fetch-mock';
 import {
   setDatasource,
@@ -26,8 +26,8 @@ import {
 import datasourcesReducer from '../reducers/datasourcesReducer';
 import { updateFormDataByDatasource } from './exploreActions';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getClientErrorObject: jest.fn(),
 }));
 

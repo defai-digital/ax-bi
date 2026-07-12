@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useCallback, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   AdhocColumn,
   isAdhocColumn,
@@ -26,9 +26,9 @@ import {
   Datasource,
   QueryFormMetric,
   QueryFormData,
-} from '@superset-ui/core';
-import { tn } from '@apache-superset/core/translation';
-import { ColumnMeta, isColumnMeta } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { tn } from '@ax-bi/core/translation';
+import { ColumnMeta, isColumnMeta } from '@ax-bi/chart-controls';
 import { isString } from 'lodash';
 import DndSelectLabel from 'src/explore/components/controls/DndColumnSelectControl/DndSelectLabel';
 import OptionWrapper from 'src/explore/components/controls/DndColumnSelectControl/OptionWrapper';

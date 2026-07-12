@@ -19,11 +19,11 @@
 import { theme } from 'antd';
 
 /**
- * Superset-specific custom tokens that extend Ant Design's token system.
- * These keys are derived from the SupersetSpecificTokens interface to ensure consistency.
+ * AxBI-specific custom tokens that extend Ant Design's token system.
+ * These keys are derived from the AxBISpecificTokens interface to ensure consistency.
  */
-const SUPERSET_CUSTOM_TOKENS: Set<string> = new Set([
-  // Font extensions (fontWeightStrong is an Ant Design token, not Superset-specific)
+const AXBI_CUSTOM_TOKENS: Set<string> = new Set([
+  // Font extensions (fontWeightStrong is an Ant Design token, not AxBI-specific)
   'fontSizeXS',
   'fontSizeXXL',
   'fontWeightNormal',
@@ -85,12 +85,12 @@ const SUPERSET_CUSTOM_TOKENS: Set<string> = new Set([
 
 /**
  * Lazy-loaded cache of valid token names.
- * Combines Ant Design tokens (extracted at runtime) + Superset custom tokens.
+ * Combines Ant Design tokens (extracted at runtime) + AxBI custom tokens.
  */
 let validTokenNamesCache: Set<string> | undefined;
 
 /**
- * Get all valid token names (Ant Design + Superset custom).
+ * Get all valid token names (Ant Design + AxBI custom).
  * Uses lazy loading and caching for performance.
  */
 function getValidTokenNames(): Set<string> {
@@ -99,17 +99,14 @@ function getValidTokenNames(): Set<string> {
     const antdTokens = theme.getDesignToken();
     const antdTokenNames = Object.keys(antdTokens);
 
-    // Combine with Superset custom tokens
-    validTokenNamesCache = new Set([
-      ...antdTokenNames,
-      ...SUPERSET_CUSTOM_TOKENS,
-    ]);
+    // Combine with AxBI custom tokens
+    validTokenNamesCache = new Set([...antdTokenNames, ...AXBI_CUSTOM_TOKENS]);
   }
   return validTokenNamesCache;
 }
 
 /**
- * Check if a token name is valid (recognized by Ant Design OR Superset).
+ * Check if a token name is valid (recognized by Ant Design OR AxBI).
  * @param tokenName - The token name to validate
  * @returns true if the token is recognized, false otherwise
  */
@@ -118,12 +115,12 @@ export function isValidTokenName(tokenName: string): boolean {
 }
 
 /**
- * Check if a token is a Superset custom token (not from Ant Design).
+ * Check if a token is a AxBI custom token (not from Ant Design).
  * @param tokenName - The token name to check
- * @returns true if it's a Superset-specific token
+ * @returns true if it's a AxBI-specific token
  */
-export function isSupersetCustomToken(tokenName: string): boolean {
-  return SUPERSET_CUSTOM_TOKENS.has(tokenName);
+export function isAxBICustomToken(tokenName: string): boolean {
+  return AXBI_CUSTOM_TOKENS.has(tokenName);
 }
 
 /**
@@ -132,18 +129,16 @@ export function isSupersetCustomToken(tokenName: string): boolean {
  */
 export function getAllValidTokenNames(): {
   antdTokens: string[];
-  supersetTokens: string[];
+  axbiTokens: string[];
   total: number;
 } {
   const allTokens = getValidTokenNames();
-  const antdTokens = Array.from(allTokens).filter(
-    t => !isSupersetCustomToken(t),
-  );
-  const supersetTokens: string[] = Array.from(SUPERSET_CUSTOM_TOKENS);
+  const antdTokens = Array.from(allTokens).filter(t => !isAxBICustomToken(t));
+  const axbiTokens: string[] = Array.from(AXBI_CUSTOM_TOKENS);
 
   return {
     antdTokens,
-    supersetTokens,
+    axbiTokens,
     total: allTokens.size,
   };
 }

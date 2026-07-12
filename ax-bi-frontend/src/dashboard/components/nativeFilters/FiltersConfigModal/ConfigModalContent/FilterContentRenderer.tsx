@@ -17,8 +17,8 @@
  * under the License.
  */
 import { memo, useMemo, RefObject } from 'react';
-import { Filter, Divider } from '@superset-ui/core';
-import type { FormInstance } from '@superset-ui/core/components';
+import { Filter, Divider } from '@ax-bi/ui-core';
+import type { FormInstance } from '@ax-bi/ui-core/components';
 import FiltersConfigForm, {
   FiltersConfigFormHandle,
 } from '../FiltersConfigForm/FiltersConfigForm';

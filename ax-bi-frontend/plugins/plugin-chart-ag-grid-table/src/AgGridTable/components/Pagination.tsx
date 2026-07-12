@@ -17,14 +17,14 @@
  * under the License.
  */
 /* eslint-disable theme-colors/no-literal-colors */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   VerticalLeftOutlined,
   VerticalRightOutlined,
   LeftOutlined,
   RightOutlined,
 } from '@ant-design/icons';
-import { Select } from '@superset-ui/core/components';
+import { Select } from '@ax-bi/ui-core/components';
 import {
   PaginationContainer,
   SelectWrapper,

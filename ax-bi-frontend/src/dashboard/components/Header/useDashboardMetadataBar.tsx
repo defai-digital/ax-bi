@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { DashboardInfo } from 'src/dashboard/types';
 import MetadataBar, {
   MetadataType,
-} from '@superset-ui/core/components/MetadataBar';
+} from '@ax-bi/ui-core/components/MetadataBar';
 import getOwnerName from 'src/utils/getOwnerName';
 
 export const useDashboardMetadataBar = (dashboardInfo: DashboardInfo) => {

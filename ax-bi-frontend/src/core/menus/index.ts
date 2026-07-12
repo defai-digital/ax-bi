@@ -25,7 +25,7 @@
  */
 
 import { useSyncExternalStore } from 'react';
-import type { menus as menusApi } from '@apache-superset/core';
+import type { menus as menusApi } from '@ax-bi/core';
 import { Disposable } from '../models';
 
 type MenuItem = menusApi.MenuItem;

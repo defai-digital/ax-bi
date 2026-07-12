@@ -20,17 +20,17 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 from sqlalchemy.exc import OperationalError
 
-from superset.app import AppRootMiddleware, create_app, SupersetApp
-from superset.commands.database.exceptions import DatabaseInvalidError
-from superset.initialization import SupersetAppInitializer
+from axbi.app import AppRootMiddleware, AxBIApp, create_app
+from axbi.commands.database.exceptions import DatabaseInvalidError
+from axbi.initialization import AxBIAppInitializer
 
 
-class TestSupersetApp:
-    @patch("superset.app.logger")
+class TestAxBIApp:
+    @patch("axbi.app.logger")
     def test_sync_config_to_db_skips_when_no_tables(self, mock_logger):
         """Test that sync is skipped when database is not up-to-date."""
         # Setup
-        app = SupersetApp(__name__)
+        app = AxBIApp(__name__)
         app.config = {"SQLALCHEMY_DATABASE_URI": "postgresql://user:pass@host:5432/db"}
 
         # Mock _is_database_up_to_date to return False
@@ -43,12 +43,12 @@ class TestSupersetApp:
             "Pending database migrations: run 'ax-bi db upgrade'"
         )
 
-    @patch("superset.extensions.db")
-    @patch("superset.app.logger")
+    @patch("axbi.extensions.db")
+    @patch("axbi.app.logger")
     def test_sync_config_to_db_handles_operational_error(self, mock_logger, mock_db):
         """Test that OperationalError during migration check is handled gracefully."""
         # Setup
-        app = SupersetApp(__name__)
+        app = AxBIApp(__name__)
         app.config = {"SQLALCHEMY_DATABASE_URI": "postgresql://user:pass@host:5432/db"}
         error_msg = "Cannot connect to database"
 
@@ -64,9 +64,9 @@ class TestSupersetApp:
             "Pending database migrations: run 'ax-bi db upgrade'"
         )
 
-    @patch("superset.extensions.feature_flag_manager")
-    @patch("superset.app.logger")
-    @patch("superset.commands.theme.seed.SeedSystemThemesCommand")
+    @patch("axbi.extensions.feature_flag_manager")
+    @patch("axbi.app.logger")
+    @patch("axbi.commands.theme.seed.SeedSystemThemesCommand")
     def test_sync_config_to_db_initializes_when_tables_exist(
         self,
         mock_seed_themes_command,
@@ -75,7 +75,7 @@ class TestSupersetApp:
     ):
         """Test that features are initialized when database is up-to-date."""
         # Setup
-        app = SupersetApp(__name__)
+        app = AxBIApp(__name__)
         app.config = {"SQLALCHEMY_DATABASE_URI": "postgresql://user:pass@host:5432/db"}
         mock_feature_flag_manager.is_feature_enabled.return_value = True
         mock_seed_themes = MagicMock()
@@ -85,7 +85,7 @@ class TestSupersetApp:
         with (
             patch.object(app, "_is_database_up_to_date", return_value=True),
             patch(
-                "superset.tags.core.register_sqla_event_listeners"
+                "axbi.tags.core.register_sqla_event_listeners"
             ) as mock_register_listeners,
         ):
             # Execute
@@ -104,8 +104,8 @@ class TestSupersetApp:
         )
 
 
-class TestSupersetAppInitializer:
-    @patch("superset.initialization.logger")
+class TestAxBIAppInitializer:
+    @patch("axbi.initialization.logger")
     def test_init_app_in_ctx_calls_sync_config_to_db(self, mock_logger):
         """Test that initialization calls app.sync_config_to_db()."""
         # Setup
@@ -114,7 +114,7 @@ class TestSupersetAppInitializer:
             "SQLALCHEMY_DATABASE_URI": "postgresql://user:pass@host:5432/db",
             "FLASK_APP_MUTATOR": None,
         }
-        app_initializer = SupersetAppInitializer(mock_app)
+        app_initializer = AxBIAppInitializer(mock_app)
 
         # Execute init_app_in_ctx which calls sync_config_to_db
         with (
@@ -138,7 +138,7 @@ class TestSupersetAppInitializer:
         mock_app = MagicMock()
         test_uri = "postgresql://user:pass@host:5432/testdb"
         mock_app.config = {"SQLALCHEMY_DATABASE_URI": test_uri}
-        app_initializer = SupersetAppInitializer(mock_app)
+        app_initializer = AxBIAppInitializer(mock_app)
 
         # Ensure cache is None initially
         assert app_initializer._db_uri_cache is None
@@ -167,7 +167,7 @@ class TestSupersetAppInitializer:
             "SQLALCHEMY_DATABASE_URI": "postgresql://nouser:nopassword@nohost:5432/nodb"
         }
         mock_app.config = config_dict
-        app_initializer = SupersetAppInitializer(mock_app)
+        app_initializer = AxBIAppInitializer(mock_app)
 
         # First access returns fallback but shouldn't cache it
         uri1 = app_initializer.database_uri
@@ -192,17 +192,17 @@ class TestSupersetAppInitializer:
         mock_app = MagicMock()
         mock_app.app_context.return_value.__enter__.return_value = MagicMock()
 
-        with patch("superset.initialization.db") as mock_db:
+        with patch("axbi.initialization.db") as mock_db:
             connection = mock_db.engine.connect.return_value.__enter__.return_value
             connection.execute.side_effect = Exception("Connection Failed")
 
             with patch.object(
-                SupersetAppInitializer,
+                AxBIAppInitializer,
                 "database_uri",
                 new_callable=PropertyMock,
             ) as mock_uri:
                 mock_uri.return_value = "postgresql://user:secretpass@localhost:5432/db"
-                app_initializer = SupersetAppInitializer(mock_app)
+                app_initializer = AxBIAppInitializer(mock_app)
 
                 with patch("builtins.print") as mock_print:
                     app_initializer.check_and_warn_database_connection()
@@ -217,20 +217,20 @@ class TestSupersetAppInitializer:
         mock_app = MagicMock()
         mock_app.app_context.return_value.__enter__.return_value = MagicMock()
 
-        with patch("superset.initialization.db") as mock_db:
+        with patch("axbi.initialization.db") as mock_db:
             connection = mock_db.engine.connect.return_value.__enter__.return_value
             connection.execute.side_effect = Exception("Connection Failed")
 
             with patch.object(
-                SupersetAppInitializer,
+                AxBIAppInitializer,
                 "database_uri",
                 new_callable=PropertyMock,
             ) as mock_uri:
                 mock_uri.return_value = "sqlite://"
-                app_initializer = SupersetAppInitializer(mock_app)
+                app_initializer = AxBIAppInitializer(mock_app)
 
                 with patch(
-                    "superset.initialization.make_url_safe",
+                    "axbi.initialization.make_url_safe",
                     side_effect=DatabaseInvalidError(),
                 ):
                     with patch("builtins.print") as mock_print:
@@ -246,67 +246,67 @@ class TestSupersetAppInitializer:
 class TestCreateAppRoot:
     """Test app root resolution precedence in create_app."""
 
-    @patch("superset.initialization.SupersetAppInitializer.init_app")
+    @patch("axbi.initialization.AxBIAppInitializer.init_app")
     def test_default_app_root_no_middleware(self, mock_init_app):
         """No param, no config, no env var: app_root is '/', no middleware."""
         env = os.environ.copy()
-        env.pop("SUPERSET_APP_ROOT", None)
-        env.pop("SUPERSET_CONFIG", None)
+        env.pop("AXBI_APP_ROOT", None)
+        env.pop("AXBI_CONFIG", None)
         with patch.dict(os.environ, env, clear=True):
             app = create_app()
 
         assert not isinstance(app.wsgi_app, AppRootMiddleware)
 
-    @patch("superset.initialization.SupersetAppInitializer.init_app")
+    @patch("axbi.initialization.AxBIAppInitializer.init_app")
     def test_application_root_config_activates_middleware(self, mock_init_app):
         """APPLICATION_ROOT in config activates AppRootMiddleware."""
         env = os.environ.copy()
-        env.pop("SUPERSET_APP_ROOT", None)
-        env.pop("SUPERSET_CONFIG", None)
+        env.pop("AXBI_APP_ROOT", None)
+        env.pop("AXBI_CONFIG", None)
         with (
             patch.dict(os.environ, env, clear=True),
-            patch("superset.config.APPLICATION_ROOT", "/from-config", create=True),
+            patch("axbi.config.APPLICATION_ROOT", "/from-config", create=True),
         ):
             app = create_app()
 
         assert isinstance(app.wsgi_app, AppRootMiddleware)
         assert app.wsgi_app.app_root == "/from-config"
 
-    @patch("superset.initialization.SupersetAppInitializer.init_app")
+    @patch("axbi.initialization.AxBIAppInitializer.init_app")
     def test_env_var_activates_middleware(self, mock_init_app):
-        """SUPERSET_APP_ROOT env var activates AppRootMiddleware."""
+        """AXBI_APP_ROOT env var activates AppRootMiddleware."""
         env = os.environ.copy()
-        env.pop("SUPERSET_CONFIG", None)
-        env["SUPERSET_APP_ROOT"] = "/from-env"
+        env.pop("AXBI_CONFIG", None)
+        env["AXBI_APP_ROOT"] = "/from-env"
         with patch.dict(os.environ, env, clear=True):
             app = create_app()
 
         assert isinstance(app.wsgi_app, AppRootMiddleware)
         assert app.wsgi_app.app_root == "/from-env"
 
-    @patch("superset.initialization.SupersetAppInitializer.init_app")
+    @patch("axbi.initialization.AxBIAppInitializer.init_app")
     def test_env_var_takes_precedence_over_config(self, mock_init_app):
-        """SUPERSET_APP_ROOT env var wins over APPLICATION_ROOT config."""
+        """AXBI_APP_ROOT env var wins over APPLICATION_ROOT config."""
         env = os.environ.copy()
-        env.pop("SUPERSET_CONFIG", None)
-        env["SUPERSET_APP_ROOT"] = "/from-env"
+        env.pop("AXBI_CONFIG", None)
+        env["AXBI_APP_ROOT"] = "/from-env"
         with (
             patch.dict(os.environ, env, clear=True),
-            patch("superset.config.APPLICATION_ROOT", "/from-config", create=True),
+            patch("axbi.config.APPLICATION_ROOT", "/from-config", create=True),
         ):
             app = create_app()
 
         assert isinstance(app.wsgi_app, AppRootMiddleware)
         assert app.wsgi_app.app_root == "/from-env"
 
-    @patch("superset.initialization.SupersetAppInitializer.init_app")
+    @patch("axbi.initialization.AxBIAppInitializer.init_app")
     def test_param_takes_precedence_over_env_var(self, mock_init_app):
-        """superset_app_root param wins over SUPERSET_APP_ROOT env var."""
+        """axbi_app_root param wins over AXBI_APP_ROOT env var."""
         env = os.environ.copy()
-        env.pop("SUPERSET_CONFIG", None)
-        env["SUPERSET_APP_ROOT"] = "/from-env"
+        env.pop("AXBI_CONFIG", None)
+        env["AXBI_APP_ROOT"] = "/from-env"
         with patch.dict(os.environ, env, clear=True):
-            app = create_app(superset_app_root="/from-param")
+            app = create_app(axbi_app_root="/from-param")
 
         assert isinstance(app.wsgi_app, AppRootMiddleware)
         assert app.wsgi_app.app_root == "/from-param"

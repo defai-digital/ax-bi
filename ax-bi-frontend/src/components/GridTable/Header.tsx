@@ -19,9 +19,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { IHeaderParams, Column, SortDirection } from 'ag-grid-community';
 
-import { t } from '@apache-superset/core/translation';
-import { styled, useTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { styled, useTheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 import { PIVOT_COL_ID } from './constants';
 import { HeaderMenu } from './HeaderMenu';

@@ -17,15 +17,15 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { truncationCSS } from '@superset-ui/core';
-import { styled, SupersetTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { truncationCSS } from '@ax-bi/ui-core';
+import { styled, AxBITheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import {
   FormItem as StyledFormItem,
   Form,
   Icons,
   Tooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { FilterBarOrientation } from 'src/dashboard/types';
 
 export const FilterStyledIcon = styled.div`
@@ -208,7 +208,7 @@ const StyledInfoCircleOutlined = styled(Icons.InfoCircleOutlined)`
 
 export const RequiredFieldIndicator = () => (
   <span
-    css={(theme: SupersetTheme) => ({
+    css={(theme: AxBITheme) => ({
       color: theme.colorError,
       fontSize: `${theme.fontSizeSM}px`,
       paddingLeft: '1px',

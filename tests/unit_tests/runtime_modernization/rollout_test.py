@@ -18,7 +18,7 @@ from typing import Any, cast
 
 import pytest
 
-from superset.runtime_modernization.rollout import (
+from axbi.runtime_modernization.rollout import (
     audit_runtime_modernization_completion,
     build_operator_approval_evidence,
     build_operator_dashboard_snapshot,
@@ -151,8 +151,7 @@ def _complete_production_evidence(
                     "risk low"
                 ),
                 "security_cost_estimate": (
-                    "Superset remains the authorization authority for extracted "
-                    "workflows"
+                    "AxBI remains the authorization authority for extracted workflows"
                 ),
                 "approval_reference": "CHG-123",
                 "approver": "platform-ops",
@@ -548,7 +547,7 @@ def test_validate_production_evidence_passes_complete_bundle() -> None:
                         "risk low"
                     ),
                     "security_cost_estimate": (
-                        "Superset remains the authorization authority for extracted "
+                        "AxBI remains the authorization authority for extracted "
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
@@ -635,7 +634,7 @@ def test_validate_production_evidence_requires_dashboard_for_enabled_workflows()
                         "risk low"
                     ),
                     "security_cost_estimate": (
-                        "Superset remains the authorization authority for extracted "
+                        "AxBI remains the authorization authority for extracted "
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
@@ -1081,7 +1080,7 @@ def test_validate_production_evidence_requires_approval_for_enabled_workflows() 
                         "risk low"
                     ),
                     "security_cost_estimate": (
-                        "Superset remains the authorization authority for extracted "
+                        "AxBI remains the authorization authority for extracted "
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
@@ -1297,7 +1296,7 @@ def test_validate_production_evidence_requires_valid_migration_decision() -> Non
                         "risk low"
                     ),
                     "security_cost_estimate": (
-                        "Superset remains the authorization authority for extracted "
+                        "AxBI remains the authorization authority for extracted "
                         "workflows"
                     ),
                     "approval_reference": "CHG-123",
@@ -1509,7 +1508,7 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
             "versioned contracts and Python fallback keep compatibility risk low"
         ),
         security_cost_estimate=(
-            "Superset remains the authorization authority for extracted workflows"
+            "AxBI remains the authorization authority for extracted workflows"
         ),
         approval_reference="CHG-123",
         workflow_names=("mcp_asset_search", "mcp_dashboard_list"),
@@ -1526,7 +1525,7 @@ def test_build_operator_approval_evidence_includes_required_fields() -> None:
             "versioned contracts and Python fallback keep compatibility risk low"
         ),
         "security_cost_estimate": (
-            "Superset remains the authorization authority for extracted workflows"
+            "AxBI remains the authorization authority for extracted workflows"
         ),
         "approval_reference": "CHG-123",
         "workflow_names": ["mcp_asset_search", "mcp_dashboard_list"],
@@ -1547,7 +1546,7 @@ def test_build_operator_approval_evidence_requires_approved_workflows() -> None:
                 "versioned contracts and Python fallback keep compatibility risk low"
             ),
             security_cost_estimate=(
-                "Superset remains the authorization authority for extracted workflows"
+                "AxBI remains the authorization authority for extracted workflows"
             ),
             approval_reference="CHG-123",
             workflow_names=(),
@@ -1566,7 +1565,7 @@ def test_build_operator_approval_evidence_requires_unique_workflows() -> None:
                 "versioned contracts and Python fallback keep compatibility risk low"
             ),
             security_cost_estimate=(
-                "Superset remains the authorization authority for extracted workflows"
+                "AxBI remains the authorization authority for extracted workflows"
             ),
             approval_reference="CHG-123",
             workflow_names=("mcp_asset_search", "mcp_asset_search"),
@@ -1585,7 +1584,7 @@ def test_build_operator_approval_evidence_requires_approver() -> None:
                 "versioned contracts and Python fallback keep compatibility risk low"
             ),
             security_cost_estimate=(
-                "Superset remains the authorization authority for extracted workflows"
+                "AxBI remains the authorization authority for extracted workflows"
             ),
             approval_reference="CHG-123",
             workflow_names=("mcp_asset_search",),
@@ -1622,7 +1621,7 @@ def test_build_operator_approval_evidence_requires_valid_migration_decision() ->
                 "versioned contracts and Python fallback keep compatibility risk low"
             ),
             security_cost_estimate=(
-                "Superset remains the authorization authority for extracted workflows"
+                "AxBI remains the authorization authority for extracted workflows"
             ),
             approval_reference="CHG-123",
             workflow_names=("mcp_asset_search",),
@@ -1639,7 +1638,7 @@ def test_build_operator_approval_evidence_requires_cost_estimates() -> None:
             migration_decision="expand",
             compatibility_cost_estimate="",
             security_cost_estimate=(
-                "Superset remains the authorization authority for extracted workflows"
+                "AxBI remains the authorization authority for extracted workflows"
             ),
             approval_reference="CHG-123",
             workflow_names=("mcp_asset_search",),

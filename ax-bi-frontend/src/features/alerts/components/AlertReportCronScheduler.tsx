@@ -18,15 +18,15 @@
  */
 import { useState, useCallback, FocusEvent, FC } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
 
 import {
   Input,
   CronPicker,
   Select,
   type CronError,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { StyledInputContainer } from '../AlertReportModal';
 
 export interface AlertReportCronSchedulerProps {

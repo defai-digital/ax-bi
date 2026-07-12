@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useEffect, useState } from 'react';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import rison from 'rison';
 import { LayerInfo } from './types';
 
@@ -56,7 +56,7 @@ export const useDeckLayerMetadata = (
         });
         const endpoint = `/api/v1/chart/?q=${queryParams}`;
 
-        const response = await SupersetClient.get({ endpoint });
+        const response = await AxBIClient.get({ endpoint });
 
         const slices: SliceResponse[] = response.json.result || [];
 

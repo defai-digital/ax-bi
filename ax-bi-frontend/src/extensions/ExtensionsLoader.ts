@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
-import type { common as core } from '@apache-superset/core';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
+import type { common as core } from '@ax-bi/core';
 
 type Extension = core.Extension;
 
@@ -62,7 +62,7 @@ class ExtensionsLoader {
     }
     this.initializationPromise = (async () => {
       try {
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint: '/api/v1/extensions/',
         });
         const extensions: Extension[] = response.json.result;

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { Radio } from '@superset-ui/core/components/Radio';
+import { t } from '@ax-bi/core/translation';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
 import {
   COMMON_RANGE_OPTIONS,
   COMMON_RANGE_SET,

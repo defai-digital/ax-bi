@@ -17,6 +17,6 @@
  * under the License.
  */
 
-// ListView-specific Playwright Components for Superset
+// ListView-specific Playwright Components for AxBI
 export { BulkSelect } from './BulkSelect';
 export type { BulkSelectActionKey } from './BulkSelect';

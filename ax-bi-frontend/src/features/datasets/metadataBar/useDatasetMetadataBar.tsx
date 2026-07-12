@@ -17,14 +17,14 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme } from '@ax-bi/core/theme';
 import { Dataset } from 'src/components/Chart/types';
-import MetadataBar from '@superset-ui/core/components/MetadataBar';
+import MetadataBar from '@ax-bi/ui-core/components/MetadataBar';
 import {
   ContentType,
   MetadataType,
-} from '@superset-ui/core/components/MetadataBar/ContentType';
+} from '@ax-bi/ui-core/components/MetadataBar/ContentType';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
 
 export interface UseDatasetMetadataBarProps {

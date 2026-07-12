@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset.models.tasks import Task
-from superset.utils import json
+from axbi.models.tasks import Task
+from axbi.utils import json
 
 
 def test_task_payload_dict_ignores_non_object_payload() -> None:

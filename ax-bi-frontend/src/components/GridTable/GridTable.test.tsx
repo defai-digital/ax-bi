@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render } from 'spec/helpers/testing-library';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { GridTable } from '.';
 
 const mockedProps = {

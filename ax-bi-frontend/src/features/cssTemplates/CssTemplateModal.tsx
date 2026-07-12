@@ -17,14 +17,14 @@
  * under the License.
  */
 import { FunctionComponent, useState, useEffect, ChangeEvent } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
 import { useSingleViewResource } from 'src/views/CRUD/hooks';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 import withToasts from 'src/components/MessageToasts/withToasts';
-import { Input, Modal } from '@superset-ui/core/components';
+import { Input, Modal } from '@ax-bi/ui-core/components';
 import { EditorHost } from 'src/core/editors';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { OnlyKeyWithType } from 'src/utils/types';
 import { TemplateObject } from './types';
 

@@ -55,6 +55,6 @@ const users = Array.from({ length: 10 }, (_, i) => ({
   id: i,
 }));
 
-export const SupersetFacePile = ({ maxCount }: { maxCount: number }) => (
+export const AxBIFacePile = ({ maxCount }: { maxCount: number }) => (
   <FacePile users={users} maxCount={maxCount} />
 );

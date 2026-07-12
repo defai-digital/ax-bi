@@ -18,11 +18,11 @@
  */
 import { useMemo, FC, ReactElement, type ReactNode } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { styled, useTheme, SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled, useTheme, AxBITheme } from '@ax-bi/core/theme';
 
-import { Button, DropdownButton } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Button, DropdownButton } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { detectOS } from 'src/utils/common';
 import { QueryButtonProps } from 'src/SqlLab/types';
 import useQueryEditor from 'src/SqlLab/hooks/useQueryEditor';
@@ -44,7 +44,7 @@ export interface RunQueryActionButtonProps {
 const buildTextAndIcon = (
   shouldShowStopButton: boolean,
   selectedText: string | undefined,
-  theme: SupersetTheme,
+  theme: AxBITheme,
 ): { text: string; icon?: ReactNode } => {
   let text = t('Run');
   let icon: ReactNode = <Icons.CaretRightOutlined />;

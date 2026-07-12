@@ -26,9 +26,9 @@ from flask import current_app
 from pandas.api.types import is_datetime64_dtype
 from pytest_mock import MockerFixture
 
-from superset.constants import DEFAULT_USER_AGENT
-from superset.exceptions import SupersetException
-from superset.utils.core import (
+from axbi.constants import DEFAULT_USER_AGENT
+from axbi.exceptions import AxBIException
+from axbi.utils.core import (
     cast_to_boolean,
     check_is_safe_zip,
     convert_legacy_filters_into_adhoc,
@@ -141,9 +141,7 @@ def test_remove_extra_adhoc_filters(
 
 def test_is_test():
     orig_axbi_value = os.getenv("AX_BI_TESTENV")
-    orig_superset_value = os.getenv("SUPERSET_TESTENV")
 
-    os.environ.pop("SUPERSET_TESTENV", None)
     os.environ["AX_BI_TESTENV"] = "true"
     assert is_test()
     os.environ["AX_BI_TESTENV"] = "false"
@@ -151,19 +149,10 @@ def test_is_test():
     os.environ["AX_BI_TESTENV"] = ""
     assert not is_test()
 
-    os.environ.pop("AX_BI_TESTENV", None)
-    os.environ["SUPERSET_TESTENV"] = "true"
-    assert is_test()
-
     if orig_axbi_value is not None:
         os.environ["AX_BI_TESTENV"] = orig_axbi_value
     else:
         os.environ.pop("AX_BI_TESTENV", None)
-
-    if orig_superset_value is not None:
-        os.environ["SUPERSET_TESTENV"] = orig_superset_value
-    else:
-        os.environ.pop("SUPERSET_TESTENV", None)
 
 
 @pytest.mark.parametrize(
@@ -478,7 +467,7 @@ def test_check_if_safe_zip_high_rate(app_context: None) -> None:
         MockZipInfo(file_size=1000, compress_size=1),
         MockZipInfo(file_size=1000, compress_size=1),
     ]
-    with pytest.raises(SupersetException):
+    with pytest.raises(AxBIException):
         check_is_safe_zip(ZipFile)
 
 
@@ -494,7 +483,7 @@ def test_check_if_safe_zip_hidden_bomb(app_context: None) -> None:
         MockZipInfo(file_size=1000, compress_size=100),
         MockZipInfo(file_size=1000 * (1024 * 1024), compress_size=100),
     ]
-    with pytest.raises(SupersetException):
+    with pytest.raises(AxBIException):
         check_is_safe_zip(ZipFile)
 
 
@@ -507,7 +496,7 @@ def test_check_if_safe_zip_total_size(app_context: None) -> None:
     ZipFile.infolist.return_value = [
         MockZipInfo(file_size=hundred_mb, compress_size=hundred_mb) for _ in range(11)
     ]
-    with pytest.raises(SupersetException):
+    with pytest.raises(AxBIException):
         check_is_safe_zip(ZipFile)
 
 
@@ -555,7 +544,7 @@ def test_generic_constraint_name_exists():
     database_mock.metadata.tables = {table_name: table_mock}
 
     # Mock the sa.Table creation with autoload
-    with patch("superset.utils.core.sa.Table") as table_creation_mock:
+    with patch("axbi.utils.core.sa.Table") as table_creation_mock:
         table_creation_mock.return_value = table_mock
 
         result = generic_find_constraint_name(
@@ -733,10 +722,10 @@ def test_get_datasource_full_name():
     "referrer,expected",
     [
         (None, None),
-        ("https://mysuperset.com/abc", None),
+        ("https://myaxbi.com/abc", None),
         ("https://myaxbi.com/ax-bi/dashboard/", QuerySource.DASHBOARD),
-        ("https://mysuperset.com/explore/", QuerySource.CHART),
-        ("https://mysuperset.com/sqllab/", QuerySource.SQL_LAB),
+        ("https://myaxbi.com/explore/", QuerySource.CHART),
+        ("https://myaxbi.com/sqllab/", QuerySource.SQL_LAB),
     ],
 )
 def test_get_query_source_from_request(
@@ -750,7 +739,7 @@ def test_get_query_source_from_request(
         with mocker.patch("flask.has_request_context", return_value=True):
             request_mock = mocker.MagicMock()
             request_mock.referrer = referrer
-            mocker.patch("superset.utils.core.request", request_mock)
+            mocker.patch("axbi.utils.core.request", request_mock)
             assert get_query_source_from_request() == expected
     else:
         # When no referrer, test without request context
@@ -2061,7 +2050,7 @@ def test_send_email_smtp_strips_crlf_from_subject() -> None:
     """
     from email.mime.multipart import MIMEMultipart
 
-    from superset.utils.core import send_email_smtp
+    from axbi.utils.core import send_email_smtp
 
     captured: dict[str, MIMEMultipart] = {}
 

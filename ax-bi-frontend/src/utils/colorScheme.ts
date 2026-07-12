@@ -22,7 +22,7 @@ import {
   ensureIsArray,
   getCategoricalSchemeRegistry,
   getLabelsColorMap,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { intersection, omit, pick } from 'lodash';
 import { areObjectsEqual } from 'src/reduxUtils';
 

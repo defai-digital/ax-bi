@@ -17,10 +17,10 @@
  * under the License.
  */
 import { FC, ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme, SupersetTheme } from '@apache-superset/core/theme';
-import { FormLabel, InfoTooltip, Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme, AxBITheme } from '@ax-bi/core/theme';
+import { FormLabel, InfoTooltip, Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 type ValidationError = string;
 
@@ -125,7 +125,7 @@ const ControlHeader: FC<ControlHeaderProps> = ({
     <div className="ControlHeader" data-test={`${name}-header`}>
       <div className="pull-left">
         <FormLabel
-          css={(theme: SupersetTheme) => css`
+          css={(theme: AxBITheme) => css`
             margin-bottom: ${theme.sizeUnit * 0.5}px;
             position: relative;
             font-size: ${theme.fontSizeSM}px;

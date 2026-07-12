@@ -21,7 +21,7 @@ import {
   ChartCustomization,
   ChartCustomizationDivider,
   ColumnOption,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   DASHBOARD_INFO_UPDATED,
   SET_FILTER_BAR_ORIENTATION,
@@ -66,8 +66,7 @@ export interface HydrateDashboardInfoAction {
 }
 
 type DashboardInfoReducerAction =
-  | DashboardInfoAction
-  | HydrateDashboardInfoAction;
+  DashboardInfoAction | HydrateDashboardInfoAction;
 
 type DashboardInfoState = Partial<DashboardInfo> & {
   last_modified_time?: number;

@@ -20,7 +20,7 @@ import {
   Behavior,
   ChartMetadata,
   getChartMetadataRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import fetchMock from 'fetch-mock';
 import {
   render,
@@ -30,7 +30,7 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import chartQueries, { sliceId } from 'spec/fixtures/mockChartQueries';
-import { supersetGetCache } from 'src/utils/cachedSupersetGet';
+import { axbiGetCache } from 'src/utils/cachedAxBIGet';
 import { DrillBySubmenu, DrillBySubmenuProps } from './DrillBySubmenu';
 
 /* eslint jest/expect-expect: ["warn", { "assertFunctionNames": ["expect*"] }] */
@@ -132,7 +132,7 @@ getChartMetadataRegistry().registerValue(
 );
 
 afterEach(() => {
-  supersetGetCache.clear();
+  axbiGetCache.clear();
   fetchMock.clearHistory().removeRoutes();
 });
 

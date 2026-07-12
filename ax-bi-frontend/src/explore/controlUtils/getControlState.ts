@@ -22,7 +22,7 @@ import {
   ensureIsArray,
   JsonValue,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   ControlConfig,
   ControlPanelState,
@@ -30,7 +30,7 @@ import {
   ControlType,
   ControlValueValidator,
   CustomControlItem,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { getSectionsToRender } from './getSectionsToRender';
 import { getControlConfig } from './getControlConfig';
 

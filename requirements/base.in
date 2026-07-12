@@ -58,7 +58,7 @@ openapi-schema-validator>=0.6.3
 setuptools>=82.0.1,<83
 
 # google-auth 2.53+ dropped its transitive dependency on cachetools, which is
-# imported directly by superset.db_engine_specs.aws_iam. We declare cachetools
+# imported directly by axbi.db_engine_specs.aws_iam. We declare cachetools
 # explicitly in pyproject.toml and pin google-auth to the post-drop range so
 # the install path is internally consistent (#40962).
 google-auth>=2.53.0,<3.0.0

@@ -18,7 +18,7 @@
 """Unit tests for ASCII charts: trend analysis, NaN/null handling,
 and boolean skipping."""
 
-from superset.mcp_service.chart.ascii_charts import (
+from axbi.mcp_service.chart.ascii_charts import (
     _analyze_trend,
     _extract_time_series_data,
     generate_ascii_chart,

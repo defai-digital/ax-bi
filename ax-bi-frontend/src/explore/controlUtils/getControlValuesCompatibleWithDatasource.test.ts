@@ -17,12 +17,8 @@
  * under the License.
  */
 
-import {
-  ControlState,
-  Dataset,
-  sharedControls,
-} from '@superset-ui/chart-controls';
-import { DatasourceType, JsonValue } from '@superset-ui/core';
+import { ControlState, Dataset, sharedControls } from '@ax-bi/chart-controls';
+import { DatasourceType, JsonValue } from '@ax-bi/ui-core';
 import { getControlValuesCompatibleWithDatasource } from './getControlValuesCompatibleWithDatasource';
 
 const sampleDatasource: Dataset = {

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { ClientErrorObject, SupersetError } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { ClientErrorObject, AxBIError } from '@ax-bi/ui-core';
 import { FC } from 'react';
 import { useChartOwnerNames } from 'src/hooks/apiResources';
 import { ErrorMessageWithStackTrace } from 'src/components';
@@ -26,7 +26,7 @@ import { ChartSource } from 'src/types/ChartSource';
 
 export type Props = {
   chartId: number;
-  error?: SupersetError;
+  error?: AxBIError;
   subtitle: React.ReactNode;
   link?: string;
   source: ChartSource;

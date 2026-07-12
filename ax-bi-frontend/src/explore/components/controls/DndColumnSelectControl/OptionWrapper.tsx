@@ -24,11 +24,11 @@ import {
   OptionProps,
   OptionItemInterface,
 } from 'src/explore/components/controls/DndColumnSelectControl/types';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { StyledColumnOption } from 'src/explore/components/optionRenderers';
-import { isAdhocColumn } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { isAdhocColumn } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import Option from './Option';
 
 export const OptionLabel = styled.div`

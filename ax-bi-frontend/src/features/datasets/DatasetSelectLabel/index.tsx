@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Tooltip } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { Tooltip } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 
 type Database = {
   database_name: string;

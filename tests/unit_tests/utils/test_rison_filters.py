@@ -16,7 +16,7 @@
 # under the License.
 """Unit tests for Rison filter parser."""
 
-from superset.utils.rison_filters import RisonFilterParser
+from axbi.utils.rison_filters import RisonFilterParser
 
 
 def test_simple_equality():

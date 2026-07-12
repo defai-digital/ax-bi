@@ -21,12 +21,12 @@ from unittest.mock import patch
 
 import pytest  # noqa: F401
 
-from superset.utils.hashing import hash_from_dict, hash_from_str
+from axbi.utils.hashing import hash_from_dict, hash_from_str
 
 
 def test_basic_md5_sha():
     """Test basic hashing with MD5 (legacy mode)."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="md5"):
         obj = {
             "product": "Coffee",
             "company": "Gobias Industries",
@@ -41,7 +41,7 @@ def test_basic_md5_sha():
 
 def test_basic_sha256():
     """Test basic hashing with SHA-256 (FedRAMP compliant mode)."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="sha256"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="sha256"):
         obj = {
             "product": "Coffee",
             "company": "Gobias Industries",
@@ -60,7 +60,7 @@ def test_basic_sha256():
 
 def test_sort_order_md5_sha():
     """Test dictionary key order independence with MD5."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="md5"):
         obj_1 = {
             "product": "Coffee",
             "price_in_cents": 4000,
@@ -79,7 +79,7 @@ def test_sort_order_md5_sha():
 
 def test_sort_order_sha256():
     """Test dictionary key order independence with SHA-256."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="sha256"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="sha256"):
         obj_1 = {
             "product": "Coffee",
             "price_in_cents": 4000,
@@ -101,7 +101,7 @@ def test_sort_order_sha256():
 
 def test_custom_default_md5_sha():
     """Test custom serializer with MD5."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="md5"):
 
         def custom_datetime_serializer(obj: Any):
             if isinstance(obj, datetime.datetime):
@@ -123,7 +123,7 @@ def test_custom_default_md5_sha():
 
 def test_custom_default_sha256():
     """Test custom serializer with SHA-256."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="sha256"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="sha256"):
 
         def custom_datetime_serializer(obj: Any):
             if isinstance(obj, datetime.datetime):
@@ -148,7 +148,7 @@ def test_custom_default_sha256():
 
 def test_ignore_nan_md5_sha():
     """Test NaN handling with MD5."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="md5"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="md5"):
         obj = {
             "product": "Coffee",
             "company": "Gobias Industries",
@@ -172,7 +172,7 @@ def test_ignore_nan_md5_sha():
 
 def test_ignore_nan_sha256():
     """Test NaN handling with SHA-256."""
-    with patch("superset.utils.hashing.get_hash_algorithm", return_value="sha256"):
+    with patch("axbi.utils.hashing.get_hash_algorithm", return_value="sha256"):
         obj = {
             "product": "Coffee",
             "company": "Gobias Industries",

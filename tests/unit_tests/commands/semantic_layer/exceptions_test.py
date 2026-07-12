@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset.commands.semantic_layer.exceptions import (
+from axbi.commands.semantic_layer.exceptions import (
     SemanticLayerCreateFailedError,
     SemanticLayerDeleteFailedError,
     SemanticLayerForbiddenError,

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { css, styled } from '@apache-superset/core/theme';
-import { Select } from '@superset-ui/core/components';
+import { css, styled } from '@ax-bi/core/theme';
+import { Select } from '@ax-bi/ui-core/components';
 
 /* Components for AgGridTable */
 // Header Styles

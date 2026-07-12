@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useEffect, SetStateAction, Dispatch, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import TableSelector, { TableOption } from 'src/components/TableSelector';
-import { EmptyState } from '@superset-ui/core/components';
+import { EmptyState } from '@ax-bi/ui-core/components';
 import { type DatabaseObject } from 'src/components';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { LocalStorageKeys, getItem } from 'src/utils/localStorageHelpers';
@@ -30,7 +30,7 @@ import {
 } from 'src/features/datasets/AddDataset/types';
 import { Table } from 'src/hooks/apiResources';
 import { ensureAppRoot } from 'src/utils/pathUtils';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 
 interface LeftPanelProps {
   setDataset: Dispatch<SetStateAction<object>>;

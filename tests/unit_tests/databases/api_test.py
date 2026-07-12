@@ -33,19 +33,19 @@ from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 from werkzeug.datastructures import FileStorage
 
-from superset import db
-from superset.commands.database.uploaders.base import UploadCommand
-from superset.commands.database.uploaders.columnar_reader import ColumnarReader
-from superset.commands.database.uploaders.csv_reader import CSVReader
-from superset.commands.database.uploaders.excel_reader import ExcelReader
-from superset.commands.database.uploaders.structured_reader import StructuredReader
-from superset.db_engine_specs.sqlite import SqliteEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import OAuth2RedirectError, SupersetSecurityException
-from superset.sql.parse import Partition, Table
-from superset.superset_typing import OAuth2State
-from superset.utils import json
-from superset.utils.oauth2 import encode_oauth2_state
+from axbi import db
+from axbi.axbi_typing import OAuth2State
+from axbi.commands.database.uploaders.base import UploadCommand
+from axbi.commands.database.uploaders.columnar_reader import ColumnarReader
+from axbi.commands.database.uploaders.csv_reader import CSVReader
+from axbi.commands.database.uploaders.excel_reader import ExcelReader
+from axbi.commands.database.uploaders.structured_reader import StructuredReader
+from axbi.db_engine_specs.sqlite import SqliteEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException, OAuth2RedirectError
+from axbi.sql.parse import Partition, Table
+from axbi.utils import json
+from axbi.utils.oauth2 import encode_oauth2_state
 from tests.unit_tests.fixtures.common import (
     create_columnar_file,
     create_csv_file,
@@ -55,8 +55,8 @@ from tests.unit_tests.fixtures.common import (
 
 def test_detect_upload_file_type_handles_compound_and_mlflow_model() -> None:
     """Auto-upload routing handles compound names and exact MLflow model files."""
-    from superset.commands.database.uploaders.base import UploadFileType
-    from superset.databases.api import detect_upload_file_type
+    from axbi.commands.database.uploaders.base import UploadFileType
+    from axbi.databases.api import detect_upload_file_type
 
     assert detect_upload_file_type(".csv") is None
     assert detect_upload_file_type("foo.mlmodel") == (
@@ -78,13 +78,13 @@ def test_filter_by_uuid(
     """
     Test that we can filter databases by UUID.
 
-    Note: this functionality is not used by the Superset UI, but is needed by 3rd
-    party tools that use the Superset API. If this tests breaks, please make sure
+    Note: this functionality is not used by the AxBI UI, but is needed by 3rd
+    party tools that use the AxBI API. If this tests breaks, please make sure
     that the functionality is properly deprecated between major versions with
     enough warning so that tools can be adapted.
     """
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database
 
     DatabaseRestApi.datamodel._session = session
 
@@ -118,7 +118,7 @@ def test_post_with_uuid(
     """
     Test that we can set the database UUID when creating it.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     # create table for databases
     Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
@@ -211,8 +211,8 @@ def test_password_mask(
     """
     Test that sensitive information is masked.
     """
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database
 
     DatabaseRestApi.datamodel._session = session
 
@@ -245,7 +245,7 @@ def test_password_mask(
 
     # mock the lookup so that we don't need to include the driver
     mocker.patch("sqlalchemy.engine.URL.get_driver_name", return_value="gsheets")
-    mocker.patch("superset.utils.log.DBEventLogger.log")
+    mocker.patch("axbi.utils.log.DBEventLogger.log")
 
     response = client.get("/api/v1/database/1/connection")
 
@@ -267,8 +267,8 @@ def test_database_connection(
     """
     Test that connection info is only returned in ``api/v1/database/${id}/connection``.
     """
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database
 
     DatabaseRestApi.datamodel._session = session
 
@@ -301,7 +301,7 @@ def test_database_connection(
 
     # mock the lookup so that we don't need to include the driver
     mocker.patch("sqlalchemy.engine.URL.get_driver_name", return_value="gsheets")
-    mocker.patch("superset.utils.log.DBEventLogger.log")
+    mocker.patch("axbi.utils.log.DBEventLogger.log")
 
     response = client.get("/api/v1/database/1/connection")
     assert response.json == {
@@ -434,11 +434,11 @@ def test_update_with_password_mask(
     """
     Test that an update with a masked password doesn't overwrite the existing password.
     """
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database
 
     DatabaseRestApi.datamodel._session = session
-    mocker.patch("superset.commands.database.update.SyncPermissionsCommand")
+    mocker.patch("axbi.commands.database.update.SyncPermissionsCommand")
 
     # create table for databases
     Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
@@ -514,13 +514,13 @@ def test_import(
             }
         ),
     }
-    mocker.patch("superset.databases.api.is_zipfile", return_value=True)
-    mocker.patch("superset.databases.api.ZipFile")
+    mocker.patch("axbi.databases.api.is_zipfile", return_value=True)
+    mocker.patch("axbi.databases.api.ZipFile")
     mocker.patch(
-        "superset.databases.api.get_contents_from_bundle",
+        "axbi.databases.api.get_contents_from_bundle",
         return_value=contents,
     )
-    command = mocker.patch("superset.databases.api.ImportDatabasesCommand")
+    command = mocker.patch("axbi.databases.api.ImportDatabasesCommand")
 
     form_data = {"formData": (BytesIO(b"test"), "test.zip")}
     client.post(
@@ -575,13 +575,13 @@ def test_import_with_encrypted_extra_secrets(
             }
         ),
     }
-    mocker.patch("superset.databases.api.is_zipfile", return_value=True)
-    mocker.patch("superset.databases.api.ZipFile")
+    mocker.patch("axbi.databases.api.is_zipfile", return_value=True)
+    mocker.patch("axbi.databases.api.ZipFile")
     mocker.patch(
-        "superset.databases.api.get_contents_from_bundle",
+        "axbi.databases.api.get_contents_from_bundle",
         return_value=contents,
     )
-    command = mocker.patch("superset.databases.api.ImportDatabasesCommand")
+    command = mocker.patch("axbi.databases.api.ImportDatabasesCommand")
 
     secrets = {
         "databases/test.yaml": {
@@ -635,13 +635,13 @@ def test_import_rejects_invalid_json_object_form_field(
             }
         ),
     }
-    mocker.patch("superset.databases.api.is_zipfile", return_value=True)
-    mocker.patch("superset.databases.api.ZipFile")
+    mocker.patch("axbi.databases.api.is_zipfile", return_value=True)
+    mocker.patch("axbi.databases.api.ZipFile")
     mocker.patch(
-        "superset.databases.api.get_contents_from_bundle",
+        "axbi.databases.api.get_contents_from_bundle",
         return_value=contents,
     )
-    command = mocker.patch("superset.databases.api.ImportDatabasesCommand")
+    command = mocker.patch("axbi.databases.api.ImportDatabasesCommand")
 
     form_data = {
         "formData": (BytesIO(b"test"), "test.zip"),
@@ -682,7 +682,7 @@ def test_non_zip_import(client: Any, full_api_access: None) -> None:
                     "issue_codes": [
                         {
                             "code": 1010,
-                            "message": "Issue 1010 - Superset encountered an error while running a command.",  # noqa: E501
+                            "message": "Issue 1010 - AxBI encountered an error while running a command.",  # noqa: E501
                         }
                     ]
                 },
@@ -705,9 +705,9 @@ def test_apply_dynamic_database_filter(
     the filtered results.
     """
     with app.app_context():
-        from superset.daos.database import DatabaseDAO
-        from superset.databases.api import DatabaseRestApi
-        from superset.models.core import Database
+        from axbi.daos.database import DatabaseDAO
+        from axbi.databases.api import DatabaseRestApi
+        from axbi.models.core import Database
 
         DatabaseRestApi.datamodel._session = session
 
@@ -748,10 +748,10 @@ def test_apply_dynamic_database_filter(
 
         # mock the lookup so that we don't need to include the driver
         mocker.patch("sqlalchemy.engine.URL.get_driver_name", return_value="gsheets")
-        mocker.patch("superset.utils.log.DBEventLogger.log")
+        mocker.patch("axbi.utils.log.DBEventLogger.log")
 
         def _base_filter(query):
-            from superset.models.core import Database
+            from axbi.models.core import Database
 
             return query.filter(Database.database_name.startswith("second"))
 
@@ -797,8 +797,8 @@ def test_oauth2_happy_path(
     """
     Test the OAuth2 endpoint when everything goes well.
     """
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database, DatabaseUserOAuth2Tokens
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database, DatabaseUserOAuth2Tokens
 
     DatabaseRestApi.datamodel._session = session
 
@@ -826,7 +826,7 @@ def test_oauth2_happy_path(
         "refresh_token": "ZZZ",
     }
     mocker.patch(
-        "superset.commands.database.oauth2.KeyValueDAO.get_value",
+        "axbi.commands.database.oauth2.KeyValueDAO.get_value",
         return_value=None,
     )
 
@@ -837,7 +837,7 @@ def test_oauth2_happy_path(
         "default_redirect_uri": "http://localhost:8088/api/v1/oauth2/",
     }
 
-    mocker.patch("superset.databases.api.render_template", return_value="OK")
+    mocker.patch("axbi.databases.api.render_template", return_value="OK")
 
     with freeze_time("2024-01-01T00:00:00Z"):
         response = client.get(
@@ -874,8 +874,8 @@ def test_oauth2_permissions(
     Anyone should be able to authenticate with OAuth2, even if they don't have
     permissions to read the database (which is needed to get the OAuth2 config).
     """
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database, DatabaseUserOAuth2Tokens
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database, DatabaseUserOAuth2Tokens
 
     DatabaseRestApi.datamodel._session = session
 
@@ -902,7 +902,7 @@ def test_oauth2_permissions(
         "refresh_token": "ZZZ",
     }
     mocker.patch(
-        "superset.commands.database.oauth2.KeyValueDAO.get_value",
+        "axbi.commands.database.oauth2.KeyValueDAO.get_value",
         return_value=None,
     )
 
@@ -913,7 +913,7 @@ def test_oauth2_permissions(
         "default_redirect_uri": "http://localhost:8088/api/v1/oauth2/",
     }
 
-    mocker.patch("superset.databases.api.render_template", return_value="OK")
+    mocker.patch("axbi.databases.api.render_template", return_value="OK")
 
     with freeze_time("2024-01-01T00:00:00Z"):
         response = client.get(
@@ -948,8 +948,8 @@ def test_oauth2_multiple_tokens(
     """
     Test the OAuth2 endpoint when a second token is added.
     """
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database, DatabaseUserOAuth2Tokens
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database, DatabaseUserOAuth2Tokens
 
     DatabaseRestApi.datamodel._session = session
 
@@ -983,7 +983,7 @@ def test_oauth2_multiple_tokens(
         },
     ]
     mocker.patch(
-        "superset.commands.database.oauth2.KeyValueDAO.get_value",
+        "axbi.commands.database.oauth2.KeyValueDAO.get_value",
         return_value=None,
     )
 
@@ -994,7 +994,7 @@ def test_oauth2_multiple_tokens(
         "default_redirect_uri": "http://localhost:8088/api/v1/oauth2/",
     }
 
-    mocker.patch("superset.databases.api.render_template", return_value="OK")
+    mocker.patch("axbi.databases.api.render_template", return_value="OK")
 
     with freeze_time("2024-01-01T00:00:00Z"):
         response = client.get(
@@ -2123,8 +2123,8 @@ def test_table_metadata_happy_path(
     # Non-ODPS backend: partition detection short-circuits to (False, []).
     database.backend = "postgresql"
     database.db_engine_spec.get_table_metadata.return_value = {"hello": "world"}
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
-    mocker.patch("superset.databases.api.security_manager.raise_for_access")
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.security_manager.raise_for_access")
 
     no_partition = Partition(False, ())
 
@@ -2169,7 +2169,7 @@ def test_table_metadata_no_table(
     Test the `table_metadata` endpoint when no table name is passed.
     """
     database = mocker.MagicMock()
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
 
     response = client.get("/api/v1/database/1/table_metadata/?schema=s&catalog=c")
     assert response.status_code == 422
@@ -2204,8 +2204,8 @@ def test_table_metadata_slashes(
     database = mocker.MagicMock()
     database.backend = "postgresql"
     database.db_engine_spec.get_table_metadata.return_value = {"hello": "world"}
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
-    mocker.patch("superset.databases.api.security_manager.raise_for_access")
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.security_manager.raise_for_access")
 
     client.get("/api/v1/database/1/table_metadata/?name=foo/bar")
     database.db_engine_spec.get_table_metadata.assert_called_with(
@@ -2223,7 +2223,7 @@ def test_table_metadata_invalid_database(
     """
     Test the `table_metadata` endpoint when the database is invalid.
     """
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=None)
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=None)
 
     response = client.get("/api/v1/database/1/table_metadata/?name=t")
     assert response.status_code == 404
@@ -2237,7 +2237,7 @@ def test_table_metadata_invalid_database(
                     "issue_codes": [
                         {
                             "code": 1011,
-                            "message": "Issue 1011 - Superset encountered an unexpected error.",  # noqa: E501
+                            "message": "Issue 1011 - AxBI encountered an unexpected error.",  # noqa: E501
                         },
                         {
                             "code": 1036,
@@ -2259,12 +2259,12 @@ def test_table_metadata_unauthorized(
     Test the `table_metadata` endpoint when the user is unauthorized.
     """
     database = mocker.MagicMock()
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
     mocker.patch(
-        "superset.databases.api.security_manager.raise_for_access",
-        side_effect=SupersetSecurityException(
-            SupersetError(
-                error_type=SupersetErrorType.TABLE_SECURITY_ACCESS_ERROR,
+        "axbi.databases.api.security_manager.raise_for_access",
+        side_effect=AxBISecurityException(
+            AxBIError(
+                error_type=AxBIErrorType.TABLE_SECURITY_ACCESS_ERROR,
                 message="You don't have access to the table",
                 level=ErrorLevel.ERROR,
             )
@@ -2295,8 +2295,8 @@ def test_table_extra_metadata_happy_path(
     """
     database = mocker.MagicMock()
     database.db_engine_spec.get_extra_table_metadata.return_value = {"hello": "world"}
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
-    mocker.patch("superset.databases.api.security_manager.raise_for_access")
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.security_manager.raise_for_access")
 
     response = client.get("/api/v1/database/1/table_metadata/extra/?name=t")
     assert response.json == {"hello": "world"}
@@ -2335,7 +2335,7 @@ def test_table_extra_metadata_no_table(
     Test the `table_extra_metadata` endpoint when no table name is passed.
     """
     database = mocker.MagicMock()
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
 
     response = client.get("/api/v1/database/1/table_metadata/extra/?schema=s&catalog=c")
     assert response.status_code == 422
@@ -2369,8 +2369,8 @@ def test_table_extra_metadata_slashes(
     """
     database = mocker.MagicMock()
     database.db_engine_spec.get_extra_table_metadata.return_value = {"hello": "world"}
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
-    mocker.patch("superset.databases.api.security_manager.raise_for_access")
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.security_manager.raise_for_access")
 
     client.get("/api/v1/database/1/table_metadata/extra/?name=foo/bar")
     database.db_engine_spec.get_extra_table_metadata.assert_called_with(
@@ -2387,7 +2387,7 @@ def test_table_extra_metadata_invalid_database(
     """
     Test the `table_extra_metadata` endpoint when the database is invalid.
     """
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=None)
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=None)
 
     response = client.get("/api/v1/database/1/table_metadata/extra/?name=t")
     assert response.status_code == 404
@@ -2401,7 +2401,7 @@ def test_table_extra_metadata_invalid_database(
                     "issue_codes": [
                         {
                             "code": 1011,
-                            "message": "Issue 1011 - Superset encountered an unexpected error.",  # noqa: E501
+                            "message": "Issue 1011 - AxBI encountered an unexpected error.",  # noqa: E501
                         },
                         {
                             "code": 1036,
@@ -2423,12 +2423,12 @@ def test_table_extra_metadata_unauthorized(
     Test the `table_extra_metadata` endpoint when the user is unauthorized.
     """
     database = mocker.MagicMock()
-    mocker.patch("superset.databases.api.DatabaseDAO.find_by_id", return_value=database)
+    mocker.patch("axbi.databases.api.DatabaseDAO.find_by_id", return_value=database)
     mocker.patch(
-        "superset.databases.api.security_manager.raise_for_access",
-        side_effect=SupersetSecurityException(
-            SupersetError(
-                error_type=SupersetErrorType.TABLE_SECURITY_ACCESS_ERROR,
+        "axbi.databases.api.security_manager.raise_for_access",
+        side_effect=AxBISecurityException(
+            AxBIError(
+                error_type=AxBIErrorType.TABLE_SECURITY_ACCESS_ERROR,
                 message="You don't have access to the table",
                 level=ErrorLevel.ERROR,
             )
@@ -2460,11 +2460,11 @@ def test_catalogs(
     database = mocker.MagicMock()
     database.catalog_cache_timeout = 0
     database.get_all_catalog_names.return_value = {"db1", "db2"}
-    DatabaseDAO = mocker.patch("superset.databases.api.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.databases.api.DatabaseDAO")  # noqa: N806
     DatabaseDAO.find_by_id.return_value = database
 
     security_manager = mocker.patch(
-        "superset.databases.api.security_manager",
+        "axbi.databases.api.security_manager",
         new=mocker.MagicMock(),
     )
     security_manager.get_catalogs_accessible_by_user.return_value = {"db2"}
@@ -2504,11 +2504,11 @@ def test_catalogs_with_oauth2(
         "tab_id",
         "redirect_uri",
     )
-    DatabaseDAO = mocker.patch("superset.databases.api.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.databases.api.DatabaseDAO")  # noqa: N806
     DatabaseDAO.find_by_id.return_value = database
 
     security_manager = mocker.patch(
-        "superset.databases.api.security_manager",
+        "axbi.databases.api.security_manager",
         new=mocker.MagicMock(),
     )
     security_manager.get_catalogs_accessible_by_user.return_value = {"db2"}
@@ -2539,7 +2539,7 @@ def test_schemas(
     """
     Test the `schemas` endpoint.
     """
-    from superset.databases.api import DatabaseRestApi
+    from axbi.databases.api import DatabaseRestApi
 
     database = mocker.MagicMock()
     database.schema_cache_timeout = 0
@@ -2548,7 +2548,7 @@ def test_schemas(
     datamodel.get.return_value = database
 
     security_manager = mocker.patch(
-        "superset.databases.api.security_manager",
+        "axbi.databases.api.security_manager",
         new=mocker.MagicMock(),
     )
     security_manager.get_schemas_accessible_by_user.return_value = {"schema2"}
@@ -2598,7 +2598,7 @@ def test_schemas_with_oauth2(
     """
     Test the `schemas` endpoint when OAuth2 is needed.
     """
-    from superset.databases.api import DatabaseRestApi
+    from axbi.databases.api import DatabaseRestApi
 
     database = mocker.MagicMock()
     database.get_all_schema_names.side_effect = OAuth2RedirectError(
@@ -2610,7 +2610,7 @@ def test_schemas_with_oauth2(
     datamodel.get.return_value = database
 
     security_manager = mocker.patch(
-        "superset.databases.api.security_manager",
+        "axbi.databases.api.security_manager",
         new=mocker.MagicMock(),
     )
     security_manager.get_schemas_accessible_by_user.return_value = {"schema2"}
@@ -2644,7 +2644,7 @@ def test_export_includes_configuration_method(
 
     import rison
 
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     # Create a database with a non-default configuration_method
     db_obj = Database(
@@ -2696,9 +2696,9 @@ def test_import_includes_configuration_method(
     import yaml
     from flask import g, has_app_context, has_request_context
 
-    from superset import db, security_manager
-    from superset.databases.api import DatabaseRestApi
-    from superset.models.core import Database
+    from axbi import db, security_manager
+    from axbi.databases.api import DatabaseRestApi
+    from axbi.models.core import Database
 
     DatabaseRestApi.datamodel._session = db.session
     Database.metadata.create_all(db.session.get_bind())
@@ -2706,7 +2706,7 @@ def test_import_includes_configuration_method(
     def find_by_id_side_effect(db_id):
         return db.session.query(Database).filter_by(id=db_id).first()
 
-    DatabaseDAO = mocker.patch("superset.databases.api.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.databases.api.DatabaseDAO")  # noqa: N806
     DatabaseDAO.find_by_id.side_effect = find_by_id_side_effect
 
     metadata = {
@@ -2736,9 +2736,9 @@ def test_import_includes_configuration_method(
     }
 
     with (
-        patch("superset.databases.api.is_zipfile", return_value=True),
-        patch("superset.databases.api.ZipFile"),
-        patch("superset.databases.api.get_contents_from_bundle", return_value=contents),
+        patch("axbi.databases.api.is_zipfile", return_value=True),
+        patch("axbi.databases.api.ZipFile"),
+        patch("axbi.databases.api.get_contents_from_bundle", return_value=contents),
     ):
         form_data = {"formData": (BytesIO(b"test"), "test.zip")}
         response = client.post(

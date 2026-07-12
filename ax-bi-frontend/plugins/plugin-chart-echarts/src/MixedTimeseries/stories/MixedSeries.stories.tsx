@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import {
   EchartsTimeseriesChartPlugin,
   MixedTimeseriesTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import data from '../../Timeseries/stories/data';
 import negativeNumData from './negativeData';
 import { withResizableChartDemo } from '@storybook-shared';
@@ -114,7 +114,7 @@ export const Timeseries = ({
       queriesData={queriesData}
       formData={{
         contributionMode: undefined,
-        colorScheme: 'supersetColors',
+        colorScheme: 'axbiColors',
         zoomable,
         logAxis,
         xAxisTimeFormat: 'smart_date',
@@ -278,7 +278,7 @@ export const WithNegativeNumbers = ({
     ]}
     formData={{
       contributionMode: undefined,
-      colorScheme: 'supersetColors',
+      colorScheme: 'axbiColors',
       seriesType,
       xAxisTimeFormat: 'smart_date',
       yAxisFormat,

@@ -20,7 +20,7 @@ import getFormDataWithExtraFilters, {
   CachedFormDataWithExtraControls,
   GetFormDataWithExtraFiltersArguments,
 } from 'src/dashboard/util/charts/getFormDataWithExtraFilters';
-import { ChartCustomizationType } from '@superset-ui/core';
+import { ChartCustomizationType } from '@ax-bi/ui-core';
 import { sliceId as chartId } from 'spec/fixtures/mockChartQueries';
 
 type ChartCustomizationItem = NonNullable<

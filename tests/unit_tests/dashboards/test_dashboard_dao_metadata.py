@@ -17,9 +17,9 @@
 
 from unittest.mock import patch
 
-from superset.daos.dashboard import DashboardDAO
-from superset.models.dashboard import Dashboard
-from superset.utils import json
+from axbi.daos.dashboard import DashboardDAO
+from axbi.models.dashboard import Dashboard
+from axbi.utils import json
 
 
 def test_get_native_filter_configuration_ignores_malformed_metadata() -> None:

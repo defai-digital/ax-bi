@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-# Netlify configuration for Superset Storybook
-# Deployed at: superset-storybook.netlify.app
+# Netlify configuration for AxBI Storybook
+# Deployed at: axbi-storybook.netlify.app
 
 [build]
   base = "ax-bi-frontend"

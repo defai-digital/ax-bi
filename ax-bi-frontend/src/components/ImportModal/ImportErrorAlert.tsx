@@ -18,17 +18,17 @@
  */
 
 import { FunctionComponent } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 
 // direct leaf import: src/views/CRUD/hooks is a monolith that can be
 // mid-evaluation (import cycle) when this module-scope constant computes
-import SupersetText from 'src/utils/textUtils';
+import AxBIText from 'src/utils/textUtils';
 import { ErrorAlert } from 'src/components';
 
-const supersetTextDocs = SupersetText.DB_CONNECTION_DOC_LINKS;
-export const DOCUMENTATION_LINK = supersetTextDocs
-  ? supersetTextDocs.support
-  : 'https://superset.apache.org/user-docs/databases/#installing-database-drivers';
+const axbiTextDocs = AxBIText.DB_CONNECTION_DOC_LINKS;
+export const DOCUMENTATION_LINK = axbiTextDocs
+  ? axbiTextDocs.support
+  : 'https://github.com/defai-digital/ax-bi/user-docs/databases/#installing-database-drivers';
 
 export interface IProps {
   errorMessage: string;
@@ -48,7 +48,7 @@ export const ImportErrorAlert: FunctionComponent<IProps> = ({
         <>
           <br />
           {t(
-            'Database driver for importing maybe not installed. Visit the Superset documentation page for installation instructions: ',
+            'Database driver for importing maybe not installed. Visit the AxBI documentation page for installation instructions: ',
           )}
           <a
             href={DOCUMENTATION_LINK}

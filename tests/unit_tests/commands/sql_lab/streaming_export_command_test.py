@@ -22,26 +22,24 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.sql_lab.streaming_export_command import (
+from axbi.commands.sql_lab.streaming_export_command import (
     StreamingSqlResultExportCommand,
 )
-from superset.errors import SupersetErrorType
-from superset.exceptions import SupersetErrorException, SupersetSecurityException
-from superset.sqllab.limiting_factor import LimitingFactor
+from axbi.errors import AxBIErrorType
+from axbi.exceptions import AxBIErrorException, AxBISecurityException
+from axbi.sqllab.limiting_factor import LimitingFactor
 
 
 def _setup_sqllab_mocks(
     mocker: MockerFixture, mock_query: MagicMock
 ) -> tuple[MagicMock, MagicMock]:
     """Set up common mocks for SQL Lab streaming export tests."""
-    mock_db_base = mocker.patch("superset.commands.streaming_export.base.db")
+    mock_db_base = mocker.patch("axbi.commands.streaming_export.base.db")
     mock_session = MagicMock()
     mock_db_base.session.return_value.__enter__.return_value = mock_session
     mock_session.merge.return_value = mock_query.database
 
-    mock_db_sqllab = mocker.patch(
-        "superset.commands.sql_lab.streaming_export_command.db"
-    )
+    mock_db_sqllab = mocker.patch("axbi.commands.sql_lab.streaming_export_command.db")
     mock_query_result = mock_db_sqllab.session.query.return_value.filter_by.return_value
     mock_query_result.one_or_none.return_value = mock_query
 
@@ -95,7 +93,7 @@ def test_streaming_sql_result_export_command_default_chunk_size():
     assert command._chunk_size == 1000
 
 
-@patch("superset.commands.sql_lab.streaming_export_command.db")
+@patch("axbi.commands.sql_lab.streaming_export_command.db")
 def test_validate_query_not_found(mock_db):
     """Test validate raises exception when query is not found."""
     mock_query_result = mock_db.session.query.return_value.filter_by.return_value
@@ -103,34 +101,32 @@ def test_validate_query_not_found(mock_db):
 
     command = StreamingSqlResultExportCommand("nonexistent_client")
 
-    with pytest.raises(SupersetErrorException) as exc_info:
+    with pytest.raises(AxBIErrorException) as exc_info:
         command.validate()
 
-    assert exc_info.value.error.error_type == SupersetErrorType.RESULTS_BACKEND_ERROR
+    assert exc_info.value.error.error_type == AxBIErrorType.RESULTS_BACKEND_ERROR
     assert exc_info.value.status == 404
 
 
-@patch("superset.commands.sql_lab.streaming_export_command.db")
+@patch("axbi.commands.sql_lab.streaming_export_command.db")
 def test_validate_access_denied(mock_db, mock_query):
     """Test validate raises exception when access is denied."""
     mock_query_result = mock_db.session.query.return_value.filter_by.return_value
     mock_query_result.one_or_none.return_value = mock_query
-    mock_query.raise_for_access.side_effect = SupersetSecurityException(
+    mock_query.raise_for_access.side_effect = AxBISecurityException(
         Mock(message="Access denied")
     )
 
     command = StreamingSqlResultExportCommand("test_client_123")
 
-    with pytest.raises(SupersetErrorException) as exc_info:
+    with pytest.raises(AxBIErrorException) as exc_info:
         command.validate()
 
-    assert (
-        exc_info.value.error.error_type == SupersetErrorType.QUERY_SECURITY_ACCESS_ERROR
-    )
+    assert exc_info.value.error.error_type == AxBIErrorType.QUERY_SECURITY_ACCESS_ERROR
     assert exc_info.value.status == 403
 
 
-@patch("superset.commands.sql_lab.streaming_export_command.db")
+@patch("axbi.commands.sql_lab.streaming_export_command.db")
 def test_validate_success(mock_db, mock_query):
     """Test successful validation."""
     mock_query_result = mock_db.session.query.return_value.filter_by.return_value
@@ -180,7 +176,7 @@ def test_csv_generation_with_select_sql(mocker, mock_query, mock_result_proxy):
     assert "3,test3,300" in csv_data
 
 
-@patch("superset.commands.sql_lab.streaming_export_command.SQLScript")
+@patch("axbi.commands.sql_lab.streaming_export_command.SQLScript")
 def test_csv_generation_with_executed_sql_and_limit(
     mock_sqlscript, mocker, mock_query, mock_result_proxy
 ):
@@ -270,7 +266,7 @@ def test_limiting_factor_dropdown(mocker, mock_query):
     mock_query.limiting_factor = LimitingFactor.DROPDOWN
 
     with patch(
-        "superset.commands.sql_lab.streaming_export_command.SQLScript"
+        "axbi.commands.sql_lab.streaming_export_command.SQLScript"
     ) as mock_sqlscript:
         mock_statement = Mock()
         mock_statement.get_limit_value.return_value = 101
@@ -315,7 +311,7 @@ def test_limiting_factor_query_and_dropdown(mocker, mock_query):
     mock_query.limiting_factor = LimitingFactor.QUERY_AND_DROPDOWN
 
     with patch(
-        "superset.commands.sql_lab.streaming_export_command.SQLScript"
+        "axbi.commands.sql_lab.streaming_export_command.SQLScript"
     ) as mock_sqlscript:
         mock_statement = Mock()
         mock_statement.get_limit_value.return_value = 51
@@ -390,14 +386,12 @@ def test_error_handling_yields_error_marker(mocker, mock_query):
     """Test that exceptions are caught and error marker is yielded."""
     mock_query.select_sql = "SELECT * FROM test"
 
-    mock_db_base = mocker.patch("superset.commands.streaming_export.base.db")
+    mock_db_base = mocker.patch("axbi.commands.streaming_export.base.db")
     mock_session = MagicMock()
     mock_db_base.session.return_value.__enter__.return_value = mock_session
     mock_session.merge.side_effect = Exception("Database connection failed")
 
-    mock_db_sqllab = mocker.patch(
-        "superset.commands.sql_lab.streaming_export_command.db"
-    )
+    mock_db_sqllab = mocker.patch("axbi.commands.sql_lab.streaming_export_command.db")
     mock_query_result = mock_db_sqllab.session.query.return_value.filter_by.return_value
     mock_query_result.one_or_none.return_value = mock_query
 
@@ -472,7 +466,7 @@ def test_streaming_execution_options_enabled(mocker, mock_query, mock_result_pro
     mock_connection.execution_options.assert_called_once_with(stream_results=True)
 
 
-@patch("superset.commands.streaming_export.base.logger")
+@patch("axbi.commands.streaming_export.base.logger")
 def test_completion_logging(mock_logger, mocker, mock_query, mock_result_proxy):
     """Test that completion is logged with metrics."""
     mock_query.select_sql = "SELECT * FROM test"
@@ -611,7 +605,7 @@ def test_csv_export_config_custom_separator(mocker, mock_query) -> None:
 
     # Mock the app config to use semicolon separator
     mocker.patch.dict(
-        "superset.commands.streaming_export.base.app.config",
+        "axbi.commands.streaming_export.base.app.config",
         {"CSV_EXPORT": {"sep": ";", "encoding": "utf-8"}},
     )
 
@@ -659,7 +653,7 @@ def test_csv_export_config_custom_decimal(mocker, mock_query) -> None:
 
     # Mock the app config to use comma as decimal separator
     mocker.patch.dict(
-        "superset.commands.streaming_export.base.app.config",
+        "axbi.commands.streaming_export.base.app.config",
         {"CSV_EXPORT": {"sep": ";", "decimal": ",", "encoding": "utf-8"}},
     )
 
@@ -705,7 +699,7 @@ def test_csv_export_config_combined_sep_and_decimal(mocker, mock_query) -> None:
 
     # Mock the app config to use European format
     mocker.patch.dict(
-        "superset.commands.streaming_export.base.app.config",
+        "axbi.commands.streaming_export.base.app.config",
         {"CSV_EXPORT": {"sep": ";", "decimal": ",", "encoding": "utf-8"}},
     )
 
@@ -754,7 +748,7 @@ def test_csv_export_config_custom_decimal_for_decimal_type(mocker, mock_query) -
     )
 
     mocker.patch.dict(
-        "superset.commands.streaming_export.base.app.config",
+        "axbi.commands.streaming_export.base.app.config",
         {"CSV_EXPORT": {"sep": ";", "decimal": ",", "encoding": "utf-8"}},
     )
 

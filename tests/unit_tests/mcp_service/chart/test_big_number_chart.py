@@ -20,7 +20,7 @@
 import pytest
 from pydantic import ValidationError
 
-from superset.mcp_service.chart.chart_utils import (
+from axbi.mcp_service.chart.chart_utils import (
     _resolve_viz_type,
     analyze_chart_capabilities,
     analyze_chart_semantics,
@@ -28,12 +28,12 @@ from superset.mcp_service.chart.chart_utils import (
     map_big_number_config,
     map_config_to_form_data,
 )
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     BigNumberChartConfig,
     ColumnRef,
     FilterConfig,
 )
-from superset.mcp_service.chart.validation.schema_validator import (
+from axbi.mcp_service.chart.validation.schema_validator import (
     SchemaValidator,
 )
 

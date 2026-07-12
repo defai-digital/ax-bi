@@ -25,12 +25,12 @@ import yaml
 
 
 def _create_example_tree(base_dir: Path) -> Path:
-    """Create a minimal example directory tree under base_dir/superset/examples/.
+    """Create a minimal example directory tree under base_dir/ax-bi/examples/.
 
-    Returns the 'superset' directory (what files("superset") would return).
+    Returns the 'axbi' directory (what files("axbi") would return).
     """
-    superset_dir = base_dir / "superset"
-    examples_dir = superset_dir / "examples"
+    axbi_dir = base_dir / "axbi"
+    examples_dir = axbi_dir / "examples"
 
     # _shared configs
     shared_dir = examples_dir / "_shared"
@@ -81,7 +81,7 @@ def _create_example_tree(base_dir: Path) -> Path:
         )
     )
 
-    return superset_dir
+    return axbi_dir
 
 
 def test_load_contents_builds_correct_import_structure():
@@ -92,16 +92,16 @@ def test_load_contents_builds_correct_import_structure():
     replaced, and the result has the correct key prefixes (databases/, datasets/,
     metadata.yaml).
     """
-    from superset.examples.utils import load_contents
+    from axbi.examples.utils import load_contents
 
     with TemporaryDirectory() as tmpdir:
-        superset_dir = _create_example_tree(Path(tmpdir))
+        axbi_dir = _create_example_tree(Path(tmpdir))
 
         test_examples_uri = "sqlite:///path/to/examples.db"
         mock_app = MagicMock()
         mock_app.config = {"SQLALCHEMY_EXAMPLES_URI": test_examples_uri}
 
-        with patch("superset.examples.utils.files", return_value=superset_dir):
+        with patch("axbi.examples.utils.files", return_value=axbi_dir):
             with patch("flask.current_app", mock_app):
                 contents = load_contents()
 
@@ -131,11 +131,11 @@ def test_load_contents_builds_correct_import_structure():
 
 def test_load_contents_resolves_data_file_uris():
     """data_file entries should point the importer at the bundled Parquet file."""
-    from superset.examples.utils import load_contents
+    from axbi.examples.utils import load_contents
 
     with TemporaryDirectory() as tmpdir:
-        superset_dir = _create_example_tree(Path(tmpdir))
-        examples_dir = superset_dir / "examples"
+        axbi_dir = _create_example_tree(Path(tmpdir))
+        examples_dir = axbi_dir / "examples"
         example_dir = examples_dir / "test_example"
 
         single_data = example_dir / "data.parquet"
@@ -167,7 +167,7 @@ def test_load_contents_resolves_data_file_uris():
         mock_app = MagicMock()
         mock_app.config = {"SQLALCHEMY_EXAMPLES_URI": "sqlite:///examples.db"}
 
-        with patch("superset.examples.utils.files", return_value=superset_dir):
+        with patch("axbi.examples.utils.files", return_value=axbi_dir):
             with patch("flask.current_app", mock_app):
                 contents = load_contents()
 
@@ -196,7 +196,7 @@ def test_bundled_data_file_varchar_columns_fit_default_length():
     """Bundled example data should not exceed default VARCHAR storage."""
     issues: list[str] = []
 
-    for yaml_path in sorted(Path("superset/examples").glob("**/datasets/*.yaml")):
+    for yaml_path in sorted(Path("axbi/examples").glob("**/datasets/*.yaml")):
         config = yaml.safe_load(yaml_path.read_text())
         if not isinstance(config, dict) or not config.get("data_file"):
             continue
@@ -236,17 +236,17 @@ def test_load_contents_replaces_sqlalchemy_examples_uri_placeholder():
     If this placeholder is not replaced, the database import will fail with an
     invalid connection string, preventing all examples from loading.
     """
-    from superset.examples.utils import _load_shared_configs
+    from axbi.examples.utils import _load_shared_configs
 
     with TemporaryDirectory() as tmpdir:
-        superset_dir = _create_example_tree(Path(tmpdir))
+        axbi_dir = _create_example_tree(Path(tmpdir))
         examples_root = Path("examples")
 
         test_uri = "postgresql://user:pass@host/db"
         mock_app = MagicMock()
         mock_app.config = {"SQLALCHEMY_EXAMPLES_URI": test_uri}
 
-        with patch("superset.examples.utils.files", return_value=superset_dir):
+        with patch("axbi.examples.utils.files", return_value=axbi_dir):
             with patch("flask.current_app", mock_app):
                 contents = _load_shared_configs(examples_root)
 
@@ -255,8 +255,8 @@ def test_load_contents_replaces_sqlalchemy_examples_uri_placeholder():
         assert "__SQLALCHEMY_EXAMPLES_URI__" not in contents["databases/examples.yaml"]
 
 
-@patch("superset.examples.utils.ImportExamplesCommand")
-@patch("superset.examples.utils.load_contents")
+@patch("axbi.examples.utils.ImportExamplesCommand")
+@patch("axbi.examples.utils.load_contents")
 def test_load_examples_from_configs_wires_command_correctly(
     mock_load_contents,
     mock_command_cls,
@@ -267,7 +267,7 @@ def test_load_examples_from_configs_wires_command_correctly(
     A wiring regression here would silently skip overwriting existing
     examples or ignore the force_data flag.
     """
-    from superset.examples.utils import load_examples_from_configs
+    from axbi.examples.utils import load_examples_from_configs
 
     mock_load_contents.return_value = {"databases/examples.yaml": "content"}
     mock_command = MagicMock()
@@ -284,14 +284,14 @@ def test_load_examples_from_configs_wires_command_correctly(
     mock_command.run.assert_called_once()
 
 
-@patch("superset.examples.utils.ImportExamplesCommand")
-@patch("superset.examples.utils.load_contents")
+@patch("axbi.examples.utils.ImportExamplesCommand")
+@patch("axbi.examples.utils.load_contents")
 def test_load_examples_from_configs_defaults(
     mock_load_contents,
     mock_command_cls,
 ):
     """Default call should pass force_data=False and load_test_data=False."""
-    from superset.examples.utils import load_examples_from_configs
+    from axbi.examples.utils import load_examples_from_configs
 
     mock_load_contents.return_value = {}
     mock_command = MagicMock()

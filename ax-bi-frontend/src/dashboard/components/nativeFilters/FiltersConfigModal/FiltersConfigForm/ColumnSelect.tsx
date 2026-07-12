@@ -18,16 +18,16 @@
  */
 import { useCallback, useState, useMemo, useEffect } from 'react';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   Column,
   ensureIsArray,
   useChangeEffect,
   getClientErrorObject,
-} from '@superset-ui/core';
-import { type FormInstance, Select } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { type FormInstance, Select } from '@ax-bi/ui-core/components';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
-import { cachedSupersetGet } from 'src/utils/cachedSupersetGet';
+import { cachedAxBIGet } from 'src/utils/cachedAxBIGet';
 import { NativeFiltersForm, NativeFiltersFormItem } from '../types';
 
 interface ColumnSelectProps {
@@ -93,7 +93,7 @@ export function ColumnSelect({
     }
     if (datasetId != null) {
       setLoading(true);
-      cachedSupersetGet({
+      cachedAxBIGet({
         endpoint: `/api/v1/dataset/${datasetId}?q=${rison.encode({
           columns: [
             'columns.column_name',

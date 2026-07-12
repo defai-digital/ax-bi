@@ -17,16 +17,16 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.dashboard.delete import DeleteDashboardCommand
-from superset.commands.dashboard.exceptions import DashboardForbiddenError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
+from axbi.commands.dashboard.delete import DeleteDashboardCommand
+from axbi.commands.dashboard.exceptions import DashboardForbiddenError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
 
 
-def _ownership_exc() -> SupersetSecurityException:
-    return SupersetSecurityException(
-        SupersetError(
-            error_type=SupersetErrorType.MISSING_OWNERSHIP_ERROR,
+def _ownership_exc() -> AxBISecurityException:
+    return AxBISecurityException(
+        AxBIError(
+            error_type=AxBIErrorType.MISSING_OWNERSHIP_ERROR,
             message="User does not own this dashboard",
             level=ErrorLevel.ERROR,
         )
@@ -39,14 +39,14 @@ def test_delete_dashboard_checks_ownership_before_reports(
     """Unauthorized deletes should not expose associated report details."""
     dashboard = mocker.MagicMock(id=1)
     find_by_ids = mocker.patch(
-        "superset.commands.dashboard.delete.DashboardDAO.find_by_ids",
+        "axbi.commands.dashboard.delete.DashboardDAO.find_by_ids",
         return_value=[dashboard],
     )
     find_reports = mocker.patch(
-        "superset.commands.dashboard.delete.ReportScheduleDAO.find_by_dashboard_ids"
+        "axbi.commands.dashboard.delete.ReportScheduleDAO.find_by_dashboard_ids"
     )
     raise_for_ownership = mocker.patch(
-        "superset.commands.dashboard.delete.security_manager.raise_for_ownership",
+        "axbi.commands.dashboard.delete.security_manager.raise_for_ownership",
         side_effect=_ownership_exc(),
     )
 

@@ -27,10 +27,10 @@ import {
   memo,
   RefObject,
 } from 'react';
-import type { ChartCustomization, JsonObject } from '@superset-ui/core';
-import { VizType } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import type { ChartCustomization, JsonObject } from '@ax-bi/ui-core';
+import { VizType } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import { debounce } from 'lodash';
 import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
@@ -210,21 +210,19 @@ const Chart = (props: ChartProps) => {
     (state: RootState) =>
       !!(state.dashboardState as JsonObject).expandedSlices?.[props.id],
   );
-  const supersetCanExplore = useSelector(
+  const axbiCanExplore = useSelector(
     (state: RootState) =>
-      !!(state.dashboardInfo as JsonObject).superset_can_explore,
+      !!(state.dashboardInfo as JsonObject).axbi_can_explore,
   );
-  const supersetCanShare = useSelector(
-    (state: RootState) =>
-      !!(state.dashboardInfo as JsonObject).superset_can_share,
+  const axbiCanShare = useSelector(
+    (state: RootState) => !!(state.dashboardInfo as JsonObject).axbi_can_share,
   );
-  const supersetCanCSV = useSelector(
-    (state: RootState) =>
-      !!(state.dashboardInfo as JsonObject).superset_can_csv,
+  const axbiCanCSV = useSelector(
+    (state: RootState) => !!(state.dashboardInfo as JsonObject).axbi_can_csv,
   );
   const timeout: number = useSelector(
     (state: RootState) =>
-      state.dashboardInfo.common.conf.SUPERSET_WEBSERVER_TIMEOUT as number,
+      state.dashboardInfo.common.conf.AXBI_WEBSERVER_TIMEOUT as number,
   );
   const emitCrossFilters = useSelector(
     (state: RootState) => !!state.dashboardInfo.crossFiltersEnabled,
@@ -311,7 +309,7 @@ const Chart = (props: ChartProps) => {
           updateChartState(
             props.id,
             sliceVizType,
-            chartStateArg as unknown as import('@superset-ui/core').AgGridChartState,
+            chartStateArg as unknown as import('@ax-bi/ui-core').AgGridChartState,
           ),
         );
       }
@@ -517,8 +515,7 @@ const Chart = (props: ChartProps) => {
         actualRowCount = (queriesResponse![0] as JsonObject).rowcount as number;
       } else {
         actualRowCount = (exportFormData as JsonObject)?.row_limit as
-          | number
-          | undefined;
+          number | undefined;
       }
 
       // Handle streaming CSV exports based on row threshold
@@ -559,7 +556,7 @@ const Chart = (props: ChartProps) => {
       try {
         await exportChart({
           formData:
-            exportFormData as unknown as import('@superset-ui/core').QueryFormData,
+            exportFormData as unknown as import('@ax-bi/ui-core').QueryFormData,
           resultType,
           resultFormat: format,
           force: true,
@@ -708,9 +705,9 @@ const Chart = (props: ChartProps) => {
           props.updateSliceName(props.id, name)
         }
         sliceName={props.sliceName}
-        supersetCanExplore={supersetCanExplore}
-        supersetCanShare={supersetCanShare}
-        supersetCanCSV={supersetCanCSV}
+        axbiCanExplore={axbiCanExplore}
+        axbiCanShare={axbiCanShare}
+        axbiCanCSV={axbiCanCSV}
         componentId={props.componentId}
         dashboardId={props.dashboardId}
         filters={getActiveFilters() || EMPTY_OBJECT}
@@ -719,9 +716,7 @@ const Chart = (props: ChartProps) => {
         handleToggleFullSize={props.handleToggleFullSize}
         isFullSize={props.isFullSize}
         chartStatus={chartStatus || ''}
-        formData={
-          formData as unknown as import('@superset-ui/core').QueryFormData
-        }
+        formData={formData as unknown as import('@ax-bi/ui-core').QueryFormData}
         exploreUrl=""
         width={width}
         height={getHeaderHeight()}
@@ -775,7 +770,7 @@ const Chart = (props: ChartProps) => {
           dashboardId={props.dashboardId}
           initialValues={EMPTY_OBJECT}
           formData={
-            formData as unknown as import('@superset-ui/core').QueryFormData
+            formData as unknown as import('@ax-bi/ui-core').QueryFormData
           }
           ownState={createOwnStateWithChartState(
             (dataMask[props.id]?.ownState as JsonObject) || EMPTY_OBJECT,

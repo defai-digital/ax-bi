@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Preset, VizType } from '@superset-ui/core';
+import { Preset, VizType } from '@ax-bi/ui-core';
 import {
   render,
   cleanup,

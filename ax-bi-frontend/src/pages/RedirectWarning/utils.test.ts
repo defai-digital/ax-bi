@@ -77,7 +77,7 @@ test('getTargetUrl does not double-decode percent-encoded values', () => {
 
 test('getSafeTargetUrl returns a normalized http URL', () => {
   const locationSpy = jest.spyOn(window, 'location', 'get').mockReturnValue({
-    origin: 'https://superset.example',
+    origin: 'https://ax-bi.example',
     search: '?url=https%3A%2F%2Fexample.com%2Fpage',
   } as Location);
   expect(getSafeTargetUrl()).toBe('https://example.com/page');
@@ -86,7 +86,7 @@ test('getSafeTargetUrl returns a normalized http URL', () => {
 
 test('getSafeTargetUrl returns null for dangerous schemes', () => {
   const locationSpy = jest.spyOn(window, 'location', 'get').mockReturnValue({
-    origin: 'https://superset.example',
+    origin: 'https://ax-bi.example',
     search: '?url=javascript%3Aalert(1)',
   } as Location);
   expect(getSafeTargetUrl()).toBeNull();

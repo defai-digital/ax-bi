@@ -46,7 +46,7 @@ const PLUGIN_PATTERNS = [
   'plugins/legacy-preset-chart-*/src',
 ];
 
-const CORE_COMPONENT_PATTERNS = ['packages/superset-ui-core/src/components/*'];
+const CORE_COMPONENT_PATTERNS = ['packages/ax-bi-ui-core/src/components/*'];
 
 // Directories/patterns to exclude from checks
 const EXCLUSIONS = [

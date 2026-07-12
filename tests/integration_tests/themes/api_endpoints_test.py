@@ -15,13 +15,13 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset import db
-from superset.models.core import Theme
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.models.core import Theme
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestThemeApiEndpoints(SupersetTestCase):
+class TestThemeApiEndpoints(AxBITestCase):
     """Integration tests for Theme API endpoints"""
 
     def setUp(self):

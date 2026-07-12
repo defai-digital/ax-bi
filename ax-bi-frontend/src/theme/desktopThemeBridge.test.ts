@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ThemeMode } from '@apache-superset/core/theme';
+import { ThemeMode } from '@ax-bi/core/theme';
 import type { ThemeController } from './ThemeController';
 import {
   DESKTOP_THEME_MESSAGE_SOURCE,

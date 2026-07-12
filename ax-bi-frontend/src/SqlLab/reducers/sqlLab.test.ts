@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryState } from '@superset-ui/core';
+import { QueryState } from '@ax-bi/ui-core';
 import sqlLabReducer from 'src/SqlLab/reducers/sqlLab';
 import * as actions from 'src/SqlLab/actions/sqlLab';
 import type { Database, SqlLabAction } from 'src/SqlLab/actions/sqlLab';

@@ -18,8 +18,8 @@ from unittest.mock import patch
 
 from flask import current_app
 
-from superset.commands.dashboard.filter_state.create import CreateFilterStateCommand
-from superset.commands.temporary_cache.parameters import CommandParameters
+from axbi.commands.dashboard.filter_state.create import CreateFilterStateCommand
+from axbi.commands.temporary_cache.parameters import CommandParameters
 
 
 def test_run_calls_validate_before_create():
@@ -49,17 +49,17 @@ def test_run_sets_cache_with_explicit_timeout():
 
     with (
         current_app.test_request_context(),
-        patch("superset.commands.dashboard.filter_state.create.check_access"),
-        patch("superset.commands.dashboard.filter_state.create.cache_key"),
+        patch("axbi.commands.dashboard.filter_state.create.check_access"),
+        patch("axbi.commands.dashboard.filter_state.create.cache_key"),
         patch(
-            "superset.commands.dashboard.filter_state.create.cache_manager"
+            "axbi.commands.dashboard.filter_state.create.cache_manager"
         ) as mock_cache_manager,
         patch(
-            "superset.commands.dashboard.filter_state.create.random_key",
+            "axbi.commands.dashboard.filter_state.create.random_key",
             return_value="random-key",
         ),
         patch(
-            "superset.commands.dashboard.filter_state.create.get_user_id",
+            "axbi.commands.dashboard.filter_state.create.get_user_id",
             return_value=1,
         ),
     ):

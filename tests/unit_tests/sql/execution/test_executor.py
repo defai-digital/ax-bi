@@ -35,15 +35,15 @@ from unittest.mock import MagicMock
 import msgpack
 import pandas as pd
 import pytest
-from flask import current_app
-from pytest_mock import MockerFixture
-from superset_core.queries.types import (
+from axbi_core.queries.types import (
     CacheOptions,
     QueryOptions,
     QueryStatus,
 )
+from flask import current_app
+from pytest_mock import MockerFixture
 
-from superset.models.core import Database
+from axbi.models.core import Database
 
 # Note: database, database_with_dml, mock_db_session fixtures and
 # mock_query_execution helper are imported from conftest.py
@@ -139,7 +139,7 @@ def test_execute_creates_query_record(
     mock_db_session: MagicMock,
 ) -> None:
     """Test that execute creates a Query record for audit."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -265,7 +265,7 @@ def test_execute_with_template_params(
         "SELECT * FROM events WHERE date > '2024-01-01'"
     )
     mocker.patch(
-        "superset.jinja_context.get_template_processor",
+        "axbi.jinja_context.get_template_processor",
         return_value=mock_tp,
     )
 
@@ -296,7 +296,7 @@ def test_execute_without_template_params_no_rendering(
         },
     )
 
-    mock_get_tp = mocker.patch("superset.jinja_context.get_template_processor")
+    mock_get_tp = mocker.patch("axbi.jinja_context.get_template_processor")
 
     result = database.execute("SELECT * FROM users")
 
@@ -397,7 +397,7 @@ def test_check_disallowed_tables_no_config(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test disallowed tables check when no config exists."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mocker.patch.dict(current_app.config, {"DISALLOWED_SQL_TABLES": {}})
 
@@ -417,7 +417,7 @@ def test_execute_rls_applied(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that RLS is always applied."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -448,7 +448,7 @@ def test_execute_returns_cached_result(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that cached results are returned when available."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     cached_df = pd.DataFrame({"id": [1, 2]})
 
@@ -483,7 +483,7 @@ def test_execute_force_cache_refresh(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that force_cache_refresh bypasses the cache."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -512,7 +512,7 @@ def test_execute_stores_in_cache(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that results are stored in cache."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -546,14 +546,14 @@ def test_execute_timeout(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test query timeout handling."""
-    from superset.errors import ErrorLevel, SupersetErrorType
-    from superset.exceptions import SupersetTimeoutException
+    from axbi.errors import AxBIErrorType, ErrorLevel
+    from axbi.exceptions import AxBITimeoutException
 
     # Mock get_raw_connection to raise timeout
     mock_conn = MagicMock()
     mock_conn.__enter__ = MagicMock(
-        side_effect=SupersetTimeoutException(
-            error_type=SupersetErrorType.GENERIC_BACKEND_ERROR,
+        side_effect=AxBITimeoutException(
+            error_type=AxBIErrorType.GENERIC_BACKEND_ERROR,
             message="Query timed out",
             level=ErrorLevel.ERROR,
         )
@@ -591,7 +591,7 @@ def test_execute_custom_timeout(
         },
     )
 
-    mock_timeout = mocker.patch("superset.sql.execution.executor.utils.timeout")
+    mock_timeout = mocker.patch("axbi.sql.execution.executor.utils.timeout")
     mock_timeout.return_value.__enter__ = MagicMock()
     mock_timeout.return_value.__exit__ = MagicMock(return_value=False)
 
@@ -648,7 +648,7 @@ def test_execute_oauth2_redirect_error_propagates(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that OAuth2RedirectError propagates instead of being swallowed."""
-    from superset.exceptions import OAuth2RedirectError
+    from axbi.exceptions import OAuth2RedirectError
 
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
@@ -665,7 +665,7 @@ def test_execute_oauth2_redirect_error_propagates(
         side_effect=OAuth2RedirectError(
             url="https://oauth.example.com/authorize",
             tab_id="test-tab",
-            redirect_uri="https://superset.example.com/callback",
+            redirect_uri="https://ax-bi.example.com/callback",
         ),
     )
     mocker.patch.dict(
@@ -686,7 +686,7 @@ def test_execute_oauth2_error_propagates(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that OAuth2Error propagates instead of being swallowed."""
-    from superset.exceptions import OAuth2Error
+    from axbi.exceptions import OAuth2Error
 
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
@@ -739,9 +739,7 @@ def test_execute_async_creates_query(
 
     mock_db_session.add.side_effect = set_query_id
 
-    mock_celery_task = mocker.patch(
-        "superset.sql.execution.celery_task.execute_sql_task"
-    )
+    mock_celery_task = mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -760,9 +758,7 @@ def test_execute_async_with_options(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
 
-    mock_celery_task = mocker.patch(
-        "superset.sql.execution.celery_task.execute_sql_task"
-    )
+    mock_celery_task = mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     options = QueryOptions(catalog="analytics", schema="reports")
     result = database.execute_async("SELECT * FROM sales", options=options)
@@ -775,13 +771,13 @@ def test_execute_async_dml_without_permission_raises(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that async DML queries raise exception when not allowed."""
-    from superset.exceptions import SupersetSecurityException
+    from axbi.exceptions import AxBISecurityException
 
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
 
-    with pytest.raises(SupersetSecurityException, match="DML queries are not allowed"):
+    with pytest.raises(AxBISecurityException, match="DML queries are not allowed"):
         database.execute_async("INSERT INTO users (name) VALUES ('test')")
 
 
@@ -792,7 +788,7 @@ def test_async_handle_get_status(
     mock_db_session: MagicMock,
 ) -> None:
     """Test that async handle can retrieve query status."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -802,7 +798,7 @@ def test_async_handle_get_status(
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -817,8 +813,8 @@ def test_async_handle_cancel(
     mock_db_session: MagicMock,
 ) -> None:
     """Test that async handle can cancel a query."""
-    from superset.models.sql_lab import Query
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.models.sql_lab import Query
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "running"
@@ -829,7 +825,7 @@ def test_async_handle_cancel(
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
     mock_cancel = mocker.patch.object(SQLExecutor, "_cancel_query", return_value=True)
 
     result = database.execute_async("SELECT * FROM users")
@@ -883,8 +879,8 @@ def test_execute_multi_statement_updates_query_progress(
     mock_db_session: MagicMock,
 ) -> None:
     """Test that multi-statement execution updates Query.progress."""
-    from superset.models.sql_lab import Query as QueryModel
-    from superset.result_set import SupersetResultSet
+    from axbi.models.sql_lab import Query as QueryModel
+    from axbi.result_set import AxBIResultSet
 
     # Mock raw connection for multi-statement execution
     mock_cursor = MagicMock()
@@ -905,11 +901,11 @@ def test_execute_multi_statement_updates_query_progress(
         database.db_engine_spec, "fetch_data", return_value=[("1", "Alice")]
     )
 
-    mock_result_set = MagicMock(spec=SupersetResultSet)
+    mock_result_set = MagicMock(spec=AxBIResultSet)
     mock_result_set.to_pandas_df.return_value = pd.DataFrame(
         {"id": ["1"], "name": ["Alice"]}
     )
-    mocker.patch("superset.result_set.SupersetResultSet", return_value=mock_result_set)
+    mocker.patch("axbi.result_set.AxBIResultSet", return_value=mock_result_set)
 
     mocker.patch.dict(
         current_app.config,
@@ -924,7 +920,7 @@ def test_execute_multi_statement_updates_query_progress(
     # Track progress updates on the Query model
     mock_query = MagicMock(spec=QueryModel)
     mock_query.id = 123
-    mocker.patch("superset.models.sql_lab.Query", return_value=mock_query)
+    mocker.patch("axbi.models.sql_lab.Query", return_value=mock_query)
 
     # Execute multiple statements
     result = database.execute("SELECT 1; SELECT 2;")
@@ -1005,7 +1001,7 @@ def test_execute_dry_run_returns_transformed_sql(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test dry run returns transformed SQL without execution."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mocker.patch.dict(
         current_app.config,
@@ -1041,9 +1037,7 @@ def test_execute_async_dry_run_returns_transformed_sql(
     )
 
     # Mock Celery task - should NOT be called
-    mock_celery_task = mocker.patch(
-        "superset.sql.execution.celery_task.execute_sql_task"
-    )
+    mock_celery_task = mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     options = QueryOptions(dry_run=True)
     result = database.execute_async("SELECT * FROM users", options=options)
@@ -1061,7 +1055,7 @@ def test_execute_async_cached_result_returns_immediately(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test async execution with cached result returns immediately."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     cached_df = pd.DataFrame({"id": [1, 2]})
     cached_result = MagicMock()
@@ -1076,9 +1070,7 @@ def test_execute_async_cached_result_returns_immediately(
     mocker.patch.object(SQLExecutor, "_get_from_cache", return_value=cached_result)
 
     # Mock Celery task - should NOT be called
-    mock_celery_task = mocker.patch(
-        "superset.sql.execution.celery_task.execute_sql_task"
-    )
+    mock_celery_task = mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1096,7 +1088,7 @@ def test_execute_empty_sql(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test execution with empty SQL."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[], column_names=[])
     mocker.patch.dict(
@@ -1122,7 +1114,7 @@ def test_execute_empty_sql(
 
 def test_execute_sql_with_cursor_empty_statements(app_context: None) -> None:
     """Test execute_sql_with_cursor with empty statement list."""
-    from superset.sql.execution.executor import execute_sql_with_cursor
+    from axbi.sql.execution.executor import execute_sql_with_cursor
 
     mock_database = MagicMock()
     mock_cursor = MagicMock()
@@ -1142,7 +1134,7 @@ def test_execute_sql_with_cursor_stopped_mid_execution(
     mocker: MockerFixture, app_context: None
 ) -> None:
     """Test execute_sql_with_cursor when query is stopped mid-execution."""
-    from superset.sql.execution.executor import execute_sql_with_cursor
+    from axbi.sql.execution.executor import execute_sql_with_cursor
 
     mock_database = MagicMock()
     mock_database.mutate_sql_based_on_config = lambda sql, **kw: sql
@@ -1158,7 +1150,7 @@ def test_execute_sql_with_cursor_stopped_mid_execution(
     mock_query.progress = 0
     mock_query.set_extra_json_key = MagicMock()
 
-    mocker.patch("superset.sql.execution.executor.db.session")
+    mocker.patch("axbi.sql.execution.executor.db.session")
 
     # Check stopped function returns True after first statement
     call_count = {"count": 0}
@@ -1183,7 +1175,7 @@ def test_execute_sql_with_cursor_custom_execute_fn(
     mocker: MockerFixture, app_context: None
 ) -> None:
     """Test execute_sql_with_cursor with custom execute function."""
-    from superset.sql.execution.executor import execute_sql_with_cursor
+    from axbi.sql.execution.executor import execute_sql_with_cursor
 
     mock_database = MagicMock()
     mock_database.mutate_sql_based_on_config = lambda sql, **kw: sql
@@ -1198,7 +1190,7 @@ def test_execute_sql_with_cursor_custom_execute_fn(
     mock_query.progress = 0
     mock_query.set_extra_json_key = MagicMock()
 
-    mocker.patch("superset.sql.execution.executor.db.session")
+    mocker.patch("axbi.sql.execution.executor.db.session")
     mock_database.db_engine_spec.fetch_data = MagicMock(return_value=[(100,)])
 
     custom_execute_calls = []
@@ -1227,7 +1219,7 @@ def test_execute_applies_limit(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that limit is applied to SELECT queries."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -1255,7 +1247,7 @@ def test_execute_respects_sql_max_row(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that SQL_MAX_ROW config limits the effective limit."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -1283,7 +1275,7 @@ def test_execute_no_limit_for_dml(
     mocker: MockerFixture, database_with_dml: Database, app_context: None
 ) -> None:
     """Test that limit is not applied to DML queries."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database_with_dml, return_data=[], column_names=[])
     mocker.patch.dict(
@@ -1309,8 +1301,8 @@ def test_apply_limit_to_script_respects_sql_max_row(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that _apply_limit_to_script caps limit at SQL_MAX_ROW."""
-    from superset.sql.execution.executor import SQLExecutor
-    from superset.sql.parse import SQLScript
+    from axbi.sql.execution.executor import SQLExecutor
+    from axbi.sql.parse import SQLScript
 
     mocker.patch.dict(
         current_app.config,
@@ -1338,8 +1330,8 @@ def test_apply_limit_to_script_with_empty_statements(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that _apply_limit_to_script handles empty script.statements."""
-    from superset.sql.execution.executor import SQLExecutor
-    from superset.sql.parse import SQLScript
+    from axbi.sql.execution.executor import SQLExecutor
+    from axbi.sql.parse import SQLScript
 
     mocker.patch.dict(
         current_app.config,
@@ -1415,7 +1407,7 @@ def test_async_handle_get_result_query_not_found(
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1434,7 +1426,7 @@ def test_async_handle_get_result_pending(
     mock_db_session: MagicMock,
 ) -> None:
     """Test getting result for pending query."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "pending"
@@ -1448,7 +1440,7 @@ def test_async_handle_get_result_pending(
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1464,7 +1456,7 @@ def test_async_handle_get_result_with_results_backend(
     mock_db_session: MagicMock,
 ) -> None:
     """Test getting result from results backend."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -1503,14 +1495,14 @@ def test_async_handle_get_result_with_results_backend(
     mock_results_backend_manager.results_backend = mock_results_backend
 
     mocker.patch(
-        "superset.results_backend_manager",
+        "axbi.results_backend_manager",
         mock_results_backend_manager,
     )
-    mocker.patch("superset.utils.core.zlib_decompress", return_value=payload)
+    mocker.patch("axbi.utils.core.zlib_decompress", return_value=payload)
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1529,7 +1521,7 @@ def test_async_handle_get_result_ignores_malformed_statement_payload(
     mock_db_session: MagicMock,
 ) -> None:
     """Malformed statement metadata should not break async result loading."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -1561,12 +1553,12 @@ def test_async_handle_get_result_ignores_malformed_statement_payload(
     mock_results_backend_manager = MagicMock()
     mock_results_backend_manager.results_backend = mock_results_backend
 
-    mocker.patch("superset.results_backend_manager", mock_results_backend_manager)
-    mocker.patch("superset.utils.core.zlib_decompress", return_value=payload)
+    mocker.patch("axbi.results_backend_manager", mock_results_backend_manager)
+    mocker.patch("axbi.utils.core.zlib_decompress", return_value=payload)
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
     query_result = result.get_result()
@@ -1585,7 +1577,7 @@ def test_async_handle_get_result_backend_load_error(
     mock_db_session: MagicMock,
 ) -> None:
     """Test error handling when loading results from backend."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -1604,17 +1596,17 @@ def test_async_handle_get_result_backend_load_error(
     mock_results_backend_manager.results_backend = mock_results_backend
 
     mocker.patch(
-        "superset.results_backend_manager",
+        "axbi.results_backend_manager",
         mock_results_backend_manager,
     )
     mocker.patch(
-        "superset.utils.core.zlib_decompress",
+        "axbi.utils.core.zlib_decompress",
         side_effect=Exception("Decompression failed"),
     )
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1632,7 +1624,7 @@ def test_async_handle_get_result_no_results_key(
     mock_db_session: MagicMock,
 ) -> None:
     """Test getting result when results_key is missing."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -1646,7 +1638,7 @@ def test_async_handle_get_result_no_results_key(
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1659,7 +1651,7 @@ def test_async_handle_get_result_no_results_key(
 
 def test_iter_dicts_returns_empty_for_non_list_values() -> None:
     """Non-list cached payload values yield no entries instead of erroring."""
-    from superset.sql.execution.executor import _iter_dicts
+    from axbi.sql.execution.executor import _iter_dicts
 
     assert _iter_dicts(None) == []
     assert _iter_dicts({"columns": []}) == []
@@ -1674,7 +1666,7 @@ def test_async_handle_get_result_non_dict_payload(
     mock_db_session: MagicMock,
 ) -> None:
     """A cached payload that isn't a mapping fails cleanly instead of crashing."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -1695,14 +1687,14 @@ def test_async_handle_get_result_non_dict_payload(
     mock_results_backend_manager.results_backend = mock_results_backend
 
     mocker.patch(
-        "superset.results_backend_manager",
+        "axbi.results_backend_manager",
         mock_results_backend_manager,
     )
-    mocker.patch("superset.utils.core.zlib_decompress", return_value=payload)
+    mocker.patch("axbi.utils.core.zlib_decompress", return_value=payload)
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1727,7 +1719,7 @@ def test_async_handle_get_status_query_not_found(
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1748,7 +1740,7 @@ def test_cancel_query_implicit_cancel(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test cancel_query with implicit cancellation."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query = MagicMock()
     mock_query.extra = {}
@@ -1766,8 +1758,8 @@ def test_cancel_query_early_cancel_flag(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test cancel_query with early cancel flag set."""
-    from superset.constants import QUERY_EARLY_CANCEL_KEY
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.constants import QUERY_EARLY_CANCEL_KEY
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query = MagicMock()
     mock_query.extra = {QUERY_EARLY_CANCEL_KEY: True}
@@ -1789,7 +1781,7 @@ def test_cancel_query_no_cancel_id(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test cancel_query when no cancel ID is available."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query = MagicMock()
     mock_query.extra = {}
@@ -1808,9 +1800,9 @@ def test_cancel_query_with_cancel_id(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test cancel_query executes cancellation with cancel ID."""
-    from superset.constants import QUERY_CANCEL_KEY
-    from superset.sql.execution.executor import SQLExecutor
-    from superset.utils.core import QuerySource
+    from axbi.constants import QUERY_CANCEL_KEY
+    from axbi.sql.execution.executor import SQLExecutor
+    from axbi.utils.core import QuerySource
 
     mock_query = MagicMock()
     mock_query.extra = {QUERY_CANCEL_KEY: "cancel_123"}
@@ -1869,7 +1861,7 @@ def test_async_handle_cancel_query_not_found(
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -1890,7 +1882,7 @@ def test_execute_uses_database_cache_timeout(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that database cache timeout is used when available."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -1908,7 +1900,7 @@ def test_execute_uses_database_cache_timeout(
 
     # Mock cache operations
     mocker.patch.object(SQLExecutor, "_get_from_cache", return_value=None)
-    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+    mock_cache_set = mocker.patch("axbi.extensions.cache_manager.data_cache.set")
 
     result = database.execute("SELECT * FROM users")
 
@@ -1923,7 +1915,7 @@ def test_execute_preserves_zero_database_cache_timeout(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that a zero database cache timeout is not replaced by default."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -1940,7 +1932,7 @@ def test_execute_preserves_zero_database_cache_timeout(
     database.cache_timeout = 0
 
     mocker.patch.object(SQLExecutor, "_get_from_cache", return_value=None)
-    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+    mock_cache_set = mocker.patch("axbi.extensions.cache_manager.data_cache.set")
 
     result = database.execute("SELECT * FROM users")
 
@@ -1954,7 +1946,7 @@ def test_execute_uses_custom_cache_timeout_option(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that custom cache timeout from options is used."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -1970,7 +1962,7 @@ def test_execute_uses_custom_cache_timeout_option(
 
     # Mock cache operations
     mocker.patch.object(SQLExecutor, "_get_from_cache", return_value=None)
-    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+    mock_cache_set = mocker.patch("axbi.extensions.cache_manager.data_cache.set")
 
     options = QueryOptions(cache=CacheOptions(timeout=1200))
     result = database.execute("SELECT * FROM users", options=options)
@@ -1986,7 +1978,7 @@ def test_execute_preserves_zero_custom_cache_timeout_option(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that a zero custom cache timeout is not replaced by fallback values."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_query_execution(mocker, database, return_data=[(1,)], column_names=["id"])
     mocker.patch.dict(
@@ -2003,7 +1995,7 @@ def test_execute_preserves_zero_custom_cache_timeout_option(
     database.cache_timeout = 600
 
     mocker.patch.object(SQLExecutor, "_get_from_cache", return_value=None)
-    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+    mock_cache_set = mocker.patch("axbi.extensions.cache_manager.data_cache.set")
 
     options = QueryOptions(cache=CacheOptions(timeout=0))
     result = database.execute("SELECT * FROM users", options=options)
@@ -2031,9 +2023,7 @@ def test_execute_async_celery_submission_error(
     )
 
     # Mock Celery task to raise exception
-    mock_celery_task = mocker.patch(
-        "superset.sql.execution.celery_task.execute_sql_task"
-    )
+    mock_celery_task = mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
     mock_celery_task.delay.side_effect = Exception("Celery connection failed")
 
     with pytest.raises(Exception, match="Celery connection failed"):
@@ -2049,7 +2039,7 @@ def test_execute_sql_with_cursor_no_rows_or_description(
     mocker: MockerFixture, app_context: None
 ) -> None:
     """Test execute_sql_with_cursor when cursor returns no rows and description."""
-    from superset.sql.execution.executor import execute_sql_with_cursor
+    from axbi.sql.execution.executor import execute_sql_with_cursor
 
     mock_database = MagicMock()
     mock_database.mutate_sql_based_on_config = lambda sql, **kw: sql
@@ -2065,7 +2055,7 @@ def test_execute_sql_with_cursor_no_rows_or_description(
     mock_query.progress = 0
     mock_query.set_extra_json_key = MagicMock()
 
-    mocker.patch("superset.sql.execution.executor.db.session")
+    mocker.patch("axbi.sql.execution.executor.db.session")
 
     result = execute_sql_with_cursor(
         database=mock_database,
@@ -2083,11 +2073,11 @@ def test_execute_with_exception_on_execute(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that _execute_statements returns empty DataFrame on None result."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     # Mock to simulate None result_set
     mocker.patch(
-        "superset.sql.execution.executor.execute_sql_with_cursor",
+        "axbi.sql.execution.executor.execute_sql_with_cursor",
         return_value=[],  # Empty list for no results
     )
 
@@ -2122,7 +2112,7 @@ def test_check_disallowed_functions_no_config(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test disallowed functions check when no config exists."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mocker.patch.dict(current_app.config, {"DISALLOWED_SQL_FUNCTIONS": {}})
 
@@ -2137,7 +2127,7 @@ def test_check_disallowed_functions_none_config(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Disallowed functions/tables check must not crash when config is None."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mocker.patch.dict(
         current_app.config,
@@ -2154,7 +2144,7 @@ def test_try_get_cached_result_with_mutation(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that cache is skipped for mutation queries."""
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     executor = SQLExecutor(database)
 
@@ -2171,9 +2161,9 @@ def test_store_in_cache_with_failed_status(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that failed queries are not cached."""
-    from superset_core.queries.types import QueryResult as QueryResultType
+    from axbi_core.queries.types import QueryResult as QueryResultType
 
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     executor = SQLExecutor(database)
 
@@ -2182,7 +2172,7 @@ def test_store_in_cache_with_failed_status(
         error_message="Test error",
     )
 
-    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+    mock_cache_set = mocker.patch("axbi.extensions.cache_manager.data_cache.set")
 
     executor._store_in_cache(failed_result, "SELECT 1", QueryOptions())
 
@@ -2194,12 +2184,12 @@ def test_store_in_cache_with_no_data(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that DML queries (with no data) are cached."""
-    from superset_core.queries.types import (
+    from axbi_core.queries.types import (
         QueryResult as QueryResultType,
         StatementResult,
     )
 
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     executor = SQLExecutor(database)
 
@@ -2215,7 +2205,7 @@ def test_store_in_cache_with_no_data(
         ],
     )
 
-    mock_cache_set = mocker.patch("superset.extensions.cache_manager.data_cache.set")
+    mock_cache_set = mocker.patch("axbi.extensions.cache_manager.data_cache.set")
 
     executor._store_in_cache(result_no_data, "INSERT INTO t VALUES (1)", QueryOptions())
 
@@ -2227,12 +2217,12 @@ def test_create_cached_async_result_cancel(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that cached async result cancel returns False."""
-    from superset_core.queries.types import (
+    from axbi_core.queries.types import (
         QueryResult as QueryResultType,
         StatementResult,
     )
 
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
@@ -2268,7 +2258,7 @@ def test_async_handle_get_result_with_empty_blob(
     mock_db_session: MagicMock,
 ) -> None:
     """Test getting result when backend returns None for blob."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -2287,13 +2277,13 @@ def test_async_handle_get_result_with_empty_blob(
     mock_results_backend_manager.results_backend = mock_results_backend
 
     mocker.patch(
-        "superset.results_backend_manager",
+        "axbi.results_backend_manager",
         mock_results_backend_manager,
     )
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -2312,7 +2302,7 @@ def test_async_handle_get_result_no_results_backend(
     mock_db_session: MagicMock,
 ) -> None:
     """Test getting result when results_backend is None."""
-    from superset.models.sql_lab import Query
+    from axbi.models.sql_lab import Query
 
     mock_query = MagicMock(spec=Query)
     mock_query.status = "success"
@@ -2328,13 +2318,13 @@ def test_async_handle_get_result_no_results_backend(
     mock_results_backend_manager.results_backend = None  # No backend configured
 
     mocker.patch(
-        "superset.results_backend_manager",
+        "axbi.results_backend_manager",
         mock_results_backend_manager,
     )
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}
     )
-    mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
     result = database.execute_async("SELECT * FROM users")
 
@@ -2358,7 +2348,7 @@ def test_create_query_record_with_user(
     mock_user = MagicMock()
     mock_user.get_id.return_value = 42
 
-    mocker.patch("superset.sql.execution.executor.has_app_context", return_value=True)
+    mocker.patch("axbi.sql.execution.executor.has_app_context", return_value=True)
     mocker.patch.object(g, "user", mock_user, create=True)
 
     mocker.patch.dict(
@@ -2381,8 +2371,8 @@ def test_get_from_cache_returns_cached_result(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that _get_from_cache returns cached result when available."""
-    from superset.extensions import cache_manager
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.extensions import cache_manager
+    from axbi.sql.execution.executor import SQLExecutor
 
     executor = SQLExecutor(database)
 
@@ -2414,8 +2404,8 @@ def test_get_from_cache_ignores_malformed_payloads(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Malformed cached result payloads should not break cache lookup."""
-    from superset.extensions import cache_manager
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.extensions import cache_manager
+    from axbi.sql.execution.executor import SQLExecutor
 
     executor = SQLExecutor(database)
 
@@ -2446,12 +2436,12 @@ def test_cached_async_result_get_result_returns_cached(
     mocker: MockerFixture, database: Database, app_context: None
 ) -> None:
     """Test that cached async result returns the original cached result."""
-    from superset_core.queries.types import (
+    from axbi_core.queries.types import (
         QueryResult as QueryResultType,
         StatementResult,
     )
 
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mocker.patch.dict(
         current_app.config, {"SQL_QUERY_MUTATOR": None, "SQLLAB_TIMEOUT": 30}

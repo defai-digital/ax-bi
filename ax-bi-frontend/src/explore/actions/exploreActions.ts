@@ -18,9 +18,9 @@
  */
 /* eslint camelcase: 0 */
 import rison from 'rison';
-import { Dataset } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, QueryFormData } from '@superset-ui/core';
+import { Dataset } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, QueryFormData } from '@ax-bi/ui-core';
 import { Dispatch } from 'redux';
 import {
   addDangerToast,
@@ -65,7 +65,7 @@ export function toggleFaveStar(isStarred: boolean) {
 export const FETCH_FAVE_STAR = 'FETCH_FAVE_STAR';
 export function fetchFaveStar(sliceId: string) {
   return function (dispatch: Dispatch) {
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/chart/favorite_status/?q=${rison.encode([sliceId])}`,
     }).then(({ json }) => {
       dispatch(toggleFaveStar(!!json?.result?.[0]?.value));
@@ -78,10 +78,10 @@ export function saveFaveStar(sliceId: string, isStarred: boolean) {
   return function (dispatch: Dispatch) {
     const endpoint = `/api/v1/chart/${sliceId}/favorites/`;
     const apiCall = isStarred
-      ? SupersetClient.delete({
+      ? AxBIClient.delete({
           endpoint,
         })
-      : SupersetClient.post({ endpoint });
+      : AxBIClient.post({ endpoint });
 
     apiCall
       .then(() => dispatch(toggleFaveStar(!isStarred)))
@@ -217,7 +217,7 @@ export function fetchCompatibility(
     );
 
     try {
-      const { json } = await SupersetClient.post({
+      const { json } = await AxBIClient.post({
         endpoint: `/api/v1/datasource/${datasourceType}/${datasourceId}/compatible`,
         jsonPayload: {
           selected_metrics: selectedMetrics,

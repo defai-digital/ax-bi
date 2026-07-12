@@ -16,11 +16,11 @@
 # under the License.
 from wtforms.form import Form
 
-from superset.forms import CommaSeparatedListField, filter_not_empty_values
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.forms import CommaSeparatedListField, filter_not_empty_values
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestForm(SupersetTestCase):
+class TestForm(AxBITestCase):
     def test_comma_separated_list_field(self):
         field = CommaSeparatedListField().bind(Form(), "foo")
         field.process_formdata([""])

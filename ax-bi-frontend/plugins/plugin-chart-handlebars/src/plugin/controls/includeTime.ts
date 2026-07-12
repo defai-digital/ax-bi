@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlSetItem } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { ControlSetItem } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import { isAggMode } from './shared';
 
 export const includeTimeControlSetItem: ControlSetItem = {

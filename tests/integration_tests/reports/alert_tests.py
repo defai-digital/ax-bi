@@ -23,10 +23,10 @@ import pytest
 from flask.ctx import AppContext
 from pytest_mock import MockerFixture
 
-from superset.commands.report.exceptions import AlertQueryError
-from superset.reports.models import ReportCreationMethod, ReportScheduleType
-from superset.tasks.types import ExecutorType, FixedExecutor
-from superset.utils.database import get_example_database
+from axbi.commands.report.exceptions import AlertQueryError
+from axbi.reports.models import ReportCreationMethod, ReportScheduleType
+from axbi.tasks.types import ExecutorType, FixedExecutor
+from axbi.utils.database import get_example_database
 from tests.integration_tests.test_app import app
 
 
@@ -65,8 +65,8 @@ def test_execute_query_as_report_executor(
     app_context: AppContext,
     get_user,
 ) -> None:
-    from superset.commands.report.alert import AlertCommand
-    from superset.reports.models import ReportSchedule
+    from axbi.commands.report.alert import AlertCommand
+    from axbi.reports.models import ReportSchedule
 
     original_config = app.config["ALERT_REPORTS_EXECUTORS"]
     app.config["ALERT_REPORTS_EXECUTORS"] = config
@@ -85,7 +85,7 @@ def test_execute_query_as_report_executor(
         validator_config_json='{"op": "==", "threshold": 1}',
     )
     command = AlertCommand(report_schedule=report_schedule, execution_id=uuid.uuid4())
-    override_user_mock = mocker.patch("superset.commands.report.alert.override_user")
+    override_user_mock = mocker.patch("axbi.commands.report.alert.override_user")
     cm = (
         pytest.raises(type(expected_result))
         if isinstance(expected_result, Exception)
@@ -103,13 +103,13 @@ def test_execute_query_mutate_query_enabled(
     app_context: AppContext,
     get_user,
 ) -> None:
-    from superset.commands.report.alert import AlertCommand
-    from superset.reports.models import ReportSchedule
+    from axbi.commands.report.alert import AlertCommand
+    from axbi.reports.models import ReportSchedule
 
     default_alert_mutate_ff = app.config["MUTATE_ALERT_QUERY"]
 
     app.config["MUTATE_ALERT_QUERY"] = True
-    mocker.patch("superset.commands.report.alert.override_user")
+    mocker.patch("axbi.commands.report.alert.override_user")
     mock_df = mocker.MagicMock(spec=pd.DataFrame)
     mock_df.empty = True
     mock_database = get_example_database()
@@ -145,13 +145,13 @@ def test_execute_query_mutate_query_disabled(
     app_context: AppContext,
     get_user,
 ) -> None:
-    from superset.commands.report.alert import AlertCommand
-    from superset.reports.models import ReportSchedule
+    from axbi.commands.report.alert import AlertCommand
+    from axbi.reports.models import ReportSchedule
 
     default_alert_mutate_ff = app.config["MUTATE_ALERT_QUERY"]
 
     app.config["MUTATE_ALERT_QUERY"] = False
-    mocker.patch("superset.commands.report.alert.override_user")
+    mocker.patch("axbi.commands.report.alert.override_user")
     mock_database = mocker.MagicMock()
 
     report_schedule = ReportSchedule(
@@ -182,10 +182,10 @@ def test_execute_query_mutate_query_disabled(
 def test_execute_query_succeeded_no_retry(
     mocker: MockerFixture, app_context: None
 ) -> None:
-    from superset.commands.report.alert import AlertCommand
+    from axbi.commands.report.alert import AlertCommand
 
     execute_query_mock = mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query",
+        "axbi.commands.report.alert.AlertCommand._execute_query",
         side_effect=lambda: pd.DataFrame([{"sample_col": 0}]),
     )
 
@@ -199,14 +199,14 @@ def test_execute_query_succeeded_no_retry(
 def test_execute_query_succeeded_with_retries(
     mocker: MockerFixture, app_context: None
 ) -> None:
-    from superset.commands.report.alert import AlertCommand, AlertQueryError
+    from axbi.commands.report.alert import AlertCommand, AlertQueryError
 
     execute_query_mock = mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query"
+        "axbi.commands.report.alert.AlertCommand._execute_query"
     )
 
     query_executed_count = 0
-    # Should match the value defined in superset_test_config.py
+    # Should match the value defined in axbi_test_config.py
     expected_max_retries = 3
 
     def _mocked_execute_query() -> pd.DataFrame:
@@ -231,10 +231,10 @@ def test_execute_query_succeeded_with_retries(
 def test_execute_query_failed_no_retry(
     mocker: MockerFixture, app_context: None
 ) -> None:
-    from superset.commands.report.alert import AlertCommand, AlertQueryTimeout
+    from axbi.commands.report.alert import AlertCommand, AlertQueryTimeout
 
     execute_query_mock = mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query"
+        "axbi.commands.report.alert.AlertCommand._execute_query"
     )
 
     def _mocked_execute_query() -> None:
@@ -253,10 +253,10 @@ def test_execute_query_failed_no_retry(
 def test_execute_query_failed_max_retries(
     mocker: MockerFixture, app_context: None
 ) -> None:
-    from superset.commands.report.alert import AlertCommand, AlertQueryError
+    from axbi.commands.report.alert import AlertCommand, AlertQueryError
 
     execute_query_mock = mocker.patch(
-        "superset.commands.report.alert.AlertCommand._execute_query"
+        "axbi.commands.report.alert.AlertCommand._execute_query"
     )
 
     def _mocked_execute_query() -> None:
@@ -269,7 +269,7 @@ def test_execute_query_failed_max_retries(
 
     with suppress(AlertQueryError):
         command.validate()
-    # Should match the value defined in superset_test_config.py
+    # Should match the value defined in axbi_test_config.py
     assert execute_query_mock.call_count == 3
 
 
@@ -278,8 +278,8 @@ def test_get_alert_metadata_from_object(
     app_context: AppContext,
     get_user,
 ) -> None:
-    from superset.commands.report.alert import AlertCommand
-    from superset.reports.models import ReportSchedule
+    from axbi.commands.report.alert import AlertCommand
+    from axbi.reports.models import ReportSchedule
 
     app.config["ALERT_REPORTS_EXECUTORS"] = [ExecutorType.OWNER]
 

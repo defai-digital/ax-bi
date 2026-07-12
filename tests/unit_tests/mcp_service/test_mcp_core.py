@@ -30,7 +30,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import BaseModel
 
-from superset.mcp_service.mcp_core import _slugify, ModelGetInfoCore
+from axbi.mcp_service.mcp_core import _slugify, ModelGetInfoCore
 
 
 class _FakeOutput(BaseModel):
@@ -59,7 +59,7 @@ def _patch_id_or_slug_filter():
     """id_or_slug_filter is called inside _find_object's slug branch, but its
     return value is only used by SQLAlchemy internals we've mocked away —
     we just need it to not blow up."""
-    with patch("superset.models.dashboard.id_or_slug_filter", return_value=MagicMock()):
+    with patch("axbi.models.dashboard.id_or_slug_filter", return_value=MagicMock()):
         yield
 
 
@@ -241,7 +241,7 @@ def test_title_fallback_ilike_pattern_preserves_word_order() -> None:
         return normalized_title
 
     with patch(
-        "superset.mcp_service.mcp_core.func.replace", side_effect=fake_replace
+        "axbi.mcp_service.mcp_core.func.replace", side_effect=fake_replace
     ) as replace_spy:
         result = core.run_tool("world-banks-data")
 
@@ -283,8 +283,8 @@ def test_title_fallback_respects_base_filter_rbac() -> None:
     filtered_query.options.return_value = filtered_query
 
     with (
-        patch("superset.mcp_service.mcp_core.db") as mock_db,
-        patch("superset.mcp_service.mcp_core.SQLAInterface") as mock_interface,
+        patch("axbi.mcp_service.mcp_core.db") as mock_db,
+        patch("axbi.mcp_service.mcp_core.SQLAInterface") as mock_interface,
     ):
         mock_db.session.query.return_value = raw_query
         mock_interface.return_value = MagicMock()

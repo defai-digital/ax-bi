@@ -18,8 +18,8 @@ from importlib import import_module
 
 import pytest
 
-from superset import db
-from superset.migrations.shared.security_converge import (
+from axbi import db
+from axbi.migrations.shared.security_converge import (
     _find_pvm,
     Permission,
     PermissionView,
@@ -27,7 +27,7 @@ from superset.migrations.shared.security_converge import (
 )
 
 migration_module = import_module(
-    "superset.migrations.versions."
+    "axbi.migrations.versions."
     "2024-02-07_17-13_87d38ad83218_migrate_can_view_and_drill_permission"
 )
 

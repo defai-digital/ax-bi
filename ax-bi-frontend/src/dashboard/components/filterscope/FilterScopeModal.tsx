@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useRef, useCallback } from 'react';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import {
   ModalTrigger,
   ModalTriggerRef,
-} from '@superset-ui/core/components/ModalTrigger';
+} from '@ax-bi/ui-core/components/ModalTrigger';
 import FilterScope from 'src/dashboard/containers/FilterScope';
 
 type FilterScopeModalProps = {

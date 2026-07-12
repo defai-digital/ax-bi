@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled } from '@apache-superset/core/theme';
-import { Flex } from '@superset-ui/core/components';
+import { styled } from '@ax-bi/core/theme';
+import { Flex } from '@ax-bi/ui-core/components';
 import ViewListExtension from 'src/components/ViewListExtension';
 import { useViews } from 'src/core';
 import { SQL_EDITOR_STATUSBAR_HEIGHT } from 'src/SqlLab/constants';

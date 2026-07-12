@@ -16,7 +16,7 @@
 # under the License.
 
 
-from superset.models.core import Theme
+from axbi.models.core import Theme
 
 
 class TestThemeModel:
@@ -45,7 +45,7 @@ class TestThemeModel:
         """Test that Theme model inherits from correct mixins"""
         from flask_appbuilder import Model
 
-        from superset.models.helpers import AuditMixinNullable, UUIDMixin
+        from axbi.models.helpers import AuditMixinNullable, UUIDMixin
 
         # Check that Theme inherits from the expected classes
         assert issubclass(Theme, AuditMixinNullable)

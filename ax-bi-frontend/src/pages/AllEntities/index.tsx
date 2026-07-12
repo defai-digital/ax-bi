@@ -17,18 +17,18 @@
  * under the License.
  */
 import { useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled, css, SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled, css, AxBITheme } from '@ax-bi/core/theme';
 import { NumberParam, useQueryParam } from 'use-query-params';
 import AllEntitiesTable from 'src/features/allEntities/AllEntitiesTable';
-import { Button, Loading } from '@superset-ui/core/components';
+import { Button, Loading } from '@ax-bi/ui-core/components';
 import MetadataBar, {
   MetadataType,
   Description,
   Owner,
   LastModified,
-} from '@superset-ui/core/components/MetadataBar';
-import { PageHeaderWithActions } from '@superset-ui/core/components/PageHeaderWithActions';
+} from '@ax-bi/ui-core/components/MetadataBar';
+import { PageHeaderWithActions } from '@ax-bi/ui-core/components/PageHeaderWithActions';
 import { Tag } from 'src/views/CRUD/types';
 import TagModal from 'src/features/tags/TagModal';
 import withToasts, { useToasts } from 'src/components/MessageToasts/withToasts';
@@ -39,7 +39,7 @@ import { findPermission } from 'src/utils/findPermission';
 import { useSelector } from 'react-redux';
 import { RootState } from 'src/dashboard/types';
 
-const additionalItemsStyles = (theme: SupersetTheme) => css`
+const additionalItemsStyles = (theme: AxBITheme) => css`
   display: flex;
   align-items: center;
   margin-left: ${theme.sizeUnit}px;

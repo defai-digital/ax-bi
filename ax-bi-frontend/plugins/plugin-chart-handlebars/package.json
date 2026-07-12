@@ -1,7 +1,7 @@
 {
-  "name": "@superset-ui/plugin-chart-handlebars",
+  "name": "@ax-bi/plugin-chart-handlebars",
   "version": "0.20.3",
-  "description": "Superset Chart - Write a handlebars template to render the data",
+  "description": "AxBI Chart - Write a handlebars template to render the data",
   "sideEffects": false,
   "main": "lib/index.js",
   "module": "esm/index.js",
@@ -11,16 +11,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/plugin-chart-handlebars"
   },
   "keywords": [
-    "superset"
+    "axbi"
   ],
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/plugin-chart-handlebars#readme",
   "publishConfig": {
@@ -32,9 +32,9 @@
     "just-handlebars-helpers": "^1.0.19"
   },
   "peerDependencies": {
-    "@superset-ui/chart-controls": "*",
-    "@apache-superset/core": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/core": "*",
+    "@ax-bi/ui-core": "*",
     "ace-builds": "^1.4.14",
     "handlebars": "^4.7.8",
     "lodash": "^4.18.1",

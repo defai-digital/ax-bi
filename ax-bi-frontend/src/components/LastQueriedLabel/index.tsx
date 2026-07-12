@@ -17,9 +17,9 @@
  * under the License.
  */
 import { FC } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 
 interface LastQueriedLabelProps {
   queriedDttm: string | null;

@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useState, useEffect, useRef, MouseEvent } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   getNumberFormatter,
   getTimeFormatter,
@@ -26,8 +26,8 @@ import {
   BRAND_COLOR,
   BinaryQueryObjectFilterClause,
   DTTM_ALIAS,
-} from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import Echart from '../components/Echart';
 import { BigNumberVizProps } from './types';
 import { PROPORTION } from './constants';
@@ -80,7 +80,7 @@ function BigNumberVis({
   }, [props.height, showTrendLine]);
 
   const getClassName = () => {
-    const names = `superset-legacy-chart-big-number ${className} ${
+    const names = `axbi-legacy-chart-big-number ${className} ${
       props.bigNumberFallback ? 'is-fallback-value' : ''
     }`;
     if (showTrendLine) return names;

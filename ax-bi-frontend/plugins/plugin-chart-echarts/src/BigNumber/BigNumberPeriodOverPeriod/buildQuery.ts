@@ -21,11 +21,8 @@ import {
   QueryFormData,
   PostProcessingRule,
   ensureIsArray,
-} from '@superset-ui/core';
-import {
-  isTimeComparison,
-  timeCompareOperator,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { isTimeComparison, timeCompareOperator } from '@ax-bi/chart-controls';
 import { isEmpty } from 'lodash';
 
 export default function buildQuery(formData: QueryFormData) {

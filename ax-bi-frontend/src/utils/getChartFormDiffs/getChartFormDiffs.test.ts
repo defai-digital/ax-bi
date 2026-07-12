@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import { alterForComparison, getChartFormDiffs, isEqualish } from '.';
 
 jest.mock('../sanitizeFormData', () => ({

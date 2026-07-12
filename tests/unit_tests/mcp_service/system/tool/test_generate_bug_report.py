@@ -23,17 +23,15 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.system.tool.generate_bug_report import _sanitize_text
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.system.tool.generate_bug_report import _sanitize_text
+from axbi.utils import json
 
 # Import the submodule via importlib so we can patch.object() on it. Going
 # through `from ...tool import generate_bug_report` would resolve to the
 # re-exported function in tool/__init__.py, not the submodule, and break
 # attribute patching — same pitfall called out in test_get_current_user.py.
-gbr_module = importlib.import_module(
-    "superset.mcp_service.system.tool.generate_bug_report"
-)
+gbr_module = importlib.import_module("axbi.mcp_service.system.tool.generate_bug_report")
 
 
 @pytest.fixture
@@ -288,11 +286,11 @@ class TestGenerateBugReportViaMCP:
 
         assert "report" in data
         # Default neutral contact when MCP_BUG_REPORT_CONTACT is unset.
-        assert "Apache Superset" in data["support_contact"]
+        assert "AX BI" in data["support_contact"]
         report = data["report"]
 
         # Structure
-        assert "# Superset MCP Bug Report" in report
+        assert "# AX BI MCP Bug Report" in report
         assert "MCP tool:** generate_chart" in report
         assert "LLM / client:** Claude Sonnet 4.6" in report
         assert "User ID:** 42" in report
@@ -454,7 +452,7 @@ def test_request_rejects_oversized_error_message():
     """error_message has a 4000-char cap to bound regex work on adversarial input."""
     from pydantic import ValidationError
 
-    from superset.mcp_service.system.schemas import GenerateBugReportRequest
+    from axbi.mcp_service.system.schemas import GenerateBugReportRequest
 
     with pytest.raises(ValidationError):
         GenerateBugReportRequest(error_message="x" * 4001)
@@ -464,7 +462,7 @@ def test_request_rejects_oversized_tool_name():
     """tool_name has a tighter 200-char cap (it's an identifier, not free text)."""
     from pydantic import ValidationError
 
-    from superset.mcp_service.system.schemas import GenerateBugReportRequest
+    from axbi.mcp_service.system.schemas import GenerateBugReportRequest
 
     with pytest.raises(ValidationError):
         GenerateBugReportRequest(tool_name="x" * 201)
@@ -484,7 +482,7 @@ def test_collect_environment_falls_back_when_version_unavailable():
     ):
         env = gbr_module._collect_environment()
 
-    assert env["superset_version"] == "unknown"
+    assert env["axbi_version"] == "unknown"
     # Other fields still populated from platform / current_app.
     assert env["python_version"]
     assert env["platform"]
@@ -511,7 +509,7 @@ def test_collect_user_context_with_no_flask_g():
 
 def test_collect_user_context_handles_role_typeerror():
     """If user.roles is unexpectedly non-iterable, roles fall back to []."""
-    from superset.mcp_service.system.tool.generate_bug_report import (
+    from axbi.mcp_service.system.tool.generate_bug_report import (
         _collect_user_context,
     )
 
@@ -530,7 +528,7 @@ def test_collect_user_context_handles_role_typeerror():
 
 def test_resolve_support_contact_returns_default_when_unset(app):
     """Without MCP_BUG_REPORT_CONTACT, the neutral default wins."""
-    from superset.mcp_service.system.tool.generate_bug_report import (
+    from axbi.mcp_service.system.tool.generate_bug_report import (
         _resolve_support_contact,
         DEFAULT_SUPPORT_CONTACT,
     )
@@ -541,7 +539,7 @@ def test_resolve_support_contact_returns_default_when_unset(app):
 
 def test_resolve_support_contact_ignores_blank_override(app):
     """Whitespace-only overrides fall back to the default."""
-    from superset.mcp_service.system.tool.generate_bug_report import (
+    from axbi.mcp_service.system.tool.generate_bug_report import (
         _resolve_support_contact,
         DEFAULT_SUPPORT_CONTACT,
     )

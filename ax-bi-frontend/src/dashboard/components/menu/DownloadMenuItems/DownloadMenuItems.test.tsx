@@ -23,12 +23,8 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { Menu, MenuItem } from '@superset-ui/core/components/Menu';
-import {
-  FeatureFlag,
-  isFeatureEnabled,
-  SupersetClient,
-} from '@superset-ui/core';
+import { Menu, MenuItem } from '@ax-bi/ui-core/components/Menu';
+import { FeatureFlag, isFeatureEnabled, AxBIClient } from '@ax-bi/ui-core';
 import { useDownloadMenuItems } from '.';
 
 const mockAddSuccessToast = jest.fn();
@@ -43,15 +39,15 @@ jest.mock('src/components/MessageToasts/withToasts', () => ({
   }),
 }));
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn().mockReturnValue(false),
-  SupersetClient: {
+  AxBIClient: {
     get: jest.fn(),
   },
 }));
 
-const mockSupersetClient = SupersetClient as jest.Mocked<typeof SupersetClient>;
+const mockAxBIClient = AxBIClient as jest.Mocked<typeof AxBIClient>;
 
 const createProps = () => ({
   pdfMenuItemTitle: 'Export to PDF',
@@ -96,7 +92,7 @@ test('Should render all menu items', () => {
   expect(screen.getByText('Export as Example')).toBeInTheDocument();
 });
 
-test('Export as Example calls SupersetClient.get with correct endpoint', async () => {
+test('Export as Example calls AxBIClient.get with correct endpoint', async () => {
   const mockBlob = new Blob(['test'], { type: 'application/zip' });
   const mockResponse: Pick<Response, 'blob' | 'headers'> = {
     blob: jest.fn().mockResolvedValue(mockBlob),
@@ -104,7 +100,7 @@ test('Export as Example calls SupersetClient.get with correct endpoint', async (
       'Content-Disposition': 'attachment; filename="dashboard_123_example.zip"',
     }),
   };
-  mockSupersetClient.get.mockResolvedValue(mockResponse as unknown as Response);
+  mockAxBIClient.get.mockResolvedValue(mockResponse as unknown as Response);
 
   // Mock URL.createObjectURL / revokeObjectURL since jsdom doesn't support them
   const createObjectURL = jest.fn(() => 'blob:http://localhost/fake');
@@ -117,7 +113,7 @@ test('Export as Example calls SupersetClient.get with correct endpoint', async (
   await userEvent.click(screen.getByText('Export as Example'));
 
   await waitFor(() => {
-    expect(mockSupersetClient.get).toHaveBeenCalledWith({
+    expect(mockAxBIClient.get).toHaveBeenCalledWith({
       endpoint: '/api/v1/dashboard/123/export_as_example/',
       headers: { Accept: 'application/zip' },
       parseMethod: 'raw',
@@ -129,7 +125,7 @@ test('Export as Example calls SupersetClient.get with correct endpoint', async (
 });
 
 test('Export as Example shows error toast on failure', async () => {
-  mockSupersetClient.get.mockRejectedValue(new Error('Network error'));
+  mockAxBIClient.get.mockRejectedValue(new Error('Network error'));
 
   render(<MenuWrapper />, { useRedux: true });
 

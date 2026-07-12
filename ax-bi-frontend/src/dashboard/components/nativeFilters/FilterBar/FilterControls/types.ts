@@ -23,7 +23,7 @@ import {
   DataMaskStateWithId,
   Filter,
   ChartCustomization,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { FilterBarOrientation } from 'src/dashboard/types';
 
 export type FilterElement = Filter | ChartCustomization;

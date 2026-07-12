@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { SetDataMaskHook } from '@superset-ui/core';
+import { SetDataMaskHook } from '@ax-bi/ui-core';
 import { FilterBarOrientation } from 'src/dashboard/types';
 
 export interface PluginFilterStylesProps {

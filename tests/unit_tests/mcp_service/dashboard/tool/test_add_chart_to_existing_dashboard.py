@@ -20,7 +20,7 @@ Unit tests for add_chart_to_existing_dashboard MCP tool.
 
 Follows the same pattern used in test_dashboard_generation.py:
 - Tests run through the async MCP Client (not direct function calls)
-- Patches applied at source locations (superset.daos.dashboard.*, superset.db.*, etc.)
+- Patches applied at source locations (axbi.daos.dashboard.*, axbi.db.*, etc.)
 - auth is mocked via the autouse mock_auth fixture (same as other tool test files)
 
 Covers:
@@ -37,9 +37,9 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.chart_utils import DatasetValidationResult
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.chart_utils import DatasetValidationResult
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 
@@ -58,7 +58,7 @@ def mcp_server() -> object:
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -70,7 +70,7 @@ def mock_auth():
 def mock_chart_access():
     """Allow chart data access by default so tests focus on dashboard logic."""
     with patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         return_value=DatasetValidationResult(
             is_valid=True,
             dataset_id=1,
@@ -137,7 +137,7 @@ def _mock_dashboard(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_dashboard_not_found(mock_find_by_id: Mock, mcp_server: object) -> None:
     """Returns a clear error when the target dashboard does not exist."""
@@ -155,8 +155,8 @@ async def test_dashboard_not_found(mock_find_by_id: Mock, mcp_server: object) ->
     assert "not found" in (result.structured_content["error"] or "").lower()
 
 
-@patch("superset.security_manager.raise_for_ownership")
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.security_manager.raise_for_ownership")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_permission_denied(
     mock_find_by_id: Mock, mock_raise_for_ownership: Mock, mcp_server: object
@@ -169,15 +169,15 @@ async def test_permission_denied(
     generate_dashboard instead.  After the fix it returns permission_denied=True
     with a message that explicitly tells the LLM to ask the user first.
     """
-    from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-    from superset.exceptions import SupersetSecurityException
+    from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+    from axbi.exceptions import AxBISecurityException
 
     dashboard = _mock_dashboard(id=1, title="Sales Dashboard")
     mock_find_by_id.return_value = dashboard
-    mock_raise_for_ownership.side_effect = SupersetSecurityException(
-        SupersetError(
+    mock_raise_for_ownership.side_effect = AxBISecurityException(
+        AxBIError(
             message="Changing this Dashboard is forbidden",
-            error_type=SupersetErrorType.GENERIC_BACKEND_ERROR,
+            error_type=AxBIErrorType.GENERIC_BACKEND_ERROR,
             level=ErrorLevel.ERROR,
         )
     )
@@ -200,9 +200,9 @@ async def test_permission_denied(
     assert "new dashboard" in content["error"].lower()
 
 
-@patch("superset.db.session.get")
-@patch("superset.security_manager.raise_for_ownership")
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.db.session.get")
+@patch("axbi.security_manager.raise_for_ownership")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_chart_not_found(
     mock_find_by_id: Mock,
@@ -228,9 +228,9 @@ async def test_chart_not_found(
     assert "99" in (content["error"] or "")
 
 
-@patch("superset.db.session.get")
-@patch("superset.security_manager.raise_for_ownership")
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.db.session.get")
+@patch("axbi.security_manager.raise_for_ownership")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_chart_already_in_dashboard(
     mock_find_by_id: Mock,
@@ -257,10 +257,10 @@ async def test_chart_already_in_dashboard(
     assert "already" in (content["error"] or "").lower()
 
 
-@patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-@patch("superset.db.session.get")
-@patch("superset.security_manager.raise_for_ownership")
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+@patch("axbi.db.session.get")
+@patch("axbi.security_manager.raise_for_ownership")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_successful_add(
     mock_find_by_id: Mock,
@@ -297,10 +297,10 @@ async def test_successful_add(
     assert "chart_key" in content["position"]
 
 
-@patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-@patch("superset.db.session.get")
-@patch("superset.security_manager.raise_for_ownership")
-@patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+@patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+@patch("axbi.db.session.get")
+@patch("axbi.security_manager.raise_for_ownership")
+@patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_non_object_position_json_falls_back_to_empty_layout(
     mock_find_by_id: Mock,
@@ -343,7 +343,7 @@ def test_empty_target_tab_rejected_by_schema() -> None:
     """Empty string target_tab is rejected at schema layer, not as 'Tab not found'."""
     from pydantic import ValidationError
 
-    from superset.mcp_service.dashboard.schemas import AddChartToDashboardRequest
+    from axbi.mcp_service.dashboard.schemas import AddChartToDashboardRequest
 
     with pytest.raises(ValidationError):
         AddChartToDashboardRequest(dashboard_id=1, chart_id=10, target_tab="")
@@ -361,8 +361,8 @@ def test_add_chart_response_error_is_sanitized_for_llm_context() -> None:
     UNTRUSTED-CONTENT delimiters so the LLM treats them as data, not
     instructions.
     """
-    from superset.mcp_service.dashboard.schemas import AddChartToDashboardResponse
-    from superset.mcp_service.utils.sanitization import (
+    from axbi.mcp_service.dashboard.schemas import AddChartToDashboardResponse
+    from axbi.mcp_service.utils.sanitization import (
         LLM_CONTEXT_CLOSE_DELIMITER,
         LLM_CONTEXT_OPEN_DELIMITER,
     )

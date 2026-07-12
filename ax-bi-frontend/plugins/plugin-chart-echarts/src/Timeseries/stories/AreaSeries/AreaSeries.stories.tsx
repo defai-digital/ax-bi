@@ -21,11 +21,11 @@ import {
   SuperChart,
   getChartTransformPropsRegistry,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   EchartsAreaChartPlugin,
   TimeseriesTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import data from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 
@@ -182,7 +182,7 @@ export const AreaSeries = ({
         area: true,
         contributionMode: undefined,
         forecastEnabled,
-        colorScheme: 'supersetColors',
+        colorScheme: 'axbiColors',
         seriesType,
         show_extra_controls,
         logAxis,

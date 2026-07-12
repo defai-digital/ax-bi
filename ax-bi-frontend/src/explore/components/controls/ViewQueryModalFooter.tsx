@@ -19,9 +19,9 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { FC } from 'react';
 import { isObject } from 'lodash';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { Button } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { Button } from '@ax-bi/ui-core/components';
 
 interface SimpleDataSource {
   id: string;
@@ -56,7 +56,7 @@ const ViewQueryModalFooter: FC<ViewQueryModalFooterProps> = (props: {
       sql,
     };
     if (openInNewWindow) {
-      SupersetClient.postForm('/sqllab/', payload);
+      AxBIClient.postForm('/sqllab/', payload);
     } else {
       history.push({
         pathname: '/sqllab',

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { ModalFormField } from 'src/components/Modal';
 import { RefreshFrequencySelect } from '../../RefreshFrequency/RefreshFrequencySelect';
 

@@ -18,7 +18,7 @@
  */
 import { FC, ReactNode } from 'react';
 import { Resizable } from 're-resizable';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import useStoredSidebarWidth from './useStoredSidebarWidth';
 
 const ResizableWrapper = styled.div`

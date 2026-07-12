@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useState, useCallback, ReactNode } from 'react';
-import { ConfirmModal } from '@superset-ui/core/components';
+import { ConfirmModal } from '@ax-bi/ui-core/components';
 
 export interface ConfirmConfig {
   title: string;

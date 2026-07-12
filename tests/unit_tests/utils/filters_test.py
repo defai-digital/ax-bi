@@ -18,15 +18,15 @@
 from pytest_mock import MockerFixture
 from sqlalchemy import create_engine
 
-from superset.utils.filters import get_dataset_access_filters
+from axbi.utils.filters import get_dataset_access_filters
 
 
 def test_get_dataset_access_filters(mocker: MockerFixture) -> None:
     """
     Test the `get_dataset_access_filters` function.
     """
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.extensions import security_manager
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.extensions import security_manager
 
     mocker.patch.object(
         security_manager,

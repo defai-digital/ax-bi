@@ -29,26 +29,26 @@ import pytest
 
 from flask import current_app, g
 from flask_appbuilder.security.sqla.models import Role
-from superset.daos.datasource import DatasourceDAO  # noqa: F401
-from superset.models.dashboard import Dashboard
-from superset import appbuilder, db, security_manager, viz
-from superset.connectors.sqla.models import SqlaTable
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
-from superset.models.core import Database
-from superset.models.slice import Slice
-from superset.sql.parse import Table
-from superset.utils.core import (
+from axbi.daos.datasource import DatasourceDAO  # noqa: F401
+from axbi.models.dashboard import Dashboard
+from axbi import appbuilder, db, security_manager, viz
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.errors import ErrorLevel, AxBIError, AxBIErrorType
+from axbi.exceptions import AxBISecurityException
+from axbi.models.core import Database
+from axbi.models.slice import Slice
+from axbi.sql.parse import Table
+from axbi.utils.core import (
     DatasourceType,
     backend,
     get_example_default_schema,
     override_user,
 )
-from superset.utils import json
-from superset.utils.database import get_example_database
-from superset.utils.urls import get_url_host
+from axbi.utils import json
+from axbi.utils.database import get_example_database
+from axbi.utils.urls import get_url_host
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import GAMMA_USERNAME
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.fixtures.public_role import (
@@ -111,7 +111,7 @@ def delete_schema_perm(view_menu_name: str) -> None:
     return None
 
 
-class TestRolePermission(SupersetTestCase):
+class TestRolePermission(AxBITestCase):
     """Testing export role permissions."""
 
     def setUp(self):
@@ -1176,8 +1176,8 @@ class TestRolePermission(SupersetTestCase):
 
         db.session.commit()
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     def test_schemas_accessible_by_user_admin(self, mock_sm_g, mock_g):
         mock_g.user = mock_sm_g.user = security_manager.find_user("admin")
         with self.client.application.test_request_context():
@@ -1187,8 +1187,8 @@ class TestRolePermission(SupersetTestCase):
             )
             assert schemas == {"1", "2", "3"}  # no changes
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
     def test_schemas_accessible_by_user_schema_access(self, mock_sm_g, mock_g):
         # User has schema access to the schema 1
         create_schema_perm("[examples].[1]")
@@ -1359,13 +1359,13 @@ class TestRolePermission(SupersetTestCase):
         # make sure that user can create slices and dashboards
         self.assert_can_all("Dashboard", perm_set)
         self.assert_can_all("Chart", perm_set)
-        assert ("can_csv", "Superset") in perm_set
-        assert ("can_dashboard", "Superset") in perm_set
-        assert ("can_explore", "Superset") in perm_set
-        assert ("can_share_chart", "Superset") in perm_set
-        assert ("can_share_dashboard", "Superset") in perm_set
-        assert ("can_explore_json", "Superset") in perm_set
-        assert ("can_explore_json", "Superset") in perm_set
+        assert ("can_csv", "AxBI") in perm_set
+        assert ("can_dashboard", "AxBI") in perm_set
+        assert ("can_explore", "AxBI") in perm_set
+        assert ("can_share_chart", "AxBI") in perm_set
+        assert ("can_share_dashboard", "AxBI") in perm_set
+        assert ("can_explore_json", "AxBI") in perm_set
+        assert ("can_explore_json", "AxBI") in perm_set
         assert ("can_userinfo", "UserDBModelView") in perm_set
         assert ("can_view_chart_as_table", "Dashboard") in perm_set
         assert ("can_view_query", "Dashboard") in perm_set
@@ -1422,7 +1422,7 @@ class TestRolePermission(SupersetTestCase):
         )
 
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("pydruid"), "pydruid not installed"
+        AxBITestCase.is_module_installed("pydruid"), "pydruid not installed"
     )
     def test_is_alpha_only(self):
         assert not security_manager._is_alpha_only(
@@ -1458,10 +1458,10 @@ class TestRolePermission(SupersetTestCase):
             security_manager.find_permission_view_menu("can_read", "Chart")
         )
         assert security_manager._is_public_pvm(
-            security_manager.find_permission_view_menu("can_dashboard", "Superset")
+            security_manager.find_permission_view_menu("can_dashboard", "AxBI")
         )
         assert security_manager._is_public_pvm(
-            security_manager.find_permission_view_menu("can_explore_json", "Superset")
+            security_manager.find_permission_view_menu("can_explore_json", "AxBI")
         )
 
         # Should NOT include write permissions on core objects
@@ -1487,10 +1487,10 @@ class TestRolePermission(SupersetTestCase):
         # Core dashboard viewing - should be present
         assert ("can_read", "Dashboard") in public_perm_set
         assert ("can_read", "Chart") in public_perm_set
-        assert ("can_dashboard", "Superset") in public_perm_set
-        assert ("can_slice", "Superset") in public_perm_set
-        assert ("can_explore_json", "Superset") in public_perm_set
-        assert ("can_dashboard_permalink", "Superset") in public_perm_set
+        assert ("can_dashboard", "AxBI") in public_perm_set
+        assert ("can_slice", "AxBI") in public_perm_set
+        assert ("can_explore_json", "AxBI") in public_perm_set
+        assert ("can_dashboard_permalink", "AxBI") in public_perm_set
 
         # Filter state for interactive dashboards
         assert ("can_read", "DashboardFilterStateRestApi") in public_perm_set
@@ -1502,11 +1502,11 @@ class TestRolePermission(SupersetTestCase):
         assert ("can_write", "Dataset") not in public_perm_set
 
         # Should NOT have share permissions
-        assert ("can_share_dashboard", "Superset") not in public_perm_set
-        assert ("can_share_chart", "Superset") not in public_perm_set
+        assert ("can_share_dashboard", "AxBI") not in public_perm_set
+        assert ("can_share_chart", "AxBI") not in public_perm_set
 
         # Should NOT have SQL Lab access
-        assert ("can_sqllab", "Superset") not in public_perm_set
+        assert ("can_sqllab", "AxBI") not in public_perm_set
         assert ("menu_access", "SQL Lab") not in public_perm_set
 
         # Should NOT have admin permissions
@@ -1556,7 +1556,7 @@ class TestRolePermission(SupersetTestCase):
         self.assert_can_gamma(get_perm_tuples("Public"))
 
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("pydruid"), "pydruid not installed"
+        AxBITestCase.is_module_installed("pydruid"), "pydruid not installed"
     )
     def test_alpha_permissions(self):
         alpha_perm_tuples = get_perm_tuples("Alpha")
@@ -1579,21 +1579,21 @@ class TestRolePermission(SupersetTestCase):
         sql_lab_set = get_perm_tuples("sql_lab")
         assert sql_lab_set == {
             ("can_activate", "TabStateView"),
-            ("can_copy_clipboard", "Superset"),
-            ("can_csv", "Superset"),
+            ("can_copy_clipboard", "AxBI"),
+            ("can_csv", "AxBI"),
             ("can_delete_query", "TabStateView"),
             ("can_delete", "TabStateView"),
             ("can_estimate_query_cost", "SQLLab"),
             ("can_execute_sql_query", "SQLLab"),
             ("can_export", "SavedQuery"),
             ("can_export_csv", "SQLLab"),
-            ("can_export_data", "Superset"),
+            ("can_export_data", "AxBI"),
             ("can_format_sql", "SQLLab"),
             ("can_get", "TabStateView"),
             ("can_get_results", "SQLLab"),
             ("can_migrate_query", "TabStateView"),
-            ("can_sqllab", "Superset"),
-            ("can_sqllab_history", "Superset"),
+            ("can_sqllab", "AxBI"),
+            ("can_sqllab_history", "AxBI"),
             ("can_put", "TabStateView"),
             ("can_post", "TabStateView"),
             ("can_write", "SavedQuery"),
@@ -1631,12 +1631,12 @@ class TestRolePermission(SupersetTestCase):
         self.assert_cannot_write("UserDBModelView", gamma_perm_set)
         self.assert_cannot_write("RoleModelView", gamma_perm_set)
 
-        assert ("can_csv", "Superset") in gamma_perm_set
-        assert ("can_dashboard", "Superset") in gamma_perm_set
-        assert ("can_explore", "Superset") in gamma_perm_set
-        assert ("can_share_chart", "Superset") in gamma_perm_set
-        assert ("can_share_dashboard", "Superset") in gamma_perm_set
-        assert ("can_explore_json", "Superset") in gamma_perm_set
+        assert ("can_csv", "AxBI") in gamma_perm_set
+        assert ("can_dashboard", "AxBI") in gamma_perm_set
+        assert ("can_explore", "AxBI") in gamma_perm_set
+        assert ("can_share_chart", "AxBI") in gamma_perm_set
+        assert ("can_share_dashboard", "AxBI") in gamma_perm_set
+        assert ("can_explore_json", "AxBI") in gamma_perm_set
         assert ("can_userinfo", "UserDBModelView") in gamma_perm_set
         assert ("can_view_chart_as_table", "Dashboard") in gamma_perm_set
         assert ("can_view_query", "Dashboard") in gamma_perm_set
@@ -1660,18 +1660,18 @@ class TestRolePermission(SupersetTestCase):
             ["Dashboard", "embedded"],
             ["EmbeddedView", "embedded"],
             ["R", "index"],
-            ["Superset", "log"],
-            ["Superset", "theme"],
-            ["Superset", "welcome"],
+            ["AxBI", "log"],
+            ["AxBI", "theme"],
+            ["AxBI", "welcome"],
             ["SecurityApi", "login"],
             ["SecurityApi", "refresh"],
-            ["SupersetIndexView", "index"],
-            ["SupersetIndexView", "patch_flask_locale"],
+            ["AxBIIndexView", "index"],
+            ["AxBIIndexView", "patch_flask_locale"],
             ["DatabaseRestApi", "oauth2"],
-            ["SupersetAuthView", "login"],
-            ["SupersetAuthView", "logout"],
-            ["SupersetRegisterUserView", "register"],
-            ["SupersetRegisterUserView", "activation"],
+            ["AxBIAuthView", "login"],
+            ["AxBIAuthView", "logout"],
+            ["AxBIRegisterUserView", "register"],
+            ["AxBIRegisterUserView", "activation"],
             ["RedirectView", "redirect_warning"],
         ]
         unsecured_views = []
@@ -1692,29 +1692,29 @@ class TestRolePermission(SupersetTestCase):
             raise Exception(f"Some views are not secured:\n{view_str}")
 
 
-class TestSecurityManager(SupersetTestCase):
+class TestSecurityManager(AxBITestCase):
     """
     Testing the Security Manager.
     """
 
-    @patch("superset.security.SupersetSecurityManager.raise_for_access")
+    @patch("axbi.security.AxBISecurityManager.raise_for_access")
     def test_can_access_datasource(self, mock_raise_for_access):
         datasource = self.get_datasource_mock()
 
         mock_raise_for_access.return_value = None
         assert security_manager.can_access_datasource(datasource=datasource)
 
-        mock_raise_for_access.side_effect = SupersetSecurityException(
-            SupersetError(
+        mock_raise_for_access.side_effect = AxBISecurityException(
+            AxBIError(
                 "dummy",
-                SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+                AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                 ErrorLevel.ERROR,
             )
         )
 
         assert not security_manager.can_access_datasource(datasource=datasource)
 
-    @patch("superset.security.SupersetSecurityManager.raise_for_access")
+    @patch("axbi.security.AxBISecurityManager.raise_for_access")
     def test_can_access_table(self, mock_raise_for_access):
         database = get_example_database()
         table = Table("bar", "foo")
@@ -1722,17 +1722,17 @@ class TestSecurityManager(SupersetTestCase):
         mock_raise_for_access.return_value = None
         assert security_manager.can_access_table(database, table)
 
-        mock_raise_for_access.side_effect = SupersetSecurityException(
-            SupersetError(
-                "dummy", SupersetErrorType.TABLE_SECURITY_ACCESS_ERROR, ErrorLevel.ERROR
+        mock_raise_for_access.side_effect = AxBISecurityException(
+            AxBIError(
+                "dummy", AxBIErrorType.TABLE_SECURITY_ACCESS_ERROR, ErrorLevel.ERROR
             )
         )
 
         assert not security_manager.can_access_table(database, table)
 
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
-    @patch("superset.security.SupersetSecurityManager.can_access_schema")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
+    @patch("axbi.security.AxBISecurityManager.can_access_schema")
     def test_raise_for_access_datasource(
         self, mock_can_access_schema, mock_can_access, mock_is_owner
     ):
@@ -1745,11 +1745,11 @@ class TestSecurityManager(SupersetTestCase):
         mock_can_access_schema.return_value = False
         mock_is_owner.return_value = False
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(datasource=datasource)
 
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_query(self, mock_can_access, mock_is_owner):
         query = Mock(
             database=get_example_database(),
@@ -1764,20 +1764,20 @@ class TestSecurityManager(SupersetTestCase):
         mock_can_access.return_value = False
         mock_is_owner.return_value = False
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(query=query)
 
     def test_raise_for_access_sql_fails(self):
         with override_user(security_manager.find_user("gamma")):
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     database=get_example_database(),
                     schema="bar",
                     sql="SELECT * FROM foo",
                 )
 
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_sql(self, mock_can_access, mock_is_owner):
         mock_can_access.return_value = True
         mock_is_owner.return_value = True
@@ -1786,15 +1786,15 @@ class TestSecurityManager(SupersetTestCase):
                 database=get_example_database(), schema="bar", sql="SELECT * FROM foo"
             )
 
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_force_dataset_match_allows_dataset(
         self, mock_can_access, mock_is_owner, mock_query_datasources
     ):
         """
         With force_dataset_match=True (SQL Lab path), a query that references
-        a table backed by a Superset dataset the user has datasource_access
+        a table backed by a AxBI dataset the user has datasource_access
         on still succeeds.
         """
         query = Mock(
@@ -1812,16 +1812,16 @@ class TestSecurityManager(SupersetTestCase):
         mock_is_owner.return_value = False
         security_manager.raise_for_access(query=query, force_dataset_match=True)
 
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_force_dataset_match_denies_schema_only(
         self, mock_can_access, mock_is_owner, mock_query_datasources
     ):
         """
         Regression test: with force_dataset_match=True, schema_access alone
         is not sufficient. The user must have datasource_access (or own) a
-        registered Superset dataset for the referenced table.
+        registered AxBI dataset for the referenced table.
         """
         query = Mock(
             database=get_example_database(),
@@ -1836,12 +1836,12 @@ class TestSecurityManager(SupersetTestCase):
         mock_can_access.side_effect = lambda perm, _vm: perm == "schema_access"
         mock_is_owner.return_value = False
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(query=query, force_dataset_match=True)
 
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_force_dataset_match_denies_unresolved_schema(
         self, mock_can_access, mock_is_owner, mock_query_datasources
     ):
@@ -1876,12 +1876,12 @@ class TestSecurityManager(SupersetTestCase):
             mock_can_access.return_value = False
             mock_is_owner.return_value = False
 
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(query=query, force_dataset_match=True)
 
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_force_dataset_match_denies_unparseable(
         self, mock_can_access, mock_is_owner, mock_query_datasources
     ):
@@ -1904,13 +1904,13 @@ class TestSecurityManager(SupersetTestCase):
         mock_can_access.return_value = False
         mock_is_owner.return_value = False
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(query=query, force_dataset_match=True)
 
-    @patch("superset.security.manager.process_jinja_sql")
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.security.manager.process_jinja_sql")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_force_dataset_match_prefers_executed_sql(
         self,
         mock_can_access,
@@ -1924,7 +1924,7 @@ class TestSecurityManager(SupersetTestCase):
         ``executed_sql`` (the rendered SQL that actually ran) when it is set
         to keep the table set aligned with the execute-time check.
         """
-        from superset.sql.parse import JinjaSQLResult, SQLScript
+        from axbi.sql.parse import JinjaSQLResult, SQLScript
 
         query = Mock(
             database=get_example_database(),
@@ -1946,9 +1946,9 @@ class TestSecurityManager(SupersetTestCase):
         sql_passed = mock_process_jinja.call_args.args[0]
         assert sql_passed == "SELECT * FROM bar.foo"
 
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_force_dataset_match_denies_kql(
         self, mock_can_access, mock_is_owner, mock_query_datasources
     ):
@@ -1973,12 +1973,12 @@ class TestSecurityManager(SupersetTestCase):
         mock_can_access.return_value = False
         mock_is_owner.return_value = False
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(query=query, force_dataset_match=True)
 
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_default_keeps_schema_access(
         self, mock_can_access, mock_is_owner, mock_query_datasources
     ):
@@ -2000,9 +2000,9 @@ class TestSecurityManager(SupersetTestCase):
 
         security_manager.raise_for_access(query=query)
 
-    @patch("superset.connectors.sqla.models.SqlaTable.query_datasources_by_name")
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.connectors.sqla.models.SqlaTable.query_datasources_by_name")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_force_dataset_match_table_uses_default_schema(
         self, mock_can_access, mock_is_owner, mock_query_datasources
     ):
@@ -2036,9 +2036,9 @@ class TestSecurityManager(SupersetTestCase):
             _args, kwargs = mock_query_datasources.call_args
             assert kwargs.get("schema") == "public"
 
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
-    @patch("superset.security.SupersetSecurityManager.can_access_schema")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
+    @patch("axbi.security.AxBISecurityManager.can_access_schema")
     def test_raise_for_access_query_context(
         self, mock_can_access_schema, mock_can_access, mock_is_owner
     ):
@@ -2051,10 +2051,10 @@ class TestSecurityManager(SupersetTestCase):
         mock_can_access_schema.return_value = False
         mock_is_owner.return_value = False
         with override_user(security_manager.find_user("gamma")):
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(query_context=query_context)
 
-    @patch("superset.security.SupersetSecurityManager.can_access")
+    @patch("axbi.security.AxBISecurityManager.can_access")
     def test_raise_for_access_table(self, mock_can_access):
         database = get_example_database()
         table = Table("bar", "foo")
@@ -2064,12 +2064,12 @@ class TestSecurityManager(SupersetTestCase):
 
         mock_can_access.return_value = False
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(database=database, table=table)
 
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
-    @patch("superset.security.SupersetSecurityManager.can_access_schema")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
+    @patch("axbi.security.AxBISecurityManager.can_access_schema")
     def test_raise_for_access_viz(
         self, mock_can_access_schema, mock_can_access, mock_is_owner
     ):
@@ -2082,15 +2082,15 @@ class TestSecurityManager(SupersetTestCase):
         mock_can_access_schema.return_value = False
         mock_is_owner.return_value = False
         with override_user(security_manager.find_user("gamma")):
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(viz=test_viz)
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     @with_feature_flags(DASHBOARD_RBAC=True)
-    @patch("superset.security.SupersetSecurityManager.is_owner")
-    @patch("superset.security.SupersetSecurityManager.can_access")
-    @patch("superset.security.SupersetSecurityManager.can_access_schema")
+    @patch("axbi.security.AxBISecurityManager.is_owner")
+    @patch("axbi.security.AxBISecurityManager.can_access")
+    @patch("axbi.security.AxBISecurityManager.can_access_schema")
     def test_raise_for_access_rbac(
         self,
         mock_can_access_schema,
@@ -2127,7 +2127,7 @@ class TestSecurityManager(SupersetTestCase):
                 births.roles = []
 
                 # No dashboard roles.
-                with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+                with self.assertRaises(AxBISecurityException):  # noqa: PT027
                     security_manager.raise_for_access(
                         **{
                             kwarg: Mock(
@@ -2143,7 +2143,7 @@ class TestSecurityManager(SupersetTestCase):
                 births.roles = [self.get_role("Gamma")]
 
                 # Undefined dashboard.
-                with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+                with self.assertRaises(AxBISecurityException):  # noqa: PT027
                     security_manager.raise_for_access(
                         **{
                             kwarg: Mock(
@@ -2168,7 +2168,7 @@ class TestSecurityManager(SupersetTestCase):
                 )
 
                 # Ill-defined dashboard chart.
-                with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+                with self.assertRaises(AxBISecurityException):  # noqa: PT027
                     security_manager.raise_for_access(
                         **{
                             kwarg: Mock(
@@ -2182,7 +2182,7 @@ class TestSecurityManager(SupersetTestCase):
                     )
 
                 # Dashboard chart not associated with said datasource.
-                with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+                with self.assertRaises(AxBISecurityException):  # noqa: PT027
                     security_manager.raise_for_access(
                         **{
                             kwarg: Mock(
@@ -2209,7 +2209,7 @@ class TestSecurityManager(SupersetTestCase):
                 )
 
                 # Ill-defined native filter.
-                with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+                with self.assertRaises(AxBISecurityException):  # noqa: PT027
                     security_manager.raise_for_access(
                         **{
                             kwarg: Mock(
@@ -2223,7 +2223,7 @@ class TestSecurityManager(SupersetTestCase):
                     )
 
                 # Native filter not associated with said datasource.
-                with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+                with self.assertRaises(AxBISecurityException):  # noqa: PT027
                     security_manager.raise_for_access(
                         **{
                             kwarg: Mock(
@@ -2323,9 +2323,9 @@ class TestSecurityManager(SupersetTestCase):
             assert security_manager.can_access_datasource(self.get_datasource_mock())
 
 
-class TestDatasources(SupersetTestCase):
-    @patch("superset.security.SupersetSecurityManager.can_access_database")
-    @patch("superset.security.SupersetSecurityManager.session")
+class TestDatasources(AxBITestCase):
+    @patch("axbi.security.AxBISecurityManager.can_access_database")
+    @patch("axbi.security.AxBISecurityManager.session")
     def test_get_user_datasources_admin(self, mock_session, mock_can_access_database):
         Datasource = namedtuple("Datasource", ["database", "schema", "name"])
         mock_can_access_database.return_value = True
@@ -2347,8 +2347,8 @@ class TestDatasources(SupersetTestCase):
                     Datasource("database2", None, "table1"),
                 ]
 
-    @patch("superset.security.SupersetSecurityManager.can_access_database")
-    @patch("superset.security.SupersetSecurityManager.session")
+    @patch("axbi.security.AxBISecurityManager.can_access_database")
+    @patch("axbi.security.AxBISecurityManager.session")
     def test_get_user_datasources_gamma(self, mock_session, mock_can_access_database):
         Datasource = namedtuple("Datasource", ["database", "schema", "name"])
         mock_can_access_database.return_value = False
@@ -2366,8 +2366,8 @@ class TestDatasources(SupersetTestCase):
                 datasources = security_manager.get_user_datasources()
                 assert datasources == []
 
-    @patch("superset.security.SupersetSecurityManager.can_access_database")
-    @patch("superset.security.SupersetSecurityManager.session")
+    @patch("axbi.security.AxBISecurityManager.can_access_database")
+    @patch("axbi.security.AxBISecurityManager.session")
     def test_get_user_datasources_gamma_with_schema(
         self, mock_session, mock_can_access_database
     ):
@@ -2400,14 +2400,14 @@ class FakeRequest:
     form: Any = {}
 
 
-class TestGuestTokens(SupersetTestCase):
+class TestGuestTokens(AxBITestCase):
     def create_guest_token(self):
         user = {"username": "test_guest"}
         resources = [{"some": "resource"}]
         rls = [{"dataset": 1, "clause": "access = 1"}]
         return security_manager.create_guest_access_token(user, resources, rls)
 
-    @patch("superset.security.SupersetSecurityManager._get_current_epoch_time")
+    @patch("axbi.security.AxBISecurityManager._get_current_epoch_time")
     def test_create_guest_access_token(self, get_time_mock):
         now = time.time()
         get_time_mock.return_value = now  # so we know what it should =
@@ -2455,7 +2455,7 @@ class TestGuestTokens(SupersetTestCase):
         assert guest_user is not None
         assert "test_guest" == guest_user.username
 
-    @patch("superset.security.SupersetSecurityManager._get_current_epoch_time")
+    @patch("axbi.security.AxBISecurityManager._get_current_epoch_time")
     def test_get_guest_user_expired_token(self, get_time_mock):
         # make a just-expired token
         get_time_mock.return_value = (
@@ -2548,7 +2548,7 @@ class TestGuestTokens(SupersetTestCase):
         self.assertRaisesRegex(jwt.exceptions.InvalidAudienceError, "Invalid audience")  # noqa: PT027
         assert guest_user is None
 
-    @patch("superset.security.SupersetSecurityManager._get_current_epoch_time")
+    @patch("axbi.security.AxBISecurityManager._get_current_epoch_time")
     def test_create_guest_access_token_callable_audience(self, get_time_mock):
         now = time.time()
         get_time_mock.return_value = now

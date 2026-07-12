@@ -24,7 +24,7 @@ import {
   JsonObject,
   QueryFormData,
   SequentialScheme,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { Color } from '@deck.gl/core';
 import { hexToRGB } from './utils/colors';
 import { ColorBreakpointType } from './types';

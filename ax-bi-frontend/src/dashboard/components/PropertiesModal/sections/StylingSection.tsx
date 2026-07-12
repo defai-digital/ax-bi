@@ -17,15 +17,11 @@
  * under the License.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  SupersetClient,
-  isFeatureEnabled,
-  FeatureFlag,
-} from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
-import { Select, Switch } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
+import { Select, Switch } from '@ax-bi/ui-core/components';
 import { EditorHost } from 'src/core/editors';
 import rison from 'rison';
 import ColorSchemeSelect from 'src/dashboard/components/ColorSchemeSelect';
@@ -120,7 +116,7 @@ const StylingSection = ({
     setIsLoadingTemplates(true);
     try {
       const query = rison.encode({ columns: ['template_name', 'css'] });
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: `/api/v1/css_template/?q=${query}`,
       });
       setCssTemplates(response.json.result || []);

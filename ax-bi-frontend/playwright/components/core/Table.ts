@@ -20,7 +20,7 @@
 import { Locator, Page } from '@playwright/test';
 
 /**
- * Table component for Superset ListView tables.
+ * Table component for AxBI ListView tables.
  */
 export class Table {
   private readonly page: Page;

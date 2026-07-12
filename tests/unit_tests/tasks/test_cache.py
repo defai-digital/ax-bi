@@ -30,9 +30,9 @@ def _fake_app(config: dict[str, Any] | None = None) -> mock.MagicMock:
 
 def test_cache_warmup_unknown_strategy(app_context: None) -> None:
     """An unknown strategy name returns an explanatory message and warms nothing."""
-    from superset.tasks.cache import cache_warmup
+    from axbi.tasks.cache import cache_warmup
 
-    with mock.patch("superset.tasks.cache.WebDriverSelenium") as mock_wd:
+    with mock.patch("axbi.tasks.cache.WebDriverSelenium") as mock_wd:
         result = cache_warmup("does_not_exist")
 
     assert result == "No strategy does_not_exist found!"
@@ -40,34 +40,34 @@ def test_cache_warmup_unknown_strategy(app_context: None) -> None:
 
 
 def test_cache_warmup_missing_config(app_context: None) -> None:
-    """Without SUPERSET_CACHE_WARMUP_USER the task fails fast before any WebDriver."""
-    from superset.tasks.cache import cache_warmup
+    """Without AXBI_CACHE_WARMUP_USER the task fails fast before any WebDriver."""
+    from axbi.tasks.cache import cache_warmup
 
     with (
         mock.patch(
-            "superset.tasks.cache.current_app",
-            _fake_app({"SUPERSET_CACHE_WARMUP_USER": None}),
+            "axbi.tasks.cache.current_app",
+            _fake_app({"AXBI_CACHE_WARMUP_USER": None}),
         ),
-        mock.patch("superset.tasks.cache.WebDriverSelenium") as mock_wd,
+        mock.patch("axbi.tasks.cache.WebDriverSelenium") as mock_wd,
     ):
         result = cache_warmup("dummy")
 
     assert isinstance(result, str)
-    assert "SUPERSET_CACHE_WARMUP_USER is not configured" in result
+    assert "AXBI_CACHE_WARMUP_USER is not configured" in result
     mock_wd.assert_not_called()
 
 
 def test_cache_warmup_user_not_found(app_context: None) -> None:
     """A configured-but-missing warmup user fails fast before any WebDriver."""
-    from superset.tasks.cache import cache_warmup
+    from axbi.tasks.cache import cache_warmup
 
     with (
         mock.patch(
-            "superset.tasks.cache.current_app",
-            _fake_app({"SUPERSET_CACHE_WARMUP_USER": "bot"}),
+            "axbi.tasks.cache.current_app",
+            _fake_app({"AXBI_CACHE_WARMUP_USER": "bot"}),
         ),
-        mock.patch("superset.tasks.cache.security_manager") as mock_sm,
-        mock.patch("superset.tasks.cache.WebDriverSelenium") as mock_wd,
+        mock.patch("axbi.tasks.cache.security_manager") as mock_sm,
+        mock.patch("axbi.tasks.cache.WebDriverSelenium") as mock_wd,
     ):
         mock_sm.find_user = mock.MagicMock(return_value=None)
         result = cache_warmup("dummy")
@@ -80,19 +80,19 @@ def test_cache_warmup_user_not_found(app_context: None) -> None:
 
 def test_cache_warmup_happy_path(app_context: None) -> None:
     """Each URL is screenshotted as the configured user and the driver is destroyed."""
-    from superset.tasks.cache import cache_warmup
+    from axbi.tasks.cache import cache_warmup
 
     urls = ["http://localhost/dash/1", "http://localhost/dash/2"]
     user = mock.MagicMock()
 
     with (
         mock.patch(
-            "superset.tasks.cache.current_app",
-            _fake_app({"SUPERSET_CACHE_WARMUP_USER": "bot"}),
+            "axbi.tasks.cache.current_app",
+            _fake_app({"AXBI_CACHE_WARMUP_USER": "bot"}),
         ),
-        mock.patch("superset.tasks.cache.security_manager") as mock_sm,
-        mock.patch("superset.tasks.cache.WebDriverSelenium") as mock_wd,
-        mock.patch("superset.tasks.cache.DummyStrategy.get_urls", return_value=urls),
+        mock.patch("axbi.tasks.cache.security_manager") as mock_sm,
+        mock.patch("axbi.tasks.cache.WebDriverSelenium") as mock_wd,
+        mock.patch("axbi.tasks.cache.DummyStrategy.get_urls", return_value=urls),
     ):
         mock_sm.find_user = mock.MagicMock(return_value=user)
         driver = mock_wd.return_value
@@ -106,7 +106,7 @@ def test_cache_warmup_happy_path(app_context: None) -> None:
 
 def test_cache_warmup_collects_errors_and_destroys(app_context: None) -> None:
     """A failing URL is recorded as an error and cleanup still runs in finally."""
-    from superset.tasks.cache import cache_warmup
+    from axbi.tasks.cache import cache_warmup
 
     urls = ["http://localhost/dash/ok", "http://localhost/dash/boom"]
     user = mock.MagicMock()
@@ -117,12 +117,12 @@ def test_cache_warmup_collects_errors_and_destroys(app_context: None) -> None:
 
     with (
         mock.patch(
-            "superset.tasks.cache.current_app",
-            _fake_app({"SUPERSET_CACHE_WARMUP_USER": "bot"}),
+            "axbi.tasks.cache.current_app",
+            _fake_app({"AXBI_CACHE_WARMUP_USER": "bot"}),
         ),
-        mock.patch("superset.tasks.cache.security_manager") as mock_sm,
-        mock.patch("superset.tasks.cache.WebDriverSelenium") as mock_wd,
-        mock.patch("superset.tasks.cache.DummyStrategy.get_urls", return_value=urls),
+        mock.patch("axbi.tasks.cache.security_manager") as mock_sm,
+        mock.patch("axbi.tasks.cache.WebDriverSelenium") as mock_wd,
+        mock.patch("axbi.tasks.cache.DummyStrategy.get_urls", return_value=urls),
     ):
         mock_sm.find_user = mock.MagicMock(return_value=user)
         driver = mock_wd.return_value

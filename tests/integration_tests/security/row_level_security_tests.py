@@ -23,16 +23,16 @@ import pytest
 from flask import g
 import rison
 
-from superset import db, security_manager
-from superset.connectors.sqla.models import RowLevelSecurityFilter, SqlaTable
-from superset.security.guest_token import (
+from axbi import db, security_manager
+from axbi.connectors.sqla.models import RowLevelSecurityFilter, SqlaTable
+from axbi.security.guest_token import (
     GuestTokenResourceType,
     GuestUser,
 )
-from superset.utils import json
+from axbi.utils import json
 from flask_babel import lazy_gettext as _  # noqa: F401
 from flask_appbuilder.models.sqla import filters
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
@@ -49,7 +49,7 @@ from tests.integration_tests.fixtures.unicode_dashboard import (
 )
 
 
-class TestRowLevelSecurity(SupersetTestCase):
+class TestRowLevelSecurity(AxBITestCase):
     """
     Testing Row Level Security
     """
@@ -411,7 +411,7 @@ class TestRowLevelSecurity(SupersetTestCase):
             db.session.commit()
 
 
-class TestRowLevelSecurityCreateAPI(SupersetTestCase):
+class TestRowLevelSecurityCreateAPI(AxBITestCase):
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_invalid_role_failure(self):
         self.login(ADMIN_USERNAME)
@@ -474,7 +474,7 @@ class TestRowLevelSecurityCreateAPI(SupersetTestCase):
         db.session.commit()
 
 
-class TestRowLevelSecurityUpdateAPI(SupersetTestCase):
+class TestRowLevelSecurityUpdateAPI(AxBITestCase):
     def test_invalid_id_failure(self):
         self.login(ADMIN_USERNAME)
         payload = {
@@ -588,7 +588,7 @@ class TestRowLevelSecurityUpdateAPI(SupersetTestCase):
         db.session.commit()
 
 
-class TestRowLevelSecurityDeleteAPI(SupersetTestCase):
+class TestRowLevelSecurityDeleteAPI(AxBITestCase):
     def test_invalid_id_failure(self):
         self.login(ADMIN_USERNAME)
 
@@ -632,7 +632,7 @@ class TestRowLevelSecurityDeleteAPI(SupersetTestCase):
         assert data["message"] == "Deleted 2 rules"
 
 
-class TestRowLevelSecurityWithRelatedAPI(SupersetTestCase):
+class TestRowLevelSecurityWithRelatedAPI(AxBITestCase):
     @pytest.mark.usefixtures("load_birth_names_data")
     @pytest.mark.usefixtures("load_energy_table_data")
     def test_rls_tables_related_api(self):
@@ -697,7 +697,7 @@ class TestRowLevelSecurityWithRelatedAPI(SupersetTestCase):
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     @mock.patch(
-        "superset.row_level_security.api.RLSRestApi.base_related_field_filters",
+        "axbi.row_level_security.api.RLSRestApi.base_related_field_filters",
         {"tables": [["table_name", filters.FilterStartsWith, "birth"]]},
     )
     def test_table_related_filter(self):
@@ -741,10 +741,10 @@ RLS_GENDER_REGEX = re.compile(r"AND \([\s\n]*gender = 'girl'[\s\n]*\)")
 
 
 @mock.patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
-    EMBEDDED_SUPERSET=True,
+    "axbi.extensions.feature_flag_manager._feature_flags",
+    EMBEDDED_AXBI=True,
 )
-class GuestTokenRowLevelSecurityTests(SupersetTestCase):
+class GuestTokenRowLevelSecurityTests(AxBITestCase):
     query_obj: dict[str, Any] = dict(  # noqa: C408
         groupby=[],
         metrics=None,

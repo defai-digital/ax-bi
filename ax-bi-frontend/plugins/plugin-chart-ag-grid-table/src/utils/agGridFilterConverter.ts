@@ -267,11 +267,11 @@ function formatValueForOperator(
 }
 
 /**
- * Format a date string to ISO format expected by Superset, preserving local timezone
+ * Format a date string to ISO format expected by AxBI, preserving local timezone
  */
-export function formatDateForSuperset(dateStr: string): string {
+export function formatDateForAxBI(dateStr: string): string {
   // AG Grid typically provides dates in format: "YYYY-MM-DD HH:MM:SS"
-  // Superset expects: "YYYY-MM-DDTHH:MM:SS" in local timezone (not UTC)
+  // AxBI expects: "YYYY-MM-DDTHH:MM:SS" in local timezone (not UTC)
   const date = new Date(dateStr);
   if (Number.isNaN(date.getTime())) {
     return dateStr; // Return as-is if invalid
@@ -295,7 +295,7 @@ export function formatDateForSuperset(dateStr: string): string {
 export function getStartOfDay(dateStr: string): string {
   const date = new Date(dateStr);
   date.setHours(0, 0, 0, 0);
-  return formatDateForSuperset(date.toISOString());
+  return formatDateForAxBI(date.toISOString());
 }
 
 /**
@@ -304,7 +304,7 @@ export function getStartOfDay(dateStr: string): string {
 export function getEndOfDay(dateStr: string): string {
   const date = new Date(dateStr);
   date.setHours(23, 59, 59, 999);
-  return formatDateForSuperset(date.toISOString());
+  return formatDateForAxBI(date.toISOString());
 }
 
 /**
@@ -488,7 +488,7 @@ function compoundFilterToWhereClause(
   return result;
 }
 
-// Converts date filters to TEMPORAL_RANGE format for Superset backend
+// Converts date filters to TEMPORAL_RANGE format for AxBI backend
 function convertDateFilter(
   columnName: string,
   filter: AgGridSimpleFilter,

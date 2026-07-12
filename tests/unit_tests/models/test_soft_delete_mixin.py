@@ -17,7 +17,7 @@
 """Tests for SoftDeleteMixin and the do_orm_execute visibility filter.
 
 Synthetic models (``_SoftDeletable`` + ``_SoftDeletableTwo``) rather than
-real Superset entities so the infrastructure is exercised in isolation
+real AxBI entities so the infrastructure is exercised in isolation
 from any concrete adoption. Two soft-deletable models lets us pin
 per-class scoping: a bypass for one class must not unhide soft-deleted
 rows of the other.
@@ -33,7 +33,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import aliased, declarative_base, relationship
 from sqlalchemy.orm.session import Session
 
-from superset.models.helpers import (
+from axbi.models.helpers import (
     skip_visibility_filter,
     SKIP_VISIBILITY_FILTER_CLASSES,
     SoftDeleteMixin,

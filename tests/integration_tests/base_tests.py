@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from contextlib import contextmanager
 from datetime import datetime
@@ -36,17 +36,17 @@ from sqlalchemy.ext.declarative import DeclarativeMeta
 from sqlalchemy.orm import Session  # noqa: F401
 from sqlalchemy.sql import func
 
-from superset import db, security_manager
-from superset.connectors.sqla.models import BaseDatasource, SqlaTable
-from superset.models import core as models
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.sql.parse import CTASMethod
-from superset.utils import json
-from superset.utils.core import get_example_default_schema, shortid
-from superset.utils.database import get_example_database
-from superset.views.base_api import BaseSupersetModelRestApi
+from axbi import db, security_manager
+from axbi.connectors.sqla.models import BaseDatasource, SqlaTable
+from axbi.models import core as models
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.sql.parse import CTASMethod
+from axbi.utils import json
+from axbi.utils.core import get_example_default_schema, shortid
+from axbi.utils.database import get_example_database
+from axbi.views.base_api import BaseAxBIModelRestApi
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.importexport import (
     chart_config,
@@ -88,7 +88,7 @@ def post_assert_metric(
     """
     Simple client post with an extra assertion for statsd metrics
 
-    :param client: test client for superset api requests
+    :param client: test client for axbi api requests
     :param uri: The URI to use for the HTTP POST
     :param data: The JSON data payload to be posted
     :param func_name: The function name that the HTTP POST triggers
@@ -96,7 +96,7 @@ def post_assert_metric(
     :return: HTTP Response
     """
     with patch.object(
-        BaseSupersetModelRestApi, "incr_stats", return_value=None
+        BaseAxBIModelRestApi, "incr_stats", return_value=None
     ) as mock_method:
         rv = client.post(uri, json=data)
     if 200 <= rv.status_code < 400:
@@ -108,10 +108,10 @@ def post_assert_metric(
     return rv
 
 
-class SupersetTestCase(TestCase):
+class AxBITestCase(TestCase):
     default_schema_backend_map = {
         "sqlite": "main",
-        "mysql": "superset",
+        "mysql": "axbi",
         "postgresql": "public",
         "presto": "default",
         "hive": "default",
@@ -131,7 +131,7 @@ class SupersetTestCase(TestCase):
 
     @staticmethod
     def get_birth_names_dataset() -> SqlaTable:
-        return SupersetTestCase.get_table(name="birth_names")
+        return AxBITestCase.get_table(name="birth_names")
 
     @staticmethod
     def create_user_with_roles(
@@ -143,7 +143,7 @@ class SupersetTestCase(TestCase):
                 username,
                 username,
                 username,
-                f"{username}@superset.com",
+                f"{username}@axbi.com",
                 security_manager.find_role("Gamma"),  # it needs a role
                 password=DEFAULT_PASSWORD,
             )
@@ -309,7 +309,7 @@ class SupersetTestCase(TestCase):
             db.session.query(SqlaTable)
             .filter_by(
                 database_id=database_id
-                or SupersetTestCase.get_database_by_name("examples").id,
+                or AxBITestCase.get_database_by_name("examples").id,
                 schema=schema,
                 table_name=name,
             )
@@ -414,7 +414,7 @@ class SupersetTestCase(TestCase):
         if username:
             self.logout()
             self.login(username)
-        dbid = SupersetTestCase.get_database_by_name(database_name).id
+        dbid = AxBITestCase.get_database_by_name(database_name).id
         json_payload = {
             "database_id": dbid,
             "sql": sql,
@@ -506,7 +506,7 @@ class SupersetTestCase(TestCase):
         :return: HTTP Response
         """
         with patch.object(
-            BaseSupersetModelRestApi, "incr_stats", return_value=None
+            BaseAxBIModelRestApi, "incr_stats", return_value=None
         ) as mock_method:
             rv = self.client.get(uri)
         if 200 <= rv.status_code < 400:
@@ -527,7 +527,7 @@ class SupersetTestCase(TestCase):
         :return: HTTP Response
         """
         with patch.object(
-            BaseSupersetModelRestApi, "incr_stats", return_value=None
+            BaseAxBIModelRestApi, "incr_stats", return_value=None
         ) as mock_method:
             rv = self.client.delete(uri)
         if 200 <= rv.status_code < 400:
@@ -556,7 +556,7 @@ class SupersetTestCase(TestCase):
         :return: HTTP Response
         """
         with patch.object(
-            BaseSupersetModelRestApi, "incr_stats", return_value=None
+            BaseAxBIModelRestApi, "incr_stats", return_value=None
         ) as mock_method:
             rv = self.client.put(uri, json=data)
         if 200 <= rv.status_code < 400:

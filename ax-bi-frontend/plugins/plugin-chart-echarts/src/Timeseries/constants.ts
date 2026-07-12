@@ -16,11 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  DEFAULT_SORT_SERIES_DATA,
-  sections,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { DEFAULT_SORT_SERIES_DATA, sections } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import { LegendOrientation, LegendType } from '../types';
 import {
   OrientationType,

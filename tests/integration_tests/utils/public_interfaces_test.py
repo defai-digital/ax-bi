@@ -19,11 +19,11 @@ from typing import Any
 
 import pytest
 
-from superset.utils.public_interfaces import compute_hash, get_warning_message
+from axbi.utils.public_interfaces import compute_hash, get_warning_message
 
-# These are public interfaces exposed by Superset. Make sure
+# These are public interfaces exposed by AxBI. Make sure
 # to only change the interfaces and update the hashes in new
-# major versions of Superset.
+# major versions of AxBI.
 hashes: dict[Callable[..., Any], str] = {}
 
 

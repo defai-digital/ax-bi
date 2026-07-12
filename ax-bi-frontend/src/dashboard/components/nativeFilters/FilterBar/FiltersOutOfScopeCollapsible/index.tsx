@@ -17,10 +17,10 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Divider, Filter } from '@superset-ui/core';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
-import { Collapse } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Divider, Filter } from '@ax-bi/ui-core';
+import { css, AxBITheme } from '@ax-bi/core/theme';
+import { Collapse } from '@ax-bi/ui-core/components';
 
 export interface FiltersOutOfScopeCollapsibleProps {
   filtersOutOfScope: (Filter | Divider)[];
@@ -42,7 +42,7 @@ export const FiltersOutOfScopeCollapsible = ({
         key: 'out-of-scope-filters',
         label: (
           <span
-            css={(theme: SupersetTheme) => css`
+            css={(theme: AxBITheme) => css`
               font-size: ${theme.fontSizeSM}px;
             `}
           >

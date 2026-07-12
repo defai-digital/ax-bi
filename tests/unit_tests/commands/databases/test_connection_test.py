@@ -18,9 +18,9 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.database.test_connection import TestConnectionDatabaseCommand
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import OAuth2RedirectError
+from axbi.commands.database.test_connection import TestConnectionDatabaseCommand
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import OAuth2RedirectError
 
 
 def test_command(mocker: MockerFixture) -> None:
@@ -29,15 +29,15 @@ def test_command(mocker: MockerFixture) -> None:
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     database.db_engine_spec.__name__ = "GSheetsEngineSpec"
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.return_value = True
 
-    DatabaseDAO = mocker.patch("superset.commands.database.test_connection.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.test_connection.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     properties = {
@@ -56,8 +56,8 @@ def test_command_with_oauth2(mocker: MockerFixture) -> None:
     """
     user = mocker.MagicMock()
     user.email = "alice@example.org"
-    mocker.patch("superset.db_engine_specs.gsheets.g", user=user)
-    mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    mocker.patch("axbi.db_engine_specs.gsheets.g", user=user)
+    mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
 
     database = mocker.MagicMock()
     database.is_oauth2_enabled.return_value = True
@@ -71,7 +71,7 @@ def test_command_with_oauth2(mocker: MockerFixture) -> None:
     with database.get_sqla_engine() as engine:
         engine.dialect.do_ping.side_effect = Exception("OAuth2 needed")
 
-    DatabaseDAO = mocker.patch("superset.commands.database.test_connection.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.test_connection.DatabaseDAO")  # noqa: N806
     DatabaseDAO.build_db_for_connection_test.return_value = database
 
     properties = {
@@ -83,9 +83,9 @@ def test_command_with_oauth2(mocker: MockerFixture) -> None:
     command = TestConnectionDatabaseCommand(properties)
     with pytest.raises(OAuth2RedirectError) as excinfo:
         command.run()
-    assert excinfo.value.error == SupersetError(
+    assert excinfo.value.error == AxBIError(
         message="You don't have permission to access the data.",
-        error_type=SupersetErrorType.OAUTH2_REDIRECT,
+        error_type=AxBIErrorType.OAUTH2_REDIRECT,
         level=ErrorLevel.WARNING,
         extra={"url": "url", "tab_id": "tab_id", "redirect_uri": "redirect_uri"},
     )

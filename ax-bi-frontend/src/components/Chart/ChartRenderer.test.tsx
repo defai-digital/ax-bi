@@ -23,7 +23,7 @@ import {
   VizType,
   JsonObject,
   FeatureFlagMap,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import ChartRenderer, {
   ChartRendererProps,
 } from 'src/components/Chart/ChartRenderer';
@@ -36,8 +36,8 @@ interface MockSuperChartProps {
   [key: string]: unknown;
 }
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   SuperChart: ({
     postTransformProps = (x: JsonObject) => x,
     isRefreshing = false,

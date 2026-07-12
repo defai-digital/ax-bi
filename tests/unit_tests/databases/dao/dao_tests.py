@@ -23,9 +23,9 @@ from sqlalchemy.orm.session import Session
 
 @pytest.fixture
 def session_with_data(session: Session) -> Iterator[Session]:
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.databases.ssh_tunnel.models import SSHTunnel
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.databases.ssh_tunnel.models import SSHTunnel
+    from axbi.models.core import Database
 
     engine = session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -51,8 +51,8 @@ def session_with_data(session: Session) -> Iterator[Session]:
 
 
 def test_database_get_ssh_tunnel(session_with_data: Session) -> None:
-    from superset.daos.database import DatabaseDAO
-    from superset.databases.ssh_tunnel.models import SSHTunnel
+    from axbi.daos.database import DatabaseDAO
+    from axbi.databases.ssh_tunnel.models import SSHTunnel
 
     database = DatabaseDAO.find_by_id(1, skip_base_filter=True)
     assert database is not None
@@ -64,7 +64,7 @@ def test_database_get_ssh_tunnel(session_with_data: Session) -> None:
 
 
 def test_database_get_ssh_tunnel_not_found(session_with_data: Session) -> None:
-    from superset.daos.database import DatabaseDAO
+    from axbi.daos.database import DatabaseDAO
 
     database = DatabaseDAO.find_by_id(2, skip_base_filter=True)
     result = database.ssh_tunnel if database else None

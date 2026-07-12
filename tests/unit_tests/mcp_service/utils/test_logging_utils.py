@@ -20,7 +20,7 @@ from __future__ import annotations
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-from superset.mcp_service.utils import logging_utils
+from axbi.mcp_service.utils import logging_utils
 
 
 class FakeEventLogger:
@@ -38,7 +38,7 @@ class FakeEventLogger:
         self.actions.append(("exit", action))
 
 
-def test_mcp_event_log_context_delegates_to_superset_event_logger(monkeypatch):
+def test_mcp_event_log_context_delegates_to_axbi_event_logger(monkeypatch):
     fake_event_logger = FakeEventLogger()
     monkeypatch.setattr(logging_utils, "event_logger", fake_event_logger)
 
@@ -52,7 +52,7 @@ def test_mcp_event_log_context_delegates_to_superset_event_logger(monkeypatch):
     ]
 
 
-def test_mcp_event_log_delegates_to_superset_event_logger(monkeypatch):
+def test_mcp_event_log_delegates_to_axbi_event_logger(monkeypatch):
     fake_event_logger = FakeEventLogger()
     monkeypatch.setattr(logging_utils, "event_logger", fake_event_logger)
 

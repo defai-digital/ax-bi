@@ -31,8 +31,8 @@ import pytest
 from flask import current_app
 from pytest_mock import MockerFixture
 
-from superset.common.db_query_status import QueryStatus as QueryStatusEnum
-from superset.models.core import Database
+from axbi.common.db_query_status import QueryStatus as QueryStatusEnum
+from axbi.models.core import Database
 
 # =============================================================================
 # Core Fixtures
@@ -43,8 +43,8 @@ from superset.models.core import Database
 def mock_db_session(mocker: MockerFixture) -> MagicMock:
     """Mock database session for all tests to avoid foreign key constraints."""
     mock_session = MagicMock()
-    mocker.patch("superset.sql.execution.executor.db.session", mock_session)
-    mocker.patch("superset.sql.execution.celery_task.db.session", mock_session)
+    mocker.patch("axbi.sql.execution.executor.db.session", mock_session)
+    mocker.patch("axbi.sql.execution.celery_task.db.session", mock_session)
     return mock_session
 
 
@@ -99,7 +99,7 @@ def mock_database() -> MagicMock:
 
 @pytest.fixture
 def mock_result_set() -> MagicMock:
-    """Create a mock SupersetResultSet."""
+    """Create a mock AxBIResultSet."""
     result_set = MagicMock()
     result_set.size = 2
     result_set.columns = [{"name": "id"}, {"name": "name"}]
@@ -247,7 +247,7 @@ def mock_query_execution(
     Returns:
         The mock for get_raw_connection, so tests can make assertions on it
     """
-    from superset.result_set import SupersetResultSet
+    from axbi.result_set import AxBIResultSet
 
     # Mock cursor and connection
     mock_cursor = create_mock_cursor(column_names, return_data)
@@ -262,12 +262,12 @@ def mock_query_execution(
     mocker.patch.object(database.db_engine_spec, "execute")
     mocker.patch.object(database.db_engine_spec, "fetch_data", return_value=return_data)
 
-    # Create a real SupersetResultSet that converts to DataFrame properly
-    mock_result_set = MagicMock(spec=SupersetResultSet)
+    # Create a real AxBIResultSet that converts to DataFrame properly
+    mock_result_set = MagicMock(spec=AxBIResultSet)
     mock_result_set.to_pandas_df.return_value = pd.DataFrame(
         return_data, columns=column_names
     )
-    mocker.patch("superset.result_set.SupersetResultSet", return_value=mock_result_set)
+    mocker.patch("axbi.result_set.AxBIResultSet", return_value=mock_result_set)
 
     return get_raw_conn_mock
 
@@ -294,7 +294,7 @@ def default_sql_config(mocker: MockerFixture) -> None:
 @pytest.fixture
 def mock_celery_task(mocker: MockerFixture) -> MagicMock:
     """Mock the Celery task for SQL execution."""
-    return mocker.patch("superset.sql.execution.celery_task.execute_sql_task")
+    return mocker.patch("axbi.sql.execution.celery_task.execute_sql_task")
 
 
 def setup_cache_mocks(
@@ -313,7 +313,7 @@ def setup_cache_mocks(
     Returns:
         Tuple of (mock_get, mock_store)
     """
-    from superset.sql.execution.executor import SQLExecutor
+    from axbi.sql.execution.executor import SQLExecutor
 
     mock_get = mocker.patch.object(
         SQLExecutor, "_get_from_cache", return_value=get_result

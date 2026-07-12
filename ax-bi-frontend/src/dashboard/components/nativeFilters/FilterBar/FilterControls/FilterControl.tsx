@@ -23,7 +23,7 @@ import {
   OutPortal,
 } from 'react-reverse-portal';
 import { FilterBarOrientation } from 'src/dashboard/types';
-import { isChartCustomization } from '@superset-ui/core';
+import { isChartCustomization } from '@ax-bi/ui-core';
 import { ChartCustomizationPlugins } from 'src/constants';
 import { checkIsMissingRequiredValue } from '../utils';
 import FilterValue from './FilterValue';

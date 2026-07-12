@@ -18,7 +18,7 @@
  */
 import type { OptionName } from 'echarts/types/src/util/types';
 import type { TreeSeriesNodeItemOption } from 'echarts/types/src/chart/tree/TreeSeries';
-import { ChartDataResponseResult, QueryFormData } from '@superset-ui/core';
+import { ChartDataResponseResult, QueryFormData } from '@ax-bi/ui-core';
 import { BaseChartProps, BaseTransformedProps } from '../types';
 
 export type EchartsTreeFormData = QueryFormData & {

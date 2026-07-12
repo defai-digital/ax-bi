@@ -33,11 +33,11 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm.session import Session
 from sqlalchemy_utils import UUIDType
 
-from superset.commands.importers.v1.utils import (
+from axbi.commands.importers.v1.utils import (
     clear_soft_deleted_for_import,
     find_existing_for_import,
 )
-from superset.models.helpers import SoftDeleteMixin
+from axbi.models.helpers import SoftDeleteMixin
 
 _TestBase = declarative_base()
 
@@ -132,7 +132,7 @@ def test_clear_hard_deletes_the_row(app_context: None, session: Session) -> None
     found = find_existing_for_import(_ImportableSoftDeletable, str(obj_uuid))
     assert found is None
     # And session.query confirms it's hard-deleted, not just soft.
-    from superset.models.helpers import SKIP_VISIBILITY_FILTER_CLASSES
+    from axbi.models.helpers import SKIP_VISIBILITY_FILTER_CLASSES
 
     raw = (
         session.query(_ImportableSoftDeletable)

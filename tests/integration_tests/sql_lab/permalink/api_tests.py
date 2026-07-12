@@ -21,10 +21,10 @@ from uuid import uuid3
 
 import pytest
 
-from superset import db
-from superset.key_value.models import KeyValueEntry
-from superset.key_value.types import KeyValueResource
-from superset.key_value.utils import decode_permalink_id
+from axbi import db
+from axbi.key_value.models import KeyValueEntry
+from axbi.key_value.types import KeyValueResource
+from axbi.key_value.utils import decode_permalink_id
 from tests.integration_tests.constants import (
     GAMMA_SQLLAB_USERNAME,
 )
@@ -44,8 +44,8 @@ def tab_state_data() -> dict[str, Any]:
 
 @pytest.fixture
 def permalink_salt(app_context) -> Iterator[str]:
-    from superset.key_value.shared_entries import get_permalink_salt, get_uuid_namespace
-    from superset.key_value.types import SharedKey
+    from axbi.key_value.shared_entries import get_permalink_salt, get_uuid_namespace
+    from axbi.key_value.types import SharedKey
 
     key = SharedKey.SQLLAB_PERMALINK_SALT
     salt = get_permalink_salt(key)

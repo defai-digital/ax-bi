@@ -21,7 +21,7 @@ import subprocess
 from subprocess import CompletedProcess
 from unittest.mock import MagicMock, patch
 
-from superset.sql_validators.sqlite import SQLiteSQLValidator
+from axbi.sql_validators.sqlite import SQLiteSQLValidator
 
 
 def _mock_result(
@@ -43,11 +43,11 @@ def test_valid_syntax() -> None:
 
     with (
         patch(
-            "superset.sql_validators.sqlite.get_binary_path",
+            "axbi.sql_validators.sqlite.get_binary_path",
             return_value="syntaqlite",
         ),
         patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             return_value=_mock_result(returncode=0),
         ) as run,
     ):
@@ -77,11 +77,9 @@ def test_invalid_syntax_single_error() -> None:
     )
 
     with (
+        patch("axbi.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"),
         patch(
-            "superset.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"
-        ),
-        patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             return_value=_mock_result(returncode=1, stderr=stderr),
         ),
     ):
@@ -117,11 +115,9 @@ def test_invalid_syntax_multiple_errors() -> None:
     )
 
     with (
+        patch("axbi.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"),
         patch(
-            "superset.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"
-        ),
-        patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             return_value=_mock_result(returncode=1, stderr=stderr),
         ),
     ):
@@ -152,11 +148,9 @@ def test_multiline_error_reports_correct_line() -> None:
     )
 
     with (
+        patch("axbi.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"),
         patch(
-            "superset.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"
-        ),
-        patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             return_value=_mock_result(returncode=1, stderr=stderr),
         ),
     ):
@@ -175,11 +169,9 @@ def test_empty_sql() -> None:
     mock_database = MagicMock()
 
     with (
+        patch("axbi.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"),
         patch(
-            "superset.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"
-        ),
-        patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             return_value=_mock_result(returncode=0),
         ),
     ):
@@ -197,11 +189,9 @@ def test_valid_complex_query() -> None:
     mock_database = MagicMock()
 
     with (
+        patch("axbi.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"),
         patch(
-            "superset.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"
-        ),
-        patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             return_value=_mock_result(returncode=0),
         ),
     ):
@@ -234,11 +224,9 @@ def test_annotation_to_dict() -> None:
     )
 
     with (
+        patch("axbi.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"),
         patch(
-            "superset.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"
-        ),
-        patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             return_value=_mock_result(returncode=1, stderr=stderr),
         ),
     ):
@@ -259,7 +247,7 @@ def test_annotation_to_dict() -> None:
 
 def test_missing_syntaqlite_returns_annotation() -> None:
     mock_database = MagicMock()
-    with patch("superset.sql_validators.sqlite.get_binary_path", None):
+    with patch("axbi.sql_validators.sqlite.get_binary_path", None):
         annotations = SQLiteSQLValidator.validate(
             sql="SELECT 1",
             catalog=None,
@@ -276,11 +264,9 @@ def test_timeout_returns_annotation() -> None:
     mock_database = MagicMock()
 
     with (
+        patch("axbi.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"),
         patch(
-            "superset.sql_validators.sqlite.get_binary_path", return_value="syntaqlite"
-        ),
-        patch(
-            "superset.sql_validators.sqlite.subprocess.run",
+            "axbi.sql_validators.sqlite.subprocess.run",
             side_effect=subprocess.TimeoutExpired(cmd="syntaqlite", timeout=10),
         ),
     ):
@@ -297,7 +283,7 @@ def test_timeout_returns_annotation() -> None:
 
 
 def test_get_validator_by_name() -> None:
-    from superset.sql_validators import get_validator_by_name
+    from axbi.sql_validators import get_validator_by_name
 
     validator = get_validator_by_name("SQLiteSQLValidator")
     assert validator is SQLiteSQLValidator

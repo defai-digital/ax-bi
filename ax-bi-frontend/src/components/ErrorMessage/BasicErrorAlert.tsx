@@ -16,13 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ErrorLevel } from '@superset-ui/core';
-import {
-  styled,
-  useTheme,
-  getColorVariants,
-} from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components';
+import { ErrorLevel } from '@ax-bi/ui-core';
+import { styled, useTheme, getColorVariants } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components';
 
 const StyledContent = styled.div`
   display: flex;

@@ -18,18 +18,18 @@
 import rison
 from flask import current_app, Response
 
-from superset import security_manager
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import security_manager
+from tests.integration_tests.base_tests import AxBITestCase
+from tests.integration_tests.dashboards.axbi_factory_util import (
+    delete_all_inserted_objects,
+)
 from tests.integration_tests.dashboards.consts import *  # noqa: F403
 from tests.integration_tests.dashboards.dashboard_test_utils import (
     build_save_dash_parts,  # noqa: F401
 )
-from tests.integration_tests.dashboards.superset_factory_util import (
-    delete_all_inserted_objects,
-)
 
 
-class DashboardTestCase(SupersetTestCase):
+class DashboardTestCase(AxBITestCase):
     def get_dashboard_via_api_by_id(self, dashboard_id: int) -> Response:
         uri = DASHBOARD_API_URL_FORMAT.format(dashboard_id)  # noqa: F405
         return self.get_assert_metric(uri, "get")

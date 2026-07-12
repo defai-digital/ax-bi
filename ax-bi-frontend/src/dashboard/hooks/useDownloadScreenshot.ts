@@ -22,9 +22,9 @@ import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { last } from 'lodash';
 import rison from 'rison';
 import { parse as parseContentDisposition } from 'content-disposition';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, SupersetApiError } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, AxBIApiError } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import {
   LOG_ACTIONS_DASHBOARD_DOWNLOAD_AS_IMAGE,
   LOG_ACTIONS_DASHBOARD_DOWNLOAD_AS_PDF,
@@ -94,7 +94,7 @@ export const useDownloadScreenshot = (
       ];
 
       const checkImageReady = (cacheKey: string) =>
-        SupersetClient.get({
+        AxBIClient.get({
           endpoint: `/api/v1/dashboard/${dashboardId}/screenshot/${cacheKey}/?download_format=${format}`,
           headers: { Accept: 'application/pdf, image/png' },
           parseMethod: 'raw',
@@ -135,7 +135,7 @@ export const useDownloadScreenshot = (
             window.URL.revokeObjectURL(url);
           })
           .catch(err => {
-            if ((err as SupersetApiError).status === 404) {
+            if ((err as AxBIApiError).status === 404) {
               throw new Error('Image not ready');
             }
           });
@@ -159,7 +159,7 @@ export const useDownloadScreenshot = (
           });
       };
 
-      SupersetClient.post({
+      AxBIClient.post({
         endpoint: `/api/v1/dashboard/${dashboardId}/cache_dashboard_screenshot/?q=${rison.encode({ force: true })}`,
         jsonPayload: {
           anchor,

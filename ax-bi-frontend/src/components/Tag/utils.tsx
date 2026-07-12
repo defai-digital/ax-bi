@@ -17,12 +17,12 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ClientErrorObject,
   getClientErrorObject,
-  SupersetClient,
-} from '@superset-ui/core';
+  AxBIClient,
+} from '@ax-bi/ui-core';
 import type { TagType } from 'src/types/TagType';
 
 import rison from 'rison';
@@ -66,7 +66,7 @@ export const loadTags = async (
     return errorText;
   };
 
-  return SupersetClient.get({
+  return AxBIClient.get({
     endpoint: `/api/v1/tag/?q=${query}`,
   })
     .then(response => {

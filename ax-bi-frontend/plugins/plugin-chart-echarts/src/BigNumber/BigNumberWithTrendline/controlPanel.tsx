@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SMART_DATE_ID } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { SMART_DATE_ID } from '@ax-bi/ui-core';
 import {
   aggregationControl,
   ControlPanelConfig,
@@ -27,7 +27,7 @@ import {
   D3_TIME_FORMAT_OPTIONS,
   getStandardizedControls,
   temporalColumnMixin,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   headerFontSize,
   subheaderFontSize,

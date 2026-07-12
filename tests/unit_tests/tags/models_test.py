@@ -21,7 +21,7 @@ from unittest.mock import MagicMock
 from markupsafe import Markup
 from sqlalchemy.orm import Session
 
-from superset.tags.models import get_tag, Tag, TagType
+from axbi.tags.models import get_tag, Tag, TagType
 
 
 def test_get_tag_returns_plain_string_not_markup() -> None:

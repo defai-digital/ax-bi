@@ -14,8 +14,8 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from superset.common.query_object_factory import QueryObjectFactory
-from superset.constants import NO_TIME_RANGE
+from axbi.common.query_object_factory import QueryObjectFactory
+from axbi.constants import NO_TIME_RANGE
 
 
 def test_process_time_range():

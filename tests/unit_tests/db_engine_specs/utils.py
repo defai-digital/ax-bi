@@ -21,10 +21,10 @@ from typing import Any, TYPE_CHECKING
 
 from sqlalchemy import types
 
-from superset.utils.core import GenericDataType
+from axbi.utils.core import GenericDataType
 
 if TYPE_CHECKING:
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
 
 def assert_convert_dttm(

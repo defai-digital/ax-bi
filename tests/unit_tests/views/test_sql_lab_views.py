@@ -25,16 +25,16 @@ import pytest
 
 def _expanded_view_func():
     """Return the unwrapped body of TableSchemaView.expanded."""
-    from superset.views.sql_lab.views import TableSchemaView
+    from axbi.views.sql_lab.views import TableSchemaView
 
     return inspect.unwrap(TableSchemaView.expanded)
 
 
 @pytest.mark.parametrize("expanded", ["[]", "{}", '"true"', "1", "null"])
-@patch("superset.views.sql_lab.views.json_error_response", return_value="error")
-@patch("superset.views.sql_lab.views.get_user_id", return_value=1)
-@patch("superset.views.sql_lab.views._get_owner_id", return_value=1)
-@patch("superset.views.sql_lab.views.db")
+@patch("axbi.views.sql_lab.views.json_error_response", return_value="error")
+@patch("axbi.views.sql_lab.views.get_user_id", return_value=1)
+@patch("axbi.views.sql_lab.views._get_owner_id", return_value=1)
+@patch("axbi.views.sql_lab.views.db")
 def test_table_schema_expanded_rejects_non_boolean_payload(
     mock_db: MagicMock,
     mock_get_owner_id: MagicMock,
@@ -66,10 +66,10 @@ def test_table_schema_expanded_rejects_non_boolean_payload(
     mock_get_user_id.assert_called_once_with()
 
 
-@patch("superset.views.sql_lab.views.json_success", return_value="ok")
-@patch("superset.views.sql_lab.views.get_user_id", return_value=1)
-@patch("superset.views.sql_lab.views._get_owner_id", return_value=1)
-@patch("superset.views.sql_lab.views.db")
+@patch("axbi.views.sql_lab.views.json_success", return_value="ok")
+@patch("axbi.views.sql_lab.views.get_user_id", return_value=1)
+@patch("axbi.views.sql_lab.views._get_owner_id", return_value=1)
+@patch("axbi.views.sql_lab.views.db")
 def test_table_schema_expanded_accepts_boolean_payload(
     mock_db: MagicMock,
     mock_get_owner_id: MagicMock,

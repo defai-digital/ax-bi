@@ -19,8 +19,8 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useEffect, useRef } from 'react';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import {
   useOptionalCommandPalette,
   Command,
@@ -102,10 +102,10 @@ export function useAssetSearchCommands(): void {
         };
 
         const [dashRes, chartRes] = await Promise.all([
-          SupersetClient.get({
+          AxBIClient.get({
             endpoint: `/api/v1/dashboard/?q=${rison.encode(filter)}`,
           }),
-          SupersetClient.get({
+          AxBIClient.get({
             endpoint: `/api/v1/chart/?q=${rison.encode(chartFilter)}`,
           }),
         ]);
@@ -127,7 +127,7 @@ export function useAssetSearchCommands(): void {
               history.push(
                 d.url
                   ? ensureAppRoot(d.url)
-                  : `${appRoot}/superset/dashboard/${d.id}/`,
+                  : `${appRoot}/ax-bi/dashboard/${d.id}/`,
               );
             },
           })),

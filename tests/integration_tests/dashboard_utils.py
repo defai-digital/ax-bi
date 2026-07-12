@@ -18,13 +18,13 @@
 
 from pandas import DataFrame  # noqa: F401
 
-from superset import db
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.utils import json
-from superset.utils.core import DatasourceType, get_example_default_schema
+from axbi import db
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.utils import json
+from axbi.utils.core import DatasourceType, get_example_default_schema
 
 
 def get_table(

@@ -17,8 +17,8 @@
 import pandas as pd
 import pytest
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils import pandas_postprocessing as pp
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils import pandas_postprocessing as pp
 from tests.unit_tests.fixtures.dataframes import categories_df
 
 

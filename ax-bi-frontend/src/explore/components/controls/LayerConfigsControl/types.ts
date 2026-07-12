@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { TreeProps, TreeDataNode } from '@superset-ui/core/components/Tree';
-import { ControlComponentProps } from '@superset-ui/chart-controls';
+import { TreeProps, TreeDataNode } from '@ax-bi/ui-core/components/Tree';
+import { ControlComponentProps } from '@ax-bi/chart-controls';
 // import type: geostyler packages ship type declarations only; a value
 // import makes jest resolve their d.ts entry (and its json-schema import)
 // as a runtime module

@@ -2,11 +2,17 @@
   "name": "ax-services",
   "version": "0.0.1",
   "description": "AX BI TypeScript sidecar services",
+  "author": "DEFAI Private Limited",
   "main": "dist/index.js",
   "files": [
     "dist",
     "README.md"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
+    "directory": "ax-services"
+  },
   "scripts": {
     "build": "tsc",
     "contracts:write": "ts-node scripts/write-contracts.ts",

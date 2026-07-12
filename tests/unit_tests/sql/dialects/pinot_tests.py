@@ -18,14 +18,14 @@
 import pytest
 import sqlglot
 
-from superset.sql.dialects.pinot import Pinot
+from axbi.sql.dialects.pinot import Pinot
 
 
 def test_pinot_dialect_registered() -> None:
     """
     Test that Pinot dialect is properly registered.
     """
-    from superset.sql.parse import SQLGLOT_DIALECTS
+    from axbi.sql.parse import SQLGLOT_DIALECTS
 
     assert "pinot" in SQLGLOT_DIALECTS
     assert SQLGLOT_DIALECTS["pinot"] == Pinot
@@ -506,7 +506,7 @@ def test_pinot_date_add_parsing() -> None:
     """
     Test that Pinot's DATE_ADD function with Presto-like syntax can be parsed.
     """
-    from superset.sql.parse import SQLScript
+    from axbi.sql.parse import SQLScript
 
     sql = """
 SELECT dt_epoch_ms FROM my_table WHERE dt_epoch_ms >= date_add('day', -180, now())
@@ -552,7 +552,7 @@ def test_pinot_date_sub_parsing() -> None:
     """
     Test that Pinot's DATE_SUB function with Presto-like syntax can be parsed.
     """
-    from superset.sql.parse import SQLScript
+    from axbi.sql.parse import SQLScript
 
     sql = "SELECT * FROM my_table WHERE dt >= date_sub('day', 7, now())"
     script = SQLScript(sql, "pinot")

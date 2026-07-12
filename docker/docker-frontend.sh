@@ -23,8 +23,8 @@ if [ "$PUPPETEER_SKIP_CHROMIUM_DOWNLOAD" = "false" ]; then
     apt install -y chromium
 fi
 
-if [ "$BUILD_SUPERSET_FRONTEND_IN_DOCKER" = "true" ]; then
-    echo "Building Superset frontend in dev mode inside docker container"
+if [ "$BUILD_AXBI_FRONTEND_IN_DOCKER" = "true" ]; then
+    echo "Building AxBI frontend in dev mode inside docker container"
     cd /app/ax-bi-frontend
 
     if [ "$NPM_RUN_PRUNE" = "true" ]; then

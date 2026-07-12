@@ -18,7 +18,7 @@
 set -e
 
 GITHUB_WORKSPACE=${GITHUB_WORKSPACE:-.}
-ASSETS_MANIFEST="$GITHUB_WORKSPACE/superset/static/assets/manifest.json"
+ASSETS_MANIFEST="$GITHUB_WORKSPACE/ax-bi/static/assets/manifest.json"
 
 # Echo only when not in parallel mode
 say() {
@@ -56,7 +56,7 @@ build-assets() {
 }
 
 build-embedded-sdk() {
-  cd "$GITHUB_WORKSPACE/superset-embedded-sdk"
+  cd "$GITHUB_WORKSPACE/ax-bi-embedded-sdk"
 
   say "::group::Build embedded SDK bundle for E2E tests"
   npm ci
@@ -82,7 +82,7 @@ setup-postgres() {
   say "::group::Install dependency for unit tests"
   sudo apt-get update && sudo apt-get install --yes libecpg-dev
   say "::group::Initialize database"
-  psql "postgresql://superset:superset@127.0.0.1:15432/superset" <<-EOF
+  psql "postgresql://ax-bi:axbi@127.0.0.1:15432/ax-bi" <<-EOF
     DROP SCHEMA IF EXISTS sqllab_test_db CASCADE;
     DROP SCHEMA IF EXISTS admin_database CASCADE;
     CREATE SCHEMA sqllab_test_db;
@@ -96,14 +96,14 @@ setup-mysql() {
   mysql -h 127.0.0.1 -P 13306 -u root --password=root <<-EOF
     SET GLOBAL transaction_isolation='READ-COMMITTED';
     SET GLOBAL TRANSACTION ISOLATION LEVEL READ COMMITTED;
-    DROP DATABASE IF EXISTS superset;
-    CREATE DATABASE superset DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+    DROP DATABASE IF EXISTS axbi;
+    CREATE DATABASE axbi DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
     DROP DATABASE IF EXISTS sqllab_test_db;
     CREATE DATABASE sqllab_test_db DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
     DROP DATABASE IF EXISTS admin_database;
     CREATE DATABASE admin_database DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
-    CREATE USER 'superset'@'%' IDENTIFIED BY 'superset';
-    GRANT ALL ON *.* TO 'superset'@'%';
+    CREATE USER 'axbi'@'%' IDENTIFIED BY 'axbi';
+    GRANT ALL ON *.* TO 'axbi'@'%';
     FLUSH PRIVILEGES;
 EOF
   say "::endgroup::"
@@ -112,7 +112,7 @@ EOF
 testdata() {
   cd "$GITHUB_WORKSPACE"
   say "::group::Load test data"
-  # must specify PYTHONPATH to make `tests.superset_test_config` importable
+  # must specify PYTHONPATH to make `tests.axbi_test_config` importable
   export PYTHONPATH="$GITHUB_WORKSPACE"
   uv pip install --system -e .
   ax-bi db upgrade
@@ -125,7 +125,7 @@ testdata() {
 playwright_testdata() {
   cd "$GITHUB_WORKSPACE"
   say "::group::Load all examples for Playwright tests"
-  # must specify PYTHONPATH to make `tests.superset_test_config` importable
+  # must specify PYTHONPATH to make `tests.axbi_test_config` importable
   export PYTHONPATH="$GITHUB_WORKSPACE"
   uv pip install --system -e .
   ax-bi db upgrade
@@ -136,8 +136,8 @@ playwright_testdata() {
   # temporary tables via SQL Lab without depending on external data sources.
   ax-bi shell <<'PYEOF'
 import sys
-from superset.extensions import db
-from superset.models.core import Database
+from axbi.extensions import db
+from axbi.models.core import Database
 examples_db = db.session.query(Database).filter_by(database_name='examples').first()
 if not examples_db:
     sys.exit('ERROR: examples database not found. load_examples may have failed.')
@@ -152,10 +152,10 @@ PYEOF
 celery-worker() {
   cd "$GITHUB_WORKSPACE"
   say "::group::Start Celery worker"
-  # must specify PYTHONPATH to make `tests.superset_test_config` importable
+  # must specify PYTHONPATH to make `tests.axbi_test_config` importable
   export PYTHONPATH="$GITHUB_WORKSPACE"
   celery \
-    --app=superset.tasks.celery_app:app \
+    --app=axbi.tasks.celery_app:app \
     worker \
       --concurrency=2 \
       --detach \
@@ -180,17 +180,17 @@ cypress-run-all() {
   local APP_ROOT=$2
   cd "$GITHUB_WORKSPACE/ax-bi-frontend/cypress-base"
 
-  # Start the Superset backend via gunicorn (not `flask run`). The Flask
+  # Start the AxBI backend via gunicorn (not `flask run`). The Flask
   # development server is single-threaded and has no crash-recovery, so
   # heavy tests (dashboard import/export, SQL Lab) can knock it offline
   # for the rest of the run — surfacing as `ECONNREFUSED` / `socket hang up`
   # / `Missing CSRF token` cascades. Gunicorn gives us multiple workers,
   # a request timeout, and worker-recycling under load.
-  local serverlog="${HOME}/superset-cypress.log"
+  local serverlog="${HOME}/ax-bi-cypress.log"
   local port=8081
   CYPRESS_BASE_URL="http://localhost:${port}"
   if [ -n "$APP_ROOT" ]; then
-    export SUPERSET_APP_ROOT=$APP_ROOT
+    export AXBI_APP_ROOT=$APP_ROOT
     CYPRESS_BASE_URL=${CYPRESS_BASE_URL}${APP_ROOT}
   fi
   export CYPRESS_BASE_URL
@@ -203,7 +203,7 @@ cypress-run-all() {
   #     default
   #   --max-requests / --max-requests-jitter: recycle the worker under
   #     test load to avoid leaks accumulating across the run
-  #   superset.app:create_app(): explicit factory so we don't depend on
+  #   axbi.app:create_app(): explicit factory so we don't depend on
   #     FLASK_APP being exported
   nohup gunicorn \
     --bind "127.0.0.1:$port" \
@@ -215,7 +215,7 @@ cypress-run-all() {
     --max-requests-jitter 50 \
     --access-logfile - \
     --error-logfile - \
-    "superset.app:create_app()" \
+    "axbi.app:create_app()" \
     >"$serverlog" 2>&1 </dev/null &
   local serverPid=$!
 
@@ -275,11 +275,11 @@ playwright-run() {
   local APP_ROOT=$1
   local TEST_PATH=$2
 
-  # Start the Superset backend via gunicorn from the project root.
+  # Start the AxBI backend via gunicorn from the project root.
   # See cypress-run-all() above for the rationale — the Flask dev server
   # cannot survive the dashboard import/export tests under load.
   cd "$GITHUB_WORKSPACE"
-  local serverlog="${HOME}/superset-playwright.log"
+  local serverlog="${HOME}/ax-bi-playwright.log"
   local port=8081
   # Use 127.0.0.1 explicitly: `flask run` binds IPv4 only, and Node's DNS
   # resolution for `localhost` can return `::1` first (IPv6), which then
@@ -288,7 +288,7 @@ playwright-run() {
   # (e.g., the embedded test app's exposed token fetcher).
   PLAYWRIGHT_BASE_URL="http://127.0.0.1:${port}"
   if [ -n "$APP_ROOT" ]; then
-    export SUPERSET_APP_ROOT=$APP_ROOT
+    export AXBI_APP_ROOT=$APP_ROOT
     PLAYWRIGHT_BASE_URL=${PLAYWRIGHT_BASE_URL}${APP_ROOT}/
   fi
   export PLAYWRIGHT_BASE_URL
@@ -306,7 +306,7 @@ playwright-run() {
     --max-requests-jitter 50 \
     --access-logfile - \
     --error-logfile - \
-    "superset.app:create_app()" \
+    "axbi.app:create_app()" \
     >"$serverlog" 2>&1 </dev/null &
   local serverPid=$!
 

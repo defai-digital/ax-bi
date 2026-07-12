@@ -94,7 +94,7 @@ jobs:
       - name: Configure npm and git
         if: env.HAS_TAGS
         run: |
-          echo "@superset-ui:registry=https://registry.npmjs.org/" > .npmrc
+          echo "@axbi-ui:registry=https://registry.npmjs.org/" > .npmrc
           echo "registry=https://registry.npmjs.org/" >> .npmrc
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> $HOME/.npmrc 2> /dev/null
           npm whoami

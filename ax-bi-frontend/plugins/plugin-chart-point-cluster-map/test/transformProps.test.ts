@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 
 jest.mock('supercluster', () => {
   const MockSupercluster = jest.fn().mockImplementation(() => ({
@@ -82,7 +82,7 @@ function createChartProps(overrides: Record<string, unknown> = {}) {
     width: 800,
     height: 600,
     queriesData: baseQueriesData,
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 }
 
@@ -135,7 +135,7 @@ test('provides onViewportChange callback that updates control values', () => {
     height: 600,
     queriesData: baseQueriesData,
     hooks: { setControlValue },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
   const result = transformProps(chartProps) as TransformPropsResult;
   expect(result.onViewportChange).toBeDefined();
@@ -260,7 +260,7 @@ test('calls onError and falls back to black for invalid color', () => {
     height: 600,
     queriesData: baseQueriesData,
     hooks: { onError },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
   const result = transformProps(chartProps) as TransformPropsResult;
   expect(onError).toHaveBeenCalled();

@@ -16,9 +16,9 @@
 # under the License.
 from unittest.mock import Mock, patch
 
-from superset.common.query_context_factory import QueryContextFactory
-from superset.common.query_object import QueryObject
-from superset.models.slice import Slice
+from axbi.common.query_context_factory import QueryContextFactory
+from axbi.common.query_object import QueryObject
+from axbi.models.slice import Slice
 
 
 class TestQueryContextFactory:
@@ -245,7 +245,7 @@ class TestQueryContextFactory:
                 query_object, ["tooltip_col1", "tooltip_col2"], set()
             )
 
-    @patch("superset.common.query_context_factory.DatasourceDAO")
+    @patch("axbi.common.query_context_factory.DatasourceDAO")
     def test_convert_to_model(self, mock_dao):
         """Test _convert_to_model"""
         datasource = {"type": "table", "id": 123}
@@ -256,7 +256,7 @@ class TestQueryContextFactory:
         mock_dao.get_datasource.assert_called_once()
         assert result is not None
 
-    @patch("superset.common.query_context_factory.ChartDAO")
+    @patch("axbi.common.query_context_factory.ChartDAO")
     def test_get_slice_found(self, mock_dao):
         """Test _get_slice when slice is found"""
         slice_id = 123
@@ -268,7 +268,7 @@ class TestQueryContextFactory:
         mock_dao.find_by_id.assert_called_once_with(slice_id)
         assert result == mock_slice
 
-    @patch("superset.common.query_context_factory.ChartDAO")
+    @patch("axbi.common.query_context_factory.ChartDAO")
     def test_get_slice_not_found(self, mock_dao):
         """Test _get_slice when slice is not found"""
         slice_id = 123

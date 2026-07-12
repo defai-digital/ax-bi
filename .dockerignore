@@ -16,7 +16,7 @@
 #
 **/__pycache__/
 **/.git
-**/.apache_superset.egg-info
+**/.axbi.egg-info
 **/.github
 **/.mypy_cache
 **/.pytest_cache
@@ -42,7 +42,7 @@ install/
 ax-bi-frontend/cypress-base/
 ax-bi-frontend/coverage/
 ax-bi-frontend/.temp_cache/
-superset/static/assets/
-superset-websocket/dist/
+axbi/static/assets/
+ax-bi-websocket/dist/
 venv
 .venv

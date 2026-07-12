@@ -19,7 +19,7 @@
 import {
   type ColDef,
   type ColumnState,
-} from '@superset-ui/core/components/ThemedAgGridReact';
+} from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import reconcileColumnState, { getLeafColumnIds } from './reconcileColumnState';
 
 test('getLeafColumnIds flattens grouped column defs in visual order', () => {

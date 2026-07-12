@@ -29,8 +29,8 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
 
-from superset.daos.base import BaseDAO
-from superset.models.helpers import SoftDeleteMixin
+from axbi.daos.base import BaseDAO
+from axbi.models.helpers import SoftDeleteMixin
 
 _TestBase = declarative_base()
 
@@ -77,7 +77,7 @@ def test_delete_routes_to_hard_delete_for_non_mixin_models(app_context: None) ->
         mock_hard.assert_called_once_with(items)
 
 
-@patch("superset.daos.base.db")
+@patch("axbi.daos.base.db")
 def test_hard_delete_calls_session_delete(
     mock_db: MagicMock, app_context: None
 ) -> None:

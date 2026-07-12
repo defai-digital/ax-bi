@@ -23,15 +23,15 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { FeatureFlag, VizType } from '@superset-ui/core';
+import { FeatureFlag, VizType } from '@ax-bi/ui-core';
 import mockState from 'spec/fixtures/mockState';
-import { cachedSupersetGet } from 'src/utils/cachedSupersetGet';
+import { cachedAxBIGet } from 'src/utils/cachedAxBIGet';
 import SliceHeaderControls, { SliceHeaderControlsProps } from '.';
 
-jest.mock('src/utils/cachedSupersetGet');
+jest.mock('src/utils/cachedAxBIGet');
 
-const mockCachedSupersetGet = cachedSupersetGet as jest.MockedFunction<
-  typeof cachedSupersetGet
+const mockCachedAxBIGet = cachedAxBIGet as jest.MockedFunction<
+  typeof cachedAxBIGet
 >;
 const SLICE_ID = 371;
 
@@ -56,7 +56,7 @@ const createProps = (viz_type = VizType.Sunburst) =>
       slice_description: 'Table of vaccine candidates for 100 countries',
       form_data: {
         adhoc_filters: [],
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         datasource: '58__table',
         ...(viz_type === VizType.Sunburst
           ? { columns: ['product_category', 'clinical_stage'] }
@@ -86,14 +86,14 @@ const createProps = (viz_type = VizType.Sunburst) =>
     isExpanded: false,
     cachedDttm: [''],
     updatedDttm: 1617213803803,
-    supersetCanExplore: true,
-    supersetCanCSV: true,
+    axbiCanExplore: true,
+    axbiCanCSV: true,
     componentId: 'CHART-fYo7IyvKZQ',
     dashboardId: 26,
     isFullSize: false,
     chartStatus: 'rendered',
     showControls: true,
-    supersetCanShare: true,
+    axbiCanShare: true,
     formData: {
       slice_id: 1,
       datasource: '58__table',
@@ -135,8 +135,8 @@ const mockFullscreenElement = (getElement: () => Element | null) => {
 };
 
 beforeEach(() => {
-  mockCachedSupersetGet.mockClear();
-  mockCachedSupersetGet.mockResolvedValue({
+  mockCachedAxBIGet.mockClear();
+  mockCachedAxBIGet.mockResolvedValue({
     response: {} as Response,
     json: {
       result: {
@@ -396,7 +396,7 @@ test('Should show "Drill to detail" with `can_explore`, `can_samples` & `can_get
   renderWrapper(props, {
     Admin: [
       ['can_samples', 'Datasource'],
-      ['can_explore', 'Superset'],
+      ['can_explore', 'AxBI'],
       ['can_get_drill_info', 'Dataset'],
     ],
   });
@@ -410,7 +410,7 @@ test('Should show "Drill to detail" with `can_drill` & `can_samples` & `can_get_
   };
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -430,13 +430,13 @@ test('Should show "Drill to detail" with both `canexplore` + `can_drill` & `can_
   };
   const props = {
     ...createProps(),
-    supersetCanExplore: true,
+    axbiCanExplore: true,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
     Admin: [
       ['can_samples', 'Datasource'],
-      ['can_explore', 'Superset'],
+      ['can_explore', 'AxBI'],
       ['can_drill', 'Dashboard'],
       ['can_get_drill_info', 'Dataset'],
     ],
@@ -451,7 +451,7 @@ test('Should not show "Drill to detail" with neither of required perms', () => {
   };
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -467,7 +467,7 @@ test('Should not show "Drill to detail" only `can_drill` perm', () => {
   };
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -483,7 +483,7 @@ test('Should not show "Drill to detail" with only `can_drill` & `can_samples` pe
   };
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -502,12 +502,12 @@ test('Should not show "Drill to detail" with only `can_explore` & `can_samples` 
   };
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
     Admin: [
-      ['can_explore', 'Superset'],
+      ['can_explore', 'AxBI'],
       ['can_samples', 'Datasource'],
     ],
   });
@@ -521,12 +521,12 @@ test('Should not show "Drill to detail" with only `can_explore`, `can_drill` & `
   };
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
     Admin: [
-      ['can_explore', 'Superset'],
+      ['can_explore', 'AxBI'],
       ['can_samples', 'Datasource'],
       ['can_drill', 'Dashboard'],
     ],
@@ -538,7 +538,7 @@ test('Should not show "Drill to detail" with only `can_explore`, `can_drill` & `
 test('Should show "View query"', () => {
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -551,7 +551,7 @@ test('Should show "View query"', () => {
 test('Should not show "View query"', () => {
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -564,7 +564,7 @@ test('Should not show "View query"', () => {
 test('Should show "View as table"', () => {
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -577,7 +577,7 @@ test('Should show "View as table"', () => {
 test('Should not show "View as table"', () => {
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -590,7 +590,7 @@ test('Should not show "View as table"', () => {
 test('Should not show the "Edit chart" button', () => {
   const props = {
     ...createProps(),
-    supersetCanExplore: false,
+    axbiCanExplore: false,
   };
   props.slice.slice_id = 18;
   renderWrapper(props, {
@@ -611,14 +611,14 @@ test('Dataset drill info API call is made when user has drill permissions', asyn
   renderWrapper(undefined, {
     Admin: [
       ['can_samples', 'Datasource'],
-      ['can_explore', 'Superset'],
+      ['can_explore', 'AxBI'],
       ['can_get_drill_info', 'Dataset'],
     ],
   });
 
   await new Promise(resolve => setTimeout(resolve, 0));
 
-  expect(mockCachedSupersetGet).toHaveBeenCalledWith({
+  expect(mockCachedAxBIGet).toHaveBeenCalledWith({
     endpoint: expect.stringContaining(
       '/api/v1/dataset/58/drill_info/?q=(dashboard_id:26)',
     ),
@@ -635,7 +635,7 @@ test('Dataset drill info API call is not made when user lacks drill permissions'
 
   await new Promise(resolve => setTimeout(resolve, 0));
 
-  expect(mockCachedSupersetGet).not.toHaveBeenCalled();
+  expect(mockCachedAxBIGet).not.toHaveBeenCalled();
 });
 
 test('Should show "Embed code" in Share menu when feature flag is enabled and chart has data', async () => {

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { SMALL_HEADER, MEDIUM_HEADER, LARGE_HEADER } from './constants';
 
 export default [

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { QueryFormColumn, QueryFormData } from '@superset-ui/core';
+import { QueryFormColumn, QueryFormData } from '@ax-bi/ui-core';
 import { WordCloudVisualProps } from './chart/WordCloud';
 
 // FormData for wordcloud contains both common properties of all form data

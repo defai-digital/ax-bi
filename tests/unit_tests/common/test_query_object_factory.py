@@ -19,7 +19,7 @@ from unittest.mock import Mock
 
 from pytest import fixture  # noqa: PT013
 
-from superset.common.query_object_factory import QueryObjectFactory
+from axbi.common.query_object_factory import QueryObjectFactory
 from tests.common.query_context_generator import QueryContextGenerator
 
 
@@ -63,7 +63,7 @@ def apply_max_row_limit(
 def query_object_factory(
     app_config: dict[str, Any], connector_registry: Mock
 ) -> QueryObjectFactory:
-    import superset.common.query_object_factory as mod
+    import axbi.common.query_object_factory as mod
 
     mod.apply_max_row_limit = apply_max_row_limit
     return QueryObjectFactory(app_config, connector_registry)

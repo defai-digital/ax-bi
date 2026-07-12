@@ -33,7 +33,7 @@ if (!process.env.NODE_OPTIONS?.includes("--max-old-space-size")) {
   process.env.NODE_OPTIONS = `${process.env.NODE_OPTIONS || ""} --max-old-space-size=8192`.trim();
 }
 
-const SUPERSET_ROOT = dirname(__dirname);
+const AXBI_ROOT = dirname(__dirname);
 const PACKAGE_ARG_REGEX = /^package=/;
 const EXCLUDE_DECLARATION_DIR_REGEX = /^excludeDeclarationDir=/;
 const DECLARATION_FILE_REGEX = /\.d\.ts$/;
@@ -107,7 +107,7 @@ Options:
  * Run full type check on the entire project
  */
 async function runFullTypeCheck(packageRootDir, excludeDeclarationDirArg) {
-  const packageRootDirAbsolute = join(SUPERSET_ROOT, packageRootDir);
+  const packageRootDirAbsolute = join(AXBI_ROOT, packageRootDir);
   const tsConfig = getTsConfig(packageRootDirAbsolute);
   // Use incremental compilation for better caching
   const command = `--noEmit --allowJs --incremental ${IGNORE_DEPRECATIONS_OPTION} --project ${tsConfig}`;
@@ -121,13 +121,13 @@ async function runFullTypeCheck(packageRootDir, excludeDeclarationDirArg) {
 async function runTargetedTypeCheck(packageRootDir, tsFiles, excludeDeclarationDirArg) {
   const excludedDeclarationDirs = getExcludedDeclarationDirs(excludeDeclarationDirArg);
   let declarationFiles = await getFilesRecursively(
-    join(SUPERSET_ROOT, packageRootDir),
+    join(AXBI_ROOT, packageRootDir),
     DECLARATION_FILE_REGEX,
     excludedDeclarationDirs
   );
   declarationFiles = removePackageSegment(declarationFiles, packageRootDir);
 
-  const packageRootDirAbsolute = join(SUPERSET_ROOT, packageRootDir);
+  const packageRootDirAbsolute = join(AXBI_ROOT, packageRootDir);
   const tsConfig = getTsConfig(packageRootDirAbsolute);
 
   // Process files in batches to avoid command line length limits
@@ -497,7 +497,7 @@ function removePackageSegment(args, package) {
  * @param {string} packageRootDir
  */
 function resolveChangedFile(file, packageRootDir) {
-  return isAbsolute(file) ? file : join(SUPERSET_ROOT, packageRootDir, file);
+  return isAbsolute(file) ? file : join(AXBI_ROOT, packageRootDir, file);
 }
 
 /**

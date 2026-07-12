@@ -28,7 +28,7 @@ import pytest
 from flask_appbuilder.security.sqla.models import Role, User
 from werkzeug.datastructures import FileStorage
 
-from superset import db
+from axbi import db
 
 
 @pytest.fixture

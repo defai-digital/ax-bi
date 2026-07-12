@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { QueryFormData } from '@superset-ui/core';
+import type { QueryFormData } from '@ax-bi/ui-core';
 import { DiffType } from 'src/types/DiffType';
 
 export interface AlteredSliceTagProps {

@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useCallback, useMemo, useEffect, useRef } from 'react';
-import { ClientErrorObject } from '@superset-ui/core';
+import { ClientErrorObject } from '@ax-bi/ui-core';
 import useEffectEvent from 'src/hooks/useEffectEvent';
 import { toQueryString } from 'src/utils/urlUtils';
 import { api, JsonResponse } from './queryApi';

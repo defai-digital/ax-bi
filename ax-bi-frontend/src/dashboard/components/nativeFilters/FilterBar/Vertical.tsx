@@ -31,12 +31,12 @@ import {
 } from 'react';
 import { useSelector } from 'react-redux';
 import cx from 'classnames';
-import { t } from '@apache-superset/core/translation';
-import { styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import { RootState } from 'src/dashboard/types';
-import { DataMaskStateWithId } from '@superset-ui/core';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { EmptyState, Loading } from '@superset-ui/core/components';
+import { DataMaskStateWithId } from '@ax-bi/ui-core';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { EmptyState, Loading } from '@ax-bi/ui-core/components';
 import { useChartLayoutItems } from 'src/dashboard/util/useChartLayoutItems';
 import { useChartIds } from 'src/dashboard/util/charts/useChartIds';
 import { getFilterBarTestId, useChartsVerboseMaps } from './utils';

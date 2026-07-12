@@ -26,14 +26,14 @@ from typing import Any
 
 import pytest
 
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     ChartData,
     ChartError,
     DataColumn,
     GetChartDataRequest,
     PerformanceMetadata,
 )
-from superset.mcp_service.chart.tool.get_chart_data import (
+from axbi.mcp_service.chart.tool.get_chart_data import (
     _GENERIC_TYPE_MAP,
     _load_saved_query_context,
     _MAX_RECOMMENDATIONS,
@@ -41,9 +41,9 @@ from superset.mcp_service.chart.tool.get_chart_data import (
     _recommend_visualizations,
     _sanitize_chart_data_for_llm_context,
 )
-from superset.mcp_service.utils import sanitize_for_llm_context
-from superset.mcp_service.utils.sanitization import LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER
-from superset.utils.core import GenericDataType
+from axbi.mcp_service.utils import sanitize_for_llm_context
+from axbi.mcp_service.utils.sanitization import LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER
+from axbi.utils.core import GenericDataType
 
 
 def _collect_groupby_extras(
@@ -398,7 +398,7 @@ class TestSavedChartParamsFallback:
     ) -> None:
         """Fallback query construction should require object-shaped chart params."""
         chart_data_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_data"
+            "axbi.mcp_service.chart.tool.get_chart_data"
         )
         chart = SimpleNamespace(
             id=42,
@@ -449,13 +449,13 @@ class TestSavedChartParamsFallback:
     ) -> None:
         """Corrupt saved query_context should use saved chart params fallback."""
         chart_data_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_data"
+            "axbi.mcp_service.chart.tool.get_chart_data"
         )
         query_context_factory_module = importlib.import_module(
-            "superset.common.query_context_factory"
+            "axbi.common.query_context_factory"
         )
         get_data_command_module = importlib.import_module(
-            "superset.commands.chart.data.get_data_command"
+            "axbi.commands.chart.data.get_data_command"
         )
         chart = SimpleNamespace(
             id=42,
@@ -542,13 +542,13 @@ class TestUnsavedChartDataQueryConstruction:
     ) -> None:
         """Cached form_data adhoc filters should constrain unsaved chart data."""
         chart_data_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_data"
+            "axbi.mcp_service.chart.tool.get_chart_data"
         )
         query_context_factory_module = importlib.import_module(
-            "superset.common.query_context_factory"
+            "axbi.common.query_context_factory"
         )
         get_data_command_module = importlib.import_module(
-            "superset.commands.chart.data.get_data_command"
+            "axbi.commands.chart.data.get_data_command"
         )
 
         captured_query_contexts: list[dict[str, Any]] = []
@@ -623,13 +623,13 @@ class TestUnsavedChartDataQueryConstruction:
     ) -> None:
         """Unsaved mixed-timeseries form_data should preserve both query layers."""
         chart_data_module = importlib.import_module(
-            "superset.mcp_service.chart.tool.get_chart_data"
+            "axbi.mcp_service.chart.tool.get_chart_data"
         )
         query_context_factory_module = importlib.import_module(
-            "superset.common.query_context_factory"
+            "axbi.common.query_context_factory"
         )
         get_data_command_module = importlib.import_module(
-            "superset.commands.chart.data.get_data_command"
+            "axbi.commands.chart.data.get_data_command"
         )
 
         captured_query_contexts: list[dict[str, Any]] = []
@@ -676,7 +676,7 @@ class TestUnsavedChartDataQueryConstruction:
             lambda **kwargs: nullcontext(),
         )
         monkeypatch.setattr(
-            "superset.mcp_service.chart.chart_helpers.resolve_datasource_engine",
+            "axbi.mcp_service.chart.chart_helpers.resolve_datasource_engine",
             lambda datasource_id, datasource_type: "base",
         )
 
@@ -1179,19 +1179,19 @@ class TestChartDataCommandValidation:
         # ChartDataCommand, db, and QueryContextFactory are local imports inside
         # the function so preview_utils stays safe to import before app setup.
         with (
-            patch("superset.extensions.db") as mock_db,
+            patch("axbi.extensions.db") as mock_db,
             patch(
-                "superset.commands.chart.data.get_data_command.ChartDataCommand",
+                "axbi.commands.chart.data.get_data_command.ChartDataCommand",
                 return_value=mock_command,
             ),
             patch(
-                "superset.common.query_context_factory.QueryContextFactory"
+                "axbi.common.query_context_factory.QueryContextFactory"
             ) as mock_factory,
         ):
             mock_db.session.query.return_value.get.return_value = mock_dataset
             mock_factory.return_value.create.return_value = MagicMock()
 
-            from superset.mcp_service.chart.preview_utils import (
+            from axbi.mcp_service.chart.preview_utils import (
                 generate_preview_from_form_data,
             )
 
@@ -1206,17 +1206,17 @@ class TestChartDataCommandValidation:
             assert call_order == ["validate", "run"]
 
     def test_preview_utils_security_exception_from_validate(self):
-        """Test that SupersetSecurityException from validate() is propagated."""
+        """Test that AxBISecurityException from validate() is propagated."""
         from unittest.mock import MagicMock, patch
 
-        from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-        from superset.exceptions import SupersetSecurityException
-        from superset.mcp_service.chart.schemas import ChartError
+        from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+        from axbi.exceptions import AxBISecurityException
+        from axbi.mcp_service.chart.schemas import ChartError
 
-        security_error = SupersetSecurityException(
-            SupersetError(
+        security_error = AxBISecurityException(
+            AxBIError(
                 message="Access denied",
-                error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+                error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                 level=ErrorLevel.ERROR,
             )
         )
@@ -1228,19 +1228,19 @@ class TestChartDataCommandValidation:
         mock_dataset.id = 10
 
         with (
-            patch("superset.extensions.db") as mock_db,
+            patch("axbi.extensions.db") as mock_db,
             patch(
-                "superset.commands.chart.data.get_data_command.ChartDataCommand",
+                "axbi.commands.chart.data.get_data_command.ChartDataCommand",
                 return_value=mock_command,
             ),
             patch(
-                "superset.common.query_context_factory.QueryContextFactory"
+                "axbi.common.query_context_factory.QueryContextFactory"
             ) as mock_factory,
         ):
             mock_db.session.query.return_value.get.return_value = mock_dataset
             mock_factory.return_value.create.return_value = MagicMock()
 
-            from superset.mcp_service.chart.preview_utils import (
+            from axbi.mcp_service.chart.preview_utils import (
                 generate_preview_from_form_data,
             )
 
@@ -1250,7 +1250,7 @@ class TestChartDataCommandValidation:
                 preview_format="table",
             )
 
-            # SupersetSecurityException is caught by the broad except and
+            # AxBISecurityException is caught by the broad except and
             # returned as a ChartError
             assert isinstance(result, ChartError)
             assert "Access denied" in result.error
@@ -1274,16 +1274,16 @@ class TestChartDataCommandValidation:
         # inside _compile_chart, so patch at source.
         with (
             patch(
-                "superset.commands.chart.data.get_data_command.ChartDataCommand",
+                "axbi.commands.chart.data.get_data_command.ChartDataCommand",
                 return_value=mock_command,
             ),
             patch(
-                "superset.common.query_context_factory.QueryContextFactory"
+                "axbi.common.query_context_factory.QueryContextFactory"
             ) as mock_factory,
         ):
             mock_factory.return_value.create.return_value = MagicMock()
 
-            from superset.mcp_service.chart.tool.generate_chart import _compile_chart
+            from axbi.mcp_service.chart.tool.generate_chart import _compile_chart
 
             result = _compile_chart(
                 form_data={"metrics": [{"label": "count"}], "viz_type": "table"},
@@ -1299,13 +1299,13 @@ class TestChartDataCommandValidation:
         """Test that _compile_chart propagates security exception from validate()."""
         from unittest.mock import MagicMock, patch
 
-        from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-        from superset.exceptions import SupersetSecurityException
+        from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+        from axbi.exceptions import AxBISecurityException
 
-        security_error = SupersetSecurityException(
-            SupersetError(
+        security_error = AxBISecurityException(
+            AxBIError(
                 message="Row-level security violation",
-                error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+                error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                 level=ErrorLevel.ERROR,
             )
         )
@@ -1315,21 +1315,21 @@ class TestChartDataCommandValidation:
 
         with (
             patch(
-                "superset.commands.chart.data.get_data_command.ChartDataCommand",
+                "axbi.commands.chart.data.get_data_command.ChartDataCommand",
                 return_value=mock_command,
             ),
             patch(
-                "superset.common.query_context_factory.QueryContextFactory"
+                "axbi.common.query_context_factory.QueryContextFactory"
             ) as mock_factory,
         ):
             mock_factory.return_value.create.return_value = MagicMock()
 
-            from superset.mcp_service.chart.tool.generate_chart import _compile_chart
+            from axbi.mcp_service.chart.tool.generate_chart import _compile_chart
 
-            # SupersetSecurityException is not caught by _compile_chart's
+            # AxBISecurityException is not caught by _compile_chart's
             # specific except blocks, so it propagates to the caller
             # (generate_chart's broad except handler).
-            with pytest.raises(SupersetSecurityException):
+            with pytest.raises(AxBISecurityException):
                 _compile_chart(
                     form_data={"metrics": [{"label": "count"}], "viz_type": "table"},
                     dataset_id=10,
@@ -1340,7 +1340,7 @@ class TestChartDataCommandValidation:
 
 @pytest.fixture
 def mcp_server():
-    from superset.mcp_service.app import mcp
+    from axbi.mcp_service.app import mcp
 
     return mcp
 
@@ -1352,9 +1352,7 @@ def mock_auth():
     from contextlib import contextmanager
     from unittest.mock import Mock, patch
 
-    _gcd_module = importlib.import_module(
-        "superset.mcp_service.chart.tool.get_chart_data"
-    )
+    _gcd_module = importlib.import_module("axbi.mcp_service.chart.tool.get_chart_data")
 
     @contextmanager
     def _noop_log_context(*_args: Any, **_kwargs: Any) -> Any:
@@ -1364,7 +1362,7 @@ def mock_auth():
     # a log row referencing our mock user_id and fail a FK constraint against
     # the real users table.
     with (
-        patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user,
+        patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user,
         patch.object(_gcd_module, "mcp_event_log_context", _noop_log_context),
     ):
         user = Mock()
@@ -1403,7 +1401,7 @@ class TestChartLookupEagerLoading:
         from fastmcp import Client
 
         with patch(
-            "superset.daos.chart.ChartDAO.find_by_id", return_value=None
+            "axbi.daos.chart.ChartDAO.find_by_id", return_value=None
         ) as mock_find:
             async with Client(mcp_server) as client:
                 await client.call_tool(
@@ -1434,7 +1432,7 @@ class TestChartLookupEagerLoading:
         uuid = "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 
         with patch(
-            "superset.daos.chart.ChartDAO.find_by_id", return_value=None
+            "axbi.daos.chart.ChartDAO.find_by_id", return_value=None
         ) as mock_find:
             async with Client(mcp_server) as client:
                 await client.call_tool(
@@ -1468,7 +1466,7 @@ class TestChartLookupEagerLoading:
         from fastmcp import Client
 
         with patch(
-            "superset.daos.chart.ChartDAO.find_by_id", return_value=None
+            "axbi.daos.chart.ChartDAO.find_by_id", return_value=None
         ) as mock_find:
             async with Client(mcp_server) as client:
                 await client.call_tool(

@@ -24,10 +24,10 @@ import textwrap
 from pathlib import Path
 
 
-def test_flask_singleton_reuses_started_superset_app_without_context() -> None:
-    """MCP helpers must not create or fail after Superset already started.
+def test_flask_singleton_reuses_started_axbi_app_without_context() -> None:
+    """MCP helpers must not create or fail after AxBI already started.
 
-    Run in a subprocess so ``superset.mcp_service.flask_singleton`` is imported
+    Run in a subprocess so ``axbi.mcp_service.flask_singleton`` is imported
     from a clean module state. This pins the real startup order: ``create_app()``
     initializes Flask-AppBuilder inside an app context, then MCP code later asks
     for the Flask app with no current context.
@@ -39,11 +39,11 @@ def test_flask_singleton_reuses_started_superset_app_without_context() -> None:
     }
     script = textwrap.dedent(
         """
-        from superset.app import create_app
+        from axbi.app import create_app
 
         created_app = create_app()
 
-        from superset.mcp_service.flask_singleton import get_flask_app
+        from axbi.mcp_service.flask_singleton import get_flask_app
 
         assert get_flask_app() is created_app
         """

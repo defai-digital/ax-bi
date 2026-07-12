@@ -18,8 +18,8 @@
  */
 
 import { useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
@@ -28,7 +28,7 @@ import {
   ListViewFilterOperator,
   ListView,
 } from 'src/components';
-import { DeleteModal } from '@superset-ui/core/components';
+import { DeleteModal } from '@ax-bi/ui-core/components';
 import { ActionProps, ActionsBar } from 'src/components/ListView/ActionsBar';
 import SubMenu from 'src/features/home/SubMenu';
 
@@ -69,7 +69,7 @@ export default function UserRegistrations() {
     username,
   }: UserRegistration) => {
     try {
-      await SupersetClient.delete({
+      await AxBIClient.delete({
         endpoint: `/api/v1/security/user_registrations/${id}`,
       });
       refreshData();

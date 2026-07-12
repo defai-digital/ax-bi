@@ -30,12 +30,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.session import Session
 
-from superset import security_manager
-from superset.app import SupersetApp
-from superset.common.chart_data import ChartDataResultType
-from superset.common.query_object_factory import QueryObjectFactory
-from superset.extensions import appbuilder, feature_flag_manager
-from superset.initialization import SupersetAppInitializer
+from axbi import security_manager
+from axbi.app import AxBIApp
+from axbi.common.chart_data import ChartDataResultType
+from axbi.common.query_object_factory import QueryObjectFactory
+from axbi.extensions import appbuilder, feature_flag_manager
+from axbi.initialization import AxBIAppInitializer
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def get_session(mocker: MockerFixture) -> Callable[[], Session]:
 
         # patch session
         get_session = mocker.patch(
-            "superset.security.SupersetSecurityManager.session",
+            "axbi.security.AxBISecurityManager.session",
         )
         get_session.return_value = in_memory_session
         # FAB calls get_session.get_bind() to get a handler to the engine
@@ -62,7 +62,7 @@ def get_session(mocker: MockerFixture) -> Callable[[], Session]:
         # Allow for queries on security manager
         get_session.query = in_memory_session.query
 
-        mocker.patch("superset.db.session", in_memory_session)
+        mocker.patch("axbi.db.session", in_memory_session)
         return in_memory_session
 
     return get_session
@@ -74,15 +74,15 @@ def session(get_session) -> Iterator[Session]:
 
 
 @pytest.fixture(scope="module")
-def app(request: SubRequest) -> Iterator[SupersetApp]:
+def app(request: SubRequest) -> Iterator[AxBIApp]:
     """
-    A fixture that generates a Superset app.
+    A fixture that generates a AxBI app.
     """
-    app = SupersetApp(__name__)
+    app = AxBIApp(__name__)
 
-    app.config.from_object("superset.config")
+    app.config.from_object("axbi.config")
     app.config["SQLALCHEMY_DATABASE_URI"] = (
-        os.environ.get("SUPERSET__SQLALCHEMY_DATABASE_URI") or "sqlite://"
+        os.environ.get("AXBI__SQLALCHEMY_DATABASE_URI") or "sqlite://"
     )
     app.config["WTF_CSRF_ENABLED"] = False
     app.config["PREVENT_UNSAFE_DB_CONNECTIONS"] = False
@@ -108,31 +108,31 @@ def app(request: SubRequest) -> Iterator[SupersetApp]:
         for key, val in request.param.items():
             app.config[key] = val
 
-    # ``superset.extensions.appbuilder`` is a singleton, and won't rebuild the
+    # ``axbi.extensions.appbuilder`` is a singleton, and won't rebuild the
     # routes when this fixture is called multiple times; we need to clear the
     # registered views to ensure the initialization can happen more than once.
     appbuilder.baseviews = []
 
-    app_initializer = SupersetAppInitializer(app)
+    app_initializer = AxBIAppInitializer(app)
     app_initializer.init_app()
 
     # reload base views to ensure error handlers are applied to the app
     with app.app_context():
-        import superset.views.base
+        import axbi.views.base
 
-        importlib.reload(superset.views.base)
+        importlib.reload(axbi.views.base)
 
     return app
 
 
 @pytest.fixture
-def client(app: SupersetApp) -> Any:
+def client(app: AxBIApp) -> Any:
     with app.test_client() as client:
         yield client
 
 
 @pytest.fixture(autouse=True)
-def app_context(app: SupersetApp) -> Iterator[None]:
+def app_context(app: AxBIApp) -> Iterator[None]:
     """
     A fixture that yields and application context.
     """
@@ -188,7 +188,7 @@ def with_feature_flags(**mock_feature_flags):
 
     Usage:
 
-        class TestYourFeature(SupersetTestCase):
+        class TestYourFeature(AxBITestCase):
 
             @with_feature_flags(YOUR_FEATURE=True)
             def test_your_feature_enabled(self):

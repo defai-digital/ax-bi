@@ -18,12 +18,12 @@
  */
 
 import { render, screen } from 'spec/helpers/testing-library';
-import { ErrorLevel } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ErrorLevel } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { BasicErrorAlert } from './BasicErrorAlert';
 
 jest.mock(
-  '@superset-ui/core/components/Icons/AsyncIcon',
+  '@ax-bi/ui-core/components/Icons/AsyncIcon',
   () =>
     ({ fileName }: { fileName: string }) => (
       <span role="img" aria-label={fileName.replace('_', '-')} />
@@ -73,7 +73,7 @@ test('should render with warning theme', () => {
   render(<BasicErrorAlert {...mockedProps} />);
   expect(screen.getByRole('alert')).toHaveStyle(
     `
-      color: ${supersetTheme.colorWarningText};
+      color: ${axbiTheme.colorWarningText};
     `,
   );
 });
@@ -86,7 +86,7 @@ test('should render with error theme', () => {
   render(<BasicErrorAlert {...errorProps} />);
   expect(screen.getByRole('alert')).toHaveStyle(
     `
-      color: ${supersetTheme.colorErrorText};
+      color: ${axbiTheme.colorErrorText};
     `,
   );
 });

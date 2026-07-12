@@ -22,14 +22,14 @@ import pytest
 from marshmallow import ValidationError
 from pytest_mock import MockerFixture
 
-from superset.commands.report.create import CreateReportScheduleCommand
-from superset.commands.report.exceptions import (
+from axbi.commands.report.create import CreateReportScheduleCommand
+from axbi.commands.report.exceptions import (
     DatabaseNotFoundValidationError,
     ReportScheduleAlertRequiredDatabaseValidationError,
     ReportScheduleInvalidError,
 )
-from superset.reports.models import ReportScheduleType
-from superset.utils import json
+from axbi.reports.models import ReportScheduleType
+from axbi.utils import json
 
 
 def _make_dashboard(position: dict[str, Any]) -> MagicMock:
@@ -162,15 +162,14 @@ def _stub_validate_deps(mocker: MockerFixture) -> None:
     can exercise a single validation branch in isolation."""
     mocker.patch.object(CreateReportScheduleCommand, "_populate_recipients")
     mocker.patch(
-        "superset.commands.report.create.ReportScheduleDAO.validate_update_uniqueness",
+        "axbi.commands.report.create.ReportScheduleDAO.validate_update_uniqueness",
         return_value=True,
     )
     mocker.patch.object(CreateReportScheduleCommand, "validate_report_frequency")
     mocker.patch.object(CreateReportScheduleCommand, "validate_chart_dashboard")
     mocker.patch.object(CreateReportScheduleCommand, "_validate_report_extra")
     mocker.patch(
-        "superset.commands.report.create.ReportScheduleDAO"
-        ".validate_unique_creation_method",
+        "axbi.commands.report.create.ReportScheduleDAO.validate_unique_creation_method",
         return_value=True,
     )
     mocker.patch.object(CreateReportScheduleCommand, "populate_owners", return_value=[])
@@ -201,7 +200,7 @@ def test_validate_alert_nonexistent_database(mocker: MockerFixture) -> None:
     """Alert type with a database ID that doesn't exist raises not-found."""
     _stub_validate_deps(mocker)
     mocker.patch(
-        "superset.commands.report.create.DatabaseDAO.find_by_id",
+        "axbi.commands.report.create.DatabaseDAO.find_by_id",
         return_value=None,
     )
 

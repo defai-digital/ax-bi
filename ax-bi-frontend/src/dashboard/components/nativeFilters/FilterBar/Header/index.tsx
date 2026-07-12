@@ -17,11 +17,11 @@
  * under the License.
  */
 /* eslint-disable no-param-reassign */
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
 import { memo, FC } from 'react';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Button } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Button } from '@ax-bi/ui-core/components';
 import { getFilterBarTestId } from '../utils';
 import FilterBarSettings from '../FilterBarSettings';
 

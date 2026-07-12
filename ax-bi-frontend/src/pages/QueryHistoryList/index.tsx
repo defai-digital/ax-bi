@@ -19,9 +19,9 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useMemo, useState, useCallback, ReactElement, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { t } from '@apache-superset/core/translation';
-import { QueryState, SupersetClient } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { QueryState, AxBIClient } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import {
   createFetchRelated,
   createFetchDistinct,
@@ -32,7 +32,7 @@ import withToasts from 'src/components/MessageToasts/withToasts';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
-import { Popover, Label, Tooltip } from '@superset-ui/core/components';
+import { Popover, Label, Tooltip } from '@ax-bi/ui-core/components';
 import { commonMenuData } from 'src/features/home/commonMenuData';
 import {
   ListView,
@@ -42,15 +42,15 @@ import {
 } from 'src/components';
 import CodeSyntaxHighlighter, {
   preloadLanguages,
-} from '@superset-ui/core/components/CodeSyntaxHighlighter';
+} from '@ax-bi/ui-core/components/CodeSyntaxHighlighter';
 import { DATETIME_WITH_TIME_ZONE, TIME_WITH_MS } from 'src/constants';
 import { QueryObject, QueryObjectColumns } from 'src/views/CRUD/types';
 
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import QueryPreviewModal from 'src/features/queries/QueryPreviewModal';
 import { addSuccessToast } from 'src/components/MessageToasts/actions';
 import getOwnerName from 'src/utils/getOwnerName';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 
 const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 const SQL_PREVIEW_MAX_LINES = 4;
@@ -127,7 +127,7 @@ function QueryList({ addDangerToast }: QueryListProps) {
 
   const handleQueryPreview = useCallback(
     (id: number) => {
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/query/${id}`,
       }).then(
         ({ json = {} }) => {

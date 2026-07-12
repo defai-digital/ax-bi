@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Metric } from '@superset-ui/chart-controls';
+import { Metric } from '@ax-bi/chart-controls';
 import { ColumnObject } from 'src/features/datasets/types';
 import {
   DEFAULT_METRICS_FOLDER_UUID,

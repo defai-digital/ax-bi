@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SupersetTheme, useTheme, css } from '@apache-superset/core/theme';
-import { Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { AxBITheme, useTheme, css } from '@ax-bi/core/theme';
+import { Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { AlertState } from '../types';
 
-function getStatusColor(status: string, theme: SupersetTheme) {
+function getStatusColor(status: string, theme: AxBITheme) {
   switch (status) {
     case AlertState.Working:
       return theme.colorPrimaryText;

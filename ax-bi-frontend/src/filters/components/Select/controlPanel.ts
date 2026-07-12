@@ -16,13 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { GenericDataType } from '@apache-superset/core/common';
-import { ensureIsArray, validateNonEmpty } from '@superset-ui/core';
-import {
-  ControlPanelConfig,
-  sharedControls,
-} from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { GenericDataType } from '@ax-bi/core/common';
+import { ensureIsArray, validateNonEmpty } from '@ax-bi/ui-core';
+import { ControlPanelConfig, sharedControls } from '@ax-bi/chart-controls';
 import { DEFAULT_FORM_DATA, SelectFilterOperatorType } from './types';
 
 const {

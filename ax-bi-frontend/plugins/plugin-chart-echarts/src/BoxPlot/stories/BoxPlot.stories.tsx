@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import {
   EchartsBoxPlotChartPlugin,
   BoxPlotTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import data from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 

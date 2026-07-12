@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { type AnyThemeConfig } from '@apache-superset/core/theme';
+import { type AnyThemeConfig } from '@ax-bi/core/theme';
 import { validateTheme } from './themeStructureValidation';
 
 test('validateTheme validates a valid theme with standard tokens', () => {
@@ -34,7 +34,7 @@ test('validateTheme validates a valid theme with standard tokens', () => {
   expect(result.warnings).toHaveLength(0);
 });
 
-test('validateTheme validates a theme with Superset custom tokens', () => {
+test('validateTheme validates a theme with AxBI custom tokens', () => {
   const theme: AnyThemeConfig = {
     token: {
       colorPrimary: '#1890ff',

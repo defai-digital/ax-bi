@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t, tn } from '@apache-superset/core/translation';
-import { getNumberFormatter } from '@superset-ui/core';
+import { t, tn } from '@ax-bi/core/translation';
+import { getNumberFormatter } from '@ax-bi/ui-core';
 
-import { Label, Tooltip } from '@superset-ui/core/components';
+import { Label, Tooltip } from '@ax-bi/ui-core/components';
 
 type RowCountLabelProps = {
   rowcount?: number;

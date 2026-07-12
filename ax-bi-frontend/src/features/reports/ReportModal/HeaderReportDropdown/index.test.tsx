@@ -17,8 +17,8 @@
  * under the License.
  */
 import { act, render, screen, userEvent } from 'spec/helpers/testing-library';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
-import { Menu, MenuItem } from '@superset-ui/core/components/Menu';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
+import { Menu, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { useHeaderReportMenuItems, HeaderReportProps } from './index';
 
 const createProps = () => ({
@@ -124,8 +124,8 @@ function setup(props: HeaderReportProps, initialState = {}) {
   render(<MenuWrapper {...props} />, { useRedux: true, initialState });
 }
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

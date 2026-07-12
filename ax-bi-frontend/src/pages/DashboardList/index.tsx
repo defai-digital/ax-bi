@@ -16,13 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import {
-  isFeatureEnabled,
-  FeatureFlag,
-  SupersetClient,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag, AxBIClient } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { useSelector } from 'react-redux';
 import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
@@ -44,7 +40,7 @@ import {
   Loading,
   PublishedLabel,
   Tooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   FacePile,
   TagType,
@@ -62,7 +58,7 @@ import handleResourceExport from 'src/utils/export';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { dangerouslyGetItemDoNotUse } from 'src/utils/localStorageHelpers';
 import withToasts from 'src/components/MessageToasts/withToasts';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import PropertiesModal from 'src/dashboard/components/PropertiesModal';
 
 import {
@@ -252,7 +248,7 @@ function DashboardList(props: DashboardListProps) {
   }, []);
 
   function handleDashboardEdit(edits: CRUDDashboard) {
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/dashboard/${edits.id}`,
     }).then(
       ({ json = {} }) => {
@@ -322,7 +318,7 @@ function DashboardList(props: DashboardListProps) {
   );
 
   function handleBulkDashboardDelete(dashboardsToDelete: CRUDDashboard[]) {
-    return SupersetClient.delete({
+    return AxBIClient.delete({
       endpoint: `/api/v1/dashboard/?q=${rison.encode(
         dashboardsToDelete.map(({ id }) => id),
       )}`,

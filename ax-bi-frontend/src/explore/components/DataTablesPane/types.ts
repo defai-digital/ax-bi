@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject, LatestQueryFormData } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { JsonObject, LatestQueryFormData } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import type { ChartStatus, Datasource } from 'src/explore/types';
 
 export enum ResultTypes {

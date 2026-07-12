@@ -21,12 +21,12 @@ import {
   SuperChart,
   VizType,
   getChartTransformPropsRegistry,
-} from '@superset-ui/core';
-import { CartodiagramPlugin } from '@superset-ui/plugin-chart-cartodiagram';
+} from '@ax-bi/ui-core';
+import { CartodiagramPlugin } from '@ax-bi/plugin-chart-cartodiagram';
 import {
   EchartsPieChartPlugin,
   PieTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import { withResizableChartDemo, dummyDatasource } from '@storybook-shared';
 import {
   defaultLayerConfigs,
@@ -65,7 +65,7 @@ export default {
   args: {
     donut: false,
     showLabels: false,
-    colorScheme: 'supersetColors',
+    colorScheme: 'axbiColors',
     chartWidth: 100,
     chartHeight: 100,
     borderRadius: 8,
@@ -81,12 +81,7 @@ export default {
     },
     colorScheme: {
       control: 'select',
-      options: [
-        'supersetColors',
-        'd3Category10',
-        'bnbColors',
-        'googleCategory20c',
-      ],
+      options: ['axbiColors', 'd3Category10', 'bnbColors', 'googleCategory20c'],
     },
     chartWidth: {
       control: { type: 'range', min: 50, max: 200, step: 10 },
@@ -110,7 +105,7 @@ Each GeoJSON point location gets a small chart (pie, bar, etc.) rendered on it.
 
 ### Features
 - OpenLayers map with configurable base layers (OSM, WMS, WFS, XYZ)
-- Embedded Superset charts at GeoJSON point locations
+- Embedded AxBI charts at GeoJSON point locations
 - Configurable chart size per zoom level
 - Chart background color and border radius customization
 

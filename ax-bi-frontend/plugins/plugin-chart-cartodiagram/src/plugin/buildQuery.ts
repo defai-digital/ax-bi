@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormData, getChartBuildQueryRegistry } from '@superset-ui/core';
+import { QueryFormData, getChartBuildQueryRegistry } from '@ax-bi/ui-core';
 
 export default function buildQuery(formData: QueryFormData) {
   const {

@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 import { useRef, useState } from 'react';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 
 type ColorSchemeLabelProps = {
   colors: string[];
@@ -98,7 +98,7 @@ export default function ColorSchemeLabel(props: ColorSchemeLabelProps) {
         <span
           className="color-scheme-label"
           ref={labelNameRef}
-          css={(theme: SupersetTheme) => css`
+          css={(theme: AxBITheme) => css`
             min-width: 125px;
             padding-right: ${theme.sizeUnit * 2}px;
             text-overflow: ellipsis;
@@ -110,7 +110,7 @@ export default function ColorSchemeLabel(props: ColorSchemeLabelProps) {
         </span>
         <span
           ref={labelsColorRef}
-          css={(theme: SupersetTheme) => css`
+          css={(theme: AxBITheme) => css`
             flex: 100%;
             text-overflow: ellipsis;
             overflow: hidden;

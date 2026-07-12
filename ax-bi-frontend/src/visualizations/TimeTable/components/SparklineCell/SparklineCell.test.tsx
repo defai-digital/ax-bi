@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render } from '@superset-ui/core/spec';
+import { render } from '@ax-bi/ui-core/spec';
 import SparklineCell from './SparklineCell';
 
 const mockData = [3516979.54, 4724162.6, 1791486.71];

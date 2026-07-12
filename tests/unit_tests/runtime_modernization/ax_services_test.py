@@ -21,7 +21,7 @@ from unittest.mock import MagicMock
 import pytest
 import requests
 
-from superset.runtime_modernization.ax_services import (
+from axbi.runtime_modernization.ax_services import (
     AxServicesClient,
     AxServicesConfig,
 )
@@ -45,7 +45,7 @@ def make_response(
 
 
 def test_ax_services_config_reads_mapping() -> None:
-    """Sidecar config is built from Superset config keys."""
+    """Sidecar config is built from AxBI config keys."""
 
     config = AxServicesConfig.from_mapping(
         {
@@ -108,18 +108,18 @@ def test_ready_returns_unready_response_payload() -> None:
 
 
 def test_metadata_calls_ax_services_metadata_endpoint() -> None:
-    """Metadata requests use the sidecar Superset metadata probe endpoint."""
+    """Metadata requests use the sidecar AxBI metadata probe endpoint."""
 
     session = MagicMock()
     session.get.return_value = make_response(
-        payload={"dependencies": {"supersetMetadata": {"ok": True}}}
+        payload={"dependencies": {"axbiMetadata": {"ok": True}}}
     )
     client = AxServicesClient(AxServicesConfig(), session=session)
 
     result = client.metadata(request_id="request-metadata")
 
     assert result.ok is True
-    assert result.payload == {"dependencies": {"supersetMetadata": {"ok": True}}}
+    assert result.payload == {"dependencies": {"axbiMetadata": {"ok": True}}}
     session.get.assert_called_once_with(
         "http://127.0.0.1:5010/metadata",
         headers={"x-request-id": "request-metadata"},

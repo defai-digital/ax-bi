@@ -24,7 +24,7 @@ for i in {1..30}; do
   if python3 -c "
 import psycopg2
 try:
-    conn = psycopg2.connect(host='db-light', user='superset', password='superset', database='superset_light')
+    conn = psycopg2.connect(host='db-light', user='axbi', password='axbi', database='axbi_light')
     conn.close()
     print('Database is ready!')
 except:
@@ -50,7 +50,7 @@ import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Connect to default database
-conn = psycopg2.connect(host='db-light', user='superset', password='superset', database='superset_light')
+conn = psycopg2.connect(host='db-light', user='axbi', password='axbi', database='axbi_light')
 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 cur = conn.cursor()
 
@@ -64,7 +64,7 @@ cur.execute('CREATE DATABASE test')
 conn.close()
 
 # Connect to test database to create schemas
-conn = psycopg2.connect(host='db-light', user='superset', password='superset', database='test')
+conn = psycopg2.connect(host='db-light', user='axbi', password='axbi', database='test')
 conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
 cur = conn.cursor()
 
@@ -88,13 +88,13 @@ from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 
 # Check if test database exists
 try:
-    conn = psycopg2.connect(host='db-light', user='superset', password='superset', database='test')
+    conn = psycopg2.connect(host='db-light', user='axbi', password='axbi', database='test')
     conn.close()
     print('Test database already exists')
 except:
     print('Creating test database...')
     # Connect to default database to create test database
-    conn = psycopg2.connect(host='db-light', user='superset', password='superset', database='superset_light')
+    conn = psycopg2.connect(host='db-light', user='axbi', password='axbi', database='axbi_light')
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
@@ -103,7 +103,7 @@ except:
     conn.close()
 
     # Connect to test database to create schemas
-    conn = psycopg2.connect(host='db-light', user='superset', password='superset', database='test')
+    conn = psycopg2.connect(host='db-light', user='axbi', password='axbi', database='test')
     conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
     cur = conn.cursor()
 
@@ -122,7 +122,7 @@ cd /app
 ax-bi db upgrade
 
 # Initialize test environment if needed
-if [ "${FORCE_RELOAD}" = "true" ] || [ ! -f "/app/superset_home/.test_initialized" ]; then
+if [ "${FORCE_RELOAD}" = "true" ] || [ ! -f "/app/axbi_home/.test_initialized" ]; then
   echo "Initializing test environment..."
   # Run initialization commands
   ax-bi init
@@ -130,7 +130,7 @@ if [ "${FORCE_RELOAD}" = "true" ] || [ ! -f "/app/superset_home/.test_initialize
   ax-bi load-test-users
 
   # Mark as initialized
-  touch /app/superset_home/.test_initialized
+  touch /app/axbi_home/.test_initialized
 else
   echo "Test environment already initialized (skipping init and load-test-users)"
   echo "Tip: Use FORCE_RELOAD=true to reinitialize the test database"

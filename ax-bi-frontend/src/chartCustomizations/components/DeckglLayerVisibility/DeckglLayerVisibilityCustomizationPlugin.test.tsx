@@ -18,18 +18,18 @@
  */
 import { render, screen, waitFor } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import DeckglLayerVisibilityCustomizationPlugin from './DeckglLayerVisibilityCustomizationPlugin';
 import { PluginDeckglLayerVisibilityProps } from './types';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     get: jest.fn(),
   },
 }));
 
-const mockSupersetClientGet = SupersetClient.get as jest.Mock;
+const mockAxBIClientGet = AxBIClient.get as jest.Mock;
 
 const defaultProps: PluginDeckglLayerVisibilityProps = {
   data: [],
@@ -83,7 +83,7 @@ const mockApiResponse = {
 };
 
 test('displays loading state initially', () => {
-  mockSupersetClientGet.mockImplementation(() => new Promise(() => {}));
+  mockAxBIClientGet.mockImplementation(() => new Promise(() => {}));
 
   render(<DeckglLayerVisibilityCustomizationPlugin {...defaultProps} />, {
     useRedux: true,
@@ -99,7 +99,7 @@ test('displays loading state initially', () => {
 });
 
 test('displays disabled select when no deck.gl multi layer charts are found', async () => {
-  mockSupersetClientGet.mockResolvedValue({ json: { result: [] } });
+  mockAxBIClientGet.mockResolvedValue({ json: { result: [] } });
 
   render(<DeckglLayerVisibilityCustomizationPlugin {...defaultProps} />, {
     useRedux: true,
@@ -122,7 +122,7 @@ test('displays disabled select when no deck.gl multi layer charts are found', as
 });
 
 test('renders layer selection control with layers from API', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
 
   render(<DeckglLayerVisibilityCustomizationPlugin {...defaultProps} />, {
     useRedux: true,
@@ -139,7 +139,7 @@ test('renders layer selection control with layers from API', async () => {
 });
 
 test('collects unique layer IDs from multiple deck_multi charts', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
 
   render(<DeckglLayerVisibilityCustomizationPlugin {...defaultProps} />, {
     useRedux: true,
@@ -149,15 +149,15 @@ test('collects unique layer IDs from multiple deck_multi charts', async () => {
   });
 
   await waitFor(() => {
-    expect(mockSupersetClientGet).toHaveBeenCalled();
+    expect(mockAxBIClientGet).toHaveBeenCalled();
   });
 
-  const callArgs = mockSupersetClientGet.mock.calls[0][0];
+  const callArgs = mockAxBIClientGet.mock.calls[0][0];
   expect(callArgs.endpoint).toContain('/api/v1/chart/?q=');
 });
 
 test('handles layer selection and calls setDataMask', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
   const setDataMaskMock = jest.fn();
 
   render(
@@ -203,7 +203,7 @@ test('handles layer selection and calls setDataMask', async () => {
 });
 
 test('initializes with filterState value when provided', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
 
   render(
     <DeckglLayerVisibilityCustomizationPlugin
@@ -234,7 +234,7 @@ test('initializes with filterState value when provided', async () => {
 });
 
 test('initializes all layers visible when defaultToAllLayersVisible is true and no prior state', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
   const setDataMaskMock = jest.fn();
 
   render(
@@ -268,7 +268,7 @@ test('initializes all layers visible when defaultToAllLayersVisible is true and 
 });
 
 test('does not auto-initialize when defaultToAllLayersVisible is false', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
   const setDataMaskMock = jest.fn();
 
   render(
@@ -299,7 +299,7 @@ test('does not auto-initialize when defaultToAllLayersVisible is false', async (
 });
 
 test('handles multiple layer selection', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
   const setDataMaskMock = jest.fn();
 
   render(
@@ -346,7 +346,7 @@ test('handles multiple layer selection', async () => {
 });
 
 test('displays tooltip on hover when select is disabled', async () => {
-  mockSupersetClientGet.mockResolvedValue({ json: { result: [] } });
+  mockAxBIClientGet.mockResolvedValue({ json: { result: [] } });
 
   render(<DeckglLayerVisibilityCustomizationPlugin {...defaultProps} />, {
     useRedux: true,
@@ -381,7 +381,7 @@ test('displays tooltip on hover when select is disabled', async () => {
 });
 
 test('handles charts with undefined deck_slices', async () => {
-  mockSupersetClientGet.mockResolvedValue({ json: { result: [] } });
+  mockAxBIClientGet.mockResolvedValue({ json: { result: [] } });
 
   const chartsWithUndefined = {
     chart1: {
@@ -404,7 +404,7 @@ test('handles charts with undefined deck_slices', async () => {
 });
 
 test('handles charts with non-array deck_slices', async () => {
-  mockSupersetClientGet.mockResolvedValue({ json: { result: [] } });
+  mockAxBIClientGet.mockResolvedValue({ json: { result: [] } });
 
   const chartsWithInvalidSlices = {
     chart1: {
@@ -428,7 +428,7 @@ test('handles charts with non-array deck_slices', async () => {
 });
 
 test('deduplicates layer IDs from multiple charts', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
 
   const chartsWithDuplicates = {
     chart1: {
@@ -453,15 +453,15 @@ test('deduplicates layer IDs from multiple charts', async () => {
   });
 
   await waitFor(() => {
-    expect(mockSupersetClientGet).toHaveBeenCalled();
+    expect(mockAxBIClientGet).toHaveBeenCalled();
   });
 
-  const callArgs = mockSupersetClientGet.mock.calls[0][0];
+  const callArgs = mockAxBIClientGet.mock.calls[0][0];
   expect(callArgs.endpoint).toContain('/api/v1/chart/?q=');
 });
 
 test('renders validate message when filterState has validateMessage', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
 
   render(
     <DeckglLayerVisibilityCustomizationPlugin
@@ -485,7 +485,7 @@ test('renders validate message when filterState has validateMessage', async () =
 });
 
 test('respects existing visible_deckgl_layers from Redux state', async () => {
-  mockSupersetClientGet.mockResolvedValue(mockApiResponse);
+  mockAxBIClientGet.mockResolvedValue(mockApiResponse);
   const setDataMaskMock = jest.fn();
 
   render(

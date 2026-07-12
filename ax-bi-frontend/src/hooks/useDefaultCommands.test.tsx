@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useEffect } from 'react';
-import { FeatureFlag } from '@superset-ui/core';
+import { FeatureFlag } from '@ax-bi/ui-core';
 import { render, waitFor } from 'spec/helpers/testing-library';
 import {
   Command,

@@ -57,10 +57,7 @@ packages.forEach(pkg => {
     console.log(
       `  Copied ${assets.length
         .toString()
-        .padStart(2)} asset files for ${pkg.replace(
-        'packages/superset-ui-',
-        '',
-      )}`,
+        .padStart(2)} asset files for ${pkg.replace('packages/ax-bi-ui-', '')}`,
     );
   }
 });

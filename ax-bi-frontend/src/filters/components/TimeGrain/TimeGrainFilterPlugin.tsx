@@ -16,19 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import {
-  ensureIsArray,
-  ExtraFormData,
-  TimeGranularity,
-} from '@superset-ui/core';
-import { tn } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
+import { ensureIsArray, ExtraFormData, TimeGranularity } from '@ax-bi/ui-core';
+import { tn } from '@ax-bi/core/translation';
 import { useEffect, useMemo, useState } from 'react';
 import {
   FormItem,
   type FormItemProps,
   Select,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { FilterPluginStyle, StatusMessage } from '../common';
 import { PluginFilterTimeGrainProps } from './types';
 

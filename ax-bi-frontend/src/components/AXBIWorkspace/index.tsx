@@ -17,12 +17,7 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import {
-  css,
-  isThemeDark,
-  styled,
-  type SupersetTheme,
-} from '@apache-superset/core/theme';
+import { css, isThemeDark, styled, type AxBITheme } from '@ax-bi/core/theme';
 
 /**
  * Soft card elevation for AX surfaces.
@@ -31,7 +26,7 @@ import {
  * Matches BI chrome practice (Power BI / Grafana: elevate cards, not pure black).
  */
 export function axbiSoftShadow(
-  theme: SupersetTheme,
+  theme: AxBITheme,
   strength: 'default' | 'hover' = 'default',
 ): string {
   const y = theme.sizeUnit * (strength === 'hover' ? 2 : 1);
@@ -165,7 +160,7 @@ export const AXBIStatsGrid = styled.div`
   `}
 `;
 
-const axbiStatCardStyles = (theme: SupersetTheme) => css`
+const axbiStatCardStyles = (theme: AxBITheme) => css`
   border: 1px solid ${theme.colorBorderSecondary};
   border-radius: ${theme.borderRadius}px;
   background: ${theme.colorBgContainer};
@@ -332,9 +327,9 @@ export const AXBIEmptyCallout = styled.div`
   ${({ theme }) => css`
     border: 1px dashed ${theme.colorBorder};
     border-radius: ${theme.borderRadius}px;
-    background: ${isThemeDark(theme)
-      ? theme.colorBgElevated
-      : theme.colorBgContainer};
+    background: ${
+      isThemeDark(theme) ? theme.colorBgElevated : theme.colorBgContainer
+    };
     padding: ${theme.sizeUnit * 6}px;
     text-align: center;
     margin: ${theme.sizeUnit * 5}px 0;

@@ -21,7 +21,7 @@ import pytest
 from freezegun import freeze_time
 from pytz import timezone
 
-from superset.utils.core import HeaderDataType
+from axbi.utils.core import HeaderDataType
 from tests.unit_tests.conftest import with_feature_flags
 
 
@@ -39,11 +39,11 @@ def _header_data() -> HeaderDataType:
 
 
 def test_render_description_with_html() -> None:
-    # `superset.models.helpers`, a dependency of following imports,
+    # `axbi.models.helpers`, a dependency of following imports,
     # requires app context
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.email import EmailNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.email import EmailNotification
 
     content = NotificationContent(
         name="test alert",
@@ -81,10 +81,10 @@ def test_render_description_with_html() -> None:
 
 
 def test_email_recipient_config_malformed_json_raises_param_exception() -> None:
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.email import EmailNotification
-    from superset.reports.notifications.exceptions import NotificationParamException
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.email import EmailNotification
+    from axbi.reports.notifications.exceptions import NotificationParamException
 
     notification = EmailNotification(
         recipient=ReportRecipients(
@@ -99,10 +99,10 @@ def test_email_recipient_config_malformed_json_raises_param_exception() -> None:
 
 
 def test_email_recipient_config_missing_target_raises_param_exception() -> None:
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.email import EmailNotification
-    from superset.reports.notifications.exceptions import NotificationParamException
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.email import EmailNotification
+    from axbi.reports.notifications.exceptions import NotificationParamException
 
     notification = EmailNotification(
         recipient=ReportRecipients(
@@ -117,11 +117,11 @@ def test_email_recipient_config_missing_target_raises_param_exception() -> None:
 
 
 def test_error_template_sanitizes_html() -> None:
-    # `superset.models.helpers`, a dependency of following imports,
+    # `axbi.models.helpers`, a dependency of following imports,
     # requires app context
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.email import EmailNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.email import EmailNotification
 
     content = NotificationContent(
         name="test alert",
@@ -153,11 +153,11 @@ def test_error_template_sanitizes_html() -> None:
 
 @with_feature_flags(DATE_FORMAT_IN_EMAIL_SUBJECT=True)
 def test_email_subject_with_datetime() -> None:
-    # `superset.models.helpers`, a dependency of following imports,
+    # `axbi.models.helpers`, a dependency of following imports,
     # requires app context
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
-    from superset.reports.notifications.email import EmailNotification
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
+    from axbi.reports.notifications.email import EmailNotification
 
     datetime_pattern = "%Y-%m-%d"
 

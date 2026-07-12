@@ -21,7 +21,7 @@ import {
   isFeatureEnabled,
   getExtensionsRegistry,
   FeatureFlag,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   act,
   cleanup,
@@ -57,8 +57,8 @@ jest.mock('react-virtualized-auto-sizer', () => {
     AutoSizer: MockAutoSizer,
   };
 });
-jest.mock('@superset-ui/core/components/AsyncAceEditor', () => ({
-  ...jest.requireActual('@superset-ui/core/components/AsyncAceEditor'),
+jest.mock('@ax-bi/ui-core/components/AsyncAceEditor', () => ({
+  ...jest.requireActual('@ax-bi/ui-core/components/AsyncAceEditor'),
   FullSQLEditor: ({
     onChange,
     onBlur,
@@ -130,8 +130,8 @@ const mockInitialState = {
   },
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 const mockIsFeatureEnabled = isFeatureEnabled as jest.Mock;

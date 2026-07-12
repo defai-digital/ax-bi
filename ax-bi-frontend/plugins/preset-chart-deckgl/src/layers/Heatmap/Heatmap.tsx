@@ -18,12 +18,12 @@
  */
 import { HeatmapLayer } from '@deck.gl/aggregation-layers';
 import { Position } from '@deck.gl/core';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   getSequentialSchemeRegistry,
   JsonObject,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { isPointInBonds } from '../../utilities/utils';
 import { commonLayerProps, getColorRange } from '../common';
 import sandboxedEval from '../../utils/sandbox';

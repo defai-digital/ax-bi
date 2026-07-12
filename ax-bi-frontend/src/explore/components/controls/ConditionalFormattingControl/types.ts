@@ -18,13 +18,13 @@
  */
 
 import { ReactNode } from 'react';
-import { PopoverProps } from '@superset-ui/core/components/Popover';
+import { PopoverProps } from '@ax-bi/ui-core/components/Popover';
 import {
   Comparator,
   ControlComponentProps,
   ObjectFormattingEnum,
-} from '@superset-ui/chart-controls';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/chart-controls';
+import { GenericDataType } from '@ax-bi/core/common';
 
 export type ConditionalFormattingConfig = {
   operator?: Comparator;

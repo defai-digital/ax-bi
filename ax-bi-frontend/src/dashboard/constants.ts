@@ -1,4 +1,4 @@
-import { DatasourceType, NativeFilterScope } from '@superset-ui/core';
+import { DatasourceType, NativeFilterScope } from '@ax-bi/ui-core';
 import { Datasource } from 'src/dashboard/types';
 import { DASHBOARD_ROOT_ID } from './util/constants';
 /**

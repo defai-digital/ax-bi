@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { safeHtmlSpan } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { safeHtmlSpan } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { ReactNode } from 'react';
 
 export type TooltipProps = {

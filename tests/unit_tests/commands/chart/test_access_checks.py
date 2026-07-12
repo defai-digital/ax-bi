@@ -20,15 +20,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.chart.exceptions import ChartForbiddenError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
+from axbi.commands.chart.exceptions import ChartForbiddenError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
 
 
-def _security_exception() -> SupersetSecurityException:
-    return SupersetSecurityException(
-        SupersetError(
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+def _security_exception() -> AxBISecurityException:
+    return AxBISecurityException(
+        AxBIError(
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             message="Access denied",
             level=ErrorLevel.ERROR,
         )
@@ -43,18 +43,18 @@ def _security_exception() -> SupersetSecurityException:
 def test_create_chart_command_forbidden_when_no_datasource_access() -> None:
     """CreateChartCommand.validate() must raise ChartForbiddenError when the
     caller lacks access to the chart's datasource."""
-    from superset.commands.chart.create import CreateChartCommand
+    from axbi.commands.chart.create import CreateChartCommand
 
     with patch(
-        "superset.commands.chart.create.get_datasource_by_id",
+        "axbi.commands.chart.create.get_datasource_by_id",
         return_value=MagicMock(name="datasource"),
     ):
         with patch(
-            "superset.commands.chart.create.security_manager.raise_for_access",
+            "axbi.commands.chart.create.security_manager.raise_for_access",
             side_effect=_security_exception(),
         ):
             with patch(
-                "superset.commands.chart.create.CreateChartCommand.populate_owners",
+                "axbi.commands.chart.create.CreateChartCommand.populate_owners",
                 return_value=[],
             ):
                 command = CreateChartCommand(
@@ -71,22 +71,22 @@ def test_create_chart_command_forbidden_when_no_datasource_access() -> None:
 
 def test_create_chart_command_allowed_when_access_passes() -> None:
     """CreateChartCommand.validate() must not raise when the caller has access."""
-    from superset.commands.chart.create import CreateChartCommand
+    from axbi.commands.chart.create import CreateChartCommand
 
     mock_datasource = MagicMock()
     mock_datasource.name = "test_table"
 
     with patch(
-        "superset.commands.chart.create.get_datasource_by_id",
+        "axbi.commands.chart.create.get_datasource_by_id",
         return_value=mock_datasource,
     ):
-        with patch("superset.commands.chart.create.security_manager.raise_for_access"):
+        with patch("axbi.commands.chart.create.security_manager.raise_for_access"):
             with patch(
-                "superset.commands.chart.create.CreateChartCommand.populate_owners",
+                "axbi.commands.chart.create.CreateChartCommand.populate_owners",
                 return_value=[],
             ):
                 with patch(
-                    "superset.commands.chart.create.DashboardDAO.find_by_ids",
+                    "axbi.commands.chart.create.DashboardDAO.find_by_ids",
                     return_value=[],
                 ):
                     command = CreateChartCommand(
@@ -102,7 +102,7 @@ def test_create_chart_command_allowed_when_access_passes() -> None:
 
 def test_create_chart_command_ignores_malformed_params_for_viz_type() -> None:
     """Malformed params should not break command construction."""
-    from superset.commands.chart.create import CreateChartCommand
+    from axbi.commands.chart.create import CreateChartCommand
 
     command = CreateChartCommand(
         {
@@ -118,7 +118,7 @@ def test_create_chart_command_ignores_malformed_params_for_viz_type() -> None:
 
 def test_create_chart_command_uses_object_params_for_viz_type() -> None:
     """Object params can provide the fallback viz_type."""
-    from superset.commands.chart.create import CreateChartCommand
+    from axbi.commands.chart.create import CreateChartCommand
 
     command = CreateChartCommand(
         {
@@ -140,7 +140,7 @@ def test_create_chart_command_uses_object_params_for_viz_type() -> None:
 def test_update_chart_command_forbidden_when_no_datasource_access() -> None:
     """UpdateChartCommand.validate() must raise ChartForbiddenError when the
     caller lacks access to the new datasource."""
-    from superset.commands.chart.update import UpdateChartCommand
+    from axbi.commands.chart.update import UpdateChartCommand
 
     mock_chart = MagicMock()
     mock_chart.id = 1
@@ -149,23 +149,21 @@ def test_update_chart_command_forbidden_when_no_datasource_access() -> None:
     mock_chart.tags = []
 
     with patch(
-        "superset.commands.chart.update.ChartDAO.find_by_id",
+        "axbi.commands.chart.update.ChartDAO.find_by_id",
         return_value=mock_chart,
     ):
-        with patch(
-            "superset.commands.chart.update.security_manager.raise_for_ownership"
-        ):
+        with patch("axbi.commands.chart.update.security_manager.raise_for_ownership"):
             with patch(
-                "superset.commands.chart.update.UpdateChartCommand.compute_owners",
+                "axbi.commands.chart.update.UpdateChartCommand.compute_owners",
                 return_value=[],
             ):
-                with patch("superset.commands.chart.update.validate_tags"):
+                with patch("axbi.commands.chart.update.validate_tags"):
                     with patch(
-                        "superset.commands.chart.update.get_datasource_by_id",
+                        "axbi.commands.chart.update.get_datasource_by_id",
                         return_value=MagicMock(name="datasource"),
                     ):
                         with patch(
-                            "superset.commands.chart.update.security_manager.raise_for_access",
+                            "axbi.commands.chart.update.security_manager.raise_for_access",
                             side_effect=_security_exception(),
                         ):
                             command = UpdateChartCommand(

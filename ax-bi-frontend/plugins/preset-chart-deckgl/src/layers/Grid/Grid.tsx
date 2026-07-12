@@ -21,7 +21,7 @@ import {
   CategoricalColorNamespace,
   JsonObject,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 import {
   commonLayerProps,

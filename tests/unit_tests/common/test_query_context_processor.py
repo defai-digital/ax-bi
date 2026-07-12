@@ -22,24 +22,24 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
-from superset.common.db_query_status import QueryStatus
-from superset.common.query_context_processor import QueryContextProcessor
-from superset.exceptions import QueryObjectValidationError
-from superset.utils.core import GenericDataType
+from axbi.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from axbi.common.db_query_status import QueryStatus
+from axbi.common.query_context_processor import QueryContextProcessor
+from axbi.exceptions import QueryObjectValidationError
+from axbi.utils.core import GenericDataType
 
 
 @pytest.fixture
 def mock_query_context():
     with patch(
-        "superset.common.query_context_processor.QueryContextProcessor"
+        "axbi.common.query_context_processor.QueryContextProcessor"
     ) as mock_query_context_processor:
         yield mock_query_context_processor
 
 
 @pytest.fixture
 def processor(mock_query_context):
-    from superset.models.helpers import ExploreMixin
+    from axbi.models.helpers import ExploreMixin
 
     mock_query_context.datasource.data = MagicMock()
     mock_query_context.datasource.data.get.return_value = {
@@ -111,7 +111,7 @@ def test_get_cache_timeout_preserves_explicit_zero(app_context):
     assert processor.get_cache_timeout() == 0
 
 
-@patch("superset.common.query_context_processor.AnnotationLayerDAO.find_by_ids")
+@patch("axbi.common.query_context_processor.AnnotationLayerDAO.find_by_ids")
 def test_get_native_annotation_data_rejects_stale_layer_reference(
     mock_find_by_ids,
 ):
@@ -133,7 +133,7 @@ def test_get_native_annotation_data_rejects_stale_layer_reference(
     mock_find_by_ids.assert_called_once_with([42])
 
 
-@patch("superset.common.query_context_processor.csv.df_to_escaped_csv")
+@patch("axbi.common.query_context_processor.csv.df_to_escaped_csv")
 def test_get_data_csv(mock_df_to_escaped_csv, processor, mock_query_context):
     df = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
     coltypes = [GenericDataType.NUMERIC, GenericDataType.STRING]
@@ -149,8 +149,8 @@ def test_get_data_csv(mock_df_to_escaped_csv, processor, mock_query_context):
     )
 
 
-@patch("superset.common.query_context_processor.excel.df_to_excel")
-@patch("superset.common.query_context_processor.excel.apply_column_types")
+@patch("axbi.common.query_context_processor.excel.df_to_excel")
+@patch("axbi.common.query_context_processor.excel.apply_column_types")
 def test_get_data_xlsx(
     mock_apply_column_types, mock_df_to_excel, processor, mock_query_context
 ):
@@ -210,7 +210,7 @@ def test_get_data_empty_dataframe_json(processor, mock_query_context):
     assert result == []
 
 
-@patch("superset.common.query_context_processor.csv.df_to_escaped_csv")
+@patch("axbi.common.query_context_processor.csv.df_to_escaped_csv")
 def test_get_data_empty_dataframe_csv(
     mock_df_to_escaped_csv, processor, mock_query_context
 ):
@@ -225,8 +225,8 @@ def test_get_data_empty_dataframe_csv(
     )
 
 
-@patch("superset.common.query_context_processor.excel.df_to_excel")
-@patch("superset.common.query_context_processor.excel.apply_column_types")
+@patch("axbi.common.query_context_processor.excel.df_to_excel")
+@patch("axbi.common.query_context_processor.excel.apply_column_types")
 def test_get_data_empty_dataframe_xlsx(
     mock_apply_column_types, mock_df_to_excel, processor, mock_query_context
 ):
@@ -279,9 +279,9 @@ def fake_apply_column_types(df, coltypes):
     return df
 
 
-@patch("superset.common.query_context_processor.excel.df_to_excel")
+@patch("axbi.common.query_context_processor.excel.df_to_excel")
 @patch(
-    "superset.common.query_context_processor.excel.apply_column_types",
+    "axbi.common.query_context_processor.excel.apply_column_types",
     side_effect=fake_apply_column_types,
 )
 def test_get_data_invalid_coltypes_length_xlsx(
@@ -306,7 +306,7 @@ def test_get_data_does_not_mutate_dataframe(processor, mock_query_context):
 
 
 @patch(
-    "superset.common.query_context_processor.excel.apply_column_types",
+    "axbi.common.query_context_processor.excel.apply_column_types",
     side_effect=ValueError("Conversion error"),
 )
 def test_get_data_xlsx_apply_column_types_error(
@@ -337,7 +337,7 @@ def test_is_valid_date_range_format(processor):
 
 def test_is_valid_date_range_static_format():
     """Test that static date range format validation works correctly."""
-    from superset.models.helpers import ExploreMixin
+    from axbi.models.helpers import ExploreMixin
 
     # Should return True for valid date range format
     assert ExploreMixin.is_valid_date_range_static("2023-01-01 : 2023-01-31") is True
@@ -351,7 +351,7 @@ def test_is_valid_date_range_static_format():
 
 def test_processing_time_offsets_date_range_logic(processor):
     """Test that date range timeshift logic works correctly with feature flag checks."""
-    from superset.models.helpers import ExploreMixin
+    from axbi.models.helpers import ExploreMixin
 
     # Test that the date range validation works
     assert (
@@ -366,7 +366,7 @@ def test_processing_time_offsets_date_range_logic(processor):
 
 def test_feature_flag_validation_logic():
     """Test that feature flag validation logic works as expected."""
-    from superset.extensions import feature_flag_manager
+    from axbi.extensions import feature_flag_manager
 
     # This tests the concept - actual feature flag value depends on config
     # The important thing is that the code checks for DATE_RANGE_TIMESHIFTS_ENABLED
@@ -394,9 +394,9 @@ def test_join_offset_dfs_date_range_basic(processor):
     offset_dfs = {"2023-01-01 : 2023-01-31": offset_df}
     join_keys = ["dim1"]
 
-    with patch("superset.models.helpers.feature_flag_manager") as mock_ff:
+    with patch("axbi.models.helpers.feature_flag_manager") as mock_ff:
         mock_ff.is_feature_enabled.return_value = True
-        with patch("superset.common.utils.dataframe_utils.left_join_df") as mock_join:
+        with patch("axbi.common.utils.dataframe_utils.left_join_df") as mock_join:
             mock_join.return_value = pd.DataFrame(
                 {
                     "dim1": ["A", "B", "C"],
@@ -560,8 +560,8 @@ def test_get_temporal_column_for_filter_no_datasource_columns(processor):
 def test_processing_time_offsets_temporal_column_error(processor):
     """Test processing_time_offsets raises QueryObjectValidationError
     when temporal column can't be determined."""
-    from superset.common.query_object import QueryObject
-    from superset.exceptions import QueryObjectValidationError
+    from axbi.common.query_object import QueryObject
+    from axbi.exceptions import QueryObjectValidationError
 
     # Create a dataframe for testing
     df = pd.DataFrame({"dim1": ["A", "B", "C"], "metric1": [10, 20, 30]})
@@ -584,7 +584,7 @@ def test_processing_time_offsets_temporal_column_error(processor):
 
     # Mock get_since_until_from_query_object to return valid dates
     with patch(
-        "superset.common.utils.time_range_utils.get_since_until_from_query_object"
+        "axbi.common.utils.time_range_utils.get_since_until_from_query_object"
     ) as mock_dates:
         mock_dates.return_value = (
             pd.Timestamp("2024-01-01"),
@@ -592,7 +592,7 @@ def test_processing_time_offsets_temporal_column_error(processor):
         )
 
         # Mock feature flag to be enabled
-        with patch("superset.models.helpers.feature_flag_manager") as mock_ff:
+        with patch("axbi.models.helpers.feature_flag_manager") as mock_ff:
             mock_ff.is_feature_enabled.return_value = True
 
             # Mock _get_temporal_column_for_filter to return None
@@ -626,7 +626,7 @@ def test_processing_time_offsets_temporal_column_error(processor):
 def test_processing_time_offsets_date_range_enabled(processor):
     """Test processing_time_offsets correctly handles
     date range offsets when enabled."""
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     # Create a dataframe for testing
     df = pd.DataFrame(
@@ -658,15 +658,15 @@ def test_processing_time_offsets_date_range_enabled(processor):
     # Mock the query context and its methods
     processor._query_context.queries = [query_object]
 
-    with patch("superset.models.helpers.feature_flag_manager") as mock_ff:
+    with patch("axbi.models.helpers.feature_flag_manager") as mock_ff:
         mock_ff.is_feature_enabled.return_value = True
 
         with patch(
-            "superset.utils.core.get_base_axis_labels",
+            "axbi.utils.core.get_base_axis_labels",
             return_value=["__timestamp"],
         ):
             with patch(
-                "superset.common.utils.time_range_utils.get_since_until_from_query_object"
+                "axbi.common.utils.time_range_utils.get_since_until_from_query_object"
             ) as mock_dates:
                 mock_dates.return_value = (
                     pd.Timestamp("2023-01-01"),
@@ -674,7 +674,7 @@ def test_processing_time_offsets_date_range_enabled(processor):
                 )
 
                 with patch(
-                    "superset.common.utils.time_range_utils.get_since_until_from_time_range"
+                    "axbi.common.utils.time_range_utils.get_since_until_from_time_range"
                 ) as mock_time_range:
                     mock_time_range.return_value = (
                         pd.Timestamp("2022-01-01"),
@@ -738,8 +738,8 @@ def test_processing_time_offsets_date_range_enabled(processor):
 
 def test_processing_time_offsets_uses_chart_row_limit(processor):
     """Offset subquery inherits the chart's row_limit when one is set."""
-    from superset.common.query_object import QueryObject
-    from superset.models.helpers import ExploreMixin
+    from axbi.common.query_object import QueryObject
+    from axbi.models.helpers import ExploreMixin
 
     processor._qc_datasource.processing_time_offsets = (
         ExploreMixin.processing_time_offsets.__get__(processor._qc_datasource)
@@ -779,11 +779,11 @@ def test_processing_time_offsets_uses_chart_row_limit(processor):
 
     with (
         patch(
-            "superset.models.helpers.get_since_until_from_query_object",
+            "axbi.models.helpers.get_since_until_from_query_object",
             return_value=(pd.Timestamp("1990-01-01"), pd.Timestamp("1991-01-01")),
         ),
         patch(
-            "superset.common.utils.query_cache_manager.QueryCacheManager"
+            "axbi.common.utils.query_cache_manager.QueryCacheManager"
         ) as mock_cache_manager,
         patch.object(
             processor._qc_datasource,
@@ -817,8 +817,8 @@ def test_processing_time_offsets_row_offset_extends_window(processor):
     query's page, yielding null comparison values. The subquery instead drops
     row_offset and widens row_limit to cover the full window.
     """
-    from superset.common.query_object import QueryObject
-    from superset.models.helpers import ExploreMixin
+    from axbi.common.query_object import QueryObject
+    from axbi.models.helpers import ExploreMixin
 
     processor._qc_datasource.processing_time_offsets = (
         ExploreMixin.processing_time_offsets.__get__(processor._qc_datasource)
@@ -858,11 +858,11 @@ def test_processing_time_offsets_row_offset_extends_window(processor):
 
     with (
         patch(
-            "superset.models.helpers.get_since_until_from_query_object",
+            "axbi.models.helpers.get_since_until_from_query_object",
             return_value=(pd.Timestamp("1990-01-01"), pd.Timestamp("1991-01-01")),
         ),
         patch(
-            "superset.common.utils.query_cache_manager.QueryCacheManager"
+            "axbi.common.utils.query_cache_manager.QueryCacheManager"
         ) as mock_cache_manager,
         patch.object(
             processor._qc_datasource,
@@ -890,8 +890,8 @@ def test_processing_time_offsets_row_offset_extends_window(processor):
 
 def test_processing_time_offsets_falls_back_to_config_row_limit(processor):
     """Offset subquery uses app config ROW_LIMIT when chart has offset but no limit."""
-    from superset.common.query_object import QueryObject
-    from superset.models.helpers import ExploreMixin
+    from axbi.common.query_object import QueryObject
+    from axbi.models.helpers import ExploreMixin
 
     processor._qc_datasource.processing_time_offsets = (
         ExploreMixin.processing_time_offsets.__get__(processor._qc_datasource)
@@ -931,11 +931,11 @@ def test_processing_time_offsets_falls_back_to_config_row_limit(processor):
 
     with (
         patch(
-            "superset.models.helpers.get_since_until_from_query_object",
+            "axbi.models.helpers.get_since_until_from_query_object",
             return_value=(pd.Timestamp("1990-01-01"), pd.Timestamp("1991-01-01")),
         ),
         patch(
-            "superset.common.utils.query_cache_manager.QueryCacheManager"
+            "axbi.common.utils.query_cache_manager.QueryCacheManager"
         ) as mock_cache_manager,
         patch.object(
             processor._qc_datasource,
@@ -947,7 +947,7 @@ def test_processing_time_offsets_falls_back_to_config_row_limit(processor):
             "join_offset_dfs",
             return_value=df,
         ),
-        patch("superset.models.helpers.app") as mock_app,
+        patch("axbi.models.helpers.app") as mock_app,
     ):
         mock_app.config = {"ROW_LIMIT": 4242}
         mock_cache = MagicMock()
@@ -970,8 +970,8 @@ def test_processing_time_offsets_updates_temporal_filter_with_adhoc_x_axis(proce
     never equals the dataset column, so the filter stayed at the original
     range and the offset query AND'd both ranges together (empty intersection).
     """
-    from superset.common.query_object import QueryObject
-    from superset.models.helpers import ExploreMixin
+    from axbi.common.query_object import QueryObject
+    from axbi.models.helpers import ExploreMixin
 
     processor._qc_datasource.processing_time_offsets = (
         ExploreMixin.processing_time_offsets.__get__(processor._qc_datasource)
@@ -1023,11 +1023,11 @@ def test_processing_time_offsets_updates_temporal_filter_with_adhoc_x_axis(proce
 
     with (
         patch(
-            "superset.models.helpers.get_since_until_from_query_object",
+            "axbi.models.helpers.get_since_until_from_query_object",
             return_value=(pd.Timestamp("2025-01-01"), pd.Timestamp("2026-06-01")),
         ),
         patch(
-            "superset.common.utils.query_cache_manager.QueryCacheManager"
+            "axbi.common.utils.query_cache_manager.QueryCacheManager"
         ) as mock_cache_manager,
         patch.object(
             processor._qc_datasource,
@@ -1070,7 +1070,7 @@ def test_ensure_totals_available_updates_cache_values():
     """
     import pandas as pd
 
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     # Create a mock datasource
     mock_datasource = MagicMock()
@@ -1166,7 +1166,7 @@ def test_ensure_totals_available_updates_cache_values():
 
         # Now call get_payload which should update cache_values
         with patch(
-            "superset.common.query_context_processor.get_query_results"
+            "axbi.common.query_context_processor.get_query_results"
         ) as mock_get_query_results:
             # Mock the query results
             mock_query_results_response = [
@@ -1179,7 +1179,7 @@ def test_ensure_totals_available_updates_cache_values():
 
             # Mock cache manager to avoid actual caching
             with patch(
-                "superset.common.query_context_processor.QueryCacheManager"
+                "axbi.common.query_context_processor.QueryCacheManager"
             ) as mock_cache_manager:
                 mock_cache = MagicMock()
                 mock_cache.is_loaded = True
@@ -1225,7 +1225,7 @@ def test_get_df_payload_validates_before_cache_key_generation():
     """
     Test that get_df_payload calls validate() before generating cache key.
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     # Create a mock query context
     mock_query_context = MagicMock()
@@ -1278,7 +1278,7 @@ def test_get_df_payload_validates_before_cache_key_generation():
     with patch.object(query_obj, "validate", side_effect=mock_validate):
         with patch.object(query_obj, "cache_key", side_effect=mock_cache_key):
             with patch(
-                "superset.common.query_context_processor.QueryCacheManager"
+                "axbi.common.query_context_processor.QueryCacheManager"
             ) as mock_cache_manager:
                 mock_cache = MagicMock()
                 mock_cache.is_loaded = True
@@ -1311,7 +1311,7 @@ def test_cache_values_sync_after_ensure_totals_available():
     """
     import pandas as pd
 
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     # Create a mock datasource
     mock_datasource = MagicMock()
@@ -1378,7 +1378,7 @@ def test_cache_values_sync_after_ensure_totals_available():
     ):
         # Mock cache management to prevent actual caching
         with patch(
-            "superset.common.query_context_processor.QueryCacheManager"
+            "axbi.common.query_context_processor.QueryCacheManager"
         ) as mock_cache_manager:
             mock_cache = MagicMock()
             mock_cache.is_loaded = True
@@ -1390,7 +1390,7 @@ def test_cache_values_sync_after_ensure_totals_available():
 
             # Mock the query results
             with patch(
-                "superset.common.query_context_processor.get_query_results"
+                "axbi.common.query_context_processor.get_query_results"
             ) as mock_get_query_results:
                 mock_query_results_response = [
                     {
@@ -1435,7 +1435,7 @@ def test_cache_key_excludes_contribution_totals():
     varies per request. Including it in the cache key would cause mismatches
     between workers that compute different totals for the same query.
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     mock_datasource = MagicMock()
     mock_datasource.uid = "test_datasource"
@@ -1489,7 +1489,7 @@ def test_cache_key_preserves_other_post_processing_options():
     """
     Test that cache_key() only excludes contribution_totals, not other options.
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     mock_datasource = MagicMock()
     mock_datasource.uid = "test_datasource"
@@ -1540,7 +1540,7 @@ def test_cache_key_non_contribution_post_processing_unchanged():
     """
     Test that non-contribution post_processing operations are unchanged in cache key.
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     mock_datasource = MagicMock()
     mock_datasource.uid = "test_datasource"
@@ -1584,7 +1584,7 @@ def test_force_cached_normalizes_totals_query_row_limit():
     normalized so its cache key matches the cached entry, but the totals query should
     not be executed.
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     mock_datasource = MagicMock()
     mock_datasource.uid = "test_datasource"
@@ -1639,12 +1639,12 @@ def test_force_cached_normalizes_totals_query_row_limit():
     mock_query_context.get_data = processor.get_data
 
     with patch(
-        "superset.common.query_context_processor.security_manager"
+        "axbi.common.query_context_processor.security_manager"
     ) as mock_security_manager:
         mock_security_manager.get_rls_cache_key.return_value = None
 
         with patch(
-            "superset.common.query_context_processor.QueryCacheManager"
+            "axbi.common.query_context_processor.QueryCacheManager"
         ) as mock_cache_manager:
 
             def cache_get(*args: Any, **kwargs: Any) -> Any:
@@ -1681,7 +1681,7 @@ def test_get_df_payload_invalidates_cache_missing_applied_filter_columns():
     This ensures that old cache entries without applied_filter_columns are
     invalidated and fresh queries are executed to populate the field correctly.
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     # Minimal setup
     mock_query_context = MagicMock()
@@ -1726,7 +1726,7 @@ def test_get_df_payload_invalidates_cache_missing_applied_filter_columns():
     mock_cache = MockCache()
 
     with patch(
-        "superset.common.query_context_processor.QueryCacheManager"
+        "axbi.common.query_context_processor.QueryCacheManager"
     ) as mock_cache_manager:
         mock_cache_manager.get.return_value = mock_cache
 
@@ -1748,7 +1748,7 @@ def test_get_df_payload_bq_memory_limited_warning() -> None:
     Test that get_df_payload includes a warning when BigQuery results are
     truncated due to the memory limit (g.bq_memory_limited is set).
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     mock_query_context = MagicMock()
     mock_query_context.force = False
@@ -1772,7 +1772,7 @@ def test_get_df_payload_bq_memory_limited_warning() -> None:
     )
 
     with patch(
-        "superset.common.query_context_processor.QueryCacheManager"
+        "axbi.common.query_context_processor.QueryCacheManager"
     ) as mock_cache_manager:
         mock_cache = MagicMock()
         mock_cache.is_loaded = True
@@ -1808,7 +1808,7 @@ def test_get_df_payload_no_warning_when_not_memory_limited() -> None:
     Test that get_df_payload does not include a warning when BigQuery
     results were not truncated.
     """
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     mock_query_context = MagicMock()
     mock_query_context.force = False
@@ -1832,7 +1832,7 @@ def test_get_df_payload_no_warning_when_not_memory_limited() -> None:
     )
 
     with patch(
-        "superset.common.query_context_processor.QueryCacheManager"
+        "axbi.common.query_context_processor.QueryCacheManager"
     ) as mock_cache_manager:
         mock_cache = MagicMock()
         mock_cache.is_loaded = True
@@ -1865,9 +1865,9 @@ def test_raise_for_access_evaluates_access_before_validate():
     validation renders the request's filter expressions. When access is denied,
     no query is validated (so caller-supplied input is never rendered).
     """
-    from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-    from superset.exceptions import SupersetSecurityException
-    from superset.utils.core import DatasourceType
+    from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+    from axbi.exceptions import AxBISecurityException
+    from axbi.utils.core import DatasourceType
 
     query = MagicMock()
     query_context = MagicMock()
@@ -1876,18 +1876,18 @@ def test_raise_for_access_evaluates_access_before_validate():
 
     processor = QueryContextProcessor(query_context)
 
-    denied = SupersetSecurityException(
-        SupersetError(
+    denied = AxBISecurityException(
+        AxBIError(
             message="denied",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.ERROR,
         )
     )
     with patch(
-        "superset.common.query_context_processor.security_manager.raise_for_access",
+        "axbi.common.query_context_processor.security_manager.raise_for_access",
         side_effect=denied,
     ):
-        with pytest.raises(SupersetSecurityException):
+        with pytest.raises(AxBISecurityException):
             processor.raise_for_access()
 
     query.validate.assert_not_called()

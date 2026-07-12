@@ -21,10 +21,10 @@ from typing import Any
 
 from sqlalchemy import func
 
-from superset import appbuilder, db, security_manager
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
+from axbi import appbuilder, db, security_manager
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
 from tests.integration_tests.dashboards.consts import DEFAULT_DASHBOARD_SLUG_TO_TEST
 
 logger = logging.getLogger(__name__)

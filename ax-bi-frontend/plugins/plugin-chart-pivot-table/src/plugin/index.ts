@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   Behavior,
   ChartMetadata,
   ChartPlugin,
   ChartProps,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import buildQuery from './buildQuery';
 import controlPanel from './controlPanel';
 import transformProps from './transformProps';

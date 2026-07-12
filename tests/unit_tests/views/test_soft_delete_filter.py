@@ -17,7 +17,7 @@
 """Unit tests for ``BaseDeletedStateFilter`` and ``SoftDeleteApiMixin``.
 
 These tests use a synthetic ``_SoftDeletable`` model + ``MagicMock``
-collaborators rather than real Superset entities, so the filter and
+collaborators rather than real AxBI entities, so the filter and
 mixin behavior is pinned at the infrastructure level independently of
 which entity has adopted ``SoftDeleteMixin``.
 """
@@ -34,8 +34,8 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm.session import Session
 
-from superset.models.helpers import SKIP_VISIBILITY_FILTER_CLASSES, SoftDeleteMixin
-from superset.views.filters import (
+from axbi.models.helpers import SKIP_VISIBILITY_FILTER_CLASSES, SoftDeleteMixin
+from axbi.views.filters import (
     AUGMENT_RESPONSE_WITH_DELETED_AT,
     BaseDeletedStateFilter,
     DELETED_STATE_ADDED_CLASSES,
@@ -59,7 +59,7 @@ class _ConcreteFilter(BaseDeletedStateFilter):
 @pytest.fixture
 def flask_request_ctx() -> Any:
     """Minimal Flask request context so the filter and mixin can read /
-    write ``g`` without booting the full Superset app."""
+    write ``g`` without booting the full AxBI app."""
     app = Flask(__name__)
     with app.test_request_context("/"):
         yield
@@ -316,7 +316,7 @@ def test_mixin_releases_bypass_after_inject(
 
     # Patch db.session to point at our test session so the release
     # step finds the same info dict.
-    import superset.views.filters as filters_module
+    import axbi.views.filters as filters_module
 
     original_db = filters_module.db
     filters_module.db = MagicMock()
@@ -357,7 +357,7 @@ def test_mixin_release_does_not_touch_unrelated_bypass_entries(
     setattr(g, DELETED_STATE_ADDED_CLASSES, {_SoftDeletable})
     setattr(g, AUGMENT_RESPONSE_WITH_DELETED_AT, True)
 
-    import superset.views.filters as filters_module
+    import axbi.views.filters as filters_module
 
     original_db = filters_module.db
     filters_module.db = MagicMock()

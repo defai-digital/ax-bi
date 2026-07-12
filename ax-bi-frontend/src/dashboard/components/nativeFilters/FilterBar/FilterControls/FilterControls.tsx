@@ -26,7 +26,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DataMask,
   DataMaskStateWithId,
@@ -37,13 +37,8 @@ import {
   ChartCustomization,
   isChartCustomizationDivider,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
-import {
-  css,
-  SupersetTheme,
-  useTheme,
-  styled,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, AxBITheme, useTheme, styled } from '@ax-bi/core/theme';
 import {
   createHtmlPortalNode,
   InPortal,
@@ -60,8 +55,8 @@ import {
   DropdownContainer,
   type DropdownRef as DropdownContainerRef,
   Typography,
-} from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { useChartIds } from 'src/dashboard/util/charts/useChartIds';
 import { useChartLayoutItems } from 'src/dashboard/util/useChartLayoutItems';
 import { setPendingChartCustomization } from 'src/dashboard/actions/chartCustomizationActions';
@@ -583,7 +578,7 @@ const FilterControls: FC<FilterControlsProps> = ({
   const renderHorizontalContent = useCallback(
     () => (
       <div
-        css={(theme: SupersetTheme) => css`
+        css={(theme: AxBITheme) => css`
           padding: 0 ${theme.sizeUnit * 4}px;
           min-width: 0;
           flex: 1;

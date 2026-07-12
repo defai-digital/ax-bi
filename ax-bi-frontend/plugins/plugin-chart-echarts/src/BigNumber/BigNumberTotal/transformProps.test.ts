@@ -17,16 +17,16 @@
  * under the License.
  */
 
-import { GenericDataType } from '@apache-superset/core/common';
-import { getColorFormatters } from '@superset-ui/chart-controls';
+import { GenericDataType } from '@ax-bi/core/common';
+import { getColorFormatters } from '@ax-bi/chart-controls';
 import { BigNumberTotalChartProps } from '../types';
 import transformProps from './transformProps';
 
-jest.mock('@superset-ui/chart-controls', () => ({
+jest.mock('@ax-bi/chart-controls', () => ({
   getColorFormatters: jest.fn(),
 }));
 
-jest.mock('@superset-ui/core', () => ({
+jest.mock('@ax-bi/ui-core', () => ({
   GenericDataType: { Temporal: 2, String: 1 },
   getMetricLabel: jest.fn(metric => metric),
   extractTimegrain: jest.fn(() => 'P1D'),

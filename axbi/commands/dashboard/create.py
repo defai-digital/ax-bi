@@ -1,0 +1,103 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+import logging
+from functools import partial
+from typing import Any
+
+from flask import current_app
+from flask_appbuilder.models.sqla import Model
+from marshmallow import ValidationError
+
+from axbi.commands.base import BaseCommand, CreateMixin
+from axbi.commands.dashboard.exceptions import (
+    DashboardCreateFailedError,
+    DashboardInvalidError,
+    DashboardSlugExistsValidationError,
+)
+from axbi.commands.utils import populate_roles
+from axbi.daos.dashboard import DashboardDAO
+from axbi.utils import json
+from axbi.utils.decorators import on_error, transaction
+
+logger = logging.getLogger(__name__)
+
+
+def load_json_object(value: str, field_name: str) -> dict[str, Any]:
+    try:
+        data = json.loads(value)
+    except (TypeError, json.JSONDecodeError) as ex:
+        raise ValidationError(f"{field_name} must be valid JSON") from ex
+    if not isinstance(data, dict):
+        raise ValidationError(f"{field_name} must be a JSON object")
+    return data
+
+
+class CreateDashboardCommand(CreateMixin, BaseCommand):
+    def __init__(self, data: dict[str, Any]) -> None:
+        self._properties = data.copy()
+
+    @transaction(on_error=partial(on_error, reraise=DashboardCreateFailedError))
+    def run(self) -> Model:
+        self.validate()
+        dashboard = DashboardDAO.create(attributes=self._properties)
+        # Link charts referenced in the layout to the dashboard so that
+        # ``dashboard.slices`` is populated, mirroring the update path. Without
+        # this, charts created through the REST API render with no definition
+        # until the dashboard is edited and re-saved in the UI (see #32966).
+        if json_metadata := self._properties.get("json_metadata"):
+            DashboardDAO.set_dash_metadata(
+                dashboard,
+                data=load_json_object(json_metadata, "json_metadata"),
+            )
+        if after_create := current_app.config.get("AFTER_ASSET_CREATE"):
+            after_create(dashboard, "dashboard")
+        return dashboard
+
+    def validate(self) -> None:
+        exceptions: list[ValidationError] = []
+        owner_ids: list[int] | None = self._properties.get("owners")
+        role_ids: list[int] | None = self._properties.get("roles")
+        slug: str = self._properties.get("slug", "")
+
+        for field_name in ("json_metadata", "position_json"):
+            if value := self._properties.get(field_name):
+                try:
+                    load_json_object(value, field_name)
+                except ValidationError as ex:
+                    exceptions.append(ex)
+
+        # Validate slug uniqueness
+        if not DashboardDAO.validate_slug_uniqueness(slug):
+            exceptions.append(DashboardSlugExistsValidationError())
+        if exceptions:
+            raise DashboardInvalidError(exceptions=exceptions)
+
+        try:
+            owners = self.populate_owners(owner_ids)
+            self._properties["owners"] = owners
+        except ValidationError as ex:
+            exceptions.append(ex)
+        if exceptions:
+            raise DashboardInvalidError(exceptions=exceptions)
+
+        try:
+            roles = populate_roles(role_ids)
+            self._properties["roles"] = roles
+        except ValidationError as ex:
+            exceptions.append(ex)
+        if exceptions:
+            raise DashboardInvalidError(exceptions=exceptions)

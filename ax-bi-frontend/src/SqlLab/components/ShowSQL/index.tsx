@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useEffect } from 'react';
-import { IconTooltip, ModalTrigger } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { IconTooltip, ModalTrigger } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import CodeSyntaxHighlighter, {
   preloadLanguages,
-} from '@superset-ui/core/components/CodeSyntaxHighlighter';
+} from '@ax-bi/ui-core/components/CodeSyntaxHighlighter';
 
 interface ShowSQLProps {
   sql: string;

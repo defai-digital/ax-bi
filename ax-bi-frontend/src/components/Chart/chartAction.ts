@@ -20,7 +20,7 @@
 import {
   FeatureFlag,
   isDefined,
-  SupersetClient,
+  AxBIClient,
   isFeatureEnabled,
   getClientErrorObject,
   QueryFormData,
@@ -30,9 +30,9 @@ import {
   DataMask,
   DatasourceType,
   LatestQueryFormData,
-} from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import type { ControlStateMapping } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import type { ControlStateMapping } from '@ax-bi/chart-controls';
 import { getControlsState } from 'src/explore/store';
 import {
   getAnnotationJsonUrl,
@@ -51,7 +51,7 @@ import { Logger, LOG_ACTIONS_LOAD_CHART } from 'src/logger/LogUtils';
 import { updateDataMask } from 'src/dataMask/actions';
 import { waitForAsyncData } from 'src/middleware/asyncEvent';
 import { safeStringify } from 'src/utils/safeStringify';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import type { Dispatch, Action, AnyAction } from 'redux';
 import type { ThunkAction, ThunkDispatch } from 'redux-thunk';
 import type { History } from 'history';
@@ -64,7 +64,7 @@ export interface ChartsState {
 
 export interface CommonState {
   conf: {
-    SUPERSET_WEBSERVER_TIMEOUT?: number;
+    AXBI_WEBSERVER_TIMEOUT?: number;
     [key: string]: unknown;
   };
 }
@@ -432,8 +432,8 @@ const legacyChartDataRequest = async (
     parseMethod,
   };
 
-  return SupersetClient.post(
-    querySettings as Parameters<typeof SupersetClient.post>[0],
+  return AxBIClient.post(
+    querySettings as Parameters<typeof AxBIClient.post>[0],
   ).then(({ json, response }: { json: JsonObject; response: Response }) =>
     // Make the legacy endpoint return a payload that corresponds to the
     // V1 chart data endpoint response signature.
@@ -485,8 +485,8 @@ const v1ChartDataRequest = async (
     parseMethod,
   };
 
-  return SupersetClient.post(
-    querySettings as Parameters<typeof SupersetClient.post>[0],
+  return AxBIClient.post(
+    querySettings as Parameters<typeof AxBIClient.post>[0],
   ) as Promise<ChartDataRequestResponse>;
 };
 
@@ -542,7 +542,7 @@ export function runAnnotationQuery({
   ): Promise<void | Action> {
     const { charts, common } = getState();
     const sliceKey = key || Object.keys(charts)[0];
-    const queryTimeout = timeout || common.conf.SUPERSET_WEBSERVER_TIMEOUT || 0;
+    const queryTimeout = timeout || common.conf.AXBI_WEBSERVER_TIMEOUT || 0;
 
     // make a copy of formData, not modifying original formData
     const fd: JsonObject = {
@@ -608,7 +608,7 @@ export function runAnnotationQuery({
       resultType: 'full',
     });
 
-    return SupersetClient.post({
+    return AxBIClient.post({
       url,
       signal,
       timeout: queryTimeout * 1000,
@@ -727,7 +727,7 @@ export function exploreJSON(
     const controller = new AbortController();
     const prevController = key ? state.charts?.[key]?.queryController : null;
     const queryTimeout =
-      timeout || state.common.conf.SUPERSET_WEBSERVER_TIMEOUT || 0;
+      timeout || state.common.conf.AXBI_WEBSERVER_TIMEOUT || 0;
 
     const requestParams: RequestParams = {
       signal: controller.signal,
@@ -944,7 +944,7 @@ export function redirectSQLLab(
             requestedQuery: payload,
           });
         } else {
-          SupersetClient.postForm(redirectUrl, {
+          AxBIClient.postForm(redirectUrl, {
             form_data: safeStringify(payload),
           });
         }
@@ -968,8 +968,7 @@ export function refreshChart(
     if (!chart) {
       return Promise.resolve();
     }
-    const timeout =
-      getState().dashboardInfo.common.conf.SUPERSET_WEBSERVER_TIMEOUT;
+    const timeout = getState().dashboardInfo.common.conf.AXBI_WEBSERVER_TIMEOUT;
 
     if (
       !chart.latestQueryFormData ||
@@ -1015,7 +1014,7 @@ export const getDatasourceSamples = async (
       searchParams.page = page;
     }
 
-    const response = await SupersetClient.post({
+    const response = await AxBIClient.post({
       endpoint: '/datasource/samples',
       jsonPayload,
       searchParams,

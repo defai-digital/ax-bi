@@ -23,7 +23,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from superset.security.manager import ExcludeUsersFilter
+from axbi.security.manager import ExcludeUsersFilter
 
 
 def test_exclude_users_filter_no_exclusions(mocker: MockerFixture) -> None:
@@ -40,7 +40,7 @@ def test_exclude_users_filter_no_exclusions(mocker: MockerFixture) -> None:
     mock_current_app.appbuilder.sm = mock_sm
 
     mocker.patch(
-        "superset.security.manager.current_app",
+        "axbi.security.manager.current_app",
         mock_current_app,
     )
 
@@ -65,7 +65,7 @@ def test_exclude_users_filter_with_config(mocker: MockerFixture) -> None:
     }
 
     mocker.patch(
-        "superset.security.manager.current_app",
+        "axbi.security.manager.current_app",
         mock_current_app,
     )
 
@@ -101,7 +101,7 @@ def test_exclude_users_filter_with_security_manager(mocker: MockerFixture) -> No
     mock_current_app.appbuilder.sm = mock_sm
 
     mocker.patch(
-        "superset.security.manager.current_app",
+        "axbi.security.manager.current_app",
         mock_current_app,
     )
 
@@ -139,7 +139,7 @@ def test_exclude_users_filter_config_takes_precedence(mocker: MockerFixture) -> 
     mock_current_app.appbuilder.sm = mock_sm
 
     mocker.patch(
-        "superset.security.manager.current_app",
+        "axbi.security.manager.current_app",
         mock_current_app,
     )
 

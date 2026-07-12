@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   isAdhocColumn,
   isPhysicalColumn,
   validateNonEmpty,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   D3_FORMAT_DOCS,
   D3_NUMBER_FORMAT_DESCRIPTION_VALUES_TEXT,
@@ -36,7 +36,7 @@ import {
   getTemporalColumns,
   sharedControls,
   DEFAULT_TIME_FORMAT,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [

@@ -21,16 +21,16 @@ from unittest.mock import ANY, patch
 import pytest
 from sqlalchemy.sql.elements import TextClause
 
-from superset import db, security_manager
-from superset.connectors.sqla.models import SqlaTable
-from superset.daos.exceptions import DatasourceTypeNotSupportedError
-from superset.extensions import cache_manager
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.daos.exceptions import DatasourceTypeNotSupportedError
+from axbi.extensions import cache_manager
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_USERNAME
 
 
-class TestDatasourceApi(SupersetTestCase):
+class TestDatasourceApi(AxBITestCase):
     def setUp(self):
         # Clear the column-values cache before every test so that
         # ``get_column_values`` always re-runs ``values_for_column`` rather
@@ -106,7 +106,7 @@ class TestDatasourceApi(SupersetTestCase):
         response = json.loads(rv.data.decode("utf-8"))
         assert response["message"] == "Invalid datasource type: not_table"
 
-    @patch("superset.datasource.api.DatasourceDAO.get_datasource")
+    @patch("axbi.datasource.api.DatasourceDAO.get_datasource")
     def test_get_column_values_datasource_type_not_supported(self, get_datasource_mock):
         get_datasource_mock.side_effect = DatasourceTypeNotSupportedError
         self.login(ADMIN_USERNAME)
@@ -144,7 +144,7 @@ class TestDatasourceApi(SupersetTestCase):
         )
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_normalize_columns_enabled(self, values_for_column_mock):
         self.login(ADMIN_USERNAME)
         table = self.get_virtual_dataset()
@@ -157,7 +157,7 @@ class TestDatasourceApi(SupersetTestCase):
         )
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.db_engine_specs.base.BaseEngineSpec.denormalize_name")
+    @patch("axbi.db_engine_specs.base.BaseEngineSpec.denormalize_name")
     def test_get_column_values_not_denormalize_column(self, denormalize_name_mock):
         self.login(ADMIN_USERNAME)
         table = self.get_virtual_dataset()
@@ -166,7 +166,7 @@ class TestDatasourceApi(SupersetTestCase):
         denormalize_name_mock.assert_not_called()
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_normalize_columns_disabled(self, values_for_column_mock):
         self.login(ADMIN_USERNAME)
         table = self.get_virtual_dataset()
@@ -179,7 +179,7 @@ class TestDatasourceApi(SupersetTestCase):
         )
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.db_engine_specs.base.BaseEngineSpec.denormalize_name")
+    @patch("axbi.db_engine_specs.base.BaseEngineSpec.denormalize_name")
     def test_get_column_values_denormalize_column(self, denormalize_name_mock):
         self.login(ADMIN_USERNAME)
         table = self.get_virtual_dataset()
@@ -216,7 +216,7 @@ class TestDatasourceApi(SupersetTestCase):
             assert response["result"] == []
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_cache_hit_skips_query(self, values_for_column_mock):
         """Regression test for #39342.
 
@@ -239,7 +239,7 @@ class TestDatasourceApi(SupersetTestCase):
         assert values_for_column_mock.call_count == 1
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_force_bypasses_cache(self, values_for_column_mock):
         """``?force=true`` should bypass the cache and re-query the source."""
         cache_manager.data_cache.clear()
@@ -254,7 +254,7 @@ class TestDatasourceApi(SupersetTestCase):
         assert values_for_column_mock.call_count == 2
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_cache_isolated_per_column(self, values_for_column_mock):
         """Different columns on the same datasource must not share a cache
         entry — otherwise filter values would be silently swapped."""
@@ -269,7 +269,7 @@ class TestDatasourceApi(SupersetTestCase):
         assert values_for_column_mock.call_count == 2
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_cache_busts_on_changed_on(self, values_for_column_mock):
         """Editing the underlying virtual dataset SQL bumps ``changed_on``,
         which is part of the cache key — so the next request must miss the
@@ -290,8 +290,8 @@ class TestDatasourceApi(SupersetTestCase):
         assert values_for_column_mock.call_count == 2
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.datasource.api.security_manager.get_rls_cache_key")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.datasource.api.security_manager.get_rls_cache_key")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_cache_isolated_per_rls_context(
         self, values_for_column_mock, get_rls_cache_key_mock
     ):
@@ -313,7 +313,7 @@ class TestDatasourceApi(SupersetTestCase):
         assert values_for_column_mock.call_count == 2
 
     @pytest.mark.usefixtures("app_context", "virtual_dataset")
-    @patch("superset.models.helpers.ExploreMixin.values_for_column")
+    @patch("axbi.models.helpers.ExploreMixin.values_for_column")
     def test_get_column_values_response_advertises_cache_status(
         self, values_for_column_mock
     ):
@@ -332,8 +332,8 @@ class TestDatasourceApi(SupersetTestCase):
         assert rv_miss.headers.get("X-Cache-Status") == "MISS"
         assert rv_hit.headers.get("X-Cache-Status") == "HIT"
 
-    @patch("superset.datasource.api.security_manager.can_access")
-    @patch("superset.datasource.api.GetCombinedDatasourceListCommand.run")
+    @patch("axbi.datasource.api.security_manager.can_access")
+    @patch("axbi.datasource.api.GetCombinedDatasourceListCommand.run")
     def test_combined_list_invalid_order_column(
         self,
         run_mock,
@@ -357,8 +357,8 @@ class TestDatasourceApi(SupersetTestCase):
         response = json.loads(rv.data.decode("utf-8"))
         assert response["message"] == "Invalid order column: invalid"
 
-    @patch("superset.datasource.api.security_manager.can_access")
-    @patch("superset.datasource.api.GetCombinedDatasourceListCommand.run")
+    @patch("axbi.datasource.api.security_manager.can_access")
+    @patch("axbi.datasource.api.GetCombinedDatasourceListCommand.run")
     def test_combined_list_semantic_layers_off(
         self,
         run_mock,
@@ -374,7 +374,7 @@ class TestDatasourceApi(SupersetTestCase):
         run_mock.return_value = {"count": 1, "result": []}
         self.login(ADMIN_USERNAME)
 
-        with patch("superset.datasource.api.is_feature_enabled", return_value=False):
+        with patch("axbi.datasource.api.is_feature_enabled", return_value=False):
             rv = self.client.get(
                 "api/v1/datasource/?q=(order_column:changed_on_delta_humanized,order_direction:desc,page:0,page_size:25)"
             )

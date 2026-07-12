@@ -25,17 +25,17 @@ import {
 } from 'react';
 import rison from 'rison';
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   FeatureFlag,
   JsonResponse,
-  SupersetClient,
+  AxBIClient,
   isFeatureEnabled,
-} from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Input, Select } from '@superset-ui/core/components';
-import RefreshLabel from '@superset-ui/core/components/RefreshLabel';
+} from '@ax-bi/ui-core';
+import { styled, useTheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Input, Select } from '@ax-bi/ui-core/components';
+import RefreshLabel from '@ax-bi/ui-core/components/RefreshLabel';
 import {
   NotificationMethodOption,
   NotificationSetting,
@@ -266,7 +266,7 @@ export const NotificationMethod: FunctionComponent<NotificationMethodProps> = ({
       force,
     });
     const endpoint = `/api/v1/report/slack_channels/?q=${queryString}`;
-    return SupersetClient.get({ endpoint });
+    return AxBIClient.get({ endpoint });
   };
 
   const updateSlackOptions = async ({

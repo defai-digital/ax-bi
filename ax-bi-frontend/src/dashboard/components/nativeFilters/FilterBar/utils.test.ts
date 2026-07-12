@@ -22,7 +22,7 @@ import {
   DataRecordValue,
   Filter,
   FilterState,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   checkIsApplyDisabled,
   checkIsValidateError,

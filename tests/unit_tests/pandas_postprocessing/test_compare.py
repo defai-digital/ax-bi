@@ -19,9 +19,9 @@ import sys
 
 import pandas as pd
 
-from superset.constants import PandasPostprocessingCompare as PPC  # noqa: N817
-from superset.utils import pandas_postprocessing as pp
-from superset.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
+from axbi.constants import PandasPostprocessingCompare as PPC  # noqa: N817
+from axbi.utils import pandas_postprocessing as pp
+from axbi.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
 from tests.unit_tests.fixtures.dataframes import multiple_metrics_df, timeseries_df2
 
 

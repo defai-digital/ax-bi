@@ -26,32 +26,29 @@ import {
   useState,
 } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   BinaryQueryObjectFilterClause,
   DatasourceType,
   ensureIsArray,
   JsonObject,
   QueryFormData,
-  SupersetClient,
-} from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
+  AxBIClient,
+} from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
 import { useResizeDetector } from 'react-resize-detector';
-import BooleanCell from '@superset-ui/core/components/Table/cell-renderers/BooleanCell';
-import NullCell from '@superset-ui/core/components/Table/cell-renderers/NullCell';
-import TimeCell from '@superset-ui/core/components/Table/cell-renderers/TimeCell';
-import { EmptyState, Loading } from '@superset-ui/core/components';
+import BooleanCell from '@ax-bi/ui-core/components/Table/cell-renderers/BooleanCell';
+import NullCell from '@ax-bi/ui-core/components/Table/cell-renderers/NullCell';
+import TimeCell from '@ax-bi/ui-core/components/Table/cell-renderers/TimeCell';
+import { EmptyState, Loading } from '@ax-bi/ui-core/components';
 import { getDatasourceSamples } from 'src/components/Chart/chartAction';
-import Table, {
-  ColumnsType,
-  TableSize,
-} from '@superset-ui/core/components/Table';
+import Table, { ColumnsType, TableSize } from '@ax-bi/ui-core/components/Table';
 import { RootState } from 'src/dashboard/types';
 import { usePermissions } from 'src/hooks/usePermissions';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { safeStringify } from 'src/utils/safeStringify';
-import HeaderWithRadioGroup from '@superset-ui/core/components/Table/header-renderers/HeaderWithRadioGroup';
+import HeaderWithRadioGroup from '@ax-bi/ui-core/components/Table/header-renderers/HeaderWithRadioGroup';
 import { useDatasetMetadataBar } from 'src/features/datasets/metadataBar/useDatasetMetadataBar';
 import { Dataset } from '../types';
 import TableControls from './DrillDetailTableControls';
@@ -249,7 +246,7 @@ export default function DrillDetailPane({
       if (dashboardId) {
         payload.form_data = { dashboardId };
       }
-      SupersetClient.postForm('/api/v1/chart/data', {
+      AxBIClient.postForm('/api/v1/chart/data', {
         form_data: safeStringify(payload),
       }).catch(error => {
         addDangerToast(

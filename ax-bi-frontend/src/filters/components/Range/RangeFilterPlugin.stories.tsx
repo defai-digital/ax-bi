@@ -17,8 +17,8 @@
  * under the License.
  */
 import { action } from 'storybook/actions';
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import RangeFilterPlugin from './index';
 import transformProps from './transformProps';
 

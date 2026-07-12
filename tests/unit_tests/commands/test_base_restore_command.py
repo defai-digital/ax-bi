@@ -32,9 +32,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.restore import BaseRestoreCommand
-from superset.exceptions import SupersetSecurityException
-from superset.models.helpers import SoftDeleteMixin
+from axbi.commands.restore import BaseRestoreCommand
+from axbi.exceptions import AxBISecurityException
+from axbi.models.helpers import SoftDeleteMixin
 
 
 class _NotFoundError(Exception):
@@ -96,7 +96,7 @@ def test_validate_returns_model_when_owned_and_soft_deleted(
     soft_deleted.deleted_at = datetime(2026, 1, 1)
     cmd = _make_command(dao_find_result=soft_deleted)
 
-    with patch("superset.commands.restore.security_manager") as mock_sec:
+    with patch("axbi.commands.restore.security_manager") as mock_sec:
         mock_sec.raise_for_ownership = MagicMock(return_value=None)
         result = cmd.validate()
 
@@ -108,7 +108,7 @@ def test_validate_raises_forbidden_when_ownership_check_fails(
     app_context: None,
 ) -> None:
     """The security manager's raise_for_ownership raises
-    ``SupersetSecurityException`` for non-owners; validate() translates
+    ``AxBISecurityException`` for non-owners; validate() translates
     that to the command's ``forbidden_exc`` (keeping the security-layer
     exception type out of caller code)."""
     soft_deleted = MagicMock()
@@ -116,9 +116,9 @@ def test_validate_raises_forbidden_when_ownership_check_fails(
     cmd = _make_command(dao_find_result=soft_deleted)
 
     def reject_ownership(_resource: object) -> None:
-        raise SupersetSecurityException(MagicMock())
+        raise AxBISecurityException(MagicMock())
 
-    with patch("superset.commands.restore.security_manager") as mock_sec:
+    with patch("axbi.commands.restore.security_manager") as mock_sec:
         mock_sec.raise_for_ownership = reject_ownership
         with pytest.raises(_ForbiddenError):
             cmd.validate()
@@ -135,7 +135,7 @@ def test_validate_calls_dao_with_visibility_bypass_only(app_context: None) -> No
     soft_deleted.deleted_at = datetime(2026, 1, 1)
     cmd = _make_command(dao_find_result=soft_deleted)
 
-    with patch("superset.commands.restore.security_manager") as mock_sec:
+    with patch("axbi.commands.restore.security_manager") as mock_sec:
         mock_sec.raise_for_ownership = MagicMock(return_value=None)
         cmd.validate()
 
@@ -155,7 +155,7 @@ def test_run_calls_model_restore_on_success(app_context: None) -> None:
     soft_deleted.deleted_at = datetime(2026, 1, 1)
     cmd = _make_command(dao_find_result=soft_deleted)
 
-    with patch("superset.commands.restore.security_manager") as mock_sec:
+    with patch("axbi.commands.restore.security_manager") as mock_sec:
         mock_sec.raise_for_ownership = MagicMock(return_value=None)
         cmd.run()
 
@@ -181,7 +181,7 @@ def test_run_translates_sqlalchemy_errors_via_restore_failed_exc(
     soft_deleted.restore.side_effect = SQLAlchemyError("simulated commit failure")
     cmd = _make_command(dao_find_result=soft_deleted)
 
-    with patch("superset.commands.restore.security_manager") as mock_sec:
+    with patch("axbi.commands.restore.security_manager") as mock_sec:
         mock_sec.raise_for_ownership = MagicMock(return_value=None)
         with pytest.raises(_RestoreFailedError):
             cmd.run()

@@ -21,7 +21,7 @@ under the License.
 
 ## Product Direction
 
-Revamp this Superset-based project into an open, governed, MCP-native GenAI
+Revamp this AxBI-based project into an open, governed, MCP-native GenAI
 business intelligence platform. The target product is not a generic chatbot
 attached to BI. The target product is a trusted AI analyst that can discover
 business data assets, reason over governed semantics, generate validated charts,
@@ -34,7 +34,7 @@ Recommended positioning:
 
 This positioning uses the project's existing strengths:
 
-- Broad SQL database support through `superset/db_engine_specs`.
+- Broad SQL database support through `axbi/db_engine_specs`.
 - Existing BI workflow for datasets, charts, dashboards, reports, and security.
 - Extensible chart plugins and dashboard authoring UI.
 - Existing MCP service with auth, RBAC-aware tool visibility, schema discovery,
@@ -80,10 +80,10 @@ Source references used for this market scan:
 
 Relevant code:
 
-- `superset/datasets`
-- `superset/semantic_layers`
-- `superset/connectors`
-- `superset/mcp_service/dataset`
+- `axbi/datasets`
+- `axbi/semantic_layers`
+- `axbi/connectors`
+- `axbi/mcp_service/dataset`
 
 Upgrade datasets from technical schema containers into AI-ready business assets.
 The AI layer should consume:
@@ -104,10 +104,10 @@ text-to-SQL.
 
 Relevant code:
 
-- `superset/mcp_service/chart/tool/generate_chart.py`
-- `superset/mcp_service/chart/schemas.py`
-- `superset/mcp_service/chart/validation`
-- `superset/mcp_service/chart/preview_utils.py`
+- `axbi/mcp_service/chart/tool/generate_chart.py`
+- `axbi/mcp_service/chart/schemas.py`
+- `axbi/mcp_service/chart/validation`
+- `axbi/mcp_service/chart/preview_utils.py`
 
 The existing implementation already has useful ingredients:
 
@@ -133,9 +133,9 @@ accepts business intent and returns:
 
 Relevant code:
 
-- `superset/mcp_service/dashboard/tool/generate_dashboard.py`
-- `superset/mcp_service/dashboard/tool/add_chart_to_existing_dashboard.py`
-- `superset/dashboards`
+- `axbi/mcp_service/dashboard/tool/generate_dashboard.py`
+- `axbi/mcp_service/dashboard/tool/add_chart_to_existing_dashboard.py`
+- `axbi/dashboards`
 - `ax-bi-frontend/src/dashboard`
 
 Move from "create dashboard from chart IDs" to a planner/composer workflow:
@@ -164,13 +164,13 @@ Dashboard plans should include:
 
 Relevant code:
 
-- `superset/security`
-- `superset/mcp_service/auth.py`
-- `superset/mcp_service/middleware.py`
-- `superset/mcp_service/privacy.py`
+- `axbi/security`
+- `axbi/mcp_service/auth.py`
+- `axbi/mcp_service/middleware.py`
+- `axbi/mcp_service/privacy.py`
 - `SECURITY.md`
 
-AI features must never bypass Superset authorization. Every AI-generated query,
+AI features must never bypass AxBI authorization. Every AI-generated query,
 chart, dashboard, and explanation should run as the current principal.
 
 Required behavior:
@@ -186,9 +186,9 @@ Required behavior:
 
 Relevant code:
 
-- `superset-embedded-sdk`
-- `superset/embedded`
-- `superset/embedded_dashboard`
+- `ax-bi-embedded-sdk`
+- `axbi/embedded`
+- `axbi/embedded_dashboard`
 
 Embedding is a differentiator for a GenAI BI platform. Add support for embedded
 AI dashboard workflows:
@@ -202,10 +202,10 @@ AI dashboard workflows:
 
 Relevant code:
 
-- `superset/reports`
-- `superset/tasks`
-- `superset/thumbnails`
-- `superset-websocket`
+- `axbi/reports`
+- `axbi/tasks`
+- `axbi/thumbnails`
+- `ax-bi-websocket`
 
 After dashboard generation, extend into insight delivery:
 
@@ -579,7 +579,7 @@ Relevant code:
 - `ax-bi-frontend/src/features`
 - `ax-bi-frontend/src/dashboard`
 - `ax-bi-frontend/src/explore`
-- `ax-bi-frontend/packages/superset-ui-core`
+- `ax-bi-frontend/packages/axbi-ui-core`
 
 Recommended user flows:
 

@@ -248,7 +248,7 @@ test('should export a dataset as a zip file', async ({
 
   // Set up API response intercept for export endpoint
   // Note: We intercept the API response instead of relying on download events because
-  // Superset uses blob downloads (createObjectURL) which don't trigger Playwright's
+  // AxBI uses blob downloads (createObjectURL) which don't trigger Playwright's
   // download event consistently, especially in app-prefix configurations.
   const exportResponsePromise = waitForGet(page, ENDPOINTS.DATASET_EXPORT);
 

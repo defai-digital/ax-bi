@@ -14,12 +14,12 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from superset.db_engine_specs.gsheets import GSheetsEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestGsheetsDbEngineSpec(SupersetTestCase):
+class TestGsheetsDbEngineSpec(AxBITestCase):
     def test_extract_errors(self):
         """
         Test that custom error messages are extracted correctly.
@@ -27,9 +27,9 @@ class TestGsheetsDbEngineSpec(SupersetTestCase):
         msg = 'SQLError: near "from_": syntax error'
         result = GSheetsEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Please check your query for syntax errors near "from_". Then, try running your query again.',  # noqa: E501
-                error_type=SupersetErrorType.SYNTAX_ERROR,
+                error_type=AxBIErrorType.SYNTAX_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google Sheets",

@@ -20,15 +20,15 @@ from pytest_mock import MockerFixture
 from sqlglot import parse_one
 from sqlglot.errors import ParseError
 
-from superset.constants import TimeGrain
-from superset.sql.parse import Table
+from axbi.constants import TimeGrain
+from axbi.sql.parse import Table
 
 
 def test_epoch_to_dttm() -> None:
     """
     Test the `epoch_to_dttm` method.
     """
-    from superset.db_engine_specs.db2 import Db2EngineSpec
+    from axbi.db_engine_specs.db2 import Db2EngineSpec
 
     assert (
         Db2EngineSpec.epoch_to_dttm().format(col="epoch_dttm")
@@ -40,7 +40,7 @@ def test_get_table_comment(mocker: MockerFixture):
     """
     Test the `get_table_comment` method.
     """
-    from superset.db_engine_specs.db2 import Db2EngineSpec
+    from axbi.db_engine_specs.db2 import Db2EngineSpec
 
     mock_inspector = mocker.MagicMock()
     mock_inspector.get_table_comment.return_value = {
@@ -58,7 +58,7 @@ def test_get_table_comment_empty(mocker: MockerFixture):
     Test the `get_table_comment` method
     when no comment is returned.
     """
-    from superset.db_engine_specs.db2 import Db2EngineSpec
+    from axbi.db_engine_specs.db2 import Db2EngineSpec
 
     mock_inspector = mocker.MagicMock()
     mock_inspector.get_table_comment.return_value = {}
@@ -73,7 +73,7 @@ def test_get_prequeries(mocker: MockerFixture) -> None:
     """
     Test the ``get_prequeries`` method.
     """
-    from superset.db_engine_specs.db2 import Db2EngineSpec
+    from axbi.db_engine_specs.db2 import Db2EngineSpec
 
     database = mocker.MagicMock()
 
@@ -123,7 +123,7 @@ def test_time_grain_expressions(grain: TimeGrain, expected_expression: str) -> N
     """
     Test that time grain expressions generate the expected SQL.
     """
-    from superset.db_engine_specs.db2 import Db2EngineSpec
+    from axbi.db_engine_specs.db2 import Db2EngineSpec
 
     actual = Db2EngineSpec._time_grain_expressions[grain].format(col="my_col")
     assert actual == expected_expression
@@ -138,7 +138,7 @@ def test_time_grain_day_parseable() -> None:
     "CAST({col} as TIMESTAMP) - HOUR({col}) HOURS - ..."
     could not be parsed by sqlglot.
     """
-    from superset.db_engine_specs.db2 import Db2EngineSpec
+    from axbi.db_engine_specs.db2 import Db2EngineSpec
 
     expression = Db2EngineSpec._time_grain_expressions[TimeGrain.DAY].format(
         col="my_timestamp_col",

@@ -15,23 +15,23 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import rison
 
-from superset.utils.core import get_example_default_schema  # noqa: F401
+from axbi.utils.core import get_example_default_schema  # noqa: F401
 
 from tests.integration_tests.utils.get_dashboards import get_dashboards_ids  # noqa: F401
 from tests.conftest import with_config
 from sqlalchemy import Column
 from typing import Any
-from superset.advanced_data_type.types import (
+from axbi.advanced_data_type.types import (
     AdvancedDataType,
     AdvancedDataTypeRequest,
     AdvancedDataTypeResponse,
 )
-from superset.utils.core import FilterOperator, FilterStringOperators
-from superset.utils import json
+from axbi.utils.core import FilterOperator, FilterStringOperators
+from axbi.utils import json
 
 
 target_resp: AdvancedDataTypeResponse = {

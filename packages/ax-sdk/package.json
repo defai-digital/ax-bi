@@ -2,9 +2,10 @@
   "name": "@defai/ax-sdk",
   "version": "0.1.0",
   "description": "TypeScript SDK for integrating with AX BI analytics platform",
+  "author": "DEFAI Private Limited",
   "keywords": [
     "ax-bi",
-    "superset",
+    "axbi",
     "analytics",
     "bi",
     "sdk",
@@ -32,6 +33,15 @@
   "files": [
     "dist"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
+    "directory": "packages/ax-sdk"
+  },
+  "homepage": "https://github.com/defai-digital/ax-bi/tree/main/packages/ax-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/defai-digital/ax-bi/issues"
+  },
   "scripts": {
     "build": "npm run build:esm && npm run build:cjs && npm run build:types",
     "build:esm": "tsc -p tsconfig.esm.json",

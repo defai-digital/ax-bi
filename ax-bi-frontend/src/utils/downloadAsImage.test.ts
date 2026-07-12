@@ -31,7 +31,7 @@ jest.mock('src/components/MessageToasts/actions', () => ({
   addWarningToast: jest.fn(),
 }));
 
-jest.mock('@apache-superset/core/translation', () => ({
+jest.mock('@ax-bi/core/translation', () => ({
   t: (str: string) => str,
 }));
 

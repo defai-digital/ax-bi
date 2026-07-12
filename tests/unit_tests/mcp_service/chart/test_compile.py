@@ -27,12 +27,12 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.mcp_service.chart.compile import (
+from axbi.mcp_service.chart.compile import (
     build_dataset_context_from_orm,
     CompileResult,
     validate_and_compile,
 )
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     BigNumberChartConfig,
     ColumnRef,
     FilterConfig,
@@ -41,7 +41,7 @@ from superset.mcp_service.chart.schemas import (
     TableChartConfig,
     XYChartConfig,
 )
-from superset.mcp_service.chart.validation.dataset_validator import DatasetValidator
+from axbi.mcp_service.chart.validation.dataset_validator import DatasetValidator
 
 
 def _orm_dataset(
@@ -112,7 +112,7 @@ class TestBuildDatasetContextFromOrm:
 class TestDatasetValidatorDatasetContext:
     """Cover the DAO-backed dataset → DatasetContext helper."""
 
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     def test_handles_missing_database_relationship(self, mock_find_by_id):
         """DAO-backed context creation also tolerates an unloaded database."""
         mock_find_by_id.return_value = _orm_dataset(has_database=False)
@@ -366,7 +366,7 @@ class TestAdhocFiltersFromFormData:
         """A saved-metric name used as a WHERE filter subject must be rejected.
 
         WHERE filters need a physical column; metric names are only valid in
-        HAVING clauses where Superset can resolve them.
+        HAVING clauses where AxBI can resolve them.
         """
         ds = _orm_dataset()
         config = TableChartConfig(
@@ -393,7 +393,7 @@ class TestAdhocFiltersFromFormData:
     def test_having_filter_with_metric_name_passes(self):
         """A saved-metric name used in a HAVING filter must be accepted.
 
-        HAVING filters are aggregate-level conditions; Superset resolves metric
+        HAVING filters are aggregate-level conditions; AxBI resolves metric
         names there so they are valid references.
         """
         ds = _orm_dataset()
@@ -421,7 +421,7 @@ class TestValidateAndCompileTier2:
     """When ``run_compile_check=True`` and Tier-1 passes, the helper must
     invoke ``_compile_chart`` and surface its outcome."""
 
-    @patch("superset.mcp_service.chart.compile._compile_chart")
+    @patch("axbi.mcp_service.chart.compile._compile_chart")
     def test_tier2_runs_when_tier1_passes(self, mock_compile):
         mock_compile.return_value = CompileResult(success=True)
         ds = _orm_dataset()
@@ -434,7 +434,7 @@ class TestValidateAndCompileTier2:
         assert result.success
         mock_compile.assert_called_once()
 
-    @patch("superset.mcp_service.chart.compile._compile_chart")
+    @patch("axbi.mcp_service.chart.compile._compile_chart")
     def test_tier2_skipped_on_tier1_failure(self, mock_compile):
         ds = _orm_dataset()
         config = TableChartConfig(chart_type="table", columns=[ColumnRef(name="bogus")])
@@ -449,18 +449,18 @@ class TestValidateAndCompileTier2:
         assert result.error_code == "DATASET_NOT_FOUND"
 
 
-@patch("superset.daos.dataset.DatasetDAO")
-@patch("superset.commands.chart.data.get_data_command.ChartDataCommand")
-@patch("superset.common.query_context_factory.QueryContextFactory")
+@patch("axbi.daos.dataset.DatasetDAO")
+@patch("axbi.commands.chart.data.get_data_command.ChartDataCommand")
+@patch("axbi.common.query_context_factory.QueryContextFactory")
 def test_compile_chart_returns_database_error_when_wrapped_in_query_failed(
     mock_factory, mock_cmd_cls, mock_dataset_dao
 ):
     """ChartDataCommand converts OperationalError to a string inside
     ChartDataQueryFailedError (no __cause__ set). _classify_as_database_error
     should use db_engine_spec.extract_errors() to detect the DB error."""
-    from superset.commands.chart.exceptions import ChartDataQueryFailedError
-    from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-    from superset.mcp_service.chart.compile import _compile_chart
+    from axbi.commands.chart.exceptions import ChartDataQueryFailedError
+    from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+    from axbi.mcp_service.chart.compile import _compile_chart
 
     mock_factory.return_value.create.return_value = Mock()
     mock_cmd_cls.return_value.validate.return_value = None
@@ -475,8 +475,8 @@ def test_compile_chart_returns_database_error_when_wrapped_in_query_failed(
     # Mock the dataset's db_engine_spec to return GENERIC_DB_ENGINE_ERROR
     mock_db = Mock()
     mock_db.db_engine_spec.extract_errors.return_value = [
-        SupersetError(
-            error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+        AxBIError(
+            error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
             message="connection to server failed",
             level=ErrorLevel.ERROR,
             extra={"engine_name": "PostgreSQL"},
@@ -502,8 +502,8 @@ def test_compile_chart_returns_database_error_when_wrapped_in_query_failed(
     mock_db.db_engine_spec.extract_errors.assert_called_once()
 
 
-@patch("superset.commands.chart.data.get_data_command.ChartDataCommand")
-@patch("superset.common.query_context_factory.QueryContextFactory")
+@patch("axbi.commands.chart.data.get_data_command.ChartDataCommand")
+@patch("axbi.common.query_context_factory.QueryContextFactory")
 def test_compile_chart_returns_database_error_on_raw_sqlalchemy_error(
     mock_factory, mock_cmd_cls
 ):
@@ -511,7 +511,7 @@ def test_compile_chart_returns_database_error_on_raw_sqlalchemy_error(
     catch it and return a database_connection_error."""
     from sqlalchemy.exc import OperationalError
 
-    from superset.mcp_service.chart.compile import _compile_chart
+    from axbi.mcp_service.chart.compile import _compile_chart
 
     mock_factory.return_value.create.return_value = Mock()
     mock_cmd_cls.return_value.validate.return_value = None

@@ -46,25 +46,25 @@ def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
     mock_decorators.ToolAnnotations = dict
 
     saved_modules: dict[str, types.ModuleType] = {}
-    for key in ("superset_core.mcp", "superset_core.mcp.decorators"):
+    for key in ("axbi_core.mcp", "axbi_core.mcp.decorators"):
         if key in sys.modules:
             saved_modules[key] = sys.modules[key]
 
-    sys.modules["superset_core.mcp"] = MagicMock()
-    sys.modules["superset_core.mcp.decorators"] = mock_decorators
+    sys.modules["axbi_core.mcp"] = MagicMock()
+    sys.modules["axbi_core.mcp.decorators"] = mock_decorators
     return saved_modules
 
 
 def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
     for key in list(sys.modules.keys()):
-        if key.startswith("superset_core.mcp"):
+        if key.startswith("axbi_core.mcp"):
             del sys.modules[key]
     sys.modules.update(saved_modules)
 
 
 _saved = _force_passthrough_decorators()
 try:
-    from superset.mcp_service.ai.tool.create_chart_from_intent import (
+    from axbi.mcp_service.ai.tool.create_chart_from_intent import (
         _dataset_name_candidates,
         _extract_chart_name,
         _suggest_alternatives,
@@ -175,7 +175,7 @@ class TestResolveChartConfigFromIntent:
         """When no LLM provider, should fall back to heuristic mapping."""
         _s2 = _force_passthrough_decorators()
         try:
-            from superset.mcp_service.ai.tool.create_chart_from_intent import (
+            from axbi.mcp_service.ai.tool.create_chart_from_intent import (
                 _resolve_chart_config_from_intent,
             )
         finally:
@@ -188,7 +188,7 @@ class TestResolveChartConfigFromIntent:
 
         # Mock provider_factory to raise NotImplementedError (no LLM configured)
         with patch(
-            "superset.mcp_service.ai.provider_factory.get_llm_provider",
+            "axbi.mcp_service.ai.provider_factory.get_llm_provider",
             side_effect=NotImplementedError,
         ):
             config, chart_type, confidence, explanation, warnings = (
@@ -204,7 +204,7 @@ class TestResolveChartConfigFromIntent:
         """When LLM fails with an exception, should fall back to heuristic."""
         _s2 = _force_passthrough_decorators()
         try:
-            from superset.mcp_service.ai.tool.create_chart_from_intent import (
+            from axbi.mcp_service.ai.tool.create_chart_from_intent import (
                 _resolve_chart_config_from_intent,
             )
         finally:
@@ -216,7 +216,7 @@ class TestResolveChartConfigFromIntent:
         ds.main_dttm_col = None
 
         with patch(
-            "superset.mcp_service.ai.provider_factory.get_llm_provider",
+            "axbi.mcp_service.ai.provider_factory.get_llm_provider",
             side_effect=RuntimeError("LLM unavailable"),
         ):
             config, chart_type, confidence, explanation, warnings = (
@@ -230,7 +230,7 @@ class TestCreateChartFromIntent:
     def test_calls_generate_chart_with_keyword_ctx(self) -> None:
         """Regression test for FastMCP wrappers receiving duplicate ctx values."""
         module = importlib.import_module(
-            "superset.mcp_service.ai.tool.create_chart_from_intent"
+            "axbi.mcp_service.ai.tool.create_chart_from_intent"
         )
         source = inspect.getsource(module)
 

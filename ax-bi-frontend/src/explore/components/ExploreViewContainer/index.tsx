@@ -38,20 +38,17 @@ import {
   MatrixifyFormData,
   DatasourceType,
   ensureIsArray,
-} from '@superset-ui/core';
-import {
-  ControlStateMapping,
-  ControlPanelState,
-} from '@superset-ui/chart-controls';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { logging } from '@apache-superset/core/utils';
+} from '@ax-bi/ui-core';
+import { ControlStateMapping, ControlPanelState } from '@ax-bi/chart-controls';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { logging } from '@ax-bi/core/utils';
 import { debounce, isEqual, isObjectLike, omit, pick } from 'lodash';
 import { Resizable } from 're-resizable';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { usePluginContext } from 'src/components';
 import { Global } from '@emotion/react';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   getItem,
   setItem,
@@ -346,7 +343,7 @@ interface ExploreRootState {
   charts: Record<number, ChartState>;
   common: {
     conf: {
-      SUPERSET_WEBSERVER_TIMEOUT: number;
+      AXBI_WEBSERVER_TIMEOUT: number;
     };
   };
   impressionId: string;
@@ -483,10 +480,7 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
   useEffect(
     () => () => {
       document.title =
-        originalTitle ||
-        theme?.brandAppName ||
-        theme?.brandLogoAlt ||
-        'Superset';
+        originalTitle || theme?.brandAppName || theme?.brandLogoAlt || 'AxBI';
     },
     [originalTitle, theme?.brandAppName, theme?.brandLogoAlt],
   );
@@ -1320,7 +1314,7 @@ function mapStateToProps(state: ExploreRootState) {
     standalone: !!explore.standalone,
     force: !!explore.force,
     chart,
-    timeout: common.conf.SUPERSET_WEBSERVER_TIMEOUT,
+    timeout: common.conf.AXBI_WEBSERVER_TIMEOUT,
     ownState: dataMask[slice_id]?.ownState,
     impressionId,
     user,

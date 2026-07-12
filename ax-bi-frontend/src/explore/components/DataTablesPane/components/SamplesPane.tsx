@@ -17,12 +17,12 @@
  * under the License.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { ensureIsArray } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { ensureIsArray } from '@ax-bi/ui-core';
 import { datasetLabelLower } from 'src/features/semanticLayers/label';
-import { styled } from '@apache-superset/core/theme';
-import { EmptyState, Loading } from '@superset-ui/core/components';
-import { GenericDataType } from '@apache-superset/core/common';
+import { styled } from '@ax-bi/core/theme';
+import { EmptyState, Loading } from '@ax-bi/ui-core/components';
+import { GenericDataType } from '@ax-bi/core/common';
 import { GridTable } from 'src/components/GridTable';
 import { GridSize } from 'src/components/GridTable/constants';
 import { getDatasourceSamples } from 'src/components/Chart/chartAction';

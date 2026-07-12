@@ -23,7 +23,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
-import { isFeatureEnabled } from '@superset-ui/core';
+import { isFeatureEnabled } from '@ax-bi/ui-core';
 import DashboardListComponent from 'src/pages/DashboardList';
 import {
   API_ENDPOINTS,
@@ -38,8 +38,8 @@ const DashboardList = DashboardListComponent as unknown as React.FC<
 
 jest.setTimeout(30000);
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -100,7 +100,7 @@ const createStoreStateWithPermissions = (
     : {},
   common: {
     conf: {
-      SUPERSET_WEBSERVER_TIMEOUT: 60000,
+      AXBI_WEBSERVER_TIMEOUT: 60000,
     },
   },
   dashboards: {

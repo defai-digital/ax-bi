@@ -31,15 +31,15 @@ from flask import Flask
 from pytest_mock import MockerFixture
 from sqlalchemy.sql.elements import TextClause
 
-from superset.connectors.sqla.models import BaseDatasource
-from superset.security.guest_token import (
+from axbi.connectors.sqla.models import BaseDatasource
+from axbi.security.guest_token import (
     GuestToken,
     GuestTokenResourceType,
     GuestTokenRlsRule,
     GuestUser,
 )
-from superset.sql.parse import Table
-from superset.utils.rls import get_predicates_for_table
+from axbi.sql.parse import Table
+from axbi.utils.rls import get_predicates_for_table
 
 
 def _make_datasource(dataset_id: int) -> MagicMock:
@@ -103,15 +103,15 @@ def test_scoped_guest_rule_preserved_in_virtual_dataset(app: Flask) -> None:
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             wraps=_guest_rls_filter(guest_user),
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):
@@ -160,15 +160,15 @@ def test_unscoped_guest_rule_duplicated_in_virtual_dataset(app: Flask) -> None:
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             wraps=_guest_rls_filter(guest_user),
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):
@@ -221,20 +221,20 @@ def test_scoped_guest_rule_preserved_through_get_predicates_for_table(
 
     database = mocker.MagicMock()
     database.get_dialect.return_value = sqlite.dialect()
-    db = mocker.patch("superset.utils.rls.db")
+    db = mocker.patch("axbi.utils.rls.db")
     db.session.query().filter().one_or_none.return_value = mock_pd
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             wraps=_guest_rls_filter(guest_user),
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):
@@ -271,20 +271,20 @@ def test_global_guest_rule_excluded_through_get_predicates_for_table(
 
     database = mocker.MagicMock()
     database.get_dialect.return_value = sqlite.dialect()
-    db = mocker.patch("superset.utils.rls.db")
+    db = mocker.patch("axbi.utils.rls.db")
     db.session.query().filter().one_or_none.return_value = mock_pd
 
     with (
         patch(
-            "superset.connectors.sqla.models.security_manager.get_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_rls_filters",
             return_value=[],
         ),
         patch(
-            "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+            "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
             wraps=_guest_rls_filter(guest_user),
         ),
         patch(
-            "superset.connectors.sqla.models.is_feature_enabled",
+            "axbi.connectors.sqla.models.is_feature_enabled",
             return_value=True,
         ),
     ):

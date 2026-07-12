@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DatasourceType, SupersetClient, VizType } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import { DatasourceType, AxBIClient, VizType } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 
 export interface DatasetColumnLike {
   column_name: string;
@@ -47,7 +47,7 @@ export interface StarterChartPlan {
   params: Record<string, unknown>;
 }
 
-const GENERIC_NUMERIC = 0; // GenericDataType.Numeric in @superset-ui/core
+const GENERIC_NUMERIC = 0; // GenericDataType.Numeric in @ax-bi/ui-core
 
 /**
  * Build a small set of chart plans from dataset metadata (X-ray lite).
@@ -133,7 +133,7 @@ export function planStarterCharts(dataset: DatasetLike): StarterChartPlan[] {
 export async function createStarterDashboard(
   datasetId: number,
 ): Promise<{ dashboardId: number; dashboardTitle: string }> {
-  const dsRes = await SupersetClient.get({
+  const dsRes = await AxBIClient.get({
     endpoint: `/api/v1/dataset/${datasetId}`,
   });
   const dataset = dsRes.json?.result as DatasetLike;
@@ -145,7 +145,7 @@ export async function createStarterDashboard(
   const chartIds: number[] = [];
 
   for (const plan of plans) {
-    const chartRes = await SupersetClient.post({
+    const chartRes = await AxBIClient.post({
       endpoint: `/api/v1/chart/`,
       jsonPayload: {
         slice_name: plan.slice_name,
@@ -168,7 +168,7 @@ export async function createStarterDashboard(
   }
 
   const dashboardTitle = t('%s — starter dashboard', dataset.table_name);
-  const dashRes = await SupersetClient.post({
+  const dashRes = await AxBIClient.post({
     endpoint: `/api/v1/dashboard/`,
     jsonPayload: { dashboard_title: dashboardTitle },
   });
@@ -225,7 +225,7 @@ export async function createStarterDashboard(
     };
   });
 
-  await SupersetClient.put({
+  await AxBIClient.put({
     endpoint: `/api/v1/dashboard/${dashboardId}`,
     jsonPayload: {
       json_metadata: JSON.stringify({}),
@@ -236,7 +236,7 @@ export async function createStarterDashboard(
   // Link charts to dashboard
   await Promise.all(
     chartIds.map(chartId =>
-      SupersetClient.put({
+      AxBIClient.put({
         endpoint: `/api/v1/chart/${chartId}`,
         jsonPayload: { dashboards: [dashboardId] },
       }).catch(() => undefined),

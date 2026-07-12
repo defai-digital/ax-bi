@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ControlType } from '@superset-ui/chart-controls';
+import { ControlType } from '@ax-bi/chart-controls';
 import { TooltipTemplateControl } from './TooltipTemplateControl';
 
 /**

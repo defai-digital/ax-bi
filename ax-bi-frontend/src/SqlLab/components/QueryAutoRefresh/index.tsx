@@ -22,13 +22,13 @@ import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 import { isObject } from 'lodash';
 import rison from 'rison';
 import {
-  SupersetClient,
+  AxBIClient,
   Query,
   runningQueryStateList,
   QueryResponse,
   QueryState,
   lruCache,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { QueryDictionary, SqlLabRootState } from 'src/SqlLab/types';
 import useInterval from 'src/SqlLab/utils/useInterval';
 import {
@@ -94,7 +94,7 @@ function QueryAutoRefresh({
 
       const controller = new AbortController();
       pendingRequestRef.current = true;
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/query/updated_since?q=${params}`,
         timeout: QUERY_TIMEOUT_LIMIT,
         parseMethod: 'json-bigint',

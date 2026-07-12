@@ -29,9 +29,9 @@ from flask import current_app
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import db
-from superset.commands.database.uploaders.structured_reader import StructuredReader
-from superset.models.core import Database
+from axbi import db
+from axbi.commands.database.uploaders.structured_reader import StructuredReader
+from axbi.models.core import Database
 from tests.unit_tests.conftest import with_feature_flags
 
 
@@ -71,7 +71,7 @@ class TestGetOrCreateLocalDb:
         Test that get_or_create_local_db creates a new DuckDB database
         when no "Local Files" database exists.
         """
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
         )
 
@@ -109,7 +109,7 @@ class TestGetOrCreateLocalDb:
         Test that get_or_create_local_db reuses an existing "Local Files"
         database instead of creating a new one.
         """
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
         )
 
@@ -146,14 +146,14 @@ class TestGetOrCreateLocalDb:
         Test that a local DB created with the old static/uploads default is
         copied to the configured durable upload path.
         """
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
         )
 
         Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
         session.query(Database).filter_by(database_name="Local Files").delete()
 
-        legacy_path = tmp_path / "superset" / "static" / "uploads"
+        legacy_path = tmp_path / "axbi" / "static" / "uploads"
         legacy_path.mkdir(parents=True)
         legacy_db_path = legacy_path / "local_files.duckdb"
         legacy_db_path.write_bytes(b"legacy duckdb bytes")
@@ -200,7 +200,7 @@ class TestGetOrCreateLocalDb:
         import os
         import tempfile
 
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
         )
 
@@ -255,7 +255,7 @@ class TestGetOrCreateLocalDb:
         import os
         import tempfile
 
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
         )
 
@@ -304,7 +304,7 @@ class TestGetOrCreateLocalDb:
         import os
         import tempfile
 
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
         )
 
@@ -344,7 +344,7 @@ class TestGetOrCreateLocalDb:
         """
         Test that local DB extra metadata parser resets non-string values.
         """
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             _get_raw_extra,
             LOCAL_DB_EXTRA,
         )
@@ -366,7 +366,7 @@ class TestGetOrCreateLocalDb:
         import os
         import tempfile
 
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
             LocalDatabaseConfigurationError,
         )
@@ -417,7 +417,7 @@ class TestGetOrCreateLocalDb:
         import os
         import tempfile
 
-        from superset.commands.database.uploaders.local_db import (
+        from axbi.commands.database.uploaders.local_db import (
             get_or_create_local_db,
         )
 
@@ -523,8 +523,8 @@ class TestAutoUploadEndpoint:
             ("customers.db", b"SQLite bytes are not parsed in this mocked test"),
         ],
     )
-    @patch("superset.databases.api.UploadCommand")
-    @patch("superset.databases.api.get_or_create_local_db")
+    @patch("axbi.databases.api.UploadCommand")
+    @patch("axbi.databases.api.get_or_create_local_db")
     def test_auto_upload_structured_formats_success(
         self,
         mock_get_local_db: MagicMock,
@@ -566,8 +566,8 @@ class TestAutoUploadEndpoint:
         reader = mock_upload_command.call_args[0][4]
         assert isinstance(reader, StructuredReader)
 
-    @patch("superset.databases.api.UploadCommand")
-    @patch("superset.databases.api.get_or_create_local_db")
+    @patch("axbi.databases.api.UploadCommand")
+    @patch("axbi.databases.api.get_or_create_local_db")
     def test_auto_upload_csv_success(
         self,
         mock_get_local_db: MagicMock,
@@ -622,12 +622,12 @@ class TestAutoUploadEndpoint:
         full_api_access: None,
     ) -> None:
         """
-        Test auto_upload writes data to DuckDB and creates a Superset datasource.
+        Test auto_upload writes data to DuckDB and creates a AxBI datasource.
         """
         import duckdb
         from flask_appbuilder.security.sqla.models import User
 
-        from superset.connectors.sqla.models import SqlaTable
+        from axbi.connectors.sqla.models import SqlaTable
 
         Database.metadata.create_all(session.get_bind())  # pylint: disable=no-member
         SqlaTable.metadata.create_all(session.get_bind())  # pylint: disable=no-member
@@ -641,7 +641,7 @@ class TestAutoUploadEndpoint:
         session.add(upload_user)
         session.flush()
         mocker.patch(
-            "superset.commands.database.uploaders.base.get_user",
+            "axbi.commands.database.uploaders.base.get_user",
             return_value=upload_user,
         )
 
@@ -681,8 +681,8 @@ class TestAutoUploadEndpoint:
             ).fetchall()
         assert rows == [("00123", 10.5), ("00124", 20.75)]
 
-    @patch("superset.databases.api.UploadCommand")
-    @patch("superset.databases.api.get_or_create_local_db")
+    @patch("axbi.databases.api.UploadCommand")
+    @patch("axbi.databases.api.get_or_create_local_db")
     def test_auto_upload_truncates_generated_table_name_to_dataset_limit(
         self,
         mock_get_local_db: MagicMock,
@@ -724,8 +724,8 @@ class TestAutoUploadEndpoint:
         assert table_name.startswith("upload_")
         assert mock_upload_command.call_args[0][1] == table_name
 
-    @patch("superset.databases.api.UploadCommand")
-    @patch("superset.databases.api.get_or_create_local_db")
+    @patch("axbi.databases.api.UploadCommand")
+    @patch("axbi.databases.api.get_or_create_local_db")
     def test_auto_upload_blank_custom_table_name_falls_back_to_filename(
         self,
         mock_get_local_db: MagicMock,
@@ -769,8 +769,8 @@ class TestAutoUploadEndpoint:
         assert not table_name.startswith("upload_upload_")
         assert mock_upload_command.call_args[0][1] == table_name
 
-    @patch("superset.databases.api.UploadCommand")
-    @patch("superset.databases.api.get_or_create_local_db")
+    @patch("axbi.databases.api.UploadCommand")
+    @patch("axbi.databases.api.get_or_create_local_db")
     def test_auto_upload_returns_500_when_dataset_missing_after_upload(
         self,
         mock_get_local_db: MagicMock,
@@ -808,9 +808,9 @@ class TestAutoUploadEndpoint:
             == "Upload succeeded but dataset could not be found"
         )
 
-    @patch("superset.databases.api.UploadCommand")
-    @patch("superset.databases.api.get_or_create_local_db")
-    def test_auto_upload_preserves_superset_exception_status(
+    @patch("axbi.databases.api.UploadCommand")
+    @patch("axbi.databases.api.get_or_create_local_db")
+    def test_auto_upload_preserves_axbi_exception_status(
         self,
         mock_get_local_db: MagicMock,
         mock_upload_command: MagicMock,
@@ -821,7 +821,7 @@ class TestAutoUploadEndpoint:
         """
         Test auto_upload preserves command exception status codes.
         """
-        from superset.commands.database.exceptions import DatabaseUploadFileTooLarge
+        from axbi.commands.database.exceptions import DatabaseUploadFileTooLarge
 
         mock_db = MagicMock()
         mock_db.id = 9999
@@ -843,8 +843,8 @@ class TestAutoUploadEndpoint:
             == "Database upload file exceeds the maximum allowed size."
         )
 
-    @patch("superset.databases.api.UploadCommand")
-    @patch("superset.databases.api.get_or_create_local_db")
+    @patch("axbi.databases.api.UploadCommand")
+    @patch("axbi.databases.api.get_or_create_local_db")
     def test_auto_upload_excel_success(
         self,
         mock_get_local_db: MagicMock,
@@ -907,8 +907,8 @@ class TestAnalyticsDbSafety:
         """
         from sqlalchemy.engine.url import make_url
 
-        from superset.exceptions import SupersetSecurityException
-        from superset.security.analytics_db_safety import check_sqlalchemy_uri
+        from axbi.exceptions import AxBISecurityException
+        from axbi.security.analytics_db_safety import check_sqlalchemy_uri
 
         mocker.patch.dict(
             current_app.config,
@@ -916,7 +916,7 @@ class TestAnalyticsDbSafety:
         )
 
         uri = make_url("duckdb:///test.db")
-        with pytest.raises(SupersetSecurityException):
+        with pytest.raises(AxBISecurityException):
             check_sqlalchemy_uri(uri)
 
     def test_duckdb_allowed_when_allow_true(
@@ -929,7 +929,7 @@ class TestAnalyticsDbSafety:
         """
         from sqlalchemy.engine.url import make_url
 
-        from superset.security.analytics_db_safety import check_sqlalchemy_uri
+        from axbi.security.analytics_db_safety import check_sqlalchemy_uri
 
         mocker.patch.dict(
             current_app.config,
@@ -950,8 +950,8 @@ class TestAnalyticsDbSafety:
         """
         from sqlalchemy.engine.url import make_url
 
-        from superset.exceptions import SupersetSecurityException
-        from superset.security.analytics_db_safety import check_sqlalchemy_uri
+        from axbi.exceptions import AxBISecurityException
+        from axbi.security.analytics_db_safety import check_sqlalchemy_uri
 
         mocker.patch.dict(
             current_app.config,
@@ -959,5 +959,5 @@ class TestAnalyticsDbSafety:
         )
 
         uri = make_url("sqlite:///test.db")
-        with pytest.raises(SupersetSecurityException):
+        with pytest.raises(AxBISecurityException):
             check_sqlalchemy_uri(uri)

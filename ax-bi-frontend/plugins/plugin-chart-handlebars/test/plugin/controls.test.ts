@@ -20,8 +20,8 @@ import {
   ControlPanelState,
   ControlState,
   CustomControlItem,
-} from '@superset-ui/chart-controls';
-import { QueryFormData } from '@superset-ui/core';
+} from '@ax-bi/chart-controls';
+import { QueryFormData } from '@ax-bi/ui-core';
 import { handlebarsTemplateControlSetItem } from '../../src/plugin/controls/handlebarTemplate';
 import { styleControlSetItem } from '../../src/plugin/controls/style';
 

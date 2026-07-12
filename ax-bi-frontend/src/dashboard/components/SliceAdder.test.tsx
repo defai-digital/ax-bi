@@ -23,14 +23,14 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { DatasourceType } from '@superset-ui/core';
+import { DatasourceType } from '@ax-bi/ui-core';
 import { sliceEntitiesForDashboard as mockSliceEntities } from 'spec/fixtures/mockSliceEntities';
 import { configureStore } from '@reduxjs/toolkit';
 import SliceAdder, { SliceAdderProps, sortByComparator } from './SliceAdder';
 
 // Mock the Select component to avoid debounce issues
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   Select: ({ value, onChange, options }: any) => (
     <select
       data-test="select"
@@ -156,9 +156,9 @@ describe('SliceAdder', () => {
   // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
   describe('sortByComparator', () => {
     const baseSlice = {
-      slice_url: '/superset/explore/',
+      slice_url: '/ax-bi/explore/',
       thumbnail_url: '/thumbnail',
-      datasource_url: '/superset/datasource/1',
+      datasource_url: '/ax-bi/datasource/1',
       changed_on_humanized: '1 day ago',
       datasource_id: 1,
       datasource_name: 'test_datasource',

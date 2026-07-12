@@ -24,12 +24,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.utils import json
+from axbi.utils import json
 from tests.unit_tests.conftest import with_feature_flags
 
 
 def test_redshift_encrypted_extra_sensitive_fields() -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     assert (
         "$.aws_iam.external_id" in RedshiftEngineSpec.encrypted_extra_sensitive_fields
@@ -38,7 +38,7 @@ def test_redshift_encrypted_extra_sensitive_fields() -> None:
 
 
 def test_redshift_update_params_no_encrypted_extra() -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = None
@@ -50,7 +50,7 @@ def test_redshift_update_params_no_encrypted_extra() -> None:
 
 
 def test_redshift_update_params_empty_encrypted_extra() -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps({})
@@ -62,7 +62,7 @@ def test_redshift_update_params_empty_encrypted_extra() -> None:
 
 
 def test_redshift_update_params_iam_disabled() -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -85,8 +85,8 @@ def test_redshift_update_params_iam_disabled() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_redshift_update_params_with_iam() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -133,8 +133,8 @@ def test_redshift_update_params_with_iam() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_redshift_update_params_with_external_id() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -142,7 +142,7 @@ def test_redshift_update_params_with_external_id() -> None:
             "aws_iam": {
                 "enabled": True,
                 "role_arn": "arn:aws:iam::222222222222:role/CrossAccountRedshift",
-                "external_id": "superset-prod-12345",
+                "external_id": "axbi-prod-12345",
                 "region": "us-west-2",
                 "workgroup_name": "prod-workgroup",
                 "db_name": "analytics",
@@ -178,13 +178,13 @@ def test_redshift_update_params_with_external_id() -> None:
     mock_get_creds.assert_called_once_with(
         role_arn="arn:aws:iam::222222222222:role/CrossAccountRedshift",
         region="us-west-2",
-        external_id="superset-prod-12345",
+        external_id="axbi-prod-12345",
         session_duration=1800,
     )
 
 
 def test_redshift_update_params_merges_remaining_encrypted_extra() -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -203,7 +203,7 @@ def test_redshift_update_params_merges_remaining_encrypted_extra() -> None:
 
 @pytest.mark.parametrize("encrypted_extra", ["not-valid-json", ["not-json"]])
 def test_redshift_update_params_invalid_json(encrypted_extra: object) -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = encrypted_extra
@@ -215,7 +215,7 @@ def test_redshift_update_params_invalid_json(encrypted_extra: object) -> None:
 
 
 def test_redshift_mask_encrypted_extra() -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     encrypted_extra = json.dumps(
         {
@@ -251,8 +251,8 @@ def test_redshift_mask_encrypted_extra() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_redshift_update_params_with_iam_provisioned_cluster() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -262,7 +262,7 @@ def test_redshift_update_params_with_iam_provisioned_cluster() -> None:
                 "role_arn": "arn:aws:iam::123456789012:role/RedshiftRole",
                 "region": "us-east-1",
                 "cluster_identifier": "my-redshift-cluster",
-                "db_username": "superset_user",
+                "db_username": "axbi_user",
                 "db_name": "analytics",
             }
         }
@@ -287,21 +287,21 @@ def test_redshift_update_params_with_iam_provisioned_cluster() -> None:
         patch.object(
             AWSIAMAuthMixin,
             "generate_redshift_cluster_credentials",
-            return_value=("IAM:superset_user", "cluster-temp-password"),
+            return_value=("IAM:axbi_user", "cluster-temp-password"),
         ),
     ):
         RedshiftEngineSpec.update_params_from_encrypted_extra(database, params)
 
     assert "connect_args" in params
     assert params["connect_args"]["password"] == "cluster-temp-password"  # noqa: S105
-    assert params["connect_args"]["user"] == "IAM:superset_user"
+    assert params["connect_args"]["user"] == "IAM:axbi_user"
     assert params["connect_args"]["sslmode"] == "verify-ca"
 
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_redshift_update_params_provisioned_cluster_with_external_id() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -309,7 +309,7 @@ def test_redshift_update_params_provisioned_cluster_with_external_id() -> None:
             "aws_iam": {
                 "enabled": True,
                 "role_arn": "arn:aws:iam::222222222222:role/CrossAccountRedshift",
-                "external_id": "superset-prod-12345",
+                "external_id": "axbi-prod-12345",
                 "region": "us-west-2",
                 "cluster_identifier": "prod-cluster",
                 "db_username": "analytics_user",
@@ -346,13 +346,13 @@ def test_redshift_update_params_provisioned_cluster_with_external_id() -> None:
     mock_get_creds.assert_called_once_with(
         role_arn="arn:aws:iam::222222222222:role/CrossAccountRedshift",
         region="us-west-2",
-        external_id="superset-prod-12345",
+        external_id="axbi-prod-12345",
         session_duration=1800,
     )
 
 
 def test_redshift_mask_encrypted_extra_provisioned_cluster() -> None:
-    from superset.db_engine_specs.redshift import RedshiftEngineSpec
+    from axbi.db_engine_specs.redshift import RedshiftEngineSpec
 
     encrypted_extra = json.dumps(
         {
@@ -362,7 +362,7 @@ def test_redshift_mask_encrypted_extra_provisioned_cluster() -> None:
                 "external_id": "secret-external-id-12345",
                 "region": "us-east-1",
                 "cluster_identifier": "my-cluster",
-                "db_username": "superset_user",
+                "db_username": "axbi_user",
                 "db_name": "analytics",
             }
         }
@@ -384,5 +384,5 @@ def test_redshift_mask_encrypted_extra_provisioned_cluster() -> None:
     assert masked_config["aws_iam"]["enabled"] is True
     assert masked_config["aws_iam"]["region"] == "us-east-1"
     assert masked_config["aws_iam"]["cluster_identifier"] == "my-cluster"
-    assert masked_config["aws_iam"]["db_username"] == "superset_user"
+    assert masked_config["aws_iam"]["db_username"] == "axbi_user"
     assert masked_config["aws_iam"]["db_name"] == "analytics"

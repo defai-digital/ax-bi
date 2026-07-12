@@ -18,17 +18,17 @@
 from datetime import datetime, timezone
 from unittest.mock import patch
 
+from axbi_core.tasks.types import TaskScope, TaskStatus
 from freezegun import freeze_time
-from superset_core.tasks.types import TaskScope, TaskStatus
 
-from superset import db
-from superset.commands.tasks import TaskPruneCommand
-from superset.daos.tasks import TaskDAO
-from superset.models.tasks import Task
+from axbi import db
+from axbi.commands.tasks import TaskPruneCommand
+from axbi.daos.tasks import TaskDAO
+from axbi.models.tasks import Task
 
 
 @freeze_time("2024-02-15")
-@patch("superset.tasks.utils.get_current_user")
+@patch("axbi.tasks.utils.get_current_user")
 def test_prune_tasks_success(mock_get_user, app_context, get_user, login_as) -> None:
     """Test successful pruning of old completed tasks"""
     login_as("admin")
@@ -88,7 +88,7 @@ def test_prune_tasks_success(mock_get_user, app_context, get_user, login_as) -> 
 
 
 @freeze_time("2024-02-15")
-@patch("superset.tasks.utils.get_current_user")
+@patch("axbi.tasks.utils.get_current_user")
 def test_prune_tasks_with_max_rows(
     mock_get_user, app_context, get_user, login_as
 ) -> None:
@@ -135,7 +135,7 @@ def test_prune_tasks_with_max_rows(
 
 
 @freeze_time("2024-02-15")
-@patch("superset.tasks.utils.get_current_user")
+@patch("axbi.tasks.utils.get_current_user")
 def test_prune_does_not_delete_pending_tasks(
     mock_get_user, app_context, get_user, login_as
 ) -> None:
@@ -183,7 +183,7 @@ def test_prune_does_not_delete_pending_tasks(
 
 
 @freeze_time("2024-02-15")
-@patch("superset.tasks.utils.get_current_user")
+@patch("axbi.tasks.utils.get_current_user")
 def test_prune_deletes_all_completed_statuses(
     mock_get_user, app_context, get_user, login_as
 ) -> None:

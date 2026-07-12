@@ -27,7 +27,7 @@
 # - Use different project names: docker-compose -p project1 -f docker-compose-light.yml up
 # - Use different NODE_PORT values: NODE_PORT=9002 docker-compose -p project2 -f docker-compose-light.yml up
 # - Volumes are isolated by project name (e.g., project1_db_home_light, project2_db_home_light)
-# - Database name is intentionally different (superset_light) to prevent accidental cross-connections
+# - Database name is intentionally different (axbi_light) to prevent accidental cross-connections
 #
 # RUNNING TESTS WITH PYTEST:
 # Tests run in an isolated environment with a separate test database.
@@ -57,21 +57,21 @@
 # - Subsequent runs are fast (~2-3 seconds startup)
 # - Use FORCE_RELOAD=true when you need a clean test database
 # - Tests use SimpleCache instead of Redis (no Redis required)
-# - Set SUPERSET_LOG_LEVEL=debug in docker/.env-local for detailed logs
+# - Set AXBI_LOG_LEVEL=debug in docker/.env-local for detailed logs
 # -----------------------------------------------------------------------
 x-ax-bi-user: &ax-bi-user root
 x-ax-bi-volumes: &ax-bi-volumes
   # /app/pythonpath_docker will be appended to the PYTHONPATH in the final container
   - ./docker:/app/docker
-  - ./superset:/app/superset
+  - ./axbi:/app/axbi
   - ./ax-bi-frontend:/app/ax-bi-frontend
-  - superset_home_light:/app/superset_home
+  - axbi_home_light:/app/axbi_home
   - ./tests:/app/tests
 x-common-build: &common-build
   context: .
-  target: ${SUPERSET_BUILD_TARGET:-dev} # can use `dev` (default) or `lean`
+  target: ${AXBI_BUILD_TARGET:-dev} # can use `dev` (default) or `lean`
   cache_from:
-    - apache/superset-cache:3.12-slim-trixie
+    - ghcr.io/defai-digital/ax-bi-cache:3.12-slim-trixie
   args:
     DEV_MODE: "true"
     INCLUDE_CHROMIUM: ${INCLUDE_CHROMIUM:-false}
@@ -92,10 +92,10 @@ services:
       - ./docker/docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
     environment:
       PGDATA: /var/lib/postgresql/data
-      POSTGRES_DB: superset_light
+      POSTGRES_DB: axbi_light
     command: postgres -c max_connections=200
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U superset -d superset_light"]
+      test: ["CMD-SHELL", "pg_isready -U axbi -d axbi_light"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -119,13 +119,13 @@ services:
     volumes: *ax-bi-volumes
     environment:
       DATABASE_HOST: db-light
-      DATABASE_DB: superset_light
-      POSTGRES_DB: superset_light
+      DATABASE_DB: axbi_light
+      POSTGRES_DB: axbi_light
       EXAMPLES_HOST: db-light
-      EXAMPLES_DB: superset_light
-      EXAMPLES_USER: superset
-      EXAMPLES_PASSWORD: superset
-      SUPERSET_CONFIG_PATH: /app/docker/pythonpath_dev/superset_config_docker_light.py
+      EXAMPLES_DB: axbi_light
+      EXAMPLES_USER: axbi
+      EXAMPLES_PASSWORD: axbi
+      AXBI_CONFIG_PATH: /app/docker/pythonpath_dev/axbi_config_docker_light.py
       GITHUB_HEAD_REF: ${GITHUB_HEAD_REF:-}
       GITHUB_SHA: ${GITHUB_SHA:-}
 
@@ -145,20 +145,20 @@ services:
     volumes: *ax-bi-volumes
     environment:
       DATABASE_HOST: db-light
-      DATABASE_DB: superset_light
-      POSTGRES_DB: superset_light
+      DATABASE_DB: axbi_light
+      POSTGRES_DB: axbi_light
       EXAMPLES_HOST: db-light
-      EXAMPLES_DB: superset_light
-      EXAMPLES_USER: superset
-      EXAMPLES_PASSWORD: superset
-      SUPERSET_CONFIG_PATH: /app/docker/pythonpath_dev/superset_config_docker_light.py
+      EXAMPLES_DB: axbi_light
+      EXAMPLES_USER: axbi
+      EXAMPLES_PASSWORD: axbi
+      AXBI_CONFIG_PATH: /app/docker/pythonpath_dev/axbi_config_docker_light.py
     healthcheck:
       disable: true
 
   ax-bi-node-light:
     build:
       context: .
-      target: superset-node
+      target: axbi-node
       args:
         # This prevents building the frontend bundle since we'll mount local folder
         # and build it on startup while firing docker-frontend.sh in dev mode, where
@@ -168,12 +168,12 @@ services:
     environment:
       # set this to false if you have perf issues running the npm i; npm run dev in-docker
       # if you do so, you have to run this manually on the host, which should perform better!
-      BUILD_SUPERSET_FRONTEND_IN_DOCKER: true
+      BUILD_AXBI_FRONTEND_IN_DOCKER: true
       NPM_RUN_PRUNE: false
       SCARF_ANALYTICS: "${SCARF_ANALYTICS:-}"
       DISABLE_TS_CHECKER: "${DISABLE_TS_CHECKER:-true}"
       # configuring the dev-server to use the host.docker.internal to connect to the backend
-      superset: "http://ax-bi-light:8088"
+      axbi: "http://ax-bi-light:8088"
       # Webpack dev server must bind to 0.0.0.0 to be accessible from outside the container
       WEBPACK_DEVSERVER_HOST: "${WEBPACK_DEVSERVER_HOST:-0.0.0.0}"
       WEBPACK_DEVSERVER_PORT: "${WEBPACK_DEVSERVER_PORT:-9000}"
@@ -207,12 +207,12 @@ services:
       DATABASE_HOST: db-light
       DATABASE_DB: test
       POSTGRES_DB: test
-      SUPERSET__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://superset:superset@db-light:5432/test
-      SUPERSET_CONFIG: superset_test_config_light
+      AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://ax-bi:axbi@db-light:5432/test
+      AXBI_CONFIG: axbi_test_config_light
       PYTHONPATH: /app/pythonpath:/app/docker/pythonpath_dev:/app
 
 volumes:
-  superset_home_light:
+  axbi_home_light:
     external: false
   db_home_light:
     external: false

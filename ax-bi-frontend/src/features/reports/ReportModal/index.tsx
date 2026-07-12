@@ -25,10 +25,10 @@ import {
   ChangeEvent,
 } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { getClientErrorObject, VizType } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { getClientErrorObject, VizType } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { AxBITheme } from '@ax-bi/core/theme';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   editReport,
@@ -38,11 +38,11 @@ import {
   Input,
   LabeledErrorBoundInput,
   type CronError,
-} from '@superset-ui/core/components';
-import TimezoneSelector from '@superset-ui/core/components/TimezoneSelector';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Typography } from '@superset-ui/core/components/Typography';
-import { Radio, RadioChangeEvent } from '@superset-ui/core/components/Radio';
+} from '@ax-bi/ui-core/components';
+import TimezoneSelector from '@ax-bi/ui-core/components/TimezoneSelector';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
+import { Radio, RadioChangeEvent } from '@ax-bi/ui-core/components/Radio';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { ChartState } from 'src/explore/types';
 import {
@@ -354,7 +354,7 @@ function ReportModal({
         <StyledScheduleTitle>
           <Typography.Title
             level={5}
-            css={(theme: SupersetTheme) => SectionHeaderStyle(theme)}
+            css={(theme: AxBITheme) => SectionHeaderStyle(theme)}
           >
             {t('Schedule')}
           </Typography.Title>
@@ -372,7 +372,7 @@ function ReportModal({
         <StyledCronError>{cronError?.description}</StyledCronError>
         <div
           className="control-label"
-          css={(theme: SupersetTheme) => TimezoneHeaderStyle(theme)}
+          css={(theme: AxBITheme) => TimezoneHeaderStyle(theme)}
         >
           {t('Timezone')}
         </div>
@@ -388,7 +388,7 @@ function ReportModal({
       {currentReport.error && (
         <Alert
           type="error"
-          css={(theme: SupersetTheme) => antDErrorAlertStyles(theme)}
+          css={(theme: AxBITheme) => antDErrorAlertStyles(theme)}
           message={
             isEditMode
               ? t('Failed to update report')

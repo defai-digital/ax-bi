@@ -23,7 +23,7 @@ import {
   userEvent,
   within,
 } from 'spec/helpers/testing-library';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { FilterableTable } from '.';
 
 const getColumnCellTexts = (columnId: string) =>

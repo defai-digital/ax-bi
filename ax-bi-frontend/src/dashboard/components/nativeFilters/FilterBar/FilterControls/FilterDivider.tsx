@@ -17,10 +17,10 @@
  * under the License.
  */
 
-import { useCSSTextTruncation, truncationCSS } from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Tooltip } from '@superset-ui/core/components';
+import { useCSSTextTruncation, truncationCSS } from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { FilterDividerProps } from './types';
 

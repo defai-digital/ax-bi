@@ -19,12 +19,12 @@
 
 import time
 
-from superset_core.tasks.types import TaskStatus
+from axbi_core.tasks.types import TaskStatus
 
-from superset import db
-from superset.commands.tasks import SubmitTaskCommand
-from superset.daos.tasks import TaskDAO
-from superset.tasks.manager import TaskManager
+from axbi import db
+from axbi.commands.tasks import SubmitTaskCommand
+from axbi.daos.tasks import TaskDAO
+from axbi.tasks.manager import TaskManager
 
 
 def test_submit_task_distinguishes_new_vs_existing(
@@ -90,7 +90,7 @@ def test_wait_for_completion_timeout(app_context, login_as, get_user) -> None:
 
     try:
         # Force polling mode by mocking distributed_coordination as None
-        with patch("superset.tasks.manager.cache_manager") as mock_cache_manager:
+        with patch("axbi.tasks.manager.cache_manager") as mock_cache_manager:
             mock_cache_manager.distributed_coordination = None
             with pytest.raises(TimeoutError):
                 TaskManager.wait_for_completion(

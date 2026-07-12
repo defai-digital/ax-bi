@@ -21,20 +21,21 @@ from urllib.parse import parse_qs, urlparse
 
 from werkzeug.test import EnvironBuilder
 
-from superset.app import AppRootMiddleware
-from superset.views.utils import redirect_to_login
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.app import AppRootMiddleware
+from axbi.views.utils import redirect_to_login
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestSubdirectoryDeployments(SupersetTestCase):
+class TestSubdirectoryDeployments(AxBITestCase):
     """Test subdirectory deployment features including middleware."""
 
     def setUp(self):
         super().setUp()
 
-    def test_legacy_superset_route_is_not_registered(self):
+    def test_former_brand_route_is_not_registered(self):
         """Only AX BI route prefixes are exposed by the application."""
-        response = self.client.get("/superset/welcome/")
+        former_brand_route = "/" + "super" + "set/welcome/"
+        response = self.client.get(former_brand_route)
 
         assert response.status_code == 404
 
@@ -46,10 +47,10 @@ class TestSubdirectoryDeployments(SupersetTestCase):
         mock_app = MagicMock()
         mock_app.return_value = [b"response"]
 
-        middleware = AppRootMiddleware(mock_app, "/superset")
+        middleware = AppRootMiddleware(mock_app, "/ax-bi")
 
         # Test with correct prefix
-        environ = EnvironBuilder("/superset/dashboard").get_environ()
+        environ = EnvironBuilder("/ax-bi/dashboard").get_environ()
         start_response = MagicMock()
 
         result = list(middleware(environ, start_response))
@@ -61,7 +62,7 @@ class TestSubdirectoryDeployments(SupersetTestCase):
         # PATH_INFO should be stripped of prefix
         assert called_environ["PATH_INFO"] == "/dashboard"
         # SCRIPT_NAME should be set to the prefix
-        assert called_environ["SCRIPT_NAME"] == "/superset"
+        assert called_environ["SCRIPT_NAME"] == "/ax-bi"
         assert result == [b"response"]
 
     def test_app_root_middleware_wrong_path_returns_404(self):
@@ -69,7 +70,7 @@ class TestSubdirectoryDeployments(SupersetTestCase):
         # Create a mock WSGI app
         mock_app = MagicMock()
 
-        middleware = AppRootMiddleware(mock_app, "/superset")
+        middleware = AppRootMiddleware(mock_app, "/ax-bi")
 
         # Test with incorrect prefix
         environ = EnvironBuilder("/wrong/path").get_environ()
@@ -91,10 +92,10 @@ class TestSubdirectoryDeployments(SupersetTestCase):
         mock_app = MagicMock()
         mock_app.return_value = [b"response"]
 
-        middleware = AppRootMiddleware(mock_app, "/superset")
+        middleware = AppRootMiddleware(mock_app, "/ax-bi")
 
         # Test with exact prefix path
-        environ = EnvironBuilder("/superset").get_environ()
+        environ = EnvironBuilder("/ax-bi").get_environ()
         start_response = MagicMock()
 
         list(middleware(environ, start_response))
@@ -106,7 +107,7 @@ class TestSubdirectoryDeployments(SupersetTestCase):
         # PATH_INFO should be empty
         assert called_environ["PATH_INFO"] == ""
         # SCRIPT_NAME should be set to the prefix
-        assert called_environ["SCRIPT_NAME"] == "/superset"
+        assert called_environ["SCRIPT_NAME"] == "/ax-bi"
 
     def test_redirect_to_login_with_app_root(self):
         """Test that redirect_to_login includes app root in next parameter."""

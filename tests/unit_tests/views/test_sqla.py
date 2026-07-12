@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for ``superset/views/sqla.py``."""
+"""Tests for ``axbi/views/sqla.py``."""
 
 
 def test_row_level_security_view_uses_canonical_permission_name() -> None:
@@ -36,16 +36,16 @@ def test_row_level_security_view_uses_canonical_permission_name() -> None:
     confusing and error-prone (the second one looks like an
     implementation detail leaking into the UI).
 
-    The fix is a one-line change in ``superset/views/sqla.py`` to align
+    The fix is a one-line change in ``axbi/views/sqla.py`` to align
     ``class_permission_name`` with the canonical name used elsewhere in
     the codebase. This test pins that contract.
     """
     # Cross-check: the security manager's allow-list (the canonical
     # source of truth for RLS view-menu naming) uses the spaced form.
-    from superset.security.manager import SupersetSecurityManager
-    from superset.views.sqla import RowLevelSecurityView
+    from axbi.security.manager import AxBISecurityManager
+    from axbi.views.sqla import RowLevelSecurityView
 
-    assert "Row Level Security" in SupersetSecurityManager.ADMIN_ONLY_VIEW_MENUS
+    assert "Row Level Security" in AxBISecurityManager.ADMIN_ONLY_VIEW_MENUS
     assert RowLevelSecurityView.class_permission_name == "Row Level Security", (
         "RLS view's class_permission_name diverges from the canonical "
         '"Row Level Security" used by the API and security manager — '

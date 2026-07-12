@@ -24,9 +24,9 @@ from flask import Flask
 from freezegun import freeze_time
 from pytest_mock import MockerFixture
 
-from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-from superset.models.core import Database
-from superset.superset_typing import QueryObjectDict
+from axbi.axbi_typing import QueryObjectDict
+from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+from axbi.models.core import Database
 
 
 def test_time_filter_applied_once_with_remove_filter_in_virtual_dataset(
@@ -82,11 +82,11 @@ def test_time_filter_applied_once_with_remove_filter_in_virtual_dataset(
 
     # Mock the security manager to avoid RLS checks
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+        "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
         return_value=[],
     )
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.is_guest_user",
+        "axbi.connectors.sqla.models.security_manager.is_guest_user",
         return_value=False,
     )
 
@@ -205,11 +205,11 @@ def test_time_filter_removed_from_outer_query_simple_case(
     )
 
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+        "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
         return_value=[],
     )
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.is_guest_user",
+        "axbi.connectors.sqla.models.security_manager.is_guest_user",
         return_value=False,
     )
 
@@ -307,11 +307,11 @@ def test_time_filter_with_timestamp_alias(mocker: MockerFixture, app: Flask) -> 
     )
 
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.get_guest_rls_filters",
+        "axbi.connectors.sqla.models.security_manager.get_guest_rls_filters",
         return_value=[],
     )
     mocker.patch(
-        "superset.connectors.sqla.models.security_manager.is_guest_user",
+        "axbi.connectors.sqla.models.security_manager.is_guest_user",
         return_value=False,
     )
 

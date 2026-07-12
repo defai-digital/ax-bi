@@ -36,27 +36,27 @@ from trino.exceptions import TrinoExternalError, TrinoInternalError, TrinoUserEr
 from trino.sqlalchemy import datatype
 from trino.sqlalchemy.dialect import TrinoDialect
 
-import superset.config
-from superset.constants import (
-    DEFAULT_USER_AGENT,
-    QUERY_CANCEL_KEY,
-    QUERY_EARLY_CANCEL_KEY,
-)
-from superset.db_engine_specs.exceptions import (
-    SupersetDBAPIConnectionError,
-    SupersetDBAPIDatabaseError,
-    SupersetDBAPIOperationalError,
-    SupersetDBAPIProgrammingError,
-)
-from superset.sql.parse import Table
-from superset.superset_typing import (
+import axbi.config
+from axbi.axbi_typing import (
     OAuth2ClientConfig,
     ResultSetColumnType,
     SQLAColumnType,
     SQLType,
 )
-from superset.utils import json
-from superset.utils.core import GenericDataType
+from axbi.constants import (
+    DEFAULT_USER_AGENT,
+    QUERY_CANCEL_KEY,
+    QUERY_EARLY_CANCEL_KEY,
+)
+from axbi.db_engine_specs.exceptions import (
+    AxBIDBAPIConnectionError,
+    AxBIDBAPIDatabaseError,
+    AxBIDBAPIOperationalError,
+    AxBIDBAPIProgrammingError,
+)
+from axbi.sql.parse import Table
+from axbi.utils import json
+from axbi.utils.core import GenericDataType
 from tests.common.assert_utils import assert_called_with_text
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
@@ -106,7 +106,7 @@ def _assert_columns_equal(actual_cols, expected_cols) -> None:
     ],
 )
 def test_get_extra_params(extra: dict[str, Any], expected: dict[str, Any]) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
 
@@ -115,9 +115,9 @@ def test_get_extra_params(extra: dict[str, Any], expected: dict[str, Any]) -> No
     assert TrinoEngineSpec.get_extra_params(database) == expected
 
 
-@patch("superset.db_engine_specs.trino.create_ssl_cert_file")
+@patch("axbi.db_engine_specs.trino.create_ssl_cert_file")
 def test_get_extra_params_with_server_cert(mock_create_ssl_cert_file: Mock) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
 
@@ -135,7 +135,7 @@ def test_get_extra_params_with_server_cert(mock_create_ssl_cert_file: Mock) -> N
 
 @patch("trino.auth.BasicAuthentication")
 def test_auth_basic(mock_auth: Mock) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
 
@@ -153,12 +153,12 @@ def test_auth_basic(mock_auth: Mock) -> None:
 
 @patch("trino.auth.KerberosAuthentication")
 def test_auth_kerberos(mock_auth: Mock) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
 
     auth_params = {
-        "service_name": "superset",
+        "service_name": "axbi",
         "mutual_authentication": False,
         "delegate": True,
     }
@@ -175,7 +175,7 @@ def test_auth_kerberos(mock_auth: Mock) -> None:
 
 @patch("trino.auth.CertificateAuthentication")
 def test_auth_certificate(mock_auth: Mock) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
     auth_params = {"cert": "/path/to/cert.pem", "key": "/path/to/key.pem"}
@@ -192,7 +192,7 @@ def test_auth_certificate(mock_auth: Mock) -> None:
 
 @patch("trino.auth.JWTAuthentication")
 def test_auth_jwt(mock_auth: Mock) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
 
@@ -209,7 +209,7 @@ def test_auth_jwt(mock_auth: Mock) -> None:
 
 
 def test_auth_custom_auth() -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
     auth_class = Mock()
@@ -221,7 +221,7 @@ def test_auth_custom_auth() -> None:
     )
 
     with patch.dict(
-        "superset.config.ALLOWED_EXTRA_AUTHENTICATIONS",
+        "axbi.config.ALLOWED_EXTRA_AUTHENTICATIONS",
         {"trino": {"custom_auth": auth_class}},
         clear=True,
     ):
@@ -235,7 +235,7 @@ def test_auth_custom_auth() -> None:
 
 
 def test_auth_custom_auth_denied() -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
     auth_method = "my.module:TrinoAuthClass"
@@ -244,7 +244,7 @@ def test_auth_custom_auth_denied() -> None:
         {"auth_method": auth_method, "auth_params": auth_params}
     )
 
-    superset.config.ALLOWED_EXTRA_AUTHENTICATIONS = {}
+    axbi.config.ALLOWED_EXTRA_AUTHENTICATIONS = {}
 
     with pytest.raises(ValueError) as excinfo:  # noqa: PT011
         TrinoEngineSpec.update_params_from_encrypted_extra(database, {})
@@ -256,7 +256,7 @@ def test_auth_custom_auth_denied() -> None:
 
 
 def test_auth_ignores_non_object_encrypted_extra() -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     database = Mock()
     database.encrypted_extra = "[]"
@@ -309,7 +309,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.trino import TrinoEngineSpec as spec  # noqa: N813
 
     assert_column_spec(
         spec,
@@ -337,13 +337,13 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     assert_convert_dttm(TrinoEngineSpec, target_type, expected_result, dttm)
 
 
 def test_get_extra_table_metadata(mocker: MockerFixture) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     db_mock = mocker.MagicMock()
     db_mock.get_indexes = Mock(
@@ -368,7 +368,7 @@ def test_get_extra_table_metadata_iceberg_unpartitioned(
     columns, so an unpartitioned Iceberg table yields no partition metadata and
     no latest-partition query.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     db_mock = mocker.MagicMock()
     db_mock.get_indexes = Mock(
@@ -399,7 +399,7 @@ def test_get_extra_table_metadata_iceberg_partitioned(
     in the ROW and not directly queryable here, the partition block is skipped
     rather than generating an invalid latest-partition query.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     db_mock = mocker.MagicMock()
     db_mock.get_indexes = Mock(
@@ -433,8 +433,8 @@ def test_latest_sub_partition_iceberg(mocker: MockerFixture) -> None:
     metadata fields: with no real partition keys it raises instead of building
     SQL.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.exceptions import SupersetTemplateException
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.exceptions import AxBITemplateException
 
     db_mock = mocker.MagicMock()
     db_mock.get_indexes = Mock(
@@ -446,7 +446,7 @@ def test_latest_sub_partition_iceberg(mocker: MockerFixture) -> None:
         ]
     )
     db_mock.get_df = Mock()
-    with pytest.raises(SupersetTemplateException):
+    with pytest.raises(AxBITemplateException):
         TrinoEngineSpec.latest_sub_partition(
             db_mock,
             Table("test_table", "test_schema"),
@@ -460,7 +460,7 @@ def test_filter_iceberg_partition_indexes() -> None:
     Iceberg ``$partitions`` metadata indexes are dropped while real partition
     indexes (and any index sharing only some metadata names) pass through.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     # Iceberg metadata-only partition index is dropped entirely.
     assert (
@@ -512,8 +512,8 @@ def test_filter_iceberg_partition_indexes() -> None:
 
 @patch("sqlalchemy.engine.Engine.connect")
 def test_cancel_query_success(engine_mock: Mock) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -522,8 +522,8 @@ def test_cancel_query_success(engine_mock: Mock) -> None:
 
 @patch("sqlalchemy.engine.Engine.connect")
 def test_cancel_query_failed(engine_mock: Mock) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.raiseError.side_effect = Exception()
@@ -542,8 +542,8 @@ def test_prepare_cancel_query(
     final_extra: dict[str, Any],
     mocker: MockerFixture,
 ) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query(extra_json=json.dumps(initial_extra))
     TrinoEngineSpec.prepare_cancel_query(query=query)
@@ -551,10 +551,10 @@ def test_prepare_cancel_query(
 
 
 @pytest.mark.parametrize("cancel_early", [True, False])
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_early_cancel(
     mock_app: Mock,
     mock_db: Mock,
@@ -563,8 +563,8 @@ def test_handle_cursor_early_cancel(
     cancel_early: bool,
     mocker: MockerFixture,
 ) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -591,7 +591,7 @@ def test_handle_cursor_early_cancel(
 
 def test_execute_with_cursor_in_parallel(app, mocker: MockerFixture):
     """Test that `execute_with_cursor` fetches query ID from the cursor"""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     query_id = "myQueryId"
 
@@ -607,7 +607,7 @@ def test_execute_with_cursor_in_parallel(app, mocker: MockerFixture):
         mock_cursor.execute.side_effect = _mock_execute
 
         with patch.dict(
-            "superset.config.DISALLOWED_SQL_FUNCTIONS",
+            "axbi.config.DISALLOWED_SQL_FUNCTIONS",
             {},
             clear=True,
         ):
@@ -624,7 +624,7 @@ def test_execute_with_cursor_in_parallel(app, mocker: MockerFixture):
 
 def test_execute_with_cursor_app_context(app, mocker: MockerFixture):
     """Test that `execute_with_cursor` still contains the current app context"""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     mock_cursor = mocker.MagicMock()
     mock_cursor.query_id = None
@@ -640,7 +640,7 @@ def test_execute_with_cursor_app_context(app, mocker: MockerFixture):
 
         with patch.object(TrinoEngineSpec, "execute", side_effect=_mock_execute):
             with patch.dict(
-                "superset.config.DISALLOWED_SQL_FUNCTIONS",
+                "axbi.config.DISALLOWED_SQL_FUNCTIONS",
                 {},
                 clear=True,
             ):
@@ -653,7 +653,7 @@ def test_execute_with_cursor_app_context(app, mocker: MockerFixture):
 
 def test_get_columns(mocker: MockerFixture):
     """Test that ROW columns are not expanded without expand_rows"""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     field1_type = datatype.parse_sqltype("row(a varchar, b date)")
     field2_type = datatype.parse_sqltype("row(r1 row(a varchar, b varchar))")
@@ -687,7 +687,7 @@ def test_get_columns_error(mocker: MockerFixture):
     """
     Test that we fallback to a `SHOW COLUMNS FROM ...` query.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     field1_type = datatype.parse_sqltype("row(a varchar, b date)")
     field2_type = datatype.parse_sqltype("row(r1 row(a varchar, b varchar))")
@@ -746,7 +746,7 @@ def test_get_columns_error(mocker: MockerFixture):
 
 def test_get_columns_expand_rows(mocker: MockerFixture):
     """Test that ROW columns are correctly expanded with expand_rows"""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     field1_type = datatype.parse_sqltype("row(a varchar, b date)")
     field2_type = datatype.parse_sqltype("row(r1 row(a varchar, b varchar))")
@@ -816,7 +816,7 @@ def test_get_columns_expand_rows(mocker: MockerFixture):
 
 
 def test_get_indexes_no_table():
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     db_mock = Mock()
     inspector_mock = Mock()
@@ -832,13 +832,13 @@ def test_get_indexes_no_table():
 
 
 def test_get_dbapi_exception_mapping():
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     mapping = TrinoEngineSpec.get_dbapi_exception_mapping()
-    assert mapping.get(TrinoUserError) == SupersetDBAPIProgrammingError
-    assert mapping.get(TrinoInternalError) == SupersetDBAPIDatabaseError
-    assert mapping.get(TrinoExternalError) == SupersetDBAPIOperationalError
-    assert mapping.get(RequestsConnectionError) == SupersetDBAPIConnectionError
+    assert mapping.get(TrinoUserError) == AxBIDBAPIProgrammingError
+    assert mapping.get(TrinoInternalError) == AxBIDBAPIDatabaseError
+    assert mapping.get(TrinoExternalError) == AxBIDBAPIOperationalError
+    assert mapping.get(RequestsConnectionError) == AxBIDBAPIConnectionError
     assert mapping.get(Exception) is None
 
 
@@ -846,7 +846,7 @@ def test_adjust_engine_params_fully_qualified() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has catalog and schema.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     url = make_url("trino://user:pass@localhost:8080/system/default")
 
@@ -892,7 +892,7 @@ def test_adjust_engine_params_catalog_only() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has only the catalog.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     url = make_url("trino://user:pass@localhost:8080/system")
 
@@ -946,8 +946,8 @@ def test_get_default_catalog(sqlalchemy_uri: str, result: str | None) -> None:
     """
     Test the ``get_default_catalog`` method.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.core import Database
 
     database = Database(
         database_name="my_db",
@@ -956,7 +956,7 @@ def test_get_default_catalog(sqlalchemy_uri: str, result: str | None) -> None:
     assert TrinoEngineSpec.get_default_catalog(database) == result
 
 
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.latest_partition")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.latest_partition")
 @pytest.mark.parametrize(
     ["column_type", "column_value", "expected_value"],
     [
@@ -972,7 +972,7 @@ def test_where_latest_partition(
     column_value: Any,
     expected_value: str,
 ) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
     mock_latest_partition.return_value = (["partition_key"], [column_value])
 
@@ -1022,9 +1022,9 @@ def test_get_oauth2_token(
     """
     Test `get_oauth2_token`.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
-    requests = mocker.patch("superset.db_engine_specs.base.requests")
+    requests = mocker.patch("axbi.db_engine_specs.base.requests")
     requests.post().json.return_value = {
         "access_token": "access-token",
         "expires_in": 3600,
@@ -1059,9 +1059,9 @@ def test_needs_oauth2_with_401_error(mocker: MockerFixture) -> None:
     """
     from trino.exceptions import HttpError
 
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.trino.g")
+    g = mocker.patch("axbi.db_engine_specs.trino.g")
     g.user = mocker.MagicMock()
 
     ex = HttpError("error 401: Unauthorized")
@@ -1074,9 +1074,9 @@ def test_needs_oauth2_without_401_error(mocker: MockerFixture) -> None:
     """
     from trino.exceptions import HttpError
 
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.trino.g")
+    g = mocker.patch("axbi.db_engine_specs.trino.g")
     g.user = mocker.MagicMock()
 
     ex = HttpError("error 500: Internal Server Error")
@@ -1087,9 +1087,9 @@ def test_needs_oauth2_with_non_http_error(mocker: MockerFixture) -> None:
     """
     Test that needs_oauth2 returns False for non-HttpError exceptions.
     """
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.trino.g")
+    g = mocker.patch("axbi.db_engine_specs.trino.g")
     g.user = mocker.MagicMock()
 
     ex = RuntimeError("error 401: something else")
@@ -1102,9 +1102,9 @@ def test_needs_oauth2_without_user(mocker: MockerFixture) -> None:
     """
     from trino.exceptions import HttpError
 
-    from superset.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.trino.g")
+    g = mocker.patch("axbi.db_engine_specs.trino.g")
     del g.user
 
     ex = HttpError("error 401: Unauthorized")
@@ -1166,7 +1166,7 @@ def test_needs_oauth2_without_user(mocker: MockerFixture) -> None:
     ],
 )
 def test_timegrain_expressions(time_grain: str, expected_result: str) -> None:
-    from superset.db_engine_specs.trino import TrinoEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.trino import TrinoEngineSpec as spec  # noqa: N813
 
     actual = str(
         spec.get_timestamp_expr(col=column("col"), pdf=None, time_grain=time_grain)
@@ -1174,10 +1174,10 @@ def test_timegrain_expressions(time_grain: str, expected_result: str) -> None:
     assert actual == expected_result
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_progress_updates(
     mock_app: Mock,
     mock_db: Mock,
@@ -1186,8 +1186,8 @@ def test_handle_cursor_progress_updates(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor updates query progress based on cursor stats."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1215,7 +1215,7 @@ def test_handle_cursor_progress_updates(
                 "totalSplits": 10,
             }
 
-    with patch("superset.db_engine_specs.trino.time.sleep", side_effect=update_stats):
+    with patch("axbi.db_engine_specs.trino.time.sleep", side_effect=update_stats):
         query = Query()
         query.status = "running"
         TrinoEngineSpec.handle_cursor(cursor=cursor_mock, query=query)
@@ -1224,10 +1224,10 @@ def test_handle_cursor_progress_updates(
     assert mock_db.session.commit.called
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_cancels_on_stopped_status(
     mock_app: Mock,
     mock_db: Mock,
@@ -1236,9 +1236,9 @@ def test_handle_cursor_cancels_on_stopped_status(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor cancels query when status is STOPPED."""
-    from superset.common.db_query_status import QueryStatus
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.common.db_query_status import QueryStatus
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1249,7 +1249,7 @@ def test_handle_cursor_cancels_on_stopped_status(
     query = Query()
     query.status = QueryStatus.STOPPED
 
-    with patch("superset.db_engine_specs.trino.time.sleep"):
+    with patch("axbi.db_engine_specs.trino.time.sleep"):
         TrinoEngineSpec.handle_cursor(cursor=cursor_mock, query=query)
 
     mock_cancel_query.assert_called_once_with(
@@ -1259,10 +1259,10 @@ def test_handle_cursor_cancels_on_stopped_status(
     )
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_cancels_on_timed_out_status(
     mock_app: Mock,
     mock_db: Mock,
@@ -1271,9 +1271,9 @@ def test_handle_cursor_cancels_on_timed_out_status(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor cancels query when status is TIMED_OUT."""
-    from superset.common.db_query_status import QueryStatus
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.common.db_query_status import QueryStatus
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1284,7 +1284,7 @@ def test_handle_cursor_cancels_on_timed_out_status(
     query = Query()
     query.status = QueryStatus.TIMED_OUT
 
-    with patch("superset.db_engine_specs.trino.time.sleep"):
+    with patch("axbi.db_engine_specs.trino.time.sleep"):
         TrinoEngineSpec.handle_cursor(cursor=cursor_mock, query=query)
 
     mock_cancel_query.assert_called_once_with(
@@ -1294,10 +1294,10 @@ def test_handle_cursor_cancels_on_timed_out_status(
     )
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_breaks_on_execute_error(
     mock_app: Mock,
     mock_db: Mock,
@@ -1306,8 +1306,8 @@ def test_handle_cursor_breaks_on_execute_error(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor breaks the loop when execute_result has an error."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1329,10 +1329,10 @@ def test_handle_cursor_breaks_on_execute_error(
     mock_cancel_query.assert_not_called()
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_breaks_on_execute_event_set(
     mock_app: Mock,
     mock_db: Mock,
@@ -1343,8 +1343,8 @@ def test_handle_cursor_breaks_on_execute_event_set(
     """Test that handle_cursor breaks the loop when execute_event is set."""
     import threading
 
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1370,10 +1370,10 @@ def test_handle_cursor_breaks_on_execute_event_set(
     mock_cancel_query.assert_not_called()
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_handles_zero_total_splits(
     mock_app: Mock,
     mock_db: Mock,
@@ -1382,8 +1382,8 @@ def test_handle_cursor_handles_zero_total_splits(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor handles zero totalSplits without division error."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1405,7 +1405,7 @@ def test_handle_cursor_handles_zero_total_splits(
     # Start with zero splits
     cursor_mock.stats = {"state": "RUNNING", "completedSplits": 0, "totalSplits": 0}
 
-    with patch("superset.db_engine_specs.trino.time.sleep", side_effect=update_stats):
+    with patch("axbi.db_engine_specs.trino.time.sleep", side_effect=update_stats):
         query = Query()
         query.status = "running"
         # Should not raise ZeroDivisionError
@@ -1415,10 +1415,10 @@ def test_handle_cursor_handles_zero_total_splits(
     assert query.progress == 0.0
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_only_commits_on_progress_change(
     mock_app: Mock,
     mock_db: Mock,
@@ -1427,8 +1427,8 @@ def test_handle_cursor_only_commits_on_progress_change(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor only commits when progress changes."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1456,7 +1456,7 @@ def test_handle_cursor_only_commits_on_progress_change(
 
     cursor_mock.stats = {"state": "RUNNING", "completedSplits": 5, "totalSplits": 10}
 
-    with patch("superset.db_engine_specs.trino.time.sleep", side_effect=update_stats):
+    with patch("axbi.db_engine_specs.trino.time.sleep", side_effect=update_stats):
         query = Query()
         query.status = "running"
         TrinoEngineSpec.handle_cursor(cursor=cursor_mock, query=query)
@@ -1468,10 +1468,10 @@ def test_handle_cursor_only_commits_on_progress_change(
     assert commit_calls >= 2  # At least initial commit and one progress update
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_sets_progress_text_for_planning_state(
     mock_app: Mock,
     mock_db: Mock,
@@ -1480,8 +1480,8 @@ def test_handle_cursor_sets_progress_text_for_planning_state(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor sets progress_text to 'Scheduled' for PLANNING state."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1503,7 +1503,7 @@ def test_handle_cursor_sets_progress_text_for_planning_state(
     # Start with PLANNING state
     cursor_mock.stats = {"state": "PLANNING", "completedSplits": 0, "totalSplits": 10}
 
-    with patch("superset.db_engine_specs.trino.time.sleep", side_effect=update_stats):
+    with patch("axbi.db_engine_specs.trino.time.sleep", side_effect=update_stats):
         query = Query()
         query.status = "running"
         TrinoEngineSpec.handle_cursor(cursor=cursor_mock, query=query)
@@ -1512,10 +1512,10 @@ def test_handle_cursor_sets_progress_text_for_planning_state(
     assert query.extra.get("progress_text") is not None
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_sets_progress_text_for_queued_state(
     mock_app: Mock,
     mock_db: Mock,
@@ -1524,8 +1524,8 @@ def test_handle_cursor_sets_progress_text_for_queued_state(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor sets progress_text to 'Queued' for QUEUED state."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1547,7 +1547,7 @@ def test_handle_cursor_sets_progress_text_for_queued_state(
     # Start with QUEUED state
     cursor_mock.stats = {"state": "QUEUED", "completedSplits": 0, "totalSplits": 0}
 
-    with patch("superset.db_engine_specs.trino.time.sleep", side_effect=update_stats):
+    with patch("axbi.db_engine_specs.trino.time.sleep", side_effect=update_stats):
         query = Query()
         query.status = "running"
         TrinoEngineSpec.handle_cursor(cursor=cursor_mock, query=query)
@@ -1556,10 +1556,10 @@ def test_handle_cursor_sets_progress_text_for_queued_state(
     assert query.extra.get("progress_text") is not None
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_sets_progress_text_to_state_for_unmapped_states(
     mock_app: Mock,
     mock_db: Mock,
@@ -1568,8 +1568,8 @@ def test_handle_cursor_sets_progress_text_to_state_for_unmapped_states(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor sets progress_text to raw state for unmapped states."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1588,10 +1588,10 @@ def test_handle_cursor_sets_progress_text_to_state_for_unmapped_states(
     assert query.extra.get("progress_text") == "FINISHED"
 
 
-@patch("superset.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
-@patch("superset.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
-@patch("superset.db_engine_specs.trino.db")
-@patch("superset.db_engine_specs.trino.app")
+@patch("axbi.db_engine_specs.presto.PrestoBaseEngineSpec.handle_cursor")
+@patch("axbi.db_engine_specs.trino.TrinoEngineSpec.cancel_query")
+@patch("axbi.db_engine_specs.trino.db")
+@patch("axbi.db_engine_specs.trino.app")
 def test_handle_cursor_commits_on_progress_text_change(
     mock_app: Mock,
     mock_db: Mock,
@@ -1600,8 +1600,8 @@ def test_handle_cursor_commits_on_progress_text_change(
     mocker: MockerFixture,
 ) -> None:
     """Test that handle_cursor commits only when progress_text changes."""
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.models.sql_lab import Query
 
     mock_app.config = {"DB_POLL_INTERVAL_SECONDS": {"trino": 0}}
 
@@ -1630,7 +1630,7 @@ def test_handle_cursor_commits_on_progress_text_change(
     # Start with QUEUED state and 0 progress
     cursor_mock.stats = {"state": "QUEUED", "completedSplits": 0, "totalSplits": 10}
 
-    with patch("superset.db_engine_specs.trino.time.sleep", side_effect=update_stats):
+    with patch("axbi.db_engine_specs.trino.time.sleep", side_effect=update_stats):
         query = Query()
         query.status = "running"
         TrinoEngineSpec.handle_cursor(cursor=cursor_mock, query=query)
@@ -1647,8 +1647,8 @@ def test_handle_boolean_filter() -> None:
     """
     from sqlalchemy import Boolean, Column
 
-    from superset.db_engine_specs.trino import TrinoEngineSpec
-    from superset.utils.core import FilterOperator
+    from axbi.db_engine_specs.trino import TrinoEngineSpec
+    from axbi.utils.core import FilterOperator
 
     bool_col = Column("test_col", Boolean)
 

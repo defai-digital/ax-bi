@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset.commands.database.export import parse_extra
-from superset.utils import json
+from axbi.commands.database.export import parse_extra
+from axbi.utils import json
 
 
 def test_parse_extra_returns_empty_dict_for_non_object_json() -> None:

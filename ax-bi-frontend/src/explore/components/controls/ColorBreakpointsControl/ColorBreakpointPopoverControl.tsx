@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useState, useMemo } from 'react';
-import { Button, Row, Col, InputNumber } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { validateNumber } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { Button, Row, Col, InputNumber } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { validateNumber } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import ControlHeader from '../../ControlHeader';
 import ColorPickerControl from '../ColorPickerControl';
 import {

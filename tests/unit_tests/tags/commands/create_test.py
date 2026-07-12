@@ -18,17 +18,17 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import db
-from superset.utils.core import DatasourceType
+from axbi import db
+from axbi.utils.core import DatasourceType
 
 
 @pytest.fixture
 def session_with_data(session: Session):
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.models.core import Database
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import SavedQuery
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.models.core import Database
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import SavedQuery
 
     engine = session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -68,22 +68,20 @@ def session_with_data(session: Session):
 
 
 def test_create_command_success(session_with_data: Session, mocker: MockerFixture):
-    from superset.commands.tag.create import CreateCustomTagWithRelationshipsCommand
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import SavedQuery
-    from superset.tags.models import ObjectType, TaggedObject
+    from axbi.commands.tag.create import CreateCustomTagWithRelationshipsCommand
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import SavedQuery
+    from axbi.tags.models import ObjectType, TaggedObject
 
     # Define a list of objects to tag
     query = db.session.query(SavedQuery).first()
     chart = db.session.query(Slice).first()
     dashboard = db.session.query(Dashboard).first()
 
-    mocker.patch(
-        "superset.security.SupersetSecurityManager.is_admin", return_value=True
-    )
-    mocker.patch("superset.daos.chart.ChartDAO.find_by_id", return_value=chart)
-    mocker.patch("superset.daos.query.SavedQueryDAO.find_by_id", return_value=query)
+    mocker.patch("axbi.security.AxBISecurityManager.is_admin", return_value=True)
+    mocker.patch("axbi.daos.chart.ChartDAO.find_by_id", return_value=chart)
+    mocker.patch("axbi.daos.query.SavedQueryDAO.find_by_id", return_value=query)
 
     objects_to_tag = [
         (ObjectType.query, query.id),
@@ -111,22 +109,20 @@ def test_create_command_success(session_with_data: Session, mocker: MockerFixtur
 def test_create_command_success_clear(
     session_with_data: Session, mocker: MockerFixture
 ):
-    from superset.commands.tag.create import CreateCustomTagWithRelationshipsCommand
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import SavedQuery
-    from superset.tags.models import ObjectType, TaggedObject
+    from axbi.commands.tag.create import CreateCustomTagWithRelationshipsCommand
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import SavedQuery
+    from axbi.tags.models import ObjectType, TaggedObject
 
     # Define a list of objects to tag
     query = db.session.query(SavedQuery).first()
     chart = db.session.query(Slice).first()
     dashboard = db.session.query(Dashboard).first()
 
-    mocker.patch(
-        "superset.security.SupersetSecurityManager.is_admin", return_value=True
-    )
-    mocker.patch("superset.daos.chart.ChartDAO.find_by_id", return_value=chart)
-    mocker.patch("superset.daos.query.SavedQueryDAO.find_by_id", return_value=query)
+    mocker.patch("axbi.security.AxBISecurityManager.is_admin", return_value=True)
+    mocker.patch("axbi.daos.chart.ChartDAO.find_by_id", return_value=chart)
+    mocker.patch("axbi.daos.query.SavedQueryDAO.find_by_id", return_value=query)
 
     objects_to_tag = [
         (ObjectType.query, query.id),

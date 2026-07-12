@@ -29,18 +29,18 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { uniqWith } from 'lodash';
 import cx from 'classnames';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DataMaskStateWithId,
   Filters,
   JsonObject,
   usePrevious,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { setDirectPathToChild } from 'src/dashboard/actions/dashboardState';
 import { useChartLayoutItems } from 'src/dashboard/util/useChartLayoutItems';
-import { Badge } from '@superset-ui/core/components';
+import { Badge } from '@ax-bi/ui-core/components';
 import DetailsPanelPopover from './DetailsPanel';
 import {
   Indicator,

@@ -1,4 +1,4 @@
-name: 🎪 Superset Showtime
+name: 🎪 AxBI Showtime
 
 # Ultra-simple: just sync on any PR state change
 on:
@@ -100,11 +100,11 @@ jobs:
             console.log(`✅ Authorized maintainer: ${actor}`);
             core.setOutput('authorized', 'true');
 
-      - name: Install Superset Showtime
+      - name: Install AxBI Showtime
         if: steps.auth.outputs.authorized == 'true'
         run: |
           echo "::notice::Maintainer $GITHUB_ACTOR triggered deploy for PR ${PULL_REQUEST_NUMBER}"
-          pip install --upgrade superset-showtime
+          pip install --upgrade axbi-showtime
           showtime version
 
         env:

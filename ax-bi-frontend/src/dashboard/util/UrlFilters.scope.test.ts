@@ -29,7 +29,7 @@
  * test pins down that contract so a future refactor of `getAllActiveFilters`
  * can't silently break the wiring again.
  */
-import { DataMaskStateWithId } from '@superset-ui/core';
+import { DataMaskStateWithId } from '@ax-bi/ui-core';
 import { getAllActiveFilters } from './activeAllDashboardFilters';
 import {
   RISON_UNMATCHED_DATAMASK_ID,

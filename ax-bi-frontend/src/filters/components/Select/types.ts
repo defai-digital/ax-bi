@@ -24,8 +24,8 @@ import {
   FilterState,
   QueryFormData,
   ChartDataResponseResult,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { RefObject } from 'react';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { PluginFilterHooks, PluginFilterStylesProps } from '../types';

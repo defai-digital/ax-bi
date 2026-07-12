@@ -448,19 +448,6 @@ cd ax-bi-frontend
 npm ci
 ```
 
-Note that Superset uses [Scarf](https://docs.scarf.sh) to capture telemetry/analytics about versions being installed, including the `scarf-js` npm package and an analytics pixel. As noted elsewhere in this documentation, Scarf gathers aggregated stats for the sake of security/release strategy and does not capture/retain PII. [You can read here](https://docs.scarf.sh/package-analytics/) about the `scarf-js` package, and various means to opt out of it, but you can opt out of the npm package _and_ the pixel by setting the `SCARF_ANALYTICS` environment variable to `false` or opt out of the pixel by adding this setting in `superset-frontent/package.json`:
-
-```json
-// your-package/package.json
-{
-  // ...
-  "scarfSettings": {
-    "enabled": false
-  }
-  // ...
-}
-```
-
 #### Build assets
 
 There are three types of assets you can build:

@@ -19,7 +19,7 @@ from collections import defaultdict
 
 
 def cleanup_permissions() -> None:
-    from superset import security_manager
+    from axbi import security_manager
 
     # 1. Clean up duplicates.
     pvms = security_manager.get_session.query(
@@ -76,8 +76,8 @@ def main() -> None:
     )
     parser.parse_args()
 
-    from superset.app import create_app
-    from superset.utils.decorators import transaction
+    from axbi.app import create_app
+    from axbi.utils.decorators import transaction
 
     app = create_app()
     with app.app_context():

@@ -18,13 +18,13 @@ from collections.abc import Callable
 
 import pytest
 
-from superset import db
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.utils.core import get_example_default_schema
-from superset.utils.database import get_example_database
+from axbi import db
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.utils.core import get_example_default_schema
+from axbi.utils.database import get_example_database
 from tests.example_data.data_loading.base_data_loader import DataLoader
 from tests.example_data.data_loading.data_definitions.types import Table
 from tests.integration_tests.dashboard_utils import create_table_metadata
@@ -74,7 +74,7 @@ def _create_dashboards():
         fetch_values_predicate="123 = 123",
     )
 
-    from superset.examples.birth_names import create_dashboard, create_slices
+    from axbi.examples.birth_names import create_dashboard, create_slices
 
     slices, _ = create_slices(table)
     dash = create_dashboard(slices)
@@ -94,7 +94,7 @@ def _create_table(
         database=database,
         fetch_values_predicate=fetch_values_predicate,
     )
-    from superset.examples.birth_names import _add_table_metrics, _set_table_metadata
+    from axbi.examples.birth_names import _add_table_metrics, _set_table_metadata
 
     _set_table_metadata(table, database)
     _add_table_metrics(table)

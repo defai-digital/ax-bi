@@ -19,10 +19,10 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { usePrevious } from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
+import { usePrevious } from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
 import { Global } from '@emotion/react';
-import type { editors } from '@apache-superset/core';
+import type { editors } from '@ax-bi/core';
 
 import { SQL_EDITOR_LEFTBAR_WIDTH } from 'src/SqlLab/constants';
 import { queryEditorSetSelectedText } from 'src/SqlLab/actions/sqlLab';

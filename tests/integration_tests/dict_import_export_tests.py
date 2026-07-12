@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import unittest
 from uuid import uuid4
@@ -23,20 +23,20 @@ from uuid import uuid4
 import yaml
 
 from tests.integration_tests.test_app import app
-from superset import db
+from axbi import db
 
-from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-from superset.utils.database import get_example_database
-from superset.utils import json
+from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+from axbi.utils.database import get_example_database
+from axbi.utils import json
 
-from .base_tests import SupersetTestCase
+from .base_tests import AxBITestCase
 
 DBREF = "dict_import__export_test"
 NAME_PREFIX = "dict_"
 ID_PREFIX = 20000
 
 
-class TestDictImportExport(SupersetTestCase):
+class TestDictImportExport(AxBITestCase):
     """Testing export import functionality for dashboards"""
 
     @classmethod

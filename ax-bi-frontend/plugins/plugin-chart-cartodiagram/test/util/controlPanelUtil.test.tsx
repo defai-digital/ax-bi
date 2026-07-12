@@ -17,10 +17,7 @@
  * under the License.
  */
 
-import {
-  ControlPanelConfig,
-  CustomControlItem,
-} from '@superset-ui/chart-controls';
+import { ControlPanelConfig, CustomControlItem } from '@ax-bi/chart-controls';
 import {
   getLayerConfig,
   selectedChartMutator,

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormColumn, QueryFormOrderBy } from '@superset-ui/core';
+import { QueryFormColumn, QueryFormOrderBy } from '@ax-bi/ui-core';
 
 /**
  * Builds orderby clauses from a list of columns, filtering out any non-string

@@ -18,10 +18,10 @@
  */
 import { memo, useEffect, useCallback, useMemo, useState, useRef } from 'react';
 import { uniq, debounce } from 'lodash';
-import { t } from '@apache-superset/core/translation';
-import { ChartCustomizationType, NativeFilterType } from '@superset-ui/core';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
-import { Constants, Form, Icons, Flex } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { ChartCustomizationType, NativeFilterType } from '@ax-bi/ui-core';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
+import { Constants, Form, Icons, Flex } from '@ax-bi/ui-core/components';
 import { ErrorBoundary } from 'src/components';
 import { testWithId } from 'src/utils/testUtils';
 import useEffectEvent from 'src/hooks/useEffectEvent';

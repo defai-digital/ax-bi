@@ -20,9 +20,9 @@ import pytest
 from flask_appbuilder.security.sqla.models import Role, User
 from pytest_mock import MockerFixture
 
-from superset.commands.dashboard.create import CreateDashboardCommand
-from superset.commands.dashboard.exceptions import DashboardInvalidError
-from superset.extensions import security_manager
+from axbi.commands.dashboard.create import CreateDashboardCommand
+from axbi.commands.dashboard.exceptions import DashboardInvalidError
+from axbi.extensions import security_manager
 from tests.unit_tests.fixtures.common import admin_user, after_each  # noqa: F401
 
 

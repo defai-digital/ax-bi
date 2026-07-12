@@ -17,12 +17,12 @@
 
 from unittest.mock import patch
 
-from superset.semantic_layers import labels
+from axbi.semantic_layers import labels
 
 
 def test_labels_feature_flag_off() -> None:
     with patch(
-        "superset.feature_flag_manager.is_feature_enabled",
+        "axbi.feature_flag_manager.is_feature_enabled",
         return_value=False,
     ):
         assert labels.dataset_label() == "Dataset"
@@ -38,7 +38,7 @@ def test_labels_feature_flag_off() -> None:
 
 def test_labels_feature_flag_on() -> None:
     with patch(
-        "superset.feature_flag_manager.is_feature_enabled",
+        "axbi.feature_flag_manager.is_feature_enabled",
         return_value=True,
     ):
         assert labels.dataset_label() == "Datasource"

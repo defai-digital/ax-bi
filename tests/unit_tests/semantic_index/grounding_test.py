@@ -20,13 +20,13 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from superset.semantic_index.governance import (
+from axbi.semantic_index.governance import (
     aliases_for,
     load_dataset_eval_cases,
     load_dataset_instructions,
     load_dataset_policies,
 )
-from superset.semantic_index.grounding import build_grounding_contract
+from axbi.semantic_index.grounding import build_grounding_contract
 
 
 def _dataset() -> SimpleNamespace:

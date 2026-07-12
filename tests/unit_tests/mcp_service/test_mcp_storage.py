@@ -26,11 +26,11 @@ def test_get_mcp_store_returns_none_when_disabled():
     mock_flask_app.config.get.return_value = {"enabled": False}
 
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app",
+        "axbi.mcp_service.flask_singleton.get_flask_app",
         return_value=mock_flask_app,
     ):
         with patch("flask.has_app_context", return_value=True):
-            from superset.mcp_service.storage import get_mcp_store
+            from axbi.mcp_service.storage import get_mcp_store
 
             result = get_mcp_store(prefix="test_")
 
@@ -47,11 +47,11 @@ def test_get_mcp_store_returns_none_when_no_redis_url():
     }
 
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app",
+        "axbi.mcp_service.flask_singleton.get_flask_app",
         return_value=mock_flask_app,
     ):
         with patch("flask.has_app_context", return_value=True):
-            from superset.mcp_service.storage import get_mcp_store
+            from axbi.mcp_service.storage import get_mcp_store
 
             result = get_mcp_store(prefix="test_")
 
@@ -73,12 +73,12 @@ def test_get_mcp_store_creates_store_when_enabled():
     mock_wrapper_class = MagicMock(return_value=mock_wrapper_instance)
 
     with patch(
-        "superset.mcp_service.flask_singleton.get_flask_app",
+        "axbi.mcp_service.flask_singleton.get_flask_app",
         return_value=mock_flask_app,
     ):
         with patch("flask.has_app_context", return_value=True):
             with patch(
-                "superset.mcp_service.storage._import_wrapper_class",
+                "axbi.mcp_service.storage._import_wrapper_class",
                 return_value=mock_wrapper_class,
             ):
                 with patch(
@@ -86,10 +86,10 @@ def test_get_mcp_store_creates_store_when_enabled():
                     return_value=mock_redis_store,
                 ):
                     with patch(
-                        "superset.mcp_service.storage.Redis",
+                        "axbi.mcp_service.storage.Redis",
                         return_value=mock_redis_client,
                     ):
-                        from superset.mcp_service.storage import get_mcp_store
+                        from axbi.mcp_service.storage import get_mcp_store
 
                         result = get_mcp_store(prefix="test_prefix_")
 
@@ -116,10 +116,10 @@ def test_create_redis_store_wrap_false_returns_raw_store():
         return_value=mock_redis_store,
     ) as mock_redis_store_class:
         with patch(
-            "superset.mcp_service.storage.Redis",
+            "axbi.mcp_service.storage.Redis",
             return_value=mock_redis_client,
         ) as mock_redis_class:
-            from superset.mcp_service.storage import _create_redis_store
+            from axbi.mcp_service.storage import _create_redis_store
 
             result = _create_redis_store(store_config, wrap=False)
 
@@ -147,7 +147,7 @@ def test_create_redis_store_wrap_true_requires_prefix():
         "key_value.aio.stores.redis.RedisStore",
         return_value=mock_redis_store,
     ):
-        from superset.mcp_service.storage import _create_redis_store
+        from axbi.mcp_service.storage import _create_redis_store
 
         # wrap=True (default) with no prefix should return None
         result = _create_redis_store(store_config, prefix=None, wrap=True)
@@ -170,10 +170,10 @@ def test_create_redis_store_handles_ssl_url():
         return_value=mock_redis_store,
     ):
         with patch(
-            "superset.mcp_service.storage.Redis",
+            "axbi.mcp_service.storage.Redis",
             return_value=mock_redis_client,
         ) as mock_redis_class:
-            from superset.mcp_service.storage import _create_redis_store
+            from axbi.mcp_service.storage import _create_redis_store
 
             result = _create_redis_store(store_config, wrap=False)
 
@@ -202,10 +202,10 @@ def test_create_redis_store_non_ssl_url_no_ssl_param():
         return_value=mock_redis_store,
     ):
         with patch(
-            "superset.mcp_service.storage.Redis",
+            "axbi.mcp_service.storage.Redis",
             return_value=mock_redis_client,
         ) as mock_redis_class:
-            from superset.mcp_service.storage import _create_redis_store
+            from axbi.mcp_service.storage import _create_redis_store
 
             result = _create_redis_store(store_config, wrap=False)
 
@@ -231,10 +231,10 @@ def test_create_redis_store_handles_url_with_username_and_password():
         return_value=mock_redis_store,
     ):
         with patch(
-            "superset.mcp_service.storage.Redis",
+            "axbi.mcp_service.storage.Redis",
             return_value=mock_redis_client,
         ) as mock_redis_class:
-            from superset.mcp_service.storage import _create_redis_store
+            from axbi.mcp_service.storage import _create_redis_store
 
             result = _create_redis_store(store_config, wrap=False)
 
@@ -260,10 +260,10 @@ def test_create_redis_store_decodes_percent_encoded_credentials():
         return_value=mock_redis_store,
     ):
         with patch(
-            "superset.mcp_service.storage.Redis",
+            "axbi.mcp_service.storage.Redis",
             return_value=mock_redis_client,
         ) as mock_redis_class:
-            from superset.mcp_service.storage import _create_redis_store
+            from axbi.mcp_service.storage import _create_redis_store
 
             result = _create_redis_store(store_config, wrap=False)
 
@@ -287,10 +287,10 @@ def test_create_redis_store_handles_url_with_only_username():
         return_value=mock_redis_store,
     ):
         with patch(
-            "superset.mcp_service.storage.Redis",
+            "axbi.mcp_service.storage.Redis",
             return_value=mock_redis_client,
         ) as mock_redis_class:
-            from superset.mcp_service.storage import _create_redis_store
+            from axbi.mcp_service.storage import _create_redis_store
 
             result = _create_redis_store(store_config, wrap=False)
 

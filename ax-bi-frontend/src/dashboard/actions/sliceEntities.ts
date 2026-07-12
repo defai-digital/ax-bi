@@ -17,12 +17,12 @@
  * under the License.
  */
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DatasourceType,
-  SupersetClient,
+  AxBIClient,
   getClientErrorObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import { Dispatch } from 'redux';
 import { Slice, SliceEntitiesState } from '../types';
@@ -152,7 +152,7 @@ export function fetchSlices(
       filters.push({ col: 'owners', opr: 'rel_m_m', value: userId });
     }
 
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/chart/?q=${rison.encode({
         columns: [
           'changed_on_delta_humanized',

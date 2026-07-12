@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonValue, QueryFormData } from '@superset-ui/core';
-import { ControlStateMapping } from '@superset-ui/chart-controls';
+import { JsonValue, QueryFormData } from '@ax-bi/ui-core';
+import { ControlStateMapping } from '@ax-bi/chart-controls';
 
 export function getFormDataFromControls(
   controlsState: ControlStateMapping,

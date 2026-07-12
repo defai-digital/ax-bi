@@ -17,14 +17,14 @@
 
 from unittest.mock import Mock, patch
 
-from superset.daos.theme import ThemeDAO
-from superset.models.core import Theme
+from axbi.daos.theme import ThemeDAO
+from axbi.models.core import Theme
 
 
 class TestThemeDAO:
     """Unit tests for ThemeDAO class"""
 
-    @patch("superset.daos.theme.db")
+    @patch("axbi.daos.theme.db")
     def test_find_by_uuid_exists(self, mock_db):
         """Test finding a theme by UUID when it exists"""
         # Arrange
@@ -42,7 +42,7 @@ class TestThemeDAO:
         mock_query.filter.assert_called_once()
         mock_query.filter.return_value.first.assert_called_once()
 
-    @patch("superset.daos.theme.db")
+    @patch("axbi.daos.theme.db")
     def test_find_by_uuid_not_exists(self, mock_db):
         """Test finding a theme by UUID when it doesn't exist"""
         # Arrange

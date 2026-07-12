@@ -22,11 +22,11 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 
-@patch("superset.examples.generic_loader.get_example_database")
-@patch("superset.examples.generic_loader.db")
+@patch("axbi.examples.generic_loader.get_example_database")
+@patch("axbi.examples.generic_loader.db")
 def test_load_parquet_table_sets_uuid_on_new_table(mock_db, mock_get_db):
     """Test that load_parquet_table sets UUID on newly created SqlaTable."""
-    from superset.examples.generic_loader import load_parquet_table
+    from axbi.examples.generic_loader import load_parquet_table
 
     mock_database = MagicMock()
     mock_database.id = 1
@@ -46,7 +46,7 @@ def test_load_parquet_table_sets_uuid_on_new_table(mock_db, mock_get_db):
 
     test_uuid = "12345678-1234-1234-1234-123456789012"
 
-    with patch("superset.examples.generic_loader.inspect") as mock_inspect:
+    with patch("axbi.examples.generic_loader.inspect") as mock_inspect:
         mock_inspect.return_value = mock_inspector
 
         tbl = load_parquet_table(
@@ -60,8 +60,8 @@ def test_load_parquet_table_sets_uuid_on_new_table(mock_db, mock_get_db):
     assert tbl.uuid == test_uuid
 
 
-@patch("superset.examples.generic_loader.get_example_database")
-@patch("superset.examples.generic_loader.db")
+@patch("axbi.examples.generic_loader.get_example_database")
+@patch("axbi.examples.generic_loader.db")
 def test_load_parquet_table_early_return_does_not_modify_existing_uuid(
     mock_db, mock_get_db
 ):
@@ -71,7 +71,7 @@ def test_load_parquet_table_early_return_does_not_modify_existing_uuid(
     without going through the full load path. The existing table's UUID is
     preserved as-is (not modified even if different from the provided uuid).
     """
-    from superset.examples.generic_loader import load_parquet_table
+    from axbi.examples.generic_loader import load_parquet_table
 
     mock_database = MagicMock()
     mock_database.id = 1
@@ -95,7 +95,7 @@ def test_load_parquet_table_early_return_does_not_modify_existing_uuid(
 
     test_uuid = "12345678-1234-1234-1234-123456789012"
 
-    with patch("superset.examples.generic_loader.inspect") as mock_inspect:
+    with patch("axbi.examples.generic_loader.inspect") as mock_inspect:
         mock_inspect.return_value = mock_inspector
 
         tbl = load_parquet_table(
@@ -112,11 +112,11 @@ def test_load_parquet_table_early_return_does_not_modify_existing_uuid(
     assert tbl.uuid is None
 
 
-@patch("superset.examples.generic_loader.get_example_database")
-@patch("superset.examples.generic_loader.db")
+@patch("axbi.examples.generic_loader.get_example_database")
+@patch("axbi.examples.generic_loader.db")
 def test_load_parquet_table_preserves_existing_uuid(mock_db, mock_get_db):
     """Test that load_parquet_table does not overwrite existing UUID."""
-    from superset.examples.generic_loader import load_parquet_table
+    from axbi.examples.generic_loader import load_parquet_table
 
     mock_database = MagicMock()
     mock_database.id = 1
@@ -141,7 +141,7 @@ def test_load_parquet_table_preserves_existing_uuid(mock_db, mock_get_db):
 
     new_uuid = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
 
-    with patch("superset.examples.generic_loader.inspect") as mock_inspect:
+    with patch("axbi.examples.generic_loader.inspect") as mock_inspect:
         mock_inspect.return_value = mock_inspector
 
         tbl = load_parquet_table(
@@ -156,11 +156,11 @@ def test_load_parquet_table_preserves_existing_uuid(mock_db, mock_get_db):
     assert tbl.uuid == existing_uuid
 
 
-@patch("superset.examples.generic_loader.get_example_database")
-@patch("superset.examples.generic_loader.db")
+@patch("axbi.examples.generic_loader.get_example_database")
+@patch("axbi.examples.generic_loader.db")
 def test_load_parquet_table_works_without_uuid(mock_db, mock_get_db):
     """Test that load_parquet_table works correctly when no UUID is provided."""
-    from superset.examples.generic_loader import load_parquet_table
+    from axbi.examples.generic_loader import load_parquet_table
 
     mock_database = MagicMock()
     mock_database.id = 1
@@ -178,7 +178,7 @@ def test_load_parquet_table_works_without_uuid(mock_db, mock_get_db):
     # Simulate table not found
     mock_db.session.query.return_value.filter_by.return_value.first.return_value = None
 
-    with patch("superset.examples.generic_loader.inspect") as mock_inspect:
+    with patch("axbi.examples.generic_loader.inspect") as mock_inspect:
         mock_inspect.return_value = mock_inspector
 
         tbl = load_parquet_table(
@@ -195,7 +195,7 @@ def test_load_parquet_table_works_without_uuid(mock_db, mock_get_db):
 
 def test_create_generic_loader_passes_uuid():
     """Test that create_generic_loader passes UUID to load_parquet_table."""
-    from superset.examples.generic_loader import create_generic_loader
+    from axbi.examples.generic_loader import create_generic_loader
 
     test_uuid = "12345678-1234-1234-1234-123456789012"
     loader = create_generic_loader(
@@ -205,7 +205,7 @@ def test_create_generic_loader_passes_uuid():
     )
 
     # Verify loader was created with UUID in closure
-    with patch("superset.examples.generic_loader.load_parquet_table") as mock_load:
+    with patch("axbi.examples.generic_loader.load_parquet_table") as mock_load:
         mock_load.return_value = MagicMock()
 
         loader(only_metadata=True)
@@ -218,7 +218,7 @@ def test_create_generic_loader_passes_uuid():
 
 def test_create_generic_loader_without_uuid():
     """Test that create_generic_loader works without UUID (backward compat)."""
-    from superset.examples.generic_loader import create_generic_loader
+    from axbi.examples.generic_loader import create_generic_loader
 
     loader = create_generic_loader(
         parquet_file="test_data",
@@ -226,7 +226,7 @@ def test_create_generic_loader_without_uuid():
         # No uuid
     )
 
-    with patch("superset.examples.generic_loader.load_parquet_table") as mock_load:
+    with patch("axbi.examples.generic_loader.load_parquet_table") as mock_load:
         mock_load.return_value = MagicMock()
 
         loader(only_metadata=True)
@@ -237,7 +237,7 @@ def test_create_generic_loader_without_uuid():
 
 
 def test_write_dataframe_to_table_uses_sqlite_connection(tmp_path):
-    from superset.examples.generic_loader import _write_dataframe_to_table
+    from axbi.examples.generic_loader import _write_dataframe_to_table
 
     database_path = tmp_path / "examples.db"
     database = MagicMock()

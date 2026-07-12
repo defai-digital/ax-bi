@@ -19,18 +19,18 @@ from unittest.mock import patch
 from uuid import UUID, uuid4
 
 import pytest
-from superset_core.tasks.types import TaskScope, TaskStatus
+from axbi_core.tasks.types import TaskScope, TaskStatus
 
-from superset import db
-from superset.commands.tasks.cancel import CancelTaskCommand
-from superset.commands.tasks.exceptions import (
+from axbi import db
+from axbi.commands.tasks.cancel import CancelTaskCommand
+from axbi.commands.tasks.exceptions import (
     TaskAbortFailedError,
     TaskNotAbortableError,
     TaskNotFoundError,
     TaskPermissionDeniedError,
 )
-from superset.daos.tasks import TaskDAO
-from superset.utils.core import override_user
+from axbi.daos.tasks import TaskDAO
+from axbi.utils.core import override_user
 from tests.integration_tests.test_app import app
 
 
@@ -88,7 +88,7 @@ def test_cancel_in_progress_abortable_task_sets_aborting(app_context, get_user) 
         # Cancel the in-progress task - mock publish_abort to avoid Redis dependency
         with (
             override_user(admin),
-            patch("superset.tasks.manager.TaskManager.publish_abort"),
+            patch("axbi.tasks.manager.TaskManager.publish_abort"),
         ):
             command = CancelTaskCommand(task_uuid=task.uuid)
             result = command.run()

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled } from '@apache-superset/core/theme';
-import { FormItem } from '@superset-ui/core/components';
+import { styled } from '@ax-bi/core/theme';
+import { FormItem } from '@ax-bi/ui-core/components';
 import { PluginFilterStylesProps } from './types';
 
 export const RESPONSIVE_WIDTH = 0;

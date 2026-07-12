@@ -15,18 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import sqlalchemy
 from sqlalchemy import Column, Integer
-from superset.advanced_data_type.types import (
+from axbi.advanced_data_type.types import (
     AdvancedDataTypeRequest,
     AdvancedDataTypeResponse,
 )
-from superset.utils.core import FilterOperator, FilterStringOperators
+from axbi.utils.core import FilterOperator, FilterStringOperators
 
-from superset.advanced_data_type.plugins.internet_address import internet_address
-from superset.advanced_data_type.plugins.internet_port import internet_port as port
+from axbi.advanced_data_type.plugins.internet_address import internet_address
+from axbi.advanced_data_type.plugins.internet_port import internet_port as port
 
 
 def test_ip_func_valid_ip():

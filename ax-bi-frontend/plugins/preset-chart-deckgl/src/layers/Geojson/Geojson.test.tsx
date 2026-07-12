@@ -20,12 +20,12 @@ import type { ReactElement } from 'react';
 import type {
   ControlPanelSectionConfig,
   CustomControlItem,
-} from '@superset-ui/chart-controls';
-import { isCustomControlItem } from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
+import { isCustomControlItem } from '@ax-bi/chart-controls';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { render } from '@testing-library/react';
-import { SqlaFormData } from '@superset-ui/core';
-import { supersetTheme, ThemeProvider } from '@apache-superset/core/theme';
+import { SqlaFormData } from '@ax-bi/ui-core';
+import { axbiTheme, ThemeProvider } from '@ax-bi/core/theme';
 import DeckGLGeoJson, {
   computeGeoJsonTextOptionsFromJsOutput,
   computeGeoJsonTextOptionsFromFormData,
@@ -183,7 +183,7 @@ test('getPoints skips malformed GeoJSON entries instead of throwing', () => {
 });
 
 const renderWithTheme = (component: ReactElement) =>
-  render(<ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>);
+  render(<ThemeProvider theme={axbiTheme}>{component}</ThemeProvider>);
 
 const geoJsonProps = {
   formData: {

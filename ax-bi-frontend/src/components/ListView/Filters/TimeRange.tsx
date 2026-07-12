@@ -25,24 +25,15 @@ import {
   type ComponentProps,
   type RefObject,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  NO_TIME_RANGE,
-  SupersetClient,
-  fetchTimeRange,
-} from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { NO_TIME_RANGE, AxBIClient, fetchTimeRange } from '@ax-bi/ui-core';
 import rison from 'rison';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import {
-  Button,
-  Constants,
-  Divider,
-  Icons,
-} from '@superset-ui/core/components';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { Button, Constants, Divider, Icons } from '@ax-bi/ui-core/components';
 // imported directly (not via the components barrel) so `styled(Select)` at
 // module scope doesn't read an uninitialized binding when this module is
 // reached through an import cycle
-import { Select } from '@superset-ui/core/components/Select';
+import { Select } from '@ax-bi/ui-core/components/Select';
 import { useDebouncedEffect } from 'src/explore/exploreUtils';
 import {
   FRAME_OPTIONS,
@@ -273,7 +264,7 @@ function TimeRangeFilter(
             // fetchTimeRange returns a formatted display string ("X ≤ col < Y"),
             // not the raw since/until strings. Call the API directly to get them.
             try {
-              const response = await SupersetClient.get({
+              const response = await AxBIClient.get({
                 endpoint: `/api/v1/time_range/?q=${rison.encode_uri(timeRangeValue)}`,
               });
               const since: string | undefined =

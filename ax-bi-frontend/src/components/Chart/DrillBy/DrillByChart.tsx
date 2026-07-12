@@ -22,8 +22,8 @@ import {
   QueryData,
   SuperChart,
   ContextMenuFilters,
-} from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
 import { Dataset } from '../types';
 
 interface DrillByChartProps {

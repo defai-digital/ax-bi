@@ -20,8 +20,8 @@ import type {
   ControlPanelState,
   ControlPanelConfig,
   CustomControlItem,
-} from '@superset-ui/chart-controls';
-import { OSM_TILE_STYLE_URL } from '@superset-ui/core/utils/mapStyles';
+} from '@ax-bi/chart-controls';
+import { OSM_TILE_STYLE_URL } from '@ax-bi/ui-core/utils/mapStyles';
 import controlPanel from '../src/controlPanel';
 
 type ControlConfig = Required<CustomControlItem['config']>;

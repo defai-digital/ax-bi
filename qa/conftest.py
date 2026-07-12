@@ -21,17 +21,17 @@ from collections.abc import Iterator
 
 import pytest
 
-from superset.app import SupersetApp
-from superset.extensions import appbuilder
-from superset.initialization import SupersetAppInitializer
+from axbi.app import AxBIApp
+from axbi.extensions import appbuilder
+from axbi.initialization import AxBIAppInitializer
 
 
-def _create_qa_app() -> SupersetApp:
-    """Create a minimal Superset app for standalone upload QA tests."""
-    app = SupersetApp(__name__)
-    app.config.from_object("superset.config")
+def _create_qa_app() -> AxBIApp:
+    """Create a minimal AxBI app for standalone upload QA tests."""
+    app = AxBIApp(__name__)
+    app.config.from_object("axbi.config")
     app.config["SQLALCHEMY_DATABASE_URI"] = (
-        os.environ.get("SUPERSET__SQLALCHEMY_DATABASE_URI") or "sqlite://"
+        os.environ.get("AXBI__SQLALCHEMY_DATABASE_URI") or "sqlite://"
     )
     app.config["WTF_CSRF_ENABLED"] = False
     app.config["PREVENT_UNSAFE_DB_CONNECTIONS"] = False
@@ -45,7 +45,7 @@ def _create_qa_app() -> SupersetApp:
     app.config["READ_CSV_CHUNK_SIZE"] = 1000
 
     appbuilder.baseviews = []
-    SupersetAppInitializer(app).init_app()
+    AxBIAppInitializer(app).init_app()
     return app
 
 
@@ -53,13 +53,13 @@ QA_APP = _create_qa_app()
 
 
 @pytest.fixture(scope="session")
-def qa_app() -> SupersetApp:
-    """Return the initialized QA Superset app."""
+def qa_app() -> AxBIApp:
+    """Return the initialized QA AxBI app."""
     return QA_APP
 
 
 @pytest.fixture(autouse=True)
-def qa_app_context(qa_app: SupersetApp) -> Iterator[None]:
+def qa_app_context(qa_app: AxBIApp) -> Iterator[None]:
     """Provide Flask current_app config for upload readers used in QA."""
     with qa_app.app_context():
         yield

@@ -19,7 +19,7 @@ from typing import Any
 
 import pytest
 
-from superset.views.custom_tags_api_mixin import CustomTagsOptimizationMixin
+from axbi.views.custom_tags_api_mixin import CustomTagsOptimizationMixin
 
 
 class BaseApiStub:

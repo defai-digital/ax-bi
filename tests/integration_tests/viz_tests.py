@@ -24,20 +24,20 @@ import pandas as pd
 import pytest
 
 import tests.integration_tests.test_app  # noqa: F401
-import superset.viz as viz
+import axbi.viz as viz
 from flask import current_app
-from superset.exceptions import QueryObjectValidationError, SpatialException
-from superset.utils.core import DTTM_ALIAS, ExtraFiltersReasonType
-from superset.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
+from axbi.exceptions import QueryObjectValidationError, SpatialException
+from axbi.utils.core import DTTM_ALIAS, ExtraFiltersReasonType
+from axbi.utils.pandas_postprocessing.utils import FLAT_COLUMN_SEPARATOR
 from tests.conftest import with_config
 
-from .base_tests import SupersetTestCase
+from .base_tests import AxBITestCase
 from .utils import load_fixture
 
 logger = logging.getLogger(__name__)
 
 
-class TestBaseViz(SupersetTestCase):
+class TestBaseViz(AxBITestCase):
     def test_constructor_exception_no_datasource(self):
         form_data = {}
         datasource = None
@@ -181,7 +181,7 @@ class TestBaseViz(SupersetTestCase):
         )
 
 
-class TestPairedTTest(SupersetTestCase):
+class TestPairedTTest(AxBITestCase):
     def test_get_data_transforms_dataframe(self):
         form_data = {
             "groupby": ["groupA", "groupB", "groupC"],
@@ -315,8 +315,8 @@ class TestPairedTTest(SupersetTestCase):
             viz.viz_types["paired_ttest"](datasource, form_data)
 
 
-class TestPartitionViz(SupersetTestCase):
-    @patch("superset.viz.BaseViz.query_obj")
+class TestPartitionViz(AxBITestCase):
+    @patch("axbi.viz.BaseViz.query_obj")
     def test_query_obj_time_series_option(self, super_query_obj):
         datasource = self.get_datasource_mock()
         form_data = {}
@@ -548,7 +548,7 @@ class TestPartitionViz(SupersetTestCase):
         assert 7 == len(test_viz.nest_values.mock_calls)
 
 
-class TestRoseVis(SupersetTestCase):
+class TestRoseVis(AxBITestCase):
     def test_rose_vis_get_data(self):
         raw = {}
         t1 = pd.Timestamp("2000")
@@ -584,7 +584,7 @@ class TestRoseVis(SupersetTestCase):
         assert expected == res
 
 
-class TestTimeSeriesTableViz(SupersetTestCase):
+class TestTimeSeriesTableViz(AxBITestCase):
     def test_get_data_metrics(self):
         form_data = {"metrics": ["sum__A", "count"], "groupby": []}
         datasource = self.get_datasource_mock()
@@ -665,7 +665,7 @@ class TestTimeSeriesTableViz(SupersetTestCase):
         assert expected == data["records"]
         assert data["is_group_by"] is True
 
-    @patch("superset.viz.BaseViz.query_obj")
+    @patch("axbi.viz.BaseViz.query_obj")
     def test_query_obj_throws_metrics_and_groupby(self, super_query_obj):
         datasource = self.get_datasource_mock()
         form_data = {"groupby": ["a"]}
@@ -686,7 +686,7 @@ class TestTimeSeriesTableViz(SupersetTestCase):
         assert query_obj["orderby"] == [("sum__A", False)]
 
 
-class TestBaseDeckGLViz(SupersetTestCase):
+class TestBaseDeckGLViz(AxBITestCase):
     def test_get_metrics(self):
         form_data = load_fixture("deck_path_form_data.json")
         datasource = self.get_datasource_mock()
@@ -878,7 +878,7 @@ class TestBaseDeckGLViz(SupersetTestCase):
         test_viz = viz.BaseDeckGLViz(datasource, form_data)
         test_viz.metric = "SUM(sales)"
 
-        with patch("superset.utils.core.get_metric_name") as mock_get_metric_name:
+        with patch("axbi.utils.core.get_metric_name") as mock_get_metric_name:
             mock_get_metric_name.return_value = "sum__sales"
 
             test_viz._setup_metric_label()
@@ -1093,7 +1093,7 @@ class TestBaseDeckGLViz(SupersetTestCase):
         test_df = pd.DataFrame({"col1": [1, 2], "col2": [3, 4]})
 
         with patch.object(test_viz, "_setup_metric_label") as mock_setup:
-            with patch("superset.viz.BaseDeckGLViz.get_data") as mock_super_get_data:
+            with patch("axbi.viz.BaseDeckGLViz.get_data") as mock_super_get_data:
                 mock_super_get_data.return_value = {"test": "data"}
 
                 result = test_viz.get_data(test_df)
@@ -1121,7 +1121,7 @@ class TestBaseDeckGLViz(SupersetTestCase):
         test_df = pd.DataFrame({"col1": [1, 2]})
 
         with patch.object(test_viz, "_setup_metric_label"):
-            with patch("superset.viz.BaseDeckGLViz.get_data") as mock_super_get_data:
+            with patch("axbi.viz.BaseDeckGLViz.get_data") as mock_super_get_data:
                 mock_super_get_data.return_value = {"result": "ok"}
 
                 test_viz.get_data(test_df)
@@ -1139,7 +1139,7 @@ class TestBaseDeckGLViz(SupersetTestCase):
         datasource = self.get_datasource_mock()
         test_viz = viz.DeckScatterViz(datasource, form_data)
 
-        with patch("superset.viz.BaseDeckGLViz.query_obj") as mock_super_query:
+        with patch("axbi.viz.BaseDeckGLViz.query_obj") as mock_super_query:
             mock_super_query.return_value = {
                 "metrics": ["count"],
                 "groupby": ["region"],
@@ -1602,7 +1602,7 @@ class TestBaseDeckGLViz(SupersetTestCase):
         assert result is None
 
 
-class TestDeckGLMultiLayer(SupersetTestCase):
+class TestDeckGLMultiLayer(AxBITestCase):
     def test_filter_items_by_scope_with_filter_id(self):
         """Test _filter_items_by_scope method with items having filterId."""
         datasource = self.get_datasource_mock()
@@ -1743,8 +1743,8 @@ class TestDeckGLMultiLayer(SupersetTestCase):
         ]
 
     @with_config({"MAPBOX_API_KEY": "test_key"})
-    @patch("superset.viz.viz_types")
-    @patch("superset.db.session")
+    @patch("axbi.viz.viz_types")
+    @patch("axbi.db.session")
     def test_get_data_with_layer_filtering(self, mock_db_session, mock_viz_types):
         """Test get_data method with layer filtering enabled."""
         datasource = self.get_datasource_mock()
@@ -1812,8 +1812,8 @@ class TestDeckGLMultiLayer(SupersetTestCase):
         assert result["mapboxApiKey"] == "test_key"
 
     @with_config({"MAPBOX_API_KEY": "test_key"})
-    @patch("superset.viz.viz_types")
-    @patch("superset.db.session")
+    @patch("axbi.viz.viz_types")
+    @patch("axbi.db.session")
     def test_get_data_filters_none_data_slices(self, mock_db_session, mock_viz_types):
         """Test get_data method filters out slices with None data."""
         datasource = self.get_datasource_mock()
@@ -1850,8 +1850,8 @@ class TestDeckGLMultiLayer(SupersetTestCase):
         assert result["slices"][0] == slice_1.data
 
     @with_config({"MAPBOX_API_KEY": "test_key"})
-    @patch("superset.viz.viz_types")
-    @patch("superset.db.session")
+    @patch("axbi.viz.viz_types")
+    @patch("axbi.db.session")
     def test_get_payload_includes_subslice_filter_metadata(
         self,
         mock_db_session,
@@ -1959,7 +1959,7 @@ class TestDeckGLMultiLayer(SupersetTestCase):
         test_viz.metric = Mock()
         test_viz.metric.value = "test_metric"
 
-        with patch("superset.viz.utils.get_metric_name") as mock_get_name:
+        with patch("axbi.viz.utils.get_metric_name") as mock_get_name:
             mock_get_name.return_value = "test_metric"
             test_viz._setup_metric_label()
 
@@ -2328,7 +2328,7 @@ class TestDeckGLMultiLayer(SupersetTestCase):
         assert result is None
 
 
-class TestTimeSeriesViz(SupersetTestCase):
+class TestTimeSeriesViz(AxBITestCase):
     def test_timeseries_unicode_data(self):
         datasource = self.get_datasource_mock()
         form_data = {"groupby": ["name"], "metrics": ["sum__payout"]}

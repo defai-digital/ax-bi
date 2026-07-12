@@ -22,7 +22,7 @@ import configureStore from 'redux-mock-store';
 
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 
-import { NO_TIME_RANGE } from '@superset-ui/core';
+import { NO_TIME_RANGE } from '@ax-bi/ui-core';
 import DateFilterLabel from '..';
 import { DateFilterControlProps } from '../types';
 import { DateFilterTestKey } from '../utils';

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { render, waitFor } from 'spec/helpers/testing-library';
 
 import SemanticLayerModal from './SemanticLayerModal';
@@ -38,10 +38,10 @@ jest.mock('@jsonforms/react', () => ({
   },
 }));
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
-    ...jest.requireActual('@superset-ui/core').SupersetClient,
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
+    ...jest.requireActual('@ax-bi/ui-core').AxBIClient,
     get: jest.fn(),
     post: jest.fn(),
     put: jest.fn(),
@@ -49,8 +49,8 @@ jest.mock('@superset-ui/core', () => ({
   getClientErrorObject: jest.fn(() => Promise.resolve({ error: '' })),
 }));
 
-const mockedGet = SupersetClient.get as jest.Mock;
-const mockedPost = SupersetClient.post as jest.Mock;
+const mockedGet = AxBIClient.get as jest.Mock;
+const mockedPost = AxBIClient.post as jest.Mock;
 
 const props = {
   show: true,

@@ -19,15 +19,15 @@ import pytest
 
 
 def test_user_favorite_tag(mocker):
-    from superset.daos.tag import TagDAO
+    from axbi.daos.tag import TagDAO
 
     # Mock the behavior of TagDAO and g
     mock_TagDAO = mocker.patch(  # noqa: N806
-        "superset.daos.tag.TagDAO"
+        "axbi.daos.tag.TagDAO"
     )  # Replace with the actual path to TagDAO
     mock_TagDAO.find_by_id.return_value = mocker.MagicMock(users_favorited=[])
 
-    mock_g = mocker.patch("superset.daos.tag.g")  # Replace with the actual path to g
+    mock_g = mocker.patch("axbi.daos.tag.g")  # Replace with the actual path to g
     mock_g.user = mocker.MagicMock()
 
     # Call the function with a test tag_id
@@ -41,14 +41,14 @@ def test_user_favorite_tag(mocker):
 
 
 def test_remove_user_favorite_tag(mocker):
-    from superset.daos.tag import TagDAO
+    from axbi.daos.tag import TagDAO
 
     # Mock the behavior of TagDAO and g
-    mock_TagDAO = mocker.patch("superset.daos.tag.TagDAO")  # noqa: N806
+    mock_TagDAO = mocker.patch("axbi.daos.tag.TagDAO")  # noqa: N806
     mock_tag = mocker.MagicMock(users_favorited=[])
     mock_TagDAO.find_by_id.return_value = mock_tag
 
-    mock_g = mocker.patch("superset.daos.tag.g")  # Replace with the actual path to g
+    mock_g = mocker.patch("axbi.daos.tag.g")  # Replace with the actual path to g
     mock_user = mocker.MagicMock()
     mock_g.user = mock_user
 
@@ -66,16 +66,16 @@ def test_remove_user_favorite_tag(mocker):
 
 
 def test_remove_user_favorite_tag_no_user(mocker):
-    from superset.daos.tag import TagDAO
-    from superset.exceptions import MissingUserContextException
+    from axbi.daos.tag import TagDAO
+    from axbi.exceptions import MissingUserContextException
 
     # Mock the behavior of TagDAO and g
-    mocker.patch("superset.daos.tag.db.session")  # noqa: F841
-    mock_TagDAO = mocker.patch("superset.daos.tag.TagDAO")  # noqa: N806
+    mocker.patch("axbi.daos.tag.db.session")  # noqa: F841
+    mock_TagDAO = mocker.patch("axbi.daos.tag.TagDAO")  # noqa: N806
     mock_tag = mocker.MagicMock(users_favorited=[])
     mock_TagDAO.find_by_id.return_value = mock_tag
 
-    mock_g = mocker.patch("superset.daos.tag.g")  # Replace with the actual path to g
+    mock_g = mocker.patch("axbi.daos.tag.g")  # Replace with the actual path to g
 
     # Test with no user
     mock_g.user = None
@@ -84,16 +84,16 @@ def test_remove_user_favorite_tag_no_user(mocker):
 
 
 def test_remove_user_favorite_tag_exc_raise(mocker):
-    from superset.daos.tag import TagDAO
+    from axbi.daos.tag import TagDAO
 
     # Mock the behavior of TagDAO and g
-    mock_session = mocker.patch("superset.daos.tag.db.session")
-    mock_TagDAO = mocker.patch("superset.daos.tag.TagDAO")  # noqa: N806
+    mock_session = mocker.patch("axbi.daos.tag.db.session")
+    mock_TagDAO = mocker.patch("axbi.daos.tag.TagDAO")  # noqa: N806
     mock_tag = mocker.MagicMock(users_favorited=[])
     mock_TagDAO.find_by_id.return_value = mock_tag
 
     mocker.patch(  # noqa: F841
-        "superset.daos.tag.g"
+        "axbi.daos.tag.g"
     )  # Replace with the actual path to g  # noqa: F841
 
     # Test that exception is raised when commit fails
@@ -103,16 +103,16 @@ def test_remove_user_favorite_tag_exc_raise(mocker):
 
 
 def test_user_favorite_tag_no_user(mocker):
-    from superset.daos.tag import TagDAO
-    from superset.exceptions import MissingUserContextException
+    from axbi.daos.tag import TagDAO
+    from axbi.exceptions import MissingUserContextException
 
     # Mock the behavior of TagDAO and g
-    mocker.patch("superset.daos.tag.db.session")  # noqa: F841
-    mock_TagDAO = mocker.patch("superset.daos.tag.TagDAO")  # noqa: N806
+    mocker.patch("axbi.daos.tag.db.session")  # noqa: F841
+    mock_TagDAO = mocker.patch("axbi.daos.tag.TagDAO")  # noqa: N806
     mock_tag = mocker.MagicMock(users_favorited=[])
     mock_TagDAO.find_by_id.return_value = mock_tag
 
-    mock_g = mocker.patch("superset.daos.tag.g")  # Replace with the actual path to g
+    mock_g = mocker.patch("axbi.daos.tag.g")  # Replace with the actual path to g
 
     # Test with no user
     mock_g.user = None
@@ -121,16 +121,16 @@ def test_user_favorite_tag_no_user(mocker):
 
 
 def test_user_favorite_tag_exc_raise(mocker):
-    from superset.daos.tag import TagDAO
+    from axbi.daos.tag import TagDAO
 
     # Mock the behavior of TagDAO and g
-    mock_session = mocker.patch("superset.daos.tag.db.session")
-    mock_TagDAO = mocker.patch("superset.daos.tag.TagDAO")  # noqa: N806
+    mock_session = mocker.patch("axbi.daos.tag.db.session")
+    mock_TagDAO = mocker.patch("axbi.daos.tag.TagDAO")  # noqa: N806
     mock_tag = mocker.MagicMock(users_favorited=[])
     mock_TagDAO.find_by_id.return_value = mock_tag
 
     mocker.patch(  # noqa: F841
-        "superset.daos.tag.g"
+        "axbi.daos.tag.g"
     )  # Replace with the actual path to g  # noqa: F841
 
     # Test that exception is raised when commit fails
@@ -140,12 +140,12 @@ def test_user_favorite_tag_exc_raise(mocker):
 
 
 def test_create_tag_relationship(mocker):
-    from superset.daos.tag import TagDAO
-    from superset.tags.models import (  # Assuming these are defined in the same module
+    from axbi.daos.tag import TagDAO
+    from axbi.tags.models import (  # Assuming these are defined in the same module
         ObjectType,
     )
 
-    mock_session = mocker.patch("superset.daos.tag.db.session")
+    mock_session = mocker.patch("axbi.daos.tag.db.session")
 
     # Define a list of objects to tag
     objects_to_tag = [

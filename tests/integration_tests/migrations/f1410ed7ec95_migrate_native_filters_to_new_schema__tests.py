@@ -18,7 +18,7 @@ from copy import deepcopy
 from importlib import import_module
 
 migrate_native_filters_to_new_schema = import_module(
-    "superset.migrations.versions."
+    "axbi.migrations.versions."
     "2021-04-29_15-32_f1410ed7ec95_migrate_native_filters_to_new_schema",
 )
 downgrade_dashboard = migrate_native_filters_to_new_schema.downgrade_dashboard

@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import {
   Actions,
   createErrorHandler,
@@ -30,7 +30,7 @@ import {
   ConfirmStatusChange,
   Tooltip,
   FaveStar,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   Tag as AntdTag,
   ListView,
@@ -42,7 +42,7 @@ import {
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { dangerouslyGetItemDoNotUse } from 'src/utils/localStorageHelpers';
 import withToasts from 'src/components/MessageToasts/withToasts';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { Link } from 'react-router-dom';
 import { deleteTags } from 'src/features/tags/tags';
 import { QueryObjectColumns, Tag } from 'src/views/CRUD/types';

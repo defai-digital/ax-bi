@@ -27,10 +27,10 @@ import pytest
 from fastmcp import Client
 from openpyxl import Workbook
 
-from superset.mcp_service.app import mcp
+from axbi.mcp_service.app import mcp
 
 upload_file_module = importlib.import_module(
-    "superset.mcp_service.dataset.tool.upload_file"
+    "axbi.mcp_service.dataset.tool.upload_file"
 )
 
 logger = logging.getLogger(__name__)
@@ -130,7 +130,7 @@ def _make_minimal_xlsx() -> str:
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as m:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as m:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -150,7 +150,7 @@ class TestExcelMetadataDiscovery:
         """file_metadata() returns all sheet names from an Excel workbook."""
         from werkzeug.datastructures import FileStorage
 
-        from superset.commands.database.uploaders.excel_reader import ExcelReader
+        from axbi.commands.database.uploaders.excel_reader import ExcelReader
 
         file_storage = FileStorage(
             stream=BytesIO(base64.b64decode(_make_minimal_xlsx())),
@@ -213,7 +213,7 @@ class TestMultiSheetUpload:
         sheet = reader._options.get("sheet_name", 0)
         assert sheet == 0, f"Expected default sheet_name=0, got {sheet}"
 
-        from superset.utils import json as sj
+        from axbi.utils import json as sj
 
         data = sj.loads(result.content[0].text)
         assert data.get("sheet_names") == ["SG", "MY", "HK", "CN", "AU"]
@@ -230,7 +230,7 @@ class TestPromptToDashboardPipeline:
     @pytest.mark.asyncio
     async def test_prompt_to_dashboard_with_pinned_dataset(self) -> None:
         """Test that prompt_to_dashboard can use a pre-uploaded dataset."""
-        from superset.mcp_service.ai.schemas import PromptToDashboardRequest
+        from axbi.mcp_service.ai.schemas import PromptToDashboardRequest
 
         async def _mock_plan(*a, **kw):
             return {
@@ -281,25 +281,25 @@ class TestPromptToDashboardPipeline:
 
         with (
             patch(
-                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                "axbi.mcp_service.auth.tool_feature_flags_enabled",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.ai.tool.prompt_to_dashboard."
+                "axbi.mcp_service.ai.tool.prompt_to_dashboard."
                 "user_can_view_data_model_metadata",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
+                "axbi.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
                 side_effect=_mock_plan,
             ),
             patch(
-                "superset.mcp_service.ai.tool.create_chart_from_intent."
+                "axbi.mcp_service.ai.tool.create_chart_from_intent."
                 "create_chart_from_intent",
                 side_effect=_mock_chart,
             ),
             patch(
-                "superset.mcp_service.ai.tool.compose_dashboard.compose_dashboard",
+                "axbi.mcp_service.ai.tool.compose_dashboard.compose_dashboard",
                 side_effect=_mock_compose,
             ),
         ):
@@ -311,7 +311,7 @@ class TestPromptToDashboardPipeline:
 
         assert result is not None
         assert result.content is not None
-        from superset.utils import json as sj
+        from axbi.utils import json as sj
 
         data = sj.loads(result.content[0].text)
         assert data.get("error") is None
@@ -323,7 +323,7 @@ class TestPromptToDashboardPipeline:
         self,
     ) -> None:
         """Dry runs validate chart previews without persisting dashboard artifacts."""
-        from superset.mcp_service.ai.schemas import PromptToDashboardRequest
+        from axbi.mcp_service.ai.schemas import PromptToDashboardRequest
 
         async def _mock_plan(*a, **kw):
             return {
@@ -370,25 +370,25 @@ class TestPromptToDashboardPipeline:
 
         with (
             patch(
-                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                "axbi.mcp_service.auth.tool_feature_flags_enabled",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.ai.tool.prompt_to_dashboard."
+                "axbi.mcp_service.ai.tool.prompt_to_dashboard."
                 "user_can_view_data_model_metadata",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
+                "axbi.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
                 side_effect=_mock_plan,
             ),
             patch(
-                "superset.mcp_service.ai.tool.create_chart_from_intent."
+                "axbi.mcp_service.ai.tool.create_chart_from_intent."
                 "create_chart_from_intent",
                 side_effect=_mock_preview,
             ),
             patch(
-                "superset.mcp_service.ai.tool.compose_dashboard.compose_dashboard",
+                "axbi.mcp_service.ai.tool.compose_dashboard.compose_dashboard",
                 compose,
             ),
         ):
@@ -398,7 +398,7 @@ class TestPromptToDashboardPipeline:
                     {"request": request.model_dump()},
                 )
 
-        from superset.utils import json as sj
+        from axbi.utils import json as sj
 
         data = sj.loads(result.content[0].text)
         assert data.get("error") is None
@@ -416,11 +416,11 @@ class TestPromptToDashboardPipeline:
 class TestPlanDashboardSparseMetadata:
     """Test plan_dashboard behavior when dataset metadata is sparse."""
 
-    @patch("superset.mcp_service.ai.tool.plan_dashboard._discover_datasets")
+    @patch("axbi.mcp_service.ai.tool.plan_dashboard._discover_datasets")
     @pytest.mark.asyncio
     async def test_plan_handles_sparse_dataset_metadata(self, mock_discover) -> None:
         """plan_dashboard returns a bounded plan for sparse dataset metadata."""
-        from superset.mcp_service.ai.schemas import DashboardPlanRequest
+        from axbi.mcp_service.ai.schemas import DashboardPlanRequest
 
         mock_discover.return_value = [
             {"id": 99, "name": "revenue_data", "description": "", "certified": False},
@@ -434,11 +434,11 @@ class TestPlanDashboardSparseMetadata:
 
         with (
             patch(
-                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                "axbi.mcp_service.auth.tool_feature_flags_enabled",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.ai.tool.plan_dashboard."
+                "axbi.mcp_service.ai.tool.plan_dashboard."
                 "user_can_view_data_model_metadata",
                 return_value=True,
             ),
@@ -449,7 +449,7 @@ class TestPlanDashboardSparseMetadata:
                     {"request": req.model_dump()},
                 )
 
-        from superset.utils import json as sj
+        from axbi.utils import json as sj
 
         data = sj.loads(result.content[0].text)
         plan_data = data.get("plan", {})
@@ -473,7 +473,7 @@ class TestHeuristicWithRevenueColumns:
 
     def _revenue_columns(self) -> list[dict[str, str | bool]]:
         """Simulate columns from the real Excel file."""
-        from superset.mcp_service.ai.tool.plan_dashboard import (
+        from axbi.mcp_service.ai.tool.plan_dashboard import (
             _extract_columns,
         )
 
@@ -503,7 +503,7 @@ class TestHeuristicWithRevenueColumns:
 
     def test_detect_by_dimension_maps_client_keyword(self) -> None:
         """'by client' in prompt should resolve to 'Client' column."""
-        from superset.mcp_service.ai.tool.plan_dashboard import (
+        from axbi.mcp_service.ai.tool.plan_dashboard import (
             _detect_by_dimension,
         )
 
@@ -520,7 +520,7 @@ class TestHeuristicWithRevenueColumns:
 
     def test_detect_by_dimension_maps_service_type(self) -> None:
         """'by service type' should resolve to 'Type of Service'."""
-        from superset.mcp_service.ai.tool.plan_dashboard import (
+        from axbi.mcp_service.ai.tool.plan_dashboard import (
             _detect_by_dimension,
         )
 
@@ -538,7 +538,7 @@ class TestHeuristicWithRevenueColumns:
     def test_heuristic_revenue_by_client(self) -> None:
         """'revenue by client' prompt should produce bar chart with
         Client dimension and revenue metrics."""
-        from superset.mcp_service.ai.tool.plan_dashboard import (
+        from axbi.mcp_service.ai.tool.plan_dashboard import (
             _build_chart_intents_heuristic,
         )
 
@@ -592,7 +592,7 @@ class TestHeuristicWithRevenueColumns:
         """For wide-format data (many numeric cols, no datetime col),
         the 'monthly' pattern should use all numeric columns as
         separate series."""
-        from superset.mcp_service.ai.tool.plan_dashboard import (
+        from axbi.mcp_service.ai.tool.plan_dashboard import (
             _build_chart_intents_heuristic,
         )
 
@@ -637,7 +637,7 @@ class TestUploadAndPlanTool:
     @pytest.mark.asyncio
     async def test_upload_and_plan_returns_plan(self) -> None:
         """upload_and_plan should upload a file and return a plan."""
-        from superset.mcp_service.ai.tool.upload_and_plan import (
+        from axbi.mcp_service.ai.tool.upload_and_plan import (
             UploadAndPlanRequest,
         )
 
@@ -652,29 +652,29 @@ class TestUploadAndPlanTool:
 
         with (
             patch(
-                "superset.mcp_service.auth.tool_feature_flags_enabled",
+                "axbi.mcp_service.auth.tool_feature_flags_enabled",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.ai.tool.upload_and_plan."
+                "axbi.mcp_service.ai.tool.upload_and_plan."
                 "user_can_view_data_model_metadata",
                 return_value=True,
             ),
             patch(
-                "superset.mcp_service.ai.tool.upload_and_plan.mcp_event_log_context",
+                "axbi.mcp_service.ai.tool.upload_and_plan.mcp_event_log_context",
             ),
             patch(
-                "superset.mcp_service.dataset.tool.upload_file.upload_single_file",
+                "axbi.mcp_service.dataset.tool.upload_file.upload_single_file",
             ) as mock_upload,
             patch(
-                "superset.mcp_service.ai.tool.plan_dashboard._discover_datasets",
+                "axbi.mcp_service.ai.tool.plan_dashboard._discover_datasets",
             ) as mock_discover,
             patch(
-                "superset.mcp_service.ai.tool.plan_dashboard._plan_with_llm",
+                "axbi.mcp_service.ai.tool.plan_dashboard._plan_with_llm",
             ) as mock_plan,
         ):
             # Mock upload success
-            from superset.mcp_service.dataset.schemas import (
+            from axbi.mcp_service.dataset.schemas import (
                 DatasetInfo,
                 TableColumnInfo,
             )
@@ -723,7 +723,7 @@ class TestUploadAndPlanTool:
                     {"request": req.model_dump()},
                 )
 
-        from superset.utils import json as sj
+        from axbi.utils import json as sj
 
         data = sj.loads(result.content[0].text)
         assert "dataset" in data

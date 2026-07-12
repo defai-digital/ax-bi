@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from superset.mcp_service.system.schemas import serialize_user_object
+from axbi.mcp_service.system.schemas import serialize_user_object
 
 
 def test_returns_none_for_none_user() -> None:

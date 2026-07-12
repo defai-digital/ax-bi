@@ -24,13 +24,13 @@ import {
   useMemo,
   useState,
 } from 'react';
-import {} from '@superset-ui/core';
+import {} from '@ax-bi/ui-core';
 import {
   type AnyThemeConfig,
   type ThemeContextType,
   Theme,
   ThemeMode,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/core/theme';
 import { ThemeController } from './ThemeController';
 
 export const ThemeContext = createContext<ThemeContextType | null>(null);
@@ -40,7 +40,7 @@ interface ThemeProviderProps {
   themeController: ThemeController;
 }
 
-export function SupersetThemeProvider({
+export function AxBIThemeProvider({
   children,
   themeController,
 }: ThemeProviderProps): JSX.Element {
@@ -176,9 +176,9 @@ export function SupersetThemeProvider({
 
   return (
     <ThemeContext.Provider value={contextValue}>
-      <currentTheme.SupersetThemeProvider>
+      <currentTheme.AxBIThemeProvider>
         {children}
-      </currentTheme.SupersetThemeProvider>
+      </currentTheme.AxBIThemeProvider>
     </ThemeContext.Provider>
   );
 }

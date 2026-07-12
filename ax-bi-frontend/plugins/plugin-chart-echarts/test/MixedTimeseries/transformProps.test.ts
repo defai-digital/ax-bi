@@ -26,8 +26,8 @@ import {
   IntervalAnnotationLayer,
   VizType,
   ChartDataResponseResult,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   LegendOrientation,
   LegendType,

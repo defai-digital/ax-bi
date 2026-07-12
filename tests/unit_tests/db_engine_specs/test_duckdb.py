@@ -21,8 +21,8 @@ from typing import cast
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.utils import json
-from superset.utils.core import GenericDataType
+from axbi.utils import json
+from axbi.utils.core import GenericDataType
 from tests.conftest import with_config
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
@@ -41,7 +41,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.duckdb import DuckDBEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.duckdb import DuckDBEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -51,7 +51,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
     """
     Test the ``get_extra_params`` method.
     """
-    from superset.db_engine_specs.duckdb import DuckDBEngineSpec
+    from axbi.db_engine_specs.duckdb import DuckDBEngineSpec
 
     database = mocker.MagicMock()
 
@@ -74,7 +74,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
 
 def test_build_sqlalchemy_uri() -> None:
     """Test DuckDBEngineSpec.build_sqlalchemy_uri"""
-    from superset.db_engine_specs.duckdb import DuckDBEngineSpec, DuckDBParametersType
+    from axbi.db_engine_specs.duckdb import DuckDBEngineSpec, DuckDBParametersType
 
     # No database provided, default to :memory:
     parameters = DuckDBParametersType()
@@ -96,7 +96,7 @@ def test_build_sqlalchemy_uri() -> None:
 
 def test_md_build_sqlalchemy_uri() -> None:
     """Test MotherDuckEngineSpec.build_sqlalchemy_uri"""
-    from superset.db_engine_specs.duckdb import (
+    from axbi.db_engine_specs.duckdb import (
         DuckDBParametersType,
         MotherDuckEngineSpec,
     )
@@ -129,7 +129,7 @@ def test_md_build_sqlalchemy_uri() -> None:
 
 
 def test_get_parameters_from_uri() -> None:
-    from superset.db_engine_specs.duckdb import DuckDBEngineSpec
+    from axbi.db_engine_specs.duckdb import DuckDBEngineSpec
 
     uri = "duckdb:////path/to/duck.db"
     parameters = DuckDBEngineSpec.get_parameters_from_uri(uri)
@@ -158,7 +158,7 @@ def test_md_get_default_catalog(
     database_name: str | None,
     expected_catalog: str | None,
 ) -> None:
-    from superset.db_engine_specs.duckdb import MotherDuckEngineSpec
+    from axbi.db_engine_specs.duckdb import MotherDuckEngineSpec
 
     database = mocker.MagicMock()
     database.url_object.database = database_name
@@ -168,7 +168,7 @@ def test_md_get_default_catalog(
 
 def test_column_type_recognition() -> None:
     """Test that DuckDB column types are properly recognized as numeric."""
-    from superset.db_engine_specs.duckdb import DuckDBEngineSpec
+    from axbi.db_engine_specs.duckdb import DuckDBEngineSpec
 
     # Test standard float/double types
     numeric_types = [

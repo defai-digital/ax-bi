@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { FeatureFlag, VizType } from '@superset-ui/core';
+import { FeatureFlag, VizType } from '@ax-bi/ui-core';
 import {
   act,
   render,

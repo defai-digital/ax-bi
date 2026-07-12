@@ -24,9 +24,9 @@ import {
   QueryFormData,
   TimeGranularity,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 // TODO: tests shouldn't depend on plugins
-import { sections } from '@superset-ui/chart-controls';
+import { sections } from '@ax-bi/chart-controls';
 import TableChartPlugin from '../../../plugins/plugin-chart-table/src';
 import { BigNumberTotalChartPlugin } from '../../../plugins/plugin-chart-echarts/src';
 import {

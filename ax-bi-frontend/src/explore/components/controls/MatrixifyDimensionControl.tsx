@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useEffect, useState, useRef, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, getColumnLabel } from '@superset-ui/core';
-import { Select, Space } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, getColumnLabel } from '@ax-bi/ui-core';
+import { Select, Space } from '@ax-bi/ui-core/components';
 import ControlHeader from 'src/explore/components/ControlHeader';
 import { optionLabel } from 'src/utils/common';
 import {
@@ -145,7 +145,7 @@ export default function MatrixifyDimensionControl(
       setLoadingValues(true);
 
       try {
-        const { json } = await SupersetClient.get({
+        const { json } = await AxBIClient.get({
           signal,
           endpoint,
         });

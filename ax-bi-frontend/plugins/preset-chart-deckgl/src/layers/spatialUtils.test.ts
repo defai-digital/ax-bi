@@ -20,8 +20,8 @@ import {
   ChartProps,
   DatasourceType,
   QueryObjectFilterClause,
-} from '@superset-ui/core';
-import { SupersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { AxBITheme } from '@ax-bi/core/theme';
 import { decode } from 'ngeohash';
 
 import {
@@ -37,8 +37,8 @@ jest.mock('ngeohash', () => ({
   decode: jest.fn(),
 }));
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   buildQueryContext: jest.fn(),
   getMetricLabel: jest.fn(),
   ensureIsArray: jest.fn(arr => arr || []),
@@ -191,7 +191,7 @@ describe('spatialUtils', () => {
 
   test('buildSpatialQuery calls buildQueryContext with correct parameters', () => {
     const mockBuildQueryContext =
-      jest.requireMock('@superset-ui/core').buildQueryContext;
+      jest.requireMock('@ax-bi/ui-core').buildQueryContext;
     const formData: SpatialFormData = {
       spatial: {
         type: 'latlong',
@@ -418,7 +418,7 @@ describe('spatialUtils', () => {
 
   test('transformSpatialProps transforms chart props correctly', () => {
     const mockGetMetricLabel =
-      jest.requireMock('@superset-ui/core').getMetricLabel;
+      jest.requireMock('@ax-bi/ui-core').getMetricLabel;
     mockGetMetricLabel.mockReturnValue('count_label');
 
     const chartProps: ChartProps = {
@@ -480,7 +480,7 @@ describe('spatialUtils', () => {
       },
       ownState: {},
       behaviors: [],
-      theme: {} as unknown as SupersetTheme,
+      theme: {} as unknown as AxBITheme,
     };
 
     const result = transformSpatialProps(chartProps);
@@ -544,7 +544,7 @@ describe('spatialUtils', () => {
       },
       ownState: {},
       behaviors: [],
-      theme: {} as unknown as SupersetTheme,
+      theme: {} as unknown as AxBITheme,
     };
 
     const result = transformSpatialProps(chartProps);
@@ -558,7 +558,7 @@ describe('spatialUtils', () => {
 
   test('transformSpatialProps handles missing metric', () => {
     const mockGetMetricLabel =
-      jest.requireMock('@superset-ui/core').getMetricLabel;
+      jest.requireMock('@ax-bi/ui-core').getMetricLabel;
     mockGetMetricLabel.mockReturnValue(undefined);
 
     const chartProps: ChartProps = {
@@ -594,7 +594,7 @@ describe('spatialUtils', () => {
       },
       ownState: {},
       behaviors: [],
-      theme: {} as unknown as SupersetTheme,
+      theme: {} as unknown as AxBITheme,
     };
 
     const result = transformSpatialProps(chartProps);

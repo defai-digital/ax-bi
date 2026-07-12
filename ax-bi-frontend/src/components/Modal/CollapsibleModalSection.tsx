@@ -17,8 +17,8 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { Collapse, CollapseLabelInModal } from '@superset-ui/core/components';
-import { styled } from '@apache-superset/core/theme';
+import { Collapse, CollapseLabelInModal } from '@ax-bi/ui-core/components';
+import { styled } from '@ax-bi/core/theme';
 
 interface CollapsibleModalSectionProps {
   sectionKey: string;

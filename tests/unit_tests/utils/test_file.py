@@ -16,7 +16,7 @@
 # under the License.
 import pytest
 
-from superset.utils.file import get_filename, sanitize_title
+from axbi.utils.file import get_filename, sanitize_title
 
 
 @pytest.mark.parametrize(

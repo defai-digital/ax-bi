@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { RadarSeriesOption } from 'echarts/charts';
 import transformProps from '../../src/Radar/transformProps';
 import {
@@ -45,7 +45,7 @@ interface RadarSeriesData {
 }
 
 const formData: Partial<EchartsRadarFormData> = {
-  colorScheme: 'supersetColors',
+  colorScheme: 'axbiColors',
   datasource: '3__table',
   granularity_sqla: 'ds',
   columnConfig: {
@@ -90,7 +90,7 @@ const chartProps = new ChartProps({
   width: 800,
   height: 600,
   queriesData,
-  theme: supersetTheme,
+  theme: axbiTheme,
 });
 
 describe('Radar transformProps', () => {
@@ -216,7 +216,7 @@ describe('radar center positioning', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
     const result = transformProps(props as EchartsRadarChartProps);
     const { center } = result.echartOptions.radar as {

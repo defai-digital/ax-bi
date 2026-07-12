@@ -21,12 +21,12 @@ from __future__ import annotations
 
 from sqlalchemy.engine.url import make_url
 
-from superset.constants import PASSWORD_MASK
-from superset.models.core import Database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.constants import PASSWORD_MASK
+from axbi.models.core import Database
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestDatabasePasswordEncodingIntegration(SupersetTestCase):
+class TestDatabasePasswordEncodingIntegration(AxBITestCase):
     """Integration tests for password encoding in Database model."""
 
     def test_database_with_percent_in_password_roundtrip(self) -> None:

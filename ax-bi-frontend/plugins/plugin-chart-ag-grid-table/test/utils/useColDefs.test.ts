@@ -17,13 +17,9 @@
  * under the License.
  */
 import { renderHook } from '@testing-library/react';
-import { GenericDataType } from '@apache-superset/core/common';
-import {
-  supersetTheme,
-  ThemeProvider,
-  type SupersetTheme,
-} from '@apache-superset/core/theme';
-import { ObjectFormattingEnum } from '@superset-ui/chart-controls';
+import { GenericDataType } from '@ax-bi/core/common';
+import { axbiTheme, ThemeProvider, type AxBITheme } from '@ax-bi/core/theme';
+import { ObjectFormattingEnum } from '@ax-bi/chart-controls';
 import tinycolor from 'tinycolor2';
 import { createElement, type ComponentProps, ReactNode } from 'react';
 import { useColDefs } from '../../src/utils/useColDefs';
@@ -108,7 +104,7 @@ function getExpectedTextColor(
     .toRgbString();
 }
 
-function makeThemeWrapper(theme: SupersetTheme) {
+function makeThemeWrapper(theme: AxBITheme) {
   return function ThemeWrapper({ children }: { children?: ReactNode }) {
     return createElement(
       ThemeProvider,
@@ -118,7 +114,7 @@ function makeThemeWrapper(theme: SupersetTheme) {
   };
 }
 
-const defaultThemeWrapper = makeThemeWrapper(supersetTheme);
+const defaultThemeWrapper = makeThemeWrapper(axbiTheme);
 
 const defaultProps = {
   data: [{ test_col: 'value' }],
@@ -401,7 +397,7 @@ test('cellStyle uses caller-provided surface color for adaptive contrast', () =>
       }),
     {
       wrapper: makeThemeWrapper({
-        ...supersetTheme,
+        ...axbiTheme,
         colorBgBase: '#ffffff',
       }),
     },
@@ -424,7 +420,7 @@ test('cellStyle uses caller-provided surface color for adaptive contrast', () =>
       }),
     {
       wrapper: makeThemeWrapper({
-        ...supersetTheme,
+        ...axbiTheme,
         colorBgBase: '#000000',
       }),
     },
@@ -481,7 +477,7 @@ test('cellStyle uses striped odd-row surface for adaptive contrast', () => {
       }),
     {
       wrapper: makeThemeWrapper({
-        ...supersetTheme,
+        ...axbiTheme,
         colorBgBase: '#ffffff',
         colorFillQuaternary: '#000000',
       }),
@@ -543,7 +539,7 @@ test('cellStyle exposes hover-specific adaptive contrast for formatted cells', (
       }),
     {
       wrapper: makeThemeWrapper({
-        ...supersetTheme,
+        ...axbiTheme,
         colorBgBase: '#ffffff',
         colorFillSecondary: '#000000',
       }),
@@ -590,7 +586,7 @@ test('cellStyle resets inline text color variables when no formatter matches', (
       }),
     {
       wrapper: makeThemeWrapper({
-        ...supersetTheme,
+        ...axbiTheme,
         colorPrimaryText: '#123456',
       }),
     },
@@ -673,7 +669,7 @@ test('cellStyle ignores cell-bar formatters for text and background resolution',
       }),
     {
       wrapper: makeThemeWrapper({
-        ...supersetTheme,
+        ...axbiTheme,
         colorPrimaryText: '#654321',
       }),
     },

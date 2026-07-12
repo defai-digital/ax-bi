@@ -21,7 +21,7 @@ import type { ReactElement } from 'react';
 import { render, screen } from '@testing-library/react';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import '@testing-library/jest-dom';
-import { supersetTheme, ThemeProvider } from '@apache-superset/core/theme';
+import { axbiTheme, ThemeProvider } from '@ax-bi/core/theme';
 import DeckGLPolygon, { getPoints } from './Polygon';
 import { COLOR_SCHEME_TYPES } from '../../utilities/utils';
 import * as utils from '../../utils';
@@ -131,7 +131,7 @@ describe('DeckGLPolygon renderer propagation', () => {
   });
 
   const renderWithTheme = (component: ReactElement) =>
-    render(<ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>);
+    render(<ThemeProvider theme={axbiTheme}>{component}</ThemeProvider>);
 
   const lastDeckGLContainerProps = () =>
     mockDeckGLContainerProps
@@ -223,7 +223,7 @@ describe('DeckGLPolygon bucket generation logic', () => {
   });
 
   const renderWithTheme = (component: ReactElement) =>
-    render(<ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>);
+    render(<ThemeProvider theme={axbiTheme}>{component}</ThemeProvider>);
 
   test('should use getBuckets for linear_palette color scheme', () => {
     const propsWithLinearPalette = {
@@ -331,7 +331,7 @@ describe('DeckGLPolygon Error Handling and Edge Cases', () => {
   });
 
   const renderWithTheme = (component: ReactElement) =>
-    render(<ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>);
+    render(<ThemeProvider theme={axbiTheme}>{component}</ThemeProvider>);
 
   test('handles empty features data gracefully', () => {
     const propsWithEmptyData = {
@@ -395,7 +395,7 @@ describe('DeckGLPolygon Legend Integration', () => {
   });
 
   const renderWithTheme = (component: ReactElement) =>
-    render(<ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>);
+    render(<ThemeProvider theme={axbiTheme}>{component}</ThemeProvider>);
 
   test('renders legend with non-empty categories when metric and linear_palette are defined', () => {
     const { container } = renderWithTheme(<DeckGLPolygon {...mockProps} />);

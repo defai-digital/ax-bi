@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 
 import yaml
 
-from superset.commands.query.export import ExportSavedQueriesCommand
+from axbi.commands.query.export import ExportSavedQueriesCommand
 
 
 def test_export_related_database_replaces_non_object_extra() -> None:

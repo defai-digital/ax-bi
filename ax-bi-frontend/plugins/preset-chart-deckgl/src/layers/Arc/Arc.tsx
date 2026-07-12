@@ -17,7 +17,7 @@
  * under the License.
  */
 import { ArcLayer } from '@deck.gl/layers';
-import { JsonObject, QueryFormData } from '@superset-ui/core';
+import { JsonObject, QueryFormData } from '@ax-bi/ui-core';
 import { COLOR_SCHEME_TYPES } from '../../utilities/utils';
 import { commonLayerProps } from '../common';
 import { GetLayerType, createCategoricalDeckGLComponent } from '../../factory';

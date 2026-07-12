@@ -26,9 +26,9 @@ import {
   useMemo,
   useEffect,
 } from 'react';
-import { safeHtmlSpan } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { safeHtmlSpan } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { axbiTheme } from '@ax-bi/core/theme';
 import PropTypes from 'prop-types';
 import {
   CaretUpOutlined,
@@ -40,7 +40,7 @@ import {
   getTextColorForBackground,
   ObjectFormattingEnum,
   ResolvedColorFormatterResult,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { PivotData, flatKey } from './utilities';
 import { Styles } from './Styles';
 
@@ -186,7 +186,7 @@ export function getCellColor(
   keys: string[],
   aggValue: string | number | null,
   cellColorFormatters: Record<string, ColorFormatters> | undefined,
-  cellBackgroundColor = supersetTheme.colorBgBase,
+  cellBackgroundColor = axbiTheme.colorBgBase,
 ): ResolvedColorFormatterResult {
   if (!cellColorFormatters) return { backgroundColor: undefined };
 
@@ -882,8 +882,8 @@ export function TableRenderer(props: TableRendererProps) {
         highlightedHeaderCells,
         cellColorFormatters,
         dateFormatters,
-        cellBackgroundColor = supersetTheme.colorBgBase,
-        activeHeaderBackgroundColor = supersetTheme.colorPrimaryBg,
+        cellBackgroundColor = axbiTheme.colorBgBase,
+        activeHeaderBackgroundColor = axbiTheme.colorPrimaryBg,
       } = tableOptions;
 
       if (!settingsVisibleColKeys || !colAttrSpans) {
@@ -1228,9 +1228,9 @@ export function TableRenderer(props: TableRendererProps) {
         highlightedHeaderCells,
         cellColorFormatters,
         dateFormatters,
-        cellBackgroundColor = supersetTheme.colorBgBase,
-        cellTextColor = supersetTheme.colorPrimaryText,
-        activeHeaderBackgroundColor = supersetTheme.colorPrimaryBg,
+        cellBackgroundColor = axbiTheme.colorBgBase,
+        cellTextColor = axbiTheme.colorPrimaryText,
+        activeHeaderBackgroundColor = axbiTheme.colorPrimaryBg,
       } = tableOptions;
       const flatRowKey = flatKey(rowKey);
 

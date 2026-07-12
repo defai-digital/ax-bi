@@ -16,15 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { LegendPaddingType, SortSeriesType } from '@superset-ui/chart-controls';
+import { LegendPaddingType, SortSeriesType } from '@ax-bi/chart-controls';
 import {
   AxisType,
   DataRecord,
   getNumberFormatter,
   getTimeFormatter,
-} from '@superset-ui/core';
-import { supersetTheme as theme } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { axbiTheme as theme } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   calculateLowerLogTick,
   dedupSeries,
@@ -67,11 +67,7 @@ const {
     chartHeight: number;
     chartWidth: number;
     legendItems?: (
-      | string
-      | number
-      | null
-      | undefined
-      | { name?: string | number | null }
+      string | number | null | undefined | { name?: string | number | null }
     )[];
     legendMargin?: string | number | null;
     orientation: LegendOrientation;
@@ -94,11 +90,7 @@ const {
     chartHeight: number;
     chartWidth: number;
     legendItems?: (
-      | string
-      | number
-      | null
-      | undefined
-      | { name?: string | number | null }
+      string | number | null | undefined | { name?: string | number | null }
     )[];
     legendMargin?: string | number | null;
     orientation: LegendOrientation;

@@ -22,24 +22,24 @@ import pytest
 from flask import current_app
 from sqlalchemy.orm.exc import StaleDataError
 
-from superset.commands.dashboard.permalink.create import CreateDashboardPermalinkCommand
-from superset.commands.report.exceptions import ReportScheduleUnexpectedError
-from superset.commands.report.execute import AsyncExecuteReportScheduleCommand
-from superset.models.dashboard import Dashboard
-from superset.reports.models import ReportSourceFormat
-from superset.utils.urls import get_url_path
+from axbi.commands.dashboard.permalink.create import CreateDashboardPermalinkCommand
+from axbi.commands.report.exceptions import ReportScheduleUnexpectedError
+from axbi.commands.report.execute import AsyncExecuteReportScheduleCommand
+from axbi.models.dashboard import Dashboard
+from axbi.reports.models import ReportSourceFormat
+from axbi.utils.urls import get_url_path
 from tests.integration_tests.fixtures.tabbed_dashboard import (
     tabbed_dashboard,  # noqa: F401
 )
 from tests.integration_tests.reports.utils import create_dashboard_report
 
 
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 @patch(
-    "superset.commands.report.execute.DashboardScreenshot",
+    "axbi.commands.report.execute.DashboardScreenshot",
 )
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
+    "axbi.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
 )
 @pytest.mark.usefixtures("login_as_admin")
 def test_report_for_dashboard_with_tabs(
@@ -67,7 +67,7 @@ def test_report_for_dashboard_with_tabs(
             str(dashboard.uuid), dashboard_state
         ).run()
 
-        expected_url = get_url_path("Superset.dashboard_permalink", key=permalink_key)
+        expected_url = get_url_path("AxBI.dashboard_permalink", key=permalink_key)
 
         assert dashboard_screenshot_mock.call_count == 1
         called_url = dashboard_screenshot_mock.call_args.args[0]
@@ -77,12 +77,12 @@ def test_report_for_dashboard_with_tabs(
         assert len(send_email_smtp_mock.call_args.kwargs["images"]) == 1
 
 
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 @patch(
-    "superset.commands.report.execute.DashboardScreenshot",
+    "axbi.commands.report.execute.DashboardScreenshot",
 )
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
+    "axbi.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
 )
 @pytest.mark.usefixtures("login_as_admin")
 def test_report_with_header_data(
@@ -124,8 +124,8 @@ def test_report_with_header_data(
         assert len(send_email_smtp_mock.call_args.kwargs["header_data"]) == 8
 
 
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.commands.report.execute.DashboardScreenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.commands.report.execute.DashboardScreenshot")
 @pytest.mark.usefixtures("login_as_admin")
 def test_report_schedule_stale_data_error_preserves_cause(
     dashboard_screenshot_mock: MagicMock,
@@ -146,7 +146,7 @@ def test_report_schedule_stale_data_error_preserves_cause(
         name="test stale data error",
     ) as report_schedule:
         # Mock db.session.commit to raise StaleDataError during log creation
-        with patch("superset.db.session.commit") as mock_commit:
+        with patch("axbi.db.session.commit") as mock_commit:
             mock_commit.side_effect = StaleDataError("test stale data")
 
             # Execute the report and expect ReportScheduleUnexpectedError

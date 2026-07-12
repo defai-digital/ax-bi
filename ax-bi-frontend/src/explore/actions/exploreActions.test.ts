@@ -17,7 +17,7 @@
  * under the License.
  */
 import type { AnyAction } from 'redux';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { defaultState } from 'src/explore/store';
 import exploreReducer, {
   ExploreState,
@@ -283,7 +283,7 @@ test('fetchCompatibility ignores stale async responses', async () => {
     resolveSecond = resolve;
   });
 
-  const postSpy = jest.spyOn(SupersetClient, 'post');
+  const postSpy = jest.spyOn(AxBIClient, 'post');
   postSpy
     .mockImplementationOnce(() => firstPromise as never)
     .mockImplementationOnce(() => secondPromise as never);

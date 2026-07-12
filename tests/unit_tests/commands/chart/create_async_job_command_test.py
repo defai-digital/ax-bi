@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.chart.data.create_async_job_command import (
+from axbi.commands.chart.data.create_async_job_command import (
     CreateAsyncChartDataJobCommand,
 )
 
@@ -36,7 +36,7 @@ def test_run_after_validate_submits_job():
     command = CreateAsyncChartDataJobCommand()
 
     with patch(
-        "superset.commands.chart.data.create_async_job_command.async_query_manager",
+        "axbi.commands.chart.data.create_async_job_command.async_query_manager",
         new=MagicMock(),
     ) as mock_manager:
         mock_manager.parse_channel_id_from_request.return_value = "channel-123"

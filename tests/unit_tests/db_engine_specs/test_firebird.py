@@ -64,7 +64,7 @@ from tests.unit_tests.fixtures.common import dttm  # noqa: F401
     ],
 )
 def test_time_grain_expressions(time_grain: str | None, expected: str) -> None:
-    from superset.db_engine_specs.firebird import FirebirdEngineSpec
+    from axbi.db_engine_specs.firebird import FirebirdEngineSpec
 
     assert (
         FirebirdEngineSpec._time_grain_expressions[time_grain].format(
@@ -75,7 +75,7 @@ def test_time_grain_expressions(time_grain: str | None, expected: str) -> None:
 
 
 def test_epoch_to_dttm() -> None:
-    from superset.db_engine_specs.firebird import FirebirdEngineSpec
+    from axbi.db_engine_specs.firebird import FirebirdEngineSpec
 
     assert (
         FirebirdEngineSpec.epoch_to_dttm().format(col="timestamp_column")
@@ -98,7 +98,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.firebird import (
+    from axbi.db_engine_specs.firebird import (
         FirebirdEngineSpec as spec,  # noqa: N813
     )
 

@@ -16,4 +16,4 @@
 # limitations under the License.
 #
 
-curl -f "http://localhost:${SUPERSET_PORT}/${SUPERSET_APP_ROOT/\//}/health" || exit 1
+curl -f "http://localhost:${AXBI_PORT}/${AXBI_APP_ROOT/\//}/health" || exit 1

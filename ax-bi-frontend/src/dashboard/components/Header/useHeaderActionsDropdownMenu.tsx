@@ -21,8 +21,8 @@ import type { Dispatch, ReactElement, SetStateAction } from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { Menu, MenuItem } from '@superset-ui/core/components/Menu';
-import { t } from '@apache-superset/core/translation';
+import { Menu, MenuItem } from '@ax-bi/ui-core/components/Menu';
+import { t } from '@ax-bi/core/translation';
 import { isEmpty } from 'lodash';
 import { URL_PARAMS } from 'src/constants';
 import { useShareMenuItems } from 'src/dashboard/components/menu/ShareMenuItems';
@@ -144,7 +144,7 @@ export const useHeaderActionsMenu = ({
   );
 
   const emailSubject = useMemo(
-    () => `${t('Superset dashboard')} ${dashboardTitle}`,
+    () => `${t('AxBI dashboard')} ${dashboardTitle}`,
     [dashboardTitle],
   );
 

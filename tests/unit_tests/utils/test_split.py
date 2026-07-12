@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset.utils.core import split
+from axbi.utils.core import split
 
 
 def test_split_empty_string():

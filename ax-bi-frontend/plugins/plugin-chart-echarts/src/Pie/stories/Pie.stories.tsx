@@ -21,11 +21,11 @@ import {
   SuperChart,
   VizType,
   getChartTransformPropsRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   EchartsPieChartPlugin,
   PieTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import { weekday, population, sales } from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 
@@ -67,7 +67,7 @@ export const WeekdayPie = ({
     height={height}
     queriesData={[{ data: weekday }]}
     formData={{
-      colorScheme: 'supersetColors',
+      colorScheme: 'axbiColors',
       groupby: ['Day'],
       metric: 'SUM(AIR_TIME)',
       numberFormat: 'SMART_NUMBER',
@@ -146,7 +146,7 @@ export const PopulationPie = ({
     height={height}
     queriesData={[{ data: population }]}
     formData={{
-      colorScheme: 'supersetColors',
+      colorScheme: 'axbiColors',
       groupby: ['Country'],
       metric: 'Population',
       numberFormat: 'SMART_NUMBER',
@@ -227,7 +227,7 @@ export const SalesPie = ({
     height={height}
     queriesData={[{ data: sales }]}
     formData={{
-      colorScheme: 'supersetColors',
+      colorScheme: 'axbiColors',
       groupby: ['Product'],
       metric: 'SUM(AMOUNT)',
       numberFormat: 'SMART_NUMBER',

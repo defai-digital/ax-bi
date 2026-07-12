@@ -17,7 +17,7 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import { QueryFormData, SupersetClient } from '@superset-ui/core';
+import { QueryFormData, AxBIClient } from '@ax-bi/ui-core';
 import {
   fireEvent,
   render,
@@ -28,7 +28,7 @@ import {
 } from 'spec/helpers/testing-library';
 import { getMockStoreWithNativeFilters } from 'spec/fixtures/mockStore';
 import chartQueries, { sliceId } from 'spec/fixtures/mockChartQueries';
-import { supersetGetCache } from 'src/utils/cachedSupersetGet';
+import { axbiGetCache } from 'src/utils/cachedAxBIGet';
 import DrillDetailPane from './DrillDetailPane';
 
 const chart = chartQueries[sliceId];
@@ -151,7 +151,7 @@ const fetchWithPaginatedData = () => {
 
 afterEach(() => {
   fetchMock.clearHistory().removeRoutes();
-  supersetGetCache.clear();
+  axbiGetCache.clear();
 });
 
 test('should render', async () => {
@@ -218,7 +218,7 @@ test('should render the metadata bar', async () => {
 
 test('should render the error', async () => {
   jest
-    .spyOn(SupersetClient, 'post')
+    .spyOn(AxBIClient, 'post')
     .mockRejectedValue(new Error('Something went wrong'));
   await waitForRender();
   expect(screen.getByText('Error: Something went wrong')).toBeInTheDocument();
@@ -234,7 +234,7 @@ describe('download actions', () => {
       {
         useRedux: true,
         initialState: {
-          user: { roles: { Admin: [['can_csv', 'Superset']] } },
+          user: { roles: { Admin: [['can_csv', 'AxBI']] } },
           common: { conf: { SAMPLES_ROW_LIMIT: 10, ROW_LIMIT: 50000 } },
           dashboardInfo: { id: 123 },
         },
@@ -251,7 +251,7 @@ describe('download actions', () => {
   test('CSV export posts drill_detail payload with ROW_LIMIT', async () => {
     fetchWithData();
     const postFormSpy = jest
-      .spyOn(SupersetClient, 'postForm')
+      .spyOn(AxBIClient, 'postForm')
       .mockImplementation(() => Promise.resolve());
     renderWithDownloadPermission();
 
@@ -270,7 +270,7 @@ describe('download actions', () => {
   test('XLSX export uses xlsx result_format', async () => {
     fetchWithData();
     const postFormSpy = jest
-      .spyOn(SupersetClient, 'postForm')
+      .spyOn(AxBIClient, 'postForm')
       .mockImplementation(() => Promise.resolve());
     renderWithDownloadPermission();
 
@@ -285,7 +285,7 @@ describe('download actions', () => {
 });
 
 test('should render pagination when results exceed page size', async () => {
-  // The "should render the error" test above leaves a SupersetClient.post
+  // The "should render the error" test above leaves a AxBIClient.post
   // rejection spy active (matching the existing pattern; "should use
   // verbose_map" further down does the same cleanup). Reset it here so the
   // fetch in this test actually returns data.

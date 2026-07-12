@@ -18,8 +18,8 @@
  */
 import { useEffect } from 'react';
 // eslint-disable-next-line no-restricted-syntax
-import * as supersetCore from '@apache-superset/core';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
+import * as axbiCore from '@ax-bi/core';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
 import {
   authentication,
   core,
@@ -36,7 +36,7 @@ import ExtensionsLoader from './ExtensionsLoader';
 
 declare global {
   interface Window {
-    superset: {
+    axbi: {
       authentication: typeof authentication;
       core: typeof core;
       commands: typeof commands;
@@ -59,9 +59,9 @@ const ExtensionsStartup: React.FC<{ children?: React.ReactNode }> = ({
   useEffect(() => {
     if (userId == null) return;
 
-    // Provide the implementations for @apache-superset/core
-    window.superset = {
-      ...supersetCore,
+    // Provide the implementations for @ax-bi/core
+    window.axbi = {
+      ...axbiCore,
       authentication,
       core,
       commands,

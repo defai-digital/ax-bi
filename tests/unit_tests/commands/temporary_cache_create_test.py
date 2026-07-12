@@ -19,8 +19,8 @@ from unittest.mock import MagicMock
 import pytest
 from flask import current_app
 
-from superset.commands.temporary_cache.create import CreateTemporaryCacheCommand
-from superset.commands.temporary_cache.parameters import CommandParameters
+from axbi.commands.temporary_cache.create import CreateTemporaryCacheCommand
+from axbi.commands.temporary_cache.parameters import CommandParameters
 
 
 def test_run_invokes_validate_before_create():

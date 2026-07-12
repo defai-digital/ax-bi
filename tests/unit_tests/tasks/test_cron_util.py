@@ -19,7 +19,7 @@ from datetime import datetime
 import pytest
 from freezegun.api import FakeDatetime
 
-from superset.tasks.cron_util import cron_schedule_window
+from axbi.tasks.cron_util import cron_schedule_window
 
 
 @pytest.mark.parametrize(

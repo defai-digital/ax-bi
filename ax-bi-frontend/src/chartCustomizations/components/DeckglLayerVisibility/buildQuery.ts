@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { buildQueryContext, BuildQuery } from '@superset-ui/core';
+import { buildQueryContext, BuildQuery } from '@ax-bi/ui-core';
 import { DeckglLayerVisibilityFormData } from './types';
 
 /**

@@ -18,8 +18,8 @@
  */
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Loading } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Loading } from '@ax-bi/ui-core/components';
 import UploadDataModal from 'src/features/databases/UploadDataModel';
 import withToasts from 'src/components/MessageToasts/withToasts';
 

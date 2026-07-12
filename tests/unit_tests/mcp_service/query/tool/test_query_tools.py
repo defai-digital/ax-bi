@@ -26,24 +26,24 @@ from fastmcp.exceptions import ToolError
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.query.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.query.schemas import (
     ListQueriesRequest,
     QueryFilter,
     QueryInfo,
     serialize_query_object,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     LLM_CONTEXT_ESCAPED_OPEN_DELIMITER,
     sanitize_for_llm_context,
 )
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 list_queries_module = importlib.import_module(
-    "superset.mcp_service.query.tool.list_queries"
+    "axbi.mcp_service.query.tool.list_queries"
 )
 
 
@@ -190,7 +190,7 @@ def mock_auth():
     """Mock authentication for all tests."""
     from unittest.mock import Mock, patch
 
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -198,7 +198,7 @@ def mock_auth():
         yield mock_get_user
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_basic(mock_list, mcp_server):
     """Test basic query listing functionality."""
@@ -320,7 +320,7 @@ async def test_list_queries_serves_valid_sidecar_response(mcp_server):
     )
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_falls_back_on_candidate_warning(mock_list, mcp_server):
     """Candidate warnings fall back to the authoritative Python query path."""
@@ -354,7 +354,7 @@ async def test_list_queries_falls_back_on_candidate_warning(mock_list, mcp_serve
                     "hasPrevious": False,
                     "columnsRequested": ["id", "status"],
                     "columnsLoaded": [],
-                    "warnings": ["query list returned status 504 from Superset"],
+                    "warnings": ["query list returned status 504 from AxBI"],
                 },
             )
 
@@ -381,7 +381,7 @@ async def test_list_queries_falls_back_on_candidate_warning(mock_list, mcp_serve
     )
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_with_status_filter(mock_list, mcp_server):
     """Test query listing with status filter."""
@@ -411,7 +411,7 @@ async def test_list_queries_with_status_filter(mock_list, mcp_server):
         assert data["queries"][0]["status"] == "failed"
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_default_page_size(mock_list, mcp_server):
     """Test that default page size is 25 for query history."""
@@ -432,7 +432,7 @@ def test_list_queries_request_rejects_both_search_and_filters():
         )
 
 
-@patch("superset.daos.query.QueryDAO.find_by_id")
+@patch("axbi.daos.query.QueryDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_query_info_basic(mock_find, mcp_server):
     """Test basic get query info functionality."""
@@ -449,7 +449,7 @@ async def test_get_query_info_basic(mock_find, mcp_server):
         assert data["database_id"] == 1
 
 
-@patch("superset.daos.query.QueryDAO.find_by_id")
+@patch("axbi.daos.query.QueryDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_query_info_not_found(mock_find, mcp_server):
     """Test get query info when query does not exist."""
@@ -461,7 +461,7 @@ async def test_get_query_info_not_found(mock_find, mcp_server):
         assert result.data["error_type"] == "not_found"
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_empty(mock_list, mcp_server):
     """Test query listing returns empty list when no results."""
@@ -478,7 +478,7 @@ async def test_list_queries_empty(mock_list, mcp_server):
         assert data["total_count"] == 0
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_pagination_info(mock_list, mcp_server):
     """Test that pagination info is correctly returned."""
@@ -498,7 +498,7 @@ async def test_list_queries_pagination_info(mock_list, mcp_server):
         assert data["has_previous"] is False
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_default_order_is_changed_on_desc(mock_list, mcp_server):
     """Test that default ordering is changed_on descending."""
@@ -512,7 +512,7 @@ async def test_list_queries_default_order_is_changed_on_desc(mock_list, mcp_serv
         assert call_kwargs.kwargs.get("order_direction") == "desc"
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_select_columns_projects_fields(mock_list, mcp_server):
     """select_columns limits which fields appear in each query result."""
@@ -534,7 +534,7 @@ async def test_list_queries_select_columns_projects_fields(mock_list, mcp_server
         assert q["status"] == "success"
 
 
-@patch("superset.daos.query.QueryDAO.list")
+@patch("axbi.daos.query.QueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_queries_select_columns_keeps_schema_alias(mock_list, mcp_server):
     """select_columns uses the public schema field name, not the internal alias."""
@@ -563,7 +563,7 @@ async def test_list_queries_invalid_order_column_raises(mcp_server):
             await client.call_tool("list_queries", {"request": request.model_dump()})
 
 
-@patch("superset.daos.query.QueryDAO.find_by_id")
+@patch("axbi.daos.query.QueryDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_query_info_internal_error(mock_find, mcp_server):
     """When an unexpected exception is raised, get_query_info returns InternalError."""

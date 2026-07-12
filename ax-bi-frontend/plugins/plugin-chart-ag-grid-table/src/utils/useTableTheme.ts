@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useTheme } from '@apache-superset/core/theme';
+import { useTheme } from '@ax-bi/core/theme';
 import {
   colorSchemeDark,
   colorSchemeLight,
   themeQuartz,
-} from '@superset-ui/core/components/ThemedAgGridReact';
+} from '@ax-bi/ui-core/components/ThemedAgGridReact';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import tinycolor from 'tinycolor2';
 

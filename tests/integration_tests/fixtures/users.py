@@ -18,7 +18,7 @@ import pytest
 from flask.ctx import AppContext
 from flask_appbuilder.security.sqla.models import Role, User
 
-from superset import db, security_manager
+from axbi import db, security_manager
 from tests.integration_tests.constants import GAMMA_SQLLAB_NO_DATA_USERNAME
 
 

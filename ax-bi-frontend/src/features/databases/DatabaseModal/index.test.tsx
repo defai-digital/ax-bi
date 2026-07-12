@@ -28,7 +28,7 @@ import {
   waitFor,
   fireEvent,
 } from 'spec/helpers/testing-library';
-import { getExtensionsRegistry } from '@superset-ui/core';
+import { getExtensionsRegistry } from '@ax-bi/ui-core';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
 import * as hooks from 'src/views/CRUD/hooks';
 import { DatabaseObject, ConfigurationMethod } from '../types';
@@ -39,8 +39,8 @@ import DatabaseModal, {
   DatabaseModalProps,
 } from './index';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: () => true,
 }));
 
@@ -57,7 +57,7 @@ jest.mock('src/hooks/useAppHistory', () => ({
 const dbProps = {
   show: true,
   database_name: 'my database',
-  sqlalchemy_uri: 'postgres://superset:superset@something:1234/superset',
+  sqlalchemy_uri: 'postgres://ax-bi:axbi@something:1234/ax-bi',
   onHide: () => {},
 };
 
@@ -2266,7 +2266,7 @@ describe('dbReducer', () => {
     });
   });
 
-  // Regression test for https://github.com/apache/superset/issues/30504
+  // Regression test for https://github.com/defai-digital/ax-bi/issues/30504
   // When creating a database, the POST response doesn't include engine_information,
   // but it should be preserved from the state populated when the user selects a
   // database engine.

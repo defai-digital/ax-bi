@@ -24,8 +24,8 @@ under the License.
   <title>Embedded Dashboard Test App</title>
   <style>
     html, body { margin: 0; padding: 0; height: 100%; }
-    #superset-container { width: 100%; height: 100vh; }
-    #superset-container iframe { width: 100%; height: 100%; border: none; }
+    #axbi-container { width: 100%; height: 100vh; }
+    #axbi-container iframe { width: 100%; height: 100%; border: none; }
     #error { color: red; padding: 20px; display: none; }
     #status { padding: 10px; font-family: monospace; font-size: 12px; }
   </style>
@@ -33,19 +33,19 @@ under the License.
 <body>
   <div id="status">Initializing embedded dashboard...</div>
   <div id="error"></div>
-  <div id="superset-container" data-test="embedded-container"></div>
+  <div id="axbi-container" data-test="embedded-container"></div>
 
   <script src="/sdk/index.js"></script>
   <script>
     (async function () {
       const params = new URLSearchParams(window.location.search);
       const uuid = params.get('uuid');
-      const supersetDomain = params.get('supersetDomain');
+      const axbiDomain = params.get('axbiDomain');
 
-      if (!uuid || !supersetDomain) {
+      if (!uuid || !axbiDomain) {
         document.getElementById('error').style.display = 'block';
         document.getElementById('error').textContent =
-          'Missing required query params: uuid, supersetDomain';
+          'Missing required query params: uuid, axbiDomain';
         return;
       }
 
@@ -69,10 +69,10 @@ under the License.
         if (params.get('hideTab') === 'true') uiConfig.hideTab = true;
         if (params.get('hideChartControls') === 'true') uiConfig.hideChartControls = true;
 
-        const dashboard = await supersetEmbeddedSdk.embedDashboard({
+        const dashboard = await axbiEmbeddedSdk.embedDashboard({
           id: uuid,
-          supersetDomain: supersetDomain,
-          mountPoint: document.getElementById('superset-container'),
+          axbiDomain: axbiDomain,
+          mountPoint: document.getElementById('axbi-container'),
           fetchGuestToken: fetchGuestToken,
           dashboardUiConfig: Object.keys(uiConfig).length > 0 ? uiConfig : undefined,
           debug: params.get('debug') === 'true',

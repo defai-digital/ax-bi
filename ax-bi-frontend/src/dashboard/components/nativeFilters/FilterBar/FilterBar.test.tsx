@@ -26,7 +26,7 @@ import {
 } from 'spec/helpers/testing-library';
 import { stateWithoutNativeFilters } from 'spec/fixtures/mockStore';
 import { testWithId } from 'src/utils/testUtils';
-import { Preset, makeApi } from '@superset-ui/core';
+import { Preset, makeApi } from '@ax-bi/ui-core';
 import {
   TimeFilterPlugin,
   SelectFilterPlugin,
@@ -41,8 +41,8 @@ import * as dataMaskActions from 'src/dataMask/actions';
 
 jest.useFakeTimers({ advanceTimers: true });
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   makeApi: jest.fn(),
 }));
 

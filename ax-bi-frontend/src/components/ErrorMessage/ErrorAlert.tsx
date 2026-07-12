@@ -17,15 +17,10 @@
  * under the License.
  */
 import { useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { useTheme } from '@apache-superset/core/theme';
-import {
-  Icons,
-  Modal,
-  Tooltip,
-  Typography,
-} from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { useTheme } from '@ax-bi/core/theme';
+import { Icons, Modal, Tooltip, Typography } from '@ax-bi/ui-core/components';
 import type { ErrorAlertProps } from './types';
 
 export const ErrorAlert: React.FC<ErrorAlertProps> = ({

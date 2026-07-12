@@ -51,22 +51,17 @@ import {
   BinaryQueryObjectFilterClause,
   extractTextFromHTML,
   TimeGranularity,
-} from '@superset-ui/core';
-import {
-  styled,
-  css,
-  useTheme,
-  SupersetTheme,
-} from '@apache-superset/core/theme';
-import { t, tn } from '@apache-superset/core/translation';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { styled, css, useTheme, AxBITheme } from '@ax-bi/core/theme';
+import { t, tn } from '@ax-bi/core/translation';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   Input,
   Space,
   RawAntdSelect as Select,
   Dropdown,
   Tooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   CheckOutlined,
   InfoCircleOutlined,
@@ -81,7 +76,7 @@ import {
   getTextColorForBackground,
   ObjectFormattingEnum,
   ColorSchemeEnum,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   DataColumnMeta,
   SearchOption,
@@ -209,7 +204,7 @@ function cellBackground({
 }: {
   value: number;
   colorPositiveNegative: boolean;
-  theme: SupersetTheme;
+  theme: AxBITheme;
 }) {
   if (!colorPositiveNegative) {
     return `${theme.colorFill}`;
@@ -286,7 +281,7 @@ function SelectPageSize({
         value={current}
         onChange={value => onChange(value)}
         size="small"
-        css={(theme: SupersetTheme) => css`
+        css={(theme: AxBITheme) => css`
           width: ${theme.sizeUnit * 18}px;
         `}
         aria-label={t('Show entries per page')}
@@ -1135,13 +1130,15 @@ export default function TableChart<D extends DataRecord = DataRecord>(
             text-align: ${sharedStyle.textAlign};
             white-space: ${value instanceof Date ? 'nowrap' : undefined};
             position: relative;
-            font-weight: ${color
-              ? `${theme.fontWeightBold}`
-              : `${theme.fontWeightNormal}`};
+            font-weight: ${
+              color ? `${theme.fontWeightBold}` : `${theme.fontWeightNormal}`
+            };
             background: ${backgroundColor || undefined};
-            padding-left: ${column.isChildColumn
-              ? `${theme.sizeUnit * 5}px`
-              : `${theme.sizeUnit}px`};
+            padding-left: ${
+              column.isChildColumn
+                ? `${theme.sizeUnit * 5}px`
+                : `${theme.sizeUnit}px`
+            };
           `;
 
           const cellBarStyles = css`
@@ -1149,10 +1146,11 @@ export default function TableChart<D extends DataRecord = DataRecord>(
             height: 100%;
             display: block;
             top: 0;
-            ${valueRange &&
-            typeof value === 'number' &&
-            valueRangeFlag &&
-            `
+            ${
+              valueRange &&
+              typeof value === 'number' &&
+              valueRangeFlag &&
+              `
                 width: ${`${cellWidth({
                   value: value as number,
                   valueRange,
@@ -1171,15 +1169,18 @@ export default function TableChart<D extends DataRecord = DataRecord>(
                     theme,
                   })
                 };
-              `}
+              `
+            }
           `;
 
           let arrowStyles = css`
-            color: ${basicColorFormatters &&
-            basicColorFormatters[row.index][originKey]?.arrowColor ===
-              ColorSchemeEnum.Green
-              ? theme.colorSuccess
-              : theme.colorError};
+            color: ${
+              basicColorFormatters &&
+              basicColorFormatters[row.index][originKey]?.arrowColor ===
+                ColorSchemeEnum.Green
+                ? theme.colorSuccess
+                : theme.colorError
+            };
             margin-right: ${theme.sizeUnit}px;
           `;
 
@@ -1188,10 +1189,12 @@ export default function TableChart<D extends DataRecord = DataRecord>(
             basicColorColumnFormatters?.length > 0
           ) {
             arrowStyles = css`
-              color: ${basicColorColumnFormatters[row.index][column.key]
-                ?.arrowColor === ColorSchemeEnum.Green
-                ? theme.colorSuccess
-                : theme.colorError};
+              color: ${
+                basicColorColumnFormatters[row.index][column.key]
+                  ?.arrowColor === ColorSchemeEnum.Green
+                  ? theme.colorSuccess
+                  : theme.colorError
+              };
               margin-right: ${theme.sizeUnit}px;
             `;
           }
@@ -1626,7 +1629,7 @@ export default function TableChart<D extends DataRecord = DataRecord>(
         noResults={getNoResultsMessage}
         searchInput={includeSearch && SearchInput}
         selectPageSize={pageSize !== null && SelectPageSize}
-        // not in use in Superset, but needed for unit tests
+        // not in use in AxBI, but needed for unit tests
         sticky={sticky}
         renderGroupingHeaders={
           !isEmpty(groupHeaderColumns) ? renderGroupingHeaders : undefined

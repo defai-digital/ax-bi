@@ -22,19 +22,19 @@ SQL Lab query execution errors should preserve tracebacks in server logs so
 operators can debug failures, but returned payloads must not expose raw Python
 tracebacks to clients.
 
-Both the legacy ``superset.sql_lab.handle_query_error`` function and the
-newer ``superset.sql.execution.celery_task._handle_query_error`` share the
+Both the legacy ``axbi.sql_lab.handle_query_error`` function and the
+newer ``axbi.sql.execution.celery_task._handle_query_error`` share the
 same pattern and are covered here.
 
 Specific failing call sites (as of the issue being filed):
-- ``superset/sql_lab.py``: ``logger.debug("Query %d: %s", query_id, ex)``
+- ``axbi/sql_lab.py``: ``logger.debug("Query %d: %s", query_id, ex)``
   in the outer ``except`` of ``get_sql_results``
-- ``superset/sql/execution/celery_task.py``: same pattern in
+- ``axbi/sql/execution/celery_task.py``: same pattern in
   ``execute_sql_task``
 - Neither ``handle_query_error`` nor ``_handle_query_error`` includes a
   ``stacktrace`` key in the returned payload dict.
 
-Reference: https://github.com/apache/superset/issues/28248
+Reference: https://github.com/defai-digital/ax-bi/issues/28248
 """
 
 from __future__ import annotations
@@ -70,13 +70,13 @@ def test_legacy_handle_query_error_payload_omits_stacktrace_when_enabled() -> No
     """
     config = {"TROUBLESHOOTING_LINK": None, "SHOW_STACKTRACE": True}
     with (
-        patch("superset.sql_lab.db") as mock_db,
-        patch("superset.sql_lab.app") as mock_app,
+        patch("axbi.sql_lab.db") as mock_db,
+        patch("axbi.sql_lab.app") as mock_app,
     ):
         mock_app.config = config
         mock_db.session = MagicMock()
 
-        from superset.sql_lab import handle_query_error
+        from axbi.sql_lab import handle_query_error
 
         query = _make_query_mock()
         try:
@@ -106,13 +106,13 @@ def test_legacy_handle_query_error_payload_omits_stacktrace_when_disabled() -> N
     """
     config = {"TROUBLESHOOTING_LINK": None, "SHOW_STACKTRACE": False}
     with (
-        patch("superset.sql_lab.db") as mock_db,
-        patch("superset.sql_lab.app") as mock_app,
+        patch("axbi.sql_lab.db") as mock_db,
+        patch("axbi.sql_lab.app") as mock_app,
     ):
         mock_app.config = config
         mock_db.session = MagicMock()
 
-        from superset.sql_lab import handle_query_error
+        from axbi.sql_lab import handle_query_error
 
         query = _make_query_mock()
         try:
@@ -149,7 +149,7 @@ def test_legacy_get_sql_results_outer_except_logs_exc_info() -> None:
     # exc_info rather than a plain debug-level call.
     import inspect
 
-    import superset.sql_lab as sql_lab_module
+    import axbi.sql_lab as sql_lab_module
 
     source = inspect.getsource(sql_lab_module.get_sql_results)
 
@@ -177,10 +177,10 @@ def test_legacy_get_sql_results_outer_except_logs_exc_info() -> None:
 def test_new_handle_query_error_payload_omits_stacktrace_when_enabled() -> None:
     """
     The dict returned by
-    ``superset.sql.execution.celery_task._handle_query_error`` must NOT include a
+    ``axbi.sql.execution.celery_task._handle_query_error`` must NOT include a
     ``stacktrace`` key when SHOW_STACKTRACE is True.
     """
-    from superset.sql.execution import celery_task as ct
+    from axbi.sql.execution import celery_task as ct
 
     query = _make_query_mock()
     config = {"TROUBLESHOOTING_LINK": None, "SHOW_STACKTRACE": True}
@@ -209,12 +209,12 @@ def test_new_handle_query_error_payload_omits_stacktrace_when_enabled() -> None:
 def test_new_handle_query_error_payload_omits_stacktrace_when_disabled() -> None:
     """
     The dict returned by
-    ``superset.sql.execution.celery_task._handle_query_error`` must NOT
+    ``axbi.sql.execution.celery_task._handle_query_error`` must NOT
     include a ``stacktrace`` key when SHOW_STACKTRACE is False (the default).
 
     This prevents raw Python tracebacks from being exposed to unprivileged users.
     """
-    from superset.sql.execution import celery_task as ct
+    from axbi.sql.execution import celery_task as ct
 
     query = _make_query_mock()
     config = {"TROUBLESHOOTING_LINK": None, "SHOW_STACKTRACE": False}
@@ -249,7 +249,7 @@ def test_new_execute_sql_task_outer_except_logs_exc_info() -> None:
     """
     import inspect
 
-    from superset.sql.execution import celery_task as ct
+    from axbi.sql.execution import celery_task as ct
 
     source = inspect.getsource(ct.execute_sql_task)
 

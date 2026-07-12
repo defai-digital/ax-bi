@@ -22,7 +22,7 @@ import { Modal, Input } from '../core';
 
 /**
  * Delete confirmation modal that requires typing "DELETE" to confirm.
- * Used throughout Superset for destructive delete operations.
+ * Used throughout AxBI for destructive delete operations.
  *
  * Provides primitives for tests to compose deletion flows.
  */

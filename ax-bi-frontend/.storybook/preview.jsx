@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { themeObject, css, exampleThemes } from '@apache-superset/core/theme';
+import { themeObject, css, exampleThemes } from '@ax-bi/core/theme';
 import { combineReducers, createStore, applyMiddleware, compose } from 'redux';
 // redux-thunk v3 dropped the default export
 import { thunk } from 'redux-thunk';
@@ -77,7 +77,7 @@ export const globalTypes = {
   theme: {
     name: 'Theme',
     description: 'Global theme for components',
-    defaultValue: 'superset',
+    defaultValue: 'axbi',
     toolbar: {
       icon: 'paintbrush',
       items: Object.keys(exampleThemes),
@@ -86,11 +86,11 @@ export const globalTypes = {
 };
 
 const themeDecorator = (Story, context) => {
-  const themeKey = context.globals.theme || 'superset';
+  const themeKey = context.globals.theme || 'axbi';
   themeObject.setConfig(exampleThemes[themeKey]);
 
   return (
-    <themeObject.SupersetThemeProvider>
+    <themeObject.AxBIThemeProvider>
       <App>
         <GlobalStylesOverrides />
         <Layout
@@ -104,7 +104,7 @@ const themeDecorator = (Story, context) => {
           <Story {...context} />
         </Layout>
       </App>
-    </themeObject.SupersetThemeProvider>
+    </themeObject.AxBIThemeProvider>
   );
 };
 
@@ -132,7 +132,7 @@ export const parameters = {
   options: {
     storySort: {
       order: [
-        'Superset Frontend',
+        'AxBI Frontend',
         ['Controls', 'Display', 'Feedback', 'Input', '*'],
         ['Overview', 'Examples', '*'],
         'Design System',

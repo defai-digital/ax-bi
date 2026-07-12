@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled, css } from '@apache-superset/core/theme';
-import { Form, StyledModal } from '@superset-ui/core/components';
+import { styled, css } from '@ax-bi/core/theme';
+import { Form, StyledModal } from '@ax-bi/ui-core/components';
 
 const MODAL_MARGIN = 16;
 const MIN_WIDTH = 880;

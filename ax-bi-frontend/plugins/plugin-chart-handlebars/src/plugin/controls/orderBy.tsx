@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlSetItem, Dataset } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { ControlSetItem, Dataset } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import { isEmpty } from 'lodash';
 import { isAggMode, isRawMode } from './shared';
 

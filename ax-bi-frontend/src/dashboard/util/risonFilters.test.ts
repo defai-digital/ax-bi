@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { PartialFilters, DataMaskStateWithId } from '@superset-ui/core';
+import { PartialFilters, DataMaskStateWithId } from '@ax-bi/ui-core';
 import {
   injectRisonFiltersIntelligently,
   RisonFilter,

@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { EmptyState } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { EmptyState } from '@ax-bi/ui-core/components';
 import { Link } from 'react-router-dom';
 
 const StyledContainer = styled.div`

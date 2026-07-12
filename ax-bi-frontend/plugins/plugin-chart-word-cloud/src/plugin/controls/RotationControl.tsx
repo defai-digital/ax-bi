@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { Select, SelectValue } from '@superset-ui/core/components';
-import { ControlHeader } from '@superset-ui/chart-controls';
-import { ControlComponentProps } from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { Select, SelectValue } from '@ax-bi/ui-core/components';
+import { ControlHeader } from '@ax-bi/chart-controls';
+import { ControlComponentProps } from '@ax-bi/chart-controls';
 
 type RotationControlProps = ControlComponentProps<string> & {
   choices?: [string, string][];

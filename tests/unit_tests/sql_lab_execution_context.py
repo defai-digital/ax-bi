@@ -19,13 +19,13 @@
 import pytest
 from marshmallow import ValidationError
 
-from superset.sql.parse import CTASMethod
-from superset.sqllab.schemas import ExecutePayloadSchema
-from superset.sqllab.sqllab_execution_context import (
+from axbi.sql.parse import CTASMethod
+from axbi.sqllab.schemas import ExecutePayloadSchema
+from axbi.sqllab.sqllab_execution_context import (
     CreateTableAsSelect,
     SqlJsonExecutionContext,
 )
-from superset.views.sql_lab.schemas import SqlJsonPayloadSchema
+from axbi.views.sql_lab.schemas import SqlJsonPayloadSchema
 from tests.unit_tests.conftest import with_feature_flags
 
 

@@ -20,25 +20,20 @@ import { useInRouterContext } from 'react-router-dom';
 import { ReactNode, useState, useEffect, FunctionComponent } from 'react';
 
 import { Link } from 'react-router-dom';
-import { t } from '@apache-superset/core/translation';
-import {
-  styled,
-  SupersetTheme,
-  css,
-  useTheme,
-} from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled, AxBITheme, css, useTheme } from '@ax-bi/core/theme';
 import cx from 'classnames';
 import { debounce } from 'lodash';
-import { Menu, MenuMode } from '@superset-ui/core/components/Menu';
+import { Menu, MenuMode } from '@ax-bi/ui-core/components/Menu';
 import {
   Button,
   Tooltip,
   Row,
   type OnClickHandler,
-} from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { MenuObjectProps } from 'src/types/bootstrapTypes';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 
 const StyledHeader = styled.div<{ backgroundColor?: string }>`
   background-color: ${({ theme, backgroundColor }) =>
@@ -119,7 +114,7 @@ const StyledHeader = styled.div<{ backgroundColor?: string }>`
   }
 `;
 
-const styledDisabled = (theme: SupersetTheme) => css`
+const styledDisabled = (theme: AxBITheme) => css`
   color: ${theme.colorTextDisabled};
   cursor: not-allowed;
 

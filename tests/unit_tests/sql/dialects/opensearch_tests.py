@@ -18,14 +18,14 @@
 import pytest
 import sqlglot
 
-from superset.sql.dialects.opensearch import OpenSearch
+from axbi.sql.dialects.opensearch import OpenSearch
 
 
 def test_opensearch_dialect_registered() -> None:
     """
     Test that OpenSearch dialect is properly registered for odelasticsearch.
     """
-    from superset.sql.parse import SQLGLOT_DIALECTS
+    from axbi.sql.parse import SQLGLOT_DIALECTS
 
     assert "odelasticsearch" in SQLGLOT_DIALECTS
     assert SQLGLOT_DIALECTS["odelasticsearch"] == OpenSearch

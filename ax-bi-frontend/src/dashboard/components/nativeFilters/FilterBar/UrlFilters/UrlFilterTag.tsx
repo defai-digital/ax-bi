@@ -17,10 +17,10 @@
  * under the License.
  */
 
-import { useCSSTextTruncation } from '@superset-ui/core';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
+import { useCSSTextTruncation } from '@ax-bi/ui-core';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
 import { Tag } from 'src/components/Tag';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { ellipsisCss } from '../CrossFilters/styles';
 import { UrlFilterIndicator } from './urlFilterUtils';
@@ -64,9 +64,11 @@ const UrlFilterTag = (props: {
   return (
     <StyledTag
       css={css`
-        ${orientation === FilterBarOrientation.Vertical
-          ? `margin-top: ${theme.sizeUnit * 2}px;`
-          : `margin-left: ${theme.sizeUnit * 2}px;`}
+        ${
+          orientation === FilterBarOrientation.Vertical
+            ? `margin-top: ${theme.sizeUnit * 2}px;`
+            : `margin-left: ${theme.sizeUnit * 2}px;`
+        }
       `}
       closable
       onClose={() => onRemove(filter)}

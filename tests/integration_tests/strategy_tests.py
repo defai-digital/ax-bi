@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset cache warmup"""
+"""Unit tests for AxBI cache warmup"""
 
 from unittest.mock import MagicMock  # noqa: F401
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -28,20 +28,20 @@ from sqlalchemy import String, Date, Float  # noqa: F401
 import pytest
 import pandas as pd  # noqa: F401
 
-from superset.models.slice import Slice  # noqa: F401
-from superset.utils.database import get_example_database  # noqa: F401
+from axbi.models.slice import Slice  # noqa: F401
+from axbi.utils.database import get_example_database  # noqa: F401
 
-from superset import db
+from axbi import db
 
-from superset.models.core import Log
-from superset.tags.models import get_tag, ObjectType, TaggedObject, TagType
-from superset.tasks.cache import (
+from axbi.models.core import Log
+from axbi.tags.models import get_tag, ObjectType, TaggedObject, TagType
+from axbi.tasks.cache import (
     DashboardTagsStrategy,
     TopNDashboardsStrategy,
 )
-from superset.utils.urls import get_url_host  # noqa: F401
+from axbi.utils.urls import get_url_host  # noqa: F401
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.dashboard_utils import (
     create_dashboard,  # noqa: F401
@@ -71,7 +71,7 @@ mock_positions = {
 }
 
 
-class TestCacheWarmUp(SupersetTestCase):
+class TestCacheWarmUp(AxBITestCase):
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_top_n_dashboards_strategy(self):
         # create a top visited dashboard

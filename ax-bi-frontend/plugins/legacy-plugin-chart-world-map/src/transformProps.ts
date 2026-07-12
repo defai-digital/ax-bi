@@ -17,7 +17,7 @@
  * under the License.
  */
 import tinycolor from 'tinycolor2';
-import { ChartProps, getValueFormatter } from '@superset-ui/core';
+import { ChartProps, getValueFormatter } from '@ax-bi/ui-core';
 
 export default function transformProps(chartProps: ChartProps) {
   const {

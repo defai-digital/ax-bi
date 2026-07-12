@@ -26,9 +26,9 @@ from sqlalchemy.dialects.mssql import DATE, NTEXT, NVARCHAR, TEXT, VARCHAR
 from sqlalchemy.sql import select
 from sqlalchemy.types import String, TypeEngine, UnicodeText
 
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.models.sql_types.mssql_sql_types import GUID
-from superset.utils.core import GenericDataType
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.models.sql_types.mssql_sql_types import GUID
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -57,13 +57,13 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec as spec  # noqa: N813
 
     assert_column_spec(spec, native_type, sqla_type, attrs, generic_type, is_dttm)
 
 
 def test_where_clause_n_prefix() -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     dialect = mssql.dialect()
 
@@ -97,7 +97,7 @@ def test_where_clause_n_prefix() -> None:
 
 
 def test_time_exp_mixed_case_col_1y() -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     col = column("MixedCase")
     expr = MssqlEngineSpec.get_timestamp_expr(col, None, "P1Y")
@@ -128,13 +128,13 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
 
 def test_extract_error_message() -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     test_mssql_exception = Exception(
         "(8155, b\"No column name was specified for column 1 of 'inner_qry'."
@@ -160,7 +160,7 @@ def test_extract_error_message() -> None:
 
 
 def test_fetch_data_no_description() -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     cursor = mock.MagicMock()
     cursor.description = []
@@ -168,8 +168,8 @@ def test_fetch_data_no_description() -> None:
 
 
 def test_fetch_data() -> None:
-    from superset.db_engine_specs.base import BaseEngineSpec
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     with mock.patch.object(
         MssqlEngineSpec,
@@ -196,7 +196,7 @@ def test_fetch_data() -> None:
     ],
 )
 def test_column_datatype_to_string(original: TypeEngine, expected: str) -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     actual = MssqlEngineSpec.column_datatype_to_string(original, mssql.dialect())
     assert actual == expected
@@ -252,7 +252,7 @@ select 'USD' as cur
     ],
 )
 def test_cte_query_parsing(original: TypeEngine, expected: str) -> None:
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     actual = MssqlEngineSpec.get_cte_query(original)
     assert actual == expected
@@ -262,7 +262,7 @@ def test_extract_errors() -> None:
     """
     Test that custom error messages are extracted correctly.
     """
-    from superset.db_engine_specs.mssql import MssqlEngineSpec
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec
 
     msg = dedent(
         """
@@ -272,8 +272,8 @@ Unable to connect: Adaptive Server is unavailable or does not exist (localhost_)
     )
     result = MssqlEngineSpec.extract_errors(Exception(msg))
     assert result == [
-        SupersetError(
-            error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+        AxBIError(
+            error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
             message='The hostname "localhost_" cannot be resolved.',
             level=ErrorLevel.ERROR,
             extra={
@@ -302,8 +302,8 @@ Net-Lib error during Connection refused (61)
         Exception(msg), context={"port": 12345, "hostname": "localhost"}
     )
     assert result == [
-        SupersetError(
-            error_type=SupersetErrorType.CONNECTION_PORT_CLOSED_ERROR,
+        AxBIError(
+            error_type=AxBIErrorType.CONNECTION_PORT_CLOSED_ERROR,
             message='Port 12345 on hostname "localhost" refused the connection.',
             level=ErrorLevel.ERROR,
             extra={
@@ -329,8 +329,8 @@ Net-Lib error during Operation timed out (60)
         Exception(msg), context={"port": 12345, "hostname": "example.com"}
     )
     assert result == [
-        SupersetError(
-            error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+        AxBIError(
+            error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
             message=(
                 'The host "example.com" might be down, '
                 "and can't be reached on port 12345."
@@ -362,8 +362,8 @@ Net-Lib error during Operation timed out (60)
         Exception(msg), context={"port": 12345, "hostname": "93.184.216.34"}
     )
     assert result == [
-        SupersetError(
-            error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+        AxBIError(
+            error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
             message=(
                 'The host "93.184.216.34" might be down, '
                 "and can't be reached on port 12345."
@@ -395,9 +395,9 @@ Adaptive Server connection failed (mssqldb.cxiotftzsypc.us-west-2.rds.amazonaws.
         Exception(msg), context={"username": "testuser", "database": "testdb"}
     )
     assert result == [
-        SupersetError(
+        AxBIError(
             message='Either the username "testuser", password, or database name "testdb" is incorrect.',  # noqa: E501
-            error_type=SupersetErrorType.CONNECTION_ACCESS_DENIED_ERROR,
+            error_type=AxBIErrorType.CONNECTION_ACCESS_DENIED_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Microsoft SQL Server",
@@ -427,6 +427,6 @@ Adaptive Server connection failed (mssqldb.cxiotftzsypc.us-west-2.rds.amazonaws.
     ],
 )
 def test_denormalize_name(name: str, expected_result: str):
-    from superset.db_engine_specs.mssql import MssqlEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.mssql import MssqlEngineSpec as spec  # noqa: N813
 
     assert spec.denormalize_name(mssql.dialect(), name) == expected_result

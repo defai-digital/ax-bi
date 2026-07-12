@@ -19,6 +19,6 @@
 *
 # DON'T ignore the .gitignore
 !.gitignore
-!superset_config.py
-!superset_config_docker_light.py
-!superset_config_local.example
+!axbi_config.py
+!axbi_config_docker_light.py
+!axbi_config_local.example

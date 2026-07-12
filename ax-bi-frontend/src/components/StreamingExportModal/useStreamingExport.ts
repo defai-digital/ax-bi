@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { ExportStatus, StreamingProgress } from './StreamingExportModal';
 import { makeUrl } from 'src/utils/pathUtils';
 import { applicationRoot } from 'src/utils/getBootstrapData';
@@ -106,7 +106,7 @@ const createFetchRequest = async (
     'Content-Type': 'application/x-www-form-urlencoded',
   };
 
-  const guestToken = SupersetClient.getGuestToken();
+  const guestToken = AxBIClient.getGuestToken();
   const isGuestTokenChartExport =
     Boolean(guestToken) &&
     exportSource === 'chart' &&
@@ -115,7 +115,7 @@ const createFetchRequest = async (
   // Embedded guest sessions cannot fetch CSRF tokens. Guest chart exports are
   // safe because chart data is CSRF-exempt and auth is carried by guest_token.
   if (!isGuestTokenChartExport) {
-    const csrfToken = await SupersetClient.getCSRFToken();
+    const csrfToken = await AxBIClient.getCSRFToken();
     if (csrfToken) {
       headers['X-CSRFToken'] = csrfToken;
     }

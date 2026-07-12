@@ -21,12 +21,12 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from superset.mcp_service.ai.intent_mapper import (
+from axbi.mcp_service.ai.intent_mapper import (
     _build_dataset_context,
     _governed_context,
 )
 
-_GOVERNANCE = "superset.semantic_index.governance"
+_GOVERNANCE = "axbi.semantic_index.governance"
 
 
 def _dataset() -> SimpleNamespace:

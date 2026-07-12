@@ -17,12 +17,12 @@
  * under the License.
  */
 import { Dispatch } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { PageHeaderWithActions } from '@superset-ui/core/components/PageHeaderWithActions';
-import { Button } from '@superset-ui/core/components';
-import { TooltipPlacement } from '@superset-ui/core/components/Tooltip/types';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Menu } from '@superset-ui/core/components/Menu';
+import { t } from '@ax-bi/core/translation';
+import { PageHeaderWithActions } from '@ax-bi/ui-core/components/PageHeaderWithActions';
+import { Button } from '@ax-bi/ui-core/components';
+import { TooltipPlacement } from '@ax-bi/ui-core/components/Tooltip/types';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Menu } from '@ax-bi/ui-core/components/Menu';
 import {
   DatasetActionType,
   DSReducerActionType,

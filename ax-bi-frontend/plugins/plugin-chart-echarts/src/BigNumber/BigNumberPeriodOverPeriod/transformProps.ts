@@ -18,7 +18,7 @@
  */
 // Type augmentation for dayjs plugins
 import 'dayjs/plugin/utc';
-import { Metric } from '@superset-ui/chart-controls';
+import { Metric } from '@ax-bi/chart-controls';
 import {
   ChartProps,
   getMetricLabel,
@@ -26,8 +26,8 @@ import {
   getNumberFormatter,
   SimpleAdhocFilter,
   ensureIsArray,
-} from '@superset-ui/core';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+} from '@ax-bi/ui-core';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 import {
   getComparisonFontSize,
   getHeaderFontSize,

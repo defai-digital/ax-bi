@@ -24,7 +24,7 @@ import {
   SMART_DATE_ID,
   getTimeFormatter,
   getNumberFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 // Regexp for the label added to time shifted series
 // (1 hour offset, 2 days offset, etc.)
 const TIME_SHIFT_PATTERN = /\d+ \w+ offset/;
@@ -32,7 +32,7 @@ const TIME_SHIFT_PATTERN = /\d+ \w+ offset/;
 const ANIMATION_TIME = 1000;
 
 export function cleanColorInput(value) {
-  // for superset series that should have the same color
+  // for axbi series that should have the same color
   return String(value)
     .trim()
     .replace(' (right axis)', '')

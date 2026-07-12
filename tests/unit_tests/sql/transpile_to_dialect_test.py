@@ -16,12 +16,12 @@
 # under the License.
 
 """
-Tests for transpile_to_dialect function in superset/sql/parse.py
+Tests for transpile_to_dialect function in axbi/sql/parse.py
 """
 
 import pytest
 
-from superset.sql.parse import transpile_to_dialect
+from axbi.sql.parse import transpile_to_dialect
 
 
 @pytest.mark.parametrize(
@@ -311,7 +311,7 @@ def test_unknown_engine_returns_sql_unchanged(engine: str) -> None:
 
 def test_invalid_sql_raises_exception() -> None:
     """Test that invalid SQL raises QueryClauseValidationException."""
-    from superset.exceptions import QueryClauseValidationException
+    from axbi.exceptions import QueryClauseValidationException
 
     with pytest.raises(QueryClauseValidationException):
         transpile_to_dialect("INVALID SQL !!!", "postgresql")
@@ -319,7 +319,7 @@ def test_invalid_sql_raises_exception() -> None:
 
 def test_empty_sql_raises_exception() -> None:
     """Test that empty SQL raises exception."""
-    from superset.exceptions import QueryClauseValidationException
+    from axbi.exceptions import QueryClauseValidationException
 
     with pytest.raises(QueryClauseValidationException):
         transpile_to_dialect("", "postgresql")
@@ -329,14 +329,14 @@ def test_sqlglot_generation_error_raises_exception() -> None:
     """Test that SQLGlot generation errors are caught and wrapped."""
     from unittest.mock import MagicMock, patch
 
-    from superset.exceptions import QueryClauseValidationException
+    from axbi.exceptions import QueryClauseValidationException
 
     # Create a mock parsed expression
     mock_parsed = MagicMock()
 
     # Mock parse_one to succeed, then make generate fail
-    with patch("superset.sql.parse.sqlglot.parse_one", return_value=mock_parsed):
-        with patch("superset.sql.parse.Dialect.get_or_raise") as mock_get_dialect:
+    with patch("axbi.sql.parse.sqlglot.parse_one", return_value=mock_parsed):
+        with patch("axbi.sql.parse.Dialect.get_or_raise") as mock_get_dialect:
             mock_dialect = mock_get_dialect.return_value
             mock_dialect.generate.side_effect = RuntimeError("SQLGlot internal error")
 
@@ -503,7 +503,7 @@ def test_sanitize_filters_writes_back_transpiled_clause() -> None:
     """
     from unittest.mock import MagicMock
 
-    from superset.common.query_object import QueryObject
+    from axbi.common.query_object import QueryObject
 
     mock_datasource = MagicMock()
     mock_datasource.database.db_engine_spec.engine = "postgresql"

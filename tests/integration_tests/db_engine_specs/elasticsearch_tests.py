@@ -17,12 +17,12 @@
 from parameterized import parameterized
 from sqlalchemy import column
 
-from superset.constants import TimeGrain
-from superset.db_engine_specs.elasticsearch import ElasticSearchEngineSpec
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.constants import TimeGrain
+from axbi.db_engine_specs.elasticsearch import ElasticSearchEngineSpec
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestElasticsearchDbEngineSpec(SupersetTestCase):
+class TestElasticsearchDbEngineSpec(AxBITestCase):
     @parameterized.expand(
         [
             [TimeGrain.SECOND, "DATE_TRUNC('second', ts)"],

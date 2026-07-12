@@ -26,13 +26,13 @@ from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION, ENUM, INTERVAL, JSO
 from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.engine.url import make_url
 
-from superset.db_engine_specs.postgres import (
+from axbi.db_engine_specs.postgres import (
     _check_not_redshift,
     PostgresEngineSpec as spec,  # noqa: N813
 )
-from superset.exceptions import SupersetSecurityException
-from superset.sql.parse import Table
-from superset.utils.core import GenericDataType
+from axbi.exceptions import AxBISecurityException
+from axbi.sql.parse import Table
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -136,7 +136,7 @@ def test_get_schema_from_engine_params() -> None:
         )
     assert str(excinfo.value) == (
         "Multiple schemas are configured in the search path, which means "
-        "Superset is unable to determine the schema of unqualified table "
+        "AxBI is unable to determine the schema of unqualified table "
         "names and enforce permissions."
     )
 
@@ -173,7 +173,7 @@ search_path -- another one
 = bar;
 SELECT * FROM some_table;
     """
-    with pytest.raises(SupersetSecurityException) as excinfo:
+    with pytest.raises(AxBISecurityException) as excinfo:
         spec.get_default_schema_for_query(database, query)
     assert (
         str(excinfo.value)
@@ -200,7 +200,7 @@ def test_get_default_catalog() -> None:
     """
     Test `get_default_catalog`.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     database = Database(
         database_name="postgres",

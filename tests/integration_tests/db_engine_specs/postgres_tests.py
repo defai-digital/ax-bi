@@ -21,18 +21,18 @@ from flask.ctx import AppContext
 from sqlalchemy import column, literal_column
 from sqlalchemy.dialects import postgresql
 
-from superset.db_engine_specs import load_engine_specs
-from superset.db_engine_specs.postgres import PostgresEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.models.sql_lab import Query
-from superset.utils.core import backend
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs import load_engine_specs
+from axbi.db_engine_specs.postgres import PostgresEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.models.sql_lab import Query
+from axbi.utils.core import backend
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.certificates import ssl_certificate
 from tests.integration_tests.fixtures.database import default_db_extra
 
 
-class TestPostgresDbEngineSpec(SupersetTestCase):
+class TestPostgresDbEngineSpec(AxBITestCase):
     def test_get_table_names(self):
         """
         DB Eng Specs (postgres): Test get table names
@@ -206,8 +206,8 @@ class TestPostgresDbEngineSpec(SupersetTestCase):
         msg = 'psql: error: FATAL:  role "testuser" does not exist'
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_INVALID_USERNAME_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_INVALID_USERNAME_ERROR,
                 message='The username "testuser" does not exist.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -232,8 +232,8 @@ class TestPostgresDbEngineSpec(SupersetTestCase):
         )
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
                 message='The hostname "localhost_" cannot be resolved.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -262,8 +262,8 @@ could not connect to server: Connection refused
         )
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_PORT_CLOSED_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_PORT_CLOSED_ERROR,
                 message='Port 12345 on hostname "localhost" refused the connection.',
                 level=ErrorLevel.ERROR,
                 extra={
@@ -285,8 +285,8 @@ psql: error: could not connect to server: Operation timed out
         )
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
                 message=(
                     'The host "example.com" might be down, '
                     "and can't be reached on port 12345."
@@ -316,8 +316,8 @@ psql: error: could not connect to server: Operation timed out
         )
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_HOST_DOWN_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_HOST_DOWN_ERROR,
                 message=(
                     'The host "93.184.216.34" might be down, '
                     "and can't be reached on port 12345."
@@ -340,8 +340,8 @@ psql: error: could not connect to server: Operation timed out
         msg = 'FATAL:  password authentication failed for user "postgres"'
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
-                error_type=SupersetErrorType.CONNECTION_INVALID_PASSWORD_ERROR,
+            AxBIError(
+                error_type=AxBIErrorType.CONNECTION_INVALID_PASSWORD_ERROR,
                 message=('The password provided for username "postgres" is incorrect.'),
                 level=ErrorLevel.ERROR,
                 extra={
@@ -363,9 +363,9 @@ psql: error: could not connect to server: Operation timed out
         msg = 'database "badDB" does not exist'
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Unable to connect to database "badDB".',
-                error_type=SupersetErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
+                error_type=AxBIErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "PostgreSQL",
@@ -386,9 +386,9 @@ psql: error: could not connect to server: Operation timed out
         msg = "no password supplied"
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message="Please re-enter the password.",
-                error_type=SupersetErrorType.CONNECTION_ACCESS_DENIED_ERROR,
+                error_type=AxBIErrorType.CONNECTION_ACCESS_DENIED_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "invalid": ["password"],
@@ -410,9 +410,9 @@ psql: error: could not connect to server: Operation timed out
         msg = 'syntax error at or near "from_"'
         result = PostgresEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Please check your query for syntax errors at or near "from_". Then, try running your query again.',  # noqa: E501
-                error_type=SupersetErrorType.SYNTAX_ERROR,
+                error_type=AxBIErrorType.SYNTAX_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "PostgreSQL",
@@ -519,5 +519,5 @@ def test_get_catalog_names(app_context: AppContext) -> None:
     with database.get_inspector() as inspector:
         assert PostgresEngineSpec.get_catalog_names(database, inspector) == {
             "postgres",
-            "superset",
+            "axbi",
         }

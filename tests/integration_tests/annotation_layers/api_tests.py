@@ -15,18 +15,18 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import pytest
 import rison
 from sqlalchemy.sql import func
 
 import tests.integration_tests.test_app  # noqa: F401
-from superset import db
-from superset.utils import json
-from superset.models.annotations import Annotation, AnnotationLayer
+from axbi import db
+from axbi.utils import json
+from axbi.models.annotations import Annotation, AnnotationLayer
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.annotation_layers.fixtures import (
     create_annotation_layers,  # noqa: F401
     get_end_dttm,
@@ -42,7 +42,7 @@ ANNOTATION_LAYERS_COUNT = 10
 ANNOTATIONS_COUNT = 5
 
 
-class TestAnnotationLayerApi(SupersetTestCase):
+class TestAnnotationLayerApi(AxBITestCase):
     @staticmethod
     def get_layer_with_annotation() -> AnnotationLayer:
         return (

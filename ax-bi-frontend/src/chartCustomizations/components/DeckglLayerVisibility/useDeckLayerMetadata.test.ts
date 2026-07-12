@@ -17,17 +17,17 @@
  * under the License.
  */
 import { act, renderHook, waitFor } from '@testing-library/react';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { useDeckLayerMetadata } from './useDeckLayerMetadata';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     get: jest.fn(),
   },
 }));
 
-const mockSupersetClientGet = SupersetClient.get as jest.Mock;
+const mockAxBIClientGet = AxBIClient.get as jest.Mock;
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -50,7 +50,7 @@ test('fetches layer metadata successfully', async () => {
       ],
     },
   };
-  mockSupersetClientGet.mockResolvedValue(mockResponse);
+  mockAxBIClientGet.mockResolvedValue(mockResponse);
 
   const { result } = renderHook(() => useDeckLayerMetadata([1, 2]));
 
@@ -65,14 +65,14 @@ test('fetches layer metadata successfully', async () => {
     { sliceId: 2, name: 'Layer 2', type: 'deck_arc' },
   ]);
   expect(result.current.error).toBe(null);
-  expect(mockSupersetClientGet).toHaveBeenCalledWith({
+  expect(mockAxBIClientGet).toHaveBeenCalledWith({
     endpoint: expect.stringContaining('/api/v1/chart/?q='),
   });
 });
 
 test('handles API error and returns fallback layers', async () => {
   const errorMessage = 'Network error';
-  mockSupersetClientGet.mockRejectedValue(new Error(errorMessage));
+  mockAxBIClientGet.mockRejectedValue(new Error(errorMessage));
 
   const { result } = renderHook(() => useDeckLayerMetadata([1, 2, 3]));
 
@@ -89,7 +89,7 @@ test('handles API error and returns fallback layers', async () => {
 });
 
 test('handles non-Error object rejection', async () => {
-  mockSupersetClientGet.mockRejectedValue('String error');
+  mockAxBIClientGet.mockRejectedValue('String error');
 
   const { result } = renderHook(() => useDeckLayerMetadata([1]));
 
@@ -118,7 +118,7 @@ test('refetches when sliceIds change', async () => {
     },
   };
 
-  mockSupersetClientGet
+  mockAxBIClientGet
     .mockResolvedValueOnce(mockResponse1)
     .mockResolvedValueOnce(mockResponse2);
 
@@ -146,7 +146,7 @@ test('refetches when sliceIds change', async () => {
   expect(result.current.layers).toHaveLength(2);
   expect(result.current.layers[0].sliceId).toBe(2);
   expect(result.current.layers[1].sliceId).toBe(3);
-  expect(mockSupersetClientGet).toHaveBeenCalledTimes(2);
+  expect(mockAxBIClientGet).toHaveBeenCalledTimes(2);
 });
 
 test('handles empty result from API', async () => {
@@ -155,7 +155,7 @@ test('handles empty result from API', async () => {
       result: [],
     },
   };
-  mockSupersetClientGet.mockResolvedValue(mockResponse);
+  mockAxBIClientGet.mockResolvedValue(mockResponse);
 
   const { result } = renderHook(() => useDeckLayerMetadata([1, 2]));
 
@@ -173,7 +173,7 @@ test('clears isLoading when sliceIds transitions from non-empty to empty', async
       result: [{ id: 1, slice_name: 'Layer 1', viz_type: 'deck_scatter' }],
     },
   };
-  mockSupersetClientGet.mockResolvedValue(mockResponse);
+  mockAxBIClientGet.mockResolvedValue(mockResponse);
 
   const { result, rerender } = renderHook(
     ({ ids }) => useDeckLayerMetadata(ids),
@@ -202,7 +202,7 @@ test('does not refetch when sliceIds array has same values', async () => {
       result: [{ id: 1, slice_name: 'Layer 1', viz_type: 'deck_scatter' }],
     },
   };
-  mockSupersetClientGet.mockResolvedValue(mockResponse);
+  mockAxBIClientGet.mockResolvedValue(mockResponse);
 
   const { result, rerender } = renderHook(
     ({ ids }) => useDeckLayerMetadata(ids),
@@ -215,9 +215,9 @@ test('does not refetch when sliceIds array has same values', async () => {
     expect(result.current.isLoading).toBe(false);
   });
 
-  const callCount = mockSupersetClientGet.mock.calls.length;
+  const callCount = mockAxBIClientGet.mock.calls.length;
 
   rerender({ ids: [1] });
 
-  expect(mockSupersetClientGet).toHaveBeenCalledTimes(callCount);
+  expect(mockAxBIClientGet).toHaveBeenCalledTimes(callCount);
 });

@@ -47,7 +47,7 @@ const parsedArgs = yargs(hideBin(process.argv)).parse();
 // input dir
 const APP_DIR = path.resolve(__dirname, './');
 // output dir
-const BUILD_DIR = path.resolve(__dirname, '../superset/static/assets');
+const BUILD_DIR = path.resolve(__dirname, '../ax-bi/static/assets');
 const ROOT_DIR = path.resolve(__dirname, '..');
 // Public path for extracted css src:urls. All assets are compiled into the same
 // folder. This forces the src:url in the extracted css to only contain the filename
@@ -112,7 +112,7 @@ const plugins = [
   // creates a manifest.json mapping of name to hashed output used in template files
   new WebpackManifestPlugin({
     publicPath: output.publicPath,
-    seed: { app: 'superset' },
+    seed: { app: 'axbi' },
     // This enables us to include all relevant files for an entry
     generate: (seed, files, entrypoints) => {
       // Each entrypoint's chunk files in the format of
@@ -148,7 +148,6 @@ const plugins = [
     'process.env.WEBPACK_MODE': JSON.stringify(mode),
     'process.env.REDUX_DEFAULT_MIDDLEWARE':
       process.env.REDUX_DEFAULT_MIDDLEWARE,
-    'process.env.SCARF_ANALYTICS': JSON.stringify(process.env.SCARF_ANALYTICS),
   }),
 
   new CopyPlugin({
@@ -173,7 +172,7 @@ const plugins = [
     filename: '500.html',
   }),
   new ModuleFederationPlugin({
-    name: 'superset',
+    name: 'axbi',
     filename: 'remoteEntry.js',
     shared: {
       react: {
@@ -372,7 +371,7 @@ const config = {
         /export 'withTooltipPropTypes' \(imported as 'vxTooltipPropTypes'\) was not found/,
     },
     {
-      message: /Can't resolve.*superset_text/,
+      message: /Can't resolve.*axbi_text/,
     },
   ],
   performance: {
@@ -456,7 +455,7 @@ const config = {
     ],
   },
   resolve: {
-    // resolve modules from `/superset_frontend/node_modules` and `/superset_frontend`
+    // resolve modules from `/axbi_frontend/node_modules` and `/axbi_frontend`
     modules: [
       'node_modules',
       APP_DIR,
@@ -517,7 +516,7 @@ const config = {
       {
         test: /\.jsx?$/,
         // include source code for plugins, but exclude node_modules and test files within them
-        exclude: [/superset-ui.*\/node_modules\//, /\.test.jsx?$/],
+        exclude: [/ax-bi-ui.*\/node_modules\//, /\.test.jsx?$/],
         include: [
           new RegExp(`${APP_DIR}/(src|.storybook|plugins|packages)`),
           ...['./src', './.storybook', './plugins', './packages'].map(p =>
@@ -533,7 +532,7 @@ const config = {
       },
       {
         test: /\.css$/,
-        include: [APP_DIR, /superset-ui.+\/src/],
+        include: [APP_DIR, /ax-bi-ui.+\/src/],
         use: [
           isDevMode
             ? 'style-loader'
@@ -658,10 +657,10 @@ Object.entries(packageConfig.dependencies).forEach(([pkg, relativeDir]) => {
   const dir = relativeDir.replace('file:', '');
 
   if (
-    (pkg.startsWith('@superset-ui') || pkg.startsWith('@apache-superset')) &&
+    (pkg.startsWith('@axbi-ui') || pkg.startsWith('@ax-bi')) &&
     fs.existsSync(srcPath)
   ) {
-    console.log(`[Superset Plugin] Use symlink source for ${pkg} @ ${dir}`);
+    console.log(`[AxBI Plugin] Use symlink source for ${pkg} @ ${dir}`);
     config.resolve.alias[pkg] = path.resolve(APP_DIR, `${dir}/src`);
   }
 });
@@ -726,7 +725,7 @@ if (process.env.BUNDLE_ANALYZER) {
   config.plugins.push(new BundleAnalyzerPlugin({ analyzerMode: 'static' }));
   config.plugins.push(
     // this creates an HTML page with a sunburst diagram of dependencies.
-    // you'll find it at superset/static/stats/statistics.html
+    // you'll find it at axbi/static/stats/statistics.html
     // note that the file is >100MB so it's in .gitignore
     new Visualizer({
       filename: path.join('..', 'stats', 'statistics.html'),

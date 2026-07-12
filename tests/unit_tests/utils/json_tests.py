@@ -27,9 +27,9 @@ import pandas as pd
 import pytest
 import pytz
 
-from superset.constants import PASSWORD_MASK
-from superset.utils import json
-from superset.utils.core import (
+from axbi.constants import PASSWORD_MASK
+from axbi.utils import json
+from axbi.utils.core import (
     zlib_compress,
     zlib_decompress,
 )

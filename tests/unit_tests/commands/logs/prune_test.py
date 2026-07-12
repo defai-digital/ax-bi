@@ -25,7 +25,7 @@ def test_prune_cutoff_is_naive_utc() -> None:
     stored (datetime.utcnow, no tzinfo). Using a timezone-aware cutoff would
     raise "operator does not exist: timestamp without time zone" on PostgreSQL.
     """
-    from superset.commands.logs.prune import LogPruneCommand
+    from axbi.commands.logs.prune import LogPruneCommand
 
     captured: dict[str, datetime] = {}
 
@@ -41,7 +41,7 @@ def test_prune_cutoff_is_naive_utc() -> None:
     session = MagicMock()
     session.execute.side_effect = fake_execute
 
-    with patch("superset.commands.logs.prune.db") as mock_db:
+    with patch("axbi.commands.logs.prune.db") as mock_db:
         mock_db.session = session
         LogPruneCommand(retention_period_days=30).run()
 

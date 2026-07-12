@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { ChartMetadata, ChartPlugin } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { ChartMetadata, ChartPlugin } from '@ax-bi/ui-core';
 
 import example1 from './images/example1.png';
 import example1Dark from './images/example1-dark.png';

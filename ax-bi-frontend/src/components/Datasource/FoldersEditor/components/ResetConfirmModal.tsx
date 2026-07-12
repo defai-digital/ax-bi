@@ -18,8 +18,8 @@
  */
 
 import { memo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Modal } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Modal } from '@ax-bi/ui-core/components';
 
 interface ResetConfirmModalProps {
   show: boolean;

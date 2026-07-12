@@ -22,4 +22,4 @@ export {
   type CodeEditorProps,
   type CodeEditorMode,
   type CodeEditorTheme,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';

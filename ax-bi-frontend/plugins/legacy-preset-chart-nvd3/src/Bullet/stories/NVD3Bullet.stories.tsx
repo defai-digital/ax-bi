@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart, VizType } from '@superset-ui/core';
-import { BulletChartPlugin } from '@superset-ui/legacy-preset-chart-nvd3';
+import { SuperChart, VizType } from '@ax-bi/ui-core';
+import { BulletChartPlugin } from '@ax-bi/legacy-preset-chart-nvd3';
 import { dummyDatasource, withResizableChartDemo } from '@storybook-shared';
 import data from './data';
 

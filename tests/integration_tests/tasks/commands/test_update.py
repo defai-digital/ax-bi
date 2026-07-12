@@ -18,15 +18,15 @@
 from uuid import UUID
 
 import pytest
-from superset_core.tasks.types import TaskScope, TaskStatus
+from axbi_core.tasks.types import TaskScope, TaskStatus
 
-from superset import db
-from superset.commands.tasks import UpdateTaskCommand
-from superset.commands.tasks.exceptions import (
+from axbi import db
+from axbi.commands.tasks import UpdateTaskCommand
+from axbi.commands.tasks.exceptions import (
     TaskForbiddenError,
     TaskNotFoundError,
 )
-from superset.daos.tasks import TaskDAO
+from axbi.daos.tasks import TaskDAO
 
 
 def test_update_task_success(app_context, get_user, login_as) -> None:

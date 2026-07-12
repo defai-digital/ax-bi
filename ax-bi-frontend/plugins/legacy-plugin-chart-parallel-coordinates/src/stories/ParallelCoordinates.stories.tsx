@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart } from '@superset-ui/core';
-import ParallelCoordinatesChartPlugin from '@superset-ui/legacy-plugin-chart-parallel-coordinates';
+import { SuperChart } from '@ax-bi/ui-core';
+import ParallelCoordinatesChartPlugin from '@ax-bi/legacy-plugin-chart-parallel-coordinates';
 import { withResizableChartDemo } from '@storybook-shared';
 import data from './data';
 

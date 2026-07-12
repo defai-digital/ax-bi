@@ -18,7 +18,7 @@
  */
 import { ReactNode, useCallback, useEffect, useState } from 'react';
 import { isEmpty, isEqual } from 'lodash';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import {
   parseDttmToDate,
   BinaryAdhocFilter,
@@ -26,19 +26,13 @@ import {
   customTimeRangeDecode,
   computeCustomDateTime,
   fetchTimeRange,
-} from '@superset-ui/core';
-import {
-  DatePicker,
-  type RangePickerProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { DatePicker, type RangePickerProps } from '@ax-bi/ui-core/components';
 import { useSelector } from 'react-redux';
 
 import ControlHeader from 'src/explore/components/ControlHeader';
 import { RootState } from 'src/views/store';
-import {
-  DEFAULT_DATE_PATTERN,
-  INVALID_DATE,
-} from '@superset-ui/chart-controls';
+import { DEFAULT_DATE_PATTERN, INVALID_DATE } from '@ax-bi/chart-controls';
 import { Dayjs } from 'dayjs';
 
 export interface TimeOffsetControlsProps {

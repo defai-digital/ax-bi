@@ -20,9 +20,9 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.db_engine_specs.impala import ImpalaEngineSpec as spec  # noqa: N813
-from superset.models.core import Database
-from superset.models.sql_lab import Query
+from axbi.db_engine_specs.impala import ImpalaEngineSpec as spec  # noqa: N813
+from axbi.models.core import Database
+from axbi.models.sql_lab import Query
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -59,7 +59,7 @@ def test_get_cancel_query_id() -> None:
     )
 
 
-@patch("superset.db_engine_specs.impala.is_safe_host", return_value=True)
+@patch("axbi.db_engine_specs.impala.is_safe_host", return_value=True)
 @patch("requests.post")
 def test_cancel_query(post_mock: Mock, _safe_host: Mock) -> None:  # noqa: PT019
     query = Query()
@@ -83,7 +83,7 @@ def test_cancel_query(post_mock: Mock, _safe_host: Mock) -> None:  # noqa: PT019
     assert result is True
 
 
-@patch("superset.db_engine_specs.impala.is_safe_host", return_value=True)
+@patch("axbi.db_engine_specs.impala.is_safe_host", return_value=True)
 @patch("requests.post")
 def test_cancel_query_failed(post_mock: Mock, _safe_host: Mock) -> None:  # noqa: PT019
     query = Query()
@@ -107,7 +107,7 @@ def test_cancel_query_failed(post_mock: Mock, _safe_host: Mock) -> None:  # noqa
     assert result is False
 
 
-@patch("superset.db_engine_specs.impala.is_safe_host", return_value=True)
+@patch("axbi.db_engine_specs.impala.is_safe_host", return_value=True)
 @patch("requests.post")
 def test_cancel_query_exception(post_mock: Mock, _safe_host: Mock) -> None:  # noqa: PT019
     query = Query()

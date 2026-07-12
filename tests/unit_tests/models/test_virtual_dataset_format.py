@@ -38,8 +38,8 @@ import pytest
 from flask import Flask
 from sqlalchemy.sql.elements import TextClause
 
-from superset.models.helpers import ExploreMixin
-from superset.sql.parse import RLSMethod, SQLStatement, Table
+from axbi.models.helpers import ExploreMixin
+from axbi.sql.parse import RLSMethod, SQLStatement, Table
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -94,7 +94,7 @@ class TestVirtualDatasetNoRLS:
     round-tripped through sqlglot's formatter.
     """
 
-    @patch("superset.models.helpers.apply_rls", return_value=False)
+    @patch("axbi.models.helpers.apply_rls", return_value=False)
     def test_sql_preserved_when_no_rls(
         self,
         mock_apply_rls: MagicMock,
@@ -110,7 +110,7 @@ class TestVirtualDatasetNoRLS:
         inner_sql = _get_subquery_sql(virtual_datasource)
         assert inner_sql == original_sql
 
-    @patch("superset.models.helpers.apply_rls", return_value=False)
+    @patch("axbi.models.helpers.apply_rls", return_value=False)
     def test_redshift_nvl_preserved_when_no_rls(
         self,
         mock_apply_rls: MagicMock,
@@ -128,7 +128,7 @@ class TestVirtualDatasetNoRLS:
         assert "NVL" in inner_sql
         assert "COALESCE" not in inner_sql
 
-    @patch("superset.models.helpers.apply_rls", return_value=False)
+    @patch("axbi.models.helpers.apply_rls", return_value=False)
     def test_redshift_current_timestamp_preserved_when_no_rls(
         self,
         mock_apply_rls: MagicMock,
@@ -145,7 +145,7 @@ class TestVirtualDatasetNoRLS:
         assert "current_timestamp" in inner_sql
         assert "GETDATE" not in inner_sql
 
-    @patch("superset.models.helpers.apply_rls", return_value=False)
+    @patch("axbi.models.helpers.apply_rls", return_value=False)
     def test_redshift_cast_syntax_preserved_when_no_rls(
         self,
         mock_apply_rls: MagicMock,
@@ -170,7 +170,7 @@ class TestVirtualDatasetWithRLS:
     sqlglot to serialize the AST modifications.
     """
 
-    @patch("superset.models.helpers.apply_rls", return_value=True)
+    @patch("axbi.models.helpers.apply_rls", return_value=True)
     def test_sql_reformatted_when_rls_applied(
         self,
         mock_apply_rls: MagicMock,
@@ -206,7 +206,7 @@ class TestApplyRlsReturnValue:
         """
         apply_rls should return False when the statement has no tables.
         """
-        from superset.utils.rls import apply_rls
+        from axbi.utils.rls import apply_rls
 
         database = MagicMock()
         database.db_engine_spec.get_rls_method.return_value = MagicMock()
@@ -223,7 +223,7 @@ class TestApplyRlsReturnValue:
         )
         assert result is False
 
-    @patch("superset.utils.rls.get_predicates_for_table")
+    @patch("axbi.utils.rls.get_predicates_for_table")
     def test_returns_false_when_predicates_empty(
         self,
         mock_get_predicates: MagicMock,
@@ -232,7 +232,7 @@ class TestApplyRlsReturnValue:
         """
         apply_rls should return False when tables exist but have no RLS rules.
         """
-        from superset.utils.rls import apply_rls
+        from axbi.utils.rls import apply_rls
 
         mock_get_predicates.return_value = []
 
@@ -254,7 +254,7 @@ class TestApplyRlsReturnValue:
         )
         assert result is False
 
-    @patch("superset.utils.rls.get_predicates_for_table")
+    @patch("axbi.utils.rls.get_predicates_for_table")
     def test_returns_true_when_predicates_exist(
         self,
         mock_get_predicates: MagicMock,
@@ -263,7 +263,7 @@ class TestApplyRlsReturnValue:
         """
         apply_rls should return True when RLS predicates are found.
         """
-        from superset.utils.rls import apply_rls
+        from axbi.utils.rls import apply_rls
 
         mock_get_predicates.return_value = ["user_id = 42"]
 

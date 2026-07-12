@@ -18,9 +18,9 @@
  */
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { css, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled } from '@ax-bi/core/theme';
 
 import {
   Button,
@@ -29,7 +29,7 @@ import {
   TableView,
   EmptyWrapperType,
   Icons,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import useQueryEditor from 'src/SqlLab/hooks/useQueryEditor';
 import { SqlLabRootState, QueryCostEstimate } from 'src/SqlLab/types';
 

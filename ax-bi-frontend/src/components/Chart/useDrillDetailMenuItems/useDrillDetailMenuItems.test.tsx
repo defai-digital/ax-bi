@@ -28,8 +28,8 @@ import {
 import setupPlugins from 'src/setup/setupPlugins';
 import { getMockStoreWithNativeFilters } from 'spec/fixtures/mockStore';
 import chartQueries, { sliceId } from 'spec/fixtures/mockChartQueries';
-import { BinaryQueryObjectFilterClause, VizType } from '@superset-ui/core';
-import { Menu } from '@superset-ui/core/components/Menu';
+import { BinaryQueryObjectFilterClause, VizType } from '@ax-bi/ui-core';
+import { Menu } from '@ax-bi/ui-core/components/Menu';
 import DrillDetailModal from '../DrillDetail/DrillDetailModal';
 import { useDrillDetailMenuItems, DrillDetailMenuItemsProps } from './index';
 

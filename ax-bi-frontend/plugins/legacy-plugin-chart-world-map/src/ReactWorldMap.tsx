@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { reactify } from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/theme';
+import { reactify } from '@ax-bi/ui-core';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import WorldMap from './WorldMap';
 
 // Type-erase the render function to allow flexible prop spreading in the wrapper.
@@ -48,7 +48,7 @@ const WorldMapComponent = ({
 };
 
 export default styled(WorldMapComponent)`
-  .superset-legacy-chart-world-map {
+  .axbi-legacy-chart-world-map {
     position: relative;
     svg {
       background-color: ${({ theme }) => theme.colorBgLayout};
@@ -58,7 +58,10 @@ export default styled(WorldMapComponent)`
       left: ${({ theme }) => theme.sizeUnit * 3}px;
       bottom: ${({ theme }) => theme.sizeUnit * 3}px;
       z-index: 1;
-      max-width: min(360px, calc(100% - ${({ theme }) => theme.sizeUnit * 6}px));
+      max-width: min(
+        360px,
+        calc(100% - ${({ theme }) => theme.sizeUnit * 6}px)
+      );
       padding: ${({ theme }) => theme.sizeUnit * 2}px
         ${({ theme }) => theme.sizeUnit * 3}px;
       border: 1px solid;

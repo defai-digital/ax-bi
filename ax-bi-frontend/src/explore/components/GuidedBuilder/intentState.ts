@@ -16,13 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import { GuidedIntent } from './types';
 import { intentFromFormData } from './intentFromFormData';
-import {
-  DEFAULT_GUIDED_VIZ_TYPE,
-  isGuidedVizType,
-} from './vizDescriptors';
+import { DEFAULT_GUIDED_VIZ_TYPE, isGuidedVizType } from './vizDescriptors';
 
 /**
  * Build the initial guided intent from Explore form_data. When form_data has no

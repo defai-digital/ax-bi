@@ -18,11 +18,7 @@
  */
 import { isEmpty } from 'lodash';
 import { mapValues, flow, keyBy } from 'lodash/fp';
-import {
-  JsonValue,
-  DataRecordFilters,
-  DataRecordValue,
-} from '@superset-ui/core';
+import { JsonValue, DataRecordFilters, DataRecordValue } from '@ax-bi/ui-core';
 import {
   getChartIdAndColumnFromFilterKey,
   getDashboardFilterKey,

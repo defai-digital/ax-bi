@@ -25,7 +25,7 @@ import {
   SqlaFormData,
   QueryFormColumn,
   QueryObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   getSpatialColumns,
   addSpatialNullFilters,

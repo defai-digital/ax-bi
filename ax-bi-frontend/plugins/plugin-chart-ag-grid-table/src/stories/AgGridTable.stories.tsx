@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import AgGridTableChartPlugin from '../index';
 import transformProps from '../transformProps';
 import { basicFormData, basicData } from './data';

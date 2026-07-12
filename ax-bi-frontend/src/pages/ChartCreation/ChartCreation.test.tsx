@@ -27,7 +27,7 @@ import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import { ChartCreation } from 'src/pages/ChartCreation';
 import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { axbiTheme } from '@ax-bi/core/theme';
 
 jest.mock('src/components/DynamicPlugins', () => ({
   usePluginContext: () => ({
@@ -95,7 +95,7 @@ async function renderComponent(user = mockUser) {
     <ChartCreation
       user={user}
       addSuccessToast={() => null}
-      theme={supersetTheme}
+      theme={axbiTheme}
       {...routeProps}
     />,
     {
@@ -327,7 +327,7 @@ test('shows loading spinner when dataset parameter is present in URL', async () 
     <ChartCreation
       user={mockUser}
       addSuccessToast={() => null}
-      theme={supersetTheme}
+      theme={axbiTheme}
       {...routeProps}
     />,
     {

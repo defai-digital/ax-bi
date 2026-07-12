@@ -20,9 +20,9 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.database.tables import TablesDatabaseCommand
-from superset.extensions import security_manager
-from superset.utils.core import DatasourceName
+from axbi.commands.database.tables import TablesDatabaseCommand
+from axbi.extensions import security_manager
+from axbi.utils.core import DatasourceName
 
 
 @pytest.fixture
@@ -30,7 +30,7 @@ def database_with_catalog(mocker: MockerFixture) -> MagicMock:
     """
     Mock a database with catalogs and schemas.
     """
-    mocker.patch("superset.commands.database.tables.db")
+    mocker.patch("axbi.commands.database.tables.db")
 
     database = mocker.MagicMock()
     database.database_name = "test_database"
@@ -44,7 +44,7 @@ def database_with_catalog(mocker: MockerFixture) -> MagicMock:
     }
     database.get_all_materialized_view_names_in_schema.return_value = set()
 
-    DatabaseDAO = mocker.patch("superset.commands.database.tables.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.tables.DatabaseDAO")  # noqa: N806
     DatabaseDAO.find_by_id.return_value = database
 
     return database
@@ -55,7 +55,7 @@ def database_without_catalog(mocker: MockerFixture) -> MagicMock:
     """
     Mock a database without catalogs but with schemas.
     """
-    mocker.patch("superset.commands.database.tables.db")
+    mocker.patch("axbi.commands.database.tables.db")
 
     database = mocker.MagicMock()
     database.database_name = "test_database"
@@ -69,7 +69,7 @@ def database_without_catalog(mocker: MockerFixture) -> MagicMock:
     }
     database.get_all_materialized_view_names_in_schema.return_value = set()
 
-    DatabaseDAO = mocker.patch("superset.commands.database.tables.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.tables.DatabaseDAO")  # noqa: N806
     DatabaseDAO.find_by_id.return_value = database
 
     return database
@@ -95,7 +95,7 @@ def test_tables_with_catalog(
         ],
     )
 
-    db = mocker.patch("superset.commands.database.tables.db")
+    db = mocker.patch("axbi.commands.database.tables.db")
     table = mocker.MagicMock()
     table.name = "table1"
     table.extra_dict = {"foo": "bar"}
@@ -153,7 +153,7 @@ def database_without_schema_support(mocker: MockerFixture) -> MagicMock:
     """
     Mock a database that does not support schemas (e.g. YDB).
     """
-    mocker.patch("superset.commands.database.tables.db")
+    mocker.patch("axbi.commands.database.tables.db")
 
     database = mocker.MagicMock()
     database.database_name = "test_database"
@@ -166,7 +166,7 @@ def database_without_schema_support(mocker: MockerFixture) -> MagicMock:
     database.get_all_view_names_in_schema.return_value = set()
     database.get_all_materialized_view_names_in_schema.return_value = set()
 
-    DatabaseDAO = mocker.patch("superset.commands.database.tables.DatabaseDAO")  # noqa: N806
+    DatabaseDAO = mocker.patch("axbi.commands.database.tables.DatabaseDAO")  # noqa: N806
     DatabaseDAO.find_by_id.return_value = database
 
     return database
@@ -193,7 +193,7 @@ def test_tables_without_schema_support(
         ],
     )
 
-    db = mocker.patch("superset.commands.database.tables.db")
+    db = mocker.patch("axbi.commands.database.tables.db")
     db.session.query().filter().options().all.return_value = []
 
     # Schema name should be overridden to None when supports_schemas=False
@@ -240,7 +240,7 @@ def test_tables_without_catalog(
         ],
     )
 
-    db = mocker.patch("superset.commands.database.tables.db")
+    db = mocker.patch("axbi.commands.database.tables.db")
     table = mocker.MagicMock()
     table.name = "table1"
     table.extra_dict = {"foo": "bar"}

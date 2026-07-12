@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { NativeFilterScope } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { NativeFilterScope } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import { ChartConfiguration } from 'src/dashboard/types';
 import { ScopingTreePanel } from './ScopingTreePanel';
 import { ChartsScopingListPanel } from './ChartsScopingListPanel';

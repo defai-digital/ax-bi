@@ -20,7 +20,7 @@ import {
   DataRecordValue,
   normalizeTimestamp,
   TimeFormatFunction,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 /**
  * Extended Date object with a custom formatter, and retains the original input

@@ -18,12 +18,12 @@ import logging
 import unittest
 from unittest.mock import MagicMock
 
-from superset.utils.logging_configurator import LoggingConfigurator
+from axbi.utils.logging_configurator import LoggingConfigurator
 
 
 class TestLoggingConfigurator(unittest.TestCase):
     def reset_logging(self):
-        # work around all of the import side-effects in superset
+        # work around all of the import side-effects in axbi
         logging.root.manager.loggerDict = {}
         logging.root.handlers = []
 

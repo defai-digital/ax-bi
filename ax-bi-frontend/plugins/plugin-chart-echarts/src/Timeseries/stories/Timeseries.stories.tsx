@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import {
   EchartsTimeseriesChartPlugin,
   TimeseriesTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import data from './data';
 import negativeNumData from './negativeNumData';
 import confbandData from './confbandData';
@@ -98,7 +98,7 @@ export const Timeseries = ({
       ]}
       formData={{
         forecastEnabled,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         seriesType,
         logAxis,
         y_axis_format: 'SMART_NUMBER',
@@ -176,7 +176,7 @@ export const WithNegativeNumbers = ({
       { data: negativeNumData, colnames: ['__timestamp'], coltypes: [2] },
     ]}
     formData={{
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
       seriesType,
       y_axis_format: '$,.2f',
       stack,
@@ -229,7 +229,7 @@ export const ConfidenceBand = ({
       },
     ]}
     formData={{
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
       series_type: 'line',
       x_axis_time_format: 'smart_date',
       x_axis: 'ds',
@@ -256,7 +256,7 @@ export const StackWithNulls = ({
       },
     ]}
     formData={{
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
       series_type: 'bar',
       stack: true,
       x_axis_time_format: 'smart_date',

@@ -25,7 +25,7 @@ import {
   getTimeFormatter,
   NumberFormatter,
   isDefined,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import type { RadarSeriesDataItemOption } from 'echarts/types/src/chart/radar/RadarSeries';
 import type { EChartsCoreOption } from 'echarts/core';

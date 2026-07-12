@@ -30,11 +30,11 @@ import {
   getChartMetadataRegistry,
   QueryFormData,
   QueryObject,
-  SupersetClient,
+  AxBIClient,
   SetDataMaskHook,
   JsonObject,
   type BuildQuery,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { safeStringify } from 'src/utils/safeStringify';
 import { optionLabel } from 'src/utils/common';
 import { ensureAppRoot } from 'src/utils/pathUtils';
@@ -374,7 +374,7 @@ export const exportChart = async ({
   // Check if streaming export handler is provided (from dashboard Chart.jsx)
   if (onStartStreamingExport) {
     // Streaming uses native fetch — apply appRoot prefix here since useStreamingExport
-    // does not go through SupersetClient (which would add it automatically).
+    // does not go through AxBIClient (which would add it automatically).
     onStartStreamingExport({
       url: url ? ensureAppRoot(url) : url,
       payload,
@@ -383,10 +383,10 @@ export const exportChart = async ({
     });
   } else {
     // Use AJAX blob download instead of form submission to enable error handling.
-    // SupersetClient.postBlob calls getUrl({ endpoint }) internally, which prepends
+    // AxBIClient.postBlob calls getUrl({ endpoint }) internally, which prepends
     // appRoot — so the URL must NOT be pre-prefixed here.
     try {
-      const response = await SupersetClient.postBlob(url as string, {
+      const response = await AxBIClient.postBlob(url as string, {
         form_data: safeStringify(payload),
       });
 
@@ -442,7 +442,7 @@ export const exploreChart = (
     endpointType: 'base',
     requestParams,
   });
-  SupersetClient.postForm(url as string, {
+  AxBIClient.postForm(url as string, {
     form_data: safeStringify(formData),
   });
 };

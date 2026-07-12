@@ -25,14 +25,14 @@ from fastmcp import Client
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.report.schemas import ListReportsRequest, ReportFilter
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.report.schemas import ListReportsRequest, ReportFilter
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 list_reports_module = importlib.import_module(
-    "superset.mcp_service.report.tool.list_reports"
+    "axbi.mcp_service.report.tool.list_reports"
 )
 
 
@@ -78,7 +78,7 @@ def mock_auth():
     """Mock authentication for all tests."""
     from unittest.mock import Mock
 
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -143,7 +143,7 @@ def test_list_reports_request_rejects_search_and_filters_together():
         )
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_basic(mock_list, mcp_server):
     """Test basic report listing functionality."""
@@ -241,7 +241,7 @@ async def test_list_reports_serves_valid_sidecar_response(mcp_server):
     )
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_serving_falls_back_on_invalid_candidate(
     mock_list, mcp_server
@@ -294,7 +294,7 @@ async def test_list_reports_serving_falls_back_on_invalid_candidate(
     )
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_with_search(mock_list, mcp_server):
     """Test report listing with search functionality."""
@@ -313,7 +313,7 @@ async def test_list_reports_with_search(mock_list, mcp_server):
         assert "Weekly Alert" in data["reports"][0]["name"]
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_with_type_filter(mock_list, mcp_server):
     """Test report listing filtered by type."""
@@ -335,7 +335,7 @@ async def test_list_reports_with_type_filter(mock_list, mcp_server):
         assert data["reports"][0]["type"] == "Alert"
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_does_not_expose_owners(mock_list, mcp_server):
     """Test that owners field is stripped by privacy controls."""
@@ -360,7 +360,7 @@ async def test_list_reports_does_not_expose_owners(mock_list, mcp_server):
         assert "owners" not in data["reports"][0]
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_empty_results(mock_list, mcp_server):
     """Test report listing with no results."""
@@ -377,7 +377,7 @@ async def test_list_reports_empty_results(mock_list, mcp_server):
         assert data["total_count"] == 0
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_api_error(mock_list, mcp_server):
     """Test error handling when DAO raises an exception returns ReportError."""
@@ -393,7 +393,7 @@ async def test_list_reports_api_error(mock_list, mcp_server):
         assert "Report DAO error" in data["error"]
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_without_request_uses_defaults(mock_list, mcp_server):
     """list_reports with no request payload should use default parameters."""
@@ -406,7 +406,7 @@ async def test_list_reports_without_request_uses_defaults(mock_list, mcp_server)
         assert data["page"] == 1
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_basic(mock_find, mcp_server):
     """Test basic get report info functionality."""
@@ -427,7 +427,7 @@ async def test_get_report_info_basic(mock_find, mcp_server):
         assert "owners" not in data
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_alert_type(mock_find, mcp_server):
     """Test get report info for an Alert type schedule."""
@@ -443,7 +443,7 @@ async def test_get_report_info_alert_type(mock_find, mcp_server):
         assert "Revenue Alert" in data["name"]
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_not_found(mock_find, mcp_server):
     """Test get report info when report does not exist."""
@@ -457,7 +457,7 @@ async def test_get_report_info_not_found(mock_find, mcp_server):
         assert data["error_type"] == "not_found"
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_with_dashboard(mock_find, mcp_server):
     """Test get report info with associated dashboard."""
@@ -473,7 +473,7 @@ async def test_get_report_info_with_dashboard(mock_find, mcp_server):
         assert data["chart_id"] is None
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_with_chart(mock_find, mcp_server):
     """Test get report info with associated chart."""
@@ -489,7 +489,7 @@ async def test_get_report_info_with_chart(mock_find, mcp_server):
         assert data["dashboard_id"] is None
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_includes_operational_fields(mock_find, mcp_server):
     """get_report_info returns run-state fields useful for report monitoring."""
@@ -513,7 +513,7 @@ async def test_get_report_info_includes_operational_fields(mock_find, mcp_server
     assert data["creation_method"] == "dashboards"
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_loads_last_eval_dependency_for_humanized_column(
     mock_list, mcp_server
@@ -542,14 +542,14 @@ async def test_list_reports_loads_last_eval_dependency_for_humanized_column(
 def test_list_reports_request_schema_accepts_any_order_column():
     """The request schema passes order_column through; ModelListCore enforces
     the REPORT_SORTABLE_COLUMNS allowlist at query time, not at schema validation."""
-    from superset.mcp_service.common.schema_discovery import REPORT_SORTABLE_COLUMNS
+    from axbi.mcp_service.common.schema_discovery import REPORT_SORTABLE_COLUMNS
 
     assert "invalid_column" not in REPORT_SORTABLE_COLUMNS
     request = ListReportsRequest(page=1, page_size=10, order_column="invalid_column")
     assert request.order_column == "invalid_column"
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_humanized_timestamps(mock_find, mcp_server):
     """Test that changed_on_humanized and created_on_humanized are returned."""
@@ -571,7 +571,7 @@ async def test_get_report_info_humanized_timestamps(mock_find, mcp_server):
         assert data["created_on_humanized"] is not None
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_owned_by_me_passed_to_dao(mock_list, mcp_server):
     """owned_by_me=True is forwarded to the DAO layer."""
@@ -589,7 +589,7 @@ async def test_list_reports_owned_by_me_passed_to_dao(mock_list, mcp_server):
     )
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_created_by_me_passed_to_dao(mock_list, mcp_server):
     """created_by_me=True is forwarded to the DAO layer."""
@@ -612,7 +612,7 @@ async def test_list_reports_created_by_me_passed_to_dao(mock_list, mcp_server):
     assert data["filters_applied"] == []
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_exception_returns_internal_error(mock_find, mcp_server):
     """Unexpected exception from DAO returns ReportError with InternalError type."""
@@ -629,7 +629,7 @@ async def test_get_report_info_exception_returns_internal_error(mock_find, mcp_s
 
 def test_report_error_create_classmethod():
     """ReportError.create() produces a timestamped error object."""
-    from superset.mcp_service.report.schemas import ReportError
+    from axbi.mcp_service.report.schemas import ReportError
 
     err = ReportError.create(error="something went wrong", error_type="TestError")
     assert "something went wrong" in err.error
@@ -641,7 +641,7 @@ def test_humanize_timestamp_naive_datetime():
     """The shared timestamp humanizer handles naive datetimes."""
     from datetime import datetime
 
-    from superset.mcp_service.utils.response_utils import humanize_timestamp
+    from axbi.mcp_service.utils.response_utils import humanize_timestamp
 
     naive_dt = datetime(2024, 1, 1, 12, 0, 0)
     result = humanize_timestamp(naive_dt)
@@ -651,19 +651,19 @@ def test_humanize_timestamp_naive_datetime():
 
 def test_humanize_timestamp_none():
     """The shared timestamp humanizer returns None for None input."""
-    from superset.mcp_service.utils.response_utils import humanize_timestamp
+    from axbi.mcp_service.utils.response_utils import humanize_timestamp
 
     assert humanize_timestamp(None) is None
 
 
 def test_serialize_report_object_none():
     """serialize_report_object returns None when passed None."""
-    from superset.mcp_service.report.schemas import serialize_report_object
+    from axbi.mcp_service.report.schemas import serialize_report_object
 
     assert serialize_report_object(None) is None
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_both_owned_and_created_by_me(mock_list, mcp_server):
     """Both flags together inject a created_by_fk_or_owner OR filter."""
@@ -688,7 +688,7 @@ async def test_list_reports_both_owned_and_created_by_me(mock_list, mcp_server):
     assert data["filters_applied"] == []
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_list_reports_name_with_instruction_like_content_is_sanitized(
     mock_list, mcp_server
@@ -727,7 +727,7 @@ async def test_list_reports_name_with_instruction_like_content_is_sanitized(
     assert injected_description in entry["description"]
 
 
-@patch("superset.daos.report.ReportScheduleDAO.find_by_id")
+@patch("axbi.daos.report.ReportScheduleDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_report_info_name_with_instruction_like_content_is_sanitized(
     mock_find, mcp_server
@@ -764,7 +764,7 @@ async def test_list_reports_returns_feature_disabled_error_when_alert_reports_of
     and never reaches the DAO layer."""
     with (
         patch.object(list_reports_module, "is_feature_enabled", return_value=False),
-        patch("superset.daos.report.ReportScheduleDAO.list") as mock_list,
+        patch("axbi.daos.report.ReportScheduleDAO.list") as mock_list,
     ):
         async with Client(mcp_server) as client:
             result = await client.call_tool("list_reports", {})
@@ -782,8 +782,8 @@ async def test_get_report_info_returns_feature_disabled_error_when_alert_reports
     """get_report_info returns a FeatureDisabled error when ALERT_REPORTS is off
     and never reaches the DAO layer."""
     with (
-        patch("superset.is_feature_enabled", return_value=False),
-        patch("superset.daos.report.ReportScheduleDAO.find_by_id") as mock_find,
+        patch("axbi.is_feature_enabled", return_value=False),
+        patch("axbi.daos.report.ReportScheduleDAO.find_by_id") as mock_find,
     ):
         async with Client(mcp_server) as client:
             result = await client.call_tool(
@@ -796,7 +796,7 @@ async def test_get_report_info_returns_feature_disabled_error_when_alert_reports
     assert "disabled" in data["error"].lower()
 
 
-@patch("superset.daos.report.ReportScheduleDAO.list")
+@patch("axbi.daos.report.ReportScheduleDAO.list")
 @pytest.mark.asyncio
 async def test_columns_available_are_serializable(mock_list, mcp_server):
     """Every column in columns_available must be serializable by ReportInfo.
@@ -805,8 +805,8 @@ async def test_columns_available_are_serializable(mock_list, mcp_server):
     (e.g. timezone, sql, email_subject) that ReportInfo cannot serialize.
     Requesting such a column previously returned an empty report entry {}.
     """
-    from superset.mcp_service.privacy import USER_DIRECTORY_FIELDS
-    from superset.mcp_service.report.schemas import ReportInfo
+    from axbi.mcp_service.privacy import USER_DIRECTORY_FIELDS
+    from axbi.mcp_service.report.schemas import ReportInfo
 
     report = create_mock_report()
     mock_list.return_value = ([report], 1)
@@ -840,9 +840,9 @@ def test_get_schema_permission_map_has_report_schedule():
     """_MODEL_TYPE_CLASS_PERMISSION["report"] must match the class_permission_name
     declared on the report tools, so the schema tool gates on the same permission.
     """
-    from superset.mcp_service.report.tool.get_report_info import get_report_info
-    from superset.mcp_service.report.tool.list_reports import list_reports
-    from superset.mcp_service.system.tool.get_schema import _MODEL_TYPE_CLASS_PERMISSION
+    from axbi.mcp_service.report.tool.get_report_info import get_report_info
+    from axbi.mcp_service.report.tool.list_reports import list_reports
+    from axbi.mcp_service.system.tool.get_schema import _MODEL_TYPE_CLASS_PERMISSION
 
     expected = "ReportSchedule"
     assert _MODEL_TYPE_CLASS_PERMISSION["report"] == expected
@@ -857,8 +857,8 @@ def test_report_filter_columns_match_schema_discovery_frozenset():
     """
     import typing
 
-    from superset.mcp_service.common.schema_discovery import REPORT_FILTER_COLUMNS
-    from superset.mcp_service.report.schemas import ReportFilter
+    from axbi.mcp_service.common.schema_discovery import REPORT_FILTER_COLUMNS
+    from axbi.mcp_service.report.schemas import ReportFilter
 
     col_annotation = ReportFilter.model_fields["col"].annotation
     # Unwrap Literal[...] to get the set of allowed values

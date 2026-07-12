@@ -17,12 +17,12 @@
 from typing import Any
 
 from tests.common.query_context_generator import QueryContextGenerator
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 
 
 class QueryContextGeneratorInteg(QueryContextGenerator):
     def get_table(self, name, id_, type_):
-        return SupersetTestCase.get_table(name=name)
+        return AxBITestCase.get_table(name=name)
 
 
 def get_query_context(

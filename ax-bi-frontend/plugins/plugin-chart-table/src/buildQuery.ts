@@ -28,12 +28,9 @@ import {
   getMetricLabel,
   isPhysicalColumn,
   removeDuplicates,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
-import {
-  isTimeComparison,
-  timeCompareOperator,
-} from '@superset-ui/chart-controls';
+import { isTimeComparison, timeCompareOperator } from '@ax-bi/chart-controls';
 import { isEmpty } from 'lodash';
 import { TableChartFormData } from './types';
 import { updateTableOwnState } from './DataTable/utils/externalAPIs';

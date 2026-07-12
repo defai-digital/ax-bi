@@ -22,12 +22,12 @@ import {
   QueryFormData,
   JsonValue,
   JsonObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   ControlState,
   ControlStateMapping,
   Dataset,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { omit, pick } from 'lodash';
 import { DYNAMIC_PLUGIN_CONTROLS_READY } from 'src/components/Chart/chartAction';
 import { getControlsState } from 'src/explore/store';

@@ -24,9 +24,9 @@ import {
   type ReactElement,
 } from 'react';
 import cx from 'classnames';
-import { Button, Input } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
+import { Button, Input } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
 import buildFilterScopeTreeEntry from 'src/dashboard/util/buildFilterScopeTreeEntry';
 import getFilterScopeNodesTree from 'src/dashboard/util/getFilterScopeNodesTree';
 import getFilterFieldNodesTree from 'src/dashboard/util/getFilterFieldNodesTree';

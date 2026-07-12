@@ -135,14 +135,14 @@ export default defineConfig({
     },
     // Strict 'true' check: non-empty strings like 'false' or '0' would
     // otherwise enable the embedded project, matching the env-parsing
-    // convention used in docker/pythonpath_dev/superset_config_docker_light.py.
+    // convention used in docker/pythonpath_dev/axbi_config_docker_light.py.
     ...(process.env.INCLUDE_EMBEDDED?.toLowerCase() === 'true'
       ? [
           {
             // Embedded dashboard tests - validates the full embedding flow:
             // external app -> SDK -> iframe -> guest token -> dashboard render.
             // Each spec file mutates per-dashboard embedding state (UUID,
-            // allowed_domains) on a single shared Superset, so files must not
+            // allowed_domains) on a single shared AxBI, so files must not
             // run in parallel even if more are added later.
             name: 'chromium-embedded',
             testMatch: '**/tests/embedded/**/*.spec.ts',

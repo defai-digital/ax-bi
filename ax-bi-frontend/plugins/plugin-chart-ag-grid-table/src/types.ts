@@ -22,7 +22,7 @@ import type {
   CustomFormatter,
   DataColumnMeta,
   TableColumnConfig,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   NumberFormatter,
   TimeFormatter,
@@ -39,13 +39,13 @@ import {
   JsonObject,
   Metric,
   AgGridChartState,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   ColDef,
   Column,
   IHeaderParams,
   CustomCellRendererProps,
-} from '@superset-ui/core/components/ThemedAgGridReact';
+} from '@ax-bi/ui-core/components/ThemedAgGridReact';
 
 // Re-export shared types used by internal plugin files that import from './types'
 // Types used locally in this file - re-export from local binding
@@ -56,7 +56,7 @@ export type {
   TableColumnConfig,
 };
 // Types only re-exported, not used locally - direct re-export
-export type { SearchOption, SortByItem } from '@superset-ui/chart-controls';
+export type { SearchOption, SortByItem } from '@ax-bi/chart-controls';
 
 export interface TableChartData {
   records: DataRecord[];
@@ -188,10 +188,7 @@ export interface InputColumn {
   isPercentMetric: boolean;
   config: TableColumnConfig;
   formatter?:
-    | TimeFormatter
-    | NumberFormatter
-    | CustomFormatter
-    | CurrencyFormatter;
+    TimeFormatter | NumberFormatter | CustomFormatter | CurrencyFormatter;
   originalLabel?: string;
   metricName?: string;
 }

@@ -17,14 +17,10 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import {
-  type ThemeContextType,
-  Theme,
-  ThemeMode,
-} from '@apache-superset/core/theme';
-import { act, render, screen } from '@superset-ui/core/spec';
+import { type ThemeContextType, Theme, ThemeMode } from '@ax-bi/core/theme';
+import { act, render, screen } from '@ax-bi/ui-core/spec';
 import { renderHook } from '@testing-library/react';
-import { SupersetThemeProvider, useThemeContext } from '../ThemeProvider';
+import { AxBIThemeProvider, useThemeContext } from '../ThemeProvider';
 import { ThemeController } from '../ThemeController';
 
 jest.mock('../ThemeController');
@@ -34,8 +30,8 @@ const MockThemeController = ThemeController as jest.MockedClass<
 
 // Mock theme objects
 const mockTheme = {
-  SupersetThemeProvider: ({ children }: { children: ReactNode }) => (
-    <div data-test="superset-theme-provider">{children}</div>
+  AxBIThemeProvider: ({ children }: { children: ReactNode }) => (
+    <div data-test="axbi-theme-provider">{children}</div>
   ),
   theme: {
     token: {
@@ -46,8 +42,8 @@ const mockTheme = {
 } as unknown as Theme;
 
 const mockDarkTheme = {
-  SupersetThemeProvider: ({ children }: { children: ReactNode }) => (
-    <div data-test="superset-dark-theme-provider">{children}</div>
+  AxBIThemeProvider: ({ children }: { children: ReactNode }) => (
+    <div data-test="axbi-dark-theme-provider">{children}</div>
   ),
   theme: {
     token: {
@@ -60,13 +56,13 @@ const mockDarkTheme = {
 const createWrapper =
   (controller: jest.Mocked<ThemeController>) =>
   ({ children }: { children: ReactNode }) => (
-    <SupersetThemeProvider themeController={controller}>
+    <AxBIThemeProvider themeController={controller}>
       {children}
-    </SupersetThemeProvider>
+    </AxBIThemeProvider>
   );
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
-describe('SupersetThemeProvider', () => {
+describe('AxBIThemeProvider', () => {
   let mockThemeController: jest.Mocked<ThemeController>;
   let mockOnChangeCallback: jest.Mock;
 
@@ -111,12 +107,12 @@ describe('SupersetThemeProvider', () => {
   describe('Provider Initialization', () => {
     test('should render children within theme provider wrapper', () => {
       render(
-        <SupersetThemeProvider themeController={mockThemeController}>
-          <div data-test="test-child">Hello Superset</div>
-        </SupersetThemeProvider>,
+        <AxBIThemeProvider themeController={mockThemeController}>
+          <div data-test="test-child">Hello AxBI</div>
+        </AxBIThemeProvider>,
       );
 
-      expect(screen.getByTestId('superset-theme-provider')).toBeInTheDocument();
+      expect(screen.getByTestId('axbi-theme-provider')).toBeInTheDocument();
       expect(screen.getByTestId('test-child')).toBeInTheDocument();
     });
 
@@ -287,9 +283,9 @@ describe('SupersetThemeProvider', () => {
     mockThemeController.getCurrentModeResolved.mockReturnValue('light');
 
     render(
-      <SupersetThemeProvider themeController={mockThemeController}>
+      <AxBIThemeProvider themeController={mockThemeController}>
         <div>Content</div>
-      </SupersetThemeProvider>,
+      </AxBIThemeProvider>,
     );
 
     expect(document.documentElement.getAttribute('data-theme-mode')).toBe(
@@ -301,9 +297,9 @@ describe('SupersetThemeProvider', () => {
     mockThemeController.getCurrentModeResolved.mockReturnValue('dark');
 
     render(
-      <SupersetThemeProvider themeController={mockThemeController}>
+      <AxBIThemeProvider themeController={mockThemeController}>
         <div>Content</div>
-      </SupersetThemeProvider>,
+      </AxBIThemeProvider>,
     );
 
     expect(document.documentElement.getAttribute('data-theme-mode')).toBe(
@@ -315,9 +311,9 @@ describe('SupersetThemeProvider', () => {
     mockThemeController.getCurrentModeResolved.mockReturnValue('light');
 
     render(
-      <SupersetThemeProvider themeController={mockThemeController}>
+      <AxBIThemeProvider themeController={mockThemeController}>
         <div>Content</div>
-      </SupersetThemeProvider>,
+      </AxBIThemeProvider>,
     );
 
     expect(document.documentElement.getAttribute('data-theme-mode')).toBe(

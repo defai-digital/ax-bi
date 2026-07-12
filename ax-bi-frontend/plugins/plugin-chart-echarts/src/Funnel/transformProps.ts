@@ -27,7 +27,7 @@ import {
   tooltipHtml,
   ValueFormatter,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { FunnelSeriesOption } from 'echarts/charts';

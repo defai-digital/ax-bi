@@ -55,11 +55,14 @@ AX BI addresses this with a self-hosted BI workspace where AI agents call govern
 
 ## What AX BI Is
 
-AX BI is a Superset-based analytics platform extended for AI-native business intelligence. It combines the standard BI surface - datasets, SQL Lab, charts, dashboards, reports, alerts, security, and database connectivity - with an MCP service that exposes those same resources as governed tools for AI agents.
+AX BI is an independently maintained, AI-native analytics platform. It combines
+datasets, SQL Lab, charts, dashboards, reports, alerts, security, and database
+connectivity with an MCP service that exposes those resources as governed tools
+for AI agents.
 
 Use AX BI when you need:
 
-- **Prompt-to-dashboard** workflows that create real Superset dashboards from governed data assets.
+- **Prompt-to-dashboard** workflows that create real AX BI dashboards from governed data assets.
 - **AI-ready semantic context** for datasets, columns, metrics, certified assets, owners, tags, and dashboard layouts.
 - **Agent-safe operations** where AI actions run through the same permission, command, DAO, validation, and event-logging layers as the web app.
 - **Self-hosted deployment** with control over databases, authentication, model connections, and infrastructure boundaries.
@@ -70,9 +73,9 @@ Use AX BI when you need:
 | Requirement | Typical BI assistant | AX BI |
 | --- | --- | --- |
 | Discover trusted business data | Often relies on raw schemas or loose search | RBAC-aware search over datasets, charts, dashboards, tags, certification metadata, and owners |
-| Build governed charts | Often returns SQL or narrative only | Generates validated Superset chart artifacts with preview and save paths |
-| Compose dashboards | Often produces static mockups | Plans and composes real Superset dashboards from generated or existing charts |
-| Respect security | Often requires separate agent policy glue | Uses Superset RBAC, dataset access checks, row-level security, and MCP auth hooks |
+| Build governed charts | Often returns SQL or narrative only | Generates validated AX BI chart artifacts with preview and save paths |
+| Compose dashboards | Often produces static mockups | Plans and composes real AX BI dashboards from generated or existing charts |
+| Respect security | Often requires separate agent policy glue | Uses AX BI RBAC, dataset access checks, row-level security, and MCP auth hooks |
 | Operate in production | Often demo-oriented | Ships Docker, Helm, health/readiness checks, audit-oriented middleware, and production MCP guidance |
 | Extend beyond the browser | Usually web-only | Adds MCP, REST APIs, `ax-services`, desktop shell, and extension tooling |
 
@@ -86,7 +89,7 @@ Use AX BI when you need:
 
 ### Secondary
 
-- **Developers** building Superset extensions, MCP-enabled workflows, embedded analytics, or desktop BI clients.
+- **Developers** building AX BI extensions, MCP-enabled workflows, embedded analytics, or desktop BI clients.
 - **Advanced analysts** who need SQL Lab, dashboard authoring, and AI-assisted exploration in one platform.
 
 ## High-Value Use Cases
@@ -95,7 +98,7 @@ Use AX BI when you need:
 2. **Dashboard Q&A** - answer questions against existing dashboards while preserving permissions and asset context.
 3. **Governed data discovery** - find certified datasets, charts, dashboards, tags, owners, and schema details through RBAC-aware search.
 4. **Upload-to-insight** - upload spreadsheet or CSV data, create a dataset, generate charts, and compose a dashboard.
-5. **Agent-ready analytics infrastructure** - expose Superset resources to tools such as AX Studio, Claude Desktop, or other MCP-compatible clients.
+5. **Agent-ready analytics infrastructure** - expose AX BI resources to tools such as AX Studio, Claude Desktop, or other MCP-compatible clients.
 6. **Embedded AI BI** - scope dashboard Q&A and prompt-to-dashboard behavior to host applications and embedded guest permissions.
 
 ## When To Use AX BI
@@ -103,11 +106,11 @@ Use AX BI when you need:
 - You need an open BI platform that can be self-hosted and extended.
 - You want AI workflows grounded in a governed semantic layer rather than free-form SQL generation.
 - You need AI agents to create inspectable dashboards, charts, datasets, saved queries, and reports.
-- You need Superset compatibility while adding MCP-native agent access and AX runtime components.
+- You want a clean AX BI product namespace with MCP-native agent access and AX runtime components.
 
 ## Core Features
 
-AX BI provides the Superset BI foundation plus AX-specific agent and runtime layers:
+AX BI provides a complete BI foundation plus AX-specific agent and runtime layers:
 
 - A **no-code interface** for building charts quickly
 - A powerful, web-based **SQL Editor** for advanced querying
@@ -120,18 +123,18 @@ AX BI provides the Superset BI foundation plus AX-specific agent and runtime lay
 - **Prompt-to-chart** and **prompt-to-dashboard** tools for governed AI authoring
 - **Dashboard explanation and Q&A** tools for existing BI assets
 - **Spreadsheet and CSV upload** paths exposed through MCP dataset tools
-- **AX Services** TypeScript sidecar for runtime health, readiness, contracts, and Superset connectivity
+- **AX Services** TypeScript sidecar for runtime health, readiness, contracts, and AX BI connectivity
 - **AX BI Desktop** thin Tauri shell with deep links and desktop-grade web app integration
-- **Extension tooling** for scaffolding and packaging Superset extensions
+- **Extension tooling** for scaffolding and packaging AX BI extensions
 - A **cloud-native architecture** designed from the ground up for scale
 
 ## MCP-Native GenAI BI
 
-What sets AX BI apart from a traditional BI stack is that it is **agent-ready by design**. The built-in MCP service exposes Superset's core resources — datasets, charts, dashboards, queries, and the semantic layer — as governed tools that any MCP-compatible AI agent can call.
+What sets AX BI apart from a traditional BI stack is that it is **agent-ready by design**. The built-in MCP service exposes AX BI resources — datasets, charts, dashboards, queries, and the semantic layer — as governed tools that any MCP-compatible AI agent can call.
 
 - **Prompt-to-dashboard** — turn natural-language questions into validated charts and composed dashboards, grounded in governed semantics rather than raw text-to-SQL.
 - **Governed by default** — agent tool visibility and every generated query respect your existing RBAC and row-level security. Agents cannot see or do more than the user they act for.
-- **Verifiable artifacts** — generated charts and dashboards are real, inspectable Superset objects, not opaque answers.
+- **Verifiable artifacts** — generated charts and dashboards are real, inspectable AX BI objects, not opaque answers.
 - **Auditable** — agent actions flow through the same command, DAO, and event-logging layers as the rest of the platform.
 
 Available MCP tool groups include:
@@ -153,26 +156,24 @@ Available MCP tool groups include:
 - SQL Lab and dataset tools for executing SQL, saving queries, creating
   datasets, querying datasets, and uploading files where permitted.
 
-The MCP service lives in [`superset/mcp_service/`](https://github.com/defai-digital/ax-bi/tree/main/superset/mcp_service) and ships with its own architecture, security, and production guides. See the [GenAI BI Roadmap](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for the product direction.
+The MCP service lives in [`axbi/mcp_service/`](https://github.com/defai-digital/ax-bi/tree/main/axbi/mcp_service) and ships with its own architecture, security, and production guides. See the [GenAI BI Roadmap](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for the product direction.
 
 ## Naming Policy
 
-The app display name is AX BI. Technical identifiers continue to use `ax-bi`,
-including the CLI command, route prefix, Docker image names, and repository
-paths. The current route prefix is `/ax-bi`.
+The display name is `AX BI`; filesystem, command, route, image, and repository
+identifiers use `ax-bi`; language namespaces use `axbi` and `AxBI`. The Python
+package is `axbi`, frontend packages use `@ax-bi/*`, and the route prefix is
+`/ax-bi`.
 
-Core Superset namespaces remain in place for compatibility with upstream
-Superset, existing imports, migrations, extensions, package contracts, Helm
-values, and deployment configuration. This is intentional: directories such as
-`superset/`, `superset-core/`, `superset-extensions-cli/`,
-`superset-embedded-sdk/`, `superset-websocket/`, and `helm/superset` are not
-unfinished rename work. Some internal source paths may retain historical names
-until they can be safely migrated without breaking upstream syncs or package
-contracts.
+This is a clean break: the former commands, imports, routes, environment
+variables, packages, and extension scopes are not compatibility aliases. The
+former upstream name remains only in legal attribution and documentation that
+explicitly discusses project history. See the
+[AX BI rename policy](docs/developer_docs/ax-bi-rename-policy.md).
 
 ## Workspace Architecture
 
-AX BI keeps the browser, API, MCP, and sidecar layers connected to one governed Superset metadata and security model.
+AX BI keeps the browser, API, MCP, and sidecar layers connected to one governed metadata and security model.
 
 ```text
 AX BI
@@ -188,10 +189,10 @@ AX BI
 │   └── Middleware for validation, privacy, telemetry, and audit context
 ├── AX Services sidecar
 │   ├── Health, readiness, metrics, runtime contracts
-│   └── Superset asset and permission proxy endpoints
+│   └── AX BI asset and permission proxy endpoints
 ├── Extension and desktop surfaces
-│   ├── superset-core shared abstractions
-│   ├── superset-extensions CLI
+│   ├── ax-bi-core shared abstractions
+│   ├── ax-bi-extensions CLI
 │   └── Tauri desktop shell with axbi:// deep links
 └── Data and infrastructure
     ├── SQLAlchemy database connectors
@@ -265,7 +266,7 @@ Check the containers:
 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml ps
 ```
 
-Wait until the `superset` service is healthy, then open:
+Wait until the `ax-bi` service is healthy, then open:
 
 | Service | URL |
 | --- | --- |
@@ -309,7 +310,7 @@ This quick start is for local trials. Before exposing AX BI on a network:
 
 See [`docker/README.md`](https://github.com/defai-digital/ax-bi/tree/main/docker)
 for Docker details and
-[`superset/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/superset/mcp_service/PRODUCTION.md)
+[`axbi/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/axbi/mcp_service/PRODUCTION.md)
 for MCP production guidance.
 
 To build images from this checkout instead of pulling published images:
@@ -327,7 +328,7 @@ docker compose \
 AX BI supports local data-file upload through the web/API upload paths and the
 MCP dataset tools when `ENABLE_LOCAL_FILE_UPLOAD` is enabled and the acting user
 has the required database upload permission. Uploaded files are loaded into the
-local analytics database and registered as Superset datasets.
+local analytics database and registered as AX BI datasets.
 
 | Category | Extensions | Notes |
 | --- | --- | --- |
@@ -367,7 +368,7 @@ Want to add support for your datastore or data engine? Read about the [technical
 
 ## Installation and Configuration
 
-AX BI runs anywhere the underlying Superset platform runs.
+AX BI supports Docker Compose, Kubernetes/Helm, and local source deployments.
 
 - **Docker deployment** — the recommended path for local AX BI trials:
   ```bash
@@ -380,8 +381,8 @@ AX BI runs anywhere the underlying Superset platform runs.
   `-f docker-compose-axbi-build.yml --build`.
 - **Production deployments** — use managed Postgres/Redis, pinned image tags,
   JWT-backed MCP authentication, and only the externally exposed services your
-  deployment needs. For Kubernetes, use the [AX BI Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/superset) with `helm/superset/values-axbi.yaml` and replace all placeholder secrets.
-- **MCP service in production** — see [`superset/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/superset/mcp_service/PRODUCTION.md).
+  deployment needs. For Kubernetes, use the [AX BI Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/ax-bi) with `helm/ax-bi/values-axbi.yaml` and replace all placeholder secrets.
+- **MCP service in production** — see [`axbi/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/axbi/mcp_service/PRODUCTION.md).
 
 ## Development
 
@@ -407,11 +408,9 @@ pre-commit run --all-files
 
 See [`GENAI_BI_ROADMAP.md`](https://github.com/defai-digital/ax-bi/blob/main/GENAI_BI_ROADMAP.md) for product direction, [`SECURITY.md`](https://github.com/defai-digital/ax-bi/blob/main/SECURITY.md) for the security and threat model, and the developer docs for engineering guidance.
 
-AX BI tracks Apache Superset through a controlled upstream sync process: security
-fixes and critical bug fixes are prioritized, stable release branches are
-reviewed in dedicated sync branches, and AX BI-specific MCP/GenAI/governance
-behavior must be regression-tested before merge. See the
-[`Upstream Sync Policy`](https://github.com/defai-digital/ax-bi/blob/main/docs/developer_docs/upstream-sync-policy.md).
+AX BI is maintained independently by DEFAI Private Limited. Upstream project
+history remains available for attribution and research, but AX BI does not
+preserve source, package, or runtime compatibility with it.
 
 ## Contributing
 

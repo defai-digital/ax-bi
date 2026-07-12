@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart, VizType } from '@superset-ui/core';
-import { PivotTableChartPlugin } from '@superset-ui/plugin-chart-pivot-table';
+import { SuperChart, VizType } from '@ax-bi/ui-core';
+import { PivotTableChartPlugin } from '@ax-bi/plugin-chart-pivot-table';
 import { basicFormData, basicData } from './testData';
 import { withResizableChartDemo } from '@storybook-shared';
 

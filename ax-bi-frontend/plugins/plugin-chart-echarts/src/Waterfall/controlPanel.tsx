@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ControlPanelConfig,
   ControlSubSectionHeader,
@@ -24,7 +24,7 @@ import {
   DEFAULT_TIME_FORMAT,
   formatSelectOptions,
   sharedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { showValueControl } from '../controls';
 
 const config: ControlPanelConfig = {

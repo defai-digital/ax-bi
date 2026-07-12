@@ -18,7 +18,7 @@
  */
 import { getCompleteFilterState } from '../../src/utils/filterStateManager';
 import type { RefObject } from 'react';
-import type { AgGridReact } from '@superset-ui/core/components/ThemedAgGridReact';
+import type { AgGridReact } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { FILTER_INPUT_POSITIONS } from '../../src/consts';
 
 describe('filterStateManager', () => {

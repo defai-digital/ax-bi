@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { buildQueryContext } from '@superset-ui/core';
+import { buildQueryContext } from '@ax-bi/ui-core';
 import { EchartsTreeFormData } from './types';
 import { buildColumnsOrderBy, applyOrderBy } from '../utils/orderby';
 

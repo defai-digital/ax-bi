@@ -17,13 +17,9 @@
  * under the License.
  */
 import { forwardRef, RefObject } from 'react';
-import { QueryData, VizType } from '@superset-ui/core';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
-import {
-  CachedLabel,
-  type LabelType,
-  Timer,
-} from '@superset-ui/core/components';
+import { QueryData, VizType } from '@ax-bi/ui-core';
+import { css, AxBITheme } from '@ax-bi/core/theme';
+import { CachedLabel, type LabelType, Timer } from '@ax-bi/ui-core/components';
 import RowCountLabel from 'src/components/RowCountLabel';
 
 const CHART_STATUS_MAP = {
@@ -88,7 +84,7 @@ export const ChartPills = forwardRef(
     return (
       <div ref={ref}>
         <div
-          css={(theme: SupersetTheme) => css`
+          css={(theme: AxBITheme) => css`
             display: flex;
             justify-content: flex-end;
             padding-bottom: ${theme.sizeUnit * 4}px;

@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled, css, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { GenericDataType } from '@apache-superset/core/common';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { GenericDataType } from '@ax-bi/core/common';
 import { useMemo } from 'react';
 import { zip } from 'lodash';
-import { Select, Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Select, Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   CopyToClipboardButton,
   FilterInput,

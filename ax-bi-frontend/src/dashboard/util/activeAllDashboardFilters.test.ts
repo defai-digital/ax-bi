@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataMaskStateWithId } from '@superset-ui/core';
+import { DataMaskStateWithId } from '@ax-bi/ui-core';
 import { getRelevantDataMask } from './activeAllDashboardFilters';
 
 const mockDataMask: DataMaskStateWithId = {

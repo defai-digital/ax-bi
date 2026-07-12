@@ -20,23 +20,23 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.semantic_layer.exceptions import (
+from axbi.commands.semantic_layer.exceptions import (
     SemanticLayerForbiddenError,
     SemanticLayerInvalidError,
     SemanticLayerNotFoundError,
     SemanticViewForbiddenError,
     SemanticViewNotFoundError,
 )
-from superset.commands.semantic_layer.update import (
+from axbi.commands.semantic_layer.update import (
     UpdateSemanticLayerCommand,
     UpdateSemanticViewCommand,
 )
-from superset.exceptions import SupersetSecurityException
+from axbi.exceptions import AxBISecurityException
 
 
 def _allow_semantic_layer_ownership(mocker: MockerFixture) -> MagicMock:
     return mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     ).raise_for_ownership
 
 
@@ -47,13 +47,13 @@ def test_update_semantic_view_success(mocker: MockerFixture) -> None:
     mock_model.configuration = "{}"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
     dao.update.return_value = mock_model
 
     mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     )
 
     data = {"description": "Updated", "cache_timeout": 300}
@@ -67,7 +67,7 @@ def test_update_semantic_view_success(mocker: MockerFixture) -> None:
 def test_update_semantic_view_not_found(mocker: MockerFixture) -> None:
     """Test that SemanticViewNotFoundError is raised when model is missing."""
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = None
 
@@ -80,16 +80,16 @@ def test_update_semantic_view_forbidden(mocker: MockerFixture) -> None:
     mock_model = MagicMock()
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
 
     sm = mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     )
     # Use a regular MagicMock for raise_for_ownership to avoid AsyncMock issues
     sm.raise_for_ownership = MagicMock(
-        side_effect=SupersetSecurityException(MagicMock()),
+        side_effect=AxBISecurityException(MagicMock()),
     )
 
     with pytest.raises(SemanticViewForbiddenError):
@@ -102,13 +102,13 @@ def test_update_semantic_view_copies_data(mocker: MockerFixture) -> None:
     mock_model.configuration = "{}"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
     dao.update.return_value = mock_model
 
     mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     )
 
     original_data = {"description": "Original"}
@@ -129,7 +129,7 @@ def test_update_semantic_layer_success(mocker: MockerFixture) -> None:
     mock_model.type = "snowflake"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.update.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
@@ -147,7 +147,7 @@ def test_update_semantic_layer_success(mocker: MockerFixture) -> None:
 def test_update_semantic_layer_not_found(mocker: MockerFixture) -> None:
     """Test that SemanticLayerNotFoundError is raised when model is missing."""
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.update.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = None
 
@@ -161,12 +161,12 @@ def test_update_semantic_layer_forbidden(mocker: MockerFixture) -> None:
     mock_model.type = "snowflake"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.update.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     raise_for_ownership = mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager.raise_for_ownership",
-        side_effect=SupersetSecurityException(MagicMock()),
+        "axbi.commands.semantic_layer.update.security_manager.raise_for_ownership",
+        side_effect=AxBISecurityException(MagicMock()),
     )
 
     with pytest.raises(SemanticLayerForbiddenError):
@@ -183,7 +183,7 @@ def test_update_semantic_layer_duplicate_name(mocker: MockerFixture) -> None:
     mock_model.type = "snowflake"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.update.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     dao.validate_update_uniqueness.return_value = False
@@ -201,7 +201,7 @@ def test_update_semantic_layer_validates_configuration(
     mock_model.type = "snowflake"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.update.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
@@ -209,7 +209,7 @@ def test_update_semantic_layer_validates_configuration(
 
     mock_cls = MagicMock()
     mocker.patch.dict(
-        "superset.commands.semantic_layer.update.registry",
+        "axbi.commands.semantic_layer.update.registry",
         {"snowflake": mock_cls},
     )
 
@@ -227,7 +227,7 @@ def test_update_semantic_layer_skips_name_check_when_no_name(
     mock_model.type = "snowflake"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.update.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
@@ -244,7 +244,7 @@ def test_update_semantic_layer_copies_data(mocker: MockerFixture) -> None:
     mock_model.type = "snowflake"
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticLayerDAO",
+        "axbi.commands.semantic_layer.update.SemanticLayerDAO",
     )
     dao.find_by_uuid.return_value = mock_model
     dao.update.return_value = mock_model
@@ -277,14 +277,14 @@ def test_update_uniqueness_different_config_same_name(
     mock_model = _make_view_model(configuration='{"schema": "prod"}')
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
     dao.update.return_value = mock_model
     dao.validate_update_uniqueness.return_value = True
 
     mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     )
 
     # Update to a config that differs from an existing view
@@ -307,14 +307,14 @@ def test_update_uniqueness_same_config_different_name(
     mock_model = _make_view_model(configuration='{"schema": "prod"}')
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
     dao.update.return_value = mock_model
     dao.validate_update_uniqueness.return_value = True
 
     mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     )
 
     data = {"name": "renamed_view", "configuration": {"schema": "prod"}}
@@ -336,14 +336,14 @@ def test_update_uniqueness_uses_empty_config_for_non_object_stored_config(
     mock_model = _make_view_model(configuration="[]")
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
     dao.update.return_value = mock_model
     dao.validate_update_uniqueness.return_value = True
 
     mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     )
 
     result = UpdateSemanticViewCommand(1, {"description": "updated"}).run()
@@ -364,16 +364,16 @@ def test_update_uniqueness_same_config_same_name_fails(
     mock_model = _make_view_model(configuration='{"schema": "prod"}')
 
     dao = mocker.patch(
-        "superset.commands.semantic_layer.update.SemanticViewDAO",
+        "axbi.commands.semantic_layer.update.SemanticViewDAO",
     )
     dao.find_by_id.return_value = mock_model
     dao.validate_update_uniqueness.return_value = False
 
     mocker.patch(
-        "superset.commands.semantic_layer.update.security_manager",
+        "axbi.commands.semantic_layer.update.security_manager",
     )
 
-    from superset.commands.semantic_layer.exceptions import (
+    from axbi.commands.semantic_layer.exceptions import (
         SemanticViewUpdateFailedError,
     )
 

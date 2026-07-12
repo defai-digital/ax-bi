@@ -16,10 +16,10 @@
 # under the License.
 """Tests that emoji characters in position_json are persisted correctly via PUT."""
 
-from superset import db
-from superset.models.dashboard import Dashboard
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.models.dashboard import Dashboard
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 # position_json payload containing a 4-byte emoji in a MARKDOWN component,
@@ -52,7 +52,7 @@ POSITION_JSON_WITH_EMOJI = json.dumps(
 )
 
 
-class TestDashboardUpdateEmoji(SupersetTestCase):
+class TestDashboardUpdateEmoji(AxBITestCase):
     """Verify that emoji in position_json survive a dashboard PUT round-trip."""
 
     def setUp(self) -> None:

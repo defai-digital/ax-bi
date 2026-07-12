@@ -27,15 +27,15 @@ import {
 } from 'react';
 import classNames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
-import { styled } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 
-import { EditableTitle, EmptyState } from '@superset-ui/core/components';
+import { EditableTitle, EmptyState } from '@ax-bi/ui-core/components';
 import { setEditMode, onRefresh } from 'src/dashboard/actions/dashboardState';
 import getChartIdsFromComponent from 'src/dashboard/util/getChartIdsFromComponent';
 import DashboardComponent from 'src/dashboard/containers/DashboardComponent';
 import AnchorLink from 'src/dashboard/components/AnchorLink';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import {
   useIsAutoRefreshing,
   useIsRefreshInFlight,

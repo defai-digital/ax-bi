@@ -27,7 +27,7 @@ import {
   getChartMetadataRegistry,
   ChartMetadata,
   VizType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import fetchMock from 'fetch-mock';
 import setupColors from 'src/setup/setupColors';
 import { ANNOTATION_TYPES_METADATA } from './AnnotationTypes';
@@ -178,14 +178,14 @@ test('triggers removeAnnotationLayer and close when remove button is clicked', a
   expect(close).toHaveBeenCalled();
 });
 
-test('fetches Superset annotation layer options', async () => {
+test('fetches AxBI annotation layer options', async () => {
   await waitForRender({
     annotationType: ANNOTATION_TYPES_METADATA.EVENT.value,
   });
   userEvent.click(
     screen.getByRole('combobox', { name: 'Annotation source type' }),
   );
-  userEvent.click(screen.getByText('Superset annotation'));
+  userEvent.click(screen.getByText('AxBI annotation'));
   expect(await screen.findByText('Annotation layer')).toBeInTheDocument();
   userEvent.click(
     screen.getByRole('combobox', { name: 'Annotation layer value' }),

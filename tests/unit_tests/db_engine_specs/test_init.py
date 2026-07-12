@@ -19,21 +19,21 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.db_engine_specs import get_available_engine_specs
+from axbi.db_engine_specs import get_available_engine_specs
 
 
 def test_get_available_engine_specs(mocker: MockerFixture) -> None:
     """
     get_available_engine_specs should return all engine specs
     """
-    from superset.db_engine_specs.databricks import (
+    from axbi.db_engine_specs.databricks import (
         DatabricksHiveEngineSpec,
         DatabricksNativeEngineSpec,
         DatabricksODBCEngineSpec,
     )
 
     mocker.patch(
-        "superset.db_engine_specs.load_engine_specs",
+        "axbi.db_engine_specs.load_engine_specs",
         return_value=iter(
             [
                 DatabricksHiveEngineSpec,
@@ -59,14 +59,14 @@ def test_get_available_engine_specs_with_denylist(mocker: MockerFixture) -> None
     """
     The denylist removes items from the db engine spec list
     """
-    from superset.db_engine_specs.databricks import (
+    from axbi.db_engine_specs.databricks import (
         DatabricksHiveEngineSpec,
         DatabricksNativeEngineSpec,
         DatabricksODBCEngineSpec,
     )
 
     mocker.patch(
-        "superset.db_engine_specs.load_engine_specs",
+        "axbi.db_engine_specs.load_engine_specs",
         return_value=iter(
             [
                 DatabricksHiveEngineSpec,

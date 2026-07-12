@@ -18,12 +18,12 @@ from pandas import DataFrame, Series, Timestamp
 from pandas.testing import assert_frame_equal
 from pytest import fixture, mark  # noqa: PT013
 
-from superset.common.chart_data import ChartDataResultFormat, ChartDataResultType
-from superset.common.query_context import QueryContext
-from superset.common.query_context_processor import QueryContextProcessor
-from superset.connectors.sqla.models import BaseDatasource
-from superset.constants import TimeGrain
-from superset.models.helpers import ExploreMixin
+from axbi.common.chart_data import ChartDataResultFormat, ChartDataResultType
+from axbi.common.query_context import QueryContext
+from axbi.common.query_context_processor import QueryContextProcessor
+from axbi.connectors.sqla.models import BaseDatasource
+from axbi.constants import TimeGrain
+from axbi.models.helpers import ExploreMixin
 
 # Create processor and bind ExploreMixin methods to datasource
 processor = QueryContextProcessor(

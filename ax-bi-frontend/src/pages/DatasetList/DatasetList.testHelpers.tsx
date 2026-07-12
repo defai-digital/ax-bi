@@ -73,7 +73,7 @@ interface StoreState {
   user?: UserState;
   common?: {
     conf?: {
-      SUPERSET_WEBSERVER_TIMEOUT?: number;
+      AXBI_WEBSERVER_TIMEOUT?: number;
       PREVENT_UNSAFE_DEFAULT_URLS_ON_DATASET?: boolean;
     };
   };
@@ -361,7 +361,7 @@ export const createDefaultStoreState = (user: UserState): StoreState => ({
   user,
   common: {
     conf: {
-      SUPERSET_WEBSERVER_TIMEOUT: 60000,
+      AXBI_WEBSERVER_TIMEOUT: 60000,
       PREVENT_UNSAFE_DEFAULT_URLS_ON_DATASET: false,
     },
   },

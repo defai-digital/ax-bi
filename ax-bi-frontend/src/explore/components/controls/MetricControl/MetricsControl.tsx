@@ -17,11 +17,11 @@
  * under the License.
  */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ensureIsArray, usePrevious } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import { ensureIsArray, usePrevious } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import { isEqual } from 'lodash';
 import ControlHeader from 'src/explore/components/ControlHeader';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   AddIconButton,
   AddControlLabel,

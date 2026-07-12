@@ -19,11 +19,11 @@
 /* eslint-disable camelcase */
 import { PureComponent, createRef } from 'react';
 import { useSelector } from 'react-redux';
-import { isDefined, ensureIsArray, DatasourceType } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import type { editors } from '@apache-superset/core';
-import { styled } from '@apache-superset/core/theme';
-import Tabs from '@superset-ui/core/components/Tabs';
+import { isDefined, ensureIsArray, DatasourceType } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import type { editors } from '@ax-bi/core';
+import { styled } from '@ax-bi/core/theme';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import {
   Button,
   EmptyState,
@@ -32,7 +32,7 @@ import {
   Icons,
   Select,
   Tooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import sqlKeywords from 'src/SqlLab/utils/sqlKeywords';
 import {
   AGGREGATES_OPTIONS,

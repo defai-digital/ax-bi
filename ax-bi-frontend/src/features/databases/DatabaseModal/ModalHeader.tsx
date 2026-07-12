@@ -17,12 +17,12 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 // direct leaf import: src/views/CRUD/hooks is a monolith that can be
 // mid-evaluation (import cycle) when this module-scope constant computes
-import SupersetText from 'src/utils/textUtils';
-import { UploadFile } from '@superset-ui/core/components/Upload';
-import { Typography } from '@superset-ui/core/components/Typography';
+import AxBIText from 'src/utils/textUtils';
+import { UploadFile } from '@ax-bi/ui-core/components/Upload';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { DatabaseForm, DatabaseObject } from '../types';
 import {
   EditHeaderTitle,
@@ -31,26 +31,26 @@ import {
   StyledStickyHeader,
 } from './styles';
 
-const supersetTextDocs = SupersetText.DB_CONNECTION_DOC_LINKS;
+const axbiTextDocs = AxBIText.DB_CONNECTION_DOC_LINKS;
 
-export const DOCUMENTATION_LINK = supersetTextDocs
-  ? supersetTextDocs.support
-  : 'https://superset.apache.org/user-docs/databases/#installing-database-drivers';
+export const DOCUMENTATION_LINK = axbiTextDocs
+  ? axbiTextDocs.support
+  : 'https://github.com/defai-digital/ax-bi/user-docs/databases/#installing-database-drivers';
 
 const irregularDocumentationLinks = {
-  postgresql: 'https://superset.apache.org',
+  postgresql: 'https://github.com/defai-digital/ax-bi',
   mssql:
-    'https://superset.apache.org/user-docs/databases/supported/microsoft-sql-server',
+    'https://github.com/defai-digital/ax-bi/user-docs/databases/supported/microsoft-sql-server',
   gsheets:
-    'https://superset.apache.org/user-docs/databases/supported/google-sheets',
+    'https://github.com/defai-digital/ax-bi/user-docs/databases/supported/google-sheets',
 };
 
 const documentationLink = (engine: string | undefined) => {
   if (!engine) return null;
 
-  if (supersetTextDocs) {
-    // override doc link for superset_txt yml
-    return supersetTextDocs[engine] || supersetTextDocs.default;
+  if (axbiTextDocs) {
+    // override doc link for axbi_txt yml
+    return axbiTextDocs[engine] || axbiTextDocs.default;
   }
 
   if (
@@ -58,7 +58,7 @@ const documentationLink = (engine: string | undefined) => {
       engine as keyof typeof irregularDocumentationLinks
     ]
   ) {
-    return `https://superset.apache.org/user-docs/databases/supported/${engine}`;
+    return `https://github.com/defai-digital/ax-bi/user-docs/databases/supported/${engine}`;
   }
   return irregularDocumentationLinks[
     engine as keyof typeof irregularDocumentationLinks
@@ -111,7 +111,7 @@ const ModalHeader = ({
       <p className="helper-bottom">
         {t('Need help? Learn how to connect your database')}{' '}
         <a
-          href={supersetTextDocs?.default || DOCUMENTATION_LINK}
+          href={axbiTextDocs?.default || DOCUMENTATION_LINK}
           target="_blank"
           rel="noopener noreferrer"
         >

@@ -24,8 +24,8 @@ import pytest
 from flask import Flask
 from pytest_mock import MockerFixture
 
-from superset.dashboards.api import DashboardRestApi
-from superset.dashboards.schemas import DashboardGetResponseSchema
+from axbi.dashboards.api import DashboardRestApi
+from axbi.dashboards.schemas import DashboardGetResponseSchema
 
 
 @pytest.fixture
@@ -130,8 +130,8 @@ def test_json_body_handlers_reject_malformed_json_body(
     kwargs: dict[str, object],
 ) -> None:
     """Dashboard JSON handlers should reject parser failures as validation errors."""
-    mocker.patch("superset.dashboards.api.is_feature_enabled", return_value=False)
-    mocker.patch("superset.dashboards.api.db.session.rollback")
+    mocker.patch("axbi.dashboards.api.is_feature_enabled", return_value=False)
+    mocker.patch("axbi.dashboards.api.db.session.rollback")
     app = Flask(__name__)
     api = DashboardRestApi.__new__(DashboardRestApi)
     api.response_400 = MagicMock(return_value="bad request")

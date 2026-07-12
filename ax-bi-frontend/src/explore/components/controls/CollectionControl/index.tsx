@@ -17,10 +17,10 @@
  * under the License.
  */
 import React, { useCallback, useMemo, useRef } from 'react';
-import { IconTooltip, List } from '@superset-ui/core/components';
+import { IconTooltip, List } from '@ax-bi/ui-core/components';
 import { nanoid } from 'nanoid';
-import { t } from '@apache-superset/core/translation';
-import { useTheme, type SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { useTheme, type AxBITheme } from '@ax-bi/core/theme';
 import {
   DndContext,
   closestCenter,
@@ -36,7 +36,7 @@ import {
   arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   HeaderContainer,
   AddIconButton,
@@ -109,7 +109,7 @@ function SortableItem({
       style={style}
       selectable={false}
       className="clearfix"
-      css={(theme: SupersetTheme) => ({
+      css={(theme: AxBITheme) => ({
         alignItems: 'center',
         justifyContent: 'flex-start',
         display: 'flex',
@@ -120,7 +120,7 @@ function SortableItem({
         <DragHandle />
       </span>
       <div
-        css={(theme: SupersetTheme) => ({
+        css={(theme: AxBITheme) => ({
           flex: 1,
           marginLeft: theme.sizeUnit * 2,
           marginRight: theme.sizeUnit * 2,
@@ -139,7 +139,7 @@ function SortableItem({
         tooltip={t('Remove item')}
         mouseEnterDelay={0}
         mouseLeaveDelay={0}
-        css={(theme: SupersetTheme) => ({
+        css={(theme: AxBITheme) => ({
           padding: 0,
           minWidth: 'auto',
           height: 'auto',
@@ -289,7 +289,7 @@ function CollectionControl({
         <SortableContext items={itemIds} strategy={verticalListSortingStrategy}>
           <List
             bordered
-            css={(theme: SupersetTheme) => ({
+            css={(theme: AxBITheme) => ({
               borderRadius: theme.borderRadius,
             })}
           >

@@ -44,25 +44,25 @@ def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
     mock_decorators.ToolAnnotations = dict
 
     saved_modules: dict[str, types.ModuleType] = {}
-    for key in ("superset_core.mcp", "superset_core.mcp.decorators"):
+    for key in ("axbi_core.mcp", "axbi_core.mcp.decorators"):
         if key in sys.modules:
             saved_modules[key] = sys.modules[key]
 
-    sys.modules["superset_core.mcp"] = MagicMock()
-    sys.modules["superset_core.mcp.decorators"] = mock_decorators
+    sys.modules["axbi_core.mcp"] = MagicMock()
+    sys.modules["axbi_core.mcp.decorators"] = mock_decorators
     return saved_modules
 
 
 def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
     for key in list(sys.modules.keys()):
-        if key.startswith("superset_core.mcp"):
+        if key.startswith("axbi_core.mcp"):
             del sys.modules[key]
     sys.modules.update(saved_modules)
 
 
 _saved = _force_passthrough_decorators()
 try:
-    from superset.mcp_service.ai.tool.plan_dashboard import (
+    from axbi.mcp_service.ai.tool.plan_dashboard import (
         _build_chart_intents_heuristic,
         _derive_title,
         _empty_plan,

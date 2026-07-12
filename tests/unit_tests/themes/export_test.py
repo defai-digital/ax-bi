@@ -18,8 +18,8 @@ from unittest.mock import MagicMock
 
 import yaml
 
-from superset.commands.theme.export import ExportThemesCommand
-from superset.utils import json
+from axbi.commands.theme.export import ExportThemesCommand
+from axbi.utils import json
 
 
 def _theme(json_data: str) -> MagicMock:

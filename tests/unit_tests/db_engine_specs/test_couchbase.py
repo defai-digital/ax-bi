@@ -21,8 +21,8 @@ from typing import Any, cast
 import pytest
 from sqlalchemy import types
 
-from superset.db_engine_specs.base import BasicParametersType
-from superset.utils.core import GenericDataType
+from axbi.db_engine_specs.base import BasicParametersType
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -34,7 +34,7 @@ def test_epoch_to_dttm() -> None:
     """
     DB Eng Specs (couchbase): Test epoch to dttm
     """
-    from superset.db_engine_specs.couchbase import CouchbaseEngineSpec
+    from axbi.db_engine_specs.couchbase import CouchbaseEngineSpec
 
     assert CouchbaseEngineSpec.epoch_to_dttm() == "MILLIS_TO_STR({col} * 1000)"
 
@@ -43,7 +43,7 @@ def test_epoch_ms_to_dttm() -> None:
     """
     DB Eng Specs (couchbase): Test epoch ms to dttm
     """
-    from superset.db_engine_specs.couchbase import CouchbaseEngineSpec
+    from axbi.db_engine_specs.couchbase import CouchbaseEngineSpec
 
     assert CouchbaseEngineSpec.epoch_ms_to_dttm() == "MILLIS_TO_STR({col})"
 
@@ -63,7 +63,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.couchbase import (
+    from axbi.db_engine_specs.couchbase import (
         CouchbaseEngineSpec as spec,  # noqa: N813
     )
 
@@ -73,7 +73,7 @@ def test_convert_dttm(
 def test_build_sqlalchemy_uri_ignores_malformed_query_params(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from superset.db_engine_specs.couchbase import CouchbaseEngineSpec
+    from axbi.db_engine_specs.couchbase import CouchbaseEngineSpec
 
     parameters = cast(
         BasicParametersType,
@@ -93,7 +93,7 @@ def test_build_sqlalchemy_uri_ignores_malformed_query_params(
 def test_get_parameters_from_uri_handles_repeated_ssl_query_param(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    from superset.db_engine_specs.couchbase import CouchbaseEngineSpec
+    from axbi.db_engine_specs.couchbase import CouchbaseEngineSpec
 
     parameters = CouchbaseEngineSpec.get_parameters_from_uri(
         "couchbase://user:secret@localhost/bucket?ssl=true&ssl=false"
@@ -124,7 +124,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.couchbase import (
+    from axbi.db_engine_specs.couchbase import (
         CouchbaseEngineSpec as spec,  # noqa: N813
     )
 

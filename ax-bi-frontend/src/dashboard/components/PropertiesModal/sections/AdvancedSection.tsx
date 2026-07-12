@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import type { editors } from '@apache-superset/core';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import type { editors } from '@ax-bi/core';
 import { EditorHost } from 'src/core/editors';
 import { ModalFormField } from 'src/components/Modal';
 import { ValidationObject } from 'src/components/Modal/useModalValidation';

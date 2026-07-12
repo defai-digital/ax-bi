@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Preset } from '@superset-ui/core';
+import { Preset } from '@ax-bi/ui-core';
 import ArcChartPlugin from './layers/Arc';
 import GeoJsonChartPlugin from './layers/Geojson';
 import GridChartPlugin from './layers/Grid';

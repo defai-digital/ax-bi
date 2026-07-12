@@ -21,16 +21,16 @@ from unittest.mock import Mock, patch
 import pytest
 import yaml
 
-from superset import db, security_manager
-from superset.commands.exceptions import CommandInvalidError
-from superset.commands.importers.exceptions import IncorrectVersionError
-from superset.commands.query.exceptions import SavedQueryNotFoundError
-from superset.commands.query.export import ExportSavedQueriesCommand
-from superset.commands.query.importers.v1 import ImportSavedQueriesCommand
-from superset.models.core import Database
-from superset.models.sql_lab import SavedQuery
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from axbi.commands.exceptions import CommandInvalidError
+from axbi.commands.importers.exceptions import IncorrectVersionError
+from axbi.commands.query.exceptions import SavedQueryNotFoundError
+from axbi.commands.query.export import ExportSavedQueriesCommand
+from axbi.commands.query.importers.v1 import ImportSavedQueriesCommand
+from axbi.models.core import Database
+from axbi.models.sql_lab import SavedQuery
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.importexport import (
     database_config,
     database_metadata_config,
@@ -39,7 +39,7 @@ from tests.integration_tests.fixtures.importexport import (
 )
 
 
-class TestExportSavedQueriesCommand(SupersetTestCase):
+class TestExportSavedQueriesCommand(AxBITestCase):
     def setUp(self):
         self.example_database = get_example_database()
         self.example_query = SavedQuery(
@@ -58,9 +58,7 @@ class TestExportSavedQueriesCommand(SupersetTestCase):
         db.session.commit()
         super().tearDown()
 
-    @patch(
-        "superset.queries.saved_queries.filters.security_manager.can_access_all_queries"
-    )
+    @patch("axbi.queries.saved_queries.filters.security_manager.can_access_all_queries")
     def test_export_query_command(self, mock_can_access_all_queries: Mock) -> None:
         mock_can_access_all_queries.return_value = True
 
@@ -88,9 +86,7 @@ class TestExportSavedQueriesCommand(SupersetTestCase):
             "database_uuid": str(self.example_database.uuid),
         }
 
-    @patch(
-        "superset.queries.saved_queries.filters.security_manager.can_access_all_queries"
-    )
+    @patch("axbi.queries.saved_queries.filters.security_manager.can_access_all_queries")
     def test_export_query_command_no_related(self, mock_can_access_all_queries):
         """
         Test that only the query is exported when export_related=False.
@@ -108,10 +104,8 @@ class TestExportSavedQueriesCommand(SupersetTestCase):
         ]
         assert expected == list(contents.keys())
 
-    @patch(
-        "superset.queries.saved_queries.filters.security_manager.can_access_all_queries"
-    )
-    @patch("superset.queries.saved_queries.filters.g")
+    @patch("axbi.queries.saved_queries.filters.security_manager.can_access_all_queries")
+    @patch("axbi.queries.saved_queries.filters.g")
     def test_export_query_command_no_access(
         self, mock_filter_g, mock_can_access_all_queries
     ):
@@ -124,9 +118,7 @@ class TestExportSavedQueriesCommand(SupersetTestCase):
         with self.assertRaises(SavedQueryNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch(
-        "superset.queries.saved_queries.filters.security_manager.can_access_all_queries"
-    )
+    @patch("axbi.queries.saved_queries.filters.security_manager.can_access_all_queries")
     def test_export_query_command_invalid_dataset(self, mock_can_access_all_queries):
         """Test that an error is raised when exporting an invalid dataset"""
         mock_can_access_all_queries.return_value = True
@@ -136,9 +128,7 @@ class TestExportSavedQueriesCommand(SupersetTestCase):
         with self.assertRaises(SavedQueryNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch(
-        "superset.queries.saved_queries.filters.security_manager.can_access_all_queries"
-    )
+    @patch("axbi.queries.saved_queries.filters.security_manager.can_access_all_queries")
     def test_export_query_command_key_order(self, mock_can_access_all_queries):
         """Test that they keys in the YAML have the same order as export_fields"""
         mock_can_access_all_queries.return_value = True
@@ -161,9 +151,9 @@ class TestExportSavedQueriesCommand(SupersetTestCase):
         ]
 
 
-class TestImportSavedQueriesCommand(SupersetTestCase):
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+class TestImportSavedQueriesCommand(AxBITestCase):
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_saved_queries(self, mock_add_permissions, mock_g):
         """Test that we can import a saved query"""
         mock_g.user = security_manager.find_user("admin")
@@ -193,8 +183,8 @@ class TestImportSavedQueriesCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_saved_queries_multiple(self, mock_add_permissions, mock_g):
         """Test that a saved query can be imported multiple times"""
         mock_g.user = security_manager.find_user("admin")

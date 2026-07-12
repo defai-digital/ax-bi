@@ -21,15 +21,15 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.database.exceptions import (
+from axbi.commands.database.exceptions import (
     ValidatorSQL400Error,
     ValidatorSQLError,
 )
-from superset.commands.database.validate_sql import ValidateSQLCommand
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import (
-    SupersetSyntaxErrorException,
-    SupersetTemplateException,
+from axbi.commands.database.validate_sql import ValidateSQLCommand
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import (
+    AxBISyntaxErrorException,
+    AxBITemplateException,
 )
 
 
@@ -41,7 +41,7 @@ def mock_database(mocker: MockerFixture) -> MagicMock:
     database.db_engine_spec.engine = "postgresql"
 
     DatabaseDAO = mocker.patch(  # noqa: N806
-        "superset.commands.database.validate_sql.DatabaseDAO"
+        "axbi.commands.database.validate_sql.DatabaseDAO"
     )
     DatabaseDAO.find_by_id.return_value = database
     return database
@@ -55,7 +55,7 @@ def mock_validator(mocker: MockerFixture) -> MagicMock:
     validator.validate.return_value = []
 
     get_validator_by_name = mocker.patch(
-        "superset.commands.database.validate_sql.get_validator_by_name"
+        "axbi.commands.database.validate_sql.get_validator_by_name"
     )
     get_validator_by_name.return_value = validator
     return validator
@@ -68,7 +68,7 @@ def mock_config(mocker: MockerFixture) -> dict[str, Any]:
         "SQL_VALIDATORS_BY_ENGINE": {"postgresql": "PostgreSQLValidator"},
         "SQLLAB_VALIDATION_TIMEOUT": 30,
     }
-    mocker.patch("superset.commands.database.validate_sql.app.config", config)
+    mocker.patch("axbi.commands.database.validate_sql.app.config", config)
     return config
 
 
@@ -79,7 +79,7 @@ def mock_template_processor(
     """Create a mock template processor."""
     template_processor = mocker.MagicMock()
     get_template_processor = mocker.patch(
-        "superset.commands.database.validate_sql.get_template_processor"
+        "axbi.commands.database.validate_sql.get_template_processor"
     )
     get_template_processor.return_value = template_processor
     return template_processor
@@ -176,18 +176,18 @@ def test_validate_sql_template_syntax_error(
     """
     Test that template syntax errors are properly surfaced to the client.
 
-    When template processing raises a SupersetSyntaxErrorException (e.g.,
+    When template processing raises a AxBISyntaxErrorException (e.g.,
     invalid Jinja2 syntax, undefined variables), it should be caught and
     converted to a ValidatorSQL400Error with detailed error information
     including line numbers.
     """
-    syntax_error = SupersetError(
+    syntax_error = AxBIError(
         message="Jinja2 template error (UndefinedError): 'city_filter' is undefined",
-        error_type=SupersetErrorType.GENERIC_COMMAND_ERROR,
+        error_type=AxBIErrorType.GENERIC_COMMAND_ERROR,
         level=ErrorLevel.ERROR,
         extra={"template": "SELECT * FROM...", "line": 3},
     )
-    mock_template_processor.process_template.side_effect = SupersetSyntaxErrorException(
+    mock_template_processor.process_template.side_effect = AxBISyntaxErrorException(
         [syntax_error]
     )
 
@@ -219,9 +219,7 @@ def test_validate_sql_template_syntax_error_without_details(
     mock_config: dict[str, Any],
 ) -> None:
     """Template syntax errors without details should still return a 400 error."""
-    mock_template_processor.process_template.side_effect = SupersetSyntaxErrorException(
-        []
-    )
+    mock_template_processor.process_template.side_effect = AxBISyntaxErrorException([])
 
     command = ValidateSQLCommand(
         model_id=1,
@@ -246,11 +244,11 @@ def test_validate_sql_template_processing_error(
     """
     Test that internal template processing errors are properly surfaced to the client.
 
-    When template processing raises a SupersetTemplateException (e.g., recursion,
+    When template processing raises a AxBITemplateException (e.g., recursion,
     unexpected failures), it should be caught and converted to a ValidatorSQL400Error
     with an appropriate error message.
     """
-    mock_template_processor.process_template.side_effect = SupersetTemplateException(
+    mock_template_processor.process_template.side_effect = AxBITemplateException(
         "Infinite recursion detected in template"
     )
 

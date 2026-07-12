@@ -33,7 +33,7 @@ import { TIMEOUT } from '../../utils/constants';
  * Dashboard Theme E2E tests.
  *
  * Prerequisites:
- * - Superset running with example data loaded
+ * - AxBI running with example data loaded
  * - Admin user authenticated (via global-setup)
  * - Non-admin test user created by `ax-bi load-test-users`
  *

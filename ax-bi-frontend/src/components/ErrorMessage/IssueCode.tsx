@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Icons } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
+import { Icons } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
 
 interface IssueCodeProps {
   code: number;
@@ -31,10 +31,10 @@ export function IssueCode({ code, message }: IssueCodeProps) {
     <>
       {message}{' '}
       <a
-        href={`https://superset.apache.org/docs/using-superset/issue-codes#issue-${code}`}
+        href={`https://github.com/defai-digital/ax-bi/docs/using-axbi/issue-codes#issue-${code}`}
         rel="noopener noreferrer"
         target="_blank"
-        aria-label={t('Superset docs link')}
+        aria-label={t('AxBI docs link')}
       >
         <Icons.Full iconSize="m" iconColor={theme.colorPrimary} />
       </a>

@@ -18,8 +18,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.connectors.sqla.models import SqlMetric
-from superset.utils.core import (
+from axbi.connectors.sqla.models import SqlMetric
+from axbi.utils.core import (
     get_metric_type_from_column,
     map_sql_type_to_inferred_type,
 )
@@ -42,7 +42,7 @@ def test_column_with_invalid_operation():
     metric = SqlMetric(metric_name="my_column", expression="INVALID(my_column)")
     datasource = MagicMock(metrics=[metric])
     column = "my_column"
-    with patch("superset.utils.core.logger.warning") as mock_warning:
+    with patch("axbi.utils.core.logger.warning") as mock_warning:
         assert (get_metric_type_from_column(column, datasource)) == ""
         mock_warning.assert_called_once()
 

@@ -18,8 +18,8 @@
  */
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useEffect, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { useFavoriteStatus, useListViewResource } from 'src/views/CRUD/hooks';
 import { Dashboard, DashboardTableProps, TableTab } from 'src/views/CRUD/types';
 import handleResourceExport from 'src/utils/export';
@@ -37,10 +37,10 @@ import {
   handleDashboardDelete,
 } from 'src/views/CRUD/utils';
 import withToasts from 'src/components/MessageToasts/withToasts';
-import { DeleteModal, Loading } from '@superset-ui/core/components';
+import { DeleteModal, Loading } from '@ax-bi/ui-core/components';
 import PropertiesModal from 'src/dashboard/components/PropertiesModal';
 import DashboardCard from 'src/features/dashboards/DashboardCard';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
 import EmptyState from './EmptyState';
 import SubMenu from './SubMenu';
@@ -135,7 +135,7 @@ function DashboardTable({
   };
 
   const handleDashboardEdit = (edits: Dashboard) =>
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/dashboard/${edits.id}`,
     }).then(
       ({ json = {} }) => {

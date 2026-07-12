@@ -21,7 +21,7 @@ from datetime import datetime
 import pytest
 from sqlalchemy.engine.url import make_url
 
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa
 
@@ -43,7 +43,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.athena import AthenaEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.athena import AthenaEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -53,14 +53,14 @@ def test_extract_errors() -> None:
     Test that custom error messages are extracted correctly.
     """
 
-    from superset.db_engine_specs.athena import AthenaEngineSpec
+    from axbi.db_engine_specs.athena import AthenaEngineSpec
 
     msg = ": mismatched input 'from_'. Expecting: "
     result = AthenaEngineSpec.extract_errors(Exception(msg))
     assert result == [
-        SupersetError(
+        AxBIError(
             message='Please check your query for syntax errors at or near "from_". Then, try running your query again.',  # noqa: E501
-            error_type=SupersetErrorType.SYNTAX_ERROR,
+            error_type=AxBIErrorType.SYNTAX_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Amazon Athena",
@@ -80,7 +80,7 @@ def test_get_text_clause_with_colon() -> None:
     Make sure text clauses don't escape the colon character
     """
 
-    from superset.db_engine_specs.athena import AthenaEngineSpec
+    from axbi.db_engine_specs.athena import AthenaEngineSpec
 
     query = (
         "SELECT foo FROM tbl WHERE " r"abc >= TIMESTAMP '2021-11-26T00\:00\:00.000000'"
@@ -95,13 +95,13 @@ def test_handle_boolean_filter() -> None:
     """
     from sqlalchemy import Boolean, Column
 
-    from superset.db_engine_specs.athena import AthenaEngineSpec
+    from axbi.db_engine_specs.athena import AthenaEngineSpec
 
     # Create a mock SQLAlchemy column
     bool_col = Column("test_col", Boolean)
 
     # Test IS_TRUE filter - use actual FilterOperator values
-    from superset.utils.core import FilterOperator
+    from axbi.utils.core import FilterOperator
 
     result_true = AthenaEngineSpec.handle_boolean_filter(
         bool_col, FilterOperator.IS_TRUE, True
@@ -128,7 +128,7 @@ def test_adjust_engine_params() -> None:
 
     The method can be used to adjust the schema dynamically.
     """
-    from superset.db_engine_specs.athena import AthenaEngineSpec
+    from axbi.db_engine_specs.athena import AthenaEngineSpec
 
     url = make_url("awsathena+rest://athena.us-east-1.amazonaws.com:443/default")
 
@@ -168,7 +168,7 @@ def test_get_schema_from_engine_params() -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
     """
-    from superset.db_engine_specs.athena import AthenaEngineSpec
+    from axbi.db_engine_specs.athena import AthenaEngineSpec
 
     assert (
         AthenaEngineSpec.get_schema_from_engine_params(

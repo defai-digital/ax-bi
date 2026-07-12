@@ -18,19 +18,19 @@
  */
 
 import { FunctionComponent } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { AxBITheme } from '@ax-bi/core/theme';
 
 // direct leaf import: src/views/CRUD/hooks is a monolith that can be
 // mid-evaluation (import cycle) when this module-scope constant computes
-import SupersetText from 'src/utils/textUtils';
+import AxBIText from 'src/utils/textUtils';
 import { antdWarningAlertStyles } from './styles';
 
-const supersetTextDocs = SupersetText.DB_CONNECTION_DOC_LINKS;
-export const DOCUMENTATION_LINK = supersetTextDocs
-  ? supersetTextDocs.support
-  : 'https://superset.apache.org/user-docs/databases/#installing-database-drivers';
+const axbiTextDocs = AxBIText.DB_CONNECTION_DOC_LINKS;
+export const DOCUMENTATION_LINK = axbiTextDocs
+  ? axbiTextDocs.support
+  : 'https://github.com/defai-digital/ax-bi/user-docs/databases/#installing-database-drivers';
 
 export interface IProps {
   errorMessage: string;
@@ -43,7 +43,7 @@ export const ErrorAlert: FunctionComponent<IProps> = ({
 }) => (
   <Alert
     closable={false}
-    css={(theme: SupersetTheme) => antdWarningAlertStyles(theme)}
+    css={(theme: AxBITheme) => antdWarningAlertStyles(theme)}
     type="error"
     showIcon
     message={errorMessage}
@@ -52,7 +52,7 @@ export const ErrorAlert: FunctionComponent<IProps> = ({
         <>
           <br />
           {t(
-            'Database driver for importing maybe not installed. Visit the Superset documentation page for installation instructions: ',
+            'Database driver for importing maybe not installed. Visit the AxBI documentation page for installation instructions: ',
           )}
           <a
             href={DOCUMENTATION_LINK}

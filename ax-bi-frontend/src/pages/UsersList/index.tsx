@@ -18,7 +18,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
@@ -28,7 +28,7 @@ import {
   Icons,
   DeleteModal,
   ConfirmStatusChange,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   ListView,
   ListViewProps,

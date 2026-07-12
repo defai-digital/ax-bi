@@ -17,19 +17,15 @@
  * under the License.
  */
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled, css } from '@apache-superset/core/theme';
-import {
-  CertifiedBadge,
-  InfoTooltip,
-  Input,
-} from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled, css } from '@ax-bi/core/theme';
+import { CertifiedBadge, InfoTooltip, Input } from '@ax-bi/ui-core/components';
 import Table, {
   TableSize,
   SortOrder,
   type TablePaginationConfig,
   type OnChangeFunction,
-} from '@superset-ui/core/components/Table';
+} from '@ax-bi/ui-core/components/Table';
 import { FacePile, ModifiedInfo, GenericLink } from 'src/components';
 import { DashboardCrossLinks } from 'src/components/ListView/DashboardCrossLinks';
 

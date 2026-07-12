@@ -17,7 +17,7 @@
  * under the License.
  */
 import { getChartDataRequest } from 'src/components/Chart/chartAction';
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 
 export interface FetchTopNValuesParams {
   datasource: string;

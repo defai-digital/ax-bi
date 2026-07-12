@@ -20,13 +20,13 @@ from click.testing import CliRunner
 from flask import current_app
 from pytest_mock import MockerFixture
 
-from superset.cli.runtime_modernization import runtime_modernization
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.runtime_modernization.benchmarks import (
+from axbi.cli.runtime_modernization import runtime_modernization
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.runtime_modernization.benchmarks import (
     RuntimeBenchmarkResult,
     RuntimeKernelBenchmarkResult,
 )
-from superset.utils import json
+from axbi.utils import json
 
 MEASUREMENT_WINDOW = "2026-06-29T00:00Z/2026-06-29T01:00Z"
 
@@ -153,7 +153,7 @@ def _write_complete_runtime_evidence(tmp_path: Path) -> Path:
                             "compatibility risk low"
                         ),
                         "security_cost_estimate": (
-                            "Superset remains the authorization authority for "
+                            "AxBI remains the authorization authority for "
                             "extracted workflows"
                         ),
                         "approval_reference": "CHG-123",
@@ -447,7 +447,7 @@ def test_runtime_modernization_production_flag_state_outputs_json(
     """Production flag-state command emits selected workflow serving flags."""
 
     mocker.patch(
-        "superset.cli.runtime_modernization.is_feature_enabled",
+        "axbi.cli.runtime_modernization.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"TS_MCP_ORCHESTRATION", "TS_ASSET_SEARCH_SERVING"},
     )
@@ -499,7 +499,7 @@ def test_runtime_modernization_production_flag_state_outputs_text(
     """Production flag-state command has a compact text mode."""
 
     mocker.patch(
-        "superset.cli.runtime_modernization.is_feature_enabled",
+        "axbi.cli.runtime_modernization.is_feature_enabled",
         return_value=False,
     )
 
@@ -549,7 +549,7 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
             "--compatibility-cost-estimate",
             "versioned contracts and Python fallback keep compatibility risk low",
             "--security-cost-estimate",
-            "Superset remains the authorization authority for extracted workflows",
+            "AxBI remains the authorization authority for extracted workflows",
             "--approval-reference",
             "CHG-123",
             "--approver",
@@ -569,7 +569,7 @@ def test_runtime_modernization_operator_approval_outputs_json() -> None:
             "versioned contracts and Python fallback keep compatibility risk low"
         ),
         "security_cost_estimate": (
-            "Superset remains the authorization authority for extracted workflows"
+            "AxBI remains the authorization authority for extracted workflows"
         ),
         "approval_reference": "CHG-123",
         "workflow_names": ["mcp_asset_search", "mcp_dashboard_list"],
@@ -596,7 +596,7 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
             "--compatibility-cost-estimate",
             "single contract family is low compatibility cost",
             "--security-cost-estimate",
-            "Superset keeps authorization checks",
+            "AxBI keeps authorization checks",
             "--approval-reference",
             "ADR-42",
             "--not-approved",
@@ -611,9 +611,7 @@ def test_runtime_modernization_operator_approval_outputs_text() -> None:
     assert "split MCP by tool class" in result.output
     assert "migration decision: pause" in result.output
     assert "compatibility cost estimate: single contract family" in result.output
-    assert "security cost estimate: Superset keeps authorization checks" in (
-        result.output
-    )
+    assert "security cost estimate: AxBI keeps authorization checks" in (result.output)
     assert "approval reference: ADR-42" in result.output
     assert "workflows: mcp_asset_search" in result.output
 
@@ -634,7 +632,7 @@ def test_operator_approval_requires_workflow_when_approved() -> None:
             "--compatibility-cost-estimate",
             "single contract family is low compatibility cost",
             "--security-cost-estimate",
-            "Superset keeps authorization checks",
+            "AxBI keeps authorization checks",
             "--approval-reference",
             "ADR-42",
         ],
@@ -664,7 +662,7 @@ def test_operator_approval_requires_approver_when_approved() -> None:
             "--compatibility-cost-estimate",
             "single contract family is low compatibility cost",
             "--security-cost-estimate",
-            "Superset keeps authorization checks",
+            "AxBI keeps authorization checks",
             "--approval-reference",
             "ADR-42",
         ],
@@ -721,7 +719,7 @@ def test_runtime_modernization_operator_approval_rejects_unknown_workflow() -> N
             "--compatibility-cost-estimate",
             "single contract family is low compatibility cost",
             "--security-cost-estimate",
-            "Superset keeps authorization checks",
+            "AxBI keeps authorization checks",
             "--approval-reference",
             "ADR-42",
         ],
@@ -1234,8 +1232,7 @@ def test_runtime_modernization_assemble_production_evidence_outputs_bundle(
                     "risk low"
                 ),
                 "security_cost_estimate": (
-                    "Superset remains the authorization authority for extracted "
-                    "workflows"
+                    "AxBI remains the authorization authority for extracted workflows"
                 ),
                 "approval_reference": "CHG-123",
                 "approver": "platform-ops",
@@ -1328,7 +1325,7 @@ def test_runtime_modernization_assemble_production_evidence_audit_strict_failure
 
     artifacts = _write_complete_runtime_evidence_artifacts(tmp_path)
     audit = mocker.patch(
-        "superset.cli.runtime_modernization.audit_runtime_modernization_completion"
+        "axbi.cli.runtime_modernization.audit_runtime_modernization_completion"
     )
     audit.return_value = {
         "schema_version": 1,
@@ -1499,7 +1496,7 @@ def test_runtime_modernization_validate_production_evidence_outputs_json(
                             "compatibility risk low"
                         ),
                         "security_cost_estimate": (
-                            "Superset remains the authorization authority for "
+                            "AxBI remains the authorization authority for "
                             "extracted workflows"
                         ),
                         "approval_reference": "CHG-123",
@@ -1799,7 +1796,7 @@ def test_validate_production_evidence_rejects_malformed_approval_workflows(
                         "rollout_scope": "asset search",
                         "migration_decision": "expand",
                         "compatibility_cost_estimate": "compatible",
-                        "security_cost_estimate": "authorized by Superset",
+                        "security_cost_estimate": "authorized by AxBI",
                         "approval_reference": "CHG-123",
                         "approver": "platform-ops",
                         "workflow_names": ["mcp_asset_search", 1],
@@ -1996,7 +1993,7 @@ def test_runtime_modernization_benchmark_outputs_json(
     """Benchmark command emits stable JSON for automation."""
 
     benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+        "axbi.cli.runtime_modernization.benchmark_sql_parsing_normalization"
     )
     benchmark.return_value = RuntimeBenchmarkResult(
         area="sql_parsing_normalization",
@@ -2038,7 +2035,7 @@ def test_runtime_modernization_kernel_benchmark_outputs_json(
     """Kernel benchmark command emits stable JSON for automation."""
 
     benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+        "axbi.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
     )
     benchmark.return_value = RuntimeKernelBenchmarkResult(
         area="sql_whitespace_kernel",
@@ -2090,7 +2087,7 @@ def test_runtime_modernization_compatibility_report_outputs_json(
     """Compatibility report command emits stable JSON for CI artifacts."""
 
     parsing_benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+        "axbi.cli.runtime_modernization.benchmark_sql_parsing_normalization"
     )
     parsing_benchmark.return_value = RuntimeBenchmarkResult(
         area="sql_parsing_normalization",
@@ -2105,7 +2102,7 @@ def test_runtime_modernization_compatibility_report_outputs_json(
         has_mutation=False,
     )
     kernel_benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+        "axbi.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
     )
     kernel_benchmark.return_value = RuntimeKernelBenchmarkResult(
         area="sql_whitespace_kernel",
@@ -2158,7 +2155,7 @@ def test_runtime_modernization_compatibility_report_strict_failure(
     """Strict compatibility report exits nonzero when checks fail."""
 
     parsing_benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+        "axbi.cli.runtime_modernization.benchmark_sql_parsing_normalization"
     )
     parsing_benchmark.return_value = RuntimeBenchmarkResult(
         area="sql_parsing_normalization",
@@ -2173,7 +2170,7 @@ def test_runtime_modernization_compatibility_report_strict_failure(
         has_mutation=False,
     )
     kernel_benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+        "axbi.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
     )
     kernel_benchmark.return_value = RuntimeKernelBenchmarkResult(
         area="sql_whitespace_kernel",
@@ -2204,7 +2201,7 @@ def test_runtime_modernization_compatibility_report_strict_target_failure(
     """Strict compatibility report exits nonzero when target gates fail."""
 
     parsing_benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_parsing_normalization"
+        "axbi.cli.runtime_modernization.benchmark_sql_parsing_normalization"
     )
     parsing_benchmark.return_value = RuntimeBenchmarkResult(
         area="sql_parsing_normalization",
@@ -2219,7 +2216,7 @@ def test_runtime_modernization_compatibility_report_strict_target_failure(
         has_mutation=False,
     )
     kernel_benchmark = mocker.patch(
-        "superset.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
+        "axbi.cli.runtime_modernization.benchmark_sql_whitespace_kernel"
     )
     kernel_benchmark.return_value = RuntimeKernelBenchmarkResult(
         area="sql_whitespace_kernel",
@@ -2267,11 +2264,11 @@ def test_runtime_modernization_ax_services_ready_outputs_text(
     mocker: MockerFixture,
     app_context: None,
 ) -> None:
-    """AX services CLI uses Superset config and prints readiness status."""
+    """AX services CLI uses AxBI config and prints readiness status."""
 
     current_app.config["AX_SERVICES_BASE_URL"] = "http://ax-services.local"
     client = mocker.patch(
-        "superset.cli.runtime_modernization.AxServicesClient"
+        "axbi.cli.runtime_modernization.AxServicesClient"
     ).return_value
     client.ready.return_value = AxServicesResponse(
         ok=True,
@@ -2296,7 +2293,7 @@ def test_runtime_modernization_ax_services_health_outputs_json(
     """AX services CLI can emit machine-readable health output."""
 
     client = mocker.patch(
-        "superset.cli.runtime_modernization.AxServicesClient"
+        "axbi.cli.runtime_modernization.AxServicesClient"
     ).return_value
     client.health.return_value = AxServicesResponse(
         ok=True,
@@ -2326,12 +2323,12 @@ def test_runtime_modernization_ax_services_metadata_outputs_json(
     """AX services CLI can emit machine-readable metadata probe output."""
 
     client = mocker.patch(
-        "superset.cli.runtime_modernization.AxServicesClient"
+        "axbi.cli.runtime_modernization.AxServicesClient"
     ).return_value
     client.metadata.return_value = AxServicesResponse(
         ok=True,
         status_code=200,
-        payload={"dependencies": {"supersetMetadata": {"ok": True}}},
+        payload={"dependencies": {"axbiMetadata": {"ok": True}}},
     )
 
     result = CliRunner().invoke(
@@ -2343,7 +2340,7 @@ def test_runtime_modernization_ax_services_metadata_outputs_json(
     assert json.loads(result.output) == {
         "error": None,
         "ok": True,
-        "payload": {"dependencies": {"supersetMetadata": {"ok": True}}},
+        "payload": {"dependencies": {"axbiMetadata": {"ok": True}}},
         "status_code": 200,
     }
     client.metadata.assert_called_once_with(request_id=None)
@@ -2356,7 +2353,7 @@ def test_runtime_modernization_ax_services_metrics_outputs_json(
     """AX services CLI can emit machine-readable metrics output."""
 
     client = mocker.patch(
-        "superset.cli.runtime_modernization.AxServicesClient"
+        "axbi.cli.runtime_modernization.AxServicesClient"
     ).return_value
     client.metrics.return_value = AxServicesResponse(
         ok=True,
@@ -2386,7 +2383,7 @@ def test_runtime_modernization_ax_services_failure_exits_nonzero(
     """AX services CLI fails when the sidecar is unavailable."""
 
     client = mocker.patch(
-        "superset.cli.runtime_modernization.AxServicesClient"
+        "axbi.cli.runtime_modernization.AxServicesClient"
     ).return_value
     client.ready.return_value = AxServicesResponse(
         ok=False,

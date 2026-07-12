@@ -45,8 +45,8 @@ jest.mock('src/logger/actions', () => ({
   logEvent: jest.fn(() => ({ type: 'LOG_EVENT' })),
 }));
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getChartMetadataRegistry: jest.fn(() => ({
     get: jest.fn(() => ({ behaviors: ['EXPORT_CURRENT_VIEW'] })),
   })),

@@ -20,7 +20,7 @@ import {
   getChartMetadataRegistry,
   ChartMetadata,
   Behavior,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
 
 /**

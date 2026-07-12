@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { NativeFilterType, Preset } from '@superset-ui/core';
-import type { Filter } from '@superset-ui/core';
+import { NativeFilterType, Preset } from '@ax-bi/ui-core';
+import type { Filter } from '@ax-bi/ui-core';
 import { SelectFilterPlugin } from 'src/filters/components';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { render, screen, waitFor } from 'spec/helpers/testing-library';

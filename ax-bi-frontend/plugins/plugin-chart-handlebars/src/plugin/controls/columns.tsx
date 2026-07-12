@@ -20,9 +20,9 @@ import {
   ControlSetItem,
   ExtraControlProps,
   sharedControls,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
-import { ensureIsArray } from '@superset-ui/core';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { ensureIsArray } from '@ax-bi/ui-core';
 import { getQueryMode, isRawMode } from './shared';
 
 const dndAllColumns: typeof sharedControls.groupby = {

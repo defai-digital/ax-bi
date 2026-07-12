@@ -18,14 +18,9 @@
  */
 
 import { Component, ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  SupersetClient,
-  Method,
-  makeApi,
-  SupersetApiError,
-} from '@superset-ui/core';
-import { Button } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, Method, makeApi, AxBIApiError } from '@ax-bi/ui-core';
+import { Button } from '@ax-bi/ui-core/components';
 import ErrorMessage from './ErrorMessage';
 
 export type Props = {
@@ -38,16 +33,16 @@ export type Props = {
 
 type State = {
   didVerify: boolean;
-  error?: Error | SupersetApiError;
+  error?: Error | AxBIApiError;
   payload?: object;
 };
 
 export const renderError = (error: Error) => (
   <div>
     The following error occurred, make sure you have <br />
-    1) configured CORS in Superset to receive requests from this domain. <br />
-    2) set the Superset host correctly below. <br />
-    3) debug the CORS configuration under the `@superset-ui/connection` stories.
+    1) configured CORS in AxBI to receive requests from this domain. <br />
+    2) set the AxBI host correctly below. <br />
+    3) debug the CORS configuration under the `@ax-bi/connection` stories.
     <br />
     <br />
     <ErrorMessage error={error} />
@@ -77,8 +72,8 @@ export default class VerifyCORS extends Component<Props, State> {
 
   handleVerify() {
     const { endpoint, host, postPayload, method } = this.props;
-    SupersetClient.reset();
-    SupersetClient.configure({
+    AxBIClient.reset();
+    AxBIClient.configure({
       credentials: 'include',
       host,
       mode: 'cors',
@@ -111,12 +106,12 @@ export default class VerifyCORS extends Component<Props, State> {
         <div className="col-md-10">
           This example requires CORS requests from this domain. <br />
           <br />
-          1) enable CORS requests in your Superset App from{' '}
+          1) enable CORS requests in your AxBI App from{' '}
           {`${window.location.origin}`}
           <br />
-          2) configure your Superset App host name below <br />
+          2) configure your AxBI App host name below <br />
           3) click below to verify authentication. You may debug CORS further
-          using the `@superset-ui/connection` story. <br />
+          using the `@ax-bi/connection` story. <br />
           <br />
           <Button type="primary" size="small" onClick={this.handleVerify}>
             {t('Verify')}

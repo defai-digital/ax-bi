@@ -27,7 +27,7 @@ import {
   DataMask,
   ValueFormatter,
   getSequentialSchemeRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import countries, { countryOptions } from './countries';
 
 /**
@@ -137,7 +137,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
 
   const path = d3.geo.path();
   const div = d3.select(container);
-  div.classed('superset-legacy-chart-country-map', true);
+  div.classed('axbi-legacy-chart-country-map', true);
   div.selectAll('*').remove();
   container.style.height = `${height}px`;
   container.style.width = `${width}px`;

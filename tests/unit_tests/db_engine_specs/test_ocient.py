@@ -22,11 +22,11 @@ from typing import Any
 
 import pytest
 
-from superset.db_engine_specs.ocient import (
+from axbi.db_engine_specs.ocient import (
     _point_list_to_wkt,
     _sanitized_ocient_type_codes,
 )
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
 
 
 def ocient_is_installed() -> bool:
@@ -34,12 +34,12 @@ def ocient_is_installed() -> bool:
 
 
 # (msg,expected)
-MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
+MARSHALED_OCIENT_ERRORS: list[tuple[str, AxBIError]] = [
     (
         "The referenced user does not exist (User 'mj' not found)",
-        SupersetError(
+        AxBIError(
             message='The username "mj" does not exist.',
-            error_type=SupersetErrorType.CONNECTION_INVALID_USERNAME_ERROR,
+            error_type=AxBIErrorType.CONNECTION_INVALID_USERNAME_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -54,9 +54,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "The userid/password combination was not valid (Incorrect password for user)",
-        SupersetError(
+        AxBIError(
             message="The user/password combination is not valid (Incorrect password for user).",  # noqa: E501
-            error_type=SupersetErrorType.CONNECTION_INVALID_PASSWORD_ERROR,
+            error_type=AxBIErrorType.CONNECTION_INVALID_PASSWORD_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -71,9 +71,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "No database named 'bulls' exists",
-        SupersetError(
+        AxBIError(
             message='Could not connect to database: "bulls"',
-            error_type=SupersetErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
+            error_type=AxBIErrorType.CONNECTION_UNKNOWN_DATABASE_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -88,9 +88,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "Unable to connect to unitedcenter.com:4050",
-        SupersetError(
+        AxBIError(
             message='Could not resolve hostname: "unitedcenter.com".',
-            error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+            error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -105,9 +105,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "Port out of range 0-65535",
-        SupersetError(
+        AxBIError(
             message="Port out of range 0-65535",
-            error_type=SupersetErrorType.CONNECTION_INVALID_PORT_ERROR,
+            error_type=AxBIErrorType.CONNECTION_INVALID_PORT_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -122,9 +122,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "An invalid connection string attribute was specified (failed to decrypt cipher text)",  # noqa: E501
-        SupersetError(
+        AxBIError(
             message="Invalid Connection String: Expecting String of the form 'ocient://user:pass@host:port/database'.",
-            error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+            error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -139,9 +139,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "There is a syntax error in your statement (extraneous input 'foo bar baz' expecting {<EOF>, 'trace', 'using'})",  # noqa: E501
-        SupersetError(
+        AxBIError(
             message="Syntax Error: extraneous input \"foo bar baz\" expecting \"{<EOF>, 'trace', 'using'}",  # noqa: E501
-            error_type=SupersetErrorType.SYNTAX_ERROR,
+            error_type=AxBIErrorType.SYNTAX_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -156,9 +156,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "There is a syntax error in your statement (mismatched input 'to' expecting {<EOF>, 'trace', 'using'})",  # noqa: E501
-        SupersetError(
+        AxBIError(
             message="Syntax Error: mismatched input \"to\" expecting \"{<EOF>, 'trace', 'using'}",  # noqa: E501
-            error_type=SupersetErrorType.SYNTAX_ERROR,
+            error_type=AxBIErrorType.SYNTAX_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -173,9 +173,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "The referenced table or view 'goats' does not exist",
-        SupersetError(
+        AxBIError(
             message='Table or View "goats" does not exist.',
-            error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -194,9 +194,9 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
     ),
     (
         "The reference to column 'goats' is not valid",
-        SupersetError(
+        AxBIError(
             message='Invalid reference to column: "goats"',
-            error_type=SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Ocient",
@@ -217,8 +217,8 @@ MARSHALED_OCIENT_ERRORS: list[tuple[str, SupersetError]] = [
 
 
 @pytest.mark.parametrize("msg,expected", MARSHALED_OCIENT_ERRORS)
-def test_connection_errors(msg: str, expected: SupersetError) -> None:
-    from superset.db_engine_specs.ocient import OcientEngineSpec
+def test_connection_errors(msg: str, expected: AxBIError) -> None:
+    from axbi.db_engine_specs.ocient import OcientEngineSpec
 
     result = OcientEngineSpec.extract_errors(Exception(msg))
     assert result == [expected]

@@ -17,8 +17,8 @@
  * under the License.
  */
 import { FC, Suspense } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { DashboardComponentMetadata, JsonObject } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { DashboardComponentMetadata, JsonObject } from '@ax-bi/ui-core';
 import backgroundStyleOptions from 'src/dashboard/util/backgroundStyleOptions';
 import cx from 'classnames';
 import { shallowEqual, useSelector } from 'react-redux';

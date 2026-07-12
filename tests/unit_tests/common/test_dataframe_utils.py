@@ -19,7 +19,7 @@ from unittest.mock import MagicMock
 
 import pandas as pd
 
-from superset.common.utils import dataframe_utils
+from axbi.common.utils import dataframe_utils
 
 
 def test_is_datetime_series():

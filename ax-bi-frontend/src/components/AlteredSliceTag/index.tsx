@@ -18,7 +18,7 @@
  */
 import { useEffect, useMemo, useState, FC } from 'react';
 import { isEmpty } from 'lodash';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import getControlsForVizType from 'src/utils/getControlsForVizType';
 import {
   Label,
@@ -26,7 +26,7 @@ import {
   Tooltip,
   ModalTrigger,
   TableView,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import type { AlteredSliceTagProps, ControlMap, RowType } from './types';
 import { getRowsFromDiffs } from './utils';
 

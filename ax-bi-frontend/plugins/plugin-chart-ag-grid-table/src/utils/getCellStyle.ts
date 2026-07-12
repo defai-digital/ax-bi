@@ -21,8 +21,8 @@ import {
   ColorFormatters,
   getTextColorForBackground,
   ObjectFormattingEnum,
-} from '@superset-ui/chart-controls';
-import { CellClassParams } from '@superset-ui/core/components/ThemedAgGridReact';
+} from '@ax-bi/chart-controls';
+import { CellClassParams } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { BasicColorFormatterType, InputColumn } from '../types';
 
 type CellStyleParams = CellClassParams & {

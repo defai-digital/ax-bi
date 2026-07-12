@@ -18,8 +18,8 @@
  */
 import { useSelector } from 'react-redux';
 
-import { t } from '@apache-superset/core/translation';
-import { COMMON_ERR_MESSAGES, ClientErrorObject } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { COMMON_ERR_MESSAGES, ClientErrorObject } from '@ax-bi/ui-core';
 import { SqlLabRootState } from 'src/SqlLab/types';
 import { VALIDATION_DEBOUNCE_MS } from 'src/SqlLab/constants';
 import {

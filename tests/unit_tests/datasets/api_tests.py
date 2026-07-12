@@ -23,7 +23,7 @@ import pytest
 from flask import Flask
 from sqlalchemy.orm.session import Session
 
-from superset import db
+from axbi import db
 
 
 def test_put_invalid_dataset(
@@ -34,8 +34,8 @@ def test_put_invalid_dataset(
     """
     Test invalid payloads.
     """
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
 
     SqlaTable.metadata.create_all(db.session.get_bind())
 
@@ -92,8 +92,8 @@ def test_get_dataset_include_rendered_sql_passes_table_to_template_processor(
     PrestoTemplateProcessor and causing NPEs when templates reference partition
     functions without an explicit schema.
     """
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
 
     SqlaTable.metadata.create_all(db.session.get_bind())
 
@@ -114,7 +114,7 @@ def test_get_dataset_include_rendered_sql_passes_table_to_template_processor(
     mock_processor.process_template.return_value = "SELECT 1"
 
     with patch(
-        "superset.datasets.api.get_template_processor",
+        "axbi.datasets.api.get_template_processor",
         return_value=mock_processor,
     ) as mock_get_processor:
         response = client.get(
@@ -138,14 +138,14 @@ def test_handle_filters_args_returns_request_scoped_filters(
     implementation mutates ``self._filters`` (a single shared instance),
     causing filters from one request to leak into another.
 
-    The fix lives on ``BaseSupersetModelRestApi`` so every superset REST
+    The fix lives on ``BaseAxBIModelRestApi`` so every axbi REST
     API subclass (datasets, charts, dashboards, saved queries, etc.)
     inherits the request-scoped behavior. This test exercises it via
     ``DatasetRestApi`` as a concrete subclass.
     """
     from flask_appbuilder.const import API_FILTERS_RIS_KEY
 
-    from superset.datasets.api import DatasetRestApi
+    from axbi.datasets.api import DatasetRestApi
 
     api = DatasetRestApi()
     api.datamodel = MagicMock()
@@ -183,7 +183,7 @@ def test_json_body_handlers_reject_malformed_json_body(
     uses_response: bool,
 ) -> None:
     """Dataset JSON handlers should reject parser failures as validation errors."""
-    from superset.datasets.api import DatasetRestApi
+    from axbi.datasets.api import DatasetRestApi
 
     app = Flask(__name__)
     api = DatasetRestApi.__new__(DatasetRestApi)

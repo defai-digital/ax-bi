@@ -24,7 +24,7 @@ import {
   ensureIsArray,
   ChartProps,
   normalizeOrderBy,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { decode } from 'ngeohash';
 import { addTooltipColumnsToQuery } from './buildQueryUtils';
 

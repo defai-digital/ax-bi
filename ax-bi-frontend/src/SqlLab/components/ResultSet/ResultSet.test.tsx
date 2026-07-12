@@ -28,7 +28,7 @@ import configureStore from 'redux-mock-store';
 import { Store } from 'redux';
 import { thunk } from 'redux-thunk';
 import fetchMock from 'fetch-mock';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import ResultSet from 'src/SqlLab/components/ResultSet';
 import * as getBootstrapData from 'src/utils/getBootstrapData';
 import {
@@ -41,15 +41,15 @@ import {
   queryWithNoQueryLimit,
   failedQueryWithFrontendTimeoutErrors,
 } from 'src/SqlLab/fixtures';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
 import { ViewLocations } from 'src/SqlLab/contributions';
 import {
   registerToolbarAction,
   cleanupExtensions,
 } from 'spec/helpers/extensionTestHelpers';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn().mockReturnValue(false),
 }));
 
@@ -655,7 +655,7 @@ describe('ResultSet', () => {
   test('should use non-streaming export (href) when rows below threshold', async () => {
     // This test validates that when rows < CSV_STREAMING_ROW_THRESHOLD,
     // the component uses the direct download href instead of streaming export.
-    const appRoot = '/superset';
+    const appRoot = '/ax-bi';
     applicationRootMock.mockReturnValue(appRoot);
 
     // Create a query with rows BELOW the threshold
@@ -714,13 +714,13 @@ describe('ResultSet', () => {
     },
     {
       name: 'with subdirectory prefix',
-      appRoot: '/superset',
-      expectedUrl: '/superset/api/v1/sqllab/export_streaming/',
+      appRoot: '/ax-bi',
+      expectedUrl: '/ax-bi/api/v1/sqllab/export_streaming/',
     },
     {
       name: 'with nested subdirectory prefix',
-      appRoot: '/my-app/superset',
-      expectedUrl: '/my-app/superset/api/v1/sqllab/export_streaming/',
+      appRoot: '/my-app/ax-bi',
+      expectedUrl: '/my-app/ax-bi/api/v1/sqllab/export_streaming/',
     },
   ])(
     'streaming export URL respects app root configuration: $name',
@@ -790,7 +790,7 @@ describe('ResultSet', () => {
         user: {
           ...user,
           roles: {
-            sql_lab: [['can_export_data', 'Superset']],
+            sql_lab: [['can_export_data', 'AxBI']],
           },
         },
         sqlLab: {
@@ -846,7 +846,7 @@ describe('ResultSet', () => {
         user: {
           ...user,
           roles: {
-            sql_lab: [['can_copy_clipboard', 'Superset']],
+            sql_lab: [['can_copy_clipboard', 'AxBI']],
           },
         },
         sqlLab: {
@@ -874,7 +874,7 @@ describe('ResultSet', () => {
         user: {
           ...user,
           roles: {
-            sql_lab: [['can_export_data', 'Superset']],
+            sql_lab: [['can_export_data', 'AxBI']],
           },
         },
         sqlLab: {
@@ -931,7 +931,7 @@ describe('ResultSet', () => {
         user: {
           ...user,
           roles: {
-            sql_lab: [['can_copy_clipboard', 'Superset']],
+            sql_lab: [['can_copy_clipboard', 'AxBI']],
           },
         },
         sqlLab: {
@@ -964,7 +964,7 @@ describe('ResultSet', () => {
         user: {
           ...user,
           roles: {
-            sql_lab: [['can_export_data', 'Superset']],
+            sql_lab: [['can_export_data', 'AxBI']],
           },
         },
         sqlLab: {

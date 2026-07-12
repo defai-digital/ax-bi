@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlPanelsContainerProps } from '@superset-ui/chart-controls/types';
-import { GenericDataType } from '@apache-superset/core/common';
+import { ControlPanelsContainerProps } from '@ax-bi/chart-controls/types';
+import { GenericDataType } from '@ax-bi/core/common';
 import controlPanel from '../../../src/Timeseries/Area/controlPanel';
 
 const config = controlPanel;

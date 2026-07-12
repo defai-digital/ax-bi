@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { getMetricLabel } from '@superset-ui/core';
+import { getMetricLabel } from '@ax-bi/ui-core';
 
 export type MetricFormValue =
   | string

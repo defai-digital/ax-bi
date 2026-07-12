@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { ChartMetadata, ChartPlugin } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { ChartMetadata, ChartPlugin } from '@ax-bi/ui-core';
 import transformProps from './transformProps';
 import buildQuery from './buildQuery';
 import { WordCloudFormData } from '../types';

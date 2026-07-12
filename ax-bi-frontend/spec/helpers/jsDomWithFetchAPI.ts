@@ -68,7 +68,7 @@ export default class FixJSDOMEnvironment extends JSDOMEnvironment {
     // Mock MessageChannel to prevent hanging Jest tests with rc-overflow@1.4.1
     // Forces rc-overflow to use requestAnimationFrame fallback instead
     // Can be removed when rc-overflow properly cleans up MessagePorts in test environments
-    // See: https://github.com/apache/superset/pull/34871
+    // See: https://github.com/defai-digital/ax-bi/pull/34871
     this.global.MessageChannel = undefined as any;
     this.global.MessagePort = undefined as any;
   }

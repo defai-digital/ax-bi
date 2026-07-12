@@ -17,12 +17,12 @@
  * under the License.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { Spin } from 'antd';
-import { Select } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Select } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { JsonForms } from '@jsonforms/react';
 import type { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { cellRegistryEntries } from '@great-expectations/jsonforms-antd-renderers';
@@ -162,7 +162,7 @@ export default function AddSemanticViewModal({
   const fetchLayers = async () => {
     setLoadingLayers(true);
     try {
-      const { json } = await SupersetClient.get({
+      const { json } = await AxBIClient.get({
         endpoint: '/api/v1/semantic_layer/',
       });
       setLayers(
@@ -184,7 +184,7 @@ export default function AddSemanticViewModal({
       setAvailableViews([]);
       setSelectedViewNames([]);
       try {
-        const { json } = await SupersetClient.post({
+        const { json } = await AxBIClient.post({
           endpoint: `/api/v1/semantic_layer/${uuid}/views`,
           jsonPayload: { runtime_data: rData },
         });
@@ -244,7 +244,7 @@ export default function AddSemanticViewModal({
 
       setLoadingRuntime(true);
       try {
-        const { json } = await SupersetClient.post({
+        const { json } = await AxBIClient.post({
           endpoint: `/api/v1/semantic_layer/${uuid}/schema/runtime`,
           jsonPayload: {},
         });
@@ -311,7 +311,7 @@ export default function AddSemanticViewModal({
             schemaTimerRef.current = setTimeout(async () => {
               setRefreshingSchema(true);
               try {
-                const { json } = await SupersetClient.post({
+                const { json } = await AxBIClient.post({
                   endpoint: `/api/v1/semantic_layer/${uuid}/schema/runtime`,
                   jsonPayload: { runtime_data: data },
                 });
@@ -404,7 +404,7 @@ export default function AddSemanticViewModal({
           configuration: runtimeData,
         }));
 
-      const { json } = await SupersetClient.post({
+      const { json } = await AxBIClient.post({
         endpoint: '/api/v1/semantic_view/',
         jsonPayload: { views: viewsToCreate },
       });

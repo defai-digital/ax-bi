@@ -27,20 +27,20 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from fastmcp import Client, FastMCP
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.schemas import DataColumn
-from superset.mcp_service.dataset.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.schemas import DataColumn
+from axbi.mcp_service.dataset.schemas import (
     QueryDatasetFilter,
     QueryDatasetResponse,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     sanitize_for_llm_context,
 )
-from superset.utils import json
+from axbi.utils import json
 
 query_dataset_module = importlib.import_module(
-    "superset.mcp_service.dataset.tool.query_dataset"
+    "axbi.mcp_service.dataset.tool.query_dataset"
 )
 
 
@@ -53,7 +53,7 @@ def mcp_server() -> FastMCP:
 def mock_auth() -> Generator[MagicMock, None, None]:
     """Mock authentication and metadata access for all tests."""
     with (
-        patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user,
+        patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user,
         patch.object(
             query_dataset_module,
             "user_can_view_data_model_metadata",
@@ -214,14 +214,14 @@ async def test_query_dataset_success(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=result_data,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             return_value=MagicMock(),
         ),
     ):
@@ -361,14 +361,14 @@ async def test_query_dataset_with_time_range(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=result_data,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             side_effect=capture_create,
         ),
     ):
@@ -447,14 +447,14 @@ async def test_query_dataset_with_filters(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=result_data,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             side_effect=capture_create,
         ),
     ):
@@ -504,14 +504,14 @@ async def test_query_dataset_empty_results(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=empty_result,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             return_value=MagicMock(),
         ),
     ):
@@ -545,14 +545,14 @@ async def test_query_dataset_by_uuid(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ) as mock_resolve,
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=result_data,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             return_value=MagicMock(),
         ),
     ):
@@ -579,8 +579,8 @@ async def test_query_dataset_by_uuid(mcp_server: FastMCP) -> None:
 @pytest.mark.asyncio
 async def test_query_dataset_permission_denied(mcp_server: FastMCP) -> None:
     """Permission denied from ChartDataCommand.validate() returns error."""
-    from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-    from superset.exceptions import SupersetSecurityException
+    from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+    from axbi.exceptions import AxBISecurityException
 
     dataset = _make_dataset()
 
@@ -591,15 +591,15 @@ async def test_query_dataset_permission_denied(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             return_value=MagicMock(),
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
-            side_effect=SupersetSecurityException(
-                SupersetError(
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            side_effect=AxBISecurityException(
+                AxBIError(
                     message="Access denied",
-                    error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+                    error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                     level=ErrorLevel.WARNING,
                 )
             ),
@@ -638,14 +638,14 @@ async def test_query_dataset_order_by_valid(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=result_data,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             side_effect=capture_create,
         ),
     ):
@@ -716,14 +716,14 @@ async def test_query_dataset_time_column_override(mcp_server: FastMCP) -> None:
             return_value=dataset,
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=result_data,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             side_effect=capture_create,
         ),
     ):
@@ -760,14 +760,14 @@ async def test_query_dataset_non_dttm_time_column_warns(mcp_server: FastMCP) -> 
             return_value=dataset,
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.validate",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.validate",
         ),
         patch(
-            "superset.commands.chart.data.get_data_command.ChartDataCommand.run",
+            "axbi.commands.chart.data.get_data_command.ChartDataCommand.run",
             return_value=result_data,
         ),
         patch(
-            "superset.common.query_context_factory.QueryContextFactory.create",
+            "axbi.common.query_context_factory.QueryContextFactory.create",
             return_value=MagicMock(),
         ),
     ):

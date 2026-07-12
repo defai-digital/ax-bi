@@ -21,12 +21,12 @@ import { AutoSizer } from 'react-virtualized-auto-sizer';
 import ControlHeader, {
   ControlHeaderProps,
 } from 'src/explore/components/ControlHeader';
-import { styled } from '@apache-superset/core/theme';
-import { ControlComponentProps } from '@superset-ui/chart-controls';
+import { styled } from '@ax-bi/core/theme';
+import { ControlComponentProps } from '@ax-bi/chart-controls';
 import {
   safeParseEChartOptions,
   EChartOptionsParseError,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import { EditorHost } from 'src/core/editors';
 
 const Container = styled.div`

@@ -36,8 +36,8 @@ from slack_sdk.errors import (
 from sqlalchemy.orm import Query as BaseQuery
 from sqlalchemy.sql import func, text
 
-from superset import db
-from superset.commands.report.exceptions import (
+from axbi import db
+from axbi.commands.report.exceptions import (
     AlertQueryError,
     AlertQueryInvalidTypeError,
     AlertQueryMultipleColumnsError,
@@ -52,17 +52,17 @@ from superset.commands.report.exceptions import (
     ReportScheduleSystemErrorsException,
     ReportScheduleWorkingTimeoutError,
 )
-from superset.commands.report.execute import (
+from axbi.commands.report.execute import (
     AsyncExecuteReportScheduleCommand,
     BaseReportState,
 )
-from superset.commands.report.log_prune import AsyncPruneReportScheduleLogCommand
-from superset.exceptions import SupersetException
-from superset.key_value.models import KeyValueEntry
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.reports.models import (
+from axbi.commands.report.log_prune import AsyncPruneReportScheduleLogCommand
+from axbi.exceptions import AxBIException
+from axbi.key_value.models import KeyValueEntry
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.reports.models import (
     ReportDataFormat,
     ReportExecutionLog,
     ReportRecipientType,
@@ -71,13 +71,13 @@ from superset.reports.models import (
     ReportScheduleValidatorType,
     ReportState,
 )
-from superset.reports.notifications.exceptions import (
+from axbi.reports.notifications.exceptions import (
     NotificationError,
     NotificationParamException,
 )
-from superset.tasks.types import ExecutorType
-from superset.utils import json
-from superset.utils.database import get_example_database
+from axbi.tasks.types import ExecutorType
+from axbi.utils import json
+from axbi.utils.database import get_example_database
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -667,8 +667,8 @@ def create_invalid_sql_alert_email_chart(request, app_context: AppContext):
     "load_birth_names_dashboard_with_slices",
     "create_report_email_chart_with_cc_and_bcc",
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_email_chart_report_schedule_with_cc_bcc(
     screenshot_mock,
     email_mock,
@@ -733,8 +733,8 @@ def test_email_chart_report_schedule_with_cc_bcc(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_email_chart_report_schedule(
     screenshot_mock,
     email_mock,
@@ -772,8 +772,8 @@ def test_email_chart_report_schedule(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_chart_alpha_owner"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_email_chart_report_schedule_alpha_owner(
     screenshot_mock,
     email_mock,
@@ -832,8 +832,8 @@ def test_email_chart_report_schedule_alpha_owner(
     "load_birth_names_dashboard_with_slices",
     "create_report_email_chart_force_screenshot",
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_email_chart_report_schedule_force_screenshot(
     screenshot_mock,
     email_mock,
@@ -876,8 +876,8 @@ def test_email_chart_report_schedule_force_screenshot(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_alert_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_email_chart_alert_schedule(
     screenshot_mock,
     email_mock,
@@ -913,8 +913,8 @@ def test_email_chart_alert_schedule(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_email_chart_report_dry_run(
     screenshot_mock,
     email_mock,
@@ -939,10 +939,10 @@ def test_email_chart_report_dry_run(
     "load_birth_names_dashboard_with_slices",
     "create_report_email_chart_with_csv",
 )
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.csv.get_chart_csv_data")
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.csv.get_chart_csv_data")
 def test_email_chart_report_schedule_with_csv(
     csv_mock,
     email_mock,
@@ -987,11 +987,11 @@ def test_email_chart_report_schedule_with_csv(
     "load_birth_names_dashboard_with_slices",
     "create_report_email_chart_with_csv_no_query_context",
 )
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.csv.get_chart_csv_data")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.csv.get_chart_csv_data")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_email_chart_report_schedule_with_csv_no_query_context(
     screenshot_mock,
     csv_mock,
@@ -1028,10 +1028,10 @@ def test_email_chart_report_schedule_with_csv_no_query_context(
     "load_birth_names_dashboard_with_slices",
     "create_report_email_chart_with_text",
 )
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.csv.get_chart_dataframe")
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.csv.get_chart_dataframe")
 def test_email_chart_report_schedule_with_text(
     dataframe_mock,
     email_mock,
@@ -1158,8 +1158,8 @@ def test_email_chart_report_schedule_with_text(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_dashboard"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.DashboardScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.DashboardScreenshot.get_screenshot")
 def test_email_dashboard_report_schedule(
     screenshot_mock, email_mock, create_report_email_dashboard
 ):
@@ -1171,7 +1171,7 @@ def test_email_dashboard_report_schedule(
 
     with freeze_time("2020-01-01T00:00:00Z"):
         with patch(
-            "superset.extensions.stats_logger_manager.instance.gauge"
+            "axbi.extensions.stats_logger_manager.instance.gauge"
         ) as statsd_mock:
             AsyncExecuteReportScheduleCommand(
                 TEST_ID, create_report_email_dashboard.id, datetime.utcnow()
@@ -1191,10 +1191,10 @@ def test_email_dashboard_report_schedule(
 
 
 @pytest.mark.usefixtures("tabbed_dashboard")
-@patch("superset.utils.screenshots.DashboardScreenshot.get_screenshot")
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.DashboardScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
+    "axbi.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=True
 )
 def test_email_dashboard_report_schedule_with_tab_anchor(
     _email_mock,  # noqa: PT019
@@ -1205,7 +1205,7 @@ def test_email_dashboard_report_schedule_with_tab_anchor(
     """
     with freeze_time("2020-01-01T00:00:00Z"):
         with patch(
-            "superset.extensions.stats_logger_manager.instance.gauge"
+            "axbi.extensions.stats_logger_manager.instance.gauge"
         ) as statsd_mock:
             # get tabbed dashboard fixture
             dashboard = db.session.query(Dashboard).all()[1]
@@ -1247,10 +1247,10 @@ def test_email_dashboard_report_schedule_with_tab_anchor(
 
 
 @pytest.mark.usefixtures("tabbed_dashboard")
-@patch("superset.utils.screenshots.DashboardScreenshot.get_screenshot")
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.DashboardScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=False
+    "axbi.extensions.feature_flag_manager._feature_flags", ALERT_REPORT_TABS=False
 )
 def test_email_dashboard_report_schedule_disabled_tabs(
     _email_mock,  # noqa: PT019
@@ -1261,7 +1261,7 @@ def test_email_dashboard_report_schedule_disabled_tabs(
     """
     with freeze_time("2020-01-01T00:00:00Z"):
         with patch(
-            "superset.extensions.stats_logger_manager.instance.gauge"
+            "axbi.extensions.stats_logger_manager.instance.gauge"
         ) as statsd_mock:
             # get tabbed dashboard fixture
             dashboard = db.session.query(Dashboard).all()[1]
@@ -1299,8 +1299,8 @@ def test_email_dashboard_report_schedule_disabled_tabs(
     "load_birth_names_dashboard_with_slices",
     "create_report_email_dashboard_force_screenshot",
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.DashboardScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.DashboardScreenshot.get_screenshot")
 def test_email_dashboard_report_schedule_force_screenshot(
     screenshot_mock, email_mock, create_report_email_dashboard_force_screenshot
 ):
@@ -1331,10 +1331,10 @@ def test_email_dashboard_report_schedule_force_screenshot(
 
 
 @pytest.mark.usefixtures("create_report_slack_chart")
-@patch("superset.commands.report.execute.get_channels_with_search")
-@patch("superset.reports.notifications.slack.should_use_v2_api", return_value=True)
-@patch("superset.reports.notifications.slackv2.get_slack_client")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.commands.report.execute.get_channels_with_search")
+@patch("axbi.reports.notifications.slack.should_use_v2_api", return_value=True)
+@patch("axbi.reports.notifications.slackv2.get_slack_client")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_slack_chart_report_schedule_converts_to_v2(
     screenshot_mock,
     slack_client_mock,
@@ -1360,7 +1360,7 @@ def test_slack_chart_report_schedule_converts_to_v2(
 
     with freeze_time("2020-01-01T00:00:00Z"):
         with patch(
-            "superset.extensions.stats_logger_manager.instance.gauge"
+            "axbi.extensions.stats_logger_manager.instance.gauge"
         ) as statsd_mock:
             AsyncExecuteReportScheduleCommand(
                 TEST_ID, create_report_slack_chart.id, datetime.utcnow()
@@ -1393,10 +1393,10 @@ def test_slack_chart_report_schedule_converts_to_v2(
             assert statsd_mock.call_args_list[1] == call("reports.slack.send.ok", 1)
 
 
-@patch("superset.commands.report.execute.get_channels_with_search")
-@patch("superset.reports.notifications.slack.should_use_v2_api", return_value=True)
-@patch("superset.reports.notifications.slackv2.get_slack_client")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.commands.report.execute.get_channels_with_search")
+@patch("axbi.reports.notifications.slack.should_use_v2_api", return_value=True)
+@patch("axbi.reports.notifications.slackv2.get_slack_client")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_slack_chart_report_schedule_converts_to_v2_channel_with_hash(
     screenshot_mock,
     slack_client_mock,
@@ -1425,7 +1425,7 @@ def test_slack_chart_report_schedule_converts_to_v2_channel_with_hash(
 
     with freeze_time("2020-01-01T00:00:00Z"):
         with patch(
-            "superset.extensions.stats_logger_manager.instance.gauge"
+            "axbi.extensions.stats_logger_manager.instance.gauge"
         ) as statsd_mock:
             AsyncExecuteReportScheduleCommand(
                 TEST_ID, report_schedule.id, datetime.utcnow()
@@ -1457,10 +1457,10 @@ def test_slack_chart_report_schedule_converts_to_v2_channel_with_hash(
     cleanup_report_schedule(report_schedule)
 
 
-@patch("superset.commands.report.execute.get_channels_with_search")
-@patch("superset.reports.notifications.slack.should_use_v2_api", return_value=True)
-@patch("superset.reports.notifications.slackv2.get_slack_client")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.commands.report.execute.get_channels_with_search")
+@patch("axbi.reports.notifications.slack.should_use_v2_api", return_value=True)
+@patch("axbi.reports.notifications.slackv2.get_slack_client")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_slack_chart_report_schedule_fails_to_converts_to_v2(
     screenshot_mock,
     slack_client_mock,
@@ -1508,9 +1508,9 @@ def test_slack_chart_report_schedule_fails_to_converts_to_v2(
 
 
 @pytest.mark.usefixtures("create_report_slack_chartv2")
-@patch("superset.reports.notifications.slack.should_use_v2_api", return_value=True)
-@patch("superset.reports.notifications.slackv2.get_slack_client")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.slack.should_use_v2_api", return_value=True)
+@patch("axbi.reports.notifications.slackv2.get_slack_client")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_slack_chart_report_schedule_v2(
     screenshot_mock,
     slack_client_mock,
@@ -1525,7 +1525,7 @@ def test_slack_chart_report_schedule_v2(
 
     with freeze_time("2020-01-01T00:00:00Z"):
         with patch(
-            "superset.extensions.stats_logger_manager.instance.gauge"
+            "axbi.extensions.stats_logger_manager.instance.gauge"
         ) as statsd_mock:
             AsyncExecuteReportScheduleCommand(
                 TEST_ID, create_report_slack_chartv2.id, datetime.utcnow()
@@ -1548,8 +1548,8 @@ def test_slack_chart_report_schedule_v2(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_slack_chart"
 )
-@patch("superset.utils.slack.get_slack_client")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.utils.slack.get_slack_client")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_slack_chart_report_schedule_with_errors(
     screenshot_mock,
     web_client_mock,
@@ -1602,11 +1602,11 @@ def test_slack_chart_report_schedule_with_errors(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_slack_chart_with_csv"
 )
-@patch("superset.reports.notifications.slack.should_use_v2_api", return_value=False)
-@patch("superset.reports.notifications.slack.get_slack_client")
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.utils.csv.get_chart_csv_data")
+@patch("axbi.reports.notifications.slack.should_use_v2_api", return_value=False)
+@patch("axbi.reports.notifications.slack.get_slack_client")
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.utils.csv.get_chart_csv_data")
 def test_slack_chart_report_schedule_with_csv(
     csv_mock,
     mock_open,
@@ -1652,11 +1652,11 @@ def test_slack_chart_report_schedule_with_csv(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_slack_chart_with_text"
 )
-@patch("superset.reports.notifications.slack.should_use_v2_api", return_value=False)
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.reports.notifications.slack.get_slack_client")
-@patch("superset.utils.csv.get_chart_dataframe")
+@patch("axbi.reports.notifications.slack.should_use_v2_api", return_value=False)
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.reports.notifications.slack.get_slack_client")
+@patch("axbi.utils.csv.get_chart_dataframe")
 def test_slack_chart_report_schedule_with_text(
     dataframe_mock,
     slack_client_mock_class,
@@ -1706,7 +1706,7 @@ def test_slack_chart_report_schedule_with_text(
             ]
         )
         assert (
-            f"<http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+{create_report_slack_chart_with_text.chart.id}%7D&force=false|Explore in Superset>"  # noqa: E501
+            f"<http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+{create_report_slack_chart_with_text.chart.id}%7D&force=false|Explore in AxBI>"  # noqa: E501
             in slack_client_mock_class.return_value.chat_postMessage.call_args[1][
                 "text"
             ]
@@ -1792,9 +1792,9 @@ def test_report_schedule_success_grace(create_alert_slack_chart_success):
 
 
 @pytest.mark.usefixtures("create_alert_slack_chart_grace")
-@patch("superset.utils.slack.WebClient.files_upload")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
-@patch("superset.reports.notifications.slack.get_slack_client")
+@patch("axbi.utils.slack.WebClient.files_upload")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.slack.get_slack_client")
 def test_report_schedule_success_grace_end(
     slack_client_mock_class,
     screenshot_mock,
@@ -1833,8 +1833,8 @@ def test_report_schedule_success_grace_end(
 
 
 @pytest.mark.usefixtures("create_alert_email_chart")
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_alert_limit_is_applied(
     screenshot_mock,
     email_mock,
@@ -1862,8 +1862,8 @@ def test_alert_limit_is_applied(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_dashboard"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.DashboardScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.DashboardScreenshot.get_screenshot")
 def test_email_dashboard_report_fails(
     screenshot_mock, email_mock, create_report_email_dashboard
 ):
@@ -1887,8 +1887,8 @@ def test_email_dashboard_report_fails(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_dashboard"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.DashboardScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.DashboardScreenshot.get_screenshot")
 def test_email_dashboard_report_fails_uncaught_exception(
     screenshot_mock, email_mock, create_report_email_dashboard
 ):
@@ -1919,10 +1919,10 @@ def test_email_dashboard_report_fails_uncaught_exception(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_alert_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
+    "axbi.extensions.feature_flag_manager._feature_flags",
     ALERTS_ATTACH_REPORTS=True,
 )
 def test_slack_chart_alert(
@@ -1954,9 +1954,9 @@ def test_slack_chart_alert(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_alert_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
+    "axbi.extensions.feature_flag_manager._feature_flags",
     ALERTS_ATTACH_REPORTS=False,
 )
 def test_slack_chart_alert_no_attachment(email_mock, create_alert_email_chart):
@@ -1983,8 +1983,8 @@ def test_slack_chart_alert_no_attachment(email_mock, create_alert_email_chart):
     "load_birth_names_dashboard_with_slices",
     "create_report_slack_chart",
 )
-@patch("superset.utils.slack.WebClient")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.utils.slack.WebClient")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_slack_token_callable_chart_report(
     screenshot_mock,
     slack_client_mock_class,
@@ -2049,14 +2049,14 @@ def test_email_mul_alert(create_mul_alert_email_chart):
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_alert_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 def test_soft_timeout_alert(email_mock, create_alert_email_chart):
     """
     ExecuteReport Command: Test soft timeout on alert queries
     """
     from celery.exceptions import SoftTimeLimitExceeded
 
-    from superset.commands.report.exceptions import AlertQueryTimeout
+    from axbi.commands.report.exceptions import AlertQueryTimeout
 
     with patch.object(
         create_alert_email_chart.database.db_engine_spec, "execute", return_value=None
@@ -2079,10 +2079,10 @@ def test_soft_timeout_alert(email_mock, create_alert_email_chart):
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_alert_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
+    "axbi.extensions.feature_flag_manager._feature_flags",
     ALERTS_ATTACH_REPORTS=True,
 )
 def test_soft_timeout_screenshot(screenshot_mock, email_mock, create_alert_email_chart):
@@ -2108,10 +2108,10 @@ def test_soft_timeout_screenshot(screenshot_mock, email_mock, create_alert_email
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_chart_with_csv"
 )
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.csv.get_chart_csv_data")
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.csv.get_chart_csv_data")
 def test_soft_timeout_csv(
     csv_mock,
     email_mock,
@@ -2147,10 +2147,10 @@ def test_soft_timeout_csv(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_chart_with_csv"
 )
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.csv.get_chart_csv_data")
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.csv.get_chart_csv_data")
 def test_generate_no_csv(
     csv_mock,
     email_mock,
@@ -2185,15 +2185,15 @@ def test_generate_no_csv(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_fail_screenshot(screenshot_mock, email_mock, create_report_email_chart):
     """
     ExecuteReport Command: Test soft timeout on screenshot
     """
     from celery.exceptions import SoftTimeLimitExceeded  # noqa: F401
 
-    from superset.commands.report.exceptions import AlertQueryTimeout  # noqa: F401
+    from axbi.commands.report.exceptions import AlertQueryTimeout  # noqa: F401
 
     screenshot_mock.side_effect = Exception("Unexpected error")
     with pytest.raises(ReportScheduleScreenshotFailedError):
@@ -2213,10 +2213,10 @@ def test_fail_screenshot(screenshot_mock, email_mock, create_report_email_chart)
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_chart_with_csv"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.csv.urllib.request.urlopen")
-@patch("superset.utils.csv.urllib.request.OpenerDirector.open")
-@patch("superset.utils.csv.get_chart_csv_data")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.csv.urllib.request.urlopen")
+@patch("axbi.utils.csv.urllib.request.OpenerDirector.open")
+@patch("axbi.utils.csv.get_chart_csv_data")
 def test_fail_csv(
     csv_mock, mock_open, mock_urlopen, email_mock, create_report_email_chart_with_csv
 ):
@@ -2246,9 +2246,9 @@ def test_fail_csv(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_alert_email_chart"
 )
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
+    "axbi.extensions.feature_flag_manager._feature_flags",
     ALERTS_ATTACH_REPORTS=False,
 )
 def test_email_disable_screenshot(email_mock, create_alert_email_chart):
@@ -2269,7 +2269,7 @@ def test_email_disable_screenshot(email_mock, create_alert_email_chart):
     assert_log(ReportState.SUCCESS)
 
 
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 def test_invalid_sql_alert(email_mock, create_invalid_sql_alert_email_chart):
     """
     ExecuteReport Command: Test alert with invalid SQL statements
@@ -2287,7 +2287,7 @@ def test_invalid_sql_alert(email_mock, create_invalid_sql_alert_email_chart):
         assert_log(ReportState.ERROR)
 
 
-@patch("superset.reports.notifications.email.send_email_smtp")
+@patch("axbi.reports.notifications.email.send_email_smtp")
 def test_grace_period_error(email_mock, create_invalid_sql_alert_email_chart):
     """
     ExecuteReport Command: Test alert grace period on error
@@ -2332,8 +2332,8 @@ def test_grace_period_error(email_mock, create_invalid_sql_alert_email_chart):
         )
 
 
-@patch("superset.reports.notifications.email.send_email_smtp")
-@patch("superset.utils.screenshots.ChartScreenshot.get_screenshot")
+@patch("axbi.reports.notifications.email.send_email_smtp")
+@patch("axbi.utils.screenshots.ChartScreenshot.get_screenshot")
 def test_grace_period_error_flap(
     screenshot_mock,
     email_mock,
@@ -2406,7 +2406,7 @@ def test_grace_period_error_flap(
 @pytest.mark.usefixtures(
     "load_birth_names_dashboard_with_slices", "create_report_email_dashboard"
 )
-@patch("superset.daos.report.ReportScheduleDAO.bulk_delete_logs")
+@patch("axbi.daos.report.ReportScheduleDAO.bulk_delete_logs")
 def test_prune_log_soft_time_out(bulk_delete_logs, create_report_email_dashboard):
     from celery.exceptions import SoftTimeLimitExceeded
 
@@ -2416,8 +2416,8 @@ def test_prune_log_soft_time_out(bulk_delete_logs, create_report_email_dashboard
     assert str(excinfo.value) == "SoftTimeLimitExceeded()"
 
 
-@patch("superset.commands.report.execute.logger")
-@patch("superset.commands.report.execute.create_notification")
+@patch("axbi.commands.report.execute.logger")
+@patch("axbi.commands.report.execute.create_notification")
 def test__send_with_client_errors(notification_mock, logger_mock):
     notification_content = "I am some content"
     recipients = ["test@foo.com"]
@@ -2425,14 +2425,14 @@ def test__send_with_client_errors(notification_mock, logger_mock):
     with pytest.raises(ReportScheduleClientErrorsException) as excinfo:
         BaseReportState._send(BaseReportState, notification_content, recipients)
 
-    assert excinfo.errisinstance(SupersetException)
+    assert excinfo.errisinstance(AxBIException)
     logger_mock.warning.assert_called_with(
-        "SupersetError(message='', error_type=<SupersetErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.WARNING: 'warning'>, extra=None)"  # noqa: E501
+        "AxBIError(message='', error_type=<AxBIErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.WARNING: 'warning'>, extra=None)"  # noqa: E501
     )
 
 
-@patch("superset.commands.report.execute.logger")
-@patch("superset.commands.report.execute.create_notification")
+@patch("axbi.commands.report.execute.logger")
+@patch("axbi.commands.report.execute.create_notification")
 def test__send_with_multiple_errors(notification_mock, logger_mock):
     notification_content = "I am some content"
     recipients = ["test@foo.com", "test2@bar.com"]
@@ -2444,22 +2444,22 @@ def test__send_with_multiple_errors(notification_mock, logger_mock):
     with pytest.raises(ReportScheduleSystemErrorsException) as excinfo:
         BaseReportState._send(BaseReportState, notification_content, recipients)
 
-    assert excinfo.errisinstance(SupersetException)
+    assert excinfo.errisinstance(AxBIException)
     # it logs both errors as warnings
     logger_mock.warning.assert_has_calls(
         [
             call(
-                "SupersetError(message='', error_type=<SupersetErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.WARNING: 'warning'>, extra=None)"  # noqa: E501
+                "AxBIError(message='', error_type=<AxBIErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.WARNING: 'warning'>, extra=None)"  # noqa: E501
             ),
             call(
-                "SupersetError(message='', error_type=<SupersetErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.ERROR: 'error'>, extra=None)"  # noqa: E501
+                "AxBIError(message='', error_type=<AxBIErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.ERROR: 'error'>, extra=None)"  # noqa: E501
             ),
         ]
     )
 
 
-@patch("superset.commands.report.execute.logger")
-@patch("superset.commands.report.execute.create_notification")
+@patch("axbi.commands.report.execute.logger")
+@patch("axbi.commands.report.execute.create_notification")
 def test__send_with_server_errors(notification_mock, logger_mock):
     notification_content = "I am some content"
     recipients = ["test@foo.com"]
@@ -2467,8 +2467,8 @@ def test__send_with_server_errors(notification_mock, logger_mock):
     with pytest.raises(ReportScheduleSystemErrorsException) as excinfo:
         BaseReportState._send(BaseReportState, notification_content, recipients)
 
-    assert excinfo.errisinstance(SupersetException)
+    assert excinfo.errisinstance(AxBIException)
     # it logs the error
     logger_mock.warning.assert_called_with(
-        "SupersetError(message='', error_type=<SupersetErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.ERROR: 'error'>, extra=None)"  # noqa: E501
+        "AxBIError(message='', error_type=<AxBIErrorType.REPORT_NOTIFICATION_ERROR: 'REPORT_NOTIFICATION_ERROR'>, level=<ErrorLevel.ERROR: 'error'>, extra=None)"  # noqa: E501
     )

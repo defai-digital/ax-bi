@@ -19,8 +19,8 @@ from datetime import datetime
 import pytest
 from flask.ctx import AppContext
 
-from superset import db
-from superset.models.annotations import Annotation, AnnotationLayer
+from axbi import db
+from axbi.models.annotations import Annotation, AnnotationLayer
 
 ANNOTATION_LAYERS_COUNT = 10
 ANNOTATIONS_COUNT = 5

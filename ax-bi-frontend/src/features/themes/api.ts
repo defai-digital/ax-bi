@@ -16,24 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 
 export const setSystemDefaultTheme = (themeId: number) =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: `/api/v1/theme/${themeId}/set_system_default`,
   });
 
 export const setSystemDarkTheme = (themeId: number) =>
-  SupersetClient.put({
+  AxBIClient.put({
     endpoint: `/api/v1/theme/${themeId}/set_system_dark`,
   });
 
 export const unsetSystemDefaultTheme = () =>
-  SupersetClient.delete({
+  AxBIClient.delete({
     endpoint: `/api/v1/theme/unset_system_default`,
   });
 
 export const unsetSystemDarkTheme = () =>
-  SupersetClient.delete({
+  AxBIClient.delete({
     endpoint: `/api/v1/theme/unset_system_dark`,
   });

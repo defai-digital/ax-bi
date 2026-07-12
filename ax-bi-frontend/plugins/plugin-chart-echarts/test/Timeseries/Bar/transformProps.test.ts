@@ -21,9 +21,9 @@ import {
   ChartProps,
   DataRecord,
   SqlaFormData,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { supersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { StackControlsValue } from '../../../src/constants';
 import type {
   GridComponentOption,
@@ -103,7 +103,7 @@ describe('Bar Chart X-axis Time Formatting', () => {
     width: 800,
     height: 600,
     queriesData: timeseriesData,
-    theme: supersetTheme,
+    theme: axbiTheme,
   };
 
   describe('Default xAxisTimeFormat', () => {
@@ -848,7 +848,7 @@ describe('Bar Chart X-axis Time Formatting', () => {
         legendMargin,
         orientation: LegendOrientation.Bottom,
         show: true,
-        theme: supersetTheme,
+        theme: axbiTheme,
         type: LegendType.Plain,
       });
 

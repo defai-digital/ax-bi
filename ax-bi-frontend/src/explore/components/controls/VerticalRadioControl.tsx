@@ -17,12 +17,12 @@
  * under the License.
  */
 import { type ReactNode } from 'react';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { JsonValue } from '@superset-ui/core';
-import { Radio } from '@superset-ui/core/components/Radio';
-import { Space } from '@superset-ui/core/components/Space';
-import { Tooltip } from '@superset-ui/core/components/Tooltip';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { JsonValue } from '@ax-bi/ui-core';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
+import { Space } from '@ax-bi/ui-core/components/Space';
+import { Tooltip } from '@ax-bi/ui-core/components/Tooltip';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import ControlHeader from '../ControlHeader';
 
 interface RadioOption {
@@ -86,9 +86,11 @@ export default function VerticalRadioControl({
                       css={css`
                         margin-left: 4px;
                         font-size: 12px;
-                        color: ${disabled
-                          ? theme.colorTextDisabled
-                          : theme.colorTextTertiary};
+                        color: ${
+                          disabled
+                            ? theme.colorTextDisabled
+                            : theme.colorTextTertiary
+                        };
                         cursor: help;
                       `}
                     />

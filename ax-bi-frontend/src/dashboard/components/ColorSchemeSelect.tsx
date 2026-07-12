@@ -17,17 +17,17 @@
  * under the License.
  */
 import { ReactNode, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ColorScheme,
   ColorSchemeGroup,
   getCategoricalSchemeRegistry,
   CategoricalScheme,
-} from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
 import { sortBy } from 'lodash';
-import { Select, Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Select, Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import ColorSchemeLabel from 'src/explore/components/controls/ColorSchemeControl/ColorSchemeLabel';
 
 export interface ColorSchemes {
@@ -69,8 +69,8 @@ const ColorSchemeSelect = ({
 
   const currentScheme = useMemo(() => {
     let result = value;
-    if (result === 'SUPERSET_DEFAULT') {
-      const defaultScheme = schemes?.SUPERSET_DEFAULT;
+    if (result === 'AXBI_DEFAULT') {
+      const defaultScheme = schemes?.AXBI_DEFAULT;
       if (
         defaultScheme &&
         typeof defaultScheme !== 'function' &&
@@ -87,7 +87,7 @@ const ColorSchemeSelect = ({
     const filteredColorOptions = choices.filter(o => {
       const option = o[0];
       const isValidColorOption =
-        option !== 'SUPERSET_DEFAULT' && !allColorOptions.includes(option);
+        option !== 'AXBI_DEFAULT' && !allColorOptions.includes(option);
       allColorOptions.push(option);
       return isValidColorOption;
     });

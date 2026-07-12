@@ -22,11 +22,11 @@ import pytest
 import pandas as pd
 from sqlalchemy.sql import select
 
-from superset.db_engine_specs.hive import HiveEngineSpec, upload_to_s3
-from superset.exceptions import SupersetException
-from superset.sql.parse import Table
+from axbi.db_engine_specs.hive import HiveEngineSpec, upload_to_s3
+from axbi.exceptions import AxBIException
+from axbi.sql.parse import Table
 from tests.common.assert_utils import assert_any_call_with_text
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.test_app import app
 
 
@@ -136,7 +136,7 @@ def test_hive_error_msg():
 
 
 def test_df_to_csv() -> None:
-    with pytest.raises(SupersetException):
+    with pytest.raises(AxBIException):
         HiveEngineSpec.df_to_sql(
             mock.MagicMock(),
             Table("foobar"),
@@ -145,26 +145,24 @@ def test_df_to_csv() -> None:
         )
 
 
-@mock.patch("superset.db_engine_specs.hive.g", spec={})
+@mock.patch("axbi.db_engine_specs.hive.g", spec={})
 def test_df_to_sql_if_exists_fail(mock_g):
     mock_g.user = True
     mock_database = mock.MagicMock()
     mock_database.get_df.return_value.empty = False
-    with pytest.raises(SupersetException, match="Table already exists"):
+    with pytest.raises(AxBIException, match="Table already exists"):
         HiveEngineSpec.df_to_sql(
             mock_database, Table("foobar"), pd.DataFrame(), {"if_exists": "fail"}
         )
 
 
-@mock.patch("superset.db_engine_specs.hive.g", spec={})
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("thrift"), "thrift not installed"
-)
+@mock.patch("axbi.db_engine_specs.hive.g", spec={})
+@unittest.skipUnless(AxBITestCase.is_module_installed("thrift"), "thrift not installed")
 def test_df_to_sql_if_exists_fail_with_schema(mock_g):
     mock_g.user = True
     mock_database = mock.MagicMock()
     mock_database.get_df.return_value.empty = False
-    with pytest.raises(SupersetException, match="Table already exists"):
+    with pytest.raises(AxBIException, match="Table already exists"):
         HiveEngineSpec.df_to_sql(
             mock_database,
             Table(table="foobar", schema="schema"),
@@ -173,11 +171,9 @@ def test_df_to_sql_if_exists_fail_with_schema(mock_g):
         )
 
 
-@mock.patch("superset.db_engine_specs.hive.g", spec={})
-@mock.patch("superset.db_engine_specs.hive.upload_to_s3")
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("boto3"), "boto3 not installed"
-)
+@mock.patch("axbi.db_engine_specs.hive.g", spec={})
+@mock.patch("axbi.db_engine_specs.hive.upload_to_s3")
+@unittest.skipUnless(AxBITestCase.is_module_installed("boto3"), "boto3 not installed")
 def test_df_to_sql_if_exists_replace(mock_upload_to_s3, mock_g):
     config = app.config.copy()
     app.config["CSV_TO_HIVE_UPLOAD_DIRECTORY_FUNC"]: lambda *args: ""  # noqa: F722
@@ -206,8 +202,8 @@ def test_df_to_sql_if_exists_replace(mock_upload_to_s3, mock_g):
     app.config = config
 
 
-@mock.patch("superset.db_engine_specs.hive.g", spec={})
-@mock.patch("superset.db_engine_specs.hive.upload_to_s3")
+@mock.patch("axbi.db_engine_specs.hive.g", spec={})
+@mock.patch("axbi.db_engine_specs.hive.upload_to_s3")
 def test_df_to_sql_if_exists_replace_with_schema(mock_upload_to_s3, mock_g):
     config = app.config.copy()
     app.config["CSV_TO_HIVE_UPLOAD_DIRECTORY_FUNC"]: lambda *args: ""  # noqa: F722
@@ -252,9 +248,7 @@ def test_s3_upload_prefix(schema: str, upload_prefix: str) -> None:
     )
 
 
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("boto3"), "boto3 not installed"
-)
+@unittest.skipUnless(AxBITestCase.is_module_installed("boto3"), "boto3 not installed")
 def test_upload_to_s3_no_bucket_path():
     with app.app_context():
         with pytest.raises(
@@ -264,9 +258,7 @@ def test_upload_to_s3_no_bucket_path():
             upload_to_s3("filename", "prefix", Table("table"))
 
 
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("boto3"), "boto3 not installed"
-)
+@unittest.skipUnless(AxBITestCase.is_module_installed("boto3"), "boto3 not installed")
 @mock.patch("boto3.client")
 def test_upload_to_s3_client_error(client):
     config = app.config.copy()
@@ -284,9 +276,7 @@ def test_upload_to_s3_client_error(client):
     app.config = config
 
 
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("boto3"), "boto3 not installed"
-)
+@unittest.skipUnless(AxBITestCase.is_module_installed("boto3"), "boto3 not installed")
 @mock.patch("boto3.client")
 def test_upload_to_s3_success(client):
     config = app.config.copy()
@@ -300,9 +290,7 @@ def test_upload_to_s3_success(client):
     app.config = config
 
 
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("thrift"), "thrift not installed"
-)
+@unittest.skipUnless(AxBITestCase.is_module_installed("thrift"), "thrift not installed")
 def test_fetch_data_query_error():
     from TCLIService import ttypes
 
@@ -314,10 +302,8 @@ def test_fetch_data_query_error():
         HiveEngineSpec.fetch_data(cursor)
 
 
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("thrift"), "thrift not installed"
-)
-@mock.patch("superset.db_engine_specs.base.BaseEngineSpec.fetch_data")
+@unittest.skipUnless(AxBITestCase.is_module_installed("thrift"), "thrift not installed")
+@mock.patch("axbi.db_engine_specs.base.BaseEngineSpec.fetch_data")
 def test_fetch_data_programming_error(fetch_data_mock):
     from pyhive.exc import ProgrammingError
 
@@ -326,10 +312,8 @@ def test_fetch_data_programming_error(fetch_data_mock):
     assert HiveEngineSpec.fetch_data(cursor) == []
 
 
-@unittest.skipUnless(
-    SupersetTestCase.is_module_installed("thrift"), "thrift not installed"
-)
-@mock.patch("superset.db_engine_specs.base.BaseEngineSpec.fetch_data")
+@unittest.skipUnless(AxBITestCase.is_module_installed("thrift"), "thrift not installed")
+@mock.patch("axbi.db_engine_specs.base.BaseEngineSpec.fetch_data")
 def test_fetch_data_success(fetch_data_mock):
     return_value = ["a", "b"]
     fetch_data_mock.return_value = return_value
@@ -337,7 +321,7 @@ def test_fetch_data_success(fetch_data_mock):
     assert HiveEngineSpec.fetch_data(cursor) == return_value
 
 
-@mock.patch("superset.db_engine_specs.hive.HiveEngineSpec._latest_partition_from_df")
+@mock.patch("axbi.db_engine_specs.hive.HiveEngineSpec._latest_partition_from_df")
 def test_where_latest_partition(mock_method):
     mock_method.return_value = ("01-01-19", 1)
     database = mock.Mock()
@@ -356,7 +340,7 @@ def test_where_latest_partition(mock_method):
     assert "SELECT \nWHERE ds = '01-01-19' AND hour = 1" == query_result
 
 
-@mock.patch("superset.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
+@mock.patch("axbi.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
 def test_where_latest_partition_super_method_exception(mock_method):
     mock_method.side_effect = Exception()
     database = mock.Mock()
@@ -372,7 +356,7 @@ def test_where_latest_partition_super_method_exception(mock_method):
     mock_method.assert_called()
 
 
-@mock.patch("superset.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
+@mock.patch("axbi.db_engine_specs.presto.PrestoEngineSpec.latest_partition")
 def test_where_latest_partition_no_columns_no_values(mock_method):
     mock_method.return_value = ("01-01-19", None)
     db = mock.Mock()
@@ -431,8 +415,8 @@ def test_get_view_names_without_schema():
     assert result == {"a", "d"}
 
 
-@mock.patch("superset.db_engine_specs.base.BaseEngineSpec.get_table_names")
-@mock.patch("superset.db_engine_specs.hive.HiveEngineSpec.get_view_names")
+@mock.patch("axbi.db_engine_specs.base.BaseEngineSpec.get_table_names")
+@mock.patch("axbi.db_engine_specs.hive.HiveEngineSpec.get_view_names")
 def test_get_table_names(
     mock_get_view_names,
     mock_get_table_names,

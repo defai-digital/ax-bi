@@ -58,17 +58,17 @@ import { apiDeleteChart } from '../../helpers/api/chart';
 import { EmbeddedPage } from '../../pages/EmbeddedPage';
 import { EMBEDDED } from '../../utils/constants';
 
-const SUPERSET_DOMAIN = (() => {
+const AXBI_DOMAIN = (() => {
   const url = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:8088';
   return url.replace(/\/+$/, '');
 })();
-const SUPERSET_BASE_URL = SUPERSET_DOMAIN.endsWith('/')
-  ? SUPERSET_DOMAIN
-  : `${SUPERSET_DOMAIN}/`;
+const AXBI_BASE_URL = AXBI_DOMAIN.endsWith('/')
+  ? AXBI_DOMAIN
+  : `${AXBI_DOMAIN}/`;
 
 const SDK_BUNDLE_PATH = join(
   __dirname,
-  '../../../../superset-embedded-sdk/bundle/index.js',
+  '../../../../ax-bi-embedded-sdk/bundle/index.js',
 );
 const EMBED_APP_DIR = join(__dirname, '../../embedded-app');
 const INDEX_HTML_PATH = join(EMBED_APP_DIR, 'index.html');
@@ -88,7 +88,7 @@ async function startEmbedAppServer(): Promise<EmbedAppServer> {
       if (!existsSync(SDK_BUNDLE_PATH)) {
         res.writeHead(404);
         res.end(
-          'SDK bundle not found. Run: cd superset-embedded-sdk && npm ci && npm run build',
+          'SDK bundle not found. Run: cd ax-bi-embedded-sdk && npm ci && npm run build',
         );
         return;
       }
@@ -131,7 +131,7 @@ async function startEmbedAppServer(): Promise<EmbedAppServer> {
 function createAdminContext(browser: Browser): Promise<BrowserContext> {
   return browser.newContext({
     storageState: 'playwright/.auth/user.json',
-    baseURL: SUPERSET_BASE_URL,
+    baseURL: AXBI_BASE_URL,
   });
 }
 
@@ -158,7 +158,7 @@ test.describe('Embedded Pivot Table collapse state (#33406)', () => {
   test.beforeAll(async ({ browser }) => {
     test.skip(
       !existsSync(SDK_BUNDLE_PATH),
-      'Embedded SDK bundle not found. Build it with: cd superset-embedded-sdk && npm ci && npm run build',
+      'Embedded SDK bundle not found. Build it with: cd ax-bi-embedded-sdk && npm ci && npm run build',
     );
 
     appServer = await startEmbedAppServer();
@@ -270,7 +270,7 @@ test.describe('Embedded Pivot Table collapse state (#33406)', () => {
     await embeddedPage.goto({
       appUrl: appServer.url,
       uuid: embedUuid,
-      supersetDomain: SUPERSET_DOMAIN,
+      axbiDomain: AXBI_DOMAIN,
     });
     await embeddedPage.waitForIframe();
     await embeddedPage.waitForDashboardContent();

@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useEffect, useState } from 'react';
-import { SupersetTheme } from '@apache-superset/core/theme';
-import { Form } from '@superset-ui/core/components';
+import { AxBITheme } from '@ax-bi/core/theme';
+import { Form } from '@ax-bi/ui-core/components';
 import { FormFieldOrder, FORM_FIELD_MAP } from './constants';
 import { formScrollableStyles, validatedFormStyles } from '../styles';
 import {
@@ -99,7 +99,7 @@ const DatabaseConnectionForm = ({
   return (
     <Form>
       <div
-        css={(theme: SupersetTheme) => [
+        css={(theme: AxBITheme) => [
           formScrollableStyles,
           validatedFormStyles(theme),
         ]}

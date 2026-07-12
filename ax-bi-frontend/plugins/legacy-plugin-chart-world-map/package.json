@@ -1,7 +1,7 @@
 {
-  "name": "@superset-ui/legacy-plugin-chart-world-map",
+  "name": "@ax-bi/legacy-plugin-chart-world-map",
   "version": "0.20.3",
-  "description": "Superset Legacy Chart - World Map",
+  "description": "AxBI Legacy Chart - World Map",
   "sideEffects": [
     "*.css"
   ],
@@ -13,16 +13,16 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/legacy-plugin-chart-world-map"
   },
   "keywords": [
-    "superset"
+    "axbi"
   ],
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/legacy-plugin-chart-world-map#readme",
   "publishConfig": {
@@ -36,9 +36,9 @@
     "tinycolor2": "^1.6.0"
   },
   "peerDependencies": {
-    "@apache-superset/core": "*",
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
     "react": "^18.3.0 || ^19.0.0"
   }
 }

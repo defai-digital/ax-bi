@@ -23,20 +23,20 @@ from flask import g
 from jwt import encode
 from pytest import fixture, mark, raises  # noqa: PT013
 
-from superset import security_manager
-from superset.async_events.async_query_manager import (
+from axbi import security_manager
+from axbi.async_events.async_query_manager import (
     AsyncQueryJobException,
     AsyncQueryManager,
     AsyncQueryTokenException,
     parse_event,
 )
-from superset.async_events.cache_backend import (
+from axbi.async_events.cache_backend import (
     RedisCacheBackend,
     RedisSentinelCacheBackend,
 )
 
 JWT_TOKEN_SECRET = "some_secret"  # noqa: S105
-JWT_TOKEN_COOKIE_NAME = "superset_async_jwt"  # noqa: S105
+JWT_TOKEN_COOKIE_NAME = "axbi_async_jwt"  # noqa: S105
 
 
 @fixture
@@ -83,7 +83,7 @@ def test_parse_channel_id_from_request(async_query_manager):
     )
 
     request = Mock()
-    request.cookies = {"superset_async_jwt": encoded_token}
+    request.cookies = {"axbi_async_jwt": encoded_token}
 
     assert (
         async_query_manager.parse_channel_id_from_request(request) == "test_channel_id"
@@ -102,7 +102,7 @@ def test_parse_channel_id_from_request_with_valid_exp(async_query_manager):
     )
 
     request = Mock()
-    request.cookies = {"superset_async_jwt": encoded_token}
+    request.cookies = {"axbi_async_jwt": encoded_token}
 
     assert (
         async_query_manager.parse_channel_id_from_request(request) == "test_channel_id"
@@ -121,7 +121,7 @@ def test_parse_channel_id_from_request_expired_token(async_query_manager):
     )
 
     request = Mock()
-    request.cookies = {"superset_async_jwt": encoded_token}
+    request.cookies = {"axbi_async_jwt": encoded_token}
 
     with raises(AsyncQueryTokenException):
         async_query_manager.parse_channel_id_from_request(request)
@@ -166,7 +166,7 @@ def test_parse_channel_id_from_request_no_cookie(async_query_manager):
 
 def test_parse_channel_id_from_request_bad_jwt(async_query_manager):
     request = Mock()
-    request.cookies = {"superset_async_jwt": "bad_jwt"}
+    request.cookies = {"axbi_async_jwt": "bad_jwt"}
 
     with raises(AsyncQueryTokenException):
         async_query_manager.parse_channel_id_from_request(request)
@@ -179,7 +179,7 @@ def test_parse_channel_id_from_request_bad_jwt(async_query_manager):
         ("RedisSentinelCacheBackend", mock.Mock(spec=RedisSentinelCacheBackend)),
     ],
 )
-@mock.patch("superset.is_feature_enabled")
+@mock.patch("axbi.is_feature_enabled")
 def test_submit_chart_data_job_as_guest_user(
     is_feature_enabled_mock, async_query_manager, cache_type, cache_backend
 ):
@@ -223,7 +223,7 @@ def test_submit_chart_data_job_as_guest_user(
         ("RedisSentinelCacheBackend", mock.Mock(spec=RedisSentinelCacheBackend)),
     ],
 )
-@mock.patch("superset.is_feature_enabled")
+@mock.patch("axbi.is_feature_enabled")
 def test_submit_explore_json_job_as_guest_user(
     is_feature_enabled_mock, async_query_manager, cache_type, cache_backend
 ):

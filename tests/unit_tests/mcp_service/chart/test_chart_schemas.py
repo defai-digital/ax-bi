@@ -22,7 +22,7 @@ Unit tests for MCP chart schema validation.
 import pytest
 from pydantic import ValidationError
 
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     ColumnRef,
     GenerateChartRequest,
     GenerateChartResponse,
@@ -97,7 +97,7 @@ class TestTableChartConfig:
 
     def test_ag_grid_table_with_all_options(self) -> None:
         """Test AG Grid table with filters and sorting."""
-        from superset.mcp_service.chart.schemas import FilterConfig
+        from axbi.mcp_service.chart.schemas import FilterConfig
 
         config = TableChartConfig(
             chart_type="table",
@@ -543,7 +543,7 @@ class TestTableChartConfigExtraFields:
 
 
 class TestAliasChoices:
-    """Test that common Superset form_data aliases are accepted."""
+    """Test that common AxBI form_data aliases are accepted."""
 
     def test_xy_stack_alias_for_stacked(self) -> None:
         """Test that 'stack' is accepted as alias for 'stacked'."""
@@ -592,7 +592,7 @@ class TestAliasChoices:
 
     def test_mixed_timeseries_time_grain_sqla_alias(self) -> None:
         """Test that 'time_grain_sqla' works for MixedTimeseriesChartConfig."""
-        from superset.mcp_service.chart.schemas import MixedTimeseriesChartConfig
+        from axbi.mcp_service.chart.schemas import MixedTimeseriesChartConfig
 
         config = MixedTimeseriesChartConfig.model_validate(
             {
@@ -635,7 +635,7 @@ class TestUnknownFieldDetection:
 
     def test_pie_chart_unknown_field(self) -> None:
         """Test unknown field detection on PieChartConfig."""
-        from superset.mcp_service.chart.schemas import PieChartConfig
+        from axbi.mcp_service.chart.schemas import PieChartConfig
 
         with pytest.raises(ValidationError, match="Unknown field"):
             PieChartConfig.model_validate(
@@ -997,7 +997,7 @@ class TestBigNumberErrorMessageMentionsSqlExpression:
     mention sql_expression as an option so an LLM can self-correct."""
 
     def test_missing_metric_value_error_mentions_sql_expression(self) -> None:
-        from superset.mcp_service.chart.schemas import BigNumberChartConfig
+        from axbi.mcp_service.chart.schemas import BigNumberChartConfig
 
         with pytest.raises(ValidationError, match=r"sql_expression"):
             BigNumberChartConfig(
@@ -1013,7 +1013,7 @@ class TestSqlMetricLlmContextWrapping:
     in <UNTRUSTED-CONTENT> delimiters when echoed back."""
 
     def test_sql_metric_sql_expression_and_label_are_wrapped(self) -> None:
-        from superset.mcp_service.chart.schemas import (
+        from axbi.mcp_service.chart.schemas import (
             ChartInfo,
             sanitize_chart_info_for_llm_context,
         )
@@ -1055,7 +1055,7 @@ class TestSqlMetricLlmContextWrapping:
         """BigNumber and Pie charts use ``form_data['metric']`` (singular).
         That key is also in the bulk-exclusion list, so it needs the same
         per-SQL-metric wrap as the plural ``metrics``."""
-        from superset.mcp_service.chart.schemas import (
+        from axbi.mcp_service.chart.schemas import (
             ChartInfo,
             sanitize_chart_info_for_llm_context,
         )

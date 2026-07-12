@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { isDefined, QueryData } from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { isDefined, QueryData } from '@ax-bi/ui-core';
+import { css, styled } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import { SingleQueryResultPane } from 'src/explore/components/DataTablesPane/components/SingleQueryResultPane';
-import Tabs from '@superset-ui/core/components/Tabs';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 
 const ResultContainer = styled.div`
   ${() => css`

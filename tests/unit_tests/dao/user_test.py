@@ -20,10 +20,10 @@ import pytest
 from flask_appbuilder.security.sqla.models import User
 from sqlalchemy.exc import NoResultFound
 
-from superset import db
-from superset.daos.user import UserDAO
-from superset.extensions import security_manager
-from superset.models.user_attributes import UserAttribute
+from axbi import db
+from axbi.daos.user import UserDAO
+from axbi.extensions import security_manager
+from axbi.models.user_attributes import UserAttribute
 from tests.unit_tests.fixtures.common import admin_user, after_each  # noqa: F401
 
 

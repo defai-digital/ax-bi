@@ -18,8 +18,8 @@ import copy
 import dataclasses
 from typing import Any
 
-from superset.common.chart_data import ChartDataResultType
-from superset.utils.core import AnnotationType, DTTM_ALIAS
+from axbi.common.chart_data import ChartDataResultType
+from axbi.utils.core import AnnotationType, DTTM_ALIAS
 
 query_birth_names = {
     "extras": {"where": "", "time_grain_sqla": "P1D"},

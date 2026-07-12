@@ -21,8 +21,8 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel
 
-from superset.mcp_service.ai.llm_provider import LLMProvider, StubLLMProvider
-from superset.mcp_service.ai.provider_factory import (
+from axbi.mcp_service.ai.llm_provider import LLMProvider, StubLLMProvider
+from axbi.mcp_service.ai.provider_factory import (
     get_llm_provider,
     reset_provider,
 )

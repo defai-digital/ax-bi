@@ -25,9 +25,9 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.engine.url import make_url
 
-from superset.constants import DEFAULT_USER_AGENT
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.utils import json
+from axbi.constants import DEFAULT_USER_AGENT
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.utils import json
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -57,7 +57,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.snowflake import (
+    from axbi.db_engine_specs.snowflake import (
         SnowflakeEngineSpec as spec,  # noqa: N813
     )
 
@@ -65,8 +65,8 @@ def test_convert_dttm(
 
 
 def test_database_connection_test_mutator() -> None:
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.models.core import Database
 
     database = Database(sqlalchemy_uri="snowflake://abc")
     SnowflakeEngineSpec.mutate_db_for_connection_test(database)
@@ -86,8 +86,8 @@ def test_database_connection_test_mutator() -> None:
     ],
 )
 def test_database_connection_test_mutator_ignores_malformed_extra(extra: str) -> None:
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.models.core import Database
 
     database = Database(sqlalchemy_uri="snowflake://abc", extra=extra)
     SnowflakeEngineSpec.mutate_db_for_connection_test(database)
@@ -99,14 +99,14 @@ def test_database_connection_test_mutator_ignores_malformed_extra(extra: str) ->
 
 
 def test_extract_errors() -> None:
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     msg = "Object dumbBrick does not exist or not authorized."
     result = SnowflakeEngineSpec.extract_errors(Exception(msg))
     assert result == [
-        SupersetError(
+        AxBIError(
             message="dumbBrick does not exist in this database.",
-            error_type=SupersetErrorType.OBJECT_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.OBJECT_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Snowflake",
@@ -123,9 +123,9 @@ def test_extract_errors() -> None:
     msg = "syntax error line 1 at position 10 unexpected 'limited'."
     result = SnowflakeEngineSpec.extract_errors(Exception(msg))
     assert result == [
-        SupersetError(
+        AxBIError(
             message='Please check your query for syntax errors at or near "limited". Then, try running your query again.',  # noqa: E501
-            error_type=SupersetErrorType.SYNTAX_ERROR,
+            error_type=AxBIErrorType.SYNTAX_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Snowflake",
@@ -142,8 +142,8 @@ def test_extract_errors() -> None:
 
 @mock.patch("sqlalchemy.engine.Engine.connect")
 def test_get_cancel_query_id(engine_mock: mock.Mock) -> None:
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -153,8 +153,8 @@ def test_get_cancel_query_id(engine_mock: mock.Mock) -> None:
 
 @mock.patch("sqlalchemy.engine.Engine.connect")
 def test_cancel_query(engine_mock: mock.Mock) -> None:
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -163,8 +163,8 @@ def test_cancel_query(engine_mock: mock.Mock) -> None:
 
 @mock.patch("sqlalchemy.engine.Engine.connect")
 def test_cancel_query_failed(engine_mock: mock.Mock) -> None:
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.raiseError.side_effect = Exception()
@@ -175,7 +175,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
     """
     Test the ``get_extra_params`` method.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     database = mocker.MagicMock()
 
@@ -199,7 +199,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
 
 
 def test_update_params_from_encrypted_extra_ignores_non_object_extra() -> None:
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     database = mock.Mock()
     database.encrypted_extra = "[]"
@@ -214,7 +214,7 @@ def test_get_schema_from_engine_params() -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     assert (
         SnowflakeEngineSpec.get_schema_from_engine_params(
@@ -253,7 +253,7 @@ def test_adjust_engine_params_fully_qualified() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has catalog and schema.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     url = make_url("snowflake://user:pass@account/database_name/default")
 
@@ -299,7 +299,7 @@ def test_adjust_engine_params_catalog_only() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has only the catalog.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     url = make_url("snowflake://user:pass@account/database_name")
 
@@ -345,7 +345,7 @@ def test_adjust_engine_params_without_catalog() -> None:
     """
     Test the ``adjust_engine_params`` method when the URL has no catalog.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     url = make_url("snowflake://user:pass@account")
 
@@ -378,8 +378,8 @@ def test_get_default_catalog() -> None:
     """
     Test the ``get_default_catalog`` method.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
-    from superset.models.core import Database
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.models.core import Database
 
     database = Database(
         database_name="my_db",
@@ -410,7 +410,7 @@ def test_mask_encrypted_extra() -> None:
     """
     Test that the private keys are masked when the database is edited.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     config = json.dumps(
         {
@@ -441,7 +441,7 @@ def test_mask_encrypted_extra_no_fields() -> None:
     """
     Test that the private key is masked when the database is edited.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     config = json.dumps(
         {
@@ -469,13 +469,13 @@ def test_handle_boolean_filter() -> None:
     """
     from sqlalchemy import Boolean, Column
 
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     # Create a mock SQLAlchemy column
     bool_col = Column("test_col", Boolean)
 
     # Test IS_TRUE filter - use actual FilterOperator values
-    from superset.utils.core import FilterOperator
+    from axbi.utils.core import FilterOperator
 
     result_true = SnowflakeEngineSpec.handle_boolean_filter(
         bool_col, FilterOperator.IS_TRUE, True
@@ -500,7 +500,7 @@ def test_use_equality_for_boolean_filters_property() -> None:
     """
     Test that Snowflake has the use_equality_for_boolean_filters property set to True.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     assert SnowflakeEngineSpec.use_equality_for_boolean_filters is True
 
@@ -509,7 +509,7 @@ def test_unmask_encrypted_extra() -> None:
     """
     Test that the private keys can be reused from the previous `encrypted_extra`.
     """
-    from superset.db_engine_specs.snowflake import SnowflakeEngineSpec
+    from axbi.db_engine_specs.snowflake import SnowflakeEngineSpec
 
     old = json.dumps(
         {

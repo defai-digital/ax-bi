@@ -28,8 +28,8 @@ import {
   useEffect,
   useMemo,
 } from 'react';
-import { typedMemo, usePrevious } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import { typedMemo, usePrevious } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import {
   useTable,
   usePagination,
@@ -44,7 +44,7 @@ import {
 } from 'react-table';
 import { matchSorter, rankings } from 'match-sorter';
 import { isEqual } from 'lodash';
-import { Flex, Space } from '@superset-ui/core/components';
+import { Flex, Space } from '@ax-bi/ui-core/components';
 import GlobalFilter, { GlobalFilterProps } from './components/GlobalFilter';
 import SelectPageSize, {
   SelectPageSizeProps,

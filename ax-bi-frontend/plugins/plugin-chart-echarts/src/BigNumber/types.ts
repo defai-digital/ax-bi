@@ -26,8 +26,8 @@ import {
   QueryFormMetric,
   TimeFormatter,
   ValueFormatter,
-} from '@superset-ui/core';
-import { ColorFormatters } from '@superset-ui/chart-controls';
+} from '@ax-bi/ui-core';
+import { ColorFormatters } from '@ax-bi/chart-controls';
 import { BaseChartProps, Refs } from '../types';
 
 export interface BigNumberDatum {

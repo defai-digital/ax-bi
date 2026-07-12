@@ -22,13 +22,13 @@ import pytest
 
 from flask.ctx import AppContext
 from flask_wtf.csrf import generate_csrf
-from superset import db, security_manager
-from superset.daos.dashboard import EmbeddedDashboardDAO
-from superset.models.dashboard import Dashboard
-from superset.utils.urls import get_url_host
-from superset.utils import json
+from axbi import db, security_manager
+from axbi.daos.dashboard import EmbeddedDashboardDAO
+from axbi.models.dashboard import Dashboard
+from axbi.utils.urls import get_url_host
+from axbi.utils import json
 from tests.conftest import with_config
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_USERNAME
 from tests.integration_tests.test_app import app
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -107,7 +107,7 @@ def inject_test_roles_data(request, create_test_roles_with_users):
     request.instance.test_roles_data = create_test_roles_with_users
 
 
-class TestSecurityCsrfApi(SupersetTestCase):
+class TestSecurityCsrfApi(AxBITestCase):
     resource_name = "security"
 
     def _assert_get_csrf_token(self):
@@ -152,7 +152,7 @@ class TestSecurityCsrfApi(SupersetTestCase):
         assert "access_token" in response.json
 
 
-class TestSecurityGuestTokenApi(SupersetTestCase):
+class TestSecurityGuestTokenApi(AxBITestCase):
     uri = "api/v1/security/guest_token/"
 
     def test_post_guest_token_unauthenticated(self):
@@ -211,7 +211,7 @@ class TestSecurityGuestTokenApi(SupersetTestCase):
 
 
 @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices", scope="class")
-class TestSecurityGuestTokenApiTokenValidator(SupersetTestCase):
+class TestSecurityGuestTokenApiTokenValidator(AxBITestCase):
     uri = "api/v1/security/guest_token/"
 
     def _get_guest_token_with_rls(self, rls_rule):
@@ -291,7 +291,7 @@ class TestSecurityGuestTokenApiTokenValidator(SupersetTestCase):
         self.assert400(self._get_guest_token_with_rls(rls_rule))
 
 
-class TestSecurityRolesApi(SupersetTestCase):
+class TestSecurityRolesApi(AxBITestCase):
     uri = "api/v1/security/roles/"  # noqa: F541
     show_uri = "api/v1/security/roles/search/"
 
@@ -366,10 +366,10 @@ class TestSecurityRolesApi(SupersetTestCase):
         # auth check (which also touches db.session.query).
         with (
             patch(
-                "superset.security.api.selectinload",
+                "axbi.security.api.selectinload",
                 side_effect=Exception(error_detail),
             ),
-            patch("superset.security.api.logger") as mock_logger,
+            patch("axbi.security.api.logger") as mock_logger,
         ):
             response = self.client.get(self.show_uri)
 
@@ -434,7 +434,7 @@ class TestSecurityRolesApi(SupersetTestCase):
         assert role2_api["group_ids"] == role2_expected["group_ids"]
 
 
-class TestLogoutSessionInvalidation(SupersetTestCase):
+class TestLogoutSessionInvalidation(AxBITestCase):
     """Regression for #24713: a session cookie captured pre-logout must not grant
     access after the user logs out. The original report describes copying the
     session cookie out, calling /logout/, and successfully reusing the cookie in

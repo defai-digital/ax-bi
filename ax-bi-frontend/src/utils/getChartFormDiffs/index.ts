@@ -18,7 +18,7 @@
  */
 import { isEqual } from 'lodash';
 import { DiffType } from 'src/types/DiffType';
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 import { sanitizeFormData } from '../sanitizeFormData';
 
 export const noisyKeys = new Set(['filters', 'having', 'where']);

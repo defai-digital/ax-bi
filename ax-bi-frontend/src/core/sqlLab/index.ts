@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { sqlLab as sqlLabApi } from '@apache-superset/core';
+import { sqlLab as sqlLabApi } from '@ax-bi/core';
 import { nanoid } from 'nanoid';
 import {
   ADD_QUERY_EDITOR,

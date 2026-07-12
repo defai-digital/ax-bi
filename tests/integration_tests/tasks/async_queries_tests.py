@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for async query celery jobs in Superset"""
+"""Unit tests for async query celery jobs in AxBI"""
 
 from unittest import mock
 from uuid import uuid4
@@ -23,15 +23,15 @@ import pytest
 from celery.exceptions import SoftTimeLimitExceeded
 from parameterized import parameterized
 
-from superset.async_events.cache_backend import (
+from axbi.async_events.cache_backend import (
     RedisCacheBackend,
     RedisSentinelCacheBackend,
 )
-from superset.commands.chart.data.get_data_command import ChartDataCommand
-from superset.commands.chart.exceptions import ChartDataQueryFailedError
-from superset.exceptions import SupersetException
-from superset.extensions import async_query_manager, security_manager
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.chart.data.get_data_command import ChartDataCommand
+from axbi.commands.chart.exceptions import ChartDataQueryFailedError
+from axbi.exceptions import AxBIException
+from axbi.extensions import async_query_manager, security_manager
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -46,19 +46,19 @@ from tests.integration_tests.test_app import app
 @pytest.mark.usefixtures(
     "load_birth_names_data", "load_birth_names_dashboard_with_slices"
 )
-class TestAsyncQueries(SupersetTestCase):
+class TestAsyncQueries(AxBITestCase):
     @parameterized.expand(
         [
             ("RedisCacheBackend", mock.Mock(spec=RedisCacheBackend)),
             ("RedisSentinelCacheBackend", mock.Mock(spec=RedisSentinelCacheBackend)),
         ]
     )
-    @mock.patch("superset.tasks.async_queries.set_form_data")
+    @mock.patch("axbi.tasks.async_queries.set_form_data")
     @mock.patch.object(async_query_manager, "update_job")
     def test_load_chart_data_into_cache(
         self, cache_type, cache_backend, mock_update_job, mock_set_form_data
     ):
-        from superset.tasks.async_queries import load_chart_data_into_cache
+        from axbi.tasks.async_queries import load_chart_data_into_cache
 
         app._got_first_request = False
 
@@ -95,7 +95,7 @@ class TestAsyncQueries(SupersetTestCase):
     def test_load_chart_data_into_cache_error(
         self, cache_type, cache_backend, mock_update_job, mock_run_command
     ):
-        from superset.tasks.async_queries import load_chart_data_into_cache
+        from axbi.tasks.async_queries import load_chart_data_into_cache
 
         app._got_first_request = False
 
@@ -129,7 +129,7 @@ class TestAsyncQueries(SupersetTestCase):
     def test_soft_timeout_load_chart_data_into_cache(
         self, cache_type, cache_backend, mock_update_job, mock_run_command
     ):
-        from superset.tasks.async_queries import load_chart_data_into_cache
+        from axbi.tasks.async_queries import load_chart_data_into_cache
 
         app._got_first_request = False
 
@@ -148,9 +148,7 @@ class TestAsyncQueries(SupersetTestCase):
         errors = ["A timeout occurred while loading chart data"]
 
         with pytest.raises(SoftTimeLimitExceeded):  # noqa: PT012
-            with mock.patch(
-                "superset.tasks.async_queries.set_form_data"
-            ) as set_form_data:
+            with mock.patch("axbi.tasks.async_queries.set_form_data") as set_form_data:
                 set_form_data.side_effect = SoftTimeLimitExceeded()
                 load_chart_data_into_cache(job_metadata, form_data)
             set_form_data.assert_called_once_with(form_data, "error", errors=errors)
@@ -167,7 +165,7 @@ class TestAsyncQueries(SupersetTestCase):
     def test_load_explore_json_into_cache(
         self, cache_type, cache_backend, mock_update_job
     ):
-        from superset.tasks.async_queries import load_explore_json_into_cache
+        from axbi.tasks.async_queries import load_explore_json_into_cache
 
         app._got_first_request = False
 
@@ -207,11 +205,11 @@ class TestAsyncQueries(SupersetTestCase):
         ]
     )
     @mock.patch.object(async_query_manager, "update_job")
-    @mock.patch("superset.tasks.async_queries.set_form_data")
+    @mock.patch("axbi.tasks.async_queries.set_form_data")
     def test_load_explore_json_into_cache_error(
         self, cache_type, cache_backend, mock_set_form_data, mock_update_job
     ):
-        from superset.tasks.async_queries import load_explore_json_into_cache
+        from axbi.tasks.async_queries import load_explore_json_into_cache
 
         app._got_first_request = False
 
@@ -228,7 +226,7 @@ class TestAsyncQueries(SupersetTestCase):
             "errors": [],
         }
 
-        with pytest.raises(SupersetException):
+        with pytest.raises(AxBIException):
             load_explore_json_into_cache(job_metadata, form_data)
 
         mock_set_form_data.assert_called_once_with(form_data)
@@ -246,7 +244,7 @@ class TestAsyncQueries(SupersetTestCase):
     def test_soft_timeout_load_explore_json_into_cache(
         self, cache_type, cache_backend, mock_update_job, mock_run_command
     ):
-        from superset.tasks.async_queries import load_explore_json_into_cache
+        from axbi.tasks.async_queries import load_explore_json_into_cache
 
         app._got_first_request = False
 
@@ -265,9 +263,7 @@ class TestAsyncQueries(SupersetTestCase):
         errors = ["A timeout occurred while loading explore JSON data"]
 
         with pytest.raises(SoftTimeLimitExceeded):  # noqa: PT012
-            with mock.patch(
-                "superset.tasks.async_queries.set_form_data"
-            ) as set_form_data:
+            with mock.patch("axbi.tasks.async_queries.set_form_data") as set_form_data:
                 set_form_data.side_effect = SoftTimeLimitExceeded()
                 load_explore_json_into_cache(job_metadata, form_data)
             set_form_data.assert_called_once_with(form_data, "error", errors=errors)

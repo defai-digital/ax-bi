@@ -21,11 +21,11 @@ import {
   SuperChart,
   VizType,
   getChartTransformPropsRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   EchartsFunnelChartPlugin,
   FunnelTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import { dataSource } from './constants';
 import { withResizableChartDemo } from '@storybook-shared';
 
@@ -98,7 +98,7 @@ export const Funnel = ({
     height={height}
     queriesData={[{ data: dataSource }]}
     formData={{
-      colorScheme: 'supersetColors',
+      colorScheme: 'axbiColors',
       groupby: ['name'],
       metric: 'value',
       numberFormat: 'SMART_NUMBER',

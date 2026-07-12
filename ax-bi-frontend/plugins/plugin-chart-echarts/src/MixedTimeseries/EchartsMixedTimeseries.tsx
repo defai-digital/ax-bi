@@ -25,7 +25,7 @@ import {
   getColumnLabel,
   getNumberFormatter,
   getTimeFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { EchartsMixedTimeseriesChartTransformedProps } from './types';
 import Echart from '../components/Echart';
 import { EventHandlers } from '../types';

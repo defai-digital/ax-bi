@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for superset.views.base module"""
+"""Tests for axbi.views.base module"""
 
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -26,7 +26,7 @@ def test_load_optional_json_object_form_field_returns_none_when_missing(
     app: Any,
 ) -> None:
     """Test that missing JSON object form fields are optional."""
-    from superset.views.base_api import load_optional_json_object_form_field
+    from axbi.views.base_api import load_optional_json_object_form_field
 
     with app.test_request_context("/", method="POST", data={}):
         assert load_optional_json_object_form_field("missing") is None
@@ -34,7 +34,7 @@ def test_load_optional_json_object_form_field_returns_none_when_missing(
 
 def test_load_optional_json_object_form_field_loads_object(app: Any) -> None:
     """Test that JSON object form fields are decoded."""
-    from superset.views.base_api import load_optional_json_object_form_field
+    from axbi.views.base_api import load_optional_json_object_form_field
 
     with app.test_request_context(
         "/", method="POST", data={"passwords": '{"database.yaml": "SECRET"}'}
@@ -50,7 +50,7 @@ def test_load_optional_json_object_form_field_rejects_invalid_payload(
     payload: str,
 ) -> None:
     """Test that JSON form fields must be objects."""
-    from superset.views.base_api import load_optional_json_object_form_field
+    from axbi.views.base_api import load_optional_json_object_form_field
 
     with app.test_request_context("/", method="POST", data={"passwords": payload}):
         with pytest.raises(
@@ -59,11 +59,9 @@ def test_load_optional_json_object_form_field_rejects_invalid_payload(
             load_optional_json_object_form_field("passwords")
 
 
-@patch("superset.views.base.utils.get_user_id", return_value=1)
-@patch(
-    "superset.views.base.cached_common_bootstrap_data", return_value={"test": "data"}
-)
-@patch("superset.views.base.get_locale")
+@patch("axbi.views.base.utils.get_user_id", return_value=1)
+@patch("axbi.views.base.cached_common_bootstrap_data", return_value={"test": "data"})
+@patch("axbi.views.base.get_locale")
 def test_common_bootstrap_payload_converts_locale_to_string(
     mock_get_locale: MagicMock,
     mock_cached: MagicMock,
@@ -80,7 +78,7 @@ def test_common_bootstrap_payload_converts_locale_to_string(
     mock_get_locale.return_value = MockLocale()
 
     # Import here to avoid initialization issues
-    from superset.views.base import common_bootstrap_payload
+    from axbi.views.base import common_bootstrap_payload
 
     result = common_bootstrap_payload()
 
@@ -89,18 +87,16 @@ def test_common_bootstrap_payload_converts_locale_to_string(
     assert result == {"test": "data"}
 
 
-@patch("superset.views.base.utils.get_user_id", return_value=1)
-@patch(
-    "superset.views.base.cached_common_bootstrap_data", return_value={"test": "data"}
-)
-@patch("superset.views.base.get_locale", return_value=None)
+@patch("axbi.views.base.utils.get_user_id", return_value=1)
+@patch("axbi.views.base.cached_common_bootstrap_data", return_value={"test": "data"})
+@patch("axbi.views.base.get_locale", return_value=None)
 def test_common_bootstrap_payload_handles_none_locale(
     mock_get_locale: MagicMock,
     mock_cached: MagicMock,
     mock_user_id: MagicMock,
 ) -> None:
     """Test that None locale is passed through correctly"""
-    from superset.views.base import common_bootstrap_payload
+    from axbi.views.base import common_bootstrap_payload
 
     common_bootstrap_payload()
 
@@ -108,7 +104,7 @@ def test_common_bootstrap_payload_handles_none_locale(
 
 
 def test_default_map_renderer_is_exposed_to_frontend_config() -> None:
-    from superset.views.base import FRONTEND_CONF_KEYS
+    from axbi.views.base import FRONTEND_CONF_KEYS
 
     assert "DEFAULT_MAP_RENDERER" in FRONTEND_CONF_KEYS
 
@@ -192,7 +188,7 @@ def test_api_query_returns_json_content_type() -> None:
     """
     from flask import current_app
 
-    from superset.views.api import Api
+    from axbi.views.api import Api
 
     # Unwrap the decorator stack (event logger, auth, etc.) to exercise the
     # handler body directly without app/DB auth context.
@@ -224,7 +220,7 @@ def test_api_query_rejects_invalid_query_context(form_data: dict[str, str]) -> N
     """``Api.query`` rejects invalid form-encoded query contexts."""
     from flask import current_app
 
-    from superset.views.api import Api
+    from axbi.views.api import Api
 
     # Unwrap the decorator stack (event logger, auth, etc.) to exercise the
     # handler body directly without app/DB auth context.
@@ -257,7 +253,7 @@ def test_csv_response_applies_csv_export_encoding(
     """str bodies are encoded with CSV_EXPORT["encoding"]."""
     from flask import current_app
 
-    from superset.views.base import CsvResponse
+    from axbi.views.base import CsvResponse
 
     original = current_app.config["CSV_EXPORT"]
     try:
@@ -270,7 +266,7 @@ def test_csv_response_applies_csv_export_encoding(
 
 
 def test_csv_response_leaves_bytes_untouched() -> None:
-    from superset.views.base import CsvResponse
+    from axbi.views.base import CsvResponse
 
     payload = "Ürün\n".encode("utf-8-sig")
     assert CsvResponse(payload).get_data() == payload

@@ -51,13 +51,13 @@ def test_import_new_assets(mocker: MockerFixture, session: Session) -> None:
     """
     Test that all new assets are imported correctly.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import (
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import (
         feature_flag_manager,
         ImportAssetsCommand,
     )
-    from superset.models.dashboard import dashboard_slices
-    from superset.models.slice import Slice
+    from axbi.models.dashboard import dashboard_slices
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     mocker.patch.object(feature_flag_manager, "is_feature_enabled", return_value=True)
@@ -87,10 +87,10 @@ def test_import_adds_dashboard_charts(mocker: MockerFixture, session: Session) -
     """
     Test that existing dashboards are updated with new charts.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.models.dashboard import dashboard_slices
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.models.dashboard import dashboard_slices
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
@@ -128,12 +128,12 @@ def test_import_assets_imports_tags(mocker: MockerFixture, session: Session) -> 
     via ``ImportAssetsCommand`` (the code path used by the CLI ``sync native``
     command). Previously tags were silently dropped for the CLI path.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.extensions import feature_flag_manager
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.tags.models import Tag, TaggedObject
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.extensions import feature_flag_manager
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.tags.models import Tag, TaggedObject
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     mocker.patch.object(feature_flag_manager, "is_feature_enabled", return_value=True)
@@ -214,10 +214,10 @@ def test_import_tag_ignores_malformed_tags_yaml(
     session: Session,
 ) -> None:
     """Malformed tags.yaml metadata should not abort tag import."""
-    from superset import db
-    from superset.commands.importers.v1.assets import feature_flag_manager
-    from superset.commands.importers.v1.utils import import_tag
-    from superset.tags.models import ObjectType, Tag, TaggedObject
+    from axbi import db
+    from axbi.commands.importers.v1.assets import feature_flag_manager
+    from axbi.commands.importers.v1.utils import import_tag
+    from axbi.tags.models import ObjectType, Tag, TaggedObject
 
     mocker.patch.object(feature_flag_manager, "is_feature_enabled", return_value=True)
 
@@ -248,11 +248,11 @@ def test_import_assets_skips_tags_when_feature_disabled(
     Test that tag import is skipped when the ``TAGGING_SYSTEM`` feature flag
     is disabled, even when the configs include tags.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.extensions import feature_flag_manager
-    from superset.models.slice import Slice
-    from superset.tags.models import Tag, TaggedObject
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.extensions import feature_flag_manager
+    from axbi.models.slice import Slice
+    from axbi.tags.models import Tag, TaggedObject
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     mocker.patch.object(feature_flag_manager, "is_feature_enabled", return_value=False)
@@ -282,7 +282,7 @@ def test_import_overwrite_defaults_to_true(session: Session) -> None:
     ``ImportAssetsCommand.overwrite`` defaults to ``True`` for backwards
     compatibility — historically the command always overwrote existing assets.
     """
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
 
     command = ImportAssetsCommand({})
     assert command.overwrite is True
@@ -298,9 +298,9 @@ def test_import_threads_overwrite_flag(mocker: MockerFixture, session: Session) 
     ``import_dashboard``. Previously these were hard-coded to ``overwrite=True``
     which caused the API flag to be ignored.
     """
-    from superset import security_manager
-    from superset.commands.importers.v1 import assets as assets_module
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi import security_manager
+    from axbi.commands.importers.v1 import assets as assets_module
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 
@@ -318,7 +318,7 @@ def test_import_threads_overwrite_flag(mocker: MockerFixture, session: Session) 
     mocker.patch.object(assets_module, "find_chart_uuids", return_value=[])
     mocker.patch.object(assets_module, "update_id_refs", side_effect=lambda c, *_: c)
     mocker.patch.object(assets_module, "migrate_dashboard")
-    mocker.patch("superset.db.session.execute")
+    mocker.patch("axbi.db.session.execute")
 
     configs = {
         **copy.deepcopy(databases_config),
@@ -378,8 +378,8 @@ def test_import_reports_missing_asset_dependencies(
     expected_message: str,
 ) -> None:
     """Missing asset references should fail with a clear import error."""
-    from superset.commands.exceptions import ImportFailedError
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.commands.exceptions import ImportFailedError
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
 
     with pytest.raises(ImportFailedError, match=expected_message):
         ImportAssetsCommand._import(configs)
@@ -406,8 +406,8 @@ def test_import_assets_tolerates_missing_or_malformed_dashboard_position(
     dashboard_config: dict[str, object],
 ) -> None:
     """Optional dashboard layout data should not break asset imports."""
-    from superset.commands.importers.v1 import assets as assets_module
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.commands.importers.v1 import assets as assets_module
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
 
     dashboard = mocker.Mock()
     dashboard.id = 1
@@ -415,7 +415,7 @@ def test_import_assets_tolerates_missing_or_malformed_dashboard_position(
         assets_module, "import_dashboard", return_value=dashboard
     )
     mocker.patch.object(assets_module, "migrate_dashboard")
-    mocker.patch("superset.db.session.execute")
+    mocker.patch("axbi.db.session.execute")
 
     ImportAssetsCommand._import({"dashboards/missing_position.yaml": dashboard_config})
 
@@ -430,9 +430,9 @@ def test_prevent_overwrite_flags_existing_assets(
     surface a clear ``ValidationError`` for each asset whose UUID already
     exists in the database.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     engine = db.session.get_bind()
@@ -480,9 +480,9 @@ def test_prevent_overwrite_allows_new_assets(
     With ``overwrite=False`` and no conflicting UUIDs in the database, the
     validation step must not raise.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     engine = db.session.get_bind()
@@ -510,9 +510,9 @@ def test_prevent_overwrite_noop_when_overwrite_true(
     be a no-op even when assets exist in the database — this preserves the
     historical behavior.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     engine = db.session.get_bind()
@@ -544,10 +544,10 @@ def test_prevent_overwrite_flags_existing_saved_queries(
     ``import_saved_query`` silently returns existing rows and the endpoint
     would appear to succeed despite the conflict.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import SavedQuery
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import SavedQuery
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     engine = db.session.get_bind()
@@ -578,9 +578,9 @@ def test_prevent_overwrite_partial_conflict(
     When only some of the incoming assets already exist, validation must flag
     exactly the conflicting ones and leave brand-new assets untouched.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     engine = db.session.get_bind()
@@ -619,13 +619,13 @@ def test_prevent_overwrite_queries_only_bundle_uuids(
     every import with ``overwrite=false`` would scan all asset tables in
     full, regardless of bundle size.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import SavedQuery
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import SavedQuery
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
     engine = db.session.get_bind()
@@ -668,10 +668,10 @@ def test_import_removes_dashboard_charts(
     """
     Test that existing dashboards are updated without old charts.
     """
-    from superset import db, security_manager
-    from superset.commands.importers.v1.assets import ImportAssetsCommand
-    from superset.models.dashboard import dashboard_slices
-    from superset.models.slice import Slice
+    from axbi import db, security_manager
+    from axbi.commands.importers.v1.assets import ImportAssetsCommand
+    from axbi.models.dashboard import dashboard_slices
+    from axbi.models.slice import Slice
 
     mocker.patch.object(security_manager, "can_access", return_value=True)
 

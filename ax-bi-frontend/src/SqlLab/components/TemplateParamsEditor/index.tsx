@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useState, useEffect } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { debounce } from 'lodash';
 import {
   Badge,
@@ -26,7 +26,7 @@ import {
   ModalTrigger,
   Tooltip,
   Constants,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { EditorHost } from 'src/core/editors';
 import useQueryEditor from 'src/SqlLab/hooks/useQueryEditor';
 
@@ -78,7 +78,7 @@ const TemplateParamsEditor = ({
         {t('), and they become available in your SQL (example:')}{' '}
         <Code>SELECT * FROM {'{{ my_table }}'} </Code>) {t('by using')}&nbsp;
         <a
-          href="https://superset.apache.org/sqllab.html#templating-with-jinja"
+          href="https://github.com/defai-digital/ax-bi/sqllab.html#templating-with-jinja"
           target="_blank"
           rel="noopener noreferrer"
         >

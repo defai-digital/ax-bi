@@ -26,7 +26,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   BaseFormData,
   Behavior,
@@ -34,15 +34,15 @@ import {
   ContextMenuFilters,
   ensureIsArray,
   getChartMetadataRegistry,
-} from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
 import {
   Constants,
   Input,
   Loading,
   Popover,
   Icons,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { debounce } from 'lodash';
 import { FixedSizeList as List } from 'react-window';
 import { InputRef } from 'antd';

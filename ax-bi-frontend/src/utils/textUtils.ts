@@ -18,12 +18,12 @@
 const loadModule = () => {
   try {
     // eslint-disable-next-line global-require, import/no-unresolved
-    return require('../../../superset_text') || {};
+    return require('../../../axbi_text') || {};
   } catch (e) {
     return {};
   }
 };
 
-const supersetText = loadModule();
+const axbiText = loadModule();
 
-export default supersetText;
+export default axbiText;

@@ -21,7 +21,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import patch
 
-from superset.mcp_service.ai.grounding_utils import (
+from axbi.mcp_service.ai.grounding_utils import (
     enrich_dataset_plan_entry,
     grounding_summary_dict,
     plan_should_block_compose,
@@ -87,7 +87,7 @@ def test_preferred_metric_names_from_dataset_metrics() -> None:
         columns=[],
     )
     with patch(
-        "superset.mcp_service.ai.grounding_utils.load_grounding_contract",
+        "axbi.mcp_service.ai.grounding_utils.load_grounding_contract",
         return_value=None,
     ):
         assert preferred_metric_names(ds) == ["count", "revenue"]
@@ -102,7 +102,7 @@ def test_enrich_dataset_plan_entry_adds_metrics() -> None:
     )
     entry = {"id": 7, "name": "sales", "columns": []}
     with patch(
-        "superset.mcp_service.ai.grounding_utils.load_grounding_contract",
+        "axbi.mcp_service.ai.grounding_utils.load_grounding_contract",
         return_value=None,
     ):
         enriched = enrich_dataset_plan_entry(entry, ds)

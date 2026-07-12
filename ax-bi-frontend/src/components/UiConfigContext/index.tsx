@@ -26,7 +26,7 @@ interface UiConfigType {
   hideTab: boolean;
   hideNav: boolean;
   hideChartControls: boolean;
-  // superset-embedded-sdk specific
+  // ax-bi-embedded-sdk specific
   emitDataMasks: boolean; // emit data masks to the parent window
   showRowLimitWarning: boolean; // show the row limit warning
 }

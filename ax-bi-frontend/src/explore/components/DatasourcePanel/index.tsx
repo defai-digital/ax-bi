@@ -17,16 +17,16 @@
  * under the License.
  */
 import { useContext, useDeferredValue, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { DatasourceType, Metric, QueryFormData } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { DatasourceType, Metric, QueryFormData } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 
-import { ControlConfig } from '@superset-ui/chart-controls';
+import { ControlConfig } from '@ax-bi/chart-controls';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
 
 import { matchSorter, rankings } from 'match-sorter';
-import { Input } from '@superset-ui/core/components';
+import { Input } from '@ax-bi/ui-core/components';
 import { SaveDatasetModal } from 'src/SqlLab/components/SaveDatasetModal';
 import { getDatasourceAsSaveableDataset } from 'src/utils/datasourceUtils';
 import { ExploreActions } from 'src/explore/actions/exploreActions';

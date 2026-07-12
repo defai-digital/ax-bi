@@ -22,7 +22,7 @@ import {
   QueryFormData,
   BinaryQueryObjectFilterClause,
   buildQueryObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export function getDrillPayload(
   queryFormData?: QueryFormData,

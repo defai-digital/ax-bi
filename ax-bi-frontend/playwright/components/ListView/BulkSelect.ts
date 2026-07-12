@@ -36,7 +36,7 @@ const BULK_SELECT_SELECTORS = {
 export type BulkSelectActionKey = 'delete' | 'export';
 
 /**
- * BulkSelect component for Superset ListView bulk operations.
+ * BulkSelect component for AxBI ListView bulk operations.
  * Provides a reusable interface for bulk selection and actions across list pages.
  *
  * @example

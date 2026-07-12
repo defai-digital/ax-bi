@@ -21,7 +21,7 @@ import { Locator, Page } from '@playwright/test';
 
 /**
  * Core Checkbox component used in Playwright tests to interact with checkbox
- * elements in the Superset UI.
+ * elements in the AxBI UI.
  *
  * This class wraps a Playwright {@link Locator} pointing to a checkbox input
  * and provides convenience methods for common interactions such as checking,

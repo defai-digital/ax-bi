@@ -70,8 +70,8 @@ jobs:
     env:
       DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      IMAGE_TAG: apache/superset:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
-      PUBLISH_DOCKER_IMAGES: ${{ github.repository == 'apache/superset' && github.event_name == 'push' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
+      IMAGE_TAG: ghcr.io/defai-digital/ax-bi:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
+      PUBLISH_DOCKER_IMAGES: ${{ github.repository == 'ghcr.io/defai-digital/ax-bi' && github.event_name == 'push' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
 
     steps:
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
@@ -88,10 +88,10 @@ jobs:
           dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
           dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           build: "true"
-          login-to-dockerhub: ${{ github.repository == 'apache/superset' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
+          login-to-dockerhub: ${{ github.repository == 'ghcr.io/defai-digital/ax-bi' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
 
-      - name: Setup supersetbot
-        uses: ./.github/actions/setup-supersetbot/
+      - name: Setup axbibot
+        uses: ./.github/actions/setup-axbibot/
 
       - name: Build Docker Image
         shell: bash
@@ -99,7 +99,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_PRESET: ${{ matrix.build_preset }}
         run: |
-          # Only the upstream Apache repository publishes apache/superset images.
+          # Only the upstream Apache repository publishes ghcr.io/defai-digital/ax-bi images.
           # Forks still validate the Docker build locally without Docker Hub push credentials.
           if [ "$PUBLISH_DOCKER_IMAGES" = "true" ]; then
             PLATFORM_ARG="--platform linux/arm64 --platform linux/amd64"
@@ -117,7 +117,7 @@ jobs:
           # buildkit layer cache from the failed attempt, so a retry mostly
           # re-does just the failed operation.
           for attempt in 1 2 3; do
-            if supersetbot docker \
+            if axbibot docker \
               $PUSH_OR_LOAD \
               --preset "$BUILD_PRESET" \
               --context "$EVENT" \
@@ -127,7 +127,7 @@ jobs:
               break
             fi
             if [ "$attempt" -eq 3 ]; then
-              echo "::error::supersetbot docker build failed after 3 attempts"
+              echo "::error::axbibot docker build failed after 3 attempts"
               exit 1
             fi
             echo "::warning::Build attempt ${attempt} failed; retrying in 30s..."
@@ -156,7 +156,7 @@ jobs:
         env:
           BUILD_PRESET: ${{ matrix.build_preset }}
         run: |
-          export SUPERSET_BUILD_TARGET=$BUILD_PRESET
+          export AXBI_BUILD_TARGET=$BUILD_PRESET
           # This should reuse the CACHED image built in the previous steps
           docker compose build ax-bi-init --build-arg DEV_MODE=false --build-arg INCLUDE_CHROMIUM=false
           docker compose up ax-bi-init --exit-code-from ax-bi-init
@@ -183,7 +183,7 @@ jobs:
           {
             echo "COMPOSE_PROJECT_NAME=axbi-ci"
             echo "AX_BI_SECRET_KEY=test-secret-key-for-ci-only"
-            echo "DATABASE_PASSWORD=superset"
+            echo "DATABASE_PASSWORD=axbi"
             echo "ADMIN_PASSWORD=admin"
           } > /tmp/axbi.env
           docker compose --env-file /tmp/axbi.env -f docker-compose-axbi.yml config
@@ -193,7 +193,7 @@ jobs:
     # Run this job only for upstream Apache pushes. The AX-BI fork publishes
     # fork-owned images via .github/workflows/axbi-docker.yml instead.
     needs: changes
-    if: github.repository == 'apache/superset' && github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.changes.outputs.docker == 'true'
+    if: github.repository == 'ghcr.io/defai-digital/ax-bi' && github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.changes.outputs.docker == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:

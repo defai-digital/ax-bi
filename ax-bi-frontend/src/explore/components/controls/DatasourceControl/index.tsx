@@ -19,31 +19,26 @@
  */
 
 import React, { PureComponent } from 'react';
-import { DatasourceType, SupersetClient, Datasource } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import {
-  css,
-  styled,
-  withTheme,
-  type SupersetTheme,
-} from '@apache-superset/core/theme';
-import { getTemporalColumns } from '@superset-ui/chart-controls';
+import { DatasourceType, AxBIClient, Datasource } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { css, styled, withTheme, type AxBITheme } from '@ax-bi/core/theme';
+import { getTemporalColumns } from '@ax-bi/chart-controls';
 import { getUrlParam } from 'src/utils/urlUtils';
 import {
   Dropdown,
   Tooltip,
   Button,
   ModalTrigger,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   ChangeDatasourceModal,
   DatasourceModal,
   ErrorAlert,
 } from 'src/components';
 import SemanticViewEditModal from 'src/features/semanticViews/SemanticViewEditModal';
-import { Menu } from '@superset-ui/core/components/Menu';
-import { Icons } from '@superset-ui/core/components/Icons';
-import WarningIconWithTooltip from '@superset-ui/core/components/WarningIconWithTooltip';
+import { Menu } from '@ax-bi/ui-core/components/Menu';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import WarningIconWithTooltip from '@ax-bi/ui-core/components/WarningIconWithTooltip';
 import { URL_PARAMS } from 'src/constants';
 import { getDatasourceAsSaveableDataset } from 'src/utils/datasourceUtils';
 import { datasetLabelLower } from 'src/features/semanticLayers/label';
@@ -102,7 +97,7 @@ export interface DatasourceControlProps {
   form_data?: FormData;
   isEditable?: boolean;
   onDatasourceSave?: ((datasource: ExtendedDatasource) => void) | null;
-  theme: SupersetTheme;
+  theme: AxBITheme;
   user: User;
   // ControlHeader-related props
   hovered?: boolean;
@@ -328,7 +323,7 @@ class DatasourceControl extends PureComponent<
             datasourceKey: `${datasource.id}__${datasource.type}`,
             sql: datasource.sql,
           };
-          SupersetClient.postForm('/sqllab/', {
+          AxBIClient.postForm('/sqllab/', {
             form_data: safeStringify(payload),
           });
         }

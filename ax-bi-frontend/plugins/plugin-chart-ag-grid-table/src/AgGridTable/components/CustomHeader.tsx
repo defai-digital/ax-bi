@@ -20,9 +20,9 @@
  */
 
 import { useRef, useState, useEffect } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { ArrowDownOutlined, ArrowUpOutlined } from '@ant-design/icons';
-import { Column } from '@superset-ui/core/components/ThemedAgGridReact';
+import { Column } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import FilterIcon from './Filter';
 import KebabMenu from './KebabMenu';
 import {

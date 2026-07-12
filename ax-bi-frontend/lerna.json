@@ -14,11 +14,11 @@
   ],
   "command": {
     "publish": {
-      "message": "chore(superset-ui): publish %s",
+      "message": "chore(axbi-ui): publish %s",
       "graphType": "all"
     },
     "version": {
-      "message": "chore(superset-ui): publish %s",
+      "message": "chore(axbi-ui): publish %s",
       "exact": true
     }
   },

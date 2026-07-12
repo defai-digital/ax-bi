@@ -25,18 +25,18 @@ import pytest
 from freezegun import freeze_time
 from pytest_mock import MockerFixture
 
-from superset.common.db_query_status import QueryStatus
-from superset.db_engine_specs.postgres import PostgresEngineSpec
-from superset.errors import ErrorLevel, SupersetErrorType
-from superset.exceptions import OAuth2Error, SupersetErrorException
-from superset.models.core import Database
-from superset.sql.parse import SQLStatement, Table
-from superset.sql_lab import (
+from axbi.common.db_query_status import QueryStatus
+from axbi.db_engine_specs.postgres import PostgresEngineSpec
+from axbi.errors import AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBIErrorException, OAuth2Error
+from axbi.models.core import Database
+from axbi.sql.parse import SQLStatement, Table
+from axbi.sql_lab import (
     execute_query,
     execute_sql_statements,
     get_sql_results,
 )
-from superset.utils.rls import apply_rls, get_predicates_for_table
+from axbi.utils.rls import apply_rls, get_predicates_for_table
 from tests.conftest import with_config
 from tests.unit_tests.models.core_test import oauth2_client_info
 
@@ -55,10 +55,10 @@ def test_execute_query(mocker: MockerFixture, app: None) -> None:
     db_engine_spec.fetch_data.return_value = [(42,)]
 
     cursor = mocker.MagicMock()
-    SupersetResultSet = mocker.patch("superset.sql_lab.SupersetResultSet")  # noqa: N806
+    AxBIResultSet = mocker.patch("axbi.sql_lab.AxBIResultSet")  # noqa: N806
 
     # Mock db.session.refresh to avoid AttributeError during session refresh
-    mocker.patch("superset.sql_lab.db.session.refresh", return_value=None)
+    mocker.patch("axbi.sql_lab.db.session.refresh", return_value=None)
 
     execute_query(query, cursor=cursor, log_params={})
 
@@ -67,7 +67,7 @@ def test_execute_query(mocker: MockerFixture, app: None) -> None:
         "SELECT 42 AS answer",
         query,
     )
-    SupersetResultSet.assert_called_with([(42,)], cursor.description, db_engine_spec)
+    AxBIResultSet.assert_called_with([(42,)], cursor.description, db_engine_spec)
 
 
 @with_config(
@@ -98,7 +98,7 @@ def test_execute_sql_statement_exceeds_payload_limit(
     query.database.allow_run_async = True
 
     # Mock get_query to return our mocked query object
-    mocker.patch("superset.sql_lab.get_query", return_value=query)
+    mocker.patch("axbi.sql_lab.get_query", return_value=query)
 
     # Mock sys.getsizeof to simulate a large payload size
     mocker.patch("sys.getsizeof", return_value=100000000)  # 100 MB
@@ -107,18 +107,16 @@ def test_execute_sql_statement_exceeds_payload_limit(
     def mock_serialize_payload(payload, use_msgpack):
         return "serialized_payload"
 
-    mocker.patch(
-        "superset.sql_lab._serialize_payload", side_effect=mock_serialize_payload
-    )
+    mocker.patch("axbi.sql_lab._serialize_payload", side_effect=mock_serialize_payload)
 
     # Mock db.session.refresh to avoid AttributeError during session refresh
-    mocker.patch("superset.sql_lab.db.session.refresh", return_value=None)
+    mocker.patch("axbi.sql_lab.db.session.refresh", return_value=None)
 
     # Mock the results backend to avoid "Results backend is not configured" error
-    mocker.patch("superset.sql_lab.results_backend", return_value=True)
+    mocker.patch("axbi.sql_lab.results_backend", return_value=True)
 
     # Test that the exception is raised when the payload exceeds the limit
-    with pytest.raises(SupersetErrorException):
+    with pytest.raises(AxBIErrorException):
         execute_sql_statements(
             query_id=1,
             rendered_query="SELECT 42 AS answer",
@@ -157,7 +155,7 @@ def test_execute_sql_statement_within_payload_limit(mocker: MockerFixture, app) 
     query.database.allow_run_async = True
 
     # Mock get_query to return our mocked query object
-    mocker.patch("superset.sql_lab.get_query", return_value=query)
+    mocker.patch("axbi.sql_lab.get_query", return_value=query)
 
     # Mock sys.getsizeof to simulate a payload size that is within the limit
     mocker.patch("sys.getsizeof", return_value=10000000)  # 10 MB (within limit)
@@ -166,15 +164,13 @@ def test_execute_sql_statement_within_payload_limit(mocker: MockerFixture, app) 
     def mock_serialize_payload(payload, use_msgpack):
         return "serialized_payload"
 
-    mocker.patch(
-        "superset.sql_lab._serialize_payload", side_effect=mock_serialize_payload
-    )
+    mocker.patch("axbi.sql_lab._serialize_payload", side_effect=mock_serialize_payload)
 
     # Mock db.session.refresh to avoid AttributeError during session refresh
-    mocker.patch("superset.sql_lab.db.session.refresh", return_value=None)
+    mocker.patch("axbi.sql_lab.db.session.refresh", return_value=None)
 
     # Mock the results backend to avoid "Results backend is not configured" error
-    mocker.patch("superset.sql_lab.results_backend", return_value=True)
+    mocker.patch("axbi.sql_lab.results_backend", return_value=True)
 
     # Test that no exception is raised and the function executes smoothly
     try:
@@ -187,9 +183,9 @@ def test_execute_sql_statement_within_payload_limit(mocker: MockerFixture, app) 
             expand_data=False,
             log_params={},
         )
-    except SupersetErrorException:
+    except AxBIErrorException:
         pytest.fail(
-            "SupersetErrorException should not have been raised for payload within the limit"  # noqa: E501
+            "AxBIErrorException should not have been raised for payload within the limit"  # noqa: E501
         )
 
 
@@ -202,18 +198,18 @@ def test_get_sql_results_oauth2(mocker: MockerFixture, app) -> None:
     app_context.push()
 
     mocker.patch(
-        "superset.db_engine_specs.base.uuid4",
+        "axbi.db_engine_specs.base.uuid4",
         return_value=UUID("fb11f528-6eba-4a8a-837e-6b0d39ee9187"),
     )
     mocker.patch(
-        "superset.db_engine_specs.base.generate_code_verifier",
+        "axbi.db_engine_specs.base.generate_code_verifier",
         return_value="xkBPVZoFChVcy3VZ2l5u7d0FZPTU-olO7HtsAOok2IUGigyoZ62tG_oldy2xg9_HdqPKrWUmKZLmU-CUqz_SQ",
     )
-    mocker.patch("superset.daos.key_value.KeyValueDAO.delete_expired_entries")
-    mocker.patch("superset.daos.key_value.KeyValueDAO.create_entry")
-    mocker.patch("superset.db_engine_specs.base.db.session.commit")
+    mocker.patch("axbi.daos.key_value.KeyValueDAO.delete_expired_entries")
+    mocker.patch("axbi.daos.key_value.KeyValueDAO.create_entry")
+    mocker.patch("axbi.db_engine_specs.base.db.session.commit")
 
-    g = mocker.patch("superset.db_engine_specs.base.g")
+    g = mocker.patch("axbi.db_engine_specs.base.g")
     g.user = mocker.MagicMock()
     g.user.id = 42
 
@@ -230,7 +226,7 @@ def test_get_sql_results_oauth2(mocker: MockerFixture, app) -> None:
     )
 
     query = mocker.MagicMock(select_as_cta=False, database=database)
-    mocker.patch("superset.sql_lab.get_query", return_value=query)
+    mocker.patch("axbi.sql_lab.get_query", return_value=query)
 
     payload = get_sql_results(query_id=1, rendered_query="SELECT 1")
     assert payload["status"] == QueryStatus.FAILED
@@ -239,7 +235,7 @@ def test_get_sql_results_oauth2(mocker: MockerFixture, app) -> None:
 
     error = payload["errors"][0]
     assert error["message"] == "You don't have permission to access the data."
-    assert error["error_type"] == SupersetErrorType.OAUTH2_REDIRECT
+    assert error["error_type"] == AxBIErrorType.OAUTH2_REDIRECT
     assert error["level"] == ErrorLevel.WARNING
     assert error["extra"]["tab_id"] == "fb11f528-6eba-4a8a-837e-6b0d39ee9187"
     assert error["extra"]["redirect_uri"] == "http://localhost/api/v1/database/oauth2/"
@@ -260,7 +256,7 @@ def test_get_sql_results_oauth2(mocker: MockerFixture, app) -> None:
     assert params["code_challenge_method"] == ["S256"]
 
     # Verify PKCE code_challenge matches the mocked code_verifier
-    from superset.utils.oauth2 import generate_code_challenge
+    from axbi.utils.oauth2 import generate_code_challenge
 
     expected_code_challenge = generate_code_challenge(
         "xkBPVZoFChVcy3VZ2l5u7d0FZPTU-olO7HtsAOok2IUGigyoZ62tG_oldy2xg9_HdqPKrWUmKZLmU-CUqz_SQ"
@@ -277,7 +273,7 @@ def test_apply_rls(mocker: MockerFixture) -> None:
     database.get_default_catalog.return_value = "examples"
     database.db_engine_spec = PostgresEngineSpec
     get_predicates_for_table = mocker.patch(
-        "superset.utils.rls.get_predicates_for_table",
+        "axbi.utils.rls.get_predicates_for_table",
         side_effect=[["c1 = 1"], ["c2 = 2"]],
     )
 
@@ -334,7 +330,7 @@ def test_get_predicates_for_table(mocker: MockerFixture) -> None:
     predicate = mocker.MagicMock()
     predicate.compile.return_value = "c1 = 1"
     dataset.get_sqla_row_level_filters.return_value = [predicate]
-    db = mocker.patch("superset.utils.rls.db")
+    db = mocker.patch("axbi.utils.rls.db")
     db.session.query().filter().one_or_none.return_value = dataset
 
     table = Table("t1", "public", "examples")
@@ -353,7 +349,7 @@ def test_get_predicates_for_table_excludes_self(mocker: MockerFixture) -> None:
     outer WHERE). Regression test for the physical→virtual conversion bug.
     """
     database = mocker.MagicMock()
-    db = mocker.patch("superset.utils.rls.db")
+    db = mocker.patch("axbi.utils.rls.db")
     db.session.query().filter().one_or_none.return_value = None
 
     table = Table("orders", "public", "examples")

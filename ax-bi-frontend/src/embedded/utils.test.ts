@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataMaskStateWithId } from '@superset-ui/core';
+import { DataMaskStateWithId } from '@ax-bi/ui-core';
 import { cloneDeep } from 'lodash';
 import { getDataMaskChangeTrigger, getChartDataPayloads } from './utils';
 import { RootState } from 'src/views/store';
@@ -132,7 +132,7 @@ const mockState: Partial<RootState> = {
         state: { sortModel: [{ colId: 'col1', sort: 'asc' }] },
       },
     },
-    colorScheme: 'supersetColors',
+    colorScheme: 'axbiColors',
     colorNamespace: 'dashboard',
     activeTabs: [],
   },

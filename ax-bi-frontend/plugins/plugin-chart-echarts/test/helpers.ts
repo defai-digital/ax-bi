@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, ChartDataResponseResult } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps, ChartDataResponseResult } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 
 /**
  * Datasource shape used by Echarts Timeseries and Mixed Timeseries chart props.
@@ -97,7 +97,7 @@ export function createEchartsTimeseriesTestChartProps<
     width,
     height,
     queriesData: customQueriesData ?? defaultQueriesData,
-    theme: supersetTheme,
+    theme: axbiTheme,
     datasource: customDatasource ?? { ...DEFAULT_DATASOURCE },
     ...(annotationData !== undefined && { annotationData }),
   });

@@ -17,9 +17,9 @@
  * under the License.
  */
 import { FunctionComponent } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { useTheme, styled } from '@apache-superset/core/theme';
-import { Button, Modal } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { useTheme, styled } from '@ax-bi/core/theme';
+import { Button, Modal } from '@ax-bi/ui-core/components';
 import SyntaxHighlighterCopy from 'src/features/queries/SyntaxHighlighterCopy';
 import withToasts, {
   ToastProps,

@@ -25,10 +25,10 @@ import { ExportStatus } from './StreamingExportModal';
 global.TextEncoder = TextEncoder;
 global.TextDecoder = TextDecoder as typeof global.TextDecoder;
 
-// Mock SupersetClient
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+// Mock AxBIClient
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     getCSRFToken: jest.fn(() => Promise.resolve('mock-csrf-token')),
     getGuestToken: jest.fn(() => undefined),
   },
@@ -51,9 +51,9 @@ global.fetch = jest.fn();
 beforeEach(() => {
   jest.clearAllMocks();
   global.fetch = jest.fn();
-  const { SupersetClient } = jest.requireMock('@superset-ui/core');
-  SupersetClient.getCSRFToken.mockResolvedValue('mock-csrf-token');
-  SupersetClient.getGuestToken.mockReturnValue(undefined);
+  const { AxBIClient } = jest.requireMock('@ax-bi/ui-core');
+  AxBIClient.getCSRFToken.mockResolvedValue('mock-csrf-token');
+  AxBIClient.getGuestToken.mockReturnValue(undefined);
 });
 
 test('useStreamingExport initializes with default progress state', () => {
@@ -147,7 +147,7 @@ test('useStreamingExport cleans up on unmount', () => {
 test('retryExport reuses the same URL from the original startExport call', async () => {
   // This test ensures that retryExport uses the exact same URL that was passed to startExport,
   // which is important for subdirectory deployments where the URL is already prefixed.
-  const originalUrl = '/superset/api/v1/sqllab/export_streaming/';
+  const originalUrl = '/ax-bi/api/v1/sqllab/export_streaming/';
   const mockFetch = jest.fn().mockResolvedValue({
     ok: true,
     headers: new Headers({
@@ -228,7 +228,7 @@ test('sets ERROR status and calls onError when fetch rejects', async () => {
 // URL prefix guard tests - prevent regression of missing app root prefix
 const { applicationRoot } = jest.requireMock('src/utils/getBootstrapData');
 const { makeUrl } = jest.requireMock('src/utils/pathUtils');
-const { SupersetClient } = jest.requireMock('@superset-ui/core');
+const { AxBIClient } = jest.requireMock('@ax-bi/ui-core');
 
 const createPrefixTestMockFetch = () =>
   jest.fn().mockResolvedValue({
@@ -245,8 +245,8 @@ const createPrefixTestMockFetch = () =>
 
 test('guest-token chart exports skip CSRF fetch and include guest_token form field', async () => {
   applicationRoot.mockReturnValue('');
-  SupersetClient.getGuestToken.mockReturnValue('guest-token');
-  SupersetClient.getCSRFToken.mockRejectedValue(new Error('CSRF forbidden'));
+  AxBIClient.getGuestToken.mockReturnValue('guest-token');
+  AxBIClient.getCSRFToken.mockRejectedValue(new Error('CSRF forbidden'));
 
   const csvData = new TextEncoder().encode('id,name\n1,Alice\n');
   let readCount = 0;
@@ -285,7 +285,7 @@ test('guest-token chart exports skip CSRF fetch and include guest_token form fie
     expect(result.current.progress.status).toBe(ExportStatus.COMPLETED);
   });
 
-  expect(SupersetClient.getCSRFToken).not.toHaveBeenCalled();
+  expect(AxBIClient.getCSRFToken).not.toHaveBeenCalled();
   expect(mockFetch).toHaveBeenCalledTimes(1);
   const [, requestInit] = mockFetch.mock.calls[0];
   const body = requestInit.body as URLSearchParams;
@@ -336,7 +336,7 @@ test('non-guest chart exports fetch CSRF and include X-CSRFToken header', async 
     expect(result.current.progress.status).toBe(ExportStatus.COMPLETED);
   });
 
-  expect(SupersetClient.getCSRFToken).toHaveBeenCalledTimes(1);
+  expect(AxBIClient.getCSRFToken).toHaveBeenCalledTimes(1);
   const [, requestInit] = mockFetch.mock.calls[0];
   expect(requestInit.headers).toMatchObject({
     'X-CSRFToken': 'mock-csrf-token',
@@ -345,7 +345,7 @@ test('non-guest chart exports fetch CSRF and include X-CSRFToken header', async 
 });
 
 test('chart streaming export includes guest token in form body when configured', async () => {
-  SupersetClient.getGuestToken.mockReturnValue('guest-token');
+  AxBIClient.getGuestToken.mockReturnValue('guest-token');
   const mockFetch = createPrefixTestMockFetch();
   global.fetch = mockFetch;
 
@@ -373,7 +373,7 @@ test('chart streaming export includes guest token in form body when configured',
 
 test('SQL Lab exports fetch CSRF and omit guest_token even when guest token exists', async () => {
   applicationRoot.mockReturnValue('');
-  SupersetClient.getGuestToken.mockReturnValue('guest-token');
+  AxBIClient.getGuestToken.mockReturnValue('guest-token');
 
   const mockFetch = createPrefixTestMockFetch();
   global.fetch = mockFetch;
@@ -393,7 +393,7 @@ test('SQL Lab exports fetch CSRF and omit guest_token even when guest token exis
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  expect(SupersetClient.getCSRFToken).toHaveBeenCalledTimes(1);
+  expect(AxBIClient.getCSRFToken).toHaveBeenCalledTimes(1);
   const [, requestInit] = mockFetch.mock.calls[0];
   const body = requestInit.body as URLSearchParams;
 
@@ -406,7 +406,7 @@ test('SQL Lab exports fetch CSRF and omit guest_token even when guest token exis
 
 test('guest tokens do not bypass CSRF for unclassified non-client exports', async () => {
   applicationRoot.mockReturnValue('');
-  SupersetClient.getGuestToken.mockReturnValue('guest-token');
+  AxBIClient.getGuestToken.mockReturnValue('guest-token');
 
   const mockFetch = createPrefixTestMockFetch();
   global.fetch = mockFetch;
@@ -425,7 +425,7 @@ test('guest tokens do not bypass CSRF for unclassified non-client exports', asyn
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  expect(SupersetClient.getCSRFToken).toHaveBeenCalledTimes(1);
+  expect(AxBIClient.getCSRFToken).toHaveBeenCalledTimes(1);
   const [, requestInit] = mockFetch.mock.calls[0];
   const body = requestInit.body as URLSearchParams;
 
@@ -436,7 +436,7 @@ test('guest tokens do not bypass CSRF for unclassified non-client exports', asyn
 });
 
 test('URL prefix guard applies prefix to unprefixed relative URL when app root is configured', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   applicationRoot.mockReturnValue(appRoot);
   makeUrl.mockImplementation((path: string) => `${appRoot}${path}`);
 
@@ -458,13 +458,13 @@ test('URL prefix guard applies prefix to unprefixed relative URL when app root i
   });
 
   expect(mockFetch).toHaveBeenCalledWith(
-    '/superset/api/v1/sqllab/export_streaming/',
+    '/ax-bi/api/v1/sqllab/export_streaming/',
     expect.any(Object),
   );
 });
 
 test('URL prefix guard does not double-prefix URL that already has app root', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   applicationRoot.mockReturnValue(appRoot);
   makeUrl.mockImplementation((path: string) => `${appRoot}${path}`);
 
@@ -475,7 +475,7 @@ test('URL prefix guard does not double-prefix URL that already has app root', as
 
   act(() => {
     result.current.startExport({
-      url: '/superset/api/v1/sqllab/export_streaming/',
+      url: '/ax-bi/api/v1/sqllab/export_streaming/',
       payload: { client_id: 'test-id' },
       exportType: 'csv',
     });
@@ -486,7 +486,7 @@ test('URL prefix guard does not double-prefix URL that already has app root', as
   });
 
   expect(mockFetch).toHaveBeenCalledWith(
-    '/superset/api/v1/sqllab/export_streaming/',
+    '/ax-bi/api/v1/sqllab/export_streaming/',
     expect.any(Object),
   );
 });
@@ -518,7 +518,7 @@ test('URL prefix guard leaves URL unchanged when no app root is configured', asy
 });
 
 test('URL prefix guard normalizes relative URL without leading slash and applies prefix', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   applicationRoot.mockReturnValue(appRoot);
   makeUrl.mockImplementation((path: string) => `${appRoot}${path}`);
 
@@ -541,7 +541,7 @@ test('URL prefix guard normalizes relative URL without leading slash and applies
 
   // Should add leading slash and apply prefix
   expect(mockFetch).toHaveBeenCalledWith(
-    '/superset/api/v1/sqllab/export_streaming/',
+    '/ax-bi/api/v1/sqllab/export_streaming/',
     expect.any(Object),
   );
 });
@@ -575,7 +575,7 @@ test('URL prefix guard normalizes non-slash URL to leading slash when no app roo
 });
 
 test('URL prefix guard leaves absolute URLs (https) unchanged', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   applicationRoot.mockReturnValue(appRoot);
   makeUrl.mockImplementation((path: string) => `${appRoot}${path}`);
 
@@ -603,7 +603,7 @@ test('URL prefix guard leaves absolute URLs (https) unchanged', async () => {
 });
 
 test('URL prefix guard leaves protocol-relative URLs (//host) unchanged', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   applicationRoot.mockReturnValue(appRoot);
   makeUrl.mockImplementation((path: string) => `${appRoot}${path}`);
 
@@ -660,7 +660,7 @@ test('URL prefix guard correctly handles sibling paths (prefixes /app2 when appR
 });
 
 test('URL prefix guard does not double-prefix URL with query string at app root', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   applicationRoot.mockReturnValue(appRoot);
   makeUrl.mockImplementation((path: string) => `${appRoot}${path}`);
 
@@ -671,7 +671,7 @@ test('URL prefix guard does not double-prefix URL with query string at app root'
 
   act(() => {
     result.current.startExport({
-      url: '/superset?foo=1&bar=2',
+      url: '/ax-bi?foo=1&bar=2',
       payload: { client_id: 'test-id' },
       exportType: 'csv',
     });
@@ -681,15 +681,15 @@ test('URL prefix guard does not double-prefix URL with query string at app root'
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  // Should NOT double-prefix to /superset/superset?foo=1&bar=2
+  // Should NOT double-prefix to /ax-bi/ax-bi?foo=1&bar=2
   expect(mockFetch).toHaveBeenCalledWith(
-    '/superset?foo=1&bar=2',
+    '/ax-bi?foo=1&bar=2',
     expect.any(Object),
   );
 });
 
 test('URL prefix guard does not double-prefix URL with hash at app root', async () => {
-  const appRoot = '/superset';
+  const appRoot = '/ax-bi';
   applicationRoot.mockReturnValue(appRoot);
   makeUrl.mockImplementation((path: string) => `${appRoot}${path}`);
 
@@ -700,7 +700,7 @@ test('URL prefix guard does not double-prefix URL with hash at app root', async 
 
   act(() => {
     result.current.startExport({
-      url: '/superset#section',
+      url: '/ax-bi#section',
       payload: { client_id: 'test-id' },
       exportType: 'csv',
     });
@@ -710,11 +710,8 @@ test('URL prefix guard does not double-prefix URL with hash at app root', async 
     expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 
-  // Should NOT double-prefix to /superset/superset#section
-  expect(mockFetch).toHaveBeenCalledWith(
-    '/superset#section',
-    expect.any(Object),
-  );
+  // Should NOT double-prefix to /ax-bi/ax-bi#section
+  expect(mockFetch).toHaveBeenCalledWith('/ax-bi#section', expect.any(Object));
 });
 
 // Streaming export behavior tests

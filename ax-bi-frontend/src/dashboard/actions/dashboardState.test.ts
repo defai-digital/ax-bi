@@ -16,11 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  JsonResponse,
-  SupersetClient,
-  isFeatureEnabled,
-} from '@superset-ui/core';
+import { JsonResponse, AxBIClient, isFeatureEnabled } from '@ax-bi/ui-core';
 import { waitFor } from 'spec/helpers/testing-library';
 
 import {
@@ -57,8 +53,8 @@ import { emptyFilters } from 'spec/fixtures/mockDashboardFilters';
 import mockDashboardData from 'spec/fixtures/mockDashboardData';
 import { navigateTo } from 'src/utils/navigationUtils';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -83,7 +79,7 @@ describe('dashboardState actions', () => {
     },
     dashboardInfo: {
       metadata: {
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
       },
     },
     sliceEntities,
@@ -104,9 +100,9 @@ describe('dashboardState actions', () => {
 
   beforeEach(() => {
     postStub = jest
-      .spyOn(SupersetClient, 'post')
+      .spyOn(AxBIClient, 'post')
       .mockResolvedValue('the value you want to return' as any);
-    getStub = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+    getStub = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
       json: {
         result: {
           ...mockDashboardData,
@@ -114,7 +110,7 @@ describe('dashboardState actions', () => {
         },
       },
     } as any);
-    putStub = jest.spyOn(SupersetClient, 'put').mockResolvedValue({
+    putStub = jest.spyOn(AxBIClient, 'put').mockResolvedValue({
       json: {
         result: mockDashboardData,
       },
@@ -232,7 +228,7 @@ describe('dashboardState actions', () => {
         const id = 192;
         const { getState, dispatch } = setup();
         putStub.mockRestore();
-        putStub = jest.spyOn(SupersetClient, 'put').mockResolvedValue({
+        putStub = jest.spyOn(AxBIClient, 'put').mockResolvedValue({
           json: {
             result: { ...newDashboardData, json_metadata: '{malformed' },
             last_modified_time: 123,
@@ -260,7 +256,7 @@ describe('dashboardState actions', () => {
       });
 
       postStub.mockRestore();
-      postStub = jest.spyOn(SupersetClient, 'post').mockResolvedValue({
+      postStub = jest.spyOn(AxBIClient, 'post').mockResolvedValue({
         json: {
           result: {
             ...mockDashboardData,
@@ -288,7 +284,7 @@ describe('dashboardState actions', () => {
     const { getState } = setup({
       dashboardInfo: {
         metadata: {},
-        common: { conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 } },
+        common: { conf: { AXBI_WEBSERVER_TIMEOUT: 60 } },
       },
     });
     const dispatch = (action: unknown): unknown => {
@@ -310,7 +306,7 @@ describe('dashboardState actions', () => {
     const { getState } = setup({
       dashboardInfo: {
         metadata: { stagger_time: 1000, stagger_refresh: true },
-        common: { conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 } },
+        common: { conf: { AXBI_WEBSERVER_TIMEOUT: 60 } },
       },
     });
     const dispatch = (action: unknown): unknown => {
@@ -341,7 +337,7 @@ describe('dashboardState actions', () => {
     const { getState } = setup({
       dashboardInfo: {
         metadata: { stagger_time: 1000, stagger_refresh: true },
-        common: { conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 } },
+        common: { conf: { AXBI_WEBSERVER_TIMEOUT: 60 } },
       },
     });
     const dispatch = (action: unknown): unknown => {
@@ -365,7 +361,7 @@ describe('dashboardState actions', () => {
     const { getState } = setup({
       dashboardInfo: {
         metadata: {},
-        common: { conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 } },
+        common: { conf: { AXBI_WEBSERVER_TIMEOUT: 60 } },
       },
     });
     const dispatched: { type: string }[] = [];
@@ -392,7 +388,7 @@ describe('dashboardState actions', () => {
     const { getState } = setup({
       dashboardInfo: {
         metadata: {},
-        common: { conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 } },
+        common: { conf: { AXBI_WEBSERVER_TIMEOUT: 60 } },
       },
     });
     const dispatched: { type: string }[] = [];
@@ -417,7 +413,7 @@ describe('dashboardState actions', () => {
     const { getState } = setup({
       dashboardInfo: {
         metadata: {},
-        common: { conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 } },
+        common: { conf: { AXBI_WEBSERVER_TIMEOUT: 60 } },
       },
     });
     const dispatched: { type: string }[] = [];
@@ -444,12 +440,12 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       getStub.mockRestore();
-      getStub = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+      getStub = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
         json: { result: [{ value: true }] },
       } as unknown as JsonResponse);
 
@@ -468,12 +464,12 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id: 456,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       getStub.mockRestore();
-      getStub = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+      getStub = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
         json: { result: [{ value: true }] },
       } as unknown as JsonResponse);
 
@@ -487,13 +483,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       getStub.mockRestore();
       getStub = jest
-        .spyOn(SupersetClient, 'get')
+        .spyOn(AxBIClient, 'get')
         .mockRejectedValue(new Error('network'));
 
       await fetchFaveStar(id)(dispatch, getState);
@@ -514,13 +510,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id: 456,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       getStub.mockRestore();
       getStub = jest
-        .spyOn(SupersetClient, 'get')
+        .spyOn(AxBIClient, 'get')
         .mockRejectedValue(new Error('network'));
 
       await fetchFaveStar(requestedId)(dispatch, getState);
@@ -535,7 +531,7 @@ describe('dashboardState actions', () => {
 
     beforeEach(() => {
       deleteStub = jest
-        .spyOn(SupersetClient, 'delete')
+        .spyOn(AxBIClient, 'delete')
         .mockResolvedValue({} as unknown as JsonResponse);
     });
 
@@ -548,13 +544,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       postStub.mockRestore();
       postStub = jest
-        .spyOn(SupersetClient, 'post')
+        .spyOn(AxBIClient, 'post')
         .mockResolvedValue({} as unknown as JsonResponse);
 
       await saveFaveStar(id, false)(dispatch, getState);
@@ -572,7 +568,7 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
@@ -592,13 +588,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id: 456,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       postStub.mockRestore();
       postStub = jest
-        .spyOn(SupersetClient, 'post')
+        .spyOn(AxBIClient, 'post')
         .mockResolvedValue({} as unknown as JsonResponse);
 
       await saveFaveStar(requestedId, false)(dispatch, getState);
@@ -612,13 +608,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       postStub.mockRestore();
       postStub = jest
-        .spyOn(SupersetClient, 'post')
+        .spyOn(AxBIClient, 'post')
         .mockRejectedValue(new Error('network'));
 
       await saveFaveStar(id, false)(dispatch, getState);
@@ -639,13 +635,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id: 456,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       postStub.mockRestore();
       postStub = jest
-        .spyOn(SupersetClient, 'post')
+        .spyOn(AxBIClient, 'post')
         .mockRejectedValue(new Error('network'));
 
       await saveFaveStar(requestedId, false)(dispatch, getState);
@@ -661,13 +657,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       putStub.mockRestore();
       putStub = jest
-        .spyOn(SupersetClient, 'put')
+        .spyOn(AxBIClient, 'put')
         .mockResolvedValue({} as unknown as JsonResponse);
 
       await savePublished(id, true)(dispatch, getState);
@@ -693,13 +689,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id: 456,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       putStub.mockRestore();
       putStub = jest
-        .spyOn(SupersetClient, 'put')
+        .spyOn(AxBIClient, 'put')
         .mockResolvedValue({} as unknown as JsonResponse);
 
       await savePublished(requestedId, true)(dispatch, getState);
@@ -713,13 +709,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       putStub.mockRestore();
       putStub = jest
-        .spyOn(SupersetClient, 'put')
+        .spyOn(AxBIClient, 'put')
         .mockRejectedValue(new Error('forbidden'));
 
       await savePublished(id, true)(dispatch, getState);
@@ -740,13 +736,13 @@ describe('dashboardState actions', () => {
       const { getState, dispatch } = setup({
         dashboardInfo: {
           id: 456,
-          metadata: { color_scheme: 'supersetColors' },
+          metadata: { color_scheme: 'axbiColors' },
         },
       });
 
       putStub.mockRestore();
       putStub = jest
-        .spyOn(SupersetClient, 'put')
+        .spyOn(AxBIClient, 'put')
         .mockRejectedValue(new Error('forbidden'));
 
       await savePublished(requestedId, true)(dispatch, getState);

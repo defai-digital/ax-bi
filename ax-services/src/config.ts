@@ -21,11 +21,11 @@ import { isIP } from 'net';
 export interface ServiceConfig {
   host: string;
   port: number;
-  supersetBaseUrl: string;
-  supersetHealthPath: string;
-  supersetMetadataPath: string;
-  supersetPermissionPath: string;
-  supersetAssetSearchPaths: {
+  axbiBaseUrl: string;
+  axbiHealthPath: string;
+  axbiMetadataPath: string;
+  axbiPermissionPath: string;
+  axbiAssetSearchPaths: {
     annotationLayer: string;
     chart: string;
     dashboard: string;
@@ -39,60 +39,60 @@ export interface ServiceConfig {
     tag: string;
     task: string;
   };
-  supersetTimeoutMs: number;
-  supersetInternalToken: string | undefined;
+  axbiTimeoutMs: number;
+  axbiInternalToken: string | undefined;
   logLevel: LogLevel;
 }
 
 type EnvironmentVariable =
   | 'AX_SERVICES_HOST'
   | 'AX_SERVICES_PORT'
-  | 'AX_SUPERSET_BASE_URL'
-  | 'AX_SUPERSET_HEALTH_PATH'
-  | 'AX_SUPERSET_METADATA_PATH'
-  | 'AX_SUPERSET_PERMISSION_PATH'
-  | 'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH'
-  | 'AX_SUPERSET_CHART_LIST_PATH'
-  | 'AX_SUPERSET_DASHBOARD_LIST_PATH'
-  | 'AX_SUPERSET_DATABASE_LIST_PATH'
-  | 'AX_SUPERSET_DATASET_LIST_PATH'
-  | 'AX_SUPERSET_QUERY_LIST_PATH'
-  | 'AX_SUPERSET_REPORT_LIST_PATH'
-  | 'AX_SUPERSET_ROLE_LIST_PATH'
-  | 'AX_SUPERSET_RLS_LIST_PATH'
-  | 'AX_SUPERSET_SAVED_QUERY_LIST_PATH'
-  | 'AX_SUPERSET_TAG_LIST_PATH'
-  | 'AX_SUPERSET_TASK_LIST_PATH'
-  | 'AX_SUPERSET_TIMEOUT_MS'
-  | 'AX_SUPERSET_INTERNAL_TOKEN'
+  | 'AXBI_BASE_URL'
+  | 'AXBI_HEALTH_PATH'
+  | 'AXBI_METADATA_PATH'
+  | 'AXBI_PERMISSION_PATH'
+  | 'AXBI_ANNOTATION_LAYER_LIST_PATH'
+  | 'AXBI_CHART_LIST_PATH'
+  | 'AXBI_DASHBOARD_LIST_PATH'
+  | 'AXBI_DATABASE_LIST_PATH'
+  | 'AXBI_DATASET_LIST_PATH'
+  | 'AXBI_QUERY_LIST_PATH'
+  | 'AXBI_REPORT_LIST_PATH'
+  | 'AXBI_ROLE_LIST_PATH'
+  | 'AXBI_RLS_LIST_PATH'
+  | 'AXBI_SAVED_QUERY_LIST_PATH'
+  | 'AXBI_TAG_LIST_PATH'
+  | 'AXBI_TASK_LIST_PATH'
+  | 'AXBI_TIMEOUT_MS'
+  | 'AXBI_INTERNAL_TOKEN'
   | 'AX_SERVICES_LOG_LEVEL';
 
 type Environment = Partial<Record<EnvironmentVariable, string | undefined>>;
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
-type SupersetAssetSearchPathKey = keyof ServiceConfig['supersetAssetSearchPaths'];
+type AxBIAssetSearchPathKey = keyof ServiceConfig['axbiAssetSearchPaths'];
 
 const DEFAULT_HOST = '127.0.0.1';
 const DEFAULT_PORT = 5010;
-const DEFAULT_SUPERSET_BASE_URL = 'http://127.0.0.1:8088';
-const DEFAULT_SUPERSET_HEALTH_PATH = '/health';
-const DEFAULT_SUPERSET_METADATA_PATH = '/api/v1/dashboard/_info';
-const DEFAULT_SUPERSET_PERMISSION_PATH = '/api/v1/security/permissions/check';
-const DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH = '/api/v1/annotation_layer/';
-const DEFAULT_SUPERSET_CHART_LIST_PATH = '/api/v1/chart/';
-const DEFAULT_SUPERSET_DASHBOARD_LIST_PATH = '/api/v1/dashboard/';
-const DEFAULT_SUPERSET_DATABASE_LIST_PATH = '/api/v1/database/';
-const DEFAULT_SUPERSET_DATASET_LIST_PATH = '/api/v1/dataset/';
-const DEFAULT_SUPERSET_QUERY_LIST_PATH = '/api/v1/query/';
-const DEFAULT_SUPERSET_REPORT_LIST_PATH = '/api/v1/report/';
-const DEFAULT_SUPERSET_ROLE_LIST_PATH = '/api/v1/role/';
-const DEFAULT_SUPERSET_RLS_LIST_PATH = '/api/v1/rowlevelsecurity/';
-const DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH = '/api/v1/saved_query/';
-const DEFAULT_SUPERSET_TAG_LIST_PATH = '/api/v1/tag/';
-const DEFAULT_SUPERSET_TASK_LIST_PATH = '/api/v1/task/';
-const DEFAULT_SUPERSET_TIMEOUT_MS = 2000;
+const DEFAULT_AXBI_BASE_URL = 'http://127.0.0.1:8088';
+const DEFAULT_AXBI_HEALTH_PATH = '/health';
+const DEFAULT_AXBI_METADATA_PATH = '/api/v1/dashboard/_info';
+const DEFAULT_AXBI_PERMISSION_PATH = '/api/v1/security/permissions/check';
+const DEFAULT_AXBI_ANNOTATION_LAYER_LIST_PATH = '/api/v1/annotation_layer/';
+const DEFAULT_AXBI_CHART_LIST_PATH = '/api/v1/chart/';
+const DEFAULT_AXBI_DASHBOARD_LIST_PATH = '/api/v1/dashboard/';
+const DEFAULT_AXBI_DATABASE_LIST_PATH = '/api/v1/database/';
+const DEFAULT_AXBI_DATASET_LIST_PATH = '/api/v1/dataset/';
+const DEFAULT_AXBI_QUERY_LIST_PATH = '/api/v1/query/';
+const DEFAULT_AXBI_REPORT_LIST_PATH = '/api/v1/report/';
+const DEFAULT_AXBI_ROLE_LIST_PATH = '/api/v1/role/';
+const DEFAULT_AXBI_RLS_LIST_PATH = '/api/v1/rowlevelsecurity/';
+const DEFAULT_AXBI_SAVED_QUERY_LIST_PATH = '/api/v1/saved_query/';
+const DEFAULT_AXBI_TAG_LIST_PATH = '/api/v1/tag/';
+const DEFAULT_AXBI_TASK_LIST_PATH = '/api/v1/task/';
+const DEFAULT_AXBI_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL: LogLevel = 'info';
 const MAX_PORT = 65535;
-const MAX_SUPERSET_TIMEOUT_MS = 2_147_483_647;
+const MAX_AXBI_TIMEOUT_MS = 2_147_483_647;
 const HOSTNAME_PATTERN =
   /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 const LOG_LEVELS = new Set<LogLevel>([
@@ -103,57 +103,57 @@ const LOG_LEVELS = new Set<LogLevel>([
   'silent',
 ]);
 
-const SUPERSET_ASSET_SEARCH_PATHS = {
+const AXBI_ASSET_SEARCH_PATHS = {
   annotationLayer: {
-    env: 'AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_ANNOTATION_LAYER_LIST_PATH,
+    env: 'AXBI_ANNOTATION_LAYER_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_ANNOTATION_LAYER_LIST_PATH,
   },
   chart: {
-    env: 'AX_SUPERSET_CHART_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_CHART_LIST_PATH,
+    env: 'AXBI_CHART_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_CHART_LIST_PATH,
   },
   dashboard: {
-    env: 'AX_SUPERSET_DASHBOARD_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_DASHBOARD_LIST_PATH,
+    env: 'AXBI_DASHBOARD_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_DASHBOARD_LIST_PATH,
   },
   database: {
-    env: 'AX_SUPERSET_DATABASE_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_DATABASE_LIST_PATH,
+    env: 'AXBI_DATABASE_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_DATABASE_LIST_PATH,
   },
   dataset: {
-    env: 'AX_SUPERSET_DATASET_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_DATASET_LIST_PATH,
+    env: 'AXBI_DATASET_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_DATASET_LIST_PATH,
   },
   query: {
-    env: 'AX_SUPERSET_QUERY_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_QUERY_LIST_PATH,
+    env: 'AXBI_QUERY_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_QUERY_LIST_PATH,
   },
   report: {
-    env: 'AX_SUPERSET_REPORT_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_REPORT_LIST_PATH,
+    env: 'AXBI_REPORT_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_REPORT_LIST_PATH,
   },
   role: {
-    env: 'AX_SUPERSET_ROLE_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_ROLE_LIST_PATH,
+    env: 'AXBI_ROLE_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_ROLE_LIST_PATH,
   },
   rls: {
-    env: 'AX_SUPERSET_RLS_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_RLS_LIST_PATH,
+    env: 'AXBI_RLS_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_RLS_LIST_PATH,
   },
   savedQuery: {
-    env: 'AX_SUPERSET_SAVED_QUERY_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_SAVED_QUERY_LIST_PATH,
+    env: 'AXBI_SAVED_QUERY_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_SAVED_QUERY_LIST_PATH,
   },
   tag: {
-    env: 'AX_SUPERSET_TAG_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_TAG_LIST_PATH,
+    env: 'AXBI_TAG_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_TAG_LIST_PATH,
   },
   task: {
-    env: 'AX_SUPERSET_TASK_LIST_PATH',
-    defaultValue: DEFAULT_SUPERSET_TASK_LIST_PATH,
+    env: 'AXBI_TASK_LIST_PATH',
+    defaultValue: DEFAULT_AXBI_TASK_LIST_PATH,
   },
 } as const satisfies Record<
-  SupersetAssetSearchPathKey,
+  AxBIAssetSearchPathKey,
   {
     env: EnvironmentVariable;
     defaultValue: string;
@@ -213,29 +213,29 @@ function parsePort(value: string | undefined): number {
   return port;
 }
 
-function parseSupersetTimeout(value: string | undefined): number {
+function parseAxBITimeout(value: string | undefined): number {
   const timeout = parsePositiveInteger(
     value,
-    DEFAULT_SUPERSET_TIMEOUT_MS,
-    'AX_SUPERSET_TIMEOUT_MS',
+    DEFAULT_AXBI_TIMEOUT_MS,
+    'AXBI_TIMEOUT_MS',
   );
-  if (timeout > MAX_SUPERSET_TIMEOUT_MS) {
+  if (timeout > MAX_AXBI_TIMEOUT_MS) {
     throw new Error(
-      `AX_SUPERSET_TIMEOUT_MS must be between 1 and ${MAX_SUPERSET_TIMEOUT_MS}`,
+      `AXBI_TIMEOUT_MS must be between 1 and ${MAX_AXBI_TIMEOUT_MS}`,
     );
   }
 
   return timeout;
 }
 
-function normalizeSupersetBaseUrl(value: string): string {
+function normalizeAxBIBaseUrl(value: string): string {
   try {
     const trimmed = value.trim();
     if (!/^https?:\/\//i.test(trimmed)) {
       throw new Error('explicit HTTP(S) authority required');
     }
 
-    validatePathSegments(rawUrlPath(trimmed), 'AX_SUPERSET_BASE_URL');
+    validatePathSegments(rawUrlPath(trimmed), 'AXBI_BASE_URL');
     const url = new URL(trimmed);
     if (url.protocol !== 'http:' && url.protocol !== 'https:') {
       throw new Error('unsupported protocol');
@@ -251,7 +251,7 @@ function normalizeSupersetBaseUrl(value: string): string {
     }
     return url.toString().replace(/\/$/, '');
   } catch (error) {
-    throw new Error('AX_SUPERSET_BASE_URL must be a valid HTTP(S) URL', {
+    throw new Error('AXBI_BASE_URL must be a valid HTTP(S) URL', {
       cause: error,
     });
   }
@@ -316,7 +316,7 @@ function normalizeOptionalSecret(value: string | undefined): string | undefined 
   }
   if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
     throw new Error(
-      'AX_SUPERSET_INTERNAL_TOKEN must not contain control characters',
+      'AXBI_INTERNAL_TOKEN must not contain control characters',
     );
   }
 
@@ -337,45 +337,45 @@ function normalizeLogLevel(value: string | undefined): LogLevel {
   return logLevel as LogLevel;
 }
 
-function buildSupersetAssetSearchPaths(
+function buildAxBIAssetSearchPaths(
   env: Environment,
-): ServiceConfig['supersetAssetSearchPaths'] {
+): ServiceConfig['axbiAssetSearchPaths'] {
   return Object.fromEntries(
-    Object.entries(SUPERSET_ASSET_SEARCH_PATHS).map(
+    Object.entries(AXBI_ASSET_SEARCH_PATHS).map(
       ([key, { env: envName, defaultValue }]) => [
         key,
         normalizeEnvPath(env, envName, defaultValue),
       ],
     ),
-  ) as ServiceConfig['supersetAssetSearchPaths'];
+  ) as ServiceConfig['axbiAssetSearchPaths'];
 }
 
 export function buildConfig(env: Environment = process.env): ServiceConfig {
   return {
     host: normalizeHost(env.AX_SERVICES_HOST),
     port: parsePort(env.AX_SERVICES_PORT),
-    supersetBaseUrl: normalizeSupersetBaseUrl(
-      env.AX_SUPERSET_BASE_URL || DEFAULT_SUPERSET_BASE_URL,
+    axbiBaseUrl: normalizeAxBIBaseUrl(
+      env.AXBI_BASE_URL || DEFAULT_AXBI_BASE_URL,
     ),
-    supersetHealthPath: normalizeEnvPath(
+    axbiHealthPath: normalizeEnvPath(
       env,
-      'AX_SUPERSET_HEALTH_PATH',
-      DEFAULT_SUPERSET_HEALTH_PATH,
+      'AXBI_HEALTH_PATH',
+      DEFAULT_AXBI_HEALTH_PATH,
     ),
-    supersetMetadataPath: normalizeEnvPath(
+    axbiMetadataPath: normalizeEnvPath(
       env,
-      'AX_SUPERSET_METADATA_PATH',
-      DEFAULT_SUPERSET_METADATA_PATH,
+      'AXBI_METADATA_PATH',
+      DEFAULT_AXBI_METADATA_PATH,
     ),
-    supersetPermissionPath: normalizeEnvPath(
+    axbiPermissionPath: normalizeEnvPath(
       env,
-      'AX_SUPERSET_PERMISSION_PATH',
-      DEFAULT_SUPERSET_PERMISSION_PATH,
+      'AXBI_PERMISSION_PATH',
+      DEFAULT_AXBI_PERMISSION_PATH,
     ),
-    supersetAssetSearchPaths: buildSupersetAssetSearchPaths(env),
-    supersetTimeoutMs: parseSupersetTimeout(env.AX_SUPERSET_TIMEOUT_MS),
-    supersetInternalToken: normalizeOptionalSecret(
-      env.AX_SUPERSET_INTERNAL_TOKEN,
+    axbiAssetSearchPaths: buildAxBIAssetSearchPaths(env),
+    axbiTimeoutMs: parseAxBITimeout(env.AXBI_TIMEOUT_MS),
+    axbiInternalToken: normalizeOptionalSecret(
+      env.AXBI_INTERNAL_TOKEN,
     ),
     logLevel: normalizeLogLevel(env.AX_SERVICES_LOG_LEVEL),
   };

@@ -17,7 +17,7 @@
  * under the License.
  */
 import { FC, ReactNode, useCallback, useEffect } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { useCommandPalette } from 'src/components/CommandPalette';
 import { CommandPalette } from 'src/components/CommandPalette';
 import { PWAInstallPrompt } from 'src/components/PWAInstallPrompt';

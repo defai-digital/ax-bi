@@ -24,7 +24,7 @@ def test_memoized_func(mocker: MockerFixture) -> None:
     """
     Test the ``memoized_func`` decorator.
     """
-    from superset.utils.cache import memoized_func
+    from axbi.utils.cache import memoized_func
 
     cache = mocker.MagicMock()
 

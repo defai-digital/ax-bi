@@ -16,19 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SqlaFormData } from '@superset-ui/core';
-import * as ChartControls from '@superset-ui/chart-controls';
+import { SqlaFormData } from '@ax-bi/ui-core';
+import * as ChartControls from '@ax-bi/chart-controls';
 import controlPanel from './controlPanel';
 
 const { __mockShiftMetric } = ChartControls as any;
 
-jest.mock('@superset-ui/core', () => ({
+jest.mock('@ax-bi/ui-core', () => ({
   GenericDataType: { Numeric: 'numeric' },
   SMART_DATE_ID: 'SMART_DATE_ID',
   t: (str: string) => str,
 }));
 
-jest.mock('@superset-ui/chart-controls', () => {
+jest.mock('@ax-bi/chart-controls', () => {
   // Define the mock function inside the factory
   const mockShiftMetric = jest.fn(() => 'shiftedMetric');
   return {

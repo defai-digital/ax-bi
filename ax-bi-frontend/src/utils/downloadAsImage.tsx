@@ -19,10 +19,10 @@
 import { SyntheticEvent } from 'react';
 import domToImage from 'dom-to-image-more';
 import { kebabCase } from 'lodash';
-import { t } from '@apache-superset/core/translation';
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBITheme } from '@ax-bi/core/theme';
 import { addWarningToast } from 'src/components/MessageToasts/actions';
-import type { AgGridContainerElement } from '@superset-ui/core/components';
+import type { AgGridContainerElement } from '@ax-bi/ui-core/components';
 
 const IMAGE_DOWNLOAD_QUALITY = 0.95;
 const TRANSPARENT_RGBA = 'transparent';
@@ -94,7 +94,7 @@ const styleCache = new WeakMap<Element, CSSStyleDeclaration>();
 const copyAllComputedStyles = (
   original: Element,
   clone: Element,
-  theme?: SupersetTheme,
+  theme?: AxBITheme,
 ) => {
   const queue: Array<[Element, Element]> = [[original, clone]];
   const processed = new WeakSet<Element>();
@@ -239,7 +239,7 @@ const preserveCanvasContent = (original: Element, clone: Element) => {
 
 const createEnhancedClone = (
   originalElement: Element,
-  theme?: SupersetTheme,
+  theme?: AxBITheme,
 ): { clone: HTMLElement; cleanup: () => void } => {
   const clone = originalElement.cloneNode(true) as HTMLElement;
   copyAllComputedStyles(originalElement, clone, theme);
@@ -312,7 +312,7 @@ export default function downloadAsImageOptimized(
   selector: string,
   description: string,
   isExactSelector = false,
-  theme?: SupersetTheme,
+  theme?: AxBITheme,
 ) {
   return async (event: SyntheticEvent) => {
     const elementToPrint = isExactSelector

@@ -20,14 +20,14 @@ import pytest
 from flask_appbuilder.security.sqla.models import User
 from sqlalchemy.orm import Session  # noqa: F401
 
-from superset import db
-from superset.commands.dataset.exceptions import DatasetAccessDeniedError
-from superset.commands.explore.form_data.state import TemporaryExploreState
-from superset.connectors.sqla.models import SqlaTable
-from superset.extensions import cache_manager
-from superset.models.slice import Slice
-from superset.utils import json
-from superset.utils.core import DatasourceType
+from axbi import db
+from axbi.commands.dataset.exceptions import DatasetAccessDeniedError
+from axbi.commands.explore.form_data.state import TemporaryExploreState
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.extensions import cache_manager
+from axbi.models.slice import Slice
+from axbi.utils import json
+from axbi.utils.core import DatasourceType
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
     load_world_bank_data,  # noqa: F401
@@ -368,7 +368,7 @@ def test_get_access_denied(test_client, login_as):
     assert resp.status_code == 403
 
 
-@patch("superset.security.SupersetSecurityManager.can_access_datasource")
+@patch("axbi.security.AxBISecurityManager.can_access_datasource")
 def test_get_dataset_access_denied(
     mock_can_access_datasource, test_client, login_as_admin
 ):

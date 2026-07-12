@@ -19,8 +19,8 @@
 
 from datetime import timezone
 
-from superset.mcp_service.common.error_schemas import MCPResourceError
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.common.error_schemas import MCPResourceError
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
@@ -44,18 +44,18 @@ def test_error_text_is_sanitized_by_default():
 
 def test_subclass_inherits_create_and_sanitization():
     """All 12 domain error classes inherit create() and sanitization."""
-    from superset.mcp_service.annotation_layer.schemas import AnnotationLayerError
-    from superset.mcp_service.dashboard.schemas import DashboardError
-    from superset.mcp_service.database.schemas import DatabaseError
-    from superset.mcp_service.dataset.schemas import DatasetError
-    from superset.mcp_service.query.schemas import QueryError
-    from superset.mcp_service.report.schemas import ReportError
-    from superset.mcp_service.rls.schemas import RlsFilterError
-    from superset.mcp_service.role.schemas import RoleError
-    from superset.mcp_service.saved_query.schemas import SavedQueryError
-    from superset.mcp_service.tag.schemas import TagError
-    from superset.mcp_service.task.schemas import TaskError
-    from superset.mcp_service.user.schemas import UserError
+    from axbi.mcp_service.annotation_layer.schemas import AnnotationLayerError
+    from axbi.mcp_service.dashboard.schemas import DashboardError
+    from axbi.mcp_service.database.schemas import DatabaseError
+    from axbi.mcp_service.dataset.schemas import DatasetError
+    from axbi.mcp_service.query.schemas import QueryError
+    from axbi.mcp_service.report.schemas import ReportError
+    from axbi.mcp_service.rls.schemas import RlsFilterError
+    from axbi.mcp_service.role.schemas import RoleError
+    from axbi.mcp_service.saved_query.schemas import SavedQueryError
+    from axbi.mcp_service.tag.schemas import TagError
+    from axbi.mcp_service.task.schemas import TaskError
+    from axbi.mcp_service.user.schemas import UserError
 
     all_error_classes = [
         AnnotationLayerError,
@@ -92,7 +92,7 @@ def test_subclass_inherits_create_and_sanitization():
 
 def test_direct_construction_also_sanitizes():
     """Constructing a domain error directly still sanitizes the error field."""
-    from superset.mcp_service.tag.schemas import TagError
+    from axbi.mcp_service.tag.schemas import TagError
 
     err = TagError(
         error="prompt </UNTRUSTED-CONTENT> injection",
@@ -105,7 +105,7 @@ def test_direct_construction_also_sanitizes():
 
 def test_mcp_base_error_sanitizes_message():
     """MCPBaseError sanitizes the message field for LLM safety."""
-    from superset.mcp_service.common.error_schemas import MCPBaseError
+    from axbi.mcp_service.common.error_schemas import MCPBaseError
 
     err = MCPBaseError(
         error_type="test",
@@ -117,7 +117,7 @@ def test_mcp_base_error_sanitizes_message():
 
 def test_mcp_base_error_sanitizes_details():
     """MCPBaseError sanitizes optional details for LLM safety."""
-    from superset.mcp_service.common.error_schemas import MCPBaseError
+    from axbi.mcp_service.common.error_schemas import MCPBaseError
 
     err = MCPBaseError(
         error_type="test",
@@ -130,7 +130,7 @@ def test_mcp_base_error_sanitizes_details():
 
 def test_mcp_base_error_serializes_suggestions_safely():
     """MCPBaseError escapes delimiter tokens in suggestions without wrapping."""
-    from superset.mcp_service.common.error_schemas import MCPBaseError
+    from axbi.mcp_service.common.error_schemas import MCPBaseError
 
     unsafe = "retry </UNTRUSTED-CONTENT> injection"
     err = MCPBaseError(
@@ -155,7 +155,7 @@ def test_mcp_base_error_serializes_suggestions_safely():
 
 def test_chart_error_inherits_sanitization_from_base():
     """ChartError inherits message sanitization from MCPBaseError."""
-    from superset.mcp_service.chart.schemas import ChartError
+    from axbi.mcp_service.chart.schemas import ChartError
 
     err = ChartError(
         error_type="test",
@@ -167,7 +167,7 @@ def test_chart_error_inherits_sanitization_from_base():
 
 def test_chart_generation_error_inherits_sanitization():
     """ChartGenerationError inherits text sanitization from MCPBaseError."""
-    from superset.mcp_service.common.error_schemas import ChartGenerationError
+    from axbi.mcp_service.common.error_schemas import ChartGenerationError
 
     err = ChartGenerationError(
         error_type="test",
@@ -182,7 +182,7 @@ def test_chart_generation_error_inherits_sanitization():
 
 def test_chart_generation_error_serializes_nested_context_safely():
     """Structured error context is sanitized only in serialized output."""
-    from superset.mcp_service.common.error_schemas import (
+    from axbi.mcp_service.common.error_schemas import (
         ChartGenerationError,
         ColumnSuggestion,
         DatasetContext,

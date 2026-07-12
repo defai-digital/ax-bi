@@ -27,14 +27,14 @@ from unittest.mock import patch
 
 import pytest
 
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     ColumnRef,
     FilterConfig,
     TableChartConfig,
     XYChartConfig,
 )
-from superset.mcp_service.chart.validation.dataset_validator import DatasetValidator
-from superset.mcp_service.common.error_schemas import DatasetContext
+from axbi.mcp_service.chart.validation.dataset_validator import DatasetValidator
+from axbi.mcp_service.common.error_schemas import DatasetContext
 
 
 @pytest.fixture

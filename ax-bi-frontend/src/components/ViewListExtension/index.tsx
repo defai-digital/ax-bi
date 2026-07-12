@@ -17,7 +17,7 @@
  * under the License.
  */
 import React from 'react';
-import { ensureIsArray } from '@superset-ui/core';
+import { ensureIsArray } from '@ax-bi/ui-core';
 import { views } from 'src/core';
 import { resolveView } from 'src/core/views';
 

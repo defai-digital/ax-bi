@@ -16,20 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FeatureFlag, VizType } from '@superset-ui/core';
+import { FeatureFlag, VizType } from '@ax-bi/ui-core';
 import { render, screen } from 'spec/helpers/testing-library';
 import { renderHook, act } from '@testing-library/react';
 import mockState from 'spec/fixtures/mockState';
 import { sliceId } from 'spec/fixtures/mockChartQueries';
 import { noOp } from 'src/utils/common';
-import { cachedSupersetGet } from 'src/utils/cachedSupersetGet';
+import { cachedAxBIGet } from 'src/utils/cachedAxBIGet';
 import { useContextMenu } from './useContextMenu';
 import { ContextMenuItem } from './ChartContextMenu';
 
-jest.mock('src/utils/cachedSupersetGet');
+jest.mock('src/utils/cachedAxBIGet');
 
-const mockCachedSupersetGet = cachedSupersetGet as jest.MockedFunction<
-  typeof cachedSupersetGet
+const mockCachedAxBIGet = cachedAxBIGet as jest.MockedFunction<
+  typeof cachedAxBIGet
 >;
 const CONTEXT_MENU_TEST_ID = 'chart-context-menu';
 
@@ -67,7 +67,7 @@ const setup = ({
         ...mockState.user,
         roles: roles ?? {
           Admin: [
-            ['can_explore', 'Superset'],
+            ['can_explore', 'AxBI'],
             ['can_samples', 'Datasource'],
             ['can_write', 'ExploreFormDataRestApi'],
             ['can_get_drill_info', 'Dataset'],
@@ -80,8 +80,8 @@ const setup = ({
 };
 
 beforeEach(() => {
-  mockCachedSupersetGet.mockClear();
-  mockCachedSupersetGet.mockResolvedValue({
+  mockCachedAxBIGet.mockClear();
+  mockCachedAxBIGet.mockResolvedValue({
     response: {} as Response,
     json: {
       result: {
@@ -137,7 +137,7 @@ test('Context menu shows "Drill by" with `can_drill`, `can_get_drill_info` & `ca
     roles: {
       Admin: [
         ['can_write', 'ExploreFormDataRestApi'],
-        ['can_explore', 'Superset'],
+        ['can_explore', 'AxBI'],
         ['can_drill', 'Dashboard'],
         ['can_get_drill_info', 'Dataset'],
       ],
@@ -193,7 +193,7 @@ test('Context menu does not show "Drill by" with just `can_drill`, `can_explore`
     roles: {
       Admin: [
         ['can_write', 'ExploreFormDataRestApi'],
-        ['can_explore', 'Superset'],
+        ['can_explore', 'AxBI'],
         ['can_drill', 'Dashboard'],
       ],
     },
@@ -209,7 +209,7 @@ test('Context menu shows "Drill to detail" with `can_samples`, `can_explore` & `
     roles: {
       Admin: [
         ['can_samples', 'Datasource'],
-        ['can_explore', 'Superset'],
+        ['can_explore', 'AxBI'],
         ['can_get_drill_info', 'Dataset'],
       ],
     },
@@ -241,7 +241,7 @@ test('Context menu shows "Drill to detail" with `can_drill`, `can_get_drill_info
     roles: {
       Admin: [
         ['can_samples', 'Datasource'],
-        ['can_explore', 'Superset'],
+        ['can_explore', 'AxBI'],
         ['can_drill', 'Dashboard'],
         ['can_get_drill_info', 'Dataset'],
       ],
@@ -297,7 +297,7 @@ test('Context menu does not show "Drill to detail" with `can_samples` & `can_exp
     roles: {
       Admin: [
         ['can_samples', 'Datasource'],
-        ['can_explore', 'Superset'],
+        ['can_explore', 'AxBI'],
       ],
     },
   });
@@ -312,7 +312,7 @@ test('Context menu does not show "Drill to detail" with `can_drill`, `can_explor
     roles: {
       Admin: [
         ['can_samples', 'Datasource'],
-        ['can_explore', 'Superset'],
+        ['can_explore', 'AxBI'],
         ['can_drill', 'Dashboard'],
       ],
     },
@@ -327,7 +327,7 @@ test('Dataset drill info API call is made when user has drill permissions', asyn
   const result = setup({
     roles: {
       Admin: [
-        ['can_explore', 'Superset'],
+        ['can_explore', 'AxBI'],
         ['can_samples', 'Datasource'],
         ['can_write', 'ExploreFormDataRestApi'],
         ['can_get_drill_info', 'Dataset'],
@@ -341,7 +341,7 @@ test('Dataset drill info API call is made when user has drill permissions', asyn
 
   await new Promise(resolve => setTimeout(resolve, 0));
 
-  expect(mockCachedSupersetGet).toHaveBeenCalledWith({
+  expect(mockCachedAxBIGet).toHaveBeenCalledWith({
     endpoint: expect.stringContaining(
       '/api/v1/dataset/1/drill_info/?q=(dashboard_id:',
     ),
@@ -361,7 +361,7 @@ test('Dataset drill info API call is not made when user lacks drill permissions'
 
   await new Promise(resolve => setTimeout(resolve, 0));
 
-  expect(mockCachedSupersetGet).not.toHaveBeenCalled();
+  expect(mockCachedAxBIGet).not.toHaveBeenCalled();
   expect(screen.queryByText('Drill by')).not.toBeInTheDocument();
   expect(screen.queryByText('Drill to detail')).not.toBeInTheDocument();
 });

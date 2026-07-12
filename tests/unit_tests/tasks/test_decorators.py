@@ -20,11 +20,11 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID
 
 import pytest
-from superset_core.tasks.types import TaskOptions, TaskScope
+from axbi_core.tasks.types import TaskOptions, TaskScope
 
-from superset.commands.tasks.exceptions import GlobalTaskFrameworkDisabledError
-from superset.tasks.decorators import task, TaskWrapper
-from superset.tasks.registry import TaskRegistry
+from axbi.commands.tasks.exceptions import GlobalTaskFrameworkDisabledError
+from axbi.tasks.decorators import task, TaskWrapper
+from axbi.tasks.registry import TaskRegistry
 
 TEST_UUID = UUID("b8b61b7b-1cd3-4a31-a74a-0a95341afc06")
 
@@ -36,7 +36,7 @@ class TestTaskDecoratorFeatureFlag:
         """Clear task registry before each test"""
         TaskRegistry._tasks.clear()
 
-    @patch("superset.tasks.decorators.is_feature_enabled", return_value=False)
+    @patch("axbi.tasks.decorators.is_feature_enabled", return_value=False)
     def test_decorator_succeeds_when_gtf_disabled(self, mock_feature_flag):
         """Test that @task decorator can be applied even when GTF is disabled.
 
@@ -51,7 +51,7 @@ class TestTaskDecoratorFeatureFlag:
         assert isinstance(my_task, TaskWrapper)
         assert my_task.name == "test_gtf_disabled_decorator"
 
-    @patch("superset.tasks.decorators.is_feature_enabled", return_value=False)
+    @patch("axbi.tasks.decorators.is_feature_enabled", return_value=False)
     def test_call_raises_error_when_gtf_disabled(self, mock_feature_flag):
         """Test that calling a task raises GlobalTaskFrameworkDisabledError
         when GTF is disabled."""
@@ -63,7 +63,7 @@ class TestTaskDecoratorFeatureFlag:
         with pytest.raises(GlobalTaskFrameworkDisabledError):
             my_task()
 
-    @patch("superset.tasks.decorators.is_feature_enabled", return_value=False)
+    @patch("axbi.tasks.decorators.is_feature_enabled", return_value=False)
     def test_schedule_raises_error_when_gtf_disabled(self, mock_feature_flag):
         """Test that scheduling a task raises GlobalTaskFrameworkDisabledError
         when GTF is disabled."""
@@ -228,7 +228,7 @@ class TestTaskWrapperSchedule:
         """Clear task registry before each test"""
         TaskRegistry._tasks.clear()
 
-    @patch("superset.tasks.decorators.TaskManager.submit_task")
+    @patch("axbi.tasks.decorators.TaskManager.submit_task")
     def test_schedule_uses_default_scope(self, mock_submit):
         """Test schedule() uses decorator's default scope"""
         mock_submit.return_value = MagicMock()
@@ -245,7 +245,7 @@ class TestTaskWrapperSchedule:
         call_args = mock_submit.call_args
         assert call_args[1]["scope"] == TaskScope.SHARED
 
-    @patch("superset.tasks.decorators.TaskManager.submit_task")
+    @patch("axbi.tasks.decorators.TaskManager.submit_task")
     def test_schedule_uses_private_scope_by_default(self, mock_submit):
         """Test schedule() uses PRIVATE scope when no scope specified"""
         mock_submit.return_value = MagicMock()
@@ -261,7 +261,7 @@ class TestTaskWrapperSchedule:
         call_args = mock_submit.call_args
         assert call_args[1]["scope"] == TaskScope.PRIVATE
 
-    @patch("superset.tasks.decorators.TaskManager.submit_task")
+    @patch("axbi.tasks.decorators.TaskManager.submit_task")
     def test_schedule_with_custom_options(self, mock_submit):
         """Test schedule() with custom task options"""
         mock_submit.return_value = MagicMock()
@@ -283,7 +283,7 @@ class TestTaskWrapperSchedule:
         assert call_args[1]["task_key"] == "custom_key"
         assert call_args[1]["task_name"] == "Custom Task Name"
 
-    @patch("superset.tasks.decorators.TaskManager.submit_task")
+    @patch("axbi.tasks.decorators.TaskManager.submit_task")
     def test_schedule_with_no_decorator_options(self, mock_submit):
         """Test schedule() uses default PRIVATE scope when no options provided"""
         mock_submit.return_value = MagicMock()
@@ -299,7 +299,7 @@ class TestTaskWrapperSchedule:
         call_args = mock_submit.call_args
         assert call_args[1]["scope"] == TaskScope.PRIVATE
 
-    @patch("superset.tasks.decorators.TaskManager.submit_task")
+    @patch("axbi.tasks.decorators.TaskManager.submit_task")
     def test_schedule_shared_task_requires_task_key(self, mock_submit):
         """Test shared task schedule() requires explicit task_key"""
 
@@ -319,7 +319,7 @@ class TestTaskWrapperSchedule:
         shared_task.schedule(123, options=TaskOptions(task_key="valid_key"))
         mock_submit.assert_called_once()
 
-    @patch("superset.tasks.decorators.TaskManager.submit_task")
+    @patch("axbi.tasks.decorators.TaskManager.submit_task")
     def test_schedule_private_task_allows_no_task_key(self, mock_submit):
         """Test private task schedule() works without task_key"""
         mock_submit.return_value = MagicMock()
@@ -340,9 +340,9 @@ class TestTaskWrapperCall:
         """Clear task registry before each test"""
         TaskRegistry._tasks.clear()
 
-    @patch("superset.commands.tasks.update.UpdateTaskCommand.run")
-    @patch("superset.daos.tasks.TaskDAO.find_one_or_none")
-    @patch("superset.commands.tasks.submit.SubmitTaskCommand.run_with_info")
+    @patch("axbi.commands.tasks.update.UpdateTaskCommand.run")
+    @patch("axbi.daos.tasks.TaskDAO.find_one_or_none")
+    @patch("axbi.commands.tasks.submit.SubmitTaskCommand.run_with_info")
     def test_call_uses_default_scope(
         self, mock_submit_run_with_info, mock_find, mock_update_run
     ):
@@ -364,10 +364,10 @@ class TestTaskWrapperCall:
         # Verify SubmitTaskCommand.run_with_info was called
         mock_submit_run_with_info.assert_called_once()
 
-    @patch("superset.utils.core.get_user_id")
-    @patch("superset.commands.tasks.update.UpdateTaskCommand.run")
-    @patch("superset.daos.tasks.TaskDAO.find_one_or_none")
-    @patch("superset.commands.tasks.submit.SubmitTaskCommand.run_with_info")
+    @patch("axbi.utils.core.get_user_id")
+    @patch("axbi.commands.tasks.update.UpdateTaskCommand.run")
+    @patch("axbi.daos.tasks.TaskDAO.find_one_or_none")
+    @patch("axbi.commands.tasks.submit.SubmitTaskCommand.run_with_info")
     def test_call_uses_private_scope_by_default(
         self, mock_submit_run_with_info, mock_find, mock_update_run, mock_get_user_id
     ):
@@ -389,9 +389,9 @@ class TestTaskWrapperCall:
         # Verify SubmitTaskCommand.run_with_info was called
         mock_submit_run_with_info.assert_called_once()
 
-    @patch("superset.commands.tasks.update.UpdateTaskCommand.run")
-    @patch("superset.daos.tasks.TaskDAO.find_one_or_none")
-    @patch("superset.commands.tasks.submit.SubmitTaskCommand.run_with_info")
+    @patch("axbi.commands.tasks.update.UpdateTaskCommand.run")
+    @patch("axbi.daos.tasks.TaskDAO.find_one_or_none")
+    @patch("axbi.commands.tasks.submit.SubmitTaskCommand.run_with_info")
     def test_call_with_custom_options(
         self, mock_submit_run_with_info, mock_find, mock_update_run
     ):
@@ -430,9 +430,9 @@ class TestTaskWrapperCall:
         ):
             shared_task(123)
 
-    @patch("superset.commands.tasks.update.UpdateTaskCommand.run")
-    @patch("superset.daos.tasks.TaskDAO.find_one_or_none")
-    @patch("superset.commands.tasks.submit.SubmitTaskCommand.run_with_info")
+    @patch("axbi.commands.tasks.update.UpdateTaskCommand.run")
+    @patch("axbi.daos.tasks.TaskDAO.find_one_or_none")
+    @patch("axbi.commands.tasks.submit.SubmitTaskCommand.run_with_info")
     def test_call_shared_task_works_with_task_key(
         self, mock_submit_run_with_info, mock_find, mock_update_run
     ):
@@ -452,10 +452,10 @@ class TestTaskWrapperCall:
         shared_task(123, options=TaskOptions(task_key="valid_key"))
         mock_submit_run_with_info.assert_called_once()
 
-    @patch("superset.utils.core.get_user_id")
-    @patch("superset.commands.tasks.update.UpdateTaskCommand.run")
-    @patch("superset.daos.tasks.TaskDAO.find_one_or_none")
-    @patch("superset.commands.tasks.submit.SubmitTaskCommand.run_with_info")
+    @patch("axbi.utils.core.get_user_id")
+    @patch("axbi.commands.tasks.update.UpdateTaskCommand.run")
+    @patch("axbi.daos.tasks.TaskDAO.find_one_or_none")
+    @patch("axbi.commands.tasks.submit.SubmitTaskCommand.run_with_info")
     def test_call_private_task_allows_no_task_key(
         self, mock_submit_run_with_info, mock_find, mock_update_run, mock_get_user_id
     ):

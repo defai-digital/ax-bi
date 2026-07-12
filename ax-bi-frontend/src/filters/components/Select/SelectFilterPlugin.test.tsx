@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { AppSection, Behavior, ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { AppSection, Behavior, ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import {
   act,
   fireEvent,
@@ -29,7 +29,7 @@ import {
 import { NULL_STRING } from 'src/utils/common';
 import SelectFilterPlugin from './SelectFilterPlugin';
 import transformProps from './transformProps';
-import { FilterState } from '@superset-ui/core';
+import { FilterState } from '@ax-bi/ui-core';
 import {
   SelectFilterOperatorType,
   PluginFilterSelectChartProps,
@@ -97,7 +97,7 @@ const buildSelectFilterProps = (overrides: SelectTestOverrides = {}) => {
     ...(overrides.filterState !== undefined && {
       filterState: overrides.filterState,
     }),
-    theme: supersetTheme,
+    theme: axbiTheme,
   }) as PluginFilterSelectChartProps;
 
   return {

@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart } from '@superset-ui/core';
-import { WordCloudChartPlugin } from '@superset-ui/plugin-chart-word-cloud';
+import { SuperChart } from '@ax-bi/ui-core';
+import { WordCloudChartPlugin } from '@ax-bi/plugin-chart-word-cloud';
 import { withResizableChartDemo } from '@storybook-shared';
 import data from './data';
 
@@ -40,12 +40,7 @@ export default {
     },
     colorScheme: {
       control: 'select',
-      options: [
-        'supersetColors',
-        'd3Category10',
-        'bnbColors',
-        'googleCategory20c',
-      ],
+      options: ['axbiColors', 'd3Category10', 'bnbColors', 'googleCategory20c'],
     },
     sizeFrom: {
       control: { type: 'range', min: 5, max: 50, step: 5 },

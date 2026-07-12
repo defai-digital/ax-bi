@@ -19,7 +19,7 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.chart.data.streaming_export_command import (
+from axbi.commands.chart.data.streaming_export_command import (
     StreamingCSVExportCommand,
 )
 
@@ -31,7 +31,7 @@ def _setup_chart_mocks(
     schema: str | None = None,
 ) -> tuple[MockerFixture, MockerFixture, MockerFixture]:
     """Set up common mocks for chart streaming export tests."""
-    mock_db = mocker.patch("superset.commands.streaming_export.base.db")
+    mock_db = mocker.patch("axbi.commands.streaming_export.base.db")
     mock_session = mocker.MagicMock()
     mock_db.session.return_value.__enter__.return_value = mock_session
 

@@ -18,12 +18,12 @@
  */
 
 import { useState, ReactNode, SyntheticEvent } from 'react';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import type { Decorator } from '@storybook/react-webpack5';
 import { ResizeCallbackData } from 'react-resizable';
 import ResizablePanel, { Size } from './ResizablePanel';
 
-export const SupersetBody = styled.div`
+export const AxBIBody = styled.div`
   background: ${({ theme }) => theme.colorBgLayout};
   padding: 16px;
   min-height: 100%;
@@ -45,7 +45,7 @@ export default function ResizableChartDemo({
   // size are all inner size
   const [size, setSize] = useState(initialSize);
   return (
-    <SupersetBody>
+    <AxBIBody>
       <ResizablePanel
         initialSize={initialSize}
         onResize={(e: SyntheticEvent, data: ResizeCallbackData) =>
@@ -57,7 +57,7 @@ export default function ResizableChartDemo({
           height: size.height - panelPadding,
         })}
       </ResizablePanel>
-    </SupersetBody>
+    </AxBIBody>
   );
 }
 

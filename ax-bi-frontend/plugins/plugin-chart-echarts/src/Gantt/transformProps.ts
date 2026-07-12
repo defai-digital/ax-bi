@@ -24,7 +24,7 @@ import {
   EChartsCoreOption,
   LineSeriesOption,
 } from 'echarts';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   AxisType,
   CategoricalColorNamespace,
@@ -33,9 +33,9 @@ import {
   getColumnLabel,
   getNumberFormatter,
   tooltipHtml,
-} from '@superset-ui/core';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
+import { GenericDataType } from '@ax-bi/core/common';
 // import type: echarts' internal types path has no runtime module to resolve
 import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import {

@@ -17,14 +17,10 @@
  * under the License.
  */
 import { useCallback, useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  makeApi,
-  SupersetApiError,
-  getExtensionsRegistry,
-} from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled, css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { makeApi, AxBIApiError, getExtensionsRegistry } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled, css } from '@ax-bi/core/theme';
 import {
   Button,
   FormItem,
@@ -34,10 +30,10 @@ import {
   Loading,
   Form,
   Space,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { EmbeddedDashboard } from 'src/dashboard/types';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 
 const extensionsRegistry = getExtensionsRegistry();
@@ -137,7 +133,7 @@ export const DashboardEmbedControls = ({ dashboardId, onHide }: Props) => {
       endpoint,
     })({})
       .catch(err => {
-        if ((err as SupersetApiError).status === 404) {
+        if ((err as AxBIApiError).status === 404) {
           // 404 just means the dashboard isn't currently embedded
           return { result: null };
         }
@@ -163,7 +159,7 @@ export const DashboardEmbedControls = ({ dashboardId, onHide }: Props) => {
   );
   const docsUrl =
     extensionsRegistry.get('embedded.documentation.url') ??
-    'https://www.npmjs.com/package/@superset-ui/embedded-sdk';
+    'https://www.npmjs.com/package/@ax-bi/embedded-sdk';
 
   return (
     <>
@@ -191,7 +187,7 @@ export const DashboardEmbedControls = ({ dashboardId, onHide }: Props) => {
         <Typography.Link href={docsUrl} target="_blank" rel="noreferrer">
           {docsDescription
             ? docsDescription()
-            : t('Superset Embedded SDK documentation.')}
+            : t('AX BI Embedded SDK documentation.')}
         </Typography.Link>
       </p>
       <h3>{t('Settings')}</h3>
@@ -213,7 +209,7 @@ export const DashboardEmbedControls = ({ dashboardId, onHide }: Props) => {
           <Input
             id="allowed-domains"
             value={allowedDomains}
-            placeholder={t('superset.example.com')}
+            placeholder={t('axbi.example.com')}
             onChange={event => setAllowedDomains(event.target.value)}
           />
         </FormItem>

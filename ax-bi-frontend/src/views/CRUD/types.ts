@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryState } from '@superset-ui/core';
+import { QueryState } from '@ax-bi/ui-core';
 import { User } from 'src/types/bootstrapTypes';
 import Database from 'src/types/Database';
 import Owner from 'src/types/Owner';
@@ -135,12 +135,7 @@ export enum QueryObjectColumns {
 }
 
 export type ImportResourceName =
-  | 'chart'
-  | 'dashboard'
-  | 'database'
-  | 'dataset'
-  | 'saved_query'
-  | 'theme';
+  'chart' | 'dashboard' | 'database' | 'dataset' | 'saved_query' | 'theme';
 
 export interface Tag {
   changed_on_delta_humanized: string;

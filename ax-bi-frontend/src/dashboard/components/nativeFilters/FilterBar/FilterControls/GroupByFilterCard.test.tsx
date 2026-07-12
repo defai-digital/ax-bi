@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { LabeledValue } from '@superset-ui/core/components';
+import { LabeledValue } from '@ax-bi/ui-core/components';
 import { createLabelSortComparator } from './GroupByFilterCard';
 
 const apple: LabeledValue = { value: 'a', label: 'Apple' };

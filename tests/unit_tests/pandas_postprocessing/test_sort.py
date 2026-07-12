@@ -17,8 +17,8 @@
 import pytest
 from dateutil.parser import parse
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils.pandas_postprocessing import sort
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils.pandas_postprocessing import sort
 from tests.unit_tests.fixtures.dataframes import categories_df, timeseries_df
 from tests.unit_tests.pandas_postprocessing.utils import series_to_list
 

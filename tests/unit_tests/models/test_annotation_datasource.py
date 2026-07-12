@@ -18,9 +18,9 @@ from typing import Any, cast
 
 import pytest
 
-from superset.common.db_query_status import QueryStatus
-from superset.common.query_object import QueryObjectDict
-from superset.connectors.sqla.models import AnnotationDatasource
+from axbi.common.db_query_status import QueryStatus
+from axbi.common.query_object import QueryObjectDict
+from axbi.connectors.sqla.models import AnnotationDatasource
 
 
 @pytest.mark.parametrize(

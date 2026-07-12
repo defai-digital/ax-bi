@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { MenuItem } from '@superset-ui/core/components/Menu';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { MenuItem } from '@ax-bi/ui-core/components/Menu';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 
 export interface Languages {
   [key: string]: {

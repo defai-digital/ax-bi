@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { FormItem, Input, FormInstance } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { FormItem, Input, FormInstance } from '@ax-bi/ui-core/components';
 import { ModalFormField } from 'src/components/Modal';
 import { ValidationObject } from 'src/components/Modal/useModalValidation';
 

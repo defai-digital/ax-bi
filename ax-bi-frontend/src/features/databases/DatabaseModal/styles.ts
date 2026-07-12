@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { css, styled, SupersetTheme } from '@apache-superset/core/theme';
-import { Button, JsonEditor } from '@superset-ui/core/components';
+import { css, styled, AxBITheme } from '@ax-bi/core/theme';
+import { Button, JsonEditor } from '@ax-bi/ui-core/components';
 
 const CTAS_CVAS_SCHEMA_FORM_HEIGHT = 108;
 const EXPOSE_IN_SQLLAB_FORM_HEIGHT = CTAS_CVAS_SCHEMA_FORM_HEIGHT + 153;
@@ -29,11 +29,11 @@ export const no_margin_bottom = css`
   margin-bottom: 0;
 `;
 
-export const labelMarginBottom = (theme: SupersetTheme) => css`
+export const labelMarginBottom = (theme: AxBITheme) => css`
   margin-bottom: ${theme.sizeUnit * 2}px;
 `;
 
-export const marginBottom = (theme: SupersetTheme) => css`
+export const marginBottom = (theme: AxBITheme) => css`
   margin-bottom: ${theme.sizeUnit * 4}px;
 `;
 
@@ -100,7 +100,7 @@ export const antDModalNoPaddingStyles = css`
   }
 `;
 
-export const infoTooltip = (theme: SupersetTheme) => css`
+export const infoTooltip = (theme: AxBITheme) => css`
   margin-bottom: ${theme.sizeUnit * 5}px;
   svg {
     margin-bottom: ${theme.sizeUnit * 0.25}px;
@@ -109,16 +109,16 @@ export const infoTooltip = (theme: SupersetTheme) => css`
   align-items: center;
 `;
 
-export const toggleStyle = (theme: SupersetTheme) => css`
+export const toggleStyle = (theme: AxBITheme) => css`
   padding-left: ${theme.sizeUnit * 2}px;
   padding-right: ${theme.sizeUnit * 2}px;
 `;
 
-export const formScrollableStyles = (theme: SupersetTheme) => css`
+export const formScrollableStyles = (theme: AxBITheme) => css`
   padding: ${theme.sizeUnit * 4}px ${theme.sizeUnit * 4}px 0;
 `;
 
-export const antDModalStyles = (theme: SupersetTheme) => css`
+export const antDModalStyles = (theme: AxBITheme) => css`
   .ant-select-dropdown {
     max-height: ${theme.sizeUnit * 40}px;
   }
@@ -141,7 +141,7 @@ export const antDModalStyles = (theme: SupersetTheme) => css`
   }
 `;
 
-export const antDAlertStyles = (theme: SupersetTheme) => css`
+export const antDAlertStyles = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 4}px 0;
 `;
 
@@ -151,11 +151,11 @@ export const StyledAlertMargin = styled.div`
   `}
 `;
 
-export const antDErrorAlertStyles = (theme: SupersetTheme) => css`
+export const antDErrorAlertStyles = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 8}px ${theme.sizeUnit * 4}px;
 `;
 
-export const antdWarningAlertStyles = (theme: SupersetTheme) => css`
+export const antdWarningAlertStyles = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 4}px 0;
 
   .ant-alert-message {
@@ -163,7 +163,7 @@ export const antdWarningAlertStyles = (theme: SupersetTheme) => css`
   }
 `;
 
-export const formHelperStyles = (theme: SupersetTheme) => css`
+export const formHelperStyles = (theme: AxBITheme) => css`
   .required {
     margin-left: ${theme.sizeUnit / 2}px;
     color: ${theme.colorError};
@@ -178,7 +178,7 @@ export const formHelperStyles = (theme: SupersetTheme) => css`
   }
 `;
 
-export const wideButton = (theme: SupersetTheme) => css`
+export const wideButton = (theme: AxBITheme) => css`
   width: 100%;
   border: 1px solid ${theme.colorPrimaryText};
   color: ${theme.colorPrimaryText};
@@ -189,7 +189,7 @@ export const wideButton = (theme: SupersetTheme) => css`
   }
 `;
 
-export const formStyles = (theme: SupersetTheme) => css`
+export const formStyles = (theme: AxBITheme) => css`
   .form-group {
     margin-bottom: ${theme.sizeUnit * 4}px;
     &-w-50 {
@@ -211,7 +211,7 @@ export const formStyles = (theme: SupersetTheme) => css`
   }
 `;
 
-export const validatedFormStyles = (theme: SupersetTheme) => css`
+export const validatedFormStyles = (theme: AxBITheme) => css`
   label {
     color: ${theme.colorText};
     font-size: ${theme.fontSizeSM}px;
@@ -295,7 +295,7 @@ export const StyledInputContainer = styled.div`
 
 // Named-reference type annotation: TypeScript 6.0 declaration emit (TS2883)
 // won't let us leak react-ace's IAceOptions/ICommand/IEditorProps/IMarker
-// through the inferred type because they live in @superset-ui/core's nested
+// through the inferred type because they live in @ax-bi/ui-core's nested
 // node_modules and aren't portable. Aliasing to `typeof JsonEditor` emits a
 // named reference in the .d.ts instead of the expanded structural type.
 // The styled-components and ForwardRefExoticComponent shapes don't overlap
@@ -330,19 +330,19 @@ export const StyledAlignment = styled.div`
   margin-top: ${({ theme }) => theme.sizeUnit * 6}px;
 `;
 
-export const buttonLinkStyles = (theme: SupersetTheme) => css`
+export const buttonLinkStyles = (theme: AxBITheme) => css`
   text-transform: initial;
   padding: 0 ${theme.sizeUnit * 4}px;
   padding-right: ${theme.sizeUnit * 2}px;
 `;
 
-export const importDbButtonLinkStyles = (theme: SupersetTheme) => css`
+export const importDbButtonLinkStyles = (theme: AxBITheme) => css`
   font-size: ${theme.sizeUnit * 3.5}px;
   text-transform: initial;
   padding-right: ${theme.sizeUnit * 2}px;
 `;
 
-export const alchemyButtonLinkStyles = (theme: SupersetTheme) => css`
+export const alchemyButtonLinkStyles = (theme: AxBITheme) => css`
   text-transform: initial;
   margin-left: 0px;
   padding: 0 ${theme.sizeUnit * 2}px 0 0;
@@ -454,7 +454,7 @@ export const CredentialInfoForm = styled.div`
 
 export const SelectDatabaseStyles = styled.div`
   .preferred {
-    .superset-button {
+    .axbi-button {
       margin-left: 0;
     }
     display: flex;

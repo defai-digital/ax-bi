@@ -19,7 +19,7 @@
 import { buildConfig } from './config';
 import { createLogger } from './logger';
 import { buildServer } from './server';
-import { SupersetClient } from './supersetClient';
+import { AxBIClient } from './axbiClient';
 
 export async function start(): Promise<void> {
   let logger = createLogger('error');
@@ -27,8 +27,8 @@ export async function start(): Promise<void> {
   try {
     const config = buildConfig();
     logger = createLogger(config.logLevel);
-    const supersetClient = new SupersetClient(config);
-    const server = buildServer(config, supersetClient);
+    const axbiClient = new AxBIClient(config);
+    const server = buildServer(config, axbiClient);
 
     await server.listen({ host: config.host, port: config.port });
     logger.info('ax-services started', {
@@ -47,4 +47,4 @@ if (require.main === module) {
 
 export { buildConfig } from './config';
 export { buildServer } from './server';
-export { SupersetClient } from './supersetClient';
+export { AxBIClient } from './axbiClient';

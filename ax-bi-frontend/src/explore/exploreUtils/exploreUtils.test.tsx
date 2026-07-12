@@ -29,8 +29,8 @@ import {
   ChartMetadata,
   getChartMetadataRegistry,
   QueryFormData,
-  SupersetClient,
-} from '@superset-ui/core';
+  AxBIClient,
+} from '@ax-bi/ui-core';
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('exploreUtils', () => {
@@ -54,7 +54,7 @@ describe('exploreUtils', () => {
         formData,
         endpointType: 'base',
         force: false,
-        curUrl: 'http://superset.com',
+        curUrl: 'http://ax-bi.com',
       });
       compareURI(URI(url!), URI('/explore/'));
     });
@@ -63,7 +63,7 @@ describe('exploreUtils', () => {
         formData,
         endpointType: 'json',
         force: false,
-        curUrl: 'http://superset.com',
+        curUrl: 'http://ax-bi.com',
       });
       compareURI(URI(url!), URI('/ax-bi/explore_json/'));
     });
@@ -72,7 +72,7 @@ describe('exploreUtils', () => {
         formData,
         endpointType: 'json',
         force: true,
-        curUrl: 'superset.com',
+        curUrl: 'axbi.com',
       });
       compareURI(
         URI(url!),
@@ -84,7 +84,7 @@ describe('exploreUtils', () => {
         formData,
         endpointType: 'csv',
         force: false,
-        curUrl: 'superset.com',
+        curUrl: 'axbi.com',
       });
       compareURI(
         URI(url!),
@@ -96,7 +96,7 @@ describe('exploreUtils', () => {
         formData,
         endpointType: 'standalone',
         force: false,
-        curUrl: 'superset.com',
+        curUrl: 'axbi.com',
       });
       compareURI(
         URI(url!),
@@ -110,24 +110,18 @@ describe('exploreUtils', () => {
         formData,
         endpointType: 'json',
         force: false,
-        curUrl: 'superset.com?foo=bar',
+        curUrl: 'axbi.com?foo=bar',
       });
-      compareURI(
-        URI(url!),
-        URI('/ax-bi/explore_json/').search({ foo: 'bar' }),
-      );
+      compareURI(URI(url!), URI('/ax-bi/explore_json/').search({ foo: 'bar' }));
     });
     test('generate proper save slice url', () => {
       const url = getExploreUrl({
         formData,
         endpointType: 'json',
         force: false,
-        curUrl: 'superset.com?foo=bar',
+        curUrl: 'axbi.com?foo=bar',
       });
-      compareURI(
-        URI(url!),
-        URI('/ax-bi/explore_json/').search({ foo: 'bar' }),
-      );
+      compareURI(URI(url!), URI('/ax-bi/explore_json/').search({ foo: 'bar' }));
     });
   });
 
@@ -234,7 +228,7 @@ describe('exploreUtils', () => {
   // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
   describe('.exploreChart()', () => {
     test('postForm', () => {
-      const postFormSpy = jest.spyOn(SupersetClient, 'postForm');
+      const postFormSpy = jest.spyOn(AxBIClient, 'postForm');
       postFormSpy.mockImplementation(jest.fn());
 
       exploreChart({ ...formData, viz_type: 'my_custom_viz' });

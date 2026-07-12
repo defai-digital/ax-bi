@@ -33,34 +33,34 @@ from sqlalchemy.dialects import sqlite
 from sqlalchemy.engine.url import make_url, URL
 from sqlalchemy.sql import sqltypes
 
-from superset.db_engine_specs.base import (
-    BaseEngineSpec,
-    BasicParametersMixin,
-    BasicParametersType,
-    convert_inspector_columns,
-)
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import OAuth2RedirectError
-from superset.sql.parse import Table
-from superset.superset_typing import (
+from axbi.axbi_typing import (
     OAuth2ClientConfig,
     OAuth2State,
     ResultSetColumnType,
     SQLAColumnType,
 )
-from superset.utils.core import FilterOperator, GenericDataType
-from superset.utils.oauth2 import decode_oauth2_state
+from axbi.db_engine_specs.base import (
+    BaseEngineSpec,
+    BasicParametersMixin,
+    BasicParametersType,
+    convert_inspector_columns,
+)
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import OAuth2RedirectError
+from axbi.sql.parse import Table
+from axbi.utils.core import FilterOperator, GenericDataType
+from axbi.utils.oauth2 import decode_oauth2_state
 from tests.conftest import with_config
 from tests.unit_tests.db_engine_specs.utils import assert_column_spec
 
 
-def create_expected_superset_error(
+def create_expected_axbi_error(
     message: str,
-    error_type: SupersetErrorType = SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+    error_type: AxBIErrorType = AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
     engine_name: str | None = None,
-) -> SupersetError:
+) -> AxBIError:
     """
-    Helper function to create expected SupersetError objects for testing.
+    Helper function to create expected AxBIError objects for testing.
     """
     extra = {
         "engine_name": engine_name,
@@ -72,7 +72,7 @@ def create_expected_superset_error(
         ],
     }
 
-    return SupersetError(
+    return AxBIError(
         message=message,
         error_type=error_type,
         level=ErrorLevel.ERROR,
@@ -195,7 +195,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.databricks import (
+    from axbi.db_engine_specs.databricks import (
         DatabricksNativeEngineSpec as spec,  # noqa: N813
     )
 
@@ -273,7 +273,7 @@ def test_extra_table_metadata(mocker: MockerFixture) -> None:
     """
     Test the deprecated `extra_table_metadata` method.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     class ThirdPartyDBEngineSpec(BaseEngineSpec):
         @classmethod
@@ -286,7 +286,7 @@ def test_extra_table_metadata(mocker: MockerFixture) -> None:
             return {"table": table_name, "schema": schema_name}
 
     database = mocker.MagicMock()
-    warnings = mocker.patch("superset.db_engine_specs.base.warnings")
+    warnings = mocker.patch("axbi.db_engine_specs.base.warnings")
 
     assert ThirdPartyDBEngineSpec.get_extra_table_metadata(
         database,
@@ -487,7 +487,7 @@ def test_impersonate_user_backwards_compatible(mocker: MockerFixture) -> None:
         BaseEngineSpec,
         "update_impersonation_config",
     )
-    signature = mocker.patch("superset.db_engine_specs.base.signature")
+    signature = mocker.patch("axbi.db_engine_specs.base.signature")
     signature().parameters = [
         "cls",
         "database",
@@ -527,7 +527,7 @@ def test_impersonate_user_no_database(mocker: MockerFixture) -> None:
         BaseEngineSpec,
         "update_impersonation_config",
     )
-    signature = mocker.patch("superset.db_engine_specs.base.signature")
+    signature = mocker.patch("axbi.db_engine_specs.base.signature")
     signature().parameters = [
         "cls",
         "connect_args",
@@ -654,7 +654,7 @@ def test_extract_errors(mocker: MockerFixture) -> None:
     msg = "This connector does not support roles"
     result = BaseEngineSpec.extract_errors(Exception(msg))
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="This connector does not support roles",
         engine_name=None,
     )
@@ -667,7 +667,7 @@ def test_extract_errors(mocker: MockerFixture) -> None:
             "examples": {
                 re.compile("This connector does not support roles"): (
                     "Custom error message",
-                    SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                    AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                     {},
                 )
             }
@@ -686,7 +686,7 @@ def test_extract_errors_from_config(mocker: MockerFixture) -> None:
     msg = "This connector does not support roles"
     result = TestEngineSpec.extract_errors(Exception(msg), database_name="examples")
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="Custom error message",
         engine_name="ExampleEngine",
     )
@@ -699,7 +699,7 @@ def test_extract_errors_from_config(mocker: MockerFixture) -> None:
             "examples": {
                 re.compile("This connector does not support roles"): (
                     "Custom error message",
-                    SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                    AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                     {},
                 )
             }
@@ -718,7 +718,7 @@ def test_extract_errors_only_to_specified_database(mocker: MockerFixture) -> Non
     # database_name doesn't match configured one, so default message is used
     result = TestEngineSpec.extract_errors(Exception(msg), database_name="examples_2")
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="This connector does not support roles",
         engine_name="ExampleEngine",
     )
@@ -731,7 +731,7 @@ def test_extract_errors_only_to_specified_database(mocker: MockerFixture) -> Non
             "examples": {
                 re.compile(r'message="(?P<message>[^"]*)"'): (
                     'Unexpected error: "%(message)s"',
-                    SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                    AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                     {
                         "custom_doc_links": [
                             {
@@ -765,13 +765,13 @@ def test_extract_errors_from_config_with_regex(mocker: MockerFixture) -> None:
     result = TestEngineSpec.extract_errors(Exception(msg), database_name="examples")
 
     assert result == [
-        SupersetError(
+        AxBIError(
             message=(
                 'Unexpected error: "line 3:6: Table '
                 "'example_catalog.example_schema.example_table' does not exist"
                 '"'
             ),
-            error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+            error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "ExampleEngine",
@@ -806,7 +806,7 @@ def test_extract_errors_with_non_dict_custom_errors(mocker: MockerFixture):
     msg = "This connector does not support roles"
     result = TestEngineSpec.extract_errors(Exception(msg))
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="This connector does not support roles",
         engine_name="ExampleEngine",
     )
@@ -826,7 +826,7 @@ def test_extract_errors_with_non_dict_engine_custom_errors(mocker: MockerFixture
     msg = "This connector does not support roles"
     result = TestEngineSpec.extract_errors(Exception(msg), database_name="examples")
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="This connector does not support roles",
         engine_name="ExampleEngine",
     )
@@ -839,7 +839,7 @@ def test_extract_errors_with_non_dict_engine_custom_errors(mocker: MockerFixture
             "examples": {
                 re.compile("This connector does not support roles"): (
                     "",
-                    SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                    AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                     {},
                 )
             }
@@ -858,7 +858,7 @@ def test_extract_errors_with_empty_custom_error_message(mocker: MockerFixture):
     msg = "This connector does not support roles"
     result = TestEngineSpec.extract_errors(Exception(msg), database_name="examples")
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="This connector does not support roles",
         engine_name="ExampleEngine",
     )
@@ -871,14 +871,14 @@ def test_extract_errors_with_empty_custom_error_message(mocker: MockerFixture):
             "examples": {
                 re.compile("connection error"): (
                     "Examples DB error message",
-                    SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                    AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                     {},
                 )
             },
             "examples_2": {
                 re.compile("connection error"): (
                     "Examples_2 DB error message",
-                    SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                    AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                     {},
                 )
             },
@@ -897,7 +897,7 @@ def test_extract_errors_matches_database_name_selection(mocker: MockerFixture) -
     # When database_name is examples_2 we should get that specific message
     result = TestEngineSpec.extract_errors(Exception(msg), database_name="examples_2")
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="Examples_2 DB error message",
         engine_name="ExampleEngine",
     )
@@ -910,7 +910,7 @@ def test_extract_errors_matches_database_name_selection(mocker: MockerFixture) -
             "examples": {
                 re.compile("connection error"): (
                     "Examples DB error message",
-                    SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+                    AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
                     {},
                 )
             },
@@ -928,7 +928,7 @@ def test_extract_errors_no_match_falls_back(mocker: MockerFixture) -> None:
     msg = "some other error"
     result = TestEngineSpec.extract_errors(Exception(msg), database_name="examples_2")
 
-    expected = create_expected_superset_error(
+    expected = create_expected_axbi_error(
         message="some other error",
         engine_name="ExampleEngine",
     )
@@ -989,8 +989,8 @@ def test_get_oauth2_authorization_uri_with_pkce(mocker: MockerFixture) -> None:
     """
     from urllib.parse import parse_qs, urlparse
 
-    from superset.db_engine_specs.base import BaseEngineSpec
-    from superset.utils.oauth2 import generate_code_challenge, generate_code_verifier
+    from axbi.db_engine_specs.base import BaseEngineSpec
+    from axbi.utils.oauth2 import generate_code_challenge, generate_code_verifier
 
     config: OAuth2ClientConfig = {
         "id": "client-id",
@@ -1029,9 +1029,9 @@ def test_get_oauth2_token_without_pkce(mocker: MockerFixture) -> None:
     """
     Test that BaseEngineSpec.get_oauth2_token works without PKCE code_verifier.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
-    mock_post = mocker.patch("superset.db_engine_specs.base.requests.post")
+    mock_post = mocker.patch("axbi.db_engine_specs.base.requests.post")
     mock_post.return_value.json.return_value = {
         "access_token": "test-access-token",  # noqa: S105
         "expires_in": 3600,
@@ -1061,10 +1061,10 @@ def test_get_oauth2_token_with_pkce(mocker: MockerFixture) -> None:
     """
     Test BaseEngineSpec.get_oauth2_token includes code_verifier when provided.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
-    from superset.utils.oauth2 import generate_code_verifier
+    from axbi.db_engine_specs.base import BaseEngineSpec
+    from axbi.utils.oauth2 import generate_code_verifier
 
-    mock_post = mocker.patch("superset.db_engine_specs.base.requests.post")
+    mock_post = mocker.patch("axbi.db_engine_specs.base.requests.post")
     mock_post.return_value.json.return_value = {
         "access_token": "test-access-token",  # noqa: S105
         "expires_in": 3600,
@@ -1097,7 +1097,7 @@ def test_get_oauth2_authorization_uri_additional_params(
     Test that a subclass can inject additional query params into the authorization URI
     via `oauth2_additional_auth_uri_query_params`.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
     class CustomEngineSpec(BaseEngineSpec):
         oauth2_additional_auth_uri_query_params = {
@@ -1141,14 +1141,14 @@ def test_get_oauth2_token_additional_params(mocker: MockerFixture) -> None:
     Test that a subclass can inject additional params into the token request body
     via `oauth2_additional_token_request_params`.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
     class CustomEngineSpec(BaseEngineSpec):
         oauth2_additional_token_request_params = {
             "audience": "https://api.example.com",
         }
 
-    mock_post = mocker.patch("superset.db_engine_specs.base.requests.post")
+    mock_post = mocker.patch("axbi.db_engine_specs.base.requests.post")
     mock_post.return_value.json.return_value = {
         "access_token": "test-access-token",  # noqa: S105
         "expires_in": 3600,
@@ -1183,9 +1183,9 @@ def test_get_oauth2_fresh_token_success(mocker: MockerFixture) -> None:
     """
     Test that get_oauth2_fresh_token returns the token response on success.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
-    mock_post = mocker.patch("superset.db_engine_specs.base.requests.post")
+    mock_post = mocker.patch("axbi.db_engine_specs.base.requests.post")
     mock_post.return_value.status_code = 200
     mock_post.return_value.json.return_value = {
         "access_token": "new-access-token",
@@ -1215,10 +1215,10 @@ def test_get_oauth2_fresh_token_raises_on_auth_error(
     """
     Test that get_oauth2_fresh_token raises OAuth2TokenRefreshError on 400/401/403.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
-    from superset.exceptions import OAuth2TokenRefreshError
+    from axbi.db_engine_specs.base import BaseEngineSpec
+    from axbi.exceptions import OAuth2TokenRefreshError
 
-    mock_post = mocker.patch("superset.db_engine_specs.base.requests.post")
+    mock_post = mocker.patch("axbi.db_engine_specs.base.requests.post")
     mock_post.return_value.status_code = status_code
     mock_post.return_value.text = '{"error": "invalid_grant"}'
 
@@ -1246,9 +1246,9 @@ def test_get_oauth2_fresh_token_raises_on_server_error(mocker: MockerFixture) ->
     """
     from requests.exceptions import HTTPError
 
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
-    mock_post = mocker.patch("superset.db_engine_specs.base.requests.post")
+    mock_post = mocker.patch("axbi.db_engine_specs.base.requests.post")
     mock_post.return_value.status_code = 500
     mock_post.return_value.raise_for_status.side_effect = HTTPError("500 Server Error")
 
@@ -1280,10 +1280,10 @@ def test_start_oauth2_dance_uses_config_redirect_uri(mocker: MockerFixture) -> N
             "DATABASE_OAUTH2_JWT_ALGORITHM": "HS256",
         },
     )
-    mocker.patch("superset.daos.key_value.KeyValueDAO")
-    mocker.patch("superset.db_engine_specs.base.db")
+    mocker.patch("axbi.daos.key_value.KeyValueDAO")
+    mocker.patch("axbi.db_engine_specs.base.db")
 
-    g = mocker.patch("superset.db_engine_specs.base.g")
+    g = mocker.patch("axbi.db_engine_specs.base.g")
     g.user.id = 1
 
     database = mocker.MagicMock()
@@ -1318,13 +1318,13 @@ def test_start_oauth2_dance_falls_back_to_url_for(mocker: MockerFixture) -> None
     fallback_uri = "http://localhost:8088/api/v1/database/oauth2/"
 
     mocker.patch(
-        "superset.utils.oauth2.url_for",
+        "axbi.utils.oauth2.url_for",
         return_value=fallback_uri,
     )
-    mocker.patch("superset.daos.key_value.KeyValueDAO")
-    mocker.patch("superset.db_engine_specs.base.db")
+    mocker.patch("axbi.daos.key_value.KeyValueDAO")
+    mocker.patch("axbi.db_engine_specs.base.db")
 
-    g = mocker.patch("superset.db_engine_specs.base.g")
+    g = mocker.patch("axbi.db_engine_specs.base.g")
     g.user.id = 1
 
     database = mocker.MagicMock()

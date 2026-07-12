@@ -27,8 +27,8 @@ import {
   NumberFormatter,
   rgbToHex,
   tooltipHtml,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import type { ComposeOption } from 'echarts/core';
 import type { BarSeriesOption } from 'echarts/charts';
 import {

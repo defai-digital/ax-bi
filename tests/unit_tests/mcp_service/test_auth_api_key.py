@@ -31,13 +31,13 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import g
 
-from superset.app import SupersetApp
-from superset.mcp_service.auth import (
+from axbi.app import AxBIApp
+from axbi.mcp_service.auth import (
     _resolve_user_from_jwt_context,
     get_user_from_request,
     MCPNoAuthSourceError,
 )
-from superset.mcp_service.composite_token_verifier import API_KEY_PASSTHROUGH_CLAIM
+from axbi.mcp_service.composite_token_verifier import API_KEY_PASSTHROUGH_CLAIM
 
 
 @pytest.fixture
@@ -65,7 +65,7 @@ def _patch_access_token(access_token: MagicMock | None):
 
 
 @pytest.fixture
-def _enable_api_keys(app: SupersetApp) -> Generator[None, None, None]:
+def _enable_api_keys(app: AxBIApp) -> Generator[None, None, None]:
     """Enable FAB API key auth and clear MCP_DEV_USERNAME so the API key
     path is exercised instead of falling through to the dev-user fallback."""
     app.config["FAB_API_KEY_ENABLED"] = True
@@ -77,7 +77,7 @@ def _enable_api_keys(app: SupersetApp) -> Generator[None, None, None]:
 
 
 @pytest.fixture
-def _disable_api_keys(app: SupersetApp) -> Generator[None, None, None]:
+def _disable_api_keys(app: AxBIApp) -> Generator[None, None, None]:
     app.config["FAB_API_KEY_ENABLED"] = False
     old_dev = app.config.pop("MCP_DEV_USERNAME", None)
     yield
@@ -87,7 +87,7 @@ def _disable_api_keys(app: SupersetApp) -> Generator[None, None, None]:
 
 
 @contextmanager
-def _mock_sm_ctx(app: SupersetApp, mock_sm: MagicMock):
+def _mock_sm_ctx(app: AxBIApp, mock_sm: MagicMock):
     """Push an app context with g.user cleared and appbuilder.sm mocked."""
     with app.app_context():
         g.user = None
@@ -104,7 +104,7 @@ def _patch_load_user_not_found():
     ValueError("not found") must patch it directly at the module level.
     """
     return patch(
-        "superset.mcp_service.auth.load_user_with_relationships",
+        "axbi.mcp_service.auth.load_user_with_relationships",
         return_value=None,
     )
 
@@ -113,7 +113,7 @@ def _patch_load_user_not_found():
 
 
 @pytest.mark.usefixtures("_enable_api_keys")
-def test_valid_api_key_returns_user(app: SupersetApp, mock_user: MagicMock) -> None:
+def test_valid_api_key_returns_user(app: AxBIApp, mock_user: MagicMock) -> None:
     """A valid API key pass-through token should authenticate and return the user."""
     mock_sm = MagicMock()
     mock_sm.validate_api_key.return_value = mock_user
@@ -124,7 +124,7 @@ def test_valid_api_key_returns_user(app: SupersetApp, mock_user: MagicMock) -> N
         with (
             _patch_access_token(access_token),
             patch(
-                "superset.mcp_service.auth.load_user_with_relationships",
+                "axbi.mcp_service.auth.load_user_with_relationships",
                 return_value=mock_user,
             ),
         ):
@@ -143,7 +143,7 @@ def test_valid_api_key_returns_user(app: SupersetApp, mock_user: MagicMock) -> N
 
 
 @pytest.mark.usefixtures("_enable_api_keys")
-def test_invalid_api_key_raises(app: SupersetApp) -> None:
+def test_invalid_api_key_raises(app: AxBIApp) -> None:
     """An invalid API key pass-through token should raise PermissionError
     (fail closed — do NOT fall through to MCP_DEV_USERNAME)."""
     mock_sm = MagicMock()
@@ -171,7 +171,7 @@ def test_invalid_api_key_raises(app: SupersetApp) -> None:
 
 
 @pytest.mark.usefixtures("_disable_api_keys")
-def test_api_key_disabled_skips_auth(app: SupersetApp) -> None:
+def test_api_key_disabled_skips_auth(app: AxBIApp) -> None:
     """When FAB_API_KEY_ENABLED is False, API key auth is skipped entirely
     even if an AccessToken is present."""
     mock_sm = MagicMock()
@@ -186,7 +186,7 @@ def test_api_key_disabled_skips_auth(app: SupersetApp) -> None:
 
 @pytest.mark.usefixtures("_disable_api_keys")
 def test_unauthenticated_error_does_not_leak_config(
-    app: SupersetApp, caplog: pytest.LogCaptureFixture
+    app: AxBIApp, caplog: pytest.LogCaptureFixture
 ) -> None:
     """The error returned to an unauthenticated client must not reveal which
     auth mechanisms are configured; the diagnostics stay in the server log."""
@@ -201,7 +201,7 @@ def test_unauthenticated_error_does_not_leak_config(
     try:
         with app.test_request_context():
             g.user = None
-            with caplog.at_level(logging.WARNING, logger="superset.mcp_service.auth"):
+            with caplog.at_level(logging.WARNING, logger="axbi.mcp_service.auth"):
                 with pytest.raises(
                     MCPNoAuthSourceError, match="Authentication required"
                 ) as exc_info:
@@ -237,7 +237,7 @@ def test_unauthenticated_error_does_not_leak_config(
 
 
 @pytest.mark.usefixtures("_enable_api_keys")
-def test_no_access_token_skips_api_key_auth(app: SupersetApp) -> None:
+def test_no_access_token_skips_api_key_auth(app: AxBIApp) -> None:
     """Without a FastMCP AccessToken (e.g., MCP_AUTH_ENABLED=False and no
     auth provider installed), API key auth is skipped."""
     mock_sm = MagicMock()
@@ -255,7 +255,7 @@ def test_no_access_token_skips_api_key_auth(app: SupersetApp) -> None:
 
 @pytest.mark.usefixtures("_disable_api_keys")
 def test_g_user_fallback_when_no_jwt_or_api_key(
-    app: SupersetApp, mock_user: MagicMock
+    app: AxBIApp, mock_user: MagicMock
 ) -> None:
     """When no JWT or API key auth succeeds and MCP_DEV_USERNAME is not set,
     g.user (set by external middleware) is used as fallback."""
@@ -271,7 +271,7 @@ def test_g_user_fallback_when_no_jwt_or_api_key(
 
 
 @pytest.mark.usefixtures("_enable_api_keys")
-def test_fab_without_validate_method_raises(app: SupersetApp) -> None:
+def test_fab_without_validate_method_raises(app: AxBIApp) -> None:
     """If FAB SecurityManager lacks validate_api_key, should raise
     PermissionError about unavailable validation."""
     mock_sm = MagicMock(spec=[])  # empty spec = no attributes
@@ -289,7 +289,7 @@ def test_fab_without_validate_method_raises(app: SupersetApp) -> None:
 
 @pytest.mark.usefixtures("_enable_api_keys")
 def test_relationship_reload_failure_returns_original_user(
-    app: SupersetApp, mock_user: MagicMock
+    app: AxBIApp, mock_user: MagicMock
 ) -> None:
     """If load_user_with_relationships fails, the original user from
     validate_api_key should be returned as fallback."""
@@ -300,7 +300,7 @@ def test_relationship_reload_failure_returns_original_user(
         with (
             _patch_access_token(_passthrough_access_token("sst_abc123")),
             patch(
-                "superset.mcp_service.auth.load_user_with_relationships",
+                "axbi.mcp_service.auth.load_user_with_relationships",
                 return_value=None,
             ),
         ):
@@ -313,7 +313,7 @@ def test_relationship_reload_failure_returns_original_user(
 
 
 @pytest.mark.usefixtures("_enable_api_keys")
-def test_jwt_access_token_skips_api_key_auth(app: SupersetApp) -> None:
+def test_jwt_access_token_skips_api_key_auth(app: AxBIApp) -> None:
     """When the AccessToken is a plain JWT (no API_KEY_PASSTHROUGH_CLAIM),
     API key auth is skipped — the JWT was already validated by the JWT
     verifier and resolved in _resolve_user_from_jwt_context."""
@@ -338,7 +338,7 @@ def test_jwt_access_token_skips_api_key_auth(app: SupersetApp) -> None:
 # -- API key pass-through detection in JWT context resolver --
 
 
-def test_jwt_context_with_api_key_passthrough_returns_none(app: SupersetApp) -> None:
+def test_jwt_context_with_api_key_passthrough_returns_none(app: AxBIApp) -> None:
     """When CompositeTokenVerifier passes through an API key token,
     _resolve_user_from_jwt_context should detect the namespaced
     pass-through claim AND client_id=="api_key" and return None so
@@ -357,7 +357,7 @@ def test_jwt_context_with_api_key_passthrough_returns_none(app: SupersetApp) -> 
 
 
 def test_namespaced_claim_without_api_key_client_id_is_ignored(
-    app: SupersetApp,
+    app: AxBIApp,
 ) -> None:
     """An external IdP JWT that includes the namespaced API_KEY_PASSTHROUGH_CLAIM
     but does NOT have client_id=='api_key' must NOT divert into the API-key path.
@@ -385,7 +385,7 @@ def test_namespaced_claim_without_api_key_client_id_is_ignored(
 
 @pytest.mark.usefixtures("_enable_api_keys")
 def test_unnamespaced_passthrough_claim_does_not_trigger_api_key_path(
-    app: SupersetApp,
+    app: AxBIApp,
 ) -> None:
     """A JWT minted by an external IdP that happens to include a custom
     ``_api_key_passthrough`` claim (legacy unnamespaced name) must NOT be
@@ -410,13 +410,13 @@ def test_unnamespaced_passthrough_claim_does_not_trigger_api_key_path(
 # -- SecurityManager method name regression test --
 
 
-def test_security_manager_has_expected_api_key_methods(app: SupersetApp) -> None:
+def test_security_manager_has_expected_api_key_methods(app: AxBIApp) -> None:
     """Regression test: verify the SecurityManager method name referenced in
     auth._resolve_user_from_api_key() actually exists on the FAB
     SecurityManager class. Catches future renames before they silently break
     API key auth at runtime (see PR #39437)."""
     with app.app_context():
-        from superset import security_manager
+        from axbi import security_manager
 
         sm = security_manager
         assert hasattr(sm, "validate_api_key"), (
@@ -426,15 +426,15 @@ def test_security_manager_has_expected_api_key_methods(app: SupersetApp) -> None
         )
 
 
-def test_security_manager_has_find_user_with_relationships(app: SupersetApp) -> None:
-    """Regression test: verify SupersetSecurityManager.find_user_with_relationships
+def test_security_manager_has_find_user_with_relationships(app: AxBIApp) -> None:
+    """Regression test: verify AxBISecurityManager.find_user_with_relationships
     exists. load_user_with_relationships() in auth.py delegates to it — a rename
     or removal would silently break MCP user resolution at runtime."""
     with app.app_context():
-        from superset import security_manager
+        from axbi import security_manager
 
         assert hasattr(security_manager, "find_user_with_relationships"), (
-            "SupersetSecurityManager is missing 'find_user_with_relationships'. "
+            "AxBISecurityManager is missing 'find_user_with_relationships'. "
             "auth.load_user_with_relationships() delegates to this method — "
             "update auth.py if the method was renamed or removed."
         )

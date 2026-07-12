@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Comparator, ObjectFormattingEnum } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { Comparator, ObjectFormattingEnum } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 
 export const operatorOptions = [
   { value: Comparator.None, label: t('None') },

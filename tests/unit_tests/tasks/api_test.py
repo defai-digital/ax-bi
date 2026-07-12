@@ -19,7 +19,7 @@ from uuid import uuid4
 
 from flask import Flask
 
-from superset.tasks.api import TaskRestApi
+from axbi.tasks.api import TaskRestApi
 
 
 def test_cancel_rejects_malformed_request_body() -> None:
@@ -29,7 +29,7 @@ def test_cancel_rejects_malformed_request_body() -> None:
     api.response_400 = MagicMock(return_value=("bad request", {}))
 
     with app.test_request_context(json={"force": "not-a-boolean"}):
-        with patch("superset.tasks.api.CancelTaskCommand") as command:
+        with patch("axbi.tasks.api.CancelTaskCommand") as command:
             result = api._execute_cancel(str(uuid4()))
 
     assert result == ("bad request", {})

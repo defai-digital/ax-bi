@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { isProbablyHTML, sanitizeHtml } from '@superset-ui/core';
-import { ValueGetterParams } from '@superset-ui/core/components/ThemedAgGridReact';
+import { isProbablyHTML, sanitizeHtml } from '@ax-bi/ui-core';
+import { ValueGetterParams } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 
 const stripHtmlToText = (html: string): string => {
   const doc = new DOMParser().parseFromString(sanitizeHtml(html), 'text/html');

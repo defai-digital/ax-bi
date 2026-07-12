@@ -20,29 +20,24 @@ import { sanitizeUrl } from '@braintree/sanitize-url';
 import rison from 'rison';
 import { PureComponent, useCallback, type ReactNode } from 'react';
 import { connect, ConnectedProps } from 'react-redux';
-import type { JsonObject } from '@superset-ui/core';
-import { type SupersetTheme } from '@apache-superset/core/theme';
+import type { JsonObject } from '@ax-bi/ui-core';
+import { type AxBITheme } from '@ax-bi/core/theme';
 import type { AnyAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
-import { Radio } from '@superset-ui/core/components/Radio';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
 import {
   isFeatureEnabled,
   FeatureFlag,
-  SupersetClient,
+  AxBIClient,
   getClientErrorObject,
   getExtensionsRegistry,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
-import { Alert } from '@apache-superset/core/components';
-import {
-  css,
-  styled,
-  themeObject,
-  withTheme,
-} from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import Tabs from '@superset-ui/core/components/Tabs';
-import WarningIconWithTooltip from '@superset-ui/core/components/WarningIconWithTooltip';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, themeObject, withTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
+import WarningIconWithTooltip from '@ax-bi/ui-core/components/WarningIconWithTooltip';
 import TableSelector from 'src/components/TableSelector';
 import CheckboxControl from 'src/explore/components/controls/CheckboxControl';
 import TextControl from 'src/explore/components/controls/TextControl';
@@ -70,7 +65,7 @@ import {
   Tooltip,
   Typography,
   Label,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { FilterableTable } from 'src/components';
 import {
   executeQuery,
@@ -78,7 +73,7 @@ import {
   resetDatabaseState,
 } from 'src/database/actions';
 import Mousetrap from 'mousetrap';
-import { clearDatasetCache } from 'src/utils/cachedSupersetGet';
+import { clearDatasetCache } from 'src/utils/cachedAxBIGet';
 import { makeUrl } from 'src/utils/pathUtils';
 import {
   OwnerSelectLabel,
@@ -208,7 +203,7 @@ interface DatasourceEditorOwnProps {
   addDangerToast: (msg: string) => void;
   setIsEditing?: (isEditing: boolean) => void;
   currencies?: string[];
-  theme?: SupersetTheme;
+  theme?: AxBITheme;
 }
 
 interface QueryResultColumn {
@@ -799,7 +794,7 @@ function OwnersSelector({
       pageSize: number,
     ): Promise<{ data: Owner[]; totalCount: number }> => {
       const query = rison.encode({ filter: search, page, page_size: pageSize });
-      return SupersetClient.get({
+      return AxBIClient.get({
         endpoint: `/api/v1/dataset/related/owners?q=${query}`,
       }).then(response => ({
         data: (response.json.result as Array<JsonObject>)
@@ -881,7 +876,7 @@ type PropsFromRedux = ConnectedProps<typeof connector>;
 
 type DatasourceEditorProps = DatasourceEditorOwnProps &
   PropsFromRedux & {
-    theme?: SupersetTheme;
+    theme?: AxBITheme;
   };
 
 const parseMetricExtra = (extra?: string) => {
@@ -1194,7 +1189,7 @@ class DatasourceEditor extends PureComponent<
     const { signal } = this.abortControllers.formatSql;
 
     try {
-      const response = await SupersetClient.post({
+      const response = await AxBIClient.post({
         endpoint: '/api/v1/sql/format',
         body: JSON.stringify({ sql: datasource.sql }),
         headers: { 'Content-Type': 'application/json' },
@@ -1337,7 +1332,7 @@ class DatasourceEditor extends PureComponent<
         page_size: pageSize,
       });
 
-      const { json = {} } = await SupersetClient.get({
+      const { json = {} } = await AxBIClient.get({
         endpoint: `/api/v1/chart/?q=${queryParams}`,
         signal,
       });
@@ -1583,9 +1578,7 @@ class DatasourceEditor extends PureComponent<
               {t(
                 'Default URL to redirect to when accessing from the dataset list page. Accepts relative URLs such as',
               )}{' '}
-              <Typography.Text code>
-                /ax-bi/dashboard/{'{id}'}/
-              </Typography.Text>
+              <Typography.Text code>/ax-bi/dashboard/{'{id}'}/</Typography.Text>
             </>
           }
           control={<TextControl controlId="default_endpoint" />}
@@ -1930,7 +1923,7 @@ class DatasourceEditor extends PureComponent<
                     label={t('SQL')}
                     description={t(
                       'When specifying SQL, the datasource acts as a view. ' +
-                        'Superset will use this statement as a subquery while grouping and filtering ' +
+                        'AxBI will use this statement as a subquery while grouping and filtering ' +
                         'on the generated parent queries.' +
                         'If changes are made to your SQL query, ' +
                         'columns in your dataset will be synced when saving the dataset.',
@@ -2122,7 +2115,7 @@ class DatasourceEditor extends PureComponent<
                   }
                   description={t(
                     'The pointer to a physical table (or view). Keep in mind that the chart is ' +
-                      'associated to this Superset logical table, and this logical table points ' +
+                      'associated to this AxBI logical table, and this logical table points ' +
                       'the physical table referenced here.',
                   )}
                 />
@@ -2537,7 +2530,7 @@ class DatasourceEditor extends PureComponent<
                         folders={this.state.folders}
                         // Type cast needed: local Metric interface differs slightly from chart-controls Metric
                         metrics={
-                          sortedMetrics as unknown as import('@superset-ui/chart-controls').Metric[]
+                          sortedMetrics as unknown as import('@ax-bi/chart-controls').Metric[]
                         }
                         columns={[
                           ...this.state.databaseColumns,

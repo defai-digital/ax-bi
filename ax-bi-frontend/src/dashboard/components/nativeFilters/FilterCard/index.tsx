@@ -18,7 +18,7 @@
  */
 
 import { useEffect, useState } from 'react';
-import { Popover } from '@superset-ui/core/components';
+import { Popover } from '@ax-bi/ui-core/components';
 import { FilterCardContent } from './FilterCardContent';
 import { FilterCardProps } from './types';
 

@@ -18,9 +18,9 @@
  */
 
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { NativeFilterScope } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { FormItem } from '@superset-ui/core/components';
+import { NativeFilterScope } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { FormItem } from '@ax-bi/ui-core/components';
 import ScopingTree from './ScopingTree';
 import { getDefaultScopeValue } from './utils';
 

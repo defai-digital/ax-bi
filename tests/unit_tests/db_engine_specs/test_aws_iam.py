@@ -24,12 +24,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.exceptions import SupersetSecurityException
+from axbi.exceptions import AxBISecurityException
 from tests.unit_tests.conftest import with_feature_flags
 
 
 def test_get_iam_credentials_success() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     mock_credentials = {
         "AccessKeyId": "ASIA...",
@@ -52,13 +52,13 @@ def test_get_iam_credentials_success() -> None:
         mock_boto3_client.assert_called_once_with("sts", region_name="us-east-1")
         mock_sts.assume_role.assert_called_once_with(
             RoleArn="arn:aws:iam::123456789012:role/TestRole",
-            RoleSessionName="superset-iam-session",
+            RoleSessionName="axbi-iam-session",
             DurationSeconds=3600,
         )
 
 
 def test_get_iam_credentials_with_external_id() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     mock_credentials = {
         "AccessKeyId": "ASIA...",
@@ -81,7 +81,7 @@ def test_get_iam_credentials_with_external_id() -> None:
         assert credentials == mock_credentials
         mock_sts.assume_role.assert_called_once_with(
             RoleArn="arn:aws:iam::123456789012:role/TestRole",
-            RoleSessionName="superset-iam-session",
+            RoleSessionName="axbi-iam-session",
             DurationSeconds=900,
             ExternalId="external-id-12345",
         )
@@ -90,7 +90,7 @@ def test_get_iam_credentials_with_external_id() -> None:
 def test_get_iam_credentials_access_denied() -> None:
     from botocore.exceptions import ClientError
 
-    from superset.db_engine_specs.aws_iam import (
+    from axbi.db_engine_specs.aws_iam import (
         _credentials_cache,
         _credentials_lock,
         AWSIAMAuthMixin,
@@ -107,7 +107,7 @@ def test_get_iam_credentials_access_denied() -> None:
         )
         mock_boto3_client.return_value = mock_sts
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             AWSIAMAuthMixin.get_iam_credentials(
                 role_arn="arn:aws:iam::123456789012:role/TestRole",
                 region="us-east-1",
@@ -119,7 +119,7 @@ def test_get_iam_credentials_access_denied() -> None:
 def test_get_iam_credentials_external_id_mismatch() -> None:
     from botocore.exceptions import ClientError
 
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     with patch("boto3.client") as mock_boto3_client:
         mock_sts = MagicMock()
@@ -134,7 +134,7 @@ def test_get_iam_credentials_external_id_mismatch() -> None:
         )
         mock_boto3_client.return_value = mock_sts
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             AWSIAMAuthMixin.get_iam_credentials(
                 role_arn="arn:aws:iam::123456789012:role/TestRole",
                 region="us-east-1",
@@ -145,7 +145,7 @@ def test_get_iam_credentials_external_id_mismatch() -> None:
 
 
 def test_generate_rds_auth_token() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     credentials = {
         "AccessKeyId": "ASIA...",
@@ -162,7 +162,7 @@ def test_generate_rds_auth_token() -> None:
             credentials=credentials,
             hostname="mydb.cluster-xyz.us-east-1.rds.amazonaws.com",
             port=5432,
-            username="superset_user",
+            username="axbi_user",
             region="us-east-1",
         )
 
@@ -177,13 +177,13 @@ def test_generate_rds_auth_token() -> None:
         mock_rds.generate_db_auth_token.assert_called_once_with(
             DBHostname="mydb.cluster-xyz.us-east-1.rds.amazonaws.com",
             Port=5432,
-            DBUsername="superset_user",
+            DBUsername="axbi_user",
         )
 
 
 def test_apply_iam_authentication_feature_flag_disabled() -> None:
     """Test that IAM auth is blocked when feature flag is disabled."""
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -194,13 +194,13 @@ def test_apply_iam_authentication_feature_flag_disabled() -> None:
         "enabled": True,
         "role_arn": "arn:aws:iam::123456789012:role/TestRole",
         "region": "us-east-1",
-        "db_username": "superset_iam_user",
+        "db_username": "axbi_iam_user",
     }
 
     params: dict[str, Any] = {}
 
     # Feature flag is disabled by default
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_iam_authentication(
             mock_database,
             params,
@@ -213,7 +213,7 @@ def test_apply_iam_authentication_feature_flag_disabled() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_iam_authentication() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -224,7 +224,7 @@ def test_apply_iam_authentication() -> None:
         "enabled": True,
         "role_arn": "arn:aws:iam::123456789012:role/TestRole",
         "region": "us-east-1",
-        "db_username": "superset_iam_user",
+        "db_username": "axbi_iam_user",
     }
 
     params: dict[str, Any] = {}
@@ -260,16 +260,16 @@ def test_apply_iam_authentication() -> None:
         token_call_kwargs["hostname"] == "mydb.cluster-xyz.us-east-1.rds.amazonaws.com"
     )
     assert token_call_kwargs["port"] == 5432
-    assert token_call_kwargs["username"] == "superset_iam_user"
+    assert token_call_kwargs["username"] == "axbi_iam_user"
 
     assert params["connect_args"]["password"] == "iam-auth-token"  # noqa: S105
-    assert params["connect_args"]["user"] == "superset_iam_user"
+    assert params["connect_args"]["user"] == "axbi_iam_user"
     assert params["connect_args"]["sslmode"] == "require"
 
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_iam_authentication_with_external_id() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -279,7 +279,7 @@ def test_apply_iam_authentication_with_external_id() -> None:
     iam_config: AWSIAMConfig = {
         "enabled": True,
         "role_arn": "arn:aws:iam::222222222222:role/CrossAccountRole",
-        "external_id": "superset-prod-12345",
+        "external_id": "axbi-prod-12345",
         "region": "us-west-2",
         "db_username": "iam_user",
         "session_duration": 1800,
@@ -308,14 +308,14 @@ def test_apply_iam_authentication_with_external_id() -> None:
     mock_get_creds.assert_called_once_with(
         role_arn="arn:aws:iam::222222222222:role/CrossAccountRole",
         region="us-west-2",
-        external_id="superset-prod-12345",
+        external_id="axbi-prod-12345",
         session_duration=1800,
     )
 
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_iam_authentication_missing_role_arn() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -325,12 +325,12 @@ def test_apply_iam_authentication_missing_role_arn() -> None:
     iam_config: AWSIAMConfig = {
         "enabled": True,
         "region": "us-east-1",
-        "db_username": "superset_iam_user",
+        "db_username": "axbi_iam_user",
     }
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_iam_authentication(mock_database, params, iam_config)
 
     assert "role_arn" in str(exc_info.value)
@@ -338,7 +338,7 @@ def test_apply_iam_authentication_missing_role_arn() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_iam_authentication_missing_db_username() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -353,7 +353,7 @@ def test_apply_iam_authentication_missing_db_username() -> None:
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_iam_authentication(mock_database, params, iam_config)
 
     assert "db_username" in str(exc_info.value)
@@ -361,7 +361,7 @@ def test_apply_iam_authentication_missing_db_username() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_iam_authentication_default_port() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     # URI without explicit port
@@ -373,7 +373,7 @@ def test_apply_iam_authentication_default_port() -> None:
         "enabled": True,
         "role_arn": "arn:aws:iam::123456789012:role/TestRole",
         "region": "us-east-1",
-        "db_username": "superset_iam_user",
+        "db_username": "axbi_iam_user",
     }
 
     params: dict[str, Any] = {}
@@ -404,7 +404,7 @@ def test_apply_iam_authentication_default_port() -> None:
 def test_get_iam_credentials_boto3_not_installed() -> None:
     import builtins
 
-    from superset.db_engine_specs.aws_iam import (
+    from axbi.db_engine_specs.aws_iam import (
         _credentials_cache,
         _credentials_lock,
         AWSIAMAuthMixin,
@@ -422,7 +422,7 @@ def test_get_iam_credentials_boto3_not_installed() -> None:
         return real_import(name, *args, **kwargs)
 
     with patch.object(builtins, "__import__", side_effect=fake_import):
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             AWSIAMAuthMixin.get_iam_credentials(
                 role_arn="arn:aws:iam::123456789012:role/TestRole",
                 region="us-east-1",
@@ -432,7 +432,7 @@ def test_get_iam_credentials_boto3_not_installed() -> None:
 
 
 def test_get_iam_credentials_caching() -> None:
-    from superset.db_engine_specs.aws_iam import (
+    from axbi.db_engine_specs.aws_iam import (
         _credentials_cache,
         _credentials_lock,
         AWSIAMAuthMixin,
@@ -476,7 +476,7 @@ def test_get_iam_credentials_caching() -> None:
 
 
 def test_get_iam_credentials_cache_different_keys() -> None:
-    from superset.db_engine_specs.aws_iam import (
+    from axbi.db_engine_specs.aws_iam import (
         _credentials_cache,
         _credentials_lock,
         AWSIAMAuthMixin,
@@ -526,7 +526,7 @@ def test_get_iam_credentials_cache_different_keys() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_iam_authentication_custom_ssl_args() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -537,7 +537,7 @@ def test_apply_iam_authentication_custom_ssl_args() -> None:
         "enabled": True,
         "role_arn": "arn:aws:iam::123456789012:role/TestRole",
         "region": "us-east-1",
-        "db_username": "superset_iam_user",
+        "db_username": "axbi_iam_user",
     }
 
     params: dict[str, Any] = {}
@@ -572,7 +572,7 @@ def test_apply_iam_authentication_custom_ssl_args() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_iam_authentication_custom_default_port() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     # URI without explicit port
@@ -584,7 +584,7 @@ def test_apply_iam_authentication_custom_default_port() -> None:
         "enabled": True,
         "role_arn": "arn:aws:iam::123456789012:role/TestRole",
         "region": "us-east-1",
-        "db_username": "superset_iam_user",
+        "db_username": "axbi_iam_user",
     }
 
     params: dict[str, Any] = {}
@@ -617,7 +617,7 @@ def test_apply_iam_authentication_custom_default_port() -> None:
 
 
 def test_generate_redshift_credentials() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     credentials = {
         "AccessKeyId": "ASIA...",
@@ -658,7 +658,7 @@ def test_generate_redshift_credentials() -> None:
 def test_generate_redshift_credentials_client_error() -> None:
     from botocore.exceptions import ClientError
 
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     credentials = {
         "AccessKeyId": "ASIA...",
@@ -674,7 +674,7 @@ def test_generate_redshift_credentials_client_error() -> None:
         )
         mock_boto3_client.return_value = mock_redshift
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             AWSIAMAuthMixin.generate_redshift_credentials(
                 credentials=credentials,
                 workgroup_name="my-workgroup",
@@ -687,7 +687,7 @@ def test_generate_redshift_credentials_client_error() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_redshift_iam_authentication() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -750,7 +750,7 @@ def test_apply_redshift_iam_authentication() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_redshift_iam_authentication_missing_workgroup() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = "redshift+psycopg2://user@host:5439/dev"
@@ -764,7 +764,7 @@ def test_apply_redshift_iam_authentication_missing_workgroup() -> None:
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_redshift_iam_authentication(
             mock_database, params, iam_config
         )
@@ -774,7 +774,7 @@ def test_apply_redshift_iam_authentication_missing_workgroup() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_redshift_iam_authentication_missing_db_name() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = "redshift+psycopg2://user@host:5439/dev"
@@ -788,7 +788,7 @@ def test_apply_redshift_iam_authentication_missing_db_name() -> None:
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_redshift_iam_authentication(
             mock_database, params, iam_config
         )
@@ -797,7 +797,7 @@ def test_apply_redshift_iam_authentication_missing_db_name() -> None:
 
 
 def test_generate_redshift_cluster_credentials() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     credentials = {
         "AccessKeyId": "ASIA...",
@@ -808,7 +808,7 @@ def test_generate_redshift_cluster_credentials() -> None:
     with patch("boto3.client") as mock_boto3_client:
         mock_redshift = MagicMock()
         mock_redshift.get_cluster_credentials.return_value = {
-            "DbUser": "IAM:superset_user",
+            "DbUser": "IAM:axbi_user",
             "DbPassword": "redshift-cluster-temp-password",
         }
         mock_boto3_client.return_value = mock_redshift
@@ -816,12 +816,12 @@ def test_generate_redshift_cluster_credentials() -> None:
         db_user, db_password = AWSIAMAuthMixin.generate_redshift_cluster_credentials(
             credentials=credentials,
             cluster_identifier="my-redshift-cluster",
-            db_user="superset_user",
+            db_user="axbi_user",
             db_name="analytics",
             region="us-east-1",
         )
 
-        assert db_user == "IAM:superset_user"
+        assert db_user == "IAM:axbi_user"
         assert db_password == "redshift-cluster-temp-password"  # noqa: S105
         mock_boto3_client.assert_called_once_with(
             "redshift",
@@ -832,14 +832,14 @@ def test_generate_redshift_cluster_credentials() -> None:
         )
         mock_redshift.get_cluster_credentials.assert_called_once_with(
             ClusterIdentifier="my-redshift-cluster",
-            DbUser="superset_user",
+            DbUser="axbi_user",
             DbName="analytics",
             AutoCreate=False,
         )
 
 
 def test_generate_redshift_cluster_credentials_with_auto_create() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     credentials = {
         "AccessKeyId": "ASIA...",
@@ -875,7 +875,7 @@ def test_generate_redshift_cluster_credentials_with_auto_create() -> None:
 def test_generate_redshift_cluster_credentials_client_error() -> None:
     from botocore.exceptions import ClientError
 
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
 
     credentials = {
         "AccessKeyId": "ASIA...",
@@ -891,11 +891,11 @@ def test_generate_redshift_cluster_credentials_client_error() -> None:
         )
         mock_boto3_client.return_value = mock_redshift
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             AWSIAMAuthMixin.generate_redshift_cluster_credentials(
                 credentials=credentials,
                 cluster_identifier="nonexistent-cluster",
-                db_user="superset_user",
+                db_user="axbi_user",
                 db_name="dev",
                 region="us-east-1",
             )
@@ -905,7 +905,7 @@ def test_generate_redshift_cluster_credentials_client_error() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_redshift_iam_authentication_provisioned_cluster() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = (
@@ -918,7 +918,7 @@ def test_apply_redshift_iam_authentication_provisioned_cluster() -> None:
         "role_arn": "arn:aws:iam::123456789012:role/RedshiftRole",
         "region": "us-east-1",
         "cluster_identifier": "my-cluster",
-        "db_username": "superset_user",
+        "db_username": "axbi_user",
         "db_name": "analytics",
     }
 
@@ -937,7 +937,7 @@ def test_apply_redshift_iam_authentication_provisioned_cluster() -> None:
         patch.object(
             AWSIAMAuthMixin,
             "generate_redshift_cluster_credentials",
-            return_value=("IAM:superset_user", "cluster-temp-password"),
+            return_value=("IAM:axbi_user", "cluster-temp-password"),
         ) as mock_gen_creds,
     ):
         AWSIAMAuthMixin._apply_redshift_iam_authentication(
@@ -958,19 +958,19 @@ def test_apply_redshift_iam_authentication_provisioned_cluster() -> None:
             "SessionToken": "token...",
         },
         cluster_identifier="my-cluster",
-        db_user="superset_user",
+        db_user="axbi_user",
         db_name="analytics",
         region="us-east-1",
     )
 
     assert params["connect_args"]["password"] == "cluster-temp-password"  # noqa: S105
-    assert params["connect_args"]["user"] == "IAM:superset_user"
+    assert params["connect_args"]["user"] == "IAM:axbi_user"
     assert params["connect_args"]["sslmode"] == "verify-ca"
 
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_redshift_iam_authentication_provisioned_missing_db_username() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = "redshift+psycopg2://user@host:5439/dev"
@@ -986,7 +986,7 @@ def test_apply_redshift_iam_authentication_provisioned_missing_db_username() -> 
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_redshift_iam_authentication(
             mock_database, params, iam_config
         )
@@ -996,7 +996,7 @@ def test_apply_redshift_iam_authentication_provisioned_missing_db_username() -> 
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_redshift_iam_authentication_both_workgroup_and_cluster() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = "redshift+psycopg2://user@host:5439/dev"
@@ -1012,7 +1012,7 @@ def test_apply_redshift_iam_authentication_both_workgroup_and_cluster() -> None:
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_redshift_iam_authentication(
             mock_database, params, iam_config
         )
@@ -1022,7 +1022,7 @@ def test_apply_redshift_iam_authentication_both_workgroup_and_cluster() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_apply_redshift_iam_authentication_neither_workgroup_nor_cluster() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin, AWSIAMConfig
 
     mock_database = MagicMock()
     mock_database.sqlalchemy_uri_decrypted = "redshift+psycopg2://user@host:5439/dev"
@@ -1037,7 +1037,7 @@ def test_apply_redshift_iam_authentication_neither_workgroup_nor_cluster() -> No
 
     params: dict[str, Any] = {}
 
-    with pytest.raises(SupersetSecurityException) as exc_info:
+    with pytest.raises(AxBISecurityException) as exc_info:
         AWSIAMAuthMixin._apply_redshift_iam_authentication(
             mock_database, params, iam_config
         )

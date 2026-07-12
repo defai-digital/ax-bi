@@ -20,8 +20,8 @@ import { PureComponent } from 'react';
 import { connect } from 'react-redux';
 import { Navigate } from 'react-router-dom';
 import Mousetrap from 'mousetrap';
-import { t } from '@apache-superset/core/translation';
-import { css, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, styled } from '@ax-bi/core/theme';
 import { throttle } from 'lodash';
 import {
   LOCALSTORAGE_MAX_USAGE_KB,

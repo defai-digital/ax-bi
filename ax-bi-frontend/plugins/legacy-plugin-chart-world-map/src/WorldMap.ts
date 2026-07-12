@@ -25,7 +25,7 @@ import {
   getSequentialSchemeRegistry,
   CategoricalColorNamespace,
   ValueFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import Datamap from 'datamaps/dist/datamaps.all.min';
 import { ColorBy } from './utils';
 
@@ -127,7 +127,7 @@ function WorldMap(element: HTMLElement, props: WorldMapProps): void {
     formatter,
   } = props;
   const div = d3.select(element);
-  div.classed('superset-legacy-chart-world-map', true);
+  div.classed('axbi-legacy-chart-world-map', true);
   div.selectAll('*').remove();
 
   // Ignore XXX's to get better normalization
@@ -382,7 +382,8 @@ function WorldMap(element: HTMLElement, props: WorldMapProps): void {
   const highLabel =
     maxMetric !== undefined ? formatter(maxMetric) : 'Higher value';
 
-  div.append('div')
+  div
+    .append('div')
     .attr('class', 'world-map-inline-legend')
     .style('background', legendBackground)
     .style('border-color', legendBorder)

@@ -34,8 +34,8 @@ interface MockIntersectionObserverEntry {
   isIntersecting: boolean;
 }
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(() => true),
   FeatureFlag: {
     DashboardVirtualization: 'DASHBOARD_VIRTUALIZATION',
@@ -314,7 +314,7 @@ describe('visibility handling for intersection observers', () => {
   });
 
   test('should not create intersection observers when feature is disabled', () => {
-    const coreMock = jest.requireMock('@superset-ui/core');
+    const coreMock = jest.requireMock('@ax-bi/ui-core');
     coreMock.isFeatureEnabled.mockReturnValue(false);
 
     jest.clearAllMocks();

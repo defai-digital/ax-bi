@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { ChartMetadata } from '@superset-ui/core';
+import type { ChartMetadata } from '@ax-bi/ui-core';
 
 export type PluginContextType = {
   loading: boolean;

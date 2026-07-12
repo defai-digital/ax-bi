@@ -18,14 +18,14 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.connectors.sqla.models import SqlaTable
-from superset.connectors.sqla.utils import get_virtual_table_metadata
-from superset.errors import SupersetErrorType
-from superset.exceptions import (
-    SupersetGenericDBErrorException,
-    SupersetSecurityException,
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.connectors.sqla.utils import get_virtual_table_metadata
+from axbi.errors import AxBIErrorType
+from axbi.exceptions import (
+    AxBIGenericDBErrorException,
+    AxBISecurityException,
 )
-from superset.models.core import Database
+from axbi.models.core import Database
 
 
 def test_get_virtual_table_metadata_invalid_sql():
@@ -42,7 +42,7 @@ def test_get_virtual_table_metadata_invalid_sql():
     mock_dataset.get_template_processor.return_value = mock_template_processor
     mock_dataset.template_params_dict = {}
 
-    with pytest.raises(SupersetGenericDBErrorException) as exc_info:
+    with pytest.raises(AxBIGenericDBErrorException) as exc_info:
         get_virtual_table_metadata(mock_dataset)
 
     # Check that the error message includes the parsing error
@@ -54,7 +54,7 @@ def test_get_virtual_table_metadata_empty_sql():
     mock_dataset = Mock(spec=SqlaTable)
     mock_dataset.sql = None
 
-    with pytest.raises(SupersetGenericDBErrorException) as exc_info:
+    with pytest.raises(AxBIGenericDBErrorException) as exc_info:
         get_virtual_table_metadata(mock_dataset)
 
     assert "Virtual dataset query cannot be empty" in str(exc_info.value.message)
@@ -75,17 +75,17 @@ def test_get_virtual_table_metadata_mutation_not_allowed():
     mock_dataset.template_params_dict = {}
 
     # Mock SQLScript to simulate mutation detection
-    with patch("superset.connectors.sqla.utils.SQLScript") as mock_sqlscript_class:
+    with patch("axbi.connectors.sqla.utils.SQLScript") as mock_sqlscript_class:
         mock_script = Mock()
         mock_script.has_mutation.return_value = True
         mock_sqlscript_class.return_value = mock_script
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             get_virtual_table_metadata(mock_dataset)
 
         assert (
             exc_info.value.error.error_type
-            == SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
+            == AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
         )
         assert "Only `SELECT` statements are allowed" in exc_info.value.error.message
 
@@ -107,17 +107,17 @@ def test_get_virtual_table_metadata_multiple_statements_not_allowed():
     mock_dataset.template_params_dict = {}
 
     # Mock SQLScript to simulate multiple statements
-    with patch("superset.connectors.sqla.utils.SQLScript") as mock_sqlscript_class:
+    with patch("axbi.connectors.sqla.utils.SQLScript") as mock_sqlscript_class:
         mock_script = Mock()
         mock_script.has_mutation.return_value = False
         mock_script.statements = [Mock(), Mock()]  # Two statements
         mock_sqlscript_class.return_value = mock_script
 
-        with pytest.raises(SupersetSecurityException) as exc_info:
+        with pytest.raises(AxBISecurityException) as exc_info:
             get_virtual_table_metadata(mock_dataset)
 
         assert (
             exc_info.value.error.error_type
-            == SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
+            == AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR
         )
         assert "Only single queries supported" in exc_info.value.error.message

@@ -19,12 +19,12 @@
 import {
   EchartsBubbleChartPlugin,
   BubbleTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import {
   SuperChart,
   VizType,
   getChartTransformPropsRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { simpleBubbleData } from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 
@@ -172,7 +172,7 @@ export const BubbleChart = ({
         sqlExpression: null,
       },
       limit: 10,
-      colorScheme: 'supersetColors',
+      colorScheme: 'axbiColors',
       maxBubbleSize,
       xAxisTitle,
       xAxisTitleMargin,

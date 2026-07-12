@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, DTTM_ALIAS, getMetricLabel } from '@superset-ui/core';
+import { ChartProps, DTTM_ALIAS, getMetricLabel } from '@ax-bi/ui-core';
 import { addJsColumnsToExtraProps, DataRecord } from '../spatialUtils';
 import {
   createBaseTransformResult,

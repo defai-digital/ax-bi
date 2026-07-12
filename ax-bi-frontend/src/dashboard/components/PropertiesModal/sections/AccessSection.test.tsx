@@ -17,12 +17,12 @@
  * under the License.
  */
 import { render, screen } from 'spec/helpers/testing-library';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import AccessSection from './AccessSection';
 
 // Mock feature flags
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

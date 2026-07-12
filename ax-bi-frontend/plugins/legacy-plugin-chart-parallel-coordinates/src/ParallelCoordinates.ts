@@ -18,7 +18,7 @@
  */
 /* eslint-disable react/sort-prop-types */
 import * as d3 from 'd3v3';
-import { getSequentialSchemeRegistry } from '@superset-ui/core';
+import { getSequentialSchemeRegistry } from '@ax-bi/ui-core';
 
 import parcoords from './vendor/parcoords/d3.parcoords';
 import divgrid from './vendor/parcoords/divgrid';
@@ -112,7 +112,7 @@ function ParallelCoordinates(
 
   const container = d3
     .select(element)
-    .classed('superset-legacy-chart-parallel-coordinates', true);
+    .classed('axbi-legacy-chart-parallel-coordinates', true);
   container.selectAll('*').remove();
   const effHeight = showDatatable ? height / 2 : height;
 

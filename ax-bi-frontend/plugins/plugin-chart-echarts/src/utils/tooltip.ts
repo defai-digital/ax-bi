@@ -23,7 +23,7 @@ import {
   QueryFormMetric,
   getColumnLabel,
   getMetricLabel,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { TOOLTIP_OVERFLOW_MARGIN, TOOLTIP_POINTER_MARGIN } from '../constants';
 import { Refs } from '../types';
 
@@ -32,7 +32,7 @@ export function getDefaultTooltip(refs: Refs) {
     appendToBody:
       typeof document !== 'undefined' ? !document.fullscreenElement : true,
     borderColor: 'transparent',
-    // CSS hack applied on this class to resolve https://github.com/apache/superset/issues/30058
+    // CSS hack applied on this class to resolve https://github.com/defai-digital/ax-bi/issues/30058
     className: 'echarts-tooltip',
     // allow scrolling inside tooltip without re-triggering the chart
     enterable: true,

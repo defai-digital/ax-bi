@@ -20,10 +20,10 @@ import {
   ControlSetItem,
   CustomControlConfig,
   sharedControls,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
-import { useTheme, useThemeMode } from '@apache-superset/core/theme';
-import { InfoTooltip } from '@superset-ui/core/components';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { useTheme, useThemeMode } from '@ax-bi/core/theme';
+import { InfoTooltip } from '@ax-bi/ui-core/components';
 import { CodeEditor } from '../../components/CodeEditor/CodeEditor';
 import { ControlHeader } from '../../components/ControlHeader/controlHeader';
 import { debounceFunc } from '../../consts';
@@ -56,7 +56,7 @@ const StyleControl = (props: CustomControlConfig<StyleCustomControlProps>) => {
               iconStyle={{ marginLeft: theme.sizeUnit }}
               tooltip={t(
                 'CSS styles may be removed by server-side HTML sanitization. ' +
-                  'If styles are not applying, ask your Superset administrator ' +
+                  'If styles are not applying, ask your AxBI administrator ' +
                   'to adjust the HTML sanitization configuration.',
               )}
             />

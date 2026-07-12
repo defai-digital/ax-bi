@@ -17,14 +17,14 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { DatasourceType, VizType } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { DatasourceType, VizType } from '@ax-bi/ui-core';
 import {
   ColumnMeta,
   ColumnOption,
   ControlConfig,
   ControlPanelSectionConfig,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { ExplorePageInitialData } from './types';
 
 export const controlPanelSectionsChartOptions: (ControlPanelSectionConfig | null)[] =

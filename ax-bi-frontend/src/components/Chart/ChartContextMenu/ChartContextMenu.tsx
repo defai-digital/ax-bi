@@ -28,7 +28,7 @@ import {
 } from 'react';
 import ReactDOM from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   Behavior,
   BinaryQueryObjectFilterClause,
@@ -40,12 +40,12 @@ import {
   getExtensionsRegistry,
   isFeatureEnabled,
   QueryFormData,
-} from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import { RootState } from 'src/dashboard/types';
-import { MenuItem } from '@superset-ui/core/components/Menu';
+import { MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { usePermissions } from 'src/hooks/usePermissions';
-import { Dropdown } from '@superset-ui/core/components';
+import { Dropdown } from '@ax-bi/ui-core/components';
 import { updateDataMask } from 'src/dataMask/actions';
 import DrillByModal from 'src/components/Chart/DrillBy/DrillByModal';
 import { useDatasetDrillInfo } from 'src/hooks/apiResources/datasets';

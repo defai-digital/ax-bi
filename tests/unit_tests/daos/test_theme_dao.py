@@ -17,14 +17,14 @@
 
 from unittest.mock import MagicMock, patch
 
-from superset.daos.theme import ThemeDAO
-from superset.models.core import Theme
+from axbi.daos.theme import ThemeDAO
+from axbi.models.core import Theme
 
 
 class TestThemeDAO:
     """Test ThemeDAO functionality"""
 
-    @patch("superset.daos.theme.db.session")
+    @patch("axbi.daos.theme.db.session")
     def test_find_system_default_single(self, mock_session):
         """Test finding system default theme when exactly one exists"""
         # Create a mock theme
@@ -44,7 +44,7 @@ class TestThemeDAO:
         # Verify the result
         assert result == mock_theme
 
-    @patch("superset.daos.theme.db.session")
+    @patch("axbi.daos.theme.db.session")
     def test_find_system_default_multiple(self, mock_session):
         """Test finding system default theme when multiple exist"""
         # Create mock themes
@@ -65,7 +65,7 @@ class TestThemeDAO:
 
         assert result is None
 
-    @patch("superset.daos.theme.db.session")
+    @patch("axbi.daos.theme.db.session")
     def test_find_system_default_none(self, mock_session):
         """Test finding system default theme when none exist"""
         # Mock the query chain
@@ -81,7 +81,7 @@ class TestThemeDAO:
         # Verify the result is None (no fallback)
         assert result is None
 
-    @patch("superset.daos.theme.db.session")
+    @patch("axbi.daos.theme.db.session")
     def test_find_system_dark_single(self, mock_session):
         """Test finding system dark theme when exactly one exists"""
         # Create a mock theme
@@ -101,7 +101,7 @@ class TestThemeDAO:
         # Verify the result
         assert result == mock_theme
 
-    @patch("superset.daos.theme.db.session")
+    @patch("axbi.daos.theme.db.session")
     def test_find_system_dark_multiple(self, mock_session):
         """Test finding system dark theme when multiple exist"""
         # Create mock themes
@@ -122,7 +122,7 @@ class TestThemeDAO:
 
         assert result is None
 
-    @patch("superset.daos.theme.db.session")
+    @patch("axbi.daos.theme.db.session")
     def test_find_system_dark_none_with_fallback(self, mock_session):
         """Test finding system dark theme when none exist"""
         # Mock the query chain
@@ -138,7 +138,7 @@ class TestThemeDAO:
         # Verify the result is None (no fallback)
         assert result is None
 
-    @patch("superset.daos.theme.db.session")
+    @patch("axbi.daos.theme.db.session")
     def test_find_system_dark_none_without_fallback(self, mock_session):
         """Test finding system dark theme when none exist and no fallback"""
         # Mock the query chains - need separate mocks for each query call

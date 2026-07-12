@@ -23,25 +23,25 @@ import yaml
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-from superset import db, security_manager
-from superset.commands.database.importers.v1 import ImportDatabasesCommand
-from superset.commands.dataset.create import CreateDatasetCommand
-from superset.commands.dataset.exceptions import (
+from axbi import db, security_manager
+from axbi.commands.database.importers.v1 import ImportDatabasesCommand
+from axbi.commands.dataset.create import CreateDatasetCommand
+from axbi.commands.dataset.exceptions import (
     DatasetInvalidError,
     DatasetNotFoundError,
     WarmUpCacheTableNotFoundError,
 )
-from superset.commands.dataset.export import ExportDatasetsCommand
-from superset.commands.dataset.importers import v0, v1
-from superset.commands.dataset.warm_up_cache import DatasetWarmUpCacheCommand
-from superset.commands.exceptions import CommandInvalidError
-from superset.commands.importers.exceptions import IncorrectVersionError
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.core import Database
-from superset.models.slice import Slice
-from superset.utils.core import get_example_default_schema, override_user
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.dataset.export import ExportDatasetsCommand
+from axbi.commands.dataset.importers import v0, v1
+from axbi.commands.dataset.warm_up_cache import DatasetWarmUpCacheCommand
+from axbi.commands.exceptions import CommandInvalidError
+from axbi.commands.importers.exceptions import IncorrectVersionError
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.core import Database
+from axbi.models.slice import Slice
+from axbi.utils.core import get_example_default_schema, override_user
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -64,8 +64,8 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 )
 
 
-class TestExportDatasetsCommand(SupersetTestCase):
-    @patch("superset.security.manager.g")
+class TestExportDatasetsCommand(AxBITestCase):
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_dataset_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -191,7 +191,7 @@ class TestExportDatasetsCommand(SupersetTestCase):
             "version": "1.0.0",
         }
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_dataset_command_no_access(self, mock_g):
         """Test that users can't export datasets they don't have access to"""
         mock_g.user = security_manager.find_user("gamma")
@@ -203,7 +203,7 @@ class TestExportDatasetsCommand(SupersetTestCase):
         with self.assertRaises(DatasetNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_dataset_command_invalid_dataset(self, mock_g):
         """Test that an error is raised when exporting an invalid dataset"""
         mock_g.user = security_manager.find_user("admin")
@@ -212,7 +212,7 @@ class TestExportDatasetsCommand(SupersetTestCase):
         with self.assertRaises(DatasetNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_dataset_command_key_order(self, mock_g):
         """Test that they keys in the YAML have the same order as export_fields"""
@@ -254,7 +254,7 @@ class TestExportDatasetsCommand(SupersetTestCase):
             "database_uuid",
         ]
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_export_dataset_command_no_related(self, mock_g):
         """
@@ -274,7 +274,7 @@ class TestExportDatasetsCommand(SupersetTestCase):
             f"datasets/examples/energy_usage_{example_dataset.id}.yaml",
         ]
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_dataset_command_unicode_chars(self, mock_g) -> None:
         mock_g.user = security_manager.find_user("admin")
         examples_db = get_example_database()
@@ -313,7 +313,7 @@ class TestExportDatasetsCommand(SupersetTestCase):
         db.session.commit()
 
 
-class TestImportDatasetsCommand(SupersetTestCase):
+class TestImportDatasetsCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     def test_import_v0_dataset_cli_export(self):
         num_datasets = db.session.query(SqlaTable).count()
@@ -391,9 +391,9 @@ class TestImportDatasetsCommand(SupersetTestCase):
         db.session.delete(dataset)
         db.session.commit()
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     def test_import_v1_dataset(self, mock_add_permissions, sm_g, utils_g):
         """Test that we can import a dataset"""
@@ -462,8 +462,8 @@ class TestImportDatasetsCommand(SupersetTestCase):
         db.session.delete(dataset.database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_dataset_multiple(self, mock_add_permissions, mock_g):
         """Test that a dataset can be imported multiple times"""
         mock_g.user = security_manager.find_user("admin")
@@ -505,7 +505,7 @@ class TestImportDatasetsCommand(SupersetTestCase):
         db.session.delete(dataset.database)
         db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_dataset_validation(self, mock_add_permissions):
         """Test different validations applied when importing a dataset"""
         # metadata.yaml must be present
@@ -555,8 +555,8 @@ class TestImportDatasetsCommand(SupersetTestCase):
             }
         }
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_dataset_existing_database(self, mock_add_permissions, mock_g):
         """Test that a dataset can be imported when the database already exists"""
         mock_g.user = security_manager.find_user("admin")
@@ -601,14 +601,14 @@ def _get_table_from_list_by_name(name: str, tables: list[Any]):
     raise ValueError(f"Table {name} does not exists in database")
 
 
-class TestCreateDatasetCommand(SupersetTestCase):
-    @patch("superset.commands.utils.g")
+class TestCreateDatasetCommand(AxBITestCase):
+    @patch("axbi.commands.utils.g")
     def test_database_not_found(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
         with self.assertRaises(DatasetInvalidError):  # noqa: PT027
             CreateDatasetCommand({"table_name": "table", "database": 9999}).run()
 
-    @patch("superset.models.core.Database.get_table")
+    @patch("axbi.models.core.Database.get_table")
     def test_get_table_from_database_error(self, get_table_mock):
         get_table_mock.side_effect = SQLAlchemyError
         with override_user(security_manager.find_user("admin")):
@@ -663,7 +663,7 @@ class TestCreateDatasetCommand(SupersetTestCase):
                 ).run()
 
 
-class TestDatasetWarmUpCacheCommand(SupersetTestCase):
+class TestDatasetWarmUpCacheCommand(AxBITestCase):
     def test_warm_up_cache_command_table_not_found(self):
         with self.assertRaises(WarmUpCacheTableNotFoundError):  # noqa: PT027
             DatasetWarmUpCacheCommand("not", "here", None, None).run()

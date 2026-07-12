@@ -27,7 +27,7 @@ import {
   ChartCustomizationDivider,
   ChartCustomizationConfiguration,
   NativeFilterType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { FilterElement } from './FilterBar/FilterControls/types';
 import { ActiveTabs, DashboardLayout, RootState } from '../../types';
 import { CHART_TYPE, TAB_TYPE, TABS_TYPE } from '../../util/componentTypes';
@@ -54,10 +54,7 @@ export const selectFilterConfiguration: (
     return nativeFilterConfig.filter(
       (
         filter:
-          | Filter
-          | Divider
-          | ChartCustomization
-          | ChartCustomizationDivider,
+          Filter | Divider | ChartCustomization | ChartCustomizationDivider,
       ) =>
         filter.type !== 'CHART_CUSTOMIZATION' &&
         filter.type !== 'CHART_CUSTOMIZATION_DIVIDER',
@@ -387,12 +384,10 @@ export function useSelectCustomizationsInScope(
 
   return useMemo(() => {
     let customizationsInScope: (
-      | ChartCustomization
-      | ChartCustomizationDivider
+      ChartCustomization | ChartCustomizationDivider
     )[] = [];
     const customizationsOutOfScope: (
-      | ChartCustomization
-      | ChartCustomizationDivider
+      ChartCustomization | ChartCustomizationDivider
     )[] = [];
 
     // we check customization scopes only on dashboards with tabs

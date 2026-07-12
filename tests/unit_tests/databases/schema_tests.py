@@ -23,10 +23,10 @@ import pytest
 from marshmallow import fields, Schema, ValidationError
 from pytest_mock import MockerFixture
 
-from superset.utils import json
+from axbi.utils import json
 
 if TYPE_CHECKING:
-    from superset.databases.schemas import DatabaseParametersSchemaMixin
+    from axbi.databases.schemas import DatabaseParametersSchemaMixin
 
 
 # pylint: disable=too-few-public-methods
@@ -41,7 +41,7 @@ def dummy_schema() -> "DatabaseParametersSchemaMixin":
     """
     Fixture providing a dummy schema.
     """
-    from superset.databases.schemas import DatabaseParametersSchemaMixin
+    from axbi.databases.schemas import DatabaseParametersSchemaMixin
 
     class DummySchema(DatabaseParametersSchemaMixin, Schema):
         sqlalchemy_uri = fields.String()
@@ -54,13 +54,13 @@ def dummy_engine(mocker: MockerFixture) -> None:
     """
     Fixture proving a dummy DB engine spec.
     """
-    from superset.db_engine_specs.base import BasicParametersMixin
+    from axbi.db_engine_specs.base import BasicParametersMixin
 
     class DummyEngine(BasicParametersMixin):
         engine = "dummy"
         default_driver = "dummy"
 
-    mocker.patch("superset.databases.schemas.get_engine_spec", return_value=DummyEngine)
+    mocker.patch("axbi.databases.schemas.get_engine_spec", return_value=DummyEngine)
 
 
 @pytest.fixture
@@ -68,15 +68,15 @@ def mock_bq_engine(mocker: MockerFixture) -> None:
     """
     Fixture providing a mocked BQ engine spec.
     """
-    from superset.db_engine_specs.bigquery import BigQueryEngineSpec
+    from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
 
     mock_url = mocker.MagicMock()
     mock_url.get_backend_name.return_value = "bigquery"
     mock_url.get_driver_name.return_value = "bigquery"
 
-    mocker.patch("superset.databases.schemas.make_url_safe", return_value=mock_url)
+    mocker.patch("axbi.databases.schemas.make_url_safe", return_value=mock_url)
     mocker.patch(
-        "superset.databases.schemas.get_engine_spec",
+        "axbi.databases.schemas.get_engine_spec",
         return_value=BigQueryEngineSpec,
     )
 
@@ -85,7 +85,7 @@ def test_database_parameters_schema_mixin(
     dummy_engine: None,
     dummy_schema: "Schema",
 ) -> None:
-    from superset.models.core import ConfigurationMethod
+    from axbi.models.core import ConfigurationMethod
 
     payload = {
         "engine": "dummy_engine",
@@ -109,9 +109,9 @@ def test_database_parameters_schema_mixin_malformed_masked_encrypted_extra(
     mocker: MockerFixture,
 ) -> None:
     """Malformed masked encrypted extras should not fail URI pre-loading."""
-    from superset.databases.schemas import DatabaseParametersSchemaMixin
-    from superset.db_engine_specs.base import BasicParametersMixin, BasicParametersType
-    from superset.models.core import ConfigurationMethod
+    from axbi.databases.schemas import DatabaseParametersSchemaMixin
+    from axbi.db_engine_specs.base import BasicParametersMixin, BasicParametersType
+    from axbi.models.core import ConfigurationMethod
 
     captured_encrypted_extra: dict[str, object] = {}
 
@@ -132,7 +132,7 @@ def test_database_parameters_schema_mixin_malformed_masked_encrypted_extra(
         sqlalchemy_uri = fields.String()
         masked_encrypted_extra = fields.String(allow_none=True)
 
-    mocker.patch("superset.databases.schemas.get_engine_spec", return_value=DummyEngine)
+    mocker.patch("axbi.databases.schemas.get_engine_spec", return_value=DummyEngine)
 
     schema = DummySchema()
     payload = {
@@ -161,9 +161,9 @@ def test_database_parameters_schema_mixin_non_object_masked_encrypted_extra(
     mocker: MockerFixture,
 ) -> None:
     """Non-object masked encrypted extras should not reach engine specs."""
-    from superset.databases.schemas import DatabaseParametersSchemaMixin
-    from superset.db_engine_specs.base import BasicParametersMixin, BasicParametersType
-    from superset.models.core import ConfigurationMethod
+    from axbi.databases.schemas import DatabaseParametersSchemaMixin
+    from axbi.db_engine_specs.base import BasicParametersMixin, BasicParametersType
+    from axbi.models.core import ConfigurationMethod
 
     captured_encrypted_extra: dict[str, object] = {}
 
@@ -184,7 +184,7 @@ def test_database_parameters_schema_mixin_non_object_masked_encrypted_extra(
         sqlalchemy_uri = fields.String()
         masked_encrypted_extra = fields.String(allow_none=True)
 
-    mocker.patch("superset.databases.schemas.get_engine_spec", return_value=DummyEngine)
+    mocker.patch("axbi.databases.schemas.get_engine_spec", return_value=DummyEngine)
 
     schema = DummySchema()
     payload = {
@@ -208,7 +208,7 @@ def test_database_parameters_schema_mixin_non_object_masked_encrypted_extra(
 def test_database_parameters_schema_mixin_no_engine(
     dummy_schema: "Schema",
 ) -> None:
-    from superset.models.core import ConfigurationMethod
+    from axbi.models.core import ConfigurationMethod
 
     payload = {
         "configuration_method": ConfigurationMethod.DYNAMIC_FORM,
@@ -240,7 +240,7 @@ def test_database_parameters_schema_mixin_invalid_engine(
     dummy_engine: None,
     dummy_schema: "Schema",
 ) -> None:
-    from superset.models.core import ConfigurationMethod
+    from axbi.models.core import ConfigurationMethod
 
     payload = {
         "engine": "dummy_engine",
@@ -265,7 +265,7 @@ def test_database_parameters_schema_no_mixin(
     dummy_engine: None,
     dummy_schema: "Schema",
 ) -> None:
-    from superset.models.core import ConfigurationMethod
+    from axbi.models.core import ConfigurationMethod
 
     payload = {
         "engine": "invalid_engine",
@@ -298,7 +298,7 @@ def test_database_parameters_schema_mixin_invalid_type(
     dummy_engine: None,
     dummy_schema: "Schema",
 ) -> None:
-    from superset.models.core import ConfigurationMethod
+    from axbi.models.core import ConfigurationMethod
 
     payload = {
         "engine": "dummy_engine",
@@ -321,7 +321,7 @@ def test_rename_encrypted_extra() -> None:
     """
     Test that ``encrypted_extra`` gets renamed to ``masked_encrypted_extra``.
     """
-    from superset.databases.schemas import ConfigurationMethod, DatabasePostSchema
+    from axbi.databases.schemas import ConfigurationMethod, DatabasePostSchema
 
     schema = DatabasePostSchema()
 
@@ -354,7 +354,7 @@ def test_rename_encrypted_extra() -> None:
 
 def test_rename_encrypted_extra_rejects_non_object_payload() -> None:
     """Database schemas should reject non-object payloads without crashing."""
-    from superset.databases.schemas import DatabasePostSchema
+    from axbi.databases.schemas import DatabasePostSchema
 
     with pytest.raises(ValidationError) as exc_info:
         DatabasePostSchema().load(["encrypted_extra"])
@@ -364,7 +364,7 @@ def test_rename_encrypted_extra_rejects_non_object_payload() -> None:
 
 def test_database_parameters_schema_mixin_rejects_non_object_payload() -> None:
     """Dynamic-form pre-loading should not crash on non-object payloads."""
-    from superset.databases.schemas import DatabaseValidateParametersSchema
+    from axbi.databases.schemas import DatabaseValidateParametersSchema
 
     with pytest.raises(ValidationError) as exc_info:
         DatabaseValidateParametersSchema().load(["parameters"])
@@ -374,7 +374,7 @@ def test_database_parameters_schema_mixin_rejects_non_object_payload() -> None:
 
 def test_extra_validator_rejects_non_object_extra() -> None:
     """Database extra must decode to a JSON object."""
-    from superset.databases.schemas import extra_validator
+    from axbi.databases.schemas import extra_validator
 
     with pytest.raises(ValidationError) as exc_info:
         extra_validator("[]")
@@ -384,7 +384,7 @@ def test_extra_validator_rejects_non_object_extra() -> None:
 
 def test_extra_validator_rejects_non_object_metadata_params() -> None:
     """metadata_params must be an object before keys are validated."""
-    from superset.databases.schemas import extra_validator
+    from axbi.databases.schemas import extra_validator
 
     with pytest.raises(ValidationError) as exc_info:
         extra_validator(json.dumps({"metadata_params": ["schema"]}))
@@ -396,7 +396,7 @@ def test_extra_validator_rejects_non_object_metadata_params() -> None:
 
 def test_extra_validator_accepts_object_metadata_params() -> None:
     """Valid metadata_params objects should keep passing validation."""
-    from superset.databases.schemas import extra_validator
+    from axbi.databases.schemas import extra_validator
 
     value = json.dumps({"metadata_params": {"schema": "public"}})
 
@@ -407,7 +407,7 @@ def test_oauth2_schema_success() -> None:
     """
     Test a successful redirect.
     """
-    from superset.databases.schemas import OAuth2ProviderResponseSchema
+    from axbi.databases.schemas import OAuth2ProviderResponseSchema
 
     schema = OAuth2ProviderResponseSchema()
 
@@ -419,7 +419,7 @@ def test_oauth2_schema_error() -> None:
     """
     Test a redirect with an error.
     """
-    from superset.databases.schemas import OAuth2ProviderResponseSchema
+    from axbi.databases.schemas import OAuth2ProviderResponseSchema
 
     schema = OAuth2ProviderResponseSchema()
 
@@ -431,7 +431,7 @@ def test_oauth2_schema_extra() -> None:
     """
     Test a redirect with extra keys.
     """
-    from superset.databases.schemas import OAuth2ProviderResponseSchema
+    from axbi.databases.schemas import OAuth2ProviderResponseSchema
 
     schema = OAuth2ProviderResponseSchema()
 
@@ -450,7 +450,7 @@ def test_import_schema_rejects_both_encrypted_and_masked() -> None:
     Test that ImportV1DatabaseSchema rejects configs with both
     encrypted_extra and masked_encrypted_extra.
     """
-    from superset.databases.schemas import ImportV1DatabaseSchema
+    from axbi.databases.schemas import ImportV1DatabaseSchema
 
     schema = ImportV1DatabaseSchema()
     config = {
@@ -475,9 +475,9 @@ def test_import_schema_rejects_masked_fields_for_new_db(
     Test that ImportV1DatabaseSchema rejects configs with PASSWORD_MASK
     values for a new DB (no existing UUID match).
     """
-    from superset.databases.schemas import ImportV1DatabaseSchema
+    from axbi.databases.schemas import ImportV1DatabaseSchema
 
-    mock_session = mocker.patch("superset.databases.schemas.db.session")
+    mock_session = mocker.patch("axbi.databases.schemas.db.session")
     mock_session.query.return_value.filter_by.return_value.first.return_value = None
 
     schema = ImportV1DatabaseSchema()
@@ -507,11 +507,11 @@ def test_import_schema_allows_masked_fields_for_existing_db(
     the DB already exists (UUID match). The reveal will happen later
     in import_database().
     """
-    from superset.databases.schemas import ImportV1DatabaseSchema
+    from axbi.databases.schemas import ImportV1DatabaseSchema
 
-    mock_session = mocker.patch("superset.databases.schemas.db.session")
+    mock_session = mocker.patch("axbi.databases.schemas.db.session")
     mock_existing_db = mocker.MagicMock()
-    mock_session = mocker.patch("superset.databases.schemas.db.session")
+    mock_session = mocker.patch("axbi.databases.schemas.db.session")
     mock_session.query.return_value.filter_by.return_value.first.return_value = (
         mock_existing_db
     )
@@ -533,7 +533,7 @@ def test_import_schema_allows_masked_fields_for_existing_db(
 
 def test_import_database_extra_schema_decodes_legacy_upload_schemas() -> None:
     """Legacy string-encoded upload schemas should load as a list."""
-    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+    from axbi.databases.schemas import ImportV1DatabaseExtraSchema
 
     payload = ImportV1DatabaseExtraSchema().load(
         {"schemas_allowed_for_csv_upload": '["public", "examples"]'}
@@ -544,7 +544,7 @@ def test_import_database_extra_schema_decodes_legacy_upload_schemas() -> None:
 
 def test_import_database_extra_schema_rejects_invalid_upload_schemas_json() -> None:
     """Invalid legacy upload schema JSON should report a validation error."""
-    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+    from axbi.databases.schemas import ImportV1DatabaseExtraSchema
 
     with pytest.raises(ValidationError) as exc_info:
         ImportV1DatabaseExtraSchema().load(
@@ -558,7 +558,7 @@ def test_import_database_extra_schema_rejects_invalid_upload_schemas_json() -> N
 
 def test_import_database_extra_schema_rejects_non_object_extra() -> None:
     """Non-object database extra payloads should fail validation cleanly."""
-    from superset.databases.schemas import ImportV1DatabaseExtraSchema
+    from axbi.databases.schemas import ImportV1DatabaseExtraSchema
 
     with pytest.raises(ValidationError) as exc_info:
         ImportV1DatabaseExtraSchema().load("not an object")
@@ -568,7 +568,7 @@ def test_import_database_extra_schema_rejects_non_object_extra() -> None:
 
 def test_import_database_schema_rejects_non_object_payload() -> None:
     """Non-object database imports should fail validation without crashing."""
-    from superset.databases.schemas import ImportV1DatabaseSchema
+    from axbi.databases.schemas import ImportV1DatabaseSchema
 
     with pytest.raises(ValidationError) as exc_info:
         ImportV1DatabaseSchema().load("allow_file_upload")
@@ -578,7 +578,7 @@ def test_import_database_schema_rejects_non_object_payload() -> None:
 
 def test_import_database_schema_renames_legacy_upload_field() -> None:
     """Legacy import payloads should still map allow_file_upload to allow_csv_upload."""
-    from superset.databases.schemas import ImportV1DatabaseSchema
+    from axbi.databases.schemas import ImportV1DatabaseSchema
 
     payload = {"allow_file_upload": True}
 
@@ -589,7 +589,7 @@ def test_import_database_schema_renames_legacy_upload_field() -> None:
 
 def test_ssh_tunnel_server_address_rejects_non_hostnames() -> None:
     """server_address must look like a hostname/IP, not a URL or arbitrary text."""
-    from superset.databases.schemas import DatabaseSSHTunnel
+    from axbi.databases.schemas import DatabaseSSHTunnel
 
     schema = DatabaseSSHTunnel()
     base = {"server_port": 22, "username": "u", "private_key": "k"}
@@ -607,7 +607,7 @@ def test_ssh_tunnel_credentials_load_only() -> None:
     Credential fields on DatabaseSSHTunnel are accepted on input (load) but
     never serialized in output (dump).
     """
-    from superset.databases.schemas import DatabaseSSHTunnel
+    from axbi.databases.schemas import DatabaseSSHTunnel
 
     schema = DatabaseSSHTunnel()
     payload = {

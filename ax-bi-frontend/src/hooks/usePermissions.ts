@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import { useSelector } from 'react-redux';
 import { RootState } from 'src/dashboard/types';
 import { findPermission } from 'src/utils/findPermission';
 
 export const usePermissions = () => {
   const canExplore = useSelector((state: RootState) =>
-    findPermission('can_explore', 'Superset', state.user?.roles),
+    findPermission('can_explore', 'AxBI', state.user?.roles),
   );
   const canWriteExploreFormData = useSelector((state: RootState) =>
     findPermission('can_write', 'ExploreFormDataRestApi', state.user?.roles),
@@ -32,19 +32,19 @@ export const usePermissions = () => {
     findPermission('can_samples', 'Datasource', state.user?.roles),
   );
   const canCsvLegacy = useSelector((state: RootState) =>
-    findPermission('can_csv', 'Superset', state.user?.roles),
+    findPermission('can_csv', 'AxBI', state.user?.roles),
   );
   const canExportCsvSqlLab = useSelector((state: RootState) =>
     findPermission('can_export_csv', 'SQLLab', state.user?.roles),
   );
   const canExportDataGranular = useSelector((state: RootState) =>
-    findPermission('can_export_data', 'Superset', state.user?.roles),
+    findPermission('can_export_data', 'AxBI', state.user?.roles),
   );
   const canExportImageGranular = useSelector((state: RootState) =>
-    findPermission('can_export_image', 'Superset', state.user?.roles),
+    findPermission('can_export_image', 'AxBI', state.user?.roles),
   );
   const canCopyClipboardGranular = useSelector((state: RootState) =>
-    findPermission('can_copy_clipboard', 'Superset', state.user?.roles),
+    findPermission('can_copy_clipboard', 'AxBI', state.user?.roles),
   );
   const granularExport = isFeatureEnabled(FeatureFlag.GranularExportControls);
   const canExportData = granularExport ? canExportDataGranular : canCsvLegacy;

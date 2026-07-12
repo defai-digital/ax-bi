@@ -19,9 +19,9 @@ from __future__ import annotations
 import pytest
 import yaml
 
-from superset.commands.dataset.importers.v0 import ImportDatasetsCommand
-from superset.commands.importers.exceptions import IncorrectVersionError
-from superset.utils import json
+from axbi.commands.dataset.importers.v0 import ImportDatasetsCommand
+from axbi.commands.importers.exceptions import IncorrectVersionError
+from axbi.utils import json
 
 
 def test_validate_accepts_v0_ui_export_dataset_params() -> None:

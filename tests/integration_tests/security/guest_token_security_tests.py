@@ -14,23 +14,23 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from unittest.mock import Mock, patch
 
 import pytest
 from flask import g
 
-from superset import db, security_manager
-from superset.connectors.sqla.models import SqlaTable
-from superset.daos.dashboard import EmbeddedDashboardDAO
-from superset.exceptions import SupersetSecurityException
-from superset.models.dashboard import Dashboard
-from superset.security.guest_token import GuestTokenResourceType
-from superset.utils import json
-from superset.utils.core import get_example_default_schema
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.daos.dashboard import EmbeddedDashboardDAO
+from axbi.exceptions import AxBISecurityException
+from axbi.models.dashboard import Dashboard
+from axbi.security.guest_token import GuestTokenResourceType
+from axbi.utils import json
+from axbi.utils.core import get_example_default_schema
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices_class_scope,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -43,10 +43,10 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 
 
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
-    EMBEDDED_SUPERSET=True,
+    "axbi.extensions.feature_flag_manager._feature_flags",
+    EMBEDDED_AXBI=True,
 )
-class TestGuestUserSecurity(SupersetTestCase):
+class TestGuestUserSecurity(AxBITestCase):
     def authorized_guest(self):
         return security_manager.get_guest_user_from_token(
             {"user": {}, "resources": [{"type": "dashboard", "id": "some-uuid"}]}
@@ -65,8 +65,8 @@ class TestGuestUserSecurity(SupersetTestCase):
         assert is_guest
 
     @patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
-        EMBEDDED_SUPERSET=False,
+        "axbi.extensions.feature_flag_manager._feature_flags",
+        EMBEDDED_AXBI=False,
     )
     def test_is_guest_user__flag_off(self):
         is_guest = security_manager.is_guest_user(self.authorized_guest())
@@ -101,11 +101,11 @@ class TestGuestUserSecurity(SupersetTestCase):
 
 
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
-    EMBEDDED_SUPERSET=True,
+    "axbi.extensions.feature_flag_manager._feature_flags",
+    EMBEDDED_AXBI=True,
 )
 @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices_class_scope")
-class TestGuestUserDashboardAccess(SupersetTestCase):
+class TestGuestUserDashboardAccess(AxBITestCase):
     def setUp(self) -> None:
         self.dash = self.get_dash_by_slug("births")
         self.embedded = EmbeddedDashboardDAO.upsert(self.dash, [])
@@ -189,7 +189,7 @@ class TestGuestUserDashboardAccess(SupersetTestCase):
     def test_raise_for_access_dashboard_as_unauthorized_guest(self):
         g.user = self.unauthorized_guest
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(dashboard=self.dash)
 
     def test_raise_for_access_dashboard_as_guest_no_rbac(self):
@@ -213,7 +213,7 @@ class TestGuestUserDashboardAccess(SupersetTestCase):
         db.session.add(dash)
         db.session.commit()
 
-        with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+        with self.assertRaises(AxBISecurityException):  # noqa: PT027
             security_manager.raise_for_access(dashboard=dash)
 
         db.session.delete(dash)
@@ -221,15 +221,15 @@ class TestGuestUserDashboardAccess(SupersetTestCase):
 
 
 @patch.dict(
-    "superset.extensions.feature_flag_manager._feature_flags",
-    EMBEDDED_SUPERSET=True,
+    "axbi.extensions.feature_flag_manager._feature_flags",
+    EMBEDDED_AXBI=True,
 )
 @pytest.mark.usefixtures(
     "create_dataset",
     "load_birth_names_dashboard_with_slices_class_scope",
     "load_world_bank_dashboard_with_slices_class_scope",
 )
-class TestGuestUserDatasourceAccess(SupersetTestCase):
+class TestGuestUserDatasourceAccess(AxBITestCase):
     """
     Guest users should only have access to datasources that are associated with a
     dashboard they have access to, and only with that dashboard context present
@@ -344,7 +344,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
     def test_raise_for_access__no_dashboard_in_form_data(self):
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -383,7 +383,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
         """
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -428,7 +428,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
         """
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -452,7 +452,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
         """
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -472,7 +472,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
     def test_raise_for_access__chart_not_on_dashboard(self):
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -488,7 +488,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
     def test_raise_for_access__chart_doesnt_belong_to_datasource(self):
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -504,7 +504,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
     def test_raise_for_access__native_filter_no_id_in_form_data(self):
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -524,7 +524,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
     def test_raise_for_access__native_filter_datasource_not_associated(self):
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -543,13 +543,13 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
                 )
 
     @patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
-        EMBEDDED_SUPERSET=False,
+        "axbi.extensions.feature_flag_manager._feature_flags",
+        EMBEDDED_AXBI=False,
     )
     def test_raise_for_access__embedded_feature_flag_off(self):
         g.user = self.authorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(
@@ -565,7 +565,7 @@ class TestGuestUserDatasourceAccess(SupersetTestCase):
     def test_raise_for_access__unauthorized_guest_user(self):
         g.user = self.unauthorized_guest
         for kwarg in ["viz", "query_context"]:
-            with self.assertRaises(SupersetSecurityException):  # noqa: PT027
+            with self.assertRaises(AxBISecurityException):  # noqa: PT027
                 security_manager.raise_for_access(
                     **{
                         kwarg: Mock(

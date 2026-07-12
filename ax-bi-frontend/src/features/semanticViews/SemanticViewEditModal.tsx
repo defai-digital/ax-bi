@@ -17,18 +17,18 @@
  * under the License.
  */
 import { useState, useEffect } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
-import { Input, InputNumber } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
-import Tabs from '@superset-ui/core/components/Tabs';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
+import { Input, InputNumber } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import {
   Table,
   type ColumnsType,
   TableSize,
-} from '@superset-ui/core/components/Table';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core/components/Table';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
 import {
   StandardModal,
   ModalFormField,
@@ -120,7 +120,7 @@ export default function SemanticViewEditModal({
   useEffect(() => {
     if (show && semanticView) {
       setStructureLoading(true);
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/semantic_view/${semanticView.id}/structure`,
       })
         .then(({ json }) => {
@@ -145,7 +145,7 @@ export default function SemanticViewEditModal({
     if (!semanticView) return;
     setSaving(true);
     try {
-      await SupersetClient.put({
+      await AxBIClient.put({
         endpoint: `/api/v1/semantic_view/${semanticView.id}`,
         jsonPayload: {
           description: description || null,

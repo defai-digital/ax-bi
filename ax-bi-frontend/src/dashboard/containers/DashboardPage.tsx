@@ -19,12 +19,12 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { createContext, lazy, FC, useEffect, useMemo, useRef } from 'react';
 import { Global } from '@emotion/react';
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
 import { useDispatch, useSelector } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
-import { Loading } from '@superset-ui/core/components';
+import { Loading } from '@ax-bi/ui-core/components';
 import {
   useDashboard,
   useDashboardCharts,
@@ -67,7 +67,7 @@ import SyncDashboardState, {
   getDashboardContextLocalStorage,
 } from '../components/SyncDashboardState';
 import { AutoRefreshProvider } from '../contexts/AutoRefreshContext';
-import { Filter, PartialFilters } from '@superset-ui/core';
+import { Filter, PartialFilters } from '@ax-bi/ui-core';
 import {
   parseRisonFilters,
   risonFiltersToExtraFormDataFilters,
@@ -217,8 +217,7 @@ export const DashboardPage: FC<PageProps> = ({ idOrSlug }: PageProps) => {
         if (permalinkValue?.state) {
           ({ dataMask, activeTabs, anchor } = permalinkValue.state);
           chartStates = permalinkValue.state.chartStates as
-            | DashboardChartStates
-            | undefined;
+            DashboardChartStates | undefined;
         }
       } else if (nativeFilterKeyValue) {
         dataMask = await getFilterValue(id, nativeFilterKeyValue);
@@ -346,10 +345,7 @@ export const DashboardPage: FC<PageProps> = ({ idOrSlug }: PageProps) => {
   useEffect(
     () => () => {
       document.title =
-        originalTitle ||
-        theme?.brandAppName ||
-        theme?.brandLogoAlt ||
-        'Superset';
+        originalTitle || theme?.brandAppName || theme?.brandLogoAlt || 'AxBI';
     },
     [originalTitle, theme?.brandAppName, theme?.brandLogoAlt],
   );

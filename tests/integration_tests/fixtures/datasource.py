@@ -23,11 +23,11 @@ import pytest
 from sqlalchemy import Column, create_engine, Date, Integer, MetaData, String, Table
 from sqlalchemy.ext.declarative import declarative_base
 
-from superset.connectors.sqla.models import SqlaTable, TableColumn
-from superset.extensions import db
-from superset.models.core import Database
-from superset.utils.core import get_example_default_schema
-from superset.utils.database import get_example_database  # noqa: F401
+from axbi.connectors.sqla.models import SqlaTable, TableColumn
+from axbi.extensions import db
+from axbi.models.core import Database
+from axbi.utils.core import get_example_default_schema
+from axbi.utils.database import get_example_database  # noqa: F401
 from tests.integration_tests.test_app import app
 
 

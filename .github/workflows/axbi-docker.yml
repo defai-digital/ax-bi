@@ -14,8 +14,8 @@ on:
       - "docker-compose-axbi*.yml"
       - "ax-services/**"
       - "requirements/**"
-      - "superset/**"
-      - "superset-core/**"
+      - "axbi/**"
+      - "ax-bi-core/**"
       - "ax-bi-frontend/**"
   workflow_dispatch:
 

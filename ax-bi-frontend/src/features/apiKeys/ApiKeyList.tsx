@@ -17,16 +17,10 @@
  * under the License.
  */
 import { useEffect, useRef, useState } from 'react';
-import { SupersetClient } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme } from '@apache-superset/core/theme';
-import {
-  Button,
-  Table,
-  Modal,
-  Tag,
-  Tooltip,
-} from '@superset-ui/core/components';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Button, Table, Modal, Tag, Tooltip } from '@ax-bi/ui-core/components';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { ApiKeyCreateModal } from './ApiKeyCreateModal';
 
@@ -55,7 +49,7 @@ export function ApiKeyList() {
     const thisRequest = fetchCounterRef.current;
     setLoading(true);
     try {
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: '/api/v1/security/api_keys/',
       });
       // Only apply results if this is still the most recent request
@@ -89,7 +83,7 @@ export function ApiKeyList() {
       cancelText: t('Cancel'),
       onOk: async () => {
         try {
-          await SupersetClient.delete({
+          await AxBIClient.delete({
             endpoint: `/api/v1/security/api_keys/${keyUuid}`,
           });
           addSuccessToast(t('API key revoked successfully'));
@@ -199,7 +193,7 @@ export function ApiKeyList() {
               margin-bottom: ${theme.sizeUnit * 2}px;
             `}
           >
-            {t('API keys allow scoped programmatic access to Superset.')}
+            {t('API keys allow scoped programmatic access to AxBI.')}
           </p>
           <p
             css={css`

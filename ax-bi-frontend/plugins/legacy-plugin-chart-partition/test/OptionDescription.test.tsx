@@ -17,8 +17,8 @@
  * under the License.
  */
 import '@testing-library/jest-dom';
-import { screen, render, fireEvent, act } from '@superset-ui/core/spec';
-import type { ColumnMeta } from '@superset-ui/chart-controls';
+import { screen, render, fireEvent, act } from '@ax-bi/ui-core/spec';
+import type { ColumnMeta } from '@ax-bi/chart-controls';
 import OptionDescription from '../src/OptionDescription';
 
 const defaultProps = {

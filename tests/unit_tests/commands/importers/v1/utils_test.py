@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for superset/commands/dataset/importers/v1/utils.py temporal helpers."""
+"""Tests for axbi/commands/dataset/importers/v1/utils.py temporal helpers."""
 
 from unittest.mock import MagicMock, patch
 
@@ -39,12 +39,12 @@ class SshTunnelSchema(Schema):
 
 
 def _mock_empty_import_queries(mocker: MockerFixture) -> None:
-    query = mocker.patch("superset.commands.importers.v1.utils.db").session.query
+    query = mocker.patch("axbi.commands.importers.v1.utils.db").session.query
     query.return_value.all.return_value = []
 
 
 def test_load_yaml_wraps_scanner_errors() -> None:
-    from superset.commands.importers.v1.utils import load_yaml
+    from axbi.commands.importers.v1.utils import load_yaml
 
     with pytest.raises(ValidationError) as excinfo:
         load_yaml("databases/bad.yaml", "name: [")
@@ -55,7 +55,7 @@ def test_load_yaml_wraps_scanner_errors() -> None:
 
 
 def test_load_configs_rejects_non_object_yaml(mocker: MockerFixture) -> None:
-    from superset.commands.importers.v1.utils import load_configs
+    from axbi.commands.importers.v1.utils import load_configs
 
     _mock_empty_import_queries(mocker)
     exceptions: list[ValidationError] = []
@@ -81,7 +81,7 @@ def test_load_configs_rejects_non_object_yaml(mocker: MockerFixture) -> None:
 def test_load_configs_schema_error_does_not_require_config_assignment(
     mocker: MockerFixture,
 ) -> None:
-    from superset.commands.importers.v1.utils import load_configs
+    from axbi.commands.importers.v1.utils import load_configs
 
     _mock_empty_import_queries(mocker)
     exceptions: list[ValidationError] = []
@@ -116,8 +116,8 @@ def test_load_configs_rejects_bad_masked_encrypted_extra_when_applying_secrets(
     masked_encrypted_extra: str,
     expected_message: str,
 ) -> None:
-    from superset.commands.importers.v1.utils import load_configs
-    from superset.utils import json
+    from axbi.commands.importers.v1.utils import load_configs
+    from axbi.utils import json
 
     _mock_empty_import_queries(mocker)
     exceptions: list[ValidationError] = []
@@ -150,7 +150,7 @@ def test_load_configs_rejects_bad_masked_encrypted_extra_when_applying_secrets(
 def test_load_configs_rejects_non_object_ssh_tunnel_without_crashing(
     mocker: MockerFixture,
 ) -> None:
-    from superset.commands.importers.v1.utils import load_configs
+    from axbi.commands.importers.v1.utils import load_configs
 
     _mock_empty_import_queries(mocker)
     exceptions: list[ValidationError] = []
@@ -177,7 +177,7 @@ def test_load_configs_rejects_non_object_ssh_tunnel_without_crashing(
 
 def test_read_dataframe_from_uri_supports_file_parquet(tmp_path) -> None:
     """Bundled example imports use local Parquet files."""
-    from superset.commands.dataset.importers.v1.utils import _read_dataframe_from_uri
+    from axbi.commands.dataset.importers.v1.utils import _read_dataframe_from_uri
 
     expected = pd.DataFrame({"name": ["alpha", "beta"], "value": [1, 2]})
     parquet_path = tmp_path / "example.parquet"
@@ -192,7 +192,7 @@ def test_get_dtype_skips_columns_without_supported_native_type() -> None:
     """Columns without supported imported types should let pandas infer SQL types."""
     from sqlalchemy import Text
 
-    from superset.commands.dataset.importers.v1.utils import get_dtype
+    from axbi.commands.dataset.importers.v1.utils import get_dtype
 
     dataset = MagicMock()
     dataset.columns = [
@@ -223,7 +223,7 @@ class TestConvertTemporalColumns:
         """Valid in-range dates are converted to datetime64 normally."""
         from sqlalchemy import DateTime
 
-        from superset.commands.dataset.importers.v1.utils import (
+        from axbi.commands.dataset.importers.v1.utils import (
             _convert_temporal_columns,
         )
 
@@ -242,14 +242,12 @@ class TestConvertTemporalColumns:
         """
         from sqlalchemy import DateTime
 
-        from superset.commands.dataset.importers.v1.utils import (
+        from axbi.commands.dataset.importers.v1.utils import (
             _convert_temporal_columns,
         )
 
         df = pd.DataFrame({"ts": ["3118-01-01"]})
-        with patch(
-            "superset.commands.dataset.importers.v1.utils.logger"
-        ) as mock_logger:
+        with patch("axbi.commands.dataset.importers.v1.utils.logger") as mock_logger:
             _convert_temporal_columns(df, {"ts": DateTime()})
 
         value = df["ts"].iloc[0]
@@ -268,7 +266,7 @@ class TestConvertTemporalColumns:
         """
         from sqlalchemy import DateTime
 
-        from superset.commands.dataset.importers.v1.utils import (
+        from axbi.commands.dataset.importers.v1.utils import (
             _convert_temporal_columns,
         )
 
@@ -293,7 +291,7 @@ class TestConvertTemporalColumns:
         """
         from sqlalchemy import DateTime
 
-        from superset.commands.dataset.importers.v1.utils import (
+        from axbi.commands.dataset.importers.v1.utils import (
             _convert_temporal_columns,
         )
 
@@ -311,14 +309,12 @@ class TestConvertTemporalColumns:
         """
         from sqlalchemy import DateTime
 
-        from superset.commands.dataset.importers.v1.utils import (
+        from axbi.commands.dataset.importers.v1.utils import (
             _convert_temporal_columns,
         )
 
         df = pd.DataFrame({"ts": [None, "3118-01-01", "3119-06-01"]})
-        with patch(
-            "superset.commands.dataset.importers.v1.utils.logger"
-        ) as mock_logger:
+        with patch("axbi.commands.dataset.importers.v1.utils.logger") as mock_logger:
             _convert_temporal_columns(df, {"ts": DateTime()})
 
         if mock_logger.warning.called:

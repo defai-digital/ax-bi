@@ -24,15 +24,15 @@ from fastmcp import Client
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.rls.schemas import ListRlsFiltersRequest, RlsColumnFilter
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.rls.schemas import ListRlsFiltersRequest, RlsColumnFilter
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 
 list_rls_filters_module = importlib.import_module(
-    "superset.mcp_service.rls.tool.list_rls_filters"
+    "axbi.mcp_service.rls.tool.list_rls_filters"
 )
 
 
@@ -71,7 +71,7 @@ def mcp_server():
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -93,7 +93,7 @@ class TestRlsColumnFilterSchema:
         assert f.col == "filter_type"
 
 
-@patch("superset.daos.security.RLSDAO.list")
+@patch("axbi.daos.security.RLSDAO.list")
 @pytest.mark.asyncio
 async def test_list_rls_filters_basic(mock_list, mcp_server):
     rls_filter = create_mock_rls_filter()
@@ -109,7 +109,7 @@ async def test_list_rls_filters_basic(mock_list, mcp_server):
         assert data["rls_filters"][0]["name"] == "test_filter"
 
 
-@patch("superset.daos.security.RLSDAO.list")
+@patch("axbi.daos.security.RLSDAO.list")
 @pytest.mark.asyncio
 async def test_list_rls_filters_with_request(mock_list, mcp_server):
     rls_filter = create_mock_rls_filter()
@@ -125,7 +125,7 @@ async def test_list_rls_filters_with_request(mock_list, mcp_server):
         assert data["total_count"] == 1
 
 
-@patch("superset.daos.security.RLSDAO.list")
+@patch("axbi.daos.security.RLSDAO.list")
 @pytest.mark.asyncio
 async def test_list_rls_filters_with_search(mock_list, mcp_server):
     rls_filter = create_mock_rls_filter(name="user_filter")
@@ -140,7 +140,7 @@ async def test_list_rls_filters_with_search(mock_list, mcp_server):
         assert data["rls_filters"][0]["name"] == "user_filter"
 
 
-@patch("superset.daos.security.RLSDAO.list")
+@patch("axbi.daos.security.RLSDAO.list")
 @pytest.mark.asyncio
 async def test_list_rls_filters_returns_tables_and_roles(mock_list, mcp_server):
     rls_filter = create_mock_rls_filter()
@@ -163,7 +163,7 @@ async def test_list_rls_filters_returns_tables_and_roles(mock_list, mcp_server):
         assert item["roles"][0]["name"] == "Alpha"
 
 
-@patch("superset.daos.security.RLSDAO.list")
+@patch("axbi.daos.security.RLSDAO.list")
 @pytest.mark.asyncio
 async def test_list_rls_filters_empty(mock_list, mcp_server):
     mock_list.return_value = ([], 0)
@@ -175,7 +175,7 @@ async def test_list_rls_filters_empty(mock_list, mcp_server):
         assert data["rls_filters"] == []
 
 
-@patch("superset.daos.security.RLSDAO.find_by_id")
+@patch("axbi.daos.security.RLSDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_rls_filter_info_basic(mock_find, mcp_server):
     rls_filter = create_mock_rls_filter()
@@ -192,7 +192,7 @@ async def test_get_rls_filter_info_basic(mock_find, mcp_server):
         assert data["clause"] == "user_id = {{current_user_id()}}"
 
 
-@patch("superset.daos.security.RLSDAO.find_by_id")
+@patch("axbi.daos.security.RLSDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_rls_filter_info_not_found(mock_find, mcp_server):
     mock_find.return_value = None
@@ -205,7 +205,7 @@ async def test_get_rls_filter_info_not_found(mock_find, mcp_server):
         assert data["error_type"] == "not_found"
 
 
-@patch("superset.daos.security.RLSDAO.find_by_id")
+@patch("axbi.daos.security.RLSDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_rls_filter_info_includes_tables_and_roles(mock_find, mcp_server):
     rls_filter = create_mock_rls_filter()
@@ -228,7 +228,7 @@ def test_list_rls_filters_request_rejects_search_and_filters():
         )
 
 
-@patch("superset.daos.security.RLSDAO.list")
+@patch("axbi.daos.security.RLSDAO.list")
 @pytest.mark.asyncio
 async def test_list_rls_filters_roles_only_select_columns(mock_list, mcp_server):
     """Regression: select_columns=['roles'] must not raise ValueError.
@@ -354,7 +354,7 @@ async def test_list_rls_filters_serves_valid_sidecar_response(mcp_server):
     )
 
 
-@patch("superset.daos.security.RLSDAO.list")
+@patch("axbi.daos.security.RLSDAO.list")
 @pytest.mark.asyncio
 async def test_list_rls_filters_falls_back_on_candidate_warning(mock_list, mcp_server):
     """Sidecar RLS warnings fall back to the authoritative Python path."""
@@ -383,7 +383,7 @@ async def test_list_rls_filters_falls_back_on_candidate_warning(mock_list, mcp_s
                     "hasPrevious": False,
                     "columnsRequested": ["id", "name"],
                     "columnsLoaded": [],
-                    "warnings": ["RLS filter list returned status 504 from Superset"],
+                    "warnings": ["RLS filter list returned status 504 from AxBI"],
                 },
             )
 

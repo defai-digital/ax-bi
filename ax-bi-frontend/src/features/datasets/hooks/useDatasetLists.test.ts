@@ -18,7 +18,7 @@
  */
 import { renderHook } from '@testing-library/react';
 import { waitFor } from '@testing-library/dom';
-import { SupersetClient, JsonResponse } from '@superset-ui/core';
+import { AxBIClient, JsonResponse } from '@ax-bi/ui-core';
 import rison from 'rison';
 import useDatasetsList from './useDatasetLists';
 
@@ -48,7 +48,7 @@ afterEach(() => {
 });
 
 test('useDatasetsList fetches first page of datasets successfully', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {
       count: 2,
       result: mockDatasets,
@@ -73,7 +73,7 @@ test('useDatasetsList fetches multiple pages (pagination) until count reached', 
   const page2Data = [{ id: 3, table_name: 'table3', schema: 'public' }];
 
   const getSpy = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockResolvedValueOnce({
       json: {
         count: 3,
@@ -98,7 +98,7 @@ test('useDatasetsList fetches multiple pages (pagination) until count reached', 
 });
 
 test('useDatasetsList extracts dataset names correctly', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {
       count: 3,
       result: [
@@ -125,7 +125,7 @@ test('useDatasetsList extracts dataset names correctly', async () => {
 test('useDatasetsList handles API 500 error gracefully', async () => {
   // Mock error - loop should break immediately
   const getSpy = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockRejectedValue(new Error('Internal Server Error'));
 
   const { result } = renderHook(() => useDatasetsList(mockDb, 'public'));
@@ -143,7 +143,7 @@ test('useDatasetsList handles API 500 error gracefully', async () => {
 });
 
 test('useDatasetsList handles empty dataset response', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {
       count: 0,
       result: [],
@@ -163,7 +163,7 @@ test('useDatasetsList handles empty dataset response', async () => {
 test('useDatasetsList stops pagination when results reach count', async () => {
   // First page returns 2 items, second page returns empty (no more results)
   const getSpy = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockResolvedValueOnce({
       json: {
         count: 2,
@@ -193,7 +193,7 @@ test('useDatasetsList stops pagination when results reach count', async () => {
 
 test('useDatasetsList resets datasets when schema changes', async () => {
   const getSpy = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockResolvedValueOnce({
       json: {
         count: 2,
@@ -242,9 +242,7 @@ test('useDatasetsList handles network timeout gracefully', async () => {
   };
   timeoutError.status = 0;
 
-  const getSpy = jest
-    .spyOn(SupersetClient, 'get')
-    .mockRejectedValue(timeoutError);
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockRejectedValue(timeoutError);
 
   const { result } = renderHook(() => useDatasetsList(mockDb, 'public'));
 
@@ -263,7 +261,7 @@ test('useDatasetsList handles network timeout gracefully', async () => {
 test('useDatasetsList breaks pagination loop on persistent API errors', async () => {
   // Mock API that always fails (persistent error)
   const getSpy = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockRejectedValue(new Error('Persistent server error'));
 
   const { result } = renderHook(() => useDatasetsList(mockDb, 'public'));
@@ -284,7 +282,7 @@ test('useDatasetsList breaks pagination loop on persistent API errors', async ()
 test('useDatasetsList handles error on second page gracefully', async () => {
   // First page succeeds, second page fails
   const getSpy = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockResolvedValueOnce({
       json: {
         count: 3, // Indicates more data exists
@@ -310,7 +308,7 @@ test('useDatasetsList handles error on second page gracefully', async () => {
 });
 
 test('useDatasetsList skips fetching when schema is null or undefined', () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get');
+  const getSpy = jest.spyOn(AxBIClient, 'get');
 
   // Test with null schema
   const { result: resultNull, rerender } = renderHook(
@@ -331,7 +329,7 @@ test('useDatasetsList skips fetching when schema is null or undefined', () => {
 });
 
 test('useDatasetsList skips fetching when db is undefined', () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get');
+  const getSpy = jest.spyOn(AxBIClient, 'get');
 
   const { result } = renderHook(() => useDatasetsList(undefined, 'public'));
 
@@ -342,7 +340,7 @@ test('useDatasetsList skips fetching when db is undefined', () => {
 });
 
 test('useDatasetsList skips fetching when db.id is undefined', () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get');
+  const getSpy = jest.spyOn(AxBIClient, 'get');
 
   // Create db object without id property
   const dbWithoutId = {
@@ -366,7 +364,7 @@ test('useDatasetsList fetches datasets for schema-less databases without schema 
     supports_schemas: false,
   };
 
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {
       count: 1,
       result: [{ id: 10, table_name: 'my_table', schema: null }],
@@ -403,7 +401,7 @@ test('useDatasetsList fetches datasets for schema-less databases without schema 
 });
 
 test('useDatasetsList skips fetching when schema-less database id is undefined', () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get');
+  const getSpy = jest.spyOn(AxBIClient, 'get');
 
   const schemalessDb = {
     database_name: 'ydb',
@@ -419,7 +417,7 @@ test('useDatasetsList skips fetching when schema-less database id is undefined',
 });
 
 test('useDatasetsList encodes schemas with spaces and special characters in endpoint URL', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { count: 0, result: [] },
   } as unknown as JsonResponse);
 

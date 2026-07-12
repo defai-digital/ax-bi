@@ -16,8 +16,8 @@
 # under the License.
 from typing import Any
 
-from superset.migrations.shared.migrate_viz import MigrateViz
-from superset.utils import json
+from axbi.migrations.shared.migrate_viz import MigrateViz
+from axbi.utils import json
 
 TIMESERIES_SOURCE_FORM_DATA: dict[str, Any] = {
     "datasource": "1__table",
@@ -69,7 +69,7 @@ TIMESERIES_TARGET_FORM_DATA: dict[str, Any] = {
 def migrate_and_assert(
     cls: type[MigrateViz], source: dict[str, Any], target: dict[str, Any]
 ) -> None:
-    from superset.models.slice import Slice
+    from axbi.models.slice import Slice
 
     dumped_form_data = json.dumps(source)
 

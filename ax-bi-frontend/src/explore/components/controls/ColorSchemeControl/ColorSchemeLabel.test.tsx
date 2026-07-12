@@ -34,7 +34,7 @@ const defaultProps = {
     '#FFFFFF',
     '#CCCCCC',
   ],
-  label: 'Superset Colors',
+  label: 'AxBI Colors',
   id: 'colorScheme',
 };
 
@@ -48,7 +48,7 @@ test('should render', async () => {
 
 test('should render the label', () => {
   setup();
-  expect(screen.getByText('Superset Colors')).toBeInTheDocument();
+  expect(screen.getByText('AxBI Colors')).toBeInTheDocument();
 });
 
 test('should render the colors', () => {

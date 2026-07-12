@@ -16,11 +16,11 @@
 # under the License.
 from sqlalchemy import column
 
-from superset.db_engine_specs.pinot import PinotEngineSpec
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs.pinot import PinotEngineSpec
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestPinotDbEngineSpec(SupersetTestCase):
+class TestPinotDbEngineSpec(AxBITestCase):
     """Tests pertaining to our Pinot database support"""
 
     def test_pinot_time_expression_sec_one_1d_grain(self):

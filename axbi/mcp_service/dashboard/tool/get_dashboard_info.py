@@ -1,0 +1,272 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+"""
+Get dashboard info FastMCP tool
+
+This module contains the FastMCP tool for getting detailed information
+about a specific dashboard.
+"""
+
+import logging
+from typing import Any
+
+from axbi_core.mcp.decorators import tool, ToolAnnotations
+from fastmcp import Context
+from flask import g, has_request_context
+from sqlalchemy.orm import subqueryload
+
+from axbi.dashboards.permalink.exceptions import DashboardPermalinkGetFailedError
+from axbi.dashboards.permalink.types import DashboardPermalinkValue
+from axbi.mcp_service.auth import load_user_with_relationships
+from axbi.mcp_service.dashboard.schemas import (
+    dashboard_serializer,
+    DashboardError,
+    DashboardInfo,
+    DEFAULT_GET_DASHBOARD_INFO_COLUMNS,
+    GetDashboardInfoRequest,
+    redact_filter_state_data_model_metadata,
+)
+from axbi.mcp_service.mcp_core import ModelGetInfoCore
+from axbi.mcp_service.privacy import user_can_view_data_model_metadata
+from axbi.mcp_service.utils import sanitize_for_llm_context
+from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.response_utils import dump_model_with_select_columns
+
+logger = logging.getLogger(__name__)
+
+
+def _refresh_request_user_for_permalink_access() -> None:
+    """Reload the request user before permalink access checks."""
+    if not has_request_context() or not getattr(g, "user", None):
+        return
+
+    current_user = g.user
+    if getattr(current_user, "is_anonymous", False):
+        return
+
+    username = getattr(current_user, "username", None)
+    email = getattr(current_user, "email", None)
+    if not username and not email:
+        return
+
+    refreshed_user = (
+        load_user_with_relationships(username=username)
+        if username
+        else load_user_with_relationships(email=email)
+    )
+    if refreshed_user is not None:
+        g.user = refreshed_user
+
+
+def _apply_permalink_state(
+    result: DashboardInfo,
+    permalink_key: str,
+    permalink_state: dict[str, object],
+) -> DashboardInfo:
+    """Sanitize only the raw permalink fields added after serialization."""
+    payload = result.model_dump(mode="python")
+    payload["permalink_key"] = permalink_key
+    payload["filter_state"] = sanitize_for_llm_context(
+        permalink_state,
+        field_path=("filter_state",),
+        excluded_field_names=frozenset(),
+    )
+    payload["is_permalink_state"] = True
+    return DashboardInfo.model_validate(payload)
+
+
+def _get_permalink_state(permalink_key: str) -> DashboardPermalinkValue | None:
+    """Retrieve dashboard filter state from permalink.
+
+    Returns the permalink value containing dashboardId and state if found,
+    None otherwise.
+    """
+    from axbi.commands.dashboard.permalink.get import GetDashboardPermalinkCommand
+
+    try:
+        return GetDashboardPermalinkCommand(permalink_key).run()
+    except DashboardPermalinkGetFailedError as e:
+        logger.warning("Failed to retrieve permalink state: %s", e)
+        return None
+
+
+@tool(
+    tags=["discovery"],
+    class_permission_name="Dashboard",
+    annotations=ToolAnnotations(
+        title="Get dashboard info",
+        readOnlyHint=True,
+        destructiveHint=False,
+    ),
+)
+async def get_dashboard_info(
+    request: GetDashboardInfoRequest, ctx: Context
+) -> dict[str, Any] | DashboardError:
+    """
+    Get dashboard metadata by ID, UUID, or slug.
+
+    Returns title, charts, and layout details.
+
+    When permalink_key is provided, also returns the filter state from that
+    permalink, allowing you to see what filters the user has applied to the
+    dashboard (not just the default filter state).
+
+    Example usage:
+    ```json
+    {
+        "identifier": 123
+    }
+    ```
+
+    With permalink (filter state from URL):
+    ```json
+    {
+        "identifier": 123,
+        "permalink_key": "abc123def456"
+    }
+    ```
+    """
+    await ctx.info(
+        f"Retrieving dashboard information: identifier={request.identifier}, "
+        f"permalink_key={request.permalink_key}"
+    )
+    await ctx.debug(
+        f"Metadata cache settings: use_cache={request.use_cache}, "
+        f"refresh_metadata={request.refresh_metadata}, "
+        f"force_refresh={request.force_refresh}"
+    )
+
+    try:
+        from axbi.daos.dashboard import DashboardDAO
+        from axbi.models.dashboard import Dashboard
+        from axbi.models.slice import Slice
+
+        # Eager load slices and tags to avoid N+1 queries during serialization.
+        eager_options = [
+            subqueryload(Dashboard.slices).subqueryload(Slice.tags),
+            subqueryload(Dashboard.tags),
+        ]
+
+        with mcp_event_log_context(action="mcp.get_dashboard_info.lookup"):
+            tool = ModelGetInfoCore(
+                dao_class=DashboardDAO,
+                output_schema=DashboardInfo,
+                error_schema=DashboardError,
+                serializer=dashboard_serializer,
+                supports_slug=True,  # Dashboards support slugs
+                logger=logger,
+                query_options=eager_options,
+            )
+
+            result = tool.run_tool(request.identifier)
+
+        if isinstance(result, DashboardInfo):
+            # If permalink_key is provided, retrieve filter state
+            if request.permalink_key:
+                await ctx.info(
+                    "Retrieving filter state from permalink: "
+                    f"permalink_key={request.permalink_key}"
+                )
+                _refresh_request_user_for_permalink_access()
+                permalink_value = _get_permalink_state(request.permalink_key)
+
+                if permalink_value:
+                    # Verify the permalink belongs to the requested dashboard
+                    # dashboardId in permalink is stored as str, result.id is int
+                    permalink_dashboard_id = permalink_value.get("dashboardId")
+                    try:
+                        permalink_dashboard_id_int = (
+                            int(permalink_dashboard_id)
+                            if permalink_dashboard_id
+                            else None
+                        )
+                    except (ValueError, TypeError):
+                        permalink_dashboard_id_int = None
+
+                    if (
+                        permalink_dashboard_id_int is not None
+                        and permalink_dashboard_id_int != result.id
+                    ):
+                        await ctx.warning(
+                            f"permalink_key dashboardId ({permalink_dashboard_id}) "
+                            f"does not match requested dashboard id ({result.id}); "
+                            "ignoring permalink filter state."
+                        )
+                    else:
+                        # Extract the state from permalink value
+                        # Handle None or non-dict state gracefully
+                        raw_state = permalink_value.get("state")
+                        permalink_state = (
+                            dict(raw_state) if isinstance(raw_state, dict) else {}
+                        )
+                        if not user_can_view_data_model_metadata():
+                            permalink_state = redact_filter_state_data_model_metadata(
+                                permalink_state
+                            )
+                        result = _apply_permalink_state(
+                            result,
+                            request.permalink_key,
+                            permalink_state,
+                        )
+
+                        await ctx.info(
+                            "Filter state retrieved from permalink: "
+                            f"has_dataMask={'dataMask' in permalink_state}, "
+                            f"has_chartStates={'chartStates' in permalink_state}, "
+                            f"has_activeTabs={'activeTabs' in permalink_state}"
+                        )
+                else:
+                    await ctx.warning(
+                        "permalink_key provided but no permalink found. "
+                        "The permalink may have expired or is invalid."
+                    )
+
+            await ctx.info(
+                "Dashboard information retrieved successfully: "
+                f"id={result.id}, title={result.dashboard_title}, "
+                f"chart_count={result.chart_count}, published={result.published}, "
+                f"is_permalink_state={result.is_permalink_state}"
+            )
+            # When permalink_key is supplied and the caller did not explicitly
+            # override select_columns, ensure filter_state is present so the
+            # caller gets the data they came for.
+            effective_select_columns = list(request.select_columns)
+            if request.permalink_key and effective_select_columns == list(
+                DEFAULT_GET_DASHBOARD_INFO_COLUMNS
+            ):
+                effective_select_columns.append("filter_state")
+
+            return dump_model_with_select_columns(result, effective_select_columns)
+
+        await ctx.warning(
+            f"Dashboard retrieval failed: error_type={result.error_type}, "
+            f"error={result.error}"
+        )
+
+        return result
+
+    except Exception as e:
+        await ctx.error(
+            "Dashboard information retrieval failed: "
+            f"identifier={request.identifier}, error={str(e)}, "
+            f"error_type={type(e).__name__}"
+        )
+        return DashboardError.create(
+            error=f"Failed to get dashboard info: {str(e)}",
+            error_type="InternalError",
+        )

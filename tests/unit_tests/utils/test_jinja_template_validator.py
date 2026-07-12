@@ -17,7 +17,7 @@
 
 import pytest
 
-from superset.utils.jinja_template_validator import (
+from axbi.utils.jinja_template_validator import (
     JinjaValidationError,
     validate_jinja_template,
     validate_params_json_with_jinja,
@@ -65,7 +65,7 @@ def test_validate_params_json_with_jinja():
     """Test the combined JSON + Jinja2 validation function."""
     from marshmallow import ValidationError
 
-    from superset.utils import json
+    from axbi.utils import json
 
     # Valid JSON with valid templates
     valid_params = {

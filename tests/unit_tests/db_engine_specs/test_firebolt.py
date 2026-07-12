@@ -44,7 +44,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.firebolt import (
+    from axbi.db_engine_specs.firebolt import (
         FireboltEngineSpec as spec,  # noqa: N813
     )
 
@@ -52,7 +52,7 @@ def test_convert_dttm(
 
 
 def test_epoch_to_dttm() -> None:
-    from superset.db_engine_specs.firebolt import FireboltEngineSpec
+    from axbi.db_engine_specs.firebolt import FireboltEngineSpec
 
     assert (
         FireboltEngineSpec.epoch_to_dttm().format(col="timestamp_column")

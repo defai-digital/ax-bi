@@ -16,7 +16,7 @@
 # under the License.
 import pytest
 
-from superset.utils.core import form_data_to_adhoc, simple_filter_to_adhoc
+from axbi.utils.core import form_data_to_adhoc, simple_filter_to_adhoc
 
 
 def test_simple_filter_to_adhoc_generates_deterministic_values(app_context):

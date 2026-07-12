@@ -21,9 +21,9 @@ from unittest.mock import patch
 
 import pytest
 
-from superset.utils import json
-from superset.utils.core import SqlExpressionType
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.utils import json
+from axbi.utils.core import SqlExpressionType
+from tests.integration_tests.base_tests import AxBITestCase
 
 # Note: Tests use mocked responses, so we don't need the actual energy table fixture
 
@@ -34,10 +34,10 @@ from tests.integration_tests.base_tests import SupersetTestCase
         "Birth names fixture conflicts with new example data structure."
     )
 )
-class TestDatasourceValidateExpressionApi(SupersetTestCase):
+class TestDatasourceValidateExpressionApi(AxBITestCase):
     """Test the datasource validate_expression API endpoint"""
 
-    @patch("superset.connectors.sqla.models.SqlaTable.validate_expression")
+    @patch("axbi.connectors.sqla.models.SqlaTable.validate_expression")
     def test_validate_expression_column_success(self, mock_validate):
         """Test successful validation of a column expression"""
         self.login("admin")
@@ -62,7 +62,7 @@ class TestDatasourceValidateExpressionApi(SupersetTestCase):
         assert "result" in data
         assert data["result"] == []  # Empty array means success
 
-    @patch("superset.connectors.sqla.models.SqlaTable.validate_expression")
+    @patch("axbi.connectors.sqla.models.SqlaTable.validate_expression")
     def test_validate_expression_metric_success(self, mock_validate):
         """Test successful validation of a metric expression"""
         self.login("admin")
@@ -87,7 +87,7 @@ class TestDatasourceValidateExpressionApi(SupersetTestCase):
         assert "result" in data
         assert data["result"] == []
 
-    @patch("superset.connectors.sqla.models.SqlaTable.validate_expression")
+    @patch("axbi.connectors.sqla.models.SqlaTable.validate_expression")
     def test_validate_expression_where_success(self, mock_validate):
         """Test successful validation of a WHERE clause expression"""
         self.login("admin")
@@ -112,7 +112,7 @@ class TestDatasourceValidateExpressionApi(SupersetTestCase):
         assert "result" in data
         assert data["result"] == []
 
-    @patch("superset.connectors.sqla.models.SqlaTable.validate_expression")
+    @patch("axbi.connectors.sqla.models.SqlaTable.validate_expression")
     def test_validate_expression_having_success(self, mock_validate):
         """Test successful validation of a HAVING clause expression"""
         self.login("admin")
@@ -146,7 +146,7 @@ class TestDatasourceValidateExpressionApi(SupersetTestCase):
         datasource_id = datasource.id
 
         with patch(
-            "superset.connectors.sqla.models.SqlaTable.validate_expression"
+            "axbi.connectors.sqla.models.SqlaTable.validate_expression"
         ) as mock_validate:
             mock_validate.return_value = {
                 "valid": False,
@@ -176,7 +176,7 @@ class TestDatasourceValidateExpressionApi(SupersetTestCase):
         datasource_id = datasource.id
 
         with patch(
-            "superset.connectors.sqla.models.SqlaTable.validate_expression"
+            "axbi.connectors.sqla.models.SqlaTable.validate_expression"
         ) as mock_validate:
             mock_validate.return_value = {
                 "valid": False,

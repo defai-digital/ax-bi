@@ -24,11 +24,11 @@ import {
   useRef,
   useCallback,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, SupersetError } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, AxBIError } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import rison from 'rison';
-import RefreshLabel from '@superset-ui/core/components/RefreshLabel';
+import RefreshLabel from '@ax-bi/ui-core/components/RefreshLabel';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import {
   useCatalogs,
@@ -43,7 +43,7 @@ import {
   LabeledValue as AntdLabeledValue,
   Button,
   Icons,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 
 import { ErrorMessageWithStackTrace } from 'src/components';
 import type {
@@ -193,7 +193,7 @@ export function DatabaseSelector({
   const [currentDb, setCurrentDb] = useState<DatabaseValue | undefined>();
   const showSchemaSelector =
     (db?.supports_schemas ?? currentDb?.supports_schemas) !== false;
-  const [errorPayload, setErrorPayload] = useState<SupersetError | null>();
+  const [errorPayload, setErrorPayload] = useState<AxBIError | null>();
   const [currentCatalog, setCurrentCatalog] = useState<
     CatalogOption | null | undefined
   >(catalog ? { label: catalog, value: catalog, title: catalog } : undefined);
@@ -241,7 +241,7 @@ export function DatabaseSelector({
               }),
         });
         const endpoint = `/api/v1/database/?q=${queryParams}`;
-        return SupersetClient.get({ endpoint }).then(({ json }) => {
+        return AxBIClient.get({ endpoint }).then(({ json }) => {
           const { result, count } = json;
           if (getDbList) {
             getDbList(result);

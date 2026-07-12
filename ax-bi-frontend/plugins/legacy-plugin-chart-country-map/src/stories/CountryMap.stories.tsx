@@ -18,11 +18,11 @@
  */
 
 import { useEffect, useState } from 'react';
-import { JsonObject, seed, SuperChart, SequentialD3 } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+import { JsonObject, seed, SuperChart, SequentialD3 } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import CountryMapChartPlugin, {
   countries,
-} from '@superset-ui/legacy-plugin-chart-country-map';
+} from '@ax-bi/legacy-plugin-chart-country-map';
 import { withResizableChartDemo } from '@storybook-shared';
 
 new CountryMapChartPlugin().configure({ key: 'country-map' }).register();

@@ -19,7 +19,7 @@ from importlib import import_module
 from typing import Any
 
 migrate_time_comparison_to_new_format = import_module(
-    "superset.migrations.versions."
+    "axbi.migrations.versions."
     "2024-05-10_18-02_f84fde59123a_update_charts_with_old_time_comparison",
 )
 downgrade_comparison_params = (

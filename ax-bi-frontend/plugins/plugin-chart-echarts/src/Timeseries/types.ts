@@ -25,7 +25,7 @@ import {
   QueryFormMetric,
   TimeFormatter,
   TimeGranularity,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   BaseChartProps,
   BaseTransformedProps,

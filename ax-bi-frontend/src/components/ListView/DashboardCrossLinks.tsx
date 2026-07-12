@@ -18,7 +18,7 @@
  */
 
 import { memo, useMemo } from 'react';
-import { ensureIsArray } from '@superset-ui/core';
+import { ensureIsArray } from '@ax-bi/ui-core';
 import { ChartLinkedDashboard } from 'src/types/Chart';
 import CrossLinks from './CrossLinks';
 

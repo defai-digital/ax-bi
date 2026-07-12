@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { SuperChart, getChartTransformPropsRegistry } from '@superset-ui/core';
+import { SuperChart, getChartTransformPropsRegistry } from '@ax-bi/ui-core';
 import {
   EchartsGaugeChartPlugin,
   GaugeTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import { withResizableChartDemo } from '@storybook-shared';
 import { speed } from './data';
 
@@ -36,7 +36,7 @@ export default {
   title: 'Chart Plugins/plugin-chart-echarts/Gauge',
   decorators: [withResizableChartDemo],
   args: {
-    colorScheme: 'supersetColors',
+    colorScheme: 'axbiColors',
     showProgress: true,
     showPointer: true,
     splitNumber: 10,
@@ -49,12 +49,7 @@ export default {
   argTypes: {
     colorScheme: {
       control: 'select',
-      options: [
-        'supersetColors',
-        'd3Category10',
-        'bnbColors',
-        'googleCategory20c',
-      ],
+      options: ['axbiColors', 'd3Category10', 'bnbColors', 'googleCategory20c'],
     },
     showProgress: { control: 'boolean' },
     showPointer: { control: 'boolean' },

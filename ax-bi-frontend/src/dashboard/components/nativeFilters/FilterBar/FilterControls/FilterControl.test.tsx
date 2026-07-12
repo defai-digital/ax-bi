@@ -23,7 +23,7 @@ import {
   ChartCustomizationType,
   Filter,
   NativeFilterType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { ChartCustomizationPlugins } from 'src/constants';
 import FilterControl from './FilterControl';
 

@@ -32,18 +32,18 @@ import {
   CategoricalJapandi,
   CategoricalLyft,
   CategoricalPreset,
-  CategoricalSuperset,
+  CategoricalAxBI,
   SequentialCommon,
   SequentialD3,
   ColorSchemeRegistry,
   ColorSchemeGroup,
-  CategoricalPresetSuperset,
+  CategoricalPresetAxBI,
   CategoricalModernSunset,
   CategoricalColorsOfRainbow,
   CategoricalBlueToGreen,
   CategoricalRedToYellow,
   CategoricalWavesOfBlue,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 function registerColorSchemes<T extends ColorScheme>(
   registry: ColorSchemeRegistry<T>,
@@ -82,8 +82,8 @@ export default function setupColors(
       ...CategoricalGoogle,
       ...CategoricalLyft,
       ...CategoricalPreset,
-      ...CategoricalSuperset,
-      ...CategoricalPresetSuperset,
+      ...CategoricalAxBI,
+      ...CategoricalPresetAxBI,
       ...CategoricalModernSunset,
       ...CategoricalColorsOfRainbow,
       ...CategoricalBlueToGreen,
@@ -96,6 +96,6 @@ export default function setupColors(
   registerColorSchemes(
     getSequentialSchemeRegistry(),
     [...SequentialCommon, ...SequentialD3, ...extraSequentialColorSchemes],
-    'superset_seq_1',
+    'axbi_seq_1',
   );
 }

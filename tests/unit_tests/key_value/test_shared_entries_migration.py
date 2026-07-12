@@ -22,9 +22,9 @@ from uuid import uuid3
 
 def test_get_shared_value_fallback_to_md5() -> None:
     """Test that get_shared_value falls back to MD5 when SHA-256 doesn't find entry."""
-    from superset.key_value.shared_entries import get_shared_value
-    from superset.key_value.types import SharedKey
-    from superset.key_value.utils import get_uuid_namespace_with_algorithm
+    from axbi.key_value.shared_entries import get_shared_value
+    from axbi.key_value.types import SharedKey
+    from axbi.key_value.utils import get_uuid_namespace_with_algorithm
 
     key = SharedKey.DASHBOARD_PERMALINK_SALT
     expected_value = "test_salt_value_12345"
@@ -51,8 +51,8 @@ def test_get_shared_value_fallback_to_md5() -> None:
         "HASH_ALGORITHM_FALLBACKS": ["md5"],
     }
 
-    with patch("superset.key_value.shared_entries.KeyValueDAO", mock_dao):
-        with patch("superset.key_value.utils.current_app", mock_app):
+    with patch("axbi.key_value.shared_entries.KeyValueDAO", mock_dao):
+        with patch("axbi.key_value.utils.current_app", mock_app):
             result = get_shared_value(key)
 
     # Should have found the MD5 entry
@@ -64,8 +64,8 @@ def test_get_shared_value_fallback_to_md5() -> None:
 
 def test_get_shared_value_no_fallback_when_md5() -> None:
     """Test get_shared_value with MD5 primary and MD5 in fallbacks."""
-    from superset.key_value.shared_entries import get_shared_value
-    from superset.key_value.types import SharedKey
+    from axbi.key_value.shared_entries import get_shared_value
+    from axbi.key_value.types import SharedKey
 
     key = SharedKey.DASHBOARD_PERMALINK_SALT
 
@@ -81,8 +81,8 @@ def test_get_shared_value_no_fallback_when_md5() -> None:
         "HASH_ALGORITHM_FALLBACKS": ["md5"],  # Fallback is same as primary
     }
 
-    with patch("superset.key_value.shared_entries.KeyValueDAO", mock_dao):
-        with patch("superset.key_value.utils.current_app", mock_app):
+    with patch("axbi.key_value.shared_entries.KeyValueDAO", mock_dao):
+        with patch("axbi.key_value.utils.current_app", mock_app):
             result = get_shared_value(key)
 
     # Should return None (not found)
@@ -95,13 +95,13 @@ def test_get_shared_value_no_fallback_when_md5() -> None:
 
 def test_upsert_shared_value_delegates_to_dao() -> None:
     """upsert_shared_value writes via KeyValueDAO.upsert_entry using current UUID."""
-    from superset.key_value.shared_entries import (
+    from axbi.key_value.shared_entries import (
         CODEC,
         RESOURCE,
         upsert_shared_value,
     )
-    from superset.key_value.types import SharedKey
-    from superset.key_value.utils import get_uuid_namespace
+    from axbi.key_value.types import SharedKey
+    from axbi.key_value.utils import get_uuid_namespace
 
     key = SharedKey.GUEST_TOKEN_REVOCATION_VERSION
     value = 7
@@ -110,7 +110,7 @@ def test_upsert_shared_value_delegates_to_dao() -> None:
 
     mock_dao = MagicMock()
 
-    with patch("superset.key_value.shared_entries.KeyValueDAO", mock_dao):
+    with patch("axbi.key_value.shared_entries.KeyValueDAO", mock_dao):
         upsert_shared_value(key, value)
 
     # Should upsert (not create) so the call is idempotent across create/update paths
@@ -120,16 +120,16 @@ def test_upsert_shared_value_delegates_to_dao() -> None:
 
 def test_upsert_shared_value_overwrites_existing_value() -> None:
     """Repeated upsert_shared_value calls overwrite the prior value for the same key."""
-    from superset.key_value.shared_entries import upsert_shared_value
-    from superset.key_value.types import SharedKey
-    from superset.key_value.utils import get_uuid_namespace
+    from axbi.key_value.shared_entries import upsert_shared_value
+    from axbi.key_value.types import SharedKey
+    from axbi.key_value.utils import get_uuid_namespace
 
     key = SharedKey.GUEST_TOKEN_REVOCATION_VERSION
     expected_uuid = uuid3(get_uuid_namespace(""), key)
 
     mock_dao = MagicMock()
 
-    with patch("superset.key_value.shared_entries.KeyValueDAO", mock_dao):
+    with patch("axbi.key_value.shared_entries.KeyValueDAO", mock_dao):
         upsert_shared_value(key, 1)
         upsert_shared_value(key, 2)
 
@@ -142,9 +142,9 @@ def test_upsert_shared_value_overwrites_existing_value() -> None:
 
 def test_get_shared_value_finds_sha256_first() -> None:
     """Test that get_shared_value finds SHA-256 entry first without fallback."""
-    from superset.key_value.shared_entries import get_shared_value
-    from superset.key_value.types import SharedKey
-    from superset.key_value.utils import get_uuid_namespace_with_algorithm
+    from axbi.key_value.shared_entries import get_shared_value
+    from axbi.key_value.types import SharedKey
+    from axbi.key_value.utils import get_uuid_namespace_with_algorithm
 
     key = SharedKey.DASHBOARD_PERMALINK_SALT
     expected_value = "new_sha256_salt"
@@ -171,8 +171,8 @@ def test_get_shared_value_finds_sha256_first() -> None:
         "HASH_ALGORITHM_FALLBACKS": ["md5"],
     }
 
-    with patch("superset.key_value.shared_entries.KeyValueDAO", mock_dao):
-        with patch("superset.key_value.utils.current_app", mock_app):
+    with patch("axbi.key_value.shared_entries.KeyValueDAO", mock_dao):
+        with patch("axbi.key_value.utils.current_app", mock_app):
             result = get_shared_value(key)
 
     # Should have found the SHA-256 entry

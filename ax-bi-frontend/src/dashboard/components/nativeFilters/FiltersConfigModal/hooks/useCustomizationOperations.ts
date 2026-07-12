@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useCallback } from 'react';
-import { ChartCustomizationType } from '@superset-ui/core';
+import { ChartCustomizationType } from '@ax-bi/ui-core';
 import { generateChartCustomizationId } from '../utils';
 import type { ItemStateManager } from './useItemStateManager';
 

@@ -22,16 +22,16 @@ from flask import current_app
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset.migrations.shared.catalogs import (
+from axbi.axbi_typing import OAuth2ClientConfig
+from axbi.migrations.shared.catalogs import (
     downgrade_catalog_perms,
     upgrade_catalog_perms,
 )
-from superset.migrations.shared.security_converge import (
+from axbi.migrations.shared.security_converge import (
     Permission,
     PermissionView,
     ViewMenu,
 )
-from superset.superset_typing import OAuth2ClientConfig
 
 
 @pytest.fixture
@@ -62,16 +62,16 @@ def test_upgrade_catalog_perms(mocker: MockerFixture, session: Session) -> None:
 
     The function is called when catalogs are introduced into a new DB engine spec.
     """
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import Query, SavedQuery, TableSchema, TabState
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import Query, SavedQuery, TableSchema, TabState
 
     engine = session.get_bind()
     Database.metadata.create_all(engine)
 
-    mocker.patch("superset.migrations.shared.catalogs.op")
-    db = mocker.patch("superset.migrations.shared.catalogs.db")
+    mocker.patch("axbi.migrations.shared.catalogs.op")
+    db = mocker.patch("axbi.migrations.shared.catalogs.db")
     db.Session.return_value = session
 
     mocker.patch.object(
@@ -245,16 +245,16 @@ def test_upgrade_catalog_perms_graceful(
     catalog browsing on the database (permissions are always synced on a DB update, see
     `UpdateDatabaseCommand`).
     """
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import Query, SavedQuery, TableSchema, TabState
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import Query, SavedQuery, TableSchema, TabState
 
     engine = session.get_bind()
     Database.metadata.create_all(engine)
 
-    mocker.patch("superset.migrations.shared.catalogs.op")
-    db = mocker.patch("superset.migrations.shared.catalogs.db")
+    mocker.patch("axbi.migrations.shared.catalogs.op")
+    db = mocker.patch("axbi.migrations.shared.catalogs.db")
     db.Session.return_value = session
 
     mocker.patch.object(
@@ -262,7 +262,7 @@ def test_upgrade_catalog_perms_graceful(
         "get_all_schema_names",
         side_effect=Exception("Failed to connect to the database"),
     )
-    mocker.patch("superset.migrations.shared.catalogs.op", session)
+    mocker.patch("axbi.migrations.shared.catalogs.op", session)
 
     database = Database(
         database_name="my_db",
@@ -370,21 +370,21 @@ def test_upgrade_catalog_perms_oauth_connection(
     schemas. This step should be skipped if the database is set up using OAuth and not
     raise an exception.
     """
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import Query, SavedQuery, TableSchema, TabState
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import Query, SavedQuery, TableSchema, TabState
 
     engine = session.get_bind()
     Database.metadata.create_all(engine)
 
-    mocker.patch("superset.migrations.shared.catalogs.op")
-    db = mocker.patch("superset.migrations.shared.catalogs.db")
+    mocker.patch("axbi.migrations.shared.catalogs.op")
+    db = mocker.patch("axbi.migrations.shared.catalogs.db")
     db.Session.return_value = session
     add_non_default_catalogs = mocker.patch(
-        "superset.migrations.shared.catalogs.add_non_default_catalogs"
+        "axbi.migrations.shared.catalogs.add_non_default_catalogs"
     )
-    mocker.patch("superset.migrations.shared.catalogs.op", session)
+    mocker.patch("axbi.migrations.shared.catalogs.op", session)
 
     database = Database(
         database_name="my_db",
@@ -494,21 +494,21 @@ def test_upgrade_catalog_perms_simplified_migration(
     This should only update existing permissions + create a new permission
     for the default catalog.
     """
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import Query, SavedQuery, TableSchema, TabState
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import Query, SavedQuery, TableSchema, TabState
 
     engine = session.get_bind()
     Database.metadata.create_all(engine)
 
-    mocker.patch("superset.migrations.shared.catalogs.op")
-    db = mocker.patch("superset.migrations.shared.catalogs.db")
+    mocker.patch("axbi.migrations.shared.catalogs.op")
+    db = mocker.patch("axbi.migrations.shared.catalogs.db")
     db.Session.return_value = session
     add_non_default_catalogs = mocker.patch(
-        "superset.migrations.shared.catalogs.add_non_default_catalogs"
+        "axbi.migrations.shared.catalogs.add_non_default_catalogs"
     )
-    mocker.patch("superset.migrations.shared.catalogs.op", session)
+    mocker.patch("axbi.migrations.shared.catalogs.op", session)
 
     database = Database(
         database_name="my_db",

@@ -13,8 +13,8 @@ inputs:
     description: 'Type of requirements to install. Options: base, development, default'
     required: false
     default: 'dev'
-  install-superset:
-    description: 'Whether to install Superset itself. If false, only python is installed'
+  install-axbi:
+    description: 'Whether to install AxBI itself. If false, only python is installed'
     required: false
     default: 'true'
 
@@ -46,10 +46,10 @@ runs:
         cache: ${{ inputs.cache }}
     - name: Install dependencies
       env:
-        INPUT_INSTALL_SUPERSET: ${{ inputs.install-superset }}
+        INPUT_INSTALL_AXBI: ${{ inputs.install-axbi }}
         INPUT_REQUIREMENTS_TYPE: ${{ inputs.requirements-type }}
       run: |
-        if [ "$INPUT_INSTALL_SUPERSET" = "true" ]; then
+        if [ "$INPUT_INSTALL_AXBI" = "true" ]; then
           sudo apt-get update && sudo apt-get -y install libldap2-dev libsasl2-dev
 
           pip install --upgrade pip setuptools wheel uv

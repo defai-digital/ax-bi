@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, getColumnLabel } from '@superset-ui/core';
+import { ChartProps, getColumnLabel } from '@ax-bi/ui-core';
 import { getRecordsFromQuery } from '../transformUtils';
 import { DataRecord } from '../spatialUtils';
 import { createBaseTransformResult } from '../transformUtils';

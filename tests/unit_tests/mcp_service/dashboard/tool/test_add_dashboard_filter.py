@@ -24,8 +24,8 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.utils import json
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ def mcp_server() -> object:
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -71,12 +71,12 @@ async def test_bad_existing_metadata_starts_clean_filter_config(
 
     with (
         patch(
-            "superset.daos.dashboard.DashboardDAO.find_by_id",
+            "axbi.daos.dashboard.DashboardDAO.find_by_id",
             return_value=dashboard,
         ),
-        patch("superset.security_manager.raise_for_ownership", return_value=None),
+        patch("axbi.security_manager.raise_for_ownership", return_value=None),
         patch(
-            "superset.commands.dashboard.update.UpdateDashboardCommand",
+            "axbi.commands.dashboard.update.UpdateDashboardCommand",
             return_value=update_command,
         ) as update_cls,
     ):

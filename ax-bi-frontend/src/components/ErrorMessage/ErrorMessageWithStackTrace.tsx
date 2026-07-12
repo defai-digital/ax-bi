@@ -17,9 +17,9 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { ErrorSource, SupersetError } from '@superset-ui/core';
-import { Typography } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { ErrorSource, AxBIError } from '@ax-bi/ui-core';
+import { Typography } from '@ax-bi/ui-core/components';
 import { getErrorMessageComponentRegistry } from './getErrorMessageComponentRegistry';
 import { ErrorAlert } from './ErrorAlert';
 
@@ -27,7 +27,7 @@ const DEFAULT_TITLE = t('Unexpected error');
 
 type Props = {
   title?: string;
-  error?: SupersetError;
+  error?: AxBIError;
   link?: string;
   subtitle?: ReactNode;
   copyText?: string;
@@ -57,7 +57,7 @@ export function ErrorMessageWithStackTrace({
   // Check if a custom error message component was registered for this message
   if (error) {
     const ErrorMessageComponent = getErrorMessageComponentRegistry().get(
-      // @ts-expect-error: plan to modify this part so that all errors in Superset 6.0 are standardized as Superset API error types
+      // @ts-expect-error: plan to modify this part so that all errors in AxBI 6.0 are standardized as AxBI API error types
       error.errorType ?? error.error_type,
     );
     if (ErrorMessageComponent) {

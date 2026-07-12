@@ -18,11 +18,11 @@
  */
 import { useMemo } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
-import { isDefined, NativeFilterScope } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { Select, Tooltip } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { isDefined, NativeFilterScope } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { Select, Tooltip } from '@ax-bi/ui-core/components';
 import { noOp } from 'src/utils/common';
 import ScopingTree from 'src/dashboard/components/nativeFilters/FiltersConfigModal/FiltersConfigForm/FilterScope/ScopingTree';
 import {
@@ -32,8 +32,8 @@ import {
   RootState,
 } from 'src/dashboard/types';
 import { CHART_TYPE } from 'src/dashboard/util/componentTypes';
-import type { SelectOptionsType } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import type { SelectOptionsType } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { NEW_CHART_SCOPING_ID } from './constants';
 
 interface ScopingTreePanelProps {

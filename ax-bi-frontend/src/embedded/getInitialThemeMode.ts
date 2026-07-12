@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ThemeMode } from '@apache-superset/core/theme';
+import { ThemeMode } from '@ax-bi/core/theme';
 
 /**
  * Reads the `?themeMode=` URL parameter from the iframe URL and returns

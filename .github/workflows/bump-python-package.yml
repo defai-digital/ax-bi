@@ -36,8 +36,8 @@ jobs:
           persist-credentials: true
           ref: master
 
-      - name: Setup supersetbot
-        uses: ./.github/actions/setup-supersetbot/
+      - name: Setup axbibot
+        uses: ./.github/actions/setup-axbibot/
 
       - name: Set up Python ${{ inputs.python-version }}
         uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
@@ -47,7 +47,7 @@ jobs:
       - name: Install uv
         run: pip install uv
 
-      - name: supersetbot bump-python -p "${{ github.event.inputs.package }}"
+      - name: axbibot bump-python -p "${{ github.event.inputs.package }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           INPUT_PACKAGE: ${{ github.event.inputs.package }}
@@ -70,7 +70,7 @@ jobs:
 
           EXTRA_FLAGS="${INPUT_EXTRA_FLAGS}"
 
-          supersetbot bump-python \
+          axbibot bump-python \
             --verbose \
             --use-current-repo \
             --include-subpackages \

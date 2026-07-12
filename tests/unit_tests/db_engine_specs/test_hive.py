@@ -23,7 +23,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.engine.url import make_url
 
-from superset.sql.parse import Table
+from axbi.sql.parse import Table
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -44,7 +44,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.hive import HiveEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.hive import HiveEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -53,7 +53,7 @@ def test_get_schema_from_engine_params() -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
     """
-    from superset.db_engine_specs.hive import HiveEngineSpec
+    from axbi.db_engine_specs.hive import HiveEngineSpec
 
     assert (
         HiveEngineSpec.get_schema_from_engine_params(
@@ -67,7 +67,7 @@ def test_select_star(mocker: MockerFixture) -> None:
     """
     Test the ``select_star`` method.
     """
-    from superset.db_engine_specs.hive import HiveEngineSpec
+    from axbi.db_engine_specs.hive import HiveEngineSpec
 
     database = mocker.MagicMock()
     dialect = mocker.MagicMock()
@@ -105,7 +105,7 @@ def test_get_view_names_escapes_schema(mocker: MockerFixture) -> None:
     Test that ``get_view_names`` correctly escapes backticks in schema names
     within the SHOW VIEWS statement.
     """
-    from superset.db_engine_specs.hive import HiveEngineSpec
+    from axbi.db_engine_specs.hive import HiveEngineSpec
 
     database = mocker.MagicMock()
     inspector = mocker.MagicMock()
@@ -131,15 +131,15 @@ def test_df_to_sql_escapes_like_wildcards(mocker: MockerFixture) -> None:
     """
     import pandas as pd
 
-    from superset.db_engine_specs.hive import HiveEngineSpec
-    from superset.exceptions import SupersetException
-    from superset.sql.parse import Table
+    from axbi.db_engine_specs.hive import HiveEngineSpec
+    from axbi.exceptions import AxBIException
+    from axbi.sql.parse import Table
 
     database = mocker.MagicMock()
     # Simulate an existing table so df_to_sql raises before reaching the upload path
     database.get_df.return_value = pd.DataFrame({"name": ["sales_%_2024"]})
 
-    with pytest.raises(SupersetException, match="Table already exists"):
+    with pytest.raises(AxBIException, match="Table already exists"):
         HiveEngineSpec.df_to_sql(
             database=database,
             table=Table("sales_%_2024", "my_schema"),
@@ -159,8 +159,8 @@ def test_partition_query_escapes_identifiers() -> None:
     Test that ``_partition_query`` correctly backtick-quotes table and schema names
     in the SHOW PARTITIONS statement.
     """
-    from superset.db_engine_specs.hive import HiveEngineSpec
-    from superset.sql.parse import Table
+    from axbi.db_engine_specs.hive import HiveEngineSpec
+    from axbi.sql.parse import Table
 
     result = HiveEngineSpec._partition_query(
         table=Table("my_table", "my_schema"),

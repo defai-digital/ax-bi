@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DatasourceType, TimeGranularity, VizType } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { DatasourceType, TimeGranularity, VizType } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import transformProps from '../../src/BigNumber/BigNumberWithTrendline/transformProps';
 import {
   BigNumberDatum,
@@ -99,7 +99,7 @@ function generateProps(
     ownState: {},
     filterState: {},
     behaviors: [],
-    theme: supersetTheme,
+    theme: axbiTheme,
   };
 }
 

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, QueryFormData, VizType } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps, QueryFormData, VizType } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { HandlebarsQueryFormData } from '../../src/types';
 import transformProps from '../../src/plugin/transformProps';
 
@@ -38,7 +38,7 @@ describe('Handlebars transformProps', () => {
     width: 800,
     height: 600,
     queriesData: [{ data }],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   test('should transform chart props for viz', () => {

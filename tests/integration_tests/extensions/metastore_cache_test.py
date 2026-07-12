@@ -25,11 +25,11 @@ import pytest
 from flask.ctx import AppContext
 from freezegun import freeze_time
 
-from superset.extensions.metastore_cache import SupersetMetastoreCache
-from superset.key_value.exceptions import (
+from axbi.extensions.metastore_cache import AxBIMetastoreCache
+from axbi.key_value.exceptions import (
     KeyValueCreateFailedError,
 )
-from superset.key_value.types import (
+from axbi.key_value.types import (
     JsonKeyValueCodec,
     KeyValueCodec,
     PickleKeyValueCodec,
@@ -46,15 +46,15 @@ SECOND_VALUE = "qwerty"
 
 
 @pytest.fixture
-def cache() -> SupersetMetastoreCache:
-    return SupersetMetastoreCache(
+def cache() -> AxBIMetastoreCache:
+    return AxBIMetastoreCache(
         namespace=NAMESPACE,
         default_timeout=600,
         codec=PickleKeyValueCodec(),
     )
 
 
-def test_caching_flow(app_context: AppContext, cache: SupersetMetastoreCache) -> None:
+def test_caching_flow(app_context: AppContext, cache: AxBIMetastoreCache) -> None:
     # Clean up any existing keys first to ensure idempotency
     cache.delete(FIRST_KEY)
     cache.delete(SECOND_KEY)
@@ -80,7 +80,7 @@ def test_caching_flow(app_context: AppContext, cache: SupersetMetastoreCache) ->
     cache.delete(SECOND_KEY)
 
 
-def test_expiry(app_context: AppContext, cache: SupersetMetastoreCache) -> None:
+def test_expiry(app_context: AppContext, cache: AxBIMetastoreCache) -> None:
     # Clean up any existing keys first to ensure idempotency
     cache.delete(FIRST_KEY)
 
@@ -130,9 +130,9 @@ def test_codec(
     expected_result: Any,
     app_context: AppContext,
 ) -> None:
-    from superset.extensions.metastore_cache import SupersetMetastoreCache
+    from axbi.extensions.metastore_cache import AxBIMetastoreCache
 
-    cache = SupersetMetastoreCache(
+    cache = AxBIMetastoreCache(
         namespace=NAMESPACE,
         default_timeout=600,
         codec=codec,

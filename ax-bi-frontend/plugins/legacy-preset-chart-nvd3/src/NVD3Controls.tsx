@@ -18,7 +18,7 @@
  */
 /* eslint-disable react/jsx-key */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ControlPanelSectionConfig,
   ControlSubSectionHeader,
@@ -27,7 +27,7 @@ import {
   D3_FORMAT_DOCS,
   D3_FORMAT_OPTIONS,
   DEFAULT_TIME_FORMAT,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 /*
   Plugins in question:

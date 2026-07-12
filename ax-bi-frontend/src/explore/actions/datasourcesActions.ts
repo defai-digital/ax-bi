@@ -19,8 +19,8 @@
 
 import { Dispatch, AnyAction } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
-import { Dataset } from '@superset-ui/chart-controls';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
+import { Dataset } from '@ax-bi/chart-controls';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import { updateFormDataByDatasource } from './exploreActions';
 import { ExplorePageState } from '../types';
@@ -68,7 +68,7 @@ export function saveDataset({
     try {
       const {
         json: { data },
-      } = await SupersetClient.post({
+      } = await AxBIClient.post({
         endpoint: '/api/v1/dataset/',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   FeatureFlag,
   isFeatureEnabled,
@@ -26,7 +26,7 @@ import {
   getSequentialSchemeRegistry,
   SequentialScheme,
   type QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   getDefaultMapRenderer,
   getBootstrapDataFromDocument,
@@ -34,7 +34,7 @@ import {
   OSM_TILE_STYLE_URL,
   type MapRendererOption,
   type MapProvider,
-} from '@superset-ui/core/utils/mapStyles';
+} from '@ax-bi/ui-core/utils/mapStyles';
 import {
   ControlPanelState,
   ControlStateMapping,
@@ -43,7 +43,7 @@ import {
   D3_FORMAT_OPTIONS,
   getColorControlsProps,
   sharedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { columnChoices, PRIMARY_COLOR } from './controls';
 import {
   COLOR_SCHEME_TYPES,
@@ -152,15 +152,14 @@ const DEFAULT_VIEWPORT = {
 };
 
 const sandboxUrl =
-  'https://github.com/apache/superset/' +
+  'https://github.com/defai-digital/ax-bi/' +
   'blob/master/ax-bi-frontend/plugins/preset-chart-deckgl/src/utils/sandbox.ts';
 const jsFunctionInfo = (
   <div>
     {t(
       'For more information about objects are in context in the scope of this function, refer to the',
     )}
-    <a href={sandboxUrl}>{t(" source code of Superset's sandboxed parser")}.</a>
-    .
+    <a href={sandboxUrl}>{t(" source code of AxBI's sandboxed parser")}.</a>.
   </div>
 );
 
@@ -521,7 +520,7 @@ export const mapProvider = {
     default: 'maplibre',
     description: t(
       'Select the map tile provider. MapLibre is open-source and requires no API key. ' +
-        'Mapbox requires MAPBOX_API_KEY to be configured in Superset.',
+        'Mapbox requires MAPBOX_API_KEY to be configured in AxBI.',
     ),
     mapStateToProps: (state: ControlPanelState) => {
       const hasKey = hasMapboxApiKey();
@@ -529,8 +528,7 @@ export const mapProvider = {
         options: getLabeledMapRendererOptions({
           hasMapboxKey: hasKey,
           currentValue: state.form_data?.map_renderer as
-            | MapProvider
-            | undefined,
+            MapProvider | undefined,
         }),
         default: getDefaultMapRenderer(),
       };

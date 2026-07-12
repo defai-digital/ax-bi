@@ -26,10 +26,10 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.chart_helpers import find_chart_by_identifier
-from superset.mcp_service.chart.chart_utils import DatasetValidationResult
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.chart_helpers import find_chart_by_identifier
+from axbi.mcp_service.chart.chart_utils import DatasetValidationResult
+from axbi.mcp_service.chart.schemas import (
     AxisConfig,
     ColumnRef,
     FilterConfig,
@@ -39,7 +39,7 @@ from superset.mcp_service.chart.schemas import (
     UpdateChartRequest,
     XYChartConfig,
 )
-from superset.mcp_service.chart.tool.update_chart import (
+from axbi.mcp_service.chart.tool.update_chart import (
     _build_preview_form_data,
     _build_update_payload,
 )
@@ -48,7 +48,7 @@ from superset.mcp_service.chart.tool.update_chart import (
 # `from ... import update_chart` gives the function, not the module.
 # Use importlib to get the module for patch.object().
 update_chart_module = importlib.import_module(
-    "superset.mcp_service.chart.tool.update_chart"
+    "axbi.mcp_service.chart.tool.update_chart"
 )
 
 
@@ -424,7 +424,7 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -436,11 +436,11 @@ class TestUpdateChartDatasetAccess:
     """Tests for dataset access validation in update_chart."""
 
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_update_chart_dataset_access_denied(
         self, mock_db_session, mock_find_by_id, mock_validate, mcp_server
@@ -478,11 +478,11 @@ class TestUpdateChartDatasetAccess:
             assert "Access denied" in error["message"]
 
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_update_chart_dataset_not_found(
         self, mock_db_session, mock_find_by_id, mock_validate, mcp_server
@@ -522,7 +522,7 @@ class TestUpdateChartDatasetAccess:
 class TestFindChart:
     """Tests for find_chart_by_identifier helper (moved to chart_helpers)."""
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_find_chart_by_numeric_id(self, mock_find):
         """Numeric int identifier calls find_by_id with int."""
         mock_chart = Mock()
@@ -533,7 +533,7 @@ class TestFindChart:
         mock_find.assert_called_once_with(42)
         assert result is mock_chart
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_find_chart_by_numeric_string(self, mock_find):
         """String-digit identifier is converted to int."""
         mock_chart = Mock()
@@ -544,7 +544,7 @@ class TestFindChart:
         mock_find.assert_called_once_with(123)
         assert result is mock_chart
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_find_chart_by_uuid(self, mock_find):
         """Non-digit string identifier looks up by uuid column."""
         mock_chart = Mock()
@@ -556,7 +556,7 @@ class TestFindChart:
         mock_find.assert_called_once_with(uuid, id_column="uuid")
         assert result is mock_chart
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_find_chart_returns_none(self, mock_find):
         """Returns None when chart is not found."""
         mock_find.return_value = None
@@ -643,15 +643,15 @@ class TestUpdateChartNameOnly:
     """Integration-style tests for name-only update via MCP tool."""
 
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
     @patch(
-        "superset.commands.chart.update.UpdateChartCommand",
+        "axbi.commands.chart.update.UpdateChartCommand",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_name_only_update_success(
         self,
@@ -704,8 +704,8 @@ class TestUpdateChartNameOnly:
                 1, {"slice_name": "Renamed Chart"}
             )
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_no_config_no_name_returns_error(
         self,
@@ -720,7 +720,7 @@ class TestUpdateChartNameOnly:
         mock_find_by_id.return_value = mock_chart
 
         with patch(
-            "superset.mcp_service.auth.check_chart_data_access",
+            "axbi.mcp_service.auth.check_chart_data_access",
             new_callable=Mock,
         ) as mock_check_access:
             mock_check_access.return_value = DatasetValidationResult(
@@ -752,15 +752,15 @@ class TestUpdateChartPreviewFirst:
     )
     @patch.object(update_chart_module, "_create_preview_url", new_callable=Mock)
     @patch(
-        "superset.commands.chart.update.UpdateChartCommand",
+        "axbi.commands.chart.update.UpdateChartCommand",
         new_callable=Mock,
     )
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_default_generates_preview_without_saving(
         self,
@@ -818,11 +818,11 @@ class TestUpdateChartPreviewFirst:
 
     @patch.object(update_chart_module, "_create_preview_url", new_callable=Mock)
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_preview_missing_config_and_name_returns_error(
         self,
@@ -963,15 +963,15 @@ class TestUpdateChartSaveWithConfig:
         update_chart_module, "_validate_update_against_dataset", return_value=None
     )
     @patch(
-        "superset.commands.chart.update.UpdateChartCommand",
+        "axbi.commands.chart.update.UpdateChartCommand",
         new_callable=Mock,
     )
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_save_chart_with_config_success(
         self,
@@ -1039,8 +1039,8 @@ class TestUpdateChartSaveWithConfig:
 class TestUpdateChartErrorPaths:
     """Integration tests for error-handling branches in update_chart."""
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_chart_not_found_returns_notfound_error(
         self,
@@ -1062,15 +1062,15 @@ class TestUpdateChartErrorPaths:
         assert "9999" in error["message"]
 
     @patch(
-        "superset.commands.chart.update.UpdateChartCommand",
+        "axbi.commands.chart.update.UpdateChartCommand",
         new_callable=Mock,
     )
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_update_command_exception_is_caught(
         self,
@@ -1081,7 +1081,7 @@ class TestUpdateChartErrorPaths:
         mcp_server,
     ):
         """CommandException from UpdateChartCommand.run() is captured and returned."""
-        from superset.commands.exceptions import CommandException
+        from axbi.commands.exceptions import CommandException
 
         mock_chart = Mock()
         mock_chart.id = 5
@@ -1120,11 +1120,11 @@ class TestUpdateChartErrorPaths:
     )
     @patch.object(update_chart_module, "_create_preview_url", new_callable=Mock)
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_preview_extracts_form_data_key_from_url_fallback(
         self,
@@ -1191,11 +1191,11 @@ class TestUpdateChartValidationGate:
     @patch.object(update_chart_module, "validate_and_compile")
     @patch.object(update_chart_module, "_create_preview_url", new_callable=Mock)
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_preview_path_validation_failure_skips_cache(
         self,
@@ -1208,8 +1208,8 @@ class TestUpdateChartValidationGate:
     ):
         """Preview path: bad column → structured error, _create_preview_url
         must NOT be called."""
-        from superset.mcp_service.chart.compile import CompileResult
-        from superset.mcp_service.common.error_schemas import ChartGenerationError
+        from axbi.mcp_service.chart.compile import CompileResult
+        from axbi.mcp_service.common.error_schemas import ChartGenerationError
 
         mock_find_by_id.return_value = self._mock_chart_with_dataset()
         mock_check_access.return_value = DatasetValidationResult(
@@ -1250,15 +1250,15 @@ class TestUpdateChartValidationGate:
 
     @patch.object(update_chart_module, "validate_and_compile")
     @patch(
-        "superset.commands.chart.update.UpdateChartCommand",
+        "axbi.commands.chart.update.UpdateChartCommand",
         new_callable=Mock,
     )
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_persist_path_validation_failure_skips_db_write(
         self,
@@ -1270,8 +1270,8 @@ class TestUpdateChartValidationGate:
         mcp_server,
     ):
         """Persist path: validation failure → UpdateChartCommand NOT called."""
-        from superset.mcp_service.chart.compile import CompileResult
-        from superset.mcp_service.common.error_schemas import ChartGenerationError
+        from axbi.mcp_service.chart.compile import CompileResult
+        from axbi.mcp_service.common.error_schemas import ChartGenerationError
 
         mock_find_by_id.return_value = self._mock_chart_with_dataset(chart_id=42)
         mock_check_access.return_value = DatasetValidationResult(
@@ -1340,7 +1340,7 @@ class TestUpdateChartSqlMetric:
     def test_response_form_data_wraps_sql_metric_strings(self) -> None:
         # Regression: previously update_chart's response top-level form_data
         # shipped LLM-controlled sqlExpression/label completely unwrapped.
-        from superset.mcp_service.chart.tool.update_chart import (
+        from axbi.mcp_service.chart.tool.update_chart import (
             _wrapped_form_data_for_response,
         )
 
@@ -1492,11 +1492,11 @@ class TestUpdateChartDatasetIdIntegration:
     """Integration test verifying dataset_id is plumbed into UpdateChartCommand."""
 
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
     @patch(
-        "superset.commands.chart.update.UpdateChartCommand",
+        "axbi.commands.chart.update.UpdateChartCommand",
         new_callable=Mock,
     )
     @patch.object(
@@ -1504,8 +1504,8 @@ class TestUpdateChartDatasetIdIntegration:
         "_validate_update_against_dataset",
         return_value=None,
     )
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_dataset_id_passed_to_update_command(
         self,
@@ -1556,12 +1556,12 @@ class TestUpdateChartDatasetIdIntegration:
             assert payload.get("datasource_type") == "table"
 
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id", new_callable=Mock)
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_dataset_only_rebind_invalid_dataset_returns_error(
         self,
@@ -1606,12 +1606,12 @@ class TestUpdateChartDatasetIdIntegration:
             assert "9999" in result.structured_content["error"]["details"]
 
     @patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         new_callable=Mock,
     )
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id", new_callable=Mock)
-    @patch("superset.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
-    @patch("superset.db.session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.daos.chart.ChartDAO.find_by_id", new_callable=Mock)
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_dataset_only_rebind_invalid_dataset_preview_returns_error(
         self,

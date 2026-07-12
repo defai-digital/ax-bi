@@ -83,8 +83,8 @@ import {
 import {
   DependencyHealth,
   DependencyMetadata,
-  SupersetDependencyClient,
-} from '../src/supersetClient';
+  AxBIDependencyClient,
+} from '../src/axbiClient';
 
 const uuidPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -125,7 +125,7 @@ function emptyListResponse<
   };
 }
 
-function makeSupersetClient({
+function makeAxBIClient({
   health = {
     ok: true,
     statusCode: 200,
@@ -252,7 +252,7 @@ function makeSupersetClient({
   onListSavedQueries?: (correlationId?: string) => void;
   onListTags?: (correlationId?: string) => void;
   onListTasks?: (correlationId?: string) => void;
-} = {}): SupersetDependencyClient {
+} = {}): AxBIDependencyClient {
   return {
     async checkHealth(correlationId) {
       onHealth?.(correlationId);
@@ -326,7 +326,7 @@ function makeSupersetClient({
 }
 
 test('health endpoint returns service metadata', async () => {
-  const server = buildServer(config, makeSupersetClient());
+  const server = buildServer(config, makeAxBIClient());
 
   const response = await server.inject({
     method: 'GET',
@@ -356,7 +356,7 @@ test('health endpoint sanitizes package version metadata', async () => {
 
   try {
     process.env['npm_package_version'] = '  1.2.3-build.4  ';
-    const server = buildServer(config, makeSupersetClient());
+    const server = buildServer(config, makeAxBIClient());
 
     const response = await server.inject({
       method: 'GET',
@@ -392,11 +392,11 @@ test('health endpoint sanitizes package version metadata', async () => {
   }
 });
 
-test('ready endpoint returns ok when Superset is reachable', async () => {
+test('ready endpoint returns ok when AxBI is reachable', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onHealth(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -421,7 +421,7 @@ test('ready endpoint returns ok when Superset is reachable', async () => {
     service: 'ax-services',
     status: 'ready',
     dependencies: {
-      superset: {
+      axbi: {
         ok: true,
         statusCode: 200,
         url: 'http://127.0.0.1:8088/health',
@@ -452,7 +452,7 @@ test('server applies configured Fastify log level', async () => {
     buildConfig({
       AX_SERVICES_LOG_LEVEL: 'warn',
     }),
-    makeSupersetClient(),
+    makeAxBIClient(),
   );
 
   expect(server.log.level).toBe('warn');
@@ -464,7 +464,7 @@ test('ready endpoint replaces unsafe request IDs before echoing or forwarding', 
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onHealth(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -490,10 +490,10 @@ test('ready endpoint replaces unsafe request IDs before echoing or forwarding', 
   expect(seenRequestIds).toEqual([response.headers['x-request-id']]);
 });
 
-test('ready endpoint returns unavailable when Superset is unreachable', async () => {
+test('ready endpoint returns unavailable when AxBI is unreachable', async () => {
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       health: {
         ok: false,
         error: 'connect ECONNREFUSED',
@@ -513,7 +513,7 @@ test('ready endpoint returns unavailable when Superset is unreachable', async ()
     service: 'ax-services',
     status: 'not_ready',
     dependencies: {
-      superset: {
+      axbi: {
         ok: false,
         error: 'connect ECONNREFUSED',
         url: 'http://127.0.0.1:8088/health',
@@ -522,11 +522,11 @@ test('ready endpoint returns unavailable when Superset is unreachable', async ()
   });
 });
 
-test('metadata endpoint returns sanitized Superset metadata probe', async () => {
+test('metadata endpoint returns sanitized AxBI metadata probe', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       metadata: {
         ok: true,
         statusCode: 200,
@@ -558,7 +558,7 @@ test('metadata endpoint returns sanitized Superset metadata probe', async () => 
     service: 'ax-services',
     status: 'ok',
     dependencies: {
-      supersetMetadata: {
+      axbiMetadata: {
         ok: true,
         statusCode: 200,
         url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
@@ -569,10 +569,10 @@ test('metadata endpoint returns sanitized Superset metadata probe', async () => 
   });
 });
 
-test('metadata endpoint returns unavailable when Superset metadata is unreachable', async () => {
+test('metadata endpoint returns unavailable when AxBI metadata is unreachable', async () => {
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       metadata: {
         ok: false,
         error: 'metadata timeout',
@@ -592,7 +592,7 @@ test('metadata endpoint returns unavailable when Superset metadata is unreachabl
     service: 'ax-services',
     status: 'not_ready',
     dependencies: {
-      supersetMetadata: {
+      axbiMetadata: {
         ok: false,
         error: 'metadata timeout',
         url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
@@ -604,7 +604,7 @@ test('metadata endpoint returns unavailable when Superset metadata is unreachabl
 test('metrics endpoint returns request counters by route', async () => {
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       health: {
         ok: false,
         error: 'connect ECONNREFUSED',
@@ -655,7 +655,7 @@ test('metrics endpoint returns request counters by route', async () => {
 });
 
 test('metrics endpoint aggregates unmatched routes under one key', async () => {
-  const server = buildServer(config, makeSupersetClient());
+  const server = buildServer(config, makeAxBIClient());
 
   await server.inject({
     method: 'GET',
@@ -684,11 +684,11 @@ test('metrics endpoint aggregates unmatched routes under one key', async () => {
   expect(Object.keys(routes)).not.toContain('GET /another-missing?token=second');
 });
 
-test('asset search endpoint delegates to Superset client', async () => {
+test('asset search endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       search: {
         contractVersion: ASSET_SEARCH_CONTRACT_VERSION,
         assets: [
@@ -753,7 +753,7 @@ test('asset search endpoint rejects unsafe query values', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onSearch(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -780,15 +780,15 @@ test('asset search endpoint rejects unsafe query values', async () => {
   expect(seenRequestIds).toEqual([]);
 });
 
-test('permission check endpoint delegates to Superset client', async () => {
+test('permission check endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       permissionCheck: {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
         allowed: true,
-        reason: 'allowed by Superset',
+        reason: 'allowed by AxBI',
       },
       onCheckPermission(correlationId) {
         if (correlationId) {
@@ -823,7 +823,7 @@ test('permission check endpoint delegates to Superset client', async () => {
   expect(response.json()).toEqual({
     contractVersion: AUTHORIZATION_CONTRACT_VERSION,
     allowed: true,
-    reason: 'allowed by Superset',
+    reason: 'allowed by AxBI',
   });
 });
 
@@ -831,7 +831,7 @@ test('permission check endpoint rejects unsafe authorization strings', async () 
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onCheckPermission(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -891,7 +891,7 @@ test('permission check endpoint rejects unsafe authorization strings', async () 
 test('permission check endpoint returns fail-closed details', async () => {
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       permissionCheck: {
         contractVersion: AUTHORIZATION_CONTRACT_VERSION,
         allowed: false,
@@ -926,11 +926,11 @@ test('permission check endpoint returns fail-closed details', async () => {
   });
 });
 
-test('annotation layer list endpoint delegates to Superset client', async () => {
+test('annotation layer list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       annotationLayerList: {
         contractVersion: ANNOTATION_LAYER_LIST_CONTRACT_VERSION,
         annotationLayers: [
@@ -1001,11 +1001,11 @@ test('annotation layer list endpoint delegates to Superset client', async () => 
   });
 });
 
-test('annotation list endpoint delegates to Superset client', async () => {
+test('annotation list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       annotationList: {
         contractVersion: ANNOTATION_LIST_CONTRACT_VERSION,
         annotations: [
@@ -1081,11 +1081,11 @@ test('annotation list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('dashboard list endpoint delegates to Superset client', async () => {
+test('dashboard list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       dashboardList: {
         contractVersion: DASHBOARD_LIST_CONTRACT_VERSION,
         dashboards: [
@@ -1093,7 +1093,7 @@ test('dashboard list endpoint delegates to Superset client', async () => {
             id: 7,
             dashboardTitle: 'Sales dashboard',
             slug: 'sales',
-            url: '/superset/dashboard/7/',
+            url: '/ax-bi/dashboard/7/',
           },
         ],
         count: 1,
@@ -1144,7 +1144,7 @@ test('dashboard list endpoint delegates to Superset client', async () => {
         id: 7,
         dashboardTitle: 'Sales dashboard',
         slug: 'sales',
-        url: '/superset/dashboard/7/',
+        url: '/ax-bi/dashboard/7/',
       },
     ],
     count: 1,
@@ -1164,7 +1164,7 @@ test('dashboard list endpoint rejects unsafe requested columns', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onListDashboards(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -1196,7 +1196,7 @@ test('dashboard list endpoint rejects unsafe ordering columns', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onListDashboards(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -1229,7 +1229,7 @@ test('dashboard list endpoint rejects unsafe search values', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onListDashboards(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -1264,7 +1264,7 @@ test('dashboard list endpoint rejects unsafe filter values', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       onListDashboards(correlationId) {
         if (correlationId) {
           seenRequestIds.push(correlationId);
@@ -1294,11 +1294,11 @@ test('dashboard list endpoint rejects unsafe filter values', async () => {
   expect(seenRequestIds).toEqual([]);
 });
 
-test('chart list endpoint delegates to Superset client', async () => {
+test('chart list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       chartList: {
         contractVersion: CHART_LIST_CONTRACT_VERSION,
         charts: [
@@ -1373,11 +1373,11 @@ test('chart list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('database list endpoint delegates to Superset client', async () => {
+test('database list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       databaseList: {
         contractVersion: DATABASE_LIST_CONTRACT_VERSION,
         databases: [
@@ -1451,11 +1451,11 @@ test('database list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('dataset list endpoint delegates to Superset client', async () => {
+test('dataset list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       datasetList: {
         contractVersion: DATASET_LIST_CONTRACT_VERSION,
         datasets: [
@@ -1532,11 +1532,11 @@ test('dataset list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('saved query list endpoint delegates to Superset client', async () => {
+test('saved query list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       savedQueryList: {
         contractVersion: SAVED_QUERY_LIST_CONTRACT_VERSION,
         savedQueries: [
@@ -1609,11 +1609,11 @@ test('saved query list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('query list endpoint delegates to Superset client', async () => {
+test('query list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       queryList: {
         contractVersion: QUERY_LIST_CONTRACT_VERSION,
         queries: [
@@ -1688,11 +1688,11 @@ test('query list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('report list endpoint delegates to Superset client', async () => {
+test('report list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       reportList: {
         contractVersion: REPORT_LIST_CONTRACT_VERSION,
         reports: [
@@ -1767,11 +1767,11 @@ test('report list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('role list endpoint delegates to Superset client', async () => {
+test('role list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       roleList: {
         contractVersion: ROLE_LIST_CONTRACT_VERSION,
         roles: [
@@ -1840,11 +1840,11 @@ test('role list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('RLS filter list endpoint delegates to Superset client', async () => {
+test('RLS filter list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       rlsList: {
         contractVersion: RLS_LIST_CONTRACT_VERSION,
         rlsFilters: [
@@ -1921,11 +1921,11 @@ test('RLS filter list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('tag list endpoint delegates to Superset client', async () => {
+test('tag list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       tagList: {
         contractVersion: TAG_LIST_CONTRACT_VERSION,
         tags: [
@@ -1996,11 +1996,11 @@ test('tag list endpoint delegates to Superset client', async () => {
   });
 });
 
-test('task list endpoint delegates to Superset client', async () => {
+test('task list endpoint delegates to AxBI client', async () => {
   const seenRequestIds: string[] = [];
   const server = buildServer(
     config,
-    makeSupersetClient({
+    makeAxBIClient({
       taskList: {
         contractVersion: TASK_LIST_CONTRACT_VERSION,
         tasks: [

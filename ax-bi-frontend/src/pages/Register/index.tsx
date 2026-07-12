@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { styled, css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { styled, css } from '@ax-bi/core/theme';
 import {
   Button,
   Card,
@@ -27,7 +27,7 @@ import {
   Form,
   Input,
   Result,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { useState } from 'react';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import ReactCAPTCHA from 'react-google-recaptcha';
@@ -111,7 +111,7 @@ export default function Login() {
       conf_password: values.confirmPassword,
       'g-recaptcha-response': captchaResponse,
     };
-    SupersetClient.postForm('/register/form', payload, '').finally(() => {
+    AxBIClient.postForm('/register/form', payload, '').finally(() => {
       setLoading(false);
     });
   };

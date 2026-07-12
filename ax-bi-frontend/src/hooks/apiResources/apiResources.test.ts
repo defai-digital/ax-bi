@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { makeApi } from '@superset-ui/core';
+import { makeApi } from '@ax-bi/ui-core';
 import { act, renderHook } from '@testing-library/react';
 import {
   ResourceStatus,
@@ -35,8 +35,8 @@ const nameToAllCaps = (thing: any) => ({
   name: thing.name.toUpperCase(),
 });
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual<any>('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual<any>('@ax-bi/ui-core'),
   makeApi: jest
     .fn()
     .mockReturnValue(jest.fn().mockResolvedValue(fakeApiResult)),

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ValueGetterParams } from '@superset-ui/core/components/ThemedAgGridReact';
+import { ValueGetterParams } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import htmlTextFilterValueGetter, {
   htmlTextComparator,
 } from './htmlTextFilterValueGetter';

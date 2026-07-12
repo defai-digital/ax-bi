@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getExtensionsRegistry } from '@superset-ui/core';
+import { getExtensionsRegistry } from '@ax-bi/ui-core';
 import {
   accessTokenField,
   databaseField,

@@ -18,9 +18,9 @@
  */
 
 import { useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
-import { Radio } from '@superset-ui/core/components/Radio';
+import { t } from '@ax-bi/core/translation';
+import { css, AxBITheme } from '@ax-bi/core/theme';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
 import { DrillByType } from '../types';
 
 export const useDisplayModeToggle = () => {
@@ -31,7 +31,7 @@ export const useDisplayModeToggle = () => {
   const displayModeToggle = useMemo(
     () => (
       <div
-        css={(theme: SupersetTheme) => css`
+        css={(theme: AxBITheme) => css`
           margin-bottom: ${theme.sizeUnit * 6}px;
         `}
         data-test="drill-by-display-toggle"

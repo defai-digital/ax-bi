@@ -16,15 +16,15 @@
 # under the License.
 # isort:skip_file
 import re
-from superset.utils.core import DatasourceType
-from superset.utils import json
+from axbi.utils.core import DatasourceType
+from axbi.utils import json
 import unittest
 from unittest import mock
 
-from superset import security_manager
-from superset.connectors.sqla.models import SqlaTable  # noqa: F401
-from superset.exceptions import SupersetException
-from superset.utils.core import override_user
+from axbi import security_manager
+from axbi.connectors.sqla.models import SqlaTable  # noqa: F401
+from axbi.exceptions import AxBIException
+from axbi.utils.core import override_user
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -36,27 +36,27 @@ from sqlalchemy.types import DateTime  # noqa: F401
 
 import tests.integration_tests.test_app  # noqa: F401
 from flask import current_app
-from superset import db as metadata_db
-from superset.db_engine_specs.postgres import PostgresEngineSpec  # noqa: F401
-from superset.common.db_query_status import QueryStatus
-from superset.models.core import Database
-from superset.models.slice import Slice
-from superset.sql.parse import Table
-from superset.utils.database import get_example_database
+from axbi import db as metadata_db
+from axbi.db_engine_specs.postgres import PostgresEngineSpec  # noqa: F401
+from axbi.common.db_query_status import QueryStatus
+from axbi.models.core import Database
+from axbi.models.slice import Slice
+from axbi.sql.parse import Table
+from axbi.utils.database import get_example_database
 
-from .base_tests import SupersetTestCase
+from .base_tests import AxBITestCase
 from .fixtures.energy_dashboard import (
     load_energy_table_with_slice,  # noqa: F401
     load_energy_table_data,  # noqa: F401
 )
 
 
-class TestDatabaseModel(SupersetTestCase):
+class TestDatabaseModel(AxBITestCase):
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("requests"), "requests not installed"
+        AxBITestCase.is_module_installed("requests"), "requests not installed"
     )
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("pyhive"), "pyhive not installed"
+        AxBITestCase.is_module_installed("pyhive"), "pyhive not installed"
     )
     def test_database_schema_presto(self):
         sqlalchemy_uri = "presto://presto.airbnb.io:8080/hive/default"
@@ -94,10 +94,10 @@ class TestDatabaseModel(SupersetTestCase):
             assert "prod" == db
 
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("thrift"), "thrift not installed"
+        AxBITestCase.is_module_installed("thrift"), "thrift not installed"
     )
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("pyhive"), "pyhive not installed"
+        AxBITestCase.is_module_installed("pyhive"), "pyhive not installed"
     )
     def test_database_schema_hive(self):
         sqlalchemy_uri = "hive://hive@hive.airbnb.io:10000/default?auth=NOSASL"
@@ -112,22 +112,22 @@ class TestDatabaseModel(SupersetTestCase):
             assert "core_db" == db
 
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("mysqlclient"), "mysqlclient not installed"
+        AxBITestCase.is_module_installed("mysqlclient"), "mysqlclient not installed"
     )
     def test_database_schema_mysql(self):
-        sqlalchemy_uri = "mysql://root@localhost/superset"
+        sqlalchemy_uri = "mysql://root@localhost/ax-bi"
         model = Database(database_name="test_database", sqlalchemy_uri=sqlalchemy_uri)
 
         with model.get_sqla_engine() as engine:
             db = make_url(engine.url).database
-            assert "superset" == db
+            assert "axbi" == db
 
         with model.get_sqla_engine(schema="staging") as engine:
             db = make_url(engine.url).database
             assert "staging" == db
 
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("mysqlclient"), "mysqlclient not installed"
+        AxBITestCase.is_module_installed("mysqlclient"), "mysqlclient not installed"
     )
     def test_database_impersonate_user(self):
         uri = "mysql://root@localhost"
@@ -145,9 +145,9 @@ class TestDatabaseModel(SupersetTestCase):
                 username = make_url(engine.url).username
                 assert example_user.username != username
 
-    @mock.patch("superset.models.core.create_engine")
+    @mock.patch("axbi.models.core.create_engine")
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("pyhive"), "pyhive not installed"
+        AxBITestCase.is_module_installed("pyhive"), "pyhive not installed"
     )
     def test_impersonate_user_presto(self, mocked_create_engine):
         uri = "presto://localhost"
@@ -197,9 +197,9 @@ class TestDatabaseModel(SupersetTestCase):
             }
 
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("mysqlclient"), "mysqlclient not installed"
+        AxBITestCase.is_module_installed("mysqlclient"), "mysqlclient not installed"
     )
-    @mock.patch("superset.models.core.create_engine")
+    @mock.patch("axbi.models.core.create_engine")
     def test_adjust_engine_params_mysql(self, mocked_create_engine):
         model = Database(
             database_name="test_database1",
@@ -221,7 +221,7 @@ class TestDatabaseModel(SupersetTestCase):
         assert str(call_args[0][0]) == "mysql+mysqlconnector://user:password@localhost"
         assert call_args[1]["connect_args"]["allow_local_infile"] == 0
 
-    @mock.patch("superset.models.core.create_engine")
+    @mock.patch("axbi.models.core.create_engine")
     def test_impersonate_user_trino(self, mocked_create_engine):
         principal_user = security_manager.find_user(username="gamma")
 
@@ -251,12 +251,12 @@ class TestDatabaseModel(SupersetTestCase):
             )
             assert call_args[1]["connect_args"]["user"] == "gamma"
 
-    @mock.patch("superset.models.core.create_engine")
+    @mock.patch("axbi.models.core.create_engine")
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("pyhive"), "pyhive not installed"
+        AxBITestCase.is_module_installed("pyhive"), "pyhive not installed"
     )
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("thrift"), "thrift not installed"
+        AxBITestCase.is_module_installed("thrift"), "thrift not installed"
     )
     def test_impersonate_user_hive(self, mocked_create_engine):
         uri = "hive://localhost"
@@ -307,7 +307,7 @@ class TestDatabaseModel(SupersetTestCase):
 
     @pytest.mark.usefixtures("load_energy_table_with_slice")
     @unittest.skipUnless(
-        SupersetTestCase.is_module_installed("pyhive"), "pyhive not installed"
+        AxBITestCase.is_module_installed("pyhive"), "pyhive not installed"
     )
     def test_select_star(self):
         db = get_example_database()
@@ -370,27 +370,27 @@ class TestDatabaseModel(SupersetTestCase):
         main_db = get_example_database()
 
         if main_db.backend == "mysql":
-            df = main_db.get_df("USE superset; SELECT 1", None, None)
+            df = main_db.get_df("USE axbi; SELECT 1", None, None)
             assert df.iat[0, 0] == 1
 
-            df = main_db.get_df("USE superset; SELECT ';';", None, None)
+            df = main_db.get_df("USE axbi; SELECT ';';", None, None)
             assert df.iat[0, 0] == ";"
 
-    @mock.patch("superset.models.core.create_engine")
+    @mock.patch("axbi.models.core.create_engine")
     def test_get_sqla_engine(self, mocked_create_engine):
         model = Database(
             database_name="test_database",
             sqlalchemy_uri="mysql://root@localhost",
         )
         model.db_engine_spec.get_dbapi_exception_mapping = mock.Mock(
-            return_value={Exception: SupersetException}
+            return_value={Exception: AxBIException}
         )
         mocked_create_engine.side_effect = Exception()
-        with self.assertRaises(SupersetException):  # noqa: PT027
+        with self.assertRaises(AxBIException):  # noqa: PT027
             model._get_sqla_engine()
 
 
-class TestSqlaTableModel(SupersetTestCase):
+class TestSqlaTableModel(AxBITestCase):
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_get_timestamp_expression(self):
         tbl = self.get_table(name="birth_names")

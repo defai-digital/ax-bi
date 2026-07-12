@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { ModalTrigger, Tabs } from '@superset-ui/core/components';
-import CodeSyntaxHighlighter from '@superset-ui/core/components/CodeSyntaxHighlighter';
+import { styled, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { ModalTrigger, Tabs } from '@ax-bi/ui-core/components';
+import CodeSyntaxHighlighter from '@ax-bi/ui-core/components/CodeSyntaxHighlighter';
 
 export interface HighlightedSqlProps {
   sql: string;

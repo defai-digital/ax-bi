@@ -21,8 +21,8 @@ import { useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 import URI from 'urijs';
 import { pick } from 'lodash';
-import { useComponentDidUpdate } from '@superset-ui/core';
-import { Skeleton } from '@superset-ui/core/components';
+import { useComponentDidUpdate } from '@ax-bi/ui-core';
+import { Skeleton } from '@ax-bi/ui-core/components';
 import useEffectEvent from 'src/hooks/useEffectEvent';
 import { useLocationState } from 'src/pages/SqlLab/LocationContext';
 import {

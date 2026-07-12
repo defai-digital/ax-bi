@@ -18,23 +18,23 @@
 
 import pytest
 
-from superset.connectors.sqla.models import SqlaTable
-from superset.extensions import db
-from superset.models.core import FavStar
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.models.sql_lab import SavedQuery
-from superset.tags.models import TaggedObject
-from superset.utils.core import DatasourceType
-from superset.utils.database import get_main_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.extensions import db
+from axbi.models.core import FavStar
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.models.sql_lab import SavedQuery
+from axbi.tags.models import TaggedObject
+from axbi.utils.core import DatasourceType
+from axbi.utils.database import get_main_database
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.fixtures.tags import (
     with_tagging_system_feature,  # noqa: F401
 )
 
 
-class TestTagging(SupersetTestCase):
+class TestTagging(AxBITestCase):
     def query_tagged_object_table(self):
         query = db.session.query(TaggedObject).all()
         return query

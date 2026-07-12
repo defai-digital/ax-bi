@@ -68,14 +68,14 @@ jobs:
           build: "true"
 
       - name: Use Node.js 20
-        # zizmor: ignore[cache-poisoning] - node only runs the supersetbot CLI; no dependency cache is enabled
+        # zizmor: ignore[cache-poisoning] - node only runs the axbibot CLI; no dependency cache is enabled
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 20
           package-manager-cache: false
 
-      - name: Setup supersetbot
-        uses: ./.github/actions/setup-supersetbot/
+      - name: Setup axbibot
+        uses: ./.github/actions/setup-axbibot/
 
       - name: Execute custom Node.js script
         env:
@@ -100,7 +100,7 @@ jobs:
             EVENT="release"
           fi
 
-          supersetbot docker \
+          axbibot docker \
             --push \
             --preset ${{ matrix.build_preset }} \
             --context "$EVENT" \
@@ -108,7 +108,7 @@ jobs:
             --platform "linux/arm64" \
             --platform "linux/amd64"
 
-          # Returning to master to support closing setup-supersetbot
+          # Returning to master to support closing setup-axbibot
           git checkout master
 
   update-prs-with-release-info:
@@ -126,14 +126,14 @@ jobs:
           fetch-depth: 0
 
       - name: Use Node.js 20
-        # zizmor: ignore[cache-poisoning] - node only runs the supersetbot CLI; no dependency cache is enabled
+        # zizmor: ignore[cache-poisoning] - node only runs the axbibot CLI; no dependency cache is enabled
         uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 20
           package-manager-cache: false
 
-      - name: Setup supersetbot
-        uses: ./.github/actions/setup-supersetbot/
+      - name: Setup axbibot
+        uses: ./.github/actions/setup-axbibot/
 
       - name: Label the PRs with the right release-related labels
         env:
@@ -149,4 +149,4 @@ jobs:
             # in the case of a manually-triggered run, read release from input
             RELEASE="${INPUT_RELEASE}"
           fi
-          supersetbot release-label $RELEASE
+          axbibot release-label $RELEASE

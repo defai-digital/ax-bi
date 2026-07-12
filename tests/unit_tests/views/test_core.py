@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for superset.views.core module."""
+"""Tests for axbi.views.core module."""
 
 from unittest.mock import Mock, patch
 from urllib.parse import quote
@@ -22,12 +22,12 @@ from urllib.parse import quote
 import pytest
 from flask import current_app
 
-from superset.utils import json
-from superset.utils.core import DatasourceType
-from superset.views.core import (
+from axbi.utils import json
+from axbi.utils.core import DatasourceType
+from axbi.views.core import (
     _get_selected_column_names,
     _parse_datasource_key,
-    Superset,
+    AxBI,
 )
 
 
@@ -93,7 +93,7 @@ def test_get_selected_column_names_rejects_non_list_values(
     assert _get_selected_column_names(selected_columns) == []
 
 
-@patch("superset.views.core.CreateFormDataCommand.run")
+@patch("axbi.views.core.CreateFormDataCommand.run")
 def test_get_redirect_url_ignores_malformed_form_data_datasource(
     create_form_data: Mock,
 ) -> None:
@@ -103,6 +103,6 @@ def test_get_redirect_url_ignores_malformed_form_data_datasource(
         f"/ax-bi/explore/?form_data={quote(json.dumps(form_data))}",
         base_url=current_app.config["WEBDRIVER_BASEURL"],
     ):
-        assert Superset.get_redirect_url().startswith("/explore/?form_data=")
+        assert AxBI.get_redirect_url().startswith("/explore/?form_data=")
 
     create_form_data.assert_not_called()

@@ -19,15 +19,15 @@
 import { RefObject, useMemo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { useSelector } from 'react-redux';
-import { Metric } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { Metric } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import { DndItemType } from 'src/explore/components/DndItemType';
 import {
   StyledColumnOption,
   StyledMetricOption,
 } from 'src/explore/components/optionRenderers';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { ExplorePageState } from 'src/explore/types';
 
 import { DatasourcePanelDndItem } from '../types';

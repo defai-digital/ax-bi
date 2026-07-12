@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { FormModal, FormItem, Input } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { FormModal, FormItem, Input } from '@ax-bi/ui-core/components';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { User } from 'src/types/bootstrapTypes';
 import { BaseUserListModalProps, FormValues } from '../users/types';
@@ -49,7 +49,7 @@ function UserInfoModal({
   const handleFormSubmit = async (values: FormValues) => {
     try {
       const { confirm_password, ...payload } = values;
-      await SupersetClient.put({
+      await AxBIClient.put({
         endpoint: `/api/v1/me/`,
         jsonPayload: { ...payload },
       });

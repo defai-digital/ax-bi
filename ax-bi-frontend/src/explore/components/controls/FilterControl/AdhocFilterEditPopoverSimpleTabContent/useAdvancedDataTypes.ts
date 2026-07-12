@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useCallback, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { ensureIsArray, SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { ensureIsArray, AxBIClient } from '@ax-bi/ui-core';
 import { debounce } from 'lodash';
 import rison from 'rison';
 import { AdvancedDataTypesState, Props } from './index';
@@ -53,7 +53,7 @@ const useAdvancedDataTypes = (validHandler: (isValid: boolean) => void) => {
           values,
         });
         const endpoint = `/api/v1/advanced_data_type/convert?q=${queryParams}`;
-        SupersetClient.get({ endpoint })
+        AxBIClient.get({ endpoint })
           .then(({ json }) => {
             setAdvancedDataTypesState({
               parsedAdvancedDataType: json.result.display_value,

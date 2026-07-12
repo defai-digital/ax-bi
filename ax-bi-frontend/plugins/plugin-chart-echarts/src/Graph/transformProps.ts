@@ -22,7 +22,7 @@ import {
   DataRecord,
   DataRecordValue,
   tooltipHtml,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { GraphSeriesOption } from 'echarts/charts';
 import type { GraphEdgeItemOption } from 'echarts/types/src/chart/graph/GraphSeries';

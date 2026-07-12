@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useEffect, useRef, useState } from 'react';
-import { sharedControlComponents } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { sharedControlComponents } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import Echart from '../components/Echart';
 import { EchartsGanttChartTransformedProps } from './types';
 import { EventHandlers } from '../types';

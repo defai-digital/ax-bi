@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 
 const CREATE_CHART_TEXT = t('Create chart');
 const UPDATE_CHART_TEXT = t('Update chart');

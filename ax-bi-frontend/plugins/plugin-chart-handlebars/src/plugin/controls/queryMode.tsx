@@ -20,9 +20,9 @@ import {
   ControlConfig,
   ControlSetItem,
   QueryModeLabel,
-} from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
-import { QueryMode } from '@superset-ui/core';
+} from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { QueryMode } from '@ax-bi/ui-core';
 import { getQueryMode } from './shared';
 
 const queryMode: ControlConfig<'RadioButtonControl'> = {

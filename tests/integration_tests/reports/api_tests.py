@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from datetime import datetime, timedelta
 from typing import Any
@@ -28,11 +28,11 @@ import rison
 from parameterized import parameterized
 from sqlalchemy.sql import func
 
-from superset import db, security_manager
-from superset.models.core import Database
-from superset.models.slice import Slice
-from superset.models.dashboard import Dashboard
-from superset.reports.models import (
+from axbi import db, security_manager
+from axbi.models.core import Database
+from axbi.models.slice import Slice
+from axbi.models.dashboard import Dashboard
+from axbi.reports.models import (
     ReportSchedule,
     ReportCreationMethod,
     ReportRecipients,
@@ -41,9 +41,9 @@ from superset.reports.models import (
     ReportRecipientType,
     ReportState,
 )
-from superset.utils.database import get_example_database
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.utils.database import get_example_database
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
@@ -60,7 +60,7 @@ REPORTS_ROLE_NAME = "reports_role"
 REPORTS_GAMMA_USER = "reports_gamma"
 
 
-class TestReportSchedulesApi(SupersetTestCase):
+class TestReportSchedulesApi(AxBITestCase):
     @pytest.fixture
     def gamma_user_with_alerts_role(self):
         with self.create_app().app_context():
@@ -68,7 +68,7 @@ class TestReportSchedulesApi(SupersetTestCase):
                 REPORTS_GAMMA_USER,
                 "general",
                 "Gamma",
-                email=f"{REPORTS_GAMMA_USER}@superset.org",
+                email=f"{REPORTS_GAMMA_USER}@axbi.org",
             )
 
             security_manager.add_role(REPORTS_ROLE_NAME)
@@ -222,10 +222,10 @@ class TestReportSchedulesApi(SupersetTestCase):
         with self.create_app().app_context():
             users = [
                 self.create_user(
-                    "alpha1", "password", "Alpha", email="alpha1@superset.org"
+                    "alpha1", "password", "Alpha", email="alpha1@axbi.org"
                 ),
                 self.create_user(
-                    "alpha2", "password", "Alpha", email="alpha2@superset.org"
+                    "alpha2", "password", "Alpha", email="alpha2@axbi.org"
                 ),
             ]
 
@@ -611,7 +611,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -720,7 +720,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -745,7 +745,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -769,7 +769,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -795,7 +795,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -821,7 +821,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -847,7 +847,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -874,7 +874,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -905,7 +905,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -1029,7 +1029,7 @@ class TestReportSchedulesApi(SupersetTestCase):
                         "issue_codes": [
                             {
                                 "code": 1010,
-                                "message": "Issue 1010 - Superset encountered an error while running a command.",  # noqa: E501
+                                "message": "Issue 1010 - AxBI encountered an error while running a command.",  # noqa: E501
                             }
                         ]
                     },
@@ -1087,7 +1087,7 @@ class TestReportSchedulesApi(SupersetTestCase):
                         "issue_codes": [
                             {
                                 "code": 1010,
-                                "message": "Issue 1010 - Superset encountered an error while running a command.",  # noqa: E501
+                                "message": "Issue 1010 - AxBI encountered an error while running a command.",  # noqa: E501
                             }
                         ]
                     },
@@ -1212,7 +1212,7 @@ class TestReportSchedulesApi(SupersetTestCase):
     #         "recipients": [
     #             {
     #                 "type": ReportRecipientType.EMAIL,
-    #                 "recipient_config_json": {"target": "target@superset.org"},
+    #                 "recipient_config_json": {"target": "target@axbi.org"},
     #             },
     #             {
     #                 "type": ReportRecipientType.SLACK,
@@ -1250,7 +1250,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -1293,7 +1293,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -1340,7 +1340,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 },
                 {
                     "type": ReportRecipientType.SLACK,
@@ -1513,7 +1513,7 @@ class TestReportSchedulesApi(SupersetTestCase):
             "recipients": [
                 {
                     "type": ReportRecipientType.EMAIL,
-                    "recipient_config_json": {"target": "target@superset.org"},
+                    "recipient_config_json": {"target": "target@axbi.org"},
                 }
             ],
             "chart": chart.id,
@@ -2722,7 +2722,7 @@ class TestReportSchedulesApi(SupersetTestCase):
         assert "message" in data
         assert "extra" in data["message"]
 
-    @patch("superset.commands.dashboard.update.send_email_smtp")
+    @patch("axbi.commands.dashboard.update.send_email_smtp")
     def test_dashboard_update_deletes_native_filter_deactivates_reports(
         self, mock_send_email: Any
     ):
@@ -2785,7 +2785,7 @@ class TestReportSchedulesApi(SupersetTestCase):
         db.session.delete(dashboard)
         db.session.commit()
 
-    @patch("superset.commands.dashboard.update.send_email_smtp")
+    @patch("axbi.commands.dashboard.update.send_email_smtp")
     def test_dashboard_update_unrelated_filter_removal_no_side_effects(
         self, mock_send_email: Any
     ):
@@ -2817,7 +2817,7 @@ class TestReportSchedulesApi(SupersetTestCase):
         db.session.delete(dashboard)
         db.session.commit()
 
-    @patch("superset.commands.dashboard.update.send_email_smtp")
+    @patch("axbi.commands.dashboard.update.send_email_smtp")
     def test_dashboard_update_deleted_filter_multiple_reports_notifies_all_owners(
         self, mock_send_email: Any
     ):

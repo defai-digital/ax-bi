@@ -26,17 +26,17 @@ from __future__ import annotations
 import uuid
 from typing import Any
 
-from superset_core.tasks.types import TaskScope, TaskStatus
+from axbi_core.tasks.types import TaskScope, TaskStatus
 
-from superset.commands.tasks.cancel import CancelTaskCommand
-from superset.daos.tasks import TaskDAO
-from superset.extensions import db
-from superset.models.tasks import Task
-from superset.tasks.ambient_context import get_context
-from superset.tasks.context import TaskContext
-from superset.tasks.registry import TaskRegistry
-from superset.tasks.scheduler import execute_task
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.tasks.cancel import CancelTaskCommand
+from axbi.daos.tasks import TaskDAO
+from axbi.extensions import db
+from axbi.models.tasks import Task
+from axbi.tasks.ambient_context import get_context
+from axbi.tasks.context import TaskContext
+from axbi.tasks.registry import TaskRegistry
+from axbi.tasks.scheduler import execute_task
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 # Module-level state to track handler calls across test executions
@@ -141,7 +141,7 @@ def _register_test_tasks() -> None:
             TaskRegistry.register(name, func)
 
 
-class TestCleanupHandlers(SupersetTestCase):
+class TestCleanupHandlers(AxBITestCase):
     """E2E tests for on_cleanup functionality using Celery executor."""
 
     def setUp(self):
@@ -214,7 +214,7 @@ class TestCleanupHandlers(SupersetTestCase):
         assert len(_handler_state["cleanup_data"]) == 0
 
 
-class TestAbortHandlers(SupersetTestCase):
+class TestAbortHandlers(AxBITestCase):
     """E2E tests for on_abort functionality."""
 
     def setUp(self):
@@ -336,7 +336,7 @@ class TestAbortHandlers(SupersetTestCase):
         assert _handler_state["cleanup_called"]
 
 
-class TestTaskContextMethods(SupersetTestCase):
+class TestTaskContextMethods(AxBITestCase):
     """Tests for TaskContext public methods."""
 
     def setUp(self):
@@ -366,7 +366,7 @@ class TestTaskContextMethods(SupersetTestCase):
         assert task_obj.properties_dict.get("is_abortable") is True
 
 
-class TestAbortBeforeExecution(SupersetTestCase):
+class TestAbortBeforeExecution(AxBITestCase):
     """Tests for aborting tasks before they start executing."""
 
     def setUp(self):

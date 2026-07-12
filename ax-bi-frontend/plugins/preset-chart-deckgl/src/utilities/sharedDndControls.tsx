@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { sharedControls } from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { sharedControls } from '@ax-bi/chart-controls';
 
 export const dndLineColumn = {
   name: 'line_column',

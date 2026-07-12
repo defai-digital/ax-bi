@@ -24,7 +24,7 @@ import {
   ContributionType,
   TimeFormatter,
   AxisType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   BaseChartProps,
   BaseTransformedProps,

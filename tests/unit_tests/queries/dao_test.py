@@ -14,13 +14,13 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from superset.utils import json
+from axbi.utils import json
 
 
 def test_column_attributes_on_query():
-    from superset.daos.query import QueryDAO
-    from superset.models.core import Database
-    from superset.models.sql_lab import Query
+    from axbi.daos.query import QueryDAO
+    from axbi.models.core import Database
+    from axbi.models.sql_lab import Query
 
     database = Database(database_name="my_database", sqlalchemy_uri="sqlite://")
     query_obj = Query(

@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useState, useEffect } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBITheme } from '@ax-bi/core/theme';
 import {
   Input,
   Button,
@@ -26,8 +26,8 @@ import {
   Select,
   Upload,
   type UploadFile,
-} from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { DatabaseParameters, Engines, FieldPropTypes } from '../../types';
 import { infoTooltip, CredentialInfoForm } from '../styles';
@@ -188,7 +188,7 @@ export const EncryptedField = ({
         showCredentialsInfo && (
           <div
             className="input-container"
-            css={(theme: SupersetTheme) => infoTooltip(theme)}
+            css={(theme: AxBITheme) => infoTooltip(theme)}
           >
             <Upload
               accept=".json"

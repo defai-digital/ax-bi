@@ -21,12 +21,12 @@ from uuid import uuid4
 
 from flask_appbuilder.security.sqla.models import User
 
-from superset import db, security_manager
-from superset.key_value.models import KeyValueEntry
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.reports.models import (
+from axbi import db, security_manager
+from axbi.key_value.models import KeyValueEntry
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.reports.models import (
     ReportDataFormat,
     ReportExecutionLog,
     ReportRecipients,
@@ -35,8 +35,8 @@ from superset.reports.models import (
     ReportScheduleType,
     ReportState,
 )
-from superset.utils import json
-from superset.utils.core import override_user
+from axbi.utils import json
+from axbi.utils.core import override_user
 from tests.integration_tests.test_app import app  # noqa: F401
 from tests.integration_tests.utils import read_fixture
 

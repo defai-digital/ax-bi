@@ -20,34 +20,34 @@ import pytest
 import yaml
 from werkzeug.utils import secure_filename
 
-from superset import db, security_manager
-from superset.commands.dashboard.copy import CopyDashboardCommand
-from superset.commands.dashboard.delete import DeleteEmbeddedDashboardCommand
-from superset.commands.dashboard.exceptions import (
+from axbi import db, security_manager
+from axbi.commands.dashboard.copy import CopyDashboardCommand
+from axbi.commands.dashboard.delete import DeleteEmbeddedDashboardCommand
+from axbi.commands.dashboard.exceptions import (
     DashboardAccessDeniedError,
     DashboardForbiddenError,
     DashboardInvalidError,
     DashboardNotFoundError,
 )
-from superset.commands.dashboard.export import (
+from axbi.commands.dashboard.export import (
     append_charts,
     ExportDashboardsCommand,
     get_default_position,
 )
-from superset.commands.dashboard.fave import AddFavoriteDashboardCommand
-from superset.commands.dashboard.importers import v0, v1
-from superset.commands.dashboard.unfave import DelFavoriteDashboardCommand
-from superset.commands.exceptions import CommandInvalidError
-from superset.commands.importers.exceptions import IncorrectVersionError
-from superset.connectors.sqla.models import SqlaTable
-from superset.daos.dashboard import DashboardDAO
-from superset.models.core import Database
-from superset.models.dashboard import Dashboard
-from superset.models.embedded_dashboard import EmbeddedDashboard
-from superset.models.slice import Slice
-from superset.utils import json
-from superset.utils.core import override_user
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.commands.dashboard.fave import AddFavoriteDashboardCommand
+from axbi.commands.dashboard.importers import v0, v1
+from axbi.commands.dashboard.unfave import DelFavoriteDashboardCommand
+from axbi.commands.exceptions import CommandInvalidError
+from axbi.commands.importers.exceptions import IncorrectVersionError
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.daos.dashboard import DashboardDAO
+from axbi.models.core import Database
+from axbi.models.dashboard import Dashboard
+from axbi.models.embedded_dashboard import EmbeddedDashboard
+from axbi.models.slice import Slice
+from axbi.utils import json
+from axbi.utils.core import override_user
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.importexport import (
     chart_config,
     dashboard_config,
@@ -63,10 +63,10 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 )
 
 
-class TestExportDashboardsCommand(SupersetTestCase):
+class TestExportDashboardsCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_export_dashboard_command(self, mock_g1, mock_g2):
         mock_g1.user = security_manager.find_user("admin")
         mock_g2.user = security_manager.find_user("admin")
@@ -243,8 +243,8 @@ class TestExportDashboardsCommand(SupersetTestCase):
 
     # @pytest.mark.usefixtures("load_covid_dashboard")
     @pytest.mark.skip(reason="missing covid fixture")
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_export_dashboard_command_dataset_references(self, mock_g1, mock_g2):
         mock_g1.user = security_manager.find_user("admin")
         mock_g2.user = security_manager.find_user("admin")
@@ -287,8 +287,8 @@ class TestExportDashboardsCommand(SupersetTestCase):
                 assert column["datasetUuid"] == "974b7a1c-22ea-49cb-9214-97b7dbd511e0"
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_export_dashboard_command_no_access(self, mock_g1, mock_g2):
         """Test that users can't export datasets they don't have access to"""
         mock_g1.user = security_manager.find_user("gamma")
@@ -303,8 +303,8 @@ class TestExportDashboardsCommand(SupersetTestCase):
             next(contents)
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_export_dashboard_command_invalid_dataset(self, mock_g1, mock_g2):
         """Test that an error is raised when exporting an invalid dataset"""
         mock_g1.user = security_manager.find_user("admin")
@@ -315,8 +315,8 @@ class TestExportDashboardsCommand(SupersetTestCase):
             next(contents)
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_export_dashboard_command_required_fields(self, mock_g1, mock_g2):
         """Test that all required keys are present in the exported YAML"""
         mock_g1.user = security_manager.find_user("admin")
@@ -483,8 +483,8 @@ class TestExportDashboardsCommand(SupersetTestCase):
         }
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_export_dashboard_command_no_related(self, mock_g1, mock_g2):
         """
         Test that only the dashboard is exported when export_related=False.
@@ -505,8 +505,8 @@ class TestExportDashboardsCommand(SupersetTestCase):
         assert expected_paths == set(contents.keys())
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.security.manager.g")
-    @patch("superset.views.base.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.views.base.g")
     def test_export_dashboard_command_unicode_chars(self, mock_g1, mock_g2):
         mock_g1.user = security_manager.find_user("admin")
         mock_g2.user = security_manager.find_user("admin")
@@ -535,7 +535,7 @@ class TestExportDashboardsCommand(SupersetTestCase):
             )
 
 
-class TestImportDashboardsCommand(SupersetTestCase):
+class TestImportDashboardsCommand(AxBITestCase):
     def test_import_v0_dashboard_cli_export(self):
         num_dashboards = db.session.query(Dashboard).count()
         num_charts = db.session.query(Slice).count()
@@ -575,9 +575,9 @@ class TestImportDashboardsCommand(SupersetTestCase):
         db.session.delete(dataset)
         db.session.commit()
 
-    @patch("superset.utils.core.g")
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.utils.core.g")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_dashboard(self, mock_add_permissions, sm_g, utils_g):
         """Test that we can import a dashboard"""
         admin = sm_g.user = utils_g.user = security_manager.find_user("admin")
@@ -688,8 +688,8 @@ class TestImportDashboardsCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_dashboard_multiple(self, mock_add_permissions, mock_g):
         """Test that a dashboard can be imported multiple times"""
         mock_g.user = security_manager.find_user("admin")
@@ -775,7 +775,7 @@ class TestImportDashboardsCommand(SupersetTestCase):
         }
 
 
-class TestCopyDashboardCommand(SupersetTestCase):
+class TestCopyDashboardCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     def test_copy_dashboard_command(self):
         """Test that an admin user can copy a dashboard"""
@@ -807,7 +807,7 @@ class TestCopyDashboardCommand(SupersetTestCase):
 
             with override_user(security_manager.find_user("gamma")):
                 with patch(
-                    "superset.commands.dashboard.copy.is_feature_enabled",
+                    "axbi.commands.dashboard.copy.is_feature_enabled",
                     return_value=True,
                 ):
                     command = CopyDashboardCommand(example_dashboard, copy_data)
@@ -829,7 +829,7 @@ class TestCopyDashboardCommand(SupersetTestCase):
                 command.run()
 
 
-class TestDeleteEmbeddedDashboardCommand(SupersetTestCase):
+class TestDeleteEmbeddedDashboardCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     def test_delete_embedded_dashboard_command(self):
         """Test that an admin user can add and then delete an embedded dashboard"""
@@ -864,7 +864,7 @@ class TestDeleteEmbeddedDashboardCommand(SupersetTestCase):
             assert deleted_embedded_dashboard is None
 
 
-class TestFavoriteDashboardCommand(SupersetTestCase):
+class TestFavoriteDashboardCommand(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     def test_fave_unfave_dashboard_command(self):
         """Test that a user can fave/unfave a dashboard"""
@@ -878,7 +878,7 @@ class TestFavoriteDashboardCommand(SupersetTestCase):
 
             with override_user(security_manager.find_user("admin")):
                 with patch(
-                    "superset.daos.dashboard.DashboardDAO.get_by_id_or_slug",
+                    "axbi.daos.dashboard.DashboardDAO.get_by_id_or_slug",
                     return_value=example_dashboard,
                 ):
                     AddFavoriteDashboardCommand(example_dashboard.id).run()
@@ -907,7 +907,7 @@ class TestFavoriteDashboardCommand(SupersetTestCase):
                     DelFavoriteDashboardCommand(example_dashboard_id).run()
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.models.dashboard.Dashboard.get")
+    @patch("axbi.models.dashboard.Dashboard.get")
     def test_fave_unfave_dashboard_command_forbidden(self, mock_get):
         """Test that faving / unfaving raises an exception for a dashboard the user doesn't own"""  # noqa: E501
         with self.client.application.test_request_context():

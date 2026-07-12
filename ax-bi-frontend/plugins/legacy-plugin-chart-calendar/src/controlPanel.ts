@@ -16,15 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { legacyValidateInteger } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { legacyValidateInteger } from '@ax-bi/ui-core';
 import {
   ControlPanelConfig,
   D3_FORMAT_DOCS,
   D3_TIME_FORMAT_OPTIONS,
   DEFAULT_TIME_FORMAT,
   getStandardizedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [

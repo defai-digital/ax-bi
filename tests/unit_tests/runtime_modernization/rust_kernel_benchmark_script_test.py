@@ -23,7 +23,7 @@ from types import ModuleType
 import pytest
 
 SCRIPT_PATH = (
-    Path(__file__).parents[3] / "superset-rust" / "python" / "benchmark_sql_kernel.py"
+    Path(__file__).parents[3] / "ax-bi-rust" / "python" / "benchmark_sql_kernel.py"
 )
 
 

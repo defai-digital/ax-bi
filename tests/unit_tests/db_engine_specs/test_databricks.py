@@ -21,10 +21,10 @@ from datetime import datetime
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.constants import DEFAULT_USER_AGENT
-from superset.db_engine_specs.databricks import DatabricksNativeEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.utils import json
+from axbi.constants import DEFAULT_USER_AGENT
+from axbi.db_engine_specs.databricks import DatabricksNativeEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.utils import json
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -33,7 +33,7 @@ def test_get_parameters_from_uri() -> None:
     """
     Test that the result from ``get_parameters_from_uri`` is JSON serializable.
     """
-    from superset.db_engine_specs.databricks import (
+    from axbi.db_engine_specs.databricks import (
         DatabricksNativeEngineSpec,
         DatabricksNativeParametersType,
     )
@@ -58,7 +58,7 @@ def test_build_sqlalchemy_uri() -> None:
     test that the parameters are can correctly be compiled into a
     sqlalchemy_uri
     """
-    from superset.db_engine_specs.databricks import (
+    from axbi.db_engine_specs.databricks import (
         DatabricksNativeEngineSpec,
         DatabricksNativeParametersType,
     )
@@ -85,7 +85,7 @@ def test_parameters_json_schema() -> None:
     """
     test that the parameters schema can be converted to json
     """
-    from superset.db_engine_specs.databricks import DatabricksNativeEngineSpec
+    from axbi.db_engine_specs.databricks import DatabricksNativeEngineSpec
 
     json_schema = DatabricksNativeEngineSpec.parameters_json_schema()
 
@@ -115,7 +115,7 @@ def test_get_extra_params(mocker: MockerFixture) -> None:
     """
     Test the ``get_extra_params`` method.
     """
-    from superset.db_engine_specs.databricks import DatabricksNativeEngineSpec
+    from axbi.db_engine_specs.databricks import DatabricksNativeEngineSpec
 
     database = mocker.MagicMock()
 
@@ -182,9 +182,9 @@ def test_extract_errors() -> None:
     result = DatabricksNativeEngineSpec.extract_errors(Exception(msg))
 
     assert result == [
-        SupersetError(
+        AxBIError(
             message=": mismatched input 'from_'. Expecting: ",
-            error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+            error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Databricks (legacy)",
@@ -209,9 +209,9 @@ def test_extract_errors_with_context() -> None:
     result = DatabricksNativeEngineSpec.extract_errors(Exception(msg), context)
 
     assert result == [
-        SupersetError(
+        AxBIError(
             message=": mismatched input 'from_'. Expecting: ",
-            error_type=SupersetErrorType.GENERIC_DB_ENGINE_ERROR,
+            error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "engine_name": "Databricks (legacy)",
@@ -242,7 +242,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.databricks import (
+    from axbi.db_engine_specs.databricks import (
         DatabricksNativeEngineSpec as spec,  # noqa: N813
     )
 
@@ -253,7 +253,7 @@ def test_get_prequeries(mocker: MockerFixture) -> None:
     """
     Test the ``get_prequeries`` method.
     """
-    from superset.db_engine_specs.databricks import DatabricksNativeEngineSpec
+    from axbi.db_engine_specs.databricks import DatabricksNativeEngineSpec
 
     database = mocker.MagicMock()
 

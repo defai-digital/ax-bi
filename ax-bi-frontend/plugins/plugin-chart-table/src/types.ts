@@ -27,14 +27,14 @@ import {
   QueryFormData,
   SetDataMaskHook,
   ContextMenuFilters,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type {
   BasicColorFormatterType,
   ColorFormatters,
   DataColumnMeta,
   ServerPaginationData,
   TableColumnConfig,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 // Re-export shared types used by internal plugin files that import from './types'
 // Types used locally in this file - re-export from local binding
@@ -45,7 +45,7 @@ export type {
   TableColumnConfig,
 };
 // Types only re-exported, not used locally - direct re-export
-export type { SearchOption, SortByItem } from '@superset-ui/chart-controls';
+export type { SearchOption, SortByItem } from '@ax-bi/chart-controls';
 
 export interface TableChartData {
   records: DataRecord[];

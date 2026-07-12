@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { isThemeDark } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { isThemeDark } from '@ax-bi/core/theme';
 
 export default function transformProps(chartProps: ChartProps) {
   const { width, height, formData, queriesData, theme } = chartProps;

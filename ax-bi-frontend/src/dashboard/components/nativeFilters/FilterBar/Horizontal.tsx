@@ -19,14 +19,11 @@
 
 import { useHistory } from 'src/hooks/useAppHistory';
 import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  DataMaskStateWithId,
-  QueryObjectFilterClause,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { Loading } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { DataMaskStateWithId, QueryObjectFilterClause } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { Loading } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { FilterBarOrientation, RootState } from 'src/dashboard/types';
 import { useChartLayoutItems } from 'src/dashboard/util/useChartLayoutItems';
 import { useChartIds } from 'src/dashboard/util/charts/useChartIds';

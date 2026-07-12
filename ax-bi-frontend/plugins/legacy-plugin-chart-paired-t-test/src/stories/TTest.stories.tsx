@@ -18,8 +18,8 @@
  */
 
 /* eslint-disable no-magic-numbers */
-import { SuperChart } from '@superset-ui/core';
-import PairedTTestChartPlugin from '@superset-ui/legacy-plugin-chart-paired-t-test';
+import { SuperChart } from '@ax-bi/ui-core';
+import PairedTTestChartPlugin from '@ax-bi/legacy-plugin-chart-paired-t-test';
 import { withResizableChartDemo } from '@storybook-shared';
 import data from './data';
 

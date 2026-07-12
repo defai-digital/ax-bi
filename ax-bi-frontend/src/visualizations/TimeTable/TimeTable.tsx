@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useMemo, ReactNode } from 'react';
-import { InfoTooltip, TableView } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { InfoTooltip, TableView } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { sortNumberWithMixedTypes, processTimeTableData } from './utils';
 import { ValueCell, LeftCell, Sparkline } from './components';
 import type { TimeTableProps } from './types';

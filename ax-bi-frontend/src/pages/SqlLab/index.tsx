@@ -18,8 +18,8 @@
  */
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
 import { useSqlLabInitialState } from 'src/hooks/apiResources/sqlLab';
 import type { InitialState } from 'src/hooks/apiResources/sqlLab';
 import { resetState } from 'src/SqlLab/actions/sqlLab';
@@ -28,8 +28,8 @@ import { ErrorAlert } from 'src/components/ErrorMessage';
 import type { SqlLabRootState } from 'src/SqlLab/types';
 import { SqlLabGlobalStyles } from 'src/SqlLab//SqlLabGlobalStyles';
 import App from 'src/SqlLab/components/App';
-import { Button, Loading } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+import { Button, Loading } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 import EditorAutoSync from 'src/SqlLab/components/EditorAutoSync';
 import useEffectEvent from 'src/hooks/useEffectEvent';
 import { LocationProvider } from './LocationContext';

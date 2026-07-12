@@ -16,15 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { GenericDataType } from '@apache-superset/core/common';
+import { t } from '@ax-bi/core/translation';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ControlPanelConfig,
   getStandardizedControls,
   sharedControls,
   sections,
   ColorSchemeEnum,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { noop } from 'lodash';
 import {
   headerFontSize,

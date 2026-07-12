@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Label } from '@superset-ui/core/components';
+import { Label } from '@ax-bi/ui-core/components';
 import { STATE_TYPE_MAP, STATE_TYPE_MAP_LOCALIZED } from 'src/SqlLab/constants';
-import { Query } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { Query } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 
 interface QueryStateLabelProps {
   query: Pick<Query, 'state'>;

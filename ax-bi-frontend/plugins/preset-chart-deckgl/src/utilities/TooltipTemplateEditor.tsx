@@ -18,8 +18,8 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { styled, css, useThemeMode } from '@apache-superset/core/theme';
-import { CodeEditor } from '@superset-ui/core/components';
+import { styled, css, useThemeMode } from '@ax-bi/core/theme';
+import { CodeEditor } from '@ax-bi/ui-core/components';
 
 const EditorContainer = styled.div`
   ${({ theme }) => css`

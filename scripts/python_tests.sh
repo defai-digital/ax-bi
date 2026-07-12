@@ -22,7 +22,7 @@ if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   cat <<'EOF'
 Usage: ./scripts/python_tests.sh [pytest args...]
 
-Upgrade the test database, initialize Superset, load test users, and run
+Upgrade the test database, initialize AxBI, load test users, and run
 integration tests. Extra arguments are passed through to pytest.
 EOF
   exit 0
@@ -33,9 +33,9 @@ fi
 # from . import _mysql
 # ImportError: /lib/x86_64-linux-gnu/libstdc++.so.6: cannot allocate memory in static TLS block
 export LD_PRELOAD=/lib/x86_64-linux-gnu/libstdc++.so.6
-export SUPERSET_CONFIG=${SUPERSET_CONFIG:-tests.integration_tests.superset_test_config}
+export AXBI_CONFIG=${AXBI_CONFIG:-tests.integration_tests.axbi_test_config}
 export AX_BI_TESTENV=true
-echo "Superset config module: $SUPERSET_CONFIG"
+echo "AxBI config module: $AXBI_CONFIG"
 
 ax-bi db upgrade
 ax-bi init
@@ -43,4 +43,4 @@ ax-bi load-test-users
 
 echo "Running tests"
 
-pytest --durations-min=2 --cov-report= --cov=superset ./tests/integration_tests "$@"
+pytest --durations-min=2 --cov-report= --cov=axbi ./tests/integration_tests "$@"

@@ -17,7 +17,7 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { Filter } from '@superset-ui/core';
+import { Filter } from '@ax-bi/ui-core';
 import { FilterElement } from '../FilterBar/FilterControls/types';
 
 export enum FilterCardPlacement {

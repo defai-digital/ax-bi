@@ -17,18 +17,18 @@
  * under the License.
  */
 import {
-  supersetTheme,
+  axbiTheme,
   ThemeProvider,
   EmotionCacheProvider,
   createEmotionCache,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/core/theme';
 
 const emotionCache = createEmotionCache({
   key: 'test',
 });
 
 export function ProviderWrapper(props: any) {
-  const { children, theme = supersetTheme } = props;
+  const { children, theme = axbiTheme } = props;
   return (
     <EmotionCacheProvider value={emotionCache}>
       <ThemeProvider theme={theme}>{children}</ThemeProvider>

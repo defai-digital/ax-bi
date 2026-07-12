@@ -26,8 +26,8 @@ from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlsplit
 
-from superset.mcp_service.sql_lab.schemas import OpenSqlLabRequest
-from superset.mcp_service.utils.sanitization import sanitize_for_llm_context
+from axbi.mcp_service.sql_lab.schemas import OpenSqlLabRequest
+from axbi.mcp_service.utils.sanitization import sanitize_for_llm_context
 
 
 def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
@@ -53,20 +53,20 @@ def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
 
     saved_modules: dict[str, types.ModuleType] = {}
     for key in (
-        "superset_core.api",
-        "superset_core.api.mcp",
-        "superset_core.api.types",
-        "superset_core.mcp",
-        "superset_core.mcp.decorators",
+        "axbi_core.api",
+        "axbi_core.api.mcp",
+        "axbi_core.api.types",
+        "axbi_core.mcp",
+        "axbi_core.mcp.decorators",
     ):
         if key in sys.modules:
             saved_modules[key] = sys.modules[key]
 
-    sys.modules["superset_core.api"] = mock_api
-    sys.modules["superset_core.api.mcp"] = mock_mcp
-    sys.modules["superset_core.mcp"] = mock_mcp
-    sys.modules["superset_core.mcp.decorators"] = mock_decorators
-    sys.modules.setdefault("superset_core.api.types", MagicMock())
+    sys.modules["axbi_core.api"] = mock_api
+    sys.modules["axbi_core.api.mcp"] = mock_mcp
+    sys.modules["axbi_core.mcp"] = mock_mcp
+    sys.modules["axbi_core.mcp.decorators"] = mock_decorators
+    sys.modules.setdefault("axbi_core.api.types", MagicMock())
 
     return saved_modules
 
@@ -74,8 +74,8 @@ def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
 def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
     """Restore mocked decorator modules after each test import."""
     for key in list(sys.modules.keys()):
-        if key.startswith(("superset_core.api", "superset_core.mcp")) or key.startswith(
-            "superset.mcp_service.sql_lab.tool"
+        if key.startswith(("axbi_core.api", "axbi_core.mcp")) or key.startswith(
+            "axbi.mcp_service.sql_lab.tool"
         ):
             del sys.modules[key]
     sys.modules.update(saved_modules)
@@ -84,10 +84,10 @@ def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
 def _get_tool_module() -> tuple[types.ModuleType, dict[str, types.ModuleType]]:
     """Import the tool module with passthrough decorators."""
     saved_modules = _force_passthrough_decorators()
-    mod_name = "superset.mcp_service.sql_lab.tool.open_sql_lab_with_context"
+    mod_name = "axbi.mcp_service.sql_lab.tool.open_sql_lab_with_context"
     saved_tool_modules: dict[str, types.ModuleType] = {}
     for key in list(sys.modules.keys()):
-        if key.startswith("superset.mcp_service.sql_lab.tool"):
+        if key.startswith("axbi.mcp_service.sql_lab.tool"):
             saved_tool_modules[key] = sys.modules.pop(key)
     saved_modules.update(saved_tool_modules)
     mod = importlib.import_module(mod_name)
@@ -114,14 +114,14 @@ class TestOpenSqlLabWithContext:
 
             with (
                 patch(
-                    "superset.daos.database.DatabaseDAO.find_by_id",
+                    "axbi.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
-                    "get_superset_base_url",
-                    return_value="https://superset.example.com",
+                    "get_axbi_base_url",
+                    return_value="https://ax-bi.example.com",
                 ),
             ):
                 response = mod.open_sql_lab_with_context(request, _make_mock_ctx())
@@ -137,7 +137,7 @@ class TestOpenSqlLabWithContext:
             params = parse_qs(parsed.query)
 
             assert parsed.scheme == "https"
-            assert parsed.netloc == "superset.example.com"
+            assert parsed.netloc == "axbi.example.com"
             assert parsed.path == "/sqllab"
             assert params["dbid"] == ["7"]
             assert params["schema"] == ["analytics"]
@@ -165,14 +165,14 @@ class TestOpenSqlLabWithContext:
 
             with (
                 patch(
-                    "superset.daos.database.DatabaseDAO.find_by_id",
+                    "axbi.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
-                    "get_superset_base_url",
-                    return_value="https://superset.example.com",
+                    "get_axbi_base_url",
+                    return_value="https://ax-bi.example.com",
                 ),
             ):
                 response = mod.open_sql_lab_with_context(request, _make_mock_ctx())
@@ -206,14 +206,14 @@ class TestOpenSqlLabWithContext:
 
             with (
                 patch(
-                    "superset.daos.database.DatabaseDAO.find_by_id",
+                    "axbi.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
-                    "get_superset_base_url",
-                    return_value="https://superset.example.com",
+                    "get_axbi_base_url",
+                    return_value="https://ax-bi.example.com",
                 ),
             ):
                 response = mod.open_sql_lab_with_context(request, _make_mock_ctx())
@@ -237,7 +237,7 @@ class TestOpenSqlLabWithContext:
         mod, saved_modules = _get_tool_module()
         try:
             url = (
-                "https://superset.example.com/sqllab?"
+                "https://ax-bi.example.com/sqllab?"
                 "dbid=7&schema=analytics&sql=SELECT+1&name=Inspect+query"
             )
 
@@ -278,14 +278,14 @@ class TestOpenSqlLabWithContext:
 
             with (
                 patch(
-                    "superset.daos.database.DatabaseDAO.find_by_id",
+                    "axbi.daos.database.DatabaseDAO.find_by_id",
                     return_value=Mock(database_name="examples"),
                 ),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
                 patch.object(
                     mod,
-                    "get_superset_base_url",
-                    return_value="https://superset.example.com",
+                    "get_axbi_base_url",
+                    return_value="https://ax-bi.example.com",
                 ),
             ):
                 response = mod.open_sql_lab_with_context(request, _make_mock_ctx())
@@ -306,9 +306,7 @@ class TestOpenSqlLabWithContext:
             )
 
             with (
-                patch(
-                    "superset.daos.database.DatabaseDAO.find_by_id", return_value=None
-                ),
+                patch("axbi.daos.database.DatabaseDAO.find_by_id", return_value=None),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 response = mod.open_sql_lab_with_context(request, _make_mock_ctx())

@@ -18,8 +18,8 @@
  */
 import { ReactElement, useMemo } from 'react';
 import Mustache from 'mustache';
-import { Typography } from '@superset-ui/core/components';
-import { MetricOption } from '@superset-ui/chart-controls';
+import { Typography } from '@ax-bi/ui-core/components';
+import { MetricOption } from '@ax-bi/chart-controls';
 import type { Row, ColumnRow, MetricRow } from '../../types';
 
 interface LeftCellProps {

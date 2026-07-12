@@ -20,11 +20,11 @@
 import { HttpClient } from '../transport/httpClient.js';
 import type { ListParams, PaginatedResponse } from '../shared/pagination.js';
 import { paginate } from '../shared/pagination.js';
-import type { SupersetListEnvelope, SupersetItemEnvelope, SupersetDeleteEnvelope } from './types.js';
+import type { AxBIListEnvelope, AxBIItemEnvelope, AxBIDeleteEnvelope } from './types.js';
 
 /**
  * Base class for REST resource modules.
- * Provides standard CRUD operations mapped to Superset API conventions.
+ * Provides standard CRUD operations mapped to AxBI API conventions.
  */
 export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput = unknown> {
   protected abstract readonly basePath: string;
@@ -36,13 +36,13 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
   /** List resources with optional filtering and pagination. */
   async list(params?: ListParams): Promise<PaginatedResponse<TItem>> {
     const query = this.buildListQuery(params);
-    const envelope = await this.http.get<SupersetListEnvelope<TItem>>(this.basePath, query);
+    const envelope = await this.http.get<AxBIListEnvelope<TItem>>(this.basePath, query);
     return this.envelopeToPaginated(envelope, params);
   }
 
   /** Fetch a single resource by ID or UUID. */
   async getById(id: number | string): Promise<TItem> {
-    const envelope = await this.http.get<SupersetItemEnvelope<TItem>>(
+    const envelope = await this.http.get<AxBIItemEnvelope<TItem>>(
       this.buildItemPath(id),
     );
     return envelope.result;
@@ -50,13 +50,13 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
 
   /** Create a new resource. Returns the created item. */
   async create(data: TCreateInput): Promise<TItem> {
-    const envelope = await this.http.post<SupersetItemEnvelope<TItem>>(`${this.basePath}/`, data);
+    const envelope = await this.http.post<AxBIItemEnvelope<TItem>>(`${this.basePath}/`, data);
     return envelope.result;
   }
 
   /** Update an existing resource by ID or UUID. */
   async update(id: number | string, data: TUpdateInput): Promise<TItem> {
-    const envelope = await this.http.put<SupersetItemEnvelope<TItem>>(
+    const envelope = await this.http.put<AxBIItemEnvelope<TItem>>(
       this.buildItemPath(id),
       data,
     );
@@ -65,7 +65,7 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
 
   /** Delete a resource by ID or UUID. */
   async delete(id: number | string): Promise<void> {
-    await this.http.delete<SupersetDeleteEnvelope>(this.buildItemPath(id));
+    await this.http.delete<AxBIDeleteEnvelope>(this.buildItemPath(id));
   }
 
   /** Export one or more resources as a ZIP archive. */
@@ -110,7 +110,7 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
     };
 
     if (params.search) {
-      // Superset uses (filters:!((col:...,opr:ct,value:...)))
+      // AxBI uses (filters:!((col:...,opr:ct,value:...)))
       // but also supports `q=(filters:...)&search=...`
       query['q'] = JSON.stringify({
         filters: [
@@ -134,7 +134,7 @@ export abstract class BaseResource<TItem, TCreateInput = unknown, TUpdateInput =
   }
 
   private envelopeToPaginated(
-    envelope: SupersetListEnvelope<TItem>,
+    envelope: AxBIListEnvelope<TItem>,
     params?: ListParams,
   ): PaginatedResponse<TItem> {
     const page = params?.page ?? 1;

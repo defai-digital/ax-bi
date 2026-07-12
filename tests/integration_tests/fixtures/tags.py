@@ -17,9 +17,9 @@
 
 import pytest
 
-from superset import db
-from superset.tags.core import clear_sqla_event_listeners, register_sqla_event_listeners
-from superset.tags.models import Tag
+from axbi import db
+from axbi.tags.core import clear_sqla_event_listeners, register_sqla_event_listeners
+from axbi.tags.models import Tag
 from tests.integration_tests.test_app import app
 
 

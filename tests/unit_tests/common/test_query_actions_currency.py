@@ -19,7 +19,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 import pytest
 
-from superset.common.query_actions import _detect_currency
+from axbi.common.query_actions import _detect_currency
 
 
 @pytest.fixture
@@ -102,7 +102,7 @@ def test_detect_currency_returns_none_when_no_currency_column(
     assert result is None
 
 
-@patch("superset.common.query_actions.detect_currency_from_df")
+@patch("axbi.common.query_actions.detect_currency_from_df")
 def test_detect_currency_uses_dataframe_when_column_present(
     mock_detect_from_df: MagicMock,
     mock_query_context: MagicMock,
@@ -119,7 +119,7 @@ def test_detect_currency_uses_dataframe_when_column_present(
     mock_detect_from_df.assert_called_once_with(df, "currency_code")
 
 
-@patch("superset.common.query_actions.detect_currency")
+@patch("axbi.common.query_actions.detect_currency")
 def test_detect_currency_queries_datasource_when_no_df(
     mock_detect: MagicMock,
     mock_query_context: MagicMock,
@@ -142,7 +142,7 @@ def test_detect_currency_queries_datasource_when_no_df(
     )
 
 
-@patch("superset.common.query_actions.detect_currency")
+@patch("axbi.common.query_actions.detect_currency")
 def test_detect_currency_queries_datasource_when_column_not_in_df(
     mock_detect: MagicMock,
     mock_query_context: MagicMock,
@@ -174,7 +174,7 @@ def mock_query_context_with_column_config() -> MagicMock:
     return context
 
 
-@patch("superset.common.query_actions.detect_currency")
+@patch("axbi.common.query_actions.detect_currency")
 def test_detect_currency_checks_column_config_for_auto(
     mock_detect: MagicMock,
     mock_query_context_with_column_config: MagicMock,
@@ -194,7 +194,7 @@ def test_detect_currency_checks_column_config_for_auto(
     mock_detect.assert_called_once()
 
 
-@patch("superset.common.query_actions.detect_currency_from_df")
+@patch("axbi.common.query_actions.detect_currency_from_df")
 def test_detect_currency_column_config_uses_dataframe(
     mock_detect_from_df: MagicMock,
     mock_query_context_with_column_config: MagicMock,
@@ -231,7 +231,7 @@ def test_detect_currency_skips_when_no_auto_in_column_config(
     assert result is None
 
 
-@patch("superset.common.query_actions.detect_currency")
+@patch("axbi.common.query_actions.detect_currency")
 def test_detect_currency_works_with_both_top_level_and_column_config(
     mock_detect: MagicMock,
     mock_query_obj: MagicMock,
@@ -251,7 +251,7 @@ def test_detect_currency_works_with_both_top_level_and_column_config(
     mock_detect.assert_called_once()
 
 
-@patch("superset.common.query_actions.detect_currency")
+@patch("axbi.common.query_actions.detect_currency")
 def test_detect_currency_top_level_auto_triggers_detection(
     mock_detect: MagicMock,
     mock_query_obj: MagicMock,

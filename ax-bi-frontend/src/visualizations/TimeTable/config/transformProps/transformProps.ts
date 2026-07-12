@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps, DataRecord, Metric } from '@superset-ui/core';
+import { ChartProps, DataRecord, Metric } from '@ax-bi/ui-core';
 
 interface FormData {
   groupby: string[];
@@ -44,7 +44,10 @@ interface ColumnData {
 export function transformProps(chartProps: TableChartProps) {
   const { height, datasource, formData, queriesData } = chartProps;
   const { columnCollection = [], groupby, metrics, url } = formData;
-  const { records, columns } = queriesData[0]?.data || { records: [], columns: [] };
+  const { records, columns } = queriesData[0]?.data || {
+    records: [],
+    columns: [],
+  };
   const isGroupBy = groupby?.length > 0;
 
   let rows;

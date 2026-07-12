@@ -25,13 +25,13 @@ from fastmcp.exceptions import ToolError
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.tag.schemas import ListTagsRequest, TagFilter
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.tag.schemas import ListTagsRequest, TagFilter
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
-list_tags_module = importlib.import_module("superset.mcp_service.tag.tool.list_tags")
+list_tags_module = importlib.import_module("axbi.mcp_service.tag.tool.list_tags")
 
 
 class TestTagFilterSchema:
@@ -79,7 +79,7 @@ def mcp_server():
 def mock_auth():
     from unittest.mock import Mock
 
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -87,7 +87,7 @@ def mock_auth():
         yield mock_get_user
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_basic(mock_list, mcp_server):
     """Test basic tag listing functionality."""
@@ -104,7 +104,7 @@ async def test_list_tags_basic(mock_list, mcp_server):
         assert "finance" in data["tags"][0]["name"]
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_without_request(mock_list, mcp_server):
     """Test listing tags with no request payload uses defaults."""
@@ -116,7 +116,7 @@ async def test_list_tags_without_request(mock_list, mcp_server):
         assert data["tags"] is not None
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_with_search(mock_list, mcp_server):
     """Test tag listing with search functionality."""
@@ -129,7 +129,7 @@ async def test_list_tags_with_search(mock_list, mcp_server):
         assert "sales" in data["tags"][0]["name"]
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_with_filters(mock_list, mcp_server):
     """Test tag listing with column filters."""
@@ -146,7 +146,7 @@ async def test_list_tags_with_filters(mock_list, mcp_server):
         assert len(data["tags"]) == 1
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_empty_results(mock_list, mcp_server):
     """Test tag listing with no results."""
@@ -159,7 +159,7 @@ async def test_list_tags_empty_results(mock_list, mcp_server):
         assert data["total_count"] == 0
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_api_error(mock_list, mcp_server):
     """Test error handling when DAO raises an exception."""
@@ -180,7 +180,7 @@ def test_list_tags_search_and_filters_mutually_exclusive():
         )
 
 
-@patch("superset.daos.tag.TagDAO.find_by_id")
+@patch("axbi.daos.tag.TagDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_tag_info_basic(mock_find, mcp_server):
     """Test basic get tag info functionality."""
@@ -196,7 +196,7 @@ async def test_get_tag_info_basic(mock_find, mcp_server):
         assert "Finance related" in data["description"]
 
 
-@patch("superset.daos.tag.TagDAO.find_by_id")
+@patch("axbi.daos.tag.TagDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_tag_info_sanitizes_user_controlled_fields(mock_find, mcp_server):
     """name and description are wrapped in UNTRUSTED-CONTENT for LLM data boundary."""
@@ -211,7 +211,7 @@ async def test_get_tag_info_sanitizes_user_controlled_fields(mock_find, mcp_serv
         assert "</UNTRUSTED-CONTENT>" in data["description"]
 
 
-@patch("superset.daos.tag.TagDAO.find_by_id")
+@patch("axbi.daos.tag.TagDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_tag_info_not_found(mock_find, mcp_server):
     """Test get tag info when tag does not exist."""
@@ -224,7 +224,7 @@ async def test_get_tag_info_not_found(mock_find, mcp_server):
         assert data["error_type"] == "not_found"
 
 
-@patch("superset.daos.tag.TagDAO.find_by_id")
+@patch("axbi.daos.tag.TagDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_tag_info_serializes_type_name(mock_find, mcp_server):
     """Test that the tag type enum is serialized as its name string."""
@@ -236,7 +236,7 @@ async def test_get_tag_info_serializes_type_name(mock_find, mcp_server):
         assert data["type"] == "owner"
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_select_columns_filters_response(mock_list, mcp_server):
     """select_columns restricts the fields returned in each tag object."""
@@ -254,7 +254,7 @@ async def test_list_tags_select_columns_filters_response(mock_list, mcp_server):
         assert "changed_on" not in tag_obj
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_default_columns_are_id_name_type(mock_list, mcp_server):
     """Default response includes id, name, type but not description or timestamps."""
@@ -271,7 +271,7 @@ async def test_list_tags_default_columns_are_id_name_type(mock_list, mcp_server)
         assert "changed_on" not in tag_obj
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_serves_valid_sidecar_response(
     mock_list,
@@ -333,7 +333,7 @@ async def test_list_tags_serves_valid_sidecar_response(
     )
 
 
-@patch("superset.daos.tag.TagDAO.list")
+@patch("axbi.daos.tag.TagDAO.list")
 @pytest.mark.asyncio
 async def test_list_tags_serving_falls_back_on_invalid_candidate(
     mock_list,

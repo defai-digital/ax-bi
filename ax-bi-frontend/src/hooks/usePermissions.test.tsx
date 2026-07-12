@@ -26,25 +26,25 @@ const mockStore = configureStore([]);
 
 const rolesWithAllPerms = {
   Admin: [
-    ['can_csv', 'Superset'],
-    ['can_export_data', 'Superset'],
-    ['can_export_image', 'Superset'],
-    ['can_copy_clipboard', 'Superset'],
-    ['can_explore', 'Superset'],
+    ['can_csv', 'AxBI'],
+    ['can_export_data', 'AxBI'],
+    ['can_export_image', 'AxBI'],
+    ['can_copy_clipboard', 'AxBI'],
+    ['can_explore', 'AxBI'],
   ],
 };
 
 const rolesWithoutExportPerms = {
   Gamma: [
-    ['can_explore', 'Superset'],
-    ['can_copy_clipboard', 'Superset'],
+    ['can_explore', 'AxBI'],
+    ['can_copy_clipboard', 'AxBI'],
   ],
 };
 
 const rolesWithLegacyCsvOnly = {
   CustomRole: [
-    ['can_csv', 'Superset'],
-    ['can_explore', 'Superset'],
+    ['can_csv', 'AxBI'],
+    ['can_explore', 'AxBI'],
   ],
 };
 
@@ -55,13 +55,13 @@ function createWrapper(roles: Record<string, string[][]>) {
   );
 }
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { isFeatureEnabled } = require('@superset-ui/core');
+const { isFeatureEnabled } = require('@ax-bi/ui-core');
 
 test('returns canExportData true when user has can_export_data', () => {
   isFeatureEnabled.mockReturnValue(true);

@@ -16,9 +16,9 @@
 # under the License.
 from unittest.mock import patch
 
-from superset.commands.explore.form_data.create import CreateFormDataCommand
-from superset.commands.explore.form_data.parameters import CommandParameters
-from superset.utils.core import DatasourceType
+from axbi.commands.explore.form_data.create import CreateFormDataCommand
+from axbi.commands.explore.form_data.parameters import CommandParameters
+from axbi.utils.core import DatasourceType
 
 
 def test_get_session_id_can_be_overridden():
@@ -55,17 +55,13 @@ def test_run_uses_get_session_id():
     command = CreateFormDataCommand(cmd_params)
 
     with (
-        patch("superset.commands.explore.form_data.create.check_access"),
-        patch("superset.commands.explore.form_data.create.cache_key") as mock_cache_key,
+        patch("axbi.commands.explore.form_data.create.check_access"),
+        patch("axbi.commands.explore.form_data.create.cache_key") as mock_cache_key,
         patch(
-            "superset.commands.explore.form_data.create.cache_manager"
+            "axbi.commands.explore.form_data.create.cache_manager"
         ) as mock_cache_manager,
-        patch(
-            "superset.commands.explore.form_data.create.random_key"
-        ) as mock_random_key,
-        patch(
-            "superset.commands.explore.form_data.create.get_user_id"
-        ) as mock_get_user_id,
+        patch("axbi.commands.explore.form_data.create.random_key") as mock_random_key,
+        patch("axbi.commands.explore.form_data.create.get_user_id") as mock_get_user_id,
         patch.object(
             command, "_get_session_id", return_value="test-session-id"
         ) as mock_get_session_id,
@@ -103,16 +99,16 @@ def test_run_sets_cache_with_explicit_timeout():
     )
 
     with (
-        patch("superset.commands.explore.form_data.create.check_access"),
-        patch("superset.commands.explore.form_data.create.cache_key"),
+        patch("axbi.commands.explore.form_data.create.check_access"),
+        patch("axbi.commands.explore.form_data.create.cache_key"),
         patch(
-            "superset.commands.explore.form_data.create.cache_manager"
+            "axbi.commands.explore.form_data.create.cache_manager"
         ) as mock_cache_manager,
         patch(
-            "superset.commands.explore.form_data.create.random_key",
+            "axbi.commands.explore.form_data.create.random_key",
             return_value="random-key",
         ),
-        patch("superset.commands.explore.form_data.create.get_user_id", return_value=1),
+        patch("axbi.commands.explore.form_data.create.get_user_id", return_value=1),
         patch.object(command, "_get_session_id", return_value="test-session-id"),
     ):
         mock_cache_manager.explore_form_data_cache.get.return_value = None

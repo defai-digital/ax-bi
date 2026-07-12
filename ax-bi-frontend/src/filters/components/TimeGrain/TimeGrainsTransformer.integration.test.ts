@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { NativeFilterType } from '@superset-ui/core';
+import { NativeFilterType } from '@ax-bi/ui-core';
 import { getInitialDataMask } from 'src/dataMask/reducer';
 import type { NativeFiltersFormItem } from 'src/dashboard/components/nativeFilters/FiltersConfigModal/types';
 import { transformFilterForSave } from 'src/dashboard/components/nativeFilters/FiltersConfigModal/transformers';

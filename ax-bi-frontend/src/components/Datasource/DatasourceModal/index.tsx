@@ -18,16 +18,16 @@
  */
 import { FunctionComponent, useState, useEffect, useCallback } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
-  SupersetClient,
+  AxBIClient,
   getClientErrorObject,
-  SupersetError,
+  AxBIError,
   isFeatureEnabled,
   FeatureFlag,
-} from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled, useTheme, css } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled, useTheme, css } from '@ax-bi/core/theme';
 
 import {
   Icons,
@@ -35,7 +35,7 @@ import {
   Checkbox,
   Modal,
   AsyncEsmComponent,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { ErrorMessageWithStackTrace } from 'src/components';
 import type { DatasetObject } from 'src/features/datasets/types';
@@ -194,12 +194,12 @@ const DatasourceModal: FunctionComponent<DatasourceModalProps> = ({
     // Pull out extra fields into the extra object
     setIsSaving(true);
     try {
-      await SupersetClient.put({
+      await AxBIClient.put({
         endpoint: `/api/v1/dataset/${currentDatasource.id}?override_columns=${syncColumns}`,
         jsonPayload: buildPayload(currentDatasource),
       });
 
-      const { json } = await SupersetClient.get({
+      const { json } = await AxBIClient.get({
         endpoint: `/api/v1/dataset/${currentDatasource?.id}`,
       });
 
@@ -214,7 +214,7 @@ const DatasourceModal: FunctionComponent<DatasourceModalProps> = ({
     } catch (response) {
       setIsSaving(false);
       const error = await getClientErrorObject(response);
-      let errorResponse: SupersetError | undefined;
+      let errorResponse: AxBIError | undefined;
       let errorText: string | undefined;
       // sip-40 error response
       if (error?.errors?.length) {
@@ -362,7 +362,7 @@ const DatasourceModal: FunctionComponent<DatasourceModalProps> = ({
             tooltip={
               currentDatasource.is_managed_externally
                 ? t(
-                    "This dataset is managed externally, and can't be edited in Superset",
+                    "This dataset is managed externally, and can't be edited in AxBI",
                   )
                 : errors.length > 0
                   ? errors.join('\n')

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Metric } from '@superset-ui/core';
+import { Metric } from '@ax-bi/ui-core';
 import { Datasource } from 'src/explore/types';
 import { ISaveableDatasource } from 'src/SqlLab/components/SaveDatasetModal';
 import AdhocMetricOption from './AdhocMetricOption';

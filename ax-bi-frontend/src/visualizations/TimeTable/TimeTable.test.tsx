@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen, within } from '@superset-ui/core/spec';
+import { render, screen, within } from '@ax-bi/ui-core/spec';
 import TimeTable from './TimeTable';
 
 const mockData = {

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Dataset } from '@superset-ui/chart-controls';
+import { Dataset } from '@ax-bi/chart-controls';
 import { getDatasourceUid } from 'src/utils/getDatasourceUid';
 import {
   AnyDatasourcesAction,

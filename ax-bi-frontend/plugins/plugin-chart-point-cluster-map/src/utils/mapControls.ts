@@ -17,13 +17,13 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   getMapRendererOptions,
   OSM_TILE_STYLE_URL,
   type MapRendererOption,
   type MapProvider,
-} from '@superset-ui/core/utils/mapStyles';
+} from '@ax-bi/ui-core/utils/mapStyles';
 import { hasMapboxApiKey } from './mapbox';
 
 export const POINT_CLUSTER_MAPLIBRE_STYLE_CHOICES = [

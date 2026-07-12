@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { VizType } from '@superset-ui/core';
+import { VizType } from '@ax-bi/ui-core';
 import { Operators } from 'src/explore/constants';
 import { intentFromFormData } from './intentFromFormData';
 import { compileIntent } from './compileIntent';

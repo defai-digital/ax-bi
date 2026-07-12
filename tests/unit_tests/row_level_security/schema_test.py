@@ -21,7 +21,7 @@ from typing import Any
 import pytest
 from marshmallow import ValidationError
 
-from superset.row_level_security.schemas import RLSPostSchema, RLSPutSchema
+from axbi.row_level_security.schemas import RLSPostSchema, RLSPutSchema
 
 
 def _post_payload(**overrides: Any) -> dict[str, Any]:

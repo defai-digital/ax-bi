@@ -18,12 +18,12 @@
  */
 
 import { FC, useMemo, useState, memo } from 'react';
-import { NativeFilterScope } from '@superset-ui/core';
-import { styled, css } from '@apache-superset/core/theme';
-import Tree from '@superset-ui/core/components/Tree';
+import { NativeFilterScope } from '@ax-bi/ui-core';
+import { styled, css } from '@ax-bi/core/theme';
+import Tree from '@ax-bi/ui-core/components/Tree';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
-import { Tooltip } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Tooltip } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { Layout } from 'src/dashboard/types';
 import { useFilterScopeTree } from './state';
 import { findFilterScope, getTreeCheckedItems } from './utils';

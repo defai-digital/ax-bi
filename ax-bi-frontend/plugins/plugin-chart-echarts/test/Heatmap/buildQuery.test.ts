@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { isPostProcessingRank, QueryFormData } from '@superset-ui/core';
+import { isPostProcessingRank, QueryFormData } from '@ax-bi/ui-core';
 import buildQuery from '../../src/Heatmap/buildQuery';
 
 const baseFormData = {

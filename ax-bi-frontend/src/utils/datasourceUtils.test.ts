@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ColumnMeta, Metric } from '@superset-ui/chart-controls';
-import { DatasourceType } from '@superset-ui/core';
+import { ColumnMeta, Metric } from '@ax-bi/chart-controls';
+import { DatasourceType } from '@ax-bi/ui-core';
 import type { Datasource } from 'src/explore/types';
 import type { QueryEditor } from 'src/SqlLab/types';
 import { getDatasourceAsSaveableDataset } from './datasourceUtils';

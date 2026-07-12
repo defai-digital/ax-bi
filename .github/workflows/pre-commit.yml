@@ -99,6 +99,6 @@ jobs:
             fi
 
             echo "🚒 To prevent/address this CI issue, please install/use pre-commit locally."
-            echo "📖 More details here: https://superset.apache.org/docs/contributing/development#git-hooks"
+            echo "📖 More details here: https://github.com/defai-digital/ax-bi/docs/contributing/development#git-hooks"
             exit 1
           fi

@@ -28,7 +28,7 @@ import {
   getNumberFormatter,
   CategoricalColorNamespace,
   sanitizeHtml,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 interface RoseDataEntry {
   key: string[];
@@ -118,7 +118,7 @@ function Rose(element: HTMLElement, props: RoseProps): void {
   } = props;
 
   const div = d3.select(element);
-  div.classed('superset-legacy-chart-rose', true);
+  div.classed('axbi-legacy-chart-rose', true);
 
   const datum = data;
   const times = Object.keys(datum)

@@ -17,15 +17,15 @@
  * under the License.
  */
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   Comparator,
   MultipleValueComparators,
   ObjectFormattingEnum,
   ColorSchemeEnum,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   Select,
   Button,
@@ -37,7 +37,7 @@ import {
   Row,
   Checkbox,
   type FormProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { ConditionalFormattingConfig, ColumnOption } from './types';
 import {
   operatorOptions,

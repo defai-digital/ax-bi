@@ -17,7 +17,7 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import { JsonObject, QueryFormData, VizType } from '@superset-ui/core';
+import { JsonObject, QueryFormData, VizType } from '@ax-bi/ui-core';
 import { getChartDataRequest } from 'src/components/Chart/chartAction';
 
 /**
@@ -72,7 +72,7 @@ beforeEach(() => {
 });
 
 // Remove only this file's route so global routes registered in
-// setupSupersetClient (e.g. CSRF) survive into the next test.
+// setupAxBIClient (e.g. CSRF) survive into the next test.
 afterEach(() => {
   fetchMock.clearHistory();
   fetchMock.removeRoutes({ names: [CHART_DATA_ROUTE] });
@@ -97,7 +97,7 @@ test('preserves url_params on form_data echoed back in the chart-data request bo
 });
 
 // buildQueryObject defaults missing url_params to `{}` (see
-// packages/superset-ui-core/src/query/buildQueryObject.ts), so the chart-data
+// packages/ax-bi-ui-core/src/query/buildQueryObject.ts), so the chart-data
 // request body carries an empty object — not `undefined`. This test documents
 // that contract; a future change that flips the default should update both.
 test('emits an empty url_params object on each query when form_data has none', async () => {

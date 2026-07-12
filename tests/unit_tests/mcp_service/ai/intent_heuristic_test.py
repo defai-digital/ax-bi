@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from superset.mcp_service.ai.intent_heuristic import (
+from axbi.mcp_service.ai.intent_heuristic import (
     _detect_chart_type,
     _find_dimension_from_prompt,
     _find_first_dimension,

@@ -17,14 +17,14 @@
  * under the License.
  */
 import { useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   COLUMN_NAME_ALIASES,
   ControlComponentProps,
-} from '@superset-ui/chart-controls';
-import { Icons } from '@superset-ui/core/components';
+} from '@ax-bi/chart-controls';
+import { Icons } from '@ax-bi/ui-core/components';
 import ColumnConfigItem from './ColumnConfigItem';
 import {
   ColumnConfigInfo,

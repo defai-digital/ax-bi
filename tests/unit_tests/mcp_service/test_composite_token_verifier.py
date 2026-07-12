@@ -22,7 +22,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastmcp.server.auth import AccessToken
 
-from superset.mcp_service.composite_token_verifier import (
+from axbi.mcp_service.composite_token_verifier import (
     API_KEY_PASSTHROUGH_CLAIM,
     API_KEY_VALIDATED_USERNAME_CLAIM,
     CompositeTokenVerifier,
@@ -193,7 +193,7 @@ async def test_invalid_prefixes_emit_warning(caplog: pytest.LogCaptureFixture) -
     detect misconfiguration in FAB_API_KEY_PREFIXES."""
     import logging
 
-    logger_name = "superset.mcp_service.composite_token_verifier"
+    logger_name = "axbi.mcp_service.composite_token_verifier"
     with caplog.at_level(logging.WARNING, logger=logger_name):
         CompositeTokenVerifier(jwt_verifier=None, api_key_prefixes=["", "sst_"])
 
@@ -296,7 +296,7 @@ async def test_transport_validation_db_error_rejects_token(
         jwt_verifier=None, api_key_prefixes=["sst_"], app=mock_app
     )
 
-    logger_name = "superset.mcp_service.composite_token_verifier"
+    logger_name = "axbi.mcp_service.composite_token_verifier"
     with caplog.at_level(logging.WARNING, logger=logger_name):
         result = await verifier.verify_token("sst_some_key")
 

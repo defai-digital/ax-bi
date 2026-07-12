@@ -19,7 +19,7 @@
 import {
   ControlPanelsContainerProps,
   ControlSetItem,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { isAggMode } from './shared';
 
 export const rowLimitControlSetItem: ControlSetItem = {

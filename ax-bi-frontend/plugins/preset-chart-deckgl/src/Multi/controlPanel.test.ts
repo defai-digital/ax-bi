@@ -20,7 +20,7 @@ import type {
   ControlPanelSectionConfig,
   ControlSetRow,
   ControlSetItem,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import controlPanel from './controlPanel';
 
 test('controlPanel should have Map section', () => {

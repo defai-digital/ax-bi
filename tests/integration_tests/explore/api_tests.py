@@ -20,13 +20,13 @@ import pytest
 from flask_appbuilder.security.sqla.models import User
 from sqlalchemy.orm import Session  # noqa: F401
 
-from superset import db
-from superset.commands.explore.form_data.state import TemporaryExploreState
-from superset.connectors.sqla.models import SqlaTable
-from superset.explore.exceptions import DatasetAccessDeniedError
-from superset.extensions import cache_manager
-from superset.models.slice import Slice
-from superset.utils import json
+from axbi import db
+from axbi.commands.explore.form_data.state import TemporaryExploreState
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.explore.exceptions import DatasetAccessDeniedError
+from axbi.extensions import cache_manager
+from axbi.models.slice import Slice
+from axbi.utils import json
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
     load_world_bank_data,  # noqa: F401
@@ -228,7 +228,7 @@ def test_get_from_permalink_unknown_key(test_client, login_as_admin):
     assert resp.status_code == 404
 
 
-@patch("superset.security.SupersetSecurityManager.can_access_datasource")
+@patch("axbi.security.AxBISecurityManager.can_access_datasource")
 def test_get_dataset_access_denied_with_form_data_key(
     mock_can_access_datasource, test_client, login_as_admin, dataset
 ):
@@ -246,7 +246,7 @@ def test_get_dataset_access_denied_with_form_data_key(
     assert data["message"] == message
 
 
-@patch("superset.security.SupersetSecurityManager.raise_for_access")
+@patch("axbi.security.AxBISecurityManager.raise_for_access")
 def test_get_dataset_access_denied(
     mock_raise_for_access, test_client, login_as_admin, dataset
 ):
@@ -264,7 +264,7 @@ def test_get_dataset_access_denied(
     assert data["message"] == message
 
 
-@patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+@patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
 def test_wrong_endpoint(mock_get_datasource, test_client, login_as_admin, dataset):
     dataset.default_endpoint = "another_endpoint"
     mock_get_datasource.return_value = dataset

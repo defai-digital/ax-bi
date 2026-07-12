@@ -80,7 +80,7 @@ export interface CsrfResult {
 
 /**
  * Get CSRF token from the API endpoint
- * Superset provides a CSRF token via api/v1/security/csrf_token/
+ * AxBI provides a CSRF token via api/v1/security/csrf_token/
  * The session cookie is automatically included by page.request
  */
 export async function getCsrfToken(page: Page): Promise<CsrfResult> {

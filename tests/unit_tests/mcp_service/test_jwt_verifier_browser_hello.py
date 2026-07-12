@@ -22,7 +22,7 @@ from unittest.mock import MagicMock
 from starlette.authentication import AuthenticationError
 from starlette.responses import HTMLResponse, JSONResponse
 
-from superset.mcp_service.jwt_verifier import _auth_error_handler
+from axbi.mcp_service.jwt_verifier import _auth_error_handler
 
 
 def _make_conn(accept: str, method: str = "GET") -> MagicMock:

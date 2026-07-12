@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ChartProps, getNumberFormatter } from '@superset-ui/core';
+import { ChartProps, getNumberFormatter } from '@ax-bi/ui-core';
 import { getFormattedUTCTime } from './utils';
 
 export default function transformProps(chartProps: ChartProps) {

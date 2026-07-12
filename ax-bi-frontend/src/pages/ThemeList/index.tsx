@@ -18,10 +18,10 @@
  */
 
 import { useCallback, useMemo, useState, useEffect } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
 import {
   Tag,
   DeleteModal,
@@ -29,7 +29,7 @@ import {
   Loading,
   Tooltip,
   Space,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 
 import rison from 'rison';
 import { useListViewResource } from 'src/views/CRUD/hooks';
@@ -54,7 +54,7 @@ import ThemeModal from 'src/features/themes/ThemeModal';
 import { ThemeObject } from 'src/features/themes/types';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { useConfirmModal } from 'src/hooks/useConfirmModal';
 import {
   setSystemDefaultTheme,
@@ -152,7 +152,7 @@ function ThemesList({
     useState<ThemeObject | null>(null);
 
   const handleThemeDelete = ({ id, theme_name }: ThemeObject) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/theme/${id}`,
     }).then(
       () => {
@@ -189,7 +189,7 @@ function ThemesList({
       );
     }
 
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/theme/?q=${rison.encode(
         deletableThemes.map(({ id }) => id),
       )}`,

@@ -25,9 +25,9 @@ import {
   FC,
 } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { getClientErrorObject, SupersetClient } from '@superset-ui/core';
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { getClientErrorObject, AxBIClient } from '@ax-bi/ui-core';
+import { AxBITheme } from '@ax-bi/core/theme';
 import {
   Button,
   Collapse,
@@ -43,9 +43,9 @@ import {
   type UploadChangeParam,
   type UploadFile,
   Typography,
-} from '@superset-ui/core/components';
-import { Switch, SwitchProps } from '@superset-ui/core/components/Switch';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components';
+import { Switch, SwitchProps } from '@ax-bi/ui-core/components/Switch';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import rison from 'rison';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
@@ -379,7 +379,7 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/database/?q=${query}`,
         }).then(response => {
           const list = response.json.result.map(
@@ -400,7 +400,7 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
         if (!currentDatabaseId) {
           return Promise.resolve({ data: [], totalCount: 0 });
         }
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/database/${currentDatabaseId}/schemas/?q=(upload_allowed:!t)`,
         }).then(response => {
           const list = response.json.result.map((item: string) => ({
@@ -423,7 +423,7 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
     }
     formData.append('type', type);
     setFileLoading(true);
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: '/api/v1/database/upload_metadata/',
       body: formData,
       headers: { Accept: 'application/json' },
@@ -508,15 +508,12 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
   const appendFormData = (formData: FormData, data: Record<string, any>) => {
     const allFieldsNotInType = getAllFieldsNotInType();
     Object.entries(data).forEach(([key, value]) => {
-      if (
-        !(
-          allFieldsNotInType.includes(key) ||
-          value === undefined ||
-          value === null ||
-          (NonNullFields.includes(key) &&
-            (value === undefined || value === null))
-        )
-      ) {
+      if (!(
+        allFieldsNotInType.includes(key) ||
+        value === undefined ||
+        value === null ||
+        (NonNullFields.includes(key) && (value === undefined || value === null))
+      )) {
         formData.append(key, value);
       }
     });
@@ -580,7 +577,7 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
     setIsLoading(true);
     const endpoint = createTypeToEndpointMap(currentDatabaseId);
     formData.append('type', type);
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint,
       body: formData,
       headers: { Accept: 'application/json' },
@@ -723,7 +720,7 @@ const UploadDataModal: FunctionComponent<UploadDataModalProps> = ({
 
   return (
     <Modal
-      css={(theme: SupersetTheme) => [
+      css={(theme: AxBITheme) => [
         antDModalNoPaddingStyles,
         antDModalStyles(theme),
         formStyles(theme),

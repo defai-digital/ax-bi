@@ -20,7 +20,7 @@ from unittest.mock import MagicMock
 
 from flask import Flask
 
-from superset.themes.api import ThemeRestApi
+from axbi.themes.api import ThemeRestApi
 
 
 class TestThemeRestApi:
@@ -108,7 +108,7 @@ class TestThemeRestApi:
 
     def test_custom_schemas_configured(self):
         """Test that custom schemas are properly configured"""
-        from superset.themes.schemas import ThemePostSchema, ThemePutSchema
+        from axbi.themes.schemas import ThemePostSchema, ThemePutSchema
 
         api = ThemeRestApi()
         assert isinstance(api.add_model_schema, ThemePostSchema)

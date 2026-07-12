@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset.migrations.shared.utils import create_index, drop_index
+from axbi.migrations.shared.utils import create_index, drop_index
 
 
 # ----- Dummy classes for capturing calls ----- #
@@ -61,10 +61,10 @@ def test_create_index_skips_if_index_exists(monkeypatch):
     dummy_op = DummyOp()
 
     # Patch globals in the module where create_index is defined.
-    monkeypatch.setattr("superset.migrations.shared.utils.logger", dummy_logger)
-    monkeypatch.setattr("superset.migrations.shared.utils.op", dummy_op)
+    monkeypatch.setattr("axbi.migrations.shared.utils.logger", dummy_logger)
+    monkeypatch.setattr("axbi.migrations.shared.utils.op", dummy_op)
     monkeypatch.setattr(
-        "superset.migrations.shared.utils.table_has_index", fake_table_has_index_true
+        "axbi.migrations.shared.utils.table_has_index", fake_table_has_index_true
     )
 
     table_name = "test_table"
@@ -83,10 +83,10 @@ def test_create_index_creates_index(monkeypatch):
     dummy_logger = DummyLogger()
     dummy_op = DummyOp()
 
-    monkeypatch.setattr("superset.migrations.shared.utils.logger", dummy_logger)
-    monkeypatch.setattr("superset.migrations.shared.utils.op", dummy_op)
+    monkeypatch.setattr("axbi.migrations.shared.utils.logger", dummy_logger)
+    monkeypatch.setattr("axbi.migrations.shared.utils.op", dummy_op)
     monkeypatch.setattr(
-        "superset.migrations.shared.utils.table_has_index", fake_table_has_index_false
+        "axbi.migrations.shared.utils.table_has_index", fake_table_has_index_false
     )
 
     table_name = "test_table"
@@ -110,10 +110,10 @@ def test_create_unique_index_creates_index(monkeypatch):
     dummy_logger = DummyLogger()
     dummy_op = DummyOp()
 
-    monkeypatch.setattr("superset.migrations.shared.utils.logger", dummy_logger)
-    monkeypatch.setattr("superset.migrations.shared.utils.op", dummy_op)
+    monkeypatch.setattr("axbi.migrations.shared.utils.logger", dummy_logger)
+    monkeypatch.setattr("axbi.migrations.shared.utils.op", dummy_op)
     monkeypatch.setattr(
-        "superset.migrations.shared.utils.table_has_index", fake_table_has_index_false
+        "axbi.migrations.shared.utils.table_has_index", fake_table_has_index_false
     )
 
     table_name = "test_table"
@@ -137,10 +137,10 @@ def test_create_index_with_not_unique(monkeypatch):
     dummy_logger = DummyLogger()
     dummy_op = DummyOp()
 
-    monkeypatch.setattr("superset.migrations.shared.utils.logger", dummy_logger)
-    monkeypatch.setattr("superset.migrations.shared.utils.op", dummy_op)
+    monkeypatch.setattr("axbi.migrations.shared.utils.logger", dummy_logger)
+    monkeypatch.setattr("axbi.migrations.shared.utils.op", dummy_op)
     monkeypatch.setattr(
-        "superset.migrations.shared.utils.table_has_index", fake_table_has_index_false
+        "axbi.migrations.shared.utils.table_has_index", fake_table_has_index_false
     )
 
     table_name = "test_table"
@@ -163,10 +163,10 @@ def test_drop_index_skips_if_index_not_exist(monkeypatch):
     dummy_logger = DummyLogger()
     dummy_op = DummyOp()
 
-    monkeypatch.setattr("superset.migrations.shared.utils.logger", dummy_logger)
-    monkeypatch.setattr("superset.migrations.shared.utils.op", dummy_op)
+    monkeypatch.setattr("axbi.migrations.shared.utils.logger", dummy_logger)
+    monkeypatch.setattr("axbi.migrations.shared.utils.op", dummy_op)
     monkeypatch.setattr(
-        "superset.migrations.shared.utils.table_has_index", fake_table_has_index_false
+        "axbi.migrations.shared.utils.table_has_index", fake_table_has_index_false
     )
 
     table_name = "test_table"
@@ -184,10 +184,10 @@ def test_drop_index_drops_index_when_exists(monkeypatch):
     dummy_logger = DummyLogger()
     dummy_op = DummyOp()
 
-    monkeypatch.setattr("superset.migrations.shared.utils.logger", dummy_logger)
-    monkeypatch.setattr("superset.migrations.shared.utils.op", dummy_op)
+    monkeypatch.setattr("axbi.migrations.shared.utils.logger", dummy_logger)
+    monkeypatch.setattr("axbi.migrations.shared.utils.op", dummy_op)
     monkeypatch.setattr(
-        "superset.migrations.shared.utils.table_has_index", fake_table_has_index_true
+        "axbi.migrations.shared.utils.table_has_index", fake_table_has_index_true
     )
 
     table_name = "test_table"

@@ -24,9 +24,9 @@ from uuid import UUID, uuid4
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.app import SupersetApp
-from superset.commands.exceptions import UpdateFailedError
-from superset.commands.report.exceptions import (
+from axbi.app import AxBIApp
+from axbi.commands.exceptions import UpdateFailedError
+from axbi.commands.report.exceptions import (
     ReportScheduleAlertGracePeriodError,
     ReportScheduleCsvFailedError,
     ReportSchedulePreviousWorkingError,
@@ -36,16 +36,16 @@ from superset.commands.report.exceptions import (
     ReportScheduleUnexpectedError,
     ReportScheduleWorkingTimeoutError,
 )
-from superset.commands.report.execute import (
+from axbi.commands.report.execute import (
     BaseReportState,
     ReportNotTriggeredErrorState,
     ReportScheduleStateMachine,
     ReportSuccessState,
     ReportWorkingState,
 )
-from superset.daos.report import REPORT_SCHEDULE_ERROR_NOTIFICATION_MARKER
-from superset.dashboards.permalink.types import DashboardPermalinkState
-from superset.reports.models import (
+from axbi.daos.report import REPORT_SCHEDULE_ERROR_NOTIFICATION_MARKER
+from axbi.dashboards.permalink.types import DashboardPermalinkState
+from axbi.reports.models import (
     ReportDataFormat,
     ReportRecipients,
     ReportRecipientType,
@@ -54,8 +54,8 @@ from superset.reports.models import (
     ReportSourceFormat,
     ReportState,
 )
-from superset.utils.core import HeaderDataType
-from superset.utils.screenshots import ChartScreenshot
+from axbi.utils.core import HeaderDataType
+from axbi.utils.screenshots import ChartScreenshot
 from tests.integration_tests.conftest import with_feature_flags
 
 
@@ -287,9 +287,7 @@ def test_log_data_with_missing_values(mocker: MockerFixture) -> None:
         ),
     ],
 )
-@patch(
-    "superset.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run"
-)
+@patch("axbi.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_with_multiple_tabs(
     mock_run, mocker: MockerFixture, anchors, permalink_side_effect, expected_paths, app
@@ -373,7 +371,7 @@ def test_get_dashboard_urls_with_exporting_dashboard_only(
     assert "12345678-1234-1234-1234-123456789abc" in result[0]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_empty_dashboard_state_skips_permalink(
     mock_permalink_cls,
@@ -407,7 +405,7 @@ def test_get_dashboard_urls_empty_dashboard_state_skips_permalink(
     assert "12345678-1234-1234-1234-123456789abc" in result[0]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_url_params_only_creates_permalink(
     mock_permalink_cls,
@@ -449,7 +447,7 @@ def test_get_dashboard_urls_url_params_only_creates_permalink(
     assert "/dashboard/p/" in result[0]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_ignores_non_object_dashboard_state(
     mock_permalink_cls,
@@ -478,7 +476,7 @@ def test_get_dashboard_urls_ignores_non_object_dashboard_state(
     assert "12345678-1234-1234-1234-123456789abc" in result[0]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_with_filters_and_tabs(
     mock_permalink_cls,
@@ -539,7 +537,7 @@ def test_get_dashboard_urls_with_filters_and_tabs(
     assert mock_permalink_cls.call_args_list[1].kwargs["state"]["anchor"] == "TAB-2"
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_with_filters_and_tabs_preserves_existing_url_params(
     mock_permalink_cls,
@@ -592,7 +590,7 @@ def test_get_dashboard_urls_with_filters_and_tabs_preserves_existing_url_params(
         ]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_with_filters_and_tabs_deduplicates_stale_native_filters(
     mock_permalink_cls,
@@ -640,7 +638,7 @@ def test_get_dashboard_urls_with_filters_and_tabs_deduplicates_stale_native_filt
         ]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_with_filters_no_tabs(
     mock_permalink_cls,
@@ -697,7 +695,7 @@ def test_get_dashboard_urls_with_filters_no_tabs(
     assert state["urlParams"] == [["native_filters", native_filter_rison]]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_preserves_existing_url_params(
     mock_permalink_cls,
@@ -751,7 +749,7 @@ def test_get_dashboard_urls_preserves_existing_url_params(
     ]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_deduplicates_stale_native_filters(
     mock_permalink_cls,
@@ -800,9 +798,7 @@ def test_get_dashboard_urls_deduplicates_stale_native_filters(
     ]
 
 
-@patch(
-    "superset.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run"
-)
+@patch("axbi.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run")
 def test_get_tab_urls(
     mock_run,
     mocker: MockerFixture,
@@ -827,7 +823,7 @@ def test_get_tab_urls(
     ]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_multitab_preserves_url_params(
     mock_permalink_cls,
@@ -886,9 +882,7 @@ def test_get_dashboard_urls_multitab_preserves_url_params(
         assert state["anchor"] == expected_anchor
 
 
-@patch(
-    "superset.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run"
-)
+@patch("axbi.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run")
 def test_get_tab_url(
     mock_run,
     mocker: MockerFixture,
@@ -915,9 +909,7 @@ def test_get_tab_url(
     assert result == urllib.parse.urljoin(base_url, "ax-bi/dashboard/p/uri/")
 
 
-@patch(
-    "superset.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run"
-)
+@patch("axbi.commands.dashboard.permalink.create.CreateDashboardPermalinkCommand.run")
 @with_feature_flags(ALERT_REPORT_TABS=False)
 def test_get_dashboard_urls_native_filters_without_tabs(
     mock_run,
@@ -964,7 +956,7 @@ def test_get_dashboard_urls_native_filters_without_tabs(
     assert "permalink_key" in result[0]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=False)
 def test_get_dashboard_urls_flag_off_preserves_url_params(
     mock_permalink_cls,
@@ -1016,7 +1008,7 @@ def test_get_dashboard_urls_flag_off_preserves_url_params(
     ]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=False)
 def test_get_dashboard_urls_ignores_malformed_url_params(
     mock_permalink_cls,
@@ -1061,7 +1053,7 @@ def test_get_dashboard_urls_ignores_malformed_url_params(
     ]
 
 
-@patch("superset.commands.report.execute.CreateDashboardPermalinkCommand")
+@patch("axbi.commands.report.execute.CreateDashboardPermalinkCommand")
 @with_feature_flags(ALERT_REPORT_TABS=True)
 def test_get_dashboard_urls_ignores_malformed_anchor(
     mock_permalink_cls,
@@ -1136,7 +1128,7 @@ def create_report_schedule(
     ],
 )
 def test_screenshot_width_calculation(
-    app: SupersetApp,
+    app: AxBIApp,
     mocker: MockerFixture,
     test_id: str,
     custom_width: int | None,
@@ -1152,7 +1144,7 @@ def test_screenshot_width_calculation(
     - Equal to custom_width when it's less than max_width
     - Equal to window_width when custom_width is None
     """
-    from superset.commands.report.execute import BaseReportState
+    from axbi.commands.report.execute import BaseReportState
 
     # Mock configuration
     app.config.update(
@@ -1178,11 +1170,9 @@ def test_screenshot_width_calculation(
 
     # Mock security manager and screenshot
     with (
+        patch("axbi.commands.report.execute.security_manager") as mock_security_manager,
         patch(
-            "superset.commands.report.execute.security_manager"
-        ) as mock_security_manager,
-        patch(
-            "superset.utils.screenshots.ChartScreenshot.get_screenshot"
+            "axbi.utils.screenshots.ChartScreenshot.get_screenshot"
         ) as mock_get_screenshot,
     ):
         # Mock user
@@ -1191,14 +1181,12 @@ def test_screenshot_width_calculation(
         mock_get_screenshot.return_value = b"screenshot bytes"
 
         # Mock get_executor to avoid database lookups
-        with patch(
-            "superset.commands.report.execute.get_executor"
-        ) as mock_get_executor:
+        with patch("axbi.commands.report.execute.get_executor") as mock_get_executor:
             mock_get_executor.return_value = ("executor", "username")
 
             # Capture the ChartScreenshot instantiation
             with patch(
-                "superset.commands.report.execute.ChartScreenshot",
+                "axbi.commands.report.execute.ChartScreenshot",
                 wraps=ChartScreenshot,
             ) as mock_chart_screenshot:
                 # Call the method that triggers screenshot creation
@@ -1218,7 +1206,7 @@ def test_update_recipient_to_slack_v2(mocker: MockerFixture):
     Test converting a Slack recipient to Slack v2 format.
     """
     mocker.patch(
-        "superset.commands.report.execute.get_channels_with_search",
+        "axbi.commands.report.execute.get_channels_with_search",
         return_value=[
             {
                 "id": "abc124f",
@@ -1261,7 +1249,7 @@ def test_update_recipient_to_slack_v2_missing_channels(mocker: MockerFixture):
     in case it can't find all channels.
     """
     mocker.patch(
-        "superset.commands.report.execute.get_channels_with_search",
+        "axbi.commands.report.execute.get_channels_with_search",
         return_value=[
             {
                 "id": "blah_!channel_2",
@@ -1295,7 +1283,7 @@ def test_update_recipient_to_slack_v2_restores_all_recipients_on_failure(
     Test Slack v2 conversion restores earlier recipient mutations on failure.
     """
     mocker.patch(
-        "superset.commands.report.execute.get_channels_with_search",
+        "axbi.commands.report.execute.get_channels_with_search",
         side_effect=[
             [
                 {
@@ -1345,7 +1333,7 @@ def test_update_recipient_to_slack_v2_skips_malformed_channels(
     as missing channels instead of raising a raw lookup error.
     """
     mocker.patch(
-        "superset.commands.report.execute.get_channels_with_search",
+        "axbi.commands.report.execute.get_channels_with_search",
         return_value=[
             {
                 "id": "abc124f",
@@ -1427,11 +1415,11 @@ def test_create_log_stale_data_raises_unexpected_error(mocker: MockerFixture) ->
     state = BaseReportState(schedule, datetime.utcnow(), uuid4())
     state._report_schedule = schedule
 
-    mock_db = mocker.patch("superset.commands.report.execute.db")
+    mock_db = mocker.patch("axbi.commands.report.execute.db")
     mock_db.session.commit.side_effect = StaleDataError("stale")
     # Prevent SQLAlchemy from inspecting the mock schedule during log creation
     mocker.patch(
-        "superset.commands.report.execute.ReportExecutionLog",
+        "axbi.commands.report.execute.ReportExecutionLog",
         return_value=mocker.Mock(),
     )
 
@@ -1489,7 +1477,7 @@ def _make_notification_state(
     return state
 
 
-@patch("superset.commands.report.execute.feature_flag_manager")
+@patch("axbi.commands.report.execute.feature_flag_manager")
 def test_get_notification_content_png_screenshot(
     mock_ff, mocker: MockerFixture
 ) -> None:
@@ -1502,7 +1490,7 @@ def test_get_notification_content_png_screenshot(
     assert content.text is None
 
 
-@patch("superset.commands.report.execute.feature_flag_manager")
+@patch("axbi.commands.report.execute.feature_flag_manager")
 def test_get_notification_content_png_empty_returns_error(
     mock_ff, mocker: MockerFixture
 ) -> None:
@@ -1514,7 +1502,7 @@ def test_get_notification_content_png_empty_returns_error(
     assert content.text == "Unexpected missing screenshot"
 
 
-@patch("superset.commands.report.execute.feature_flag_manager")
+@patch("axbi.commands.report.execute.feature_flag_manager")
 def test_get_notification_content_csv_format(mock_ff, mocker: MockerFixture) -> None:
     mock_ff.is_feature_enabled.return_value = False
     state = _make_notification_state(
@@ -1526,7 +1514,7 @@ def test_get_notification_content_csv_format(mock_ff, mocker: MockerFixture) -> 
     assert content.csv == b"col1,col2\n1,2"
 
 
-@patch("superset.commands.report.execute.feature_flag_manager")
+@patch("axbi.commands.report.execute.feature_flag_manager")
 def test_get_notification_content_text_format(mock_ff, mocker: MockerFixture) -> None:
     import pandas as pd
 
@@ -1551,7 +1539,7 @@ def test_get_notification_content_text_format(mock_ff, mocker: MockerFixture) ->
     ],
     ids=["email_subject", "chart_name", "dashboard_name"],
 )
-@patch("superset.commands.report.execute.feature_flag_manager")
+@patch("axbi.commands.report.execute.feature_flag_manager")
 def test_get_notification_content_name(
     mock_ff,
     mocker: MockerFixture,
@@ -1613,7 +1601,7 @@ def test_working_state_timeout_raises_timeout_error(mocker: MockerFixture) -> No
     mock_log = mocker.Mock()
     mock_log.end_dttm = datetime.utcnow() - timedelta(hours=2)
     mocker.patch(
-        "superset.commands.report.execute.ReportScheduleDAO.find_last_entered_working_log",
+        "axbi.commands.report.execute.ReportScheduleDAO.find_last_entered_working_log",
         return_value=mock_log,
     )
     mocker.patch.object(state, "update_report_schedule_and_log")
@@ -1699,7 +1687,7 @@ def test_not_triggered_error_state_send_failure_logs_error_and_reraises(
 
 
 def test_get_dashboard_urls_no_state_fallback(
-    mocker: MockerFixture, app: SupersetApp
+    mocker: MockerFixture, app: AxBIApp
 ) -> None:
     """No dashboard state in extra -> standard dashboard URL, not permalink."""
     mock_report_schedule = mocker.Mock(spec=ReportSchedule)
@@ -1733,7 +1721,7 @@ def test_success_state_alert_command_error_sends_error_and_reraises(
     mocker.patch.object(state, "update_report_schedule_and_log")
     mocker.patch.object(state, "send_error")
     mocker.patch(
-        "superset.commands.report.execute.AlertCommand"
+        "axbi.commands.report.execute.AlertCommand"
     ).return_value.run.side_effect = RuntimeError("alert boom")
 
     with pytest.raises(RuntimeError, match="alert boom"):
@@ -1767,7 +1755,7 @@ def test_success_state_send_error_logs_and_reraises(
     assert calls[-1].args[0] == ReportState.ERROR
 
 
-@patch("superset.commands.report.execute.feature_flag_manager")
+@patch("axbi.commands.report.execute.feature_flag_manager")
 def test_get_notification_content_pdf_format(mock_ff, mocker: MockerFixture) -> None:
     """PDF report format branch produces pdf content."""
     mock_ff.is_feature_enabled.return_value = False
@@ -1797,7 +1785,7 @@ def test_state_machine_unknown_state_raises_not_found(
         sm.run()
 
 
-@patch("superset.commands.report.execute.feature_flag_manager")
+@patch("axbi.commands.report.execute.feature_flag_manager")
 def test_get_notification_content_alert_no_flag_skips_attachment(
     mock_ff, mocker: MockerFixture
 ) -> None:
@@ -1829,9 +1817,9 @@ def test_create_log_success_commits(mocker: MockerFixture) -> None:
     state = BaseReportState(schedule, datetime.utcnow(), uuid4())
     state._report_schedule = schedule
 
-    mock_db = mocker.patch("superset.commands.report.execute.db")
+    mock_db = mocker.patch("axbi.commands.report.execute.db")
     mock_log_cls = mocker.patch(
-        "superset.commands.report.execute.ReportExecutionLog",
+        "axbi.commands.report.execute.ReportExecutionLog",
         return_value=mocker.Mock(),
     )
 
@@ -1880,7 +1868,7 @@ def test_success_state_error_logged_when_send_error_raises(
         state, "send_error", side_effect=RuntimeError("notification boom")
     )
     mocker.patch(
-        "superset.commands.report.execute.AlertCommand"
+        "axbi.commands.report.execute.AlertCommand"
     ).return_value.run.side_effect = RuntimeError("alert boom")
 
     # The original alert error propagates...
@@ -1893,7 +1881,7 @@ def test_success_state_error_logged_when_send_error_raises(
 
 
 def test_get_url_for_csv_uses_post_processed_type(
-    app: SupersetApp,
+    app: AxBIApp,
     mocker: MockerFixture,
 ) -> None:
     """Regression for #25538: when an alert/report generates a CSV for a
@@ -1911,8 +1899,8 @@ def test_get_url_for_csv_uses_post_processed_type(
     from datetime import datetime
     from uuid import UUID
 
-    from superset.commands.report.execute import BaseReportState
-    from superset.common.chart_data import ChartDataResultFormat
+    from axbi.commands.report.execute import BaseReportState
+    from axbi.common.chart_data import ChartDataResultFormat
 
     app.config.update({"ALERT_REPORTS_EXECUTORS": {}})
 

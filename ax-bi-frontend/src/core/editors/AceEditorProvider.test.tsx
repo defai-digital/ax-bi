@@ -25,8 +25,8 @@ import {
 } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider, supersetTheme } from '@apache-superset/core/theme';
-import type { editors } from '@apache-superset/core';
+import { ThemeProvider, axbiTheme } from '@ax-bi/core/theme';
+import type { editors } from '@ax-bi/core';
 import AceEditorProvider from './AceEditorProvider';
 
 type EditorProps = editors.EditorProps;
@@ -52,7 +52,7 @@ const mockEditor = {
 
 let mockOnLoadCallback: ((editor: typeof mockEditor) => void) | undefined;
 
-jest.mock('@superset-ui/core/components', () => ({
+jest.mock('@ax-bi/ui-core/components', () => ({
   __esModule: true,
   FullSQLEditor: jest.fn((props: { onLoad?: () => void }) => {
     mockOnLoadCallback = props.onLoad;
@@ -65,7 +65,7 @@ jest.mock('@superset-ui/core/components', () => ({
 }));
 
 const render = (ui: ReactElement) =>
-  rtlRender(<ThemeProvider theme={supersetTheme}>{ui}</ThemeProvider>);
+  rtlRender(<ThemeProvider theme={axbiTheme}>{ui}</ThemeProvider>);
 
 afterEach(() => {
   cleanup();

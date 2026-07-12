@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { GenericDataType } from '@apache-superset/core/common';
+import { GenericDataType } from '@ax-bi/core/common';
 import transformProps from './transformProps';
 import { BigNumberWithTrendlineChartProps, BigNumberDatum } from '../types';
 
 // Mock chart-controls to avoid styled-components issues in Jest
-jest.mock('@superset-ui/chart-controls', () => ({
+jest.mock('@ax-bi/chart-controls', () => ({
   aggregationChoices: {
     raw: {
       label: 'Force server-side aggregation',
@@ -55,7 +55,7 @@ jest.mock('@superset-ui/chart-controls', () => ({
   },
 }));
 
-jest.mock('@superset-ui/core', () => ({
+jest.mock('@ax-bi/ui-core', () => ({
   BRAND_COLOR: '#00A699',
   GenericDataType: { Temporal: 2, String: 1 },
   extractTimegrain: jest.fn(() => 'P1D'),

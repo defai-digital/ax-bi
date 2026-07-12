@@ -21,7 +21,12 @@ from typing import Any
 
 import pytest
 
-from superset.mcp_service.utils.config_utils import (
+from axbi.mcp_service.utils.config_utils import (
+    get_axbi_admin_role_name,
+    get_axbi_app_icon,
+    get_axbi_app_name,
+    get_axbi_row_limit,
+    get_axbi_webserver_address,
     get_fab_api_key_enabled,
     get_fab_api_key_prefixes,
     get_mcp_api_key_create_url,
@@ -55,11 +60,6 @@ from superset.mcp_service.utils.config_utils import (
     get_screenshot_locate_wait,
     get_screenshot_replace_unexpected_errors,
     get_screenshot_selenium_headstart,
-    get_superset_admin_role_name,
-    get_superset_app_icon,
-    get_superset_app_name,
-    get_superset_row_limit,
-    get_superset_webserver_address,
     get_upload_max_file_size_bytes,
     get_webdriver_baseurl_user_friendly,
     get_webdriver_pool_config,
@@ -68,71 +68,67 @@ from superset.mcp_service.utils.config_utils import (
 )
 
 
-def test_get_superset_app_name_reads_supplied_config() -> None:
-    assert get_superset_app_name({"APP_NAME": "AX BI"}) == "AX BI"
+def test_get_axbi_app_name_reads_supplied_config() -> None:
+    assert get_axbi_app_name({"APP_NAME": "AX BI"}) == "AX BI"
 
 
-def test_get_superset_app_name_uses_default_for_missing_key() -> None:
-    assert get_superset_app_name({}) == "Superset"
+def test_get_axbi_app_name_uses_default_for_missing_key() -> None:
+    assert get_axbi_app_name({}) == "AX BI"
 
 
-def test_get_superset_app_name_supports_custom_default() -> None:
-    assert get_superset_app_name({}, default="Analytics") == "Analytics"
+def test_get_axbi_app_name_supports_custom_default() -> None:
+    assert get_axbi_app_name({}, default="Analytics") == "Analytics"
 
 
-def test_get_superset_app_icon_reads_supplied_config() -> None:
-    assert get_superset_app_icon({"APP_ICON": "/static/icon.png"}) == "/static/icon.png"
+def test_get_axbi_app_icon_reads_supplied_config() -> None:
+    assert get_axbi_app_icon({"APP_ICON": "/static/icon.png"}) == "/static/icon.png"
 
 
-def test_get_superset_app_icon_defaults_to_empty_string() -> None:
-    assert get_superset_app_icon({}) == ""
+def test_get_axbi_app_icon_defaults_to_empty_string() -> None:
+    assert get_axbi_app_icon({}) == ""
 
 
-def test_get_superset_admin_role_name_reads_supplied_config() -> None:
-    assert get_superset_admin_role_name({"AUTH_ROLE_ADMIN": "Superuser"}) == "Superuser"
+def test_get_axbi_admin_role_name_reads_supplied_config() -> None:
+    assert get_axbi_admin_role_name({"AUTH_ROLE_ADMIN": "Superuser"}) == "Superuser"
 
 
-def test_get_superset_admin_role_name_preserves_missing_key_error() -> None:
+def test_get_axbi_admin_role_name_preserves_missing_key_error() -> None:
     with pytest.raises(KeyError):
-        get_superset_admin_role_name({})
+        get_axbi_admin_role_name({})
 
 
-def test_get_superset_webserver_address_reads_supplied_config() -> None:
+def test_get_axbi_webserver_address_reads_supplied_config() -> None:
     assert (
-        get_superset_webserver_address(
-            {"SUPERSET_WEBSERVER_ADDRESS": "https://superset.example"}
-        )
-        == "https://superset.example"
+        get_axbi_webserver_address({"AXBI_WEBSERVER_ADDRESS": "https://ax-bi.example"})
+        == "https://ax-bi.example"
     )
 
 
-def test_get_superset_webserver_address_reads_environment_fallback(
+def test_get_axbi_webserver_address_reads_environment_fallback(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("SUPERSET_WEBSERVER_ADDRESS", "http://127.0.0.1:8080")
+    monkeypatch.setenv("AXBI_WEBSERVER_ADDRESS", "http://127.0.0.1:8080")
 
-    assert get_superset_webserver_address({}) == "http://127.0.0.1:8080"
+    assert get_axbi_webserver_address({}) == "http://127.0.0.1:8080"
 
 
-def test_get_superset_webserver_address_prefers_config_over_environment(
+def test_get_axbi_webserver_address_prefers_config_over_environment(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.setenv("SUPERSET_WEBSERVER_ADDRESS", "http://127.0.0.1:8080")
+    monkeypatch.setenv("AXBI_WEBSERVER_ADDRESS", "http://127.0.0.1:8080")
 
     assert (
-        get_superset_webserver_address(
-            {"SUPERSET_WEBSERVER_ADDRESS": "https://superset.example"}
-        )
-        == "https://superset.example"
+        get_axbi_webserver_address({"AXBI_WEBSERVER_ADDRESS": "https://ax-bi.example"})
+        == "https://ax-bi.example"
     )
 
 
-def test_get_superset_webserver_address_defaults_to_empty_string(
+def test_get_axbi_webserver_address_defaults_to_empty_string(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    monkeypatch.delenv("SUPERSET_WEBSERVER_ADDRESS", raising=False)
+    monkeypatch.delenv("AXBI_WEBSERVER_ADDRESS", raising=False)
 
-    assert get_superset_webserver_address({}) == ""
+    assert get_axbi_webserver_address({}) == ""
 
 
 def test_screenshot_timing_helpers_read_supplied_config() -> None:
@@ -201,9 +197,9 @@ def test_get_webdriver_pool_config_preserves_raw_config_value() -> None:
 def test_get_webdriver_baseurl_user_friendly_reads_supplied_config() -> None:
     assert (
         get_webdriver_baseurl_user_friendly(
-            {"WEBDRIVER_BASEURL_USER_FRIENDLY": "https://superset.example"}
+            {"WEBDRIVER_BASEURL_USER_FRIENDLY": "https://ax-bi.example"}
         )
-        == "https://superset.example"
+        == "https://ax-bi.example"
     )
 
 
@@ -537,7 +533,7 @@ def test_get_mcp_jwt_issuer_returns_none_when_unset() -> None:
 
 
 def test_get_mcp_required_scopes_reads_supplied_config() -> None:
-    scopes = ["superset:read"]
+    scopes = ["axbi:read"]
 
     assert get_mcp_required_scopes({"MCP_REQUIRED_SCOPES": scopes}) is scopes
 
@@ -578,13 +574,13 @@ def test_get_mcp_rbac_enabled_truthy_values_enable_rbac(value: object) -> None:
     assert get_mcp_rbac_enabled({"MCP_RBAC_ENABLED": value}) is True
 
 
-def test_get_superset_row_limit_reads_supplied_config() -> None:
-    assert get_superset_row_limit({"ROW_LIMIT": 1234}) == 1234
+def test_get_axbi_row_limit_reads_supplied_config() -> None:
+    assert get_axbi_row_limit({"ROW_LIMIT": 1234}) == 1234
 
 
-def test_get_superset_row_limit_preserves_missing_key_error() -> None:
+def test_get_axbi_row_limit_preserves_missing_key_error() -> None:
     with pytest.raises(KeyError):
-        get_superset_row_limit({})
+        get_axbi_row_limit({})
 
 
 def test_get_upload_max_file_size_bytes_reads_supplied_config() -> None:

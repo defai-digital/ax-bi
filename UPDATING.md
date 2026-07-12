@@ -17,12 +17,36 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-# Updating Superset
+# Updating AX BI
 
-This file documents any backwards-incompatible changes in Superset and
+This file documents any backwards-incompatible changes in AX BI and
 assists people when migrating to a new version.
 
 ## Next
+
+### Clean-break rename to AX BI
+
+The project namespace has moved completely to AX BI. This change intentionally
+does not provide compatibility aliases or deprecation windows.
+
+- Python imports move from the former backend namespace to `axbi`; shared-core
+  imports move to `axbi_core`.
+- The Python distribution and CLI are `ax-bi`; use commands such as
+  `ax-bi run`, `ax-bi db upgrade`, and `ax-bi mcp run`.
+- Runtime configuration uses `AXBI_CONFIG`, `AXBI_CONFIG_PATH`, `AXBI_HOME`,
+  and `AXBI_*` variables. The canonical secret and test variables are
+  `AX_BI_SECRET_KEY` and `AX_BI_TESTENV`.
+- Frontend dependencies use `@ax-bi/*`; the embedded SDK is
+  `@ax-bi/embedded-sdk`.
+- Repository directories use `axbi/`, `ax-bi-core/`, `ax-bi-frontend/`,
+  `ax-bi-desktop/`, `ax-bi-websocket/`, `ax-bi-embedded-sdk/`,
+  `ax-bi-extensions-cli/`, and `helm/ax-bi/`.
+- The application route prefix is `/ax-bi`. Former-name route redirects are not
+  registered.
+
+Update deployment manifests, extension imports, package dependencies, scripts,
+and environment files before starting this release. Do not expect existing
+former-name commands, imports, or configuration variables to resolve.
 
 ### UI: Japandi (Japanese-inspired) default theme & chart palette
 
@@ -33,11 +57,11 @@ tone (paper, ink, stone) aligned with the AX Office library design tokens:
   (`#0f766e`), charcoal ink text, earthy status colors.
 - Dark: warm ink-board (`#161412` / `#1f1d1a`), lifted teal (`#2dd4bf`).
 - New default categorical scheme: **`japandiColors`** (Featured). Existing
-  charts that stored `color_scheme: "supersetColors"` / `"evidence"` are
+  charts that stored `color_scheme: "axbiColors"` / `"evidence"` are
   unchanged; only new charts pick the new default.
 - Theme editor examples: `japandi` / `japandiDark`.
 
-Override via `THEME_DEFAULT` / `THEME_DARK` in `superset_config.py`, or set
+Override via `THEME_DEFAULT` / `THEME_DARK` in `axbi_config.py`, or set
 system themes in the UI when `ENABLE_UI_THEME_ADMINISTRATION` is enabled.
 
 ### Frontend: React 19
@@ -94,7 +118,7 @@ AX-BI adds reader/analyst UX improvements (see `.internal/docs/ui-ux-phase5-*`):
 - **Starter dashboard** from a dataset list action (big number + table + bar/line).
 
 `STARTER_DASHBOARD` defaults to `True`. Set it to `False` in
-`SUPERSET_CONFIG` / `DEFAULT_FEATURE_FLAGS` to hide the dataset action. Other
+`AXBI_CONFIG` / `DEFAULT_FEATURE_FLAGS` to hide the dataset action. Other
 Phase 5 surfaces are additive and always available.
 
 ### UI/UX continuity defaults (`GUIDED_CHART_BUILDER`, `CURATED_VIZ_GALLERY`)
@@ -108,7 +132,7 @@ AX-BI now defaults the following presentation-only feature flags to `True`:
 
 `SIMPLIFIED_NAV` remains default `True` (SQL Lab demoted to an Advanced
 settings group). Operators can set any of these flags to `False` in
-`SUPERSET_CONFIG` / `DEFAULT_FEATURE_FLAGS` to restore prior defaults. See
+`AXBI_CONFIG` / `DEFAULT_FEATURE_FLAGS` to restore prior defaults. See
 `.internal/docs/ui-ux-improvement-tech-spec.md`.
 ### Pandas upgraded to 3.0.x
 
@@ -124,12 +148,12 @@ Operators installing from lock files should refresh from
 `requirements/base.txt` / `requirements/development.txt` after upgrade.
 
 
-### Local upload storage moved under `SUPERSET_HOME`
+### Local upload storage moved under `AXBI_HOME`
 
-The default `UPLOAD_FOLDER` now resolves to `<SUPERSET_HOME>/uploads`, and the
+The default `UPLOAD_FOLDER` now resolves to `<AXBI_HOME>/uploads`, and the
 zero-config local DuckDB database defaults to
-`<SUPERSET_HOME>/uploads/local_files.duckdb`. Packaged AX BI Docker stacks map
-this to `/app/superset_home/uploads`, which is on the shared `superset_home`
+`<AXBI_HOME>/uploads/local_files.duckdb`. Packaged AX BI Docker stacks map
+this to `/app/axbi_home/uploads`, which is on the shared `axbi_home`
 volume. Override `UPLOAD_FOLDER` or `LOCAL_DB_PATH` if you intentionally store
 uploads elsewhere.
 
@@ -165,11 +189,11 @@ The thumbnail endpoint redirects to the current digest URL regardless of whether
 
 Webhook alert/report dispatch (`WebhookNotification.send`) now validates the target URL's host against the same private/internal-IP block applied to dataset import URLs. If the resolved host is in a loopback, link-local, private (RFC-1918), shared-CGNAT, or multicast range, the webhook is rejected with `NotificationParamException`.
 
-Deployments that intentionally point webhooks at internal targets (chatops bridges, internal automation servers, on-premises Mattermost/Rocket.Chat, etc.) can opt out by setting `ALERT_REPORTS_WEBHOOK_ALLOW_INTERNAL_HOSTS = True` in `superset_config.py`. This mirrors the existing `DATASET_IMPORT_ALLOW_INTERNAL_DATA_URLS` opt-out for dataset imports.
+Deployments that intentionally point webhooks at internal targets (chatops bridges, internal automation servers, on-premises Mattermost/Rocket.Chat, etc.) can opt out by setting `ALERT_REPORTS_WEBHOOK_ALLOW_INTERNAL_HOSTS = True` in `axbi_config.py`. This mirrors the existing `DATASET_IMPORT_ALLOW_INTERNAL_DATA_URLS` opt-out for dataset imports.
 
 ### Impala cancel_query blocks private/internal hosts by default
 
-The Impala engine spec's `cancel_query` issues an HTTP request from the Superset backend to the host configured on the Impala database connection. That host is now validated before the request: if it resolves to a private/internal IP range, the cancel call is refused and a warning is logged. Operators whose Impala cluster runs on an internal network can opt out by setting `IMPALA_CANCEL_QUERY_ALLOW_INTERNAL_HOSTS = True` in `superset_config.py`. This mirrors the dataset-import and webhook opt-out flags.
+The Impala engine spec's `cancel_query` issues an HTTP request from the AX BI backend to the host configured on the Impala database connection. That host is now validated before the request: if it resolves to a private/internal IP range, the cancel call is refused and a warning is logged. Operators whose Impala cluster runs on an internal network can opt out by setting `IMPALA_CANCEL_QUERY_ALLOW_INTERNAL_HOSTS = True` in `axbi_config.py`. This mirrors the dataset-import and webhook opt-out flags.
 ### Map chart renderer and OpenStreetMap migration behavior
 
 The MapLibre migration for deck.gl charts preserves saved non-Mapbox styles on
@@ -179,7 +203,7 @@ not reclassified as Mapbox during migration and do not require
 `MAPBOX_API_KEY` only because of the migration.
 
 Saved true Mapbox styles whose value starts with `mapbox://` remain
-Mapbox-backed. If a Superset deployment does not configure `MAPBOX_API_KEY`,
+Mapbox-backed. If a AX BI deployment does not configure `MAPBOX_API_KEY`,
 those saved Mapbox charts keep the existing missing-key message instead of
 silently falling back to MapLibre or another provider. In Explore, deck.gl and
 point-cluster renderer controls preserve saved Mapbox state, but the Mapbox
@@ -193,7 +217,7 @@ for bulk prefetch or offline tile downloads.
 
 ### Password complexity policy enabled by default
 
-Superset now ships a default password-complexity policy, enforced (via Flask-AppBuilder) across self-registration, the user create/edit/reset forms, and the User REST API. The policy requires a minimum password length of 8 characters and rejects a built-in blocklist of common/guessable passwords.
+AX BI now ships a default password-complexity policy, enforced (via Flask-AppBuilder) across self-registration, the user create/edit/reset forms, and the User REST API. The policy requires a minimum password length of 8 characters and rejects a built-in blocklist of common/guessable passwords.
 
 This is enabled by default (`FAB_PASSWORD_COMPLEXITY_ENABLED = True`), so new or reset passwords that are too short or appear in the blocklist will be rejected where they were previously accepted. Existing stored passwords are unaffected until they are next changed.
 
@@ -214,13 +238,13 @@ The `DURATION` number formatter now uses `Intl.DurationFormat` for locale-aware 
 
 To preserve sub-second precision in custom duration formatters, enable `formatSubMilliseconds`.
 
-### Cache warmup authenticates via SUPERSET_CACHE_WARMUP_USER
+### Cache warmup authenticates via AXBI_CACHE_WARMUP_USER
 
-The `cache-warmup` Celery task now drives a real WebDriver session for reliable authentication and reads the user to authenticate as from the new `SUPERSET_CACHE_WARMUP_USER` config option. It no longer consults `CACHE_WARMUP_EXECUTORS` for the warmup path. `SUPERSET_CACHE_WARMUP_USER` defaults to `None`, so the task fails fast with a clear message until you set it. Operators who previously relied on `CACHE_WARMUP_EXECUTORS` for cache warmup must set `SUPERSET_CACHE_WARMUP_USER` to a dedicated least-privilege user with access to the dashboards they want warmed up before the next warmup run.
+The `cache-warmup` Celery task now drives a real WebDriver session for reliable authentication and reads the user to authenticate as from the new `AXBI_CACHE_WARMUP_USER` config option. It no longer consults `CACHE_WARMUP_EXECUTORS` for the warmup path. `AXBI_CACHE_WARMUP_USER` defaults to `None`, so the task fails fast with a clear message until you set it. Operators who previously relied on `CACHE_WARMUP_EXECUTORS` for cache warmup must set `AXBI_CACHE_WARMUP_USER` to a dedicated least-privilege user with access to the dashboards they want warmed up before the next warmup run.
 
 ### YDB now uses a native sqlglot dialect
 
-YDB SQL parsing now relies on the dedicated [`ydb-sqlglot-plugin`](https://pypi.org/project/ydb-sqlglot-plugin/) dialect, which registers itself with sqlglot automatically. YDB users must install this plugin (e.g., via `pip install "apache-superset[ydb]"`) to avoid a `ValueError` when Superset parses YDB queries.
+YDB SQL parsing now relies on the dedicated [`ydb-sqlglot-plugin`](https://pypi.org/project/ydb-sqlglot-plugin/) dialect, which registers itself with sqlglot automatically. YDB users must install this plugin (e.g., via `pip install "ax-bi[ydb]"`) to avoid a `ValueError` when AX BI parses YDB queries.
 
 ### Embedded dashboards enforce configured Allowed Domains for postMessage
 
@@ -230,11 +254,11 @@ Enforcement only applies when the Allowed Domains list is non-empty. If the list
 
 ### Default guest/async JWT secrets are rejected at startup
 
-Superset already refuses to start in production (non-debug, non-testing) when `SECRET_KEY` is left at its built-in default, and when `GUEST_TOKEN_JWT_SECRET` is left at its default while `EMBEDDED_SUPERSET` is enabled. This behavior is extended to `GLOBAL_ASYNC_QUERIES_JWT_SECRET`: if the `GLOBAL_ASYNC_QUERIES` feature flag is enabled and the secret is still the publicly known default (`test-secret-change-me`), Superset logs a clear error and refuses to start.
+AX BI already refuses to start in production (non-debug, non-testing) when `SECRET_KEY` is left at its built-in default, and when `GUEST_TOKEN_JWT_SECRET` is left at its default while `EMBEDDED_AXBI` is enabled. This behavior is extended to `GLOBAL_ASYNC_QUERIES_JWT_SECRET`: if the `GLOBAL_ASYNC_QUERIES` feature flag is enabled and the secret is still the publicly known default (`test-secret-change-me`), AX BI logs a clear error and refuses to start.
 
 As with the existing `SECRET_KEY` check, this only fails in production. In debug mode, testing mode, or under the test runner, a warning is logged instead of exiting, so local development is unaffected.
 
-To resolve the error, set a strong random value in `superset_config.py`:
+To resolve the error, set a strong random value in `axbi_config.py`:
 
 ```python
 GLOBAL_ASYNC_QUERIES_JWT_SECRET = "<output of: openssl rand -base64 42>"
@@ -263,14 +287,14 @@ Disabling a user account (setting `active` to `False`, via the admin UI, REST AP
 SSH tunnels can now optionally pin the expected SSH server host key as a defense-in-depth measure against man-in-the-middle attacks. paramiko's transport performs no known-hosts checking by default, so previously the SSH server's identity was not verified. This feature is opt-in and off by default; existing tunnels are unaffected.
 
 - A new nullable `server_host_key` column on the `ssh_tunnels` table stores the expected host key in authorized-key form (e.g. `ssh-ed25519 AAAA...`). It is a public key and is stored in plaintext. It can be set via the SSH tunnel POST/PUT payloads (`ssh_tunnel.server_host_key`).
-- When a tunnel has `server_host_key` set, Superset connects to the SSH server, reads the host key it presents, and rejects the tunnel if it does not match.
+- When a tunnel has `server_host_key` set, AX BI connects to the SSH server, reads the host key it presents, and rejects the tunnel if it does not match.
 - A new config flag `SSH_TUNNEL_STRICT_HOST_KEY_CHECKING` (default `False`) controls fail-closed behavior. When `True`, every tunnel must declare a `server_host_key`; a tunnel without one is rejected.
 
 Runbook to adopt:
 
 1. Capture the SSH server's host key, e.g. `ssh-keyscan -t ed25519 ssh.example.com` (verify it out-of-band).
 2. Set that value on the tunnel's `server_host_key` (via the database/SSH tunnel API or UI payload).
-3. Optionally set `SSH_TUNNEL_STRICT_HOST_KEY_CHECKING = True` in `superset_config.py` to require host-key verification on all tunnels.
+3. Optionally set `SSH_TUNNEL_STRICT_HOST_KEY_CHECKING = True` in `axbi_config.py` to require host-key verification on all tunnels.
 
 ### Dataset import validates catalog against the target connection
 
@@ -310,7 +334,7 @@ SQLALCHEMY_ENCRYPTED_FIELD_ENGINE = "aes"
    ax-bi re-encrypt-secrets --engine aes-gcm
    ```
 3. Set `SQLALCHEMY_ENCRYPTED_FIELD_ENGINE = "aes-gcm"` in your config.
-4. Restart Superset.
+4. Restart AX BI.
 5. Re-run the migrator once more after the restart:
    ```bash
    ax-bi re-encrypt-secrets --engine aes-gcm

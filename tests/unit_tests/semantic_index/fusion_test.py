@@ -18,11 +18,11 @@
 
 from __future__ import annotations
 
-from superset.semantic_index.repository import (
+from axbi.semantic_index.repository import (
     _query_tokens,
     _reciprocal_rank_fusion,
 )
-from superset.semantic_index.types import SemanticSearchResult
+from axbi.semantic_index.types import SemanticSearchResult
 
 
 def _result(object_id: str, distance: float | None = None) -> SemanticSearchResult:

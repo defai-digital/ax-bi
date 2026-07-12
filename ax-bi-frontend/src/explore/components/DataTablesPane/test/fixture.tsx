@@ -17,7 +17,7 @@
  * under the License.
  */
 import { ReactElement } from 'react';
-import { DatasourceType, VizType } from '@superset-ui/core';
+import { DatasourceType, VizType } from '@ax-bi/ui-core';
 import { ChartStatus } from 'src/explore/types';
 import {
   DataTablesPaneProps,

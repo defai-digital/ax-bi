@@ -17,8 +17,8 @@
  * under the License.
  */
 import { forwardRef, type ReactNode } from 'react';
-import { useTheme } from '@apache-superset/core/theme';
-import { List, type ListItemProps } from '@superset-ui/core/components';
+import { useTheme } from '@ax-bi/core/theme';
+import { List, type ListItemProps } from '@ax-bi/ui-core/components';
 
 export interface CustomListItemProps extends ListItemProps {
   selectable: boolean;

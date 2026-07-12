@@ -27,7 +27,7 @@ They need explicit design, ownership, and wider test coverage before refactor.
 
 | Area | Why deferred | Suggested next step |
 | --- | --- | --- |
-| MCP tool modules and Superset globals | Tool transport, auth, configuration, logging, persistence, and Flask context are still coupled in parts of `superset/mcp_service/`. Broad extraction would affect execution and auth paths. | Pick one boundary at a time, starting with a narrow adapter that has existing tests or can receive focused tests. |
+| MCP tool modules and AxBI globals | Tool transport, auth, configuration, logging, persistence, and Flask context are still coupled in parts of `axbi/mcp_service/`. Broad extraction would affect execution and auth paths. | Pick one boundary at a time, starting with a narrow adapter that has existing tests or can receive focused tests. |
 | Frontend list pages | CRUD list pages still repeat orchestration around `useListViewResource`, permissions, filters, bulk actions, and sorting. A shared abstraction could easily become too broad. | Extract only one repeated behavior after tests document it across at least two list pages. |
 | Report command workflow | Timestamp consistency has been fixed, but report execution still mixes state persistence and elapsed-time branches. | Treat as a command workflow refactor, not a cleanup patch. |
 | Pandas postprocessing compatibility | Version-compatibility branches live near transformation logic. They are small and covered by focused tests. | Leave local unless more pandas-version branches appear. |
@@ -37,7 +37,7 @@ They need explicit design, ownership, and wider test coverage before refactor.
 Before starting one of the deferred areas:
 
 - Read the relevant local architecture docs, especially the MCP service docs
-  before touching `superset/mcp_service/`.
+  before touching `axbi/mcp_service/`.
 - Prefer small shared helpers over new framework-style abstractions.
 - Keep resource-specific DAO, security, validation, and serialization behavior
   local unless duplication is proven and tested.

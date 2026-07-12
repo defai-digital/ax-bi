@@ -23,9 +23,9 @@ from flask_appbuilder.security.sqla.models import User
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 
-from superset.extensions import db
-from superset.reports.models import ReportScheduleType
-from superset.tasks.scheduler import execute, log_task_failure, scheduler
+from axbi.extensions import db
+from axbi.reports.models import ReportScheduleType
+from axbi.tasks.scheduler import execute, log_task_failure, scheduler
 from tests.integration_tests.reports.utils import insert_report_schedule
 from tests.integration_tests.test_app import app
 
@@ -36,7 +36,7 @@ def owners(get_user) -> list[User]:
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.tasks.scheduler.execute.apply_async")
+@patch("axbi.tasks.scheduler.execute.apply_async")
 def test_scheduler_celery_timeout_ny(execute_mock, owners):
     """
     Reports scheduler: Test scheduler setting celery soft and hard timeout
@@ -58,7 +58,7 @@ def test_scheduler_celery_timeout_ny(execute_mock, owners):
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.tasks.scheduler.execute.apply_async")
+@patch("axbi.tasks.scheduler.execute.apply_async")
 def test_scheduler_celery_no_timeout_ny(execute_mock, owners):
     """
     Reports scheduler: Test scheduler setting celery soft and hard timeout
@@ -81,7 +81,7 @@ def test_scheduler_celery_no_timeout_ny(execute_mock, owners):
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.tasks.scheduler.execute.apply_async")
+@patch("axbi.tasks.scheduler.execute.apply_async")
 def test_scheduler_celery_timeout_utc(execute_mock, owners):
     """
     Reports scheduler: Test scheduler setting celery soft and hard timeout
@@ -103,7 +103,7 @@ def test_scheduler_celery_timeout_utc(execute_mock, owners):
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.tasks.scheduler.execute.apply_async")
+@patch("axbi.tasks.scheduler.execute.apply_async")
 def test_scheduler_celery_no_timeout_utc(execute_mock, owners):
     """
     Reports scheduler: Test scheduler setting celery soft and hard timeout
@@ -126,8 +126,8 @@ def test_scheduler_celery_no_timeout_utc(execute_mock, owners):
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.tasks.scheduler.is_feature_enabled")
-@patch("superset.tasks.scheduler.execute.apply_async")
+@patch("axbi.tasks.scheduler.is_feature_enabled")
+@patch("axbi.tasks.scheduler.execute.apply_async")
 def test_scheduler_feature_flag_off(execute_mock, is_feature_enabled, owners):
     """
     Reports scheduler: Test scheduler with feature flag off
@@ -149,11 +149,11 @@ def test_scheduler_feature_flag_off(execute_mock, is_feature_enabled, owners):
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.commands.report.execute.AsyncExecuteReportScheduleCommand.__init__")
-@patch("superset.commands.report.execute.AsyncExecuteReportScheduleCommand.run")
-@patch("superset.tasks.scheduler.execute.update_state")
+@patch("axbi.commands.report.execute.AsyncExecuteReportScheduleCommand.__init__")
+@patch("axbi.commands.report.execute.AsyncExecuteReportScheduleCommand.run")
+@patch("axbi.tasks.scheduler.execute.update_state")
 def test_execute_task(update_state_mock, command_mock, init_mock, owners):
-    from superset.commands.report.exceptions import ReportScheduleUnexpectedError
+    from axbi.commands.report.exceptions import ReportScheduleUnexpectedError
 
     report_schedule = insert_report_schedule(
         type=ReportScheduleType.ALERT,
@@ -173,14 +173,14 @@ def test_execute_task(update_state_mock, command_mock, init_mock, owners):
 
 
 @pytest.mark.usefixtures("app_context")
-@patch("superset.commands.report.execute.AsyncExecuteReportScheduleCommand.__init__")
-@patch("superset.commands.report.execute.AsyncExecuteReportScheduleCommand.run")
-@patch("superset.tasks.scheduler.execute.update_state")
-@patch("superset.utils.log.logger")
+@patch("axbi.commands.report.execute.AsyncExecuteReportScheduleCommand.__init__")
+@patch("axbi.commands.report.execute.AsyncExecuteReportScheduleCommand.run")
+@patch("axbi.tasks.scheduler.execute.update_state")
+@patch("axbi.utils.log.logger")
 def test_execute_task_with_command_exception(
     logger_mock, update_state_mock, command_mock, init_mock, owners
 ):
-    from superset.commands.exceptions import CommandException
+    from axbi.commands.exceptions import CommandException
 
     report_schedule = insert_report_schedule(
         type=ReportScheduleType.ALERT,
@@ -203,7 +203,7 @@ def test_execute_task_with_command_exception(
     db.session.commit()
 
 
-@patch("superset.tasks.scheduler.logger")
+@patch("axbi.tasks.scheduler.logger")
 def test_log_task_failure_with_sender(logger_mock):
     """
     Test that log_task_failure logs correctly when sender is provided
@@ -228,7 +228,7 @@ def test_log_task_failure_with_sender(logger_mock):
     )
 
 
-@patch("superset.tasks.scheduler.logger")
+@patch("axbi.tasks.scheduler.logger")
 def test_log_task_failure_without_sender(logger_mock):
     """
     Test that log_task_failure logs correctly when sender is None

@@ -17,7 +17,7 @@
  * under the License.
  */
 import memoizeOne from 'memoize-one';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ComparisonType,
   CurrencyFormatter,
@@ -36,14 +36,14 @@ import {
   SMART_DATE_ID,
   TimeFormats,
   TimeFormatter,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ColorFormatters,
   ConditionalFormattingConfig,
   getColorFormatters,
   ColorSchemeEnum,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 import { isEmpty, merge } from 'lodash';
 import isEqualColumns from './utils/isEqualColumns';

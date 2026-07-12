@@ -18,9 +18,9 @@
  */
 import { extent as d3Extent, range as d3Range } from 'd3-array';
 import { select as d3Select } from 'd3-selection';
-import { getSequentialSchemeRegistry } from '@superset-ui/core';
-import { SupersetTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { getSequentialSchemeRegistry } from '@ax-bi/ui-core';
+import { AxBITheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import CalHeatMapImport from './vendor/cal-heatmap';
 import { convertUTCTimestampToLocal } from './utils';
 
@@ -55,7 +55,7 @@ interface CalendarProps {
   timeFormatter: (ts: number | string) => string;
   valueFormatter: (value: number) => string;
   verboseMap: Record<string, string>;
-  theme: SupersetTheme;
+  theme: AxBITheme;
 }
 
 function Calendar(element: HTMLElement, props: CalendarProps) {
@@ -79,7 +79,7 @@ function Calendar(element: HTMLElement, props: CalendarProps) {
   } = props;
 
   const container = d3Select(element)
-    .classed('superset-legacy-chart-calendar', true)
+    .classed('axbi-legacy-chart-calendar', true)
     .style('height', height);
   container.selectAll('*').remove();
   const div = container.append('div');

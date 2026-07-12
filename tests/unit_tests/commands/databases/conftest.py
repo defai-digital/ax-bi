@@ -20,9 +20,9 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.db_engine_specs.base import BaseEngineSpec
-from superset.exceptions import OAuth2RedirectError
-from superset.utils import json
+from axbi.db_engine_specs.base import BaseEngineSpec
+from axbi.exceptions import OAuth2RedirectError
+from axbi.utils import json
 
 oauth2_client_info = {
     "id": "client_id",

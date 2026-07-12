@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { Query, QueryResponse } from '@superset-ui/core';
+import type { Query, QueryResponse } from '@ax-bi/ui-core';
 import type { JsonResponse } from './queryApi';
 import { api } from './queryApi';
 

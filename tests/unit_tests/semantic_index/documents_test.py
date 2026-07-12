@@ -21,7 +21,7 @@ from __future__ import annotations
 from types import SimpleNamespace
 from uuid import uuid4
 
-from superset.semantic_index.documents import build_dataset_semantic_documents
+from axbi.semantic_index.documents import build_dataset_semantic_documents
 
 
 def test_build_dataset_semantic_documents() -> None:

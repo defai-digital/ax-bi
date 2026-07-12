@@ -18,7 +18,7 @@
  */
 
 import { lazy, ComponentType } from 'react';
-import { JsonObject } from '@superset-ui/core';
+import { JsonObject } from '@ax-bi/ui-core';
 
 export interface RegistryMetadata {
   description: string;

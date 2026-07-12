@@ -19,8 +19,8 @@
 
 /* eslint-disable sort-keys */
 /* eslint-disable no-magic-numbers */
-import { SuperChart } from '@superset-ui/core';
-import { ArcChartPlugin } from '@superset-ui/preset-chart-deckgl';
+import { SuperChart } from '@ax-bi/ui-core';
+import { ArcChartPlugin } from '@ax-bi/preset-chart-deckgl';
 import { withResizableChartDemo } from '@storybook-shared';
 import payload from './payload';
 import { dummyDatasource } from '@storybook-shared';

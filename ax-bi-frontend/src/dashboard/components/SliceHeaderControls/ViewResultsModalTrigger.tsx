@@ -18,9 +18,9 @@
  */
 import { useHistory } from 'src/hooks/useAppHistory';
 import { ReactChild, RefObject, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Button, ModalTrigger } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Button, ModalTrigger } from '@ax-bi/ui-core/components';
 
 export const ViewResultsModalTrigger = ({
   canExplore,

@@ -16,8 +16,8 @@
 # under the License.
 from unittest.mock import MagicMock
 
-from superset.utils import json
-from superset.utils.dashboard_filter_scopes_converter import (
+from axbi.utils import json
+from axbi.utils.dashboard_filter_scopes_converter import (
     convert_filter_scopes,
     copy_filter_scopes,
 )

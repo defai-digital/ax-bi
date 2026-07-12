@@ -20,7 +20,7 @@ import {
   buildQueryContext,
   QueryFormData,
   QueryFormOrderBy,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { buildColumnsOrderBy, applyOrderBy } from '../utils/orderby';
 
 export default function buildQuery(formData: QueryFormData) {

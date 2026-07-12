@@ -15,14 +15,14 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import pytest
 
 from marshmallow import ValidationError
 from tests.conftest import with_config
-from superset.charts.schemas import ChartDataQueryContextSchema
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.charts.schemas import ChartDataQueryContextSchema
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -30,7 +30,7 @@ from tests.integration_tests.fixtures.birth_names_dashboard import (
 from tests.integration_tests.fixtures.query_context import get_query_context
 
 
-class TestSchema(SupersetTestCase):
+class TestSchema(AxBITestCase):
     @with_config({"ROW_LIMIT": 5000})
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     def test_query_context_limit_and_offset(self):

@@ -27,7 +27,7 @@ import {
   waitFor,
 } from 'spec/helpers/testing-library';
 import { api } from 'src/hooks/apiResources/queryApi';
-import { EmptyState } from '@superset-ui/core/components';
+import { EmptyState } from '@ax-bi/ui-core/components';
 import { DatabaseSelector } from '.';
 import type { DatabaseSelectorProps } from './types';
 

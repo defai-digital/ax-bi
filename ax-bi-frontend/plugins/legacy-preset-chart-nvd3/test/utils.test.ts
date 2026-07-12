@@ -20,7 +20,7 @@ import {
   getTimeFormatterRegistry,
   SMART_DATE_ID,
   createSmartDateFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 import {
   computeYDomain,

@@ -41,9 +41,9 @@ import {
   NativeFilterTarget,
   ChartCustomization,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { Constants } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { Constants } from '@ax-bi/ui-core/components';
 import { updateDataMask, removeDataMask } from 'src/dataMask/actions';
 import {
   saveChartCustomization,

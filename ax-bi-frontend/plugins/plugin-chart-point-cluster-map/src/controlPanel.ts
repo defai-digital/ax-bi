@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   columnChoices,
   ControlPanelState,
@@ -24,10 +24,10 @@ import {
   formatSelectOptions,
   sharedControls,
   getStandardizedControls,
-} from '@superset-ui/chart-controls';
-import type { QueryFormData } from '@superset-ui/core';
-import type { MapProvider } from '@superset-ui/core/utils/mapStyles';
-import { getDefaultMapRenderer } from '@superset-ui/core/utils/mapStyles';
+} from '@ax-bi/chart-controls';
+import type { QueryFormData } from '@ax-bi/ui-core';
+import type { MapProvider } from '@ax-bi/ui-core/utils/mapStyles';
+import { getDefaultMapRenderer } from '@ax-bi/ui-core/utils/mapStyles';
 import {
   getPointClusterMapRendererProps,
   POINT_CLUSTER_MAPLIBRE_STYLE_CHOICES,

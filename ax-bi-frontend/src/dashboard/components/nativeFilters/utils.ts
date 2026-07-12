@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   AdhocFilter,
   Behavior,
@@ -30,7 +30,7 @@ import {
   QueryFormData,
   ExtraFormDataOverride,
   ExtraFormDataAppend,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { LayoutItem } from 'src/dashboard/types';
 import extractUrlParams from 'src/dashboard/util/extractUrlParams';
 import { isIterable } from 'src/utils/types';
@@ -141,7 +141,7 @@ export function mergeExtraFormData(
 }
 
 export function isCrossFilter(vizType: string) {
-  // @ts-expect-error need export from superset-ui `ItemWithValue`
+  // @ts-expect-error need export from axbi-ui `ItemWithValue`
   return getChartMetadataRegistry().items[vizType]?.value.behaviors?.includes(
     Behavior.InteractiveChart,
   );

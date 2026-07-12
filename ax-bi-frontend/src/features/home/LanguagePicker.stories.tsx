@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { Menu } from '@superset-ui/core/components/Menu';
+import { Menu } from '@ax-bi/ui-core/components/Menu';
 import { useLanguageMenuItems } from './LanguagePicker';
 import type { Languages } from './LanguagePicker';
 

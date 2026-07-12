@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from io import BytesIO
 from time import sleep
@@ -29,18 +29,18 @@ import rison
 import yaml
 
 from sqlalchemy import and_
-from superset import db, security_manager  # noqa: F401
-from superset.models.dashboard import Dashboard
-from superset.models.core import FavStar, FavStarClassName
-from superset.reports.models import ReportSchedule, ReportScheduleType
-from superset.models.slice import Slice
-from superset.tags.models import Tag, TaggedObject, TagType, ObjectType
-from superset.utils.core import backend, override_user
-from superset.utils.screenshots import ScreenshotCachePayload
-from superset.utils import json
+from axbi import db, security_manager  # noqa: F401
+from axbi.models.dashboard import Dashboard
+from axbi.models.core import FavStar, FavStarClassName
+from axbi.reports.models import ReportSchedule, ReportScheduleType
+from axbi.models.slice import Slice
+from axbi.tags.models import Tag, TaggedObject, TagType, ObjectType
+from axbi.utils.core import backend, override_user
+from axbi.utils.screenshots import ScreenshotCachePayload
+from axbi.utils import json
 
 from tests.integration_tests.base_api_tests import ApiOwnersTestCaseMixin
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 from tests.integration_tests.constants import (
     ADMIN_USERNAME,
@@ -73,7 +73,7 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 DASHBOARDS_FIXTURE_COUNT = 10
 
 
-class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
+class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, AxBITestCase):
     resource_name = "dashboard"
 
     dashboards: list[Dashboard] = []
@@ -282,7 +282,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
             db.session.commit()
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.utils.log.logger")
+    @patch("axbi.utils.log.logger")
     def test_get_dashboard_datasets(self, logger_mock):
         self.login(ADMIN_USERNAME)
         uri = "api/v1/dashboard/world_health/datasets"
@@ -300,8 +300,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         logger_mock.warning.assert_not_called()
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.dashboards.schemas.security_manager.has_guest_access")
-    @patch("superset.dashboards.schemas.security_manager.is_guest_user")
+    @patch("axbi.dashboards.schemas.security_manager.has_guest_access")
+    @patch("axbi.dashboards.schemas.security_manager.is_guest_user")
     def test_get_dashboard_datasets_as_guest(self, is_guest_user, has_guest_access):
         self.login(ADMIN_USERNAME)
         uri = "api/v1/dashboard/world_health/datasets"
@@ -318,7 +318,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
                 assert excluded_key not in dataset
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.dashboards.api.security_manager.can_access_datasource")
+    @patch("axbi.dashboards.api.security_manager.can_access_datasource")
     def test_get_dashboard_datasets_strips_definition_without_datasource_access(
         self, can_access_datasource_mock
     ):
@@ -343,7 +343,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
                 assert "expression" not in metric
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.utils.log.logger")
+    @patch("axbi.utils.log.logger")
     def test_get_dashboard_datasets_not_found(self, logger_mock):
         self.login(ALPHA_USERNAME)
         uri = "api/v1/dashboard/not_found/datasets"
@@ -354,8 +354,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         )
 
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
-    @patch("superset.utils.log.logger")
-    @patch("superset.daos.dashboard.DashboardDAO.get_datasets_for_dashboard")
+    @patch("axbi.utils.log.logger")
+    @patch("axbi.daos.dashboard.DashboardDAO.get_datasets_for_dashboard")
     def test_get_dashboard_datasets_invalid_schema(
         self, dashboard_datasets_mock, logger_mock
     ):
@@ -373,7 +373,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         """
         Check that a gamma user with data access can access dashboard/datasets
         """
-        from superset.connectors.sqla.models import SqlaTable
+        from axbi.connectors.sqla.models import SqlaTable
 
         # Set correct role permissions
         gamma_role = security_manager.find_role("Gamma")
@@ -493,7 +493,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         """
         Check that a gamma user with data access can access dashboard/charts
         """
-        from superset.connectors.sqla.models import SqlaTable
+        from axbi.connectors.sqla.models import SqlaTable
 
         # Set correct role permissions
         gamma_role = security_manager.find_role("Gamma")
@@ -678,8 +678,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         db.session.delete(dashboard)
         db.session.commit()
 
-    @patch("superset.dashboards.schemas.security_manager.has_guest_access")
-    @patch("superset.dashboards.schemas.security_manager.is_guest_user")
+    @patch("axbi.dashboards.schemas.security_manager.has_guest_access")
+    @patch("axbi.dashboards.schemas.security_manager.is_guest_user")
     def test_get_dashboard_as_guest(self, is_guest_user, has_guest_access):
         """
         Dashboard API: Test get dashboard as guest
@@ -777,7 +777,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         }
         uri = f"api/v1/dashboard/?q={rison.dumps(arguments)}"
 
-        with patch("superset.models.helpers.datetime") as mock_datetime:
+        with patch("axbi.models.helpers.datetime") as mock_datetime:
             mock_datetime.now.return_value = frozen_now
             rv = self.client.get(uri)
         assert rv.status_code == 200
@@ -1647,10 +1647,10 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         Dashboard API: Test delete try not owned
         """
         user_alpha1 = self.create_user(
-            "alpha1", "password", "Alpha", email="alpha1@superset.org"
+            "alpha1", "password", "Alpha", email="alpha1@axbi.org"
         )
         user_alpha2 = self.create_user(
-            "alpha2", "password", "Alpha", email="alpha2@superset.org"
+            "alpha2", "password", "Alpha", email="alpha2@axbi.org"
         )
         existing_slice = (
             db.session.query(Slice).filter_by(slice_name="Girl Name Cloud").first()
@@ -1673,10 +1673,10 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         Dashboard API: Test delete bulk try not owned
         """
         user_alpha1 = self.create_user(
-            "alpha1", "password", "Alpha", email="alpha1@superset.org"
+            "alpha1", "password", "Alpha", email="alpha1@axbi.org"
         )
         user_alpha2 = self.create_user(
-            "alpha2", "password", "Alpha", email="alpha2@superset.org"
+            "alpha2", "password", "Alpha", email="alpha2@axbi.org"
         )
         existing_slice = (
             db.session.query(Slice).filter_by(slice_name="Girl Name Cloud").first()
@@ -1770,7 +1770,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
         CI green => the create path now links the referenced charts and merging
         closes #32966. CI red => the bug is still live; the fix belongs in
-        ``superset/commands/dashboard/create.py`` (mirror the
+        ``axbi/commands/dashboard/create.py`` (mirror the
         ``set_dash_metadata`` call from ``update.py``).
         """
         admin = self.get_user("admin")
@@ -2546,7 +2546,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
             "alpha1",
             "password",
             "Alpha",
-            email="alpha1@superset.org",
+            email="alpha1@axbi.org",
             first_name="alpha1",
         )
         admin = self.get_user("admin")
@@ -2784,10 +2784,10 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         Dashboard API: Test update dashboard not owned
         """
         user_alpha1 = self.create_user(
-            "alpha1", "password", "Alpha", email="alpha1@superset.org"
+            "alpha1", "password", "Alpha", email="alpha1@axbi.org"
         )
         user_alpha2 = self.create_user(
-            "alpha2", "password", "Alpha", email="alpha2@superset.org"
+            "alpha2", "password", "Alpha", email="alpha2@axbi.org"
         )
         existing_slice = (
             db.session.query(Slice).filter_by(slice_name="Girl Name Cloud").first()
@@ -2819,7 +2819,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         dashboards_ids = get_dashboards_ids(["world_health", "births"])
         uri = f"api/v1/dashboard/export/?q={rison.dumps(dashboards_ids)}"
 
-        with patch("superset.dashboards.api.datetime") as mock_datetime:
+        with patch("axbi.dashboards.api.datetime") as mock_datetime:
             mock_datetime.now.return_value = datetime(2022, 1, 1)
             rv = self.client.get(uri)
 
@@ -2980,7 +2980,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         """
         import pandas as pd
 
-        from superset.connectors.sqla.models import RowLevelSecurityFilter
+        from axbi.connectors.sqla.models import RowLevelSecurityFilter
 
         table = self.get_table(name="birth_names")
         gamma = security_manager.find_role("Gamma")
@@ -3035,7 +3035,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
                     gamma.permissions.remove(pvm)
             db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_dashboard(self, mock_add_permissions):
         """
         Dashboard API: Test import dashboard
@@ -3100,7 +3100,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
                             {
                                 "code": 1010,
                                 "message": (
-                                    "Issue 1010 - Superset encountered an "
+                                    "Issue 1010 - AxBI encountered an "
                                     "error while running a command."
                                 ),
                             }
@@ -3140,7 +3140,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
         db.session.delete(dataset)
         db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_dashboard_overwrite(self, mock_add_permissions):
         """
         Dashboard API: Test import existing dashboard
@@ -3766,8 +3766,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
     @with_feature_flags(THUMBNAILS=True, ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True)
     @pytest.mark.usefixtures("create_dashboard_with_tag")
-    @patch("superset.dashboards.api.cache_dashboard_screenshot")
-    @patch("superset.dashboards.api.DashboardScreenshot.get_from_cache_key")
+    @patch("axbi.dashboards.api.cache_dashboard_screenshot")
+    @patch("axbi.dashboards.api.DashboardScreenshot.get_from_cache_key")
     def test_screenshot_success_png(self, mock_get_from_cache_key, mock_cache_task):
         """
         Validate screenshot returns png
@@ -3798,9 +3798,9 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
     @with_feature_flags(THUMBNAILS=True, ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True)
     @pytest.mark.usefixtures("create_dashboard_with_tag")
-    @patch("superset.dashboards.api.cache_dashboard_screenshot")
-    @patch("superset.dashboards.api.build_pdf_from_screenshots")
-    @patch("superset.dashboards.api.DashboardScreenshot.get_from_cache_key")
+    @patch("axbi.dashboards.api.cache_dashboard_screenshot")
+    @patch("axbi.dashboards.api.build_pdf_from_screenshots")
+    @patch("axbi.dashboards.api.DashboardScreenshot.get_from_cache_key")
     def test_screenshot_success_pdf(
         self,
         mock_get_from_cache_key,
@@ -3837,8 +3837,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
     @with_feature_flags(THUMBNAILS=True, ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True)
     @pytest.mark.usefixtures("create_dashboard_with_tag")
-    @patch("superset.dashboards.api.cache_dashboard_screenshot")
-    @patch("superset.dashboards.api.DashboardScreenshot.get_from_cache_key")
+    @patch("axbi.dashboards.api.cache_dashboard_screenshot")
+    @patch("axbi.dashboards.api.DashboardScreenshot.get_from_cache_key")
     def test_screenshot_not_in_cache(self, mock_get_cache, mock_cache_task):
         self.login(ADMIN_USERNAME)
         mock_cache_task.return_value = None
@@ -3865,8 +3865,8 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
     @with_feature_flags(THUMBNAILS=True, ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True)
     @pytest.mark.usefixtures("create_dashboard_with_tag")
-    @patch("superset.dashboards.api.cache_dashboard_screenshot")
-    @patch("superset.dashboards.api.DashboardScreenshot.get_from_cache_key")
+    @patch("axbi.dashboards.api.cache_dashboard_screenshot")
+    @patch("axbi.dashboards.api.DashboardScreenshot.get_from_cache_key")
     def test_screenshot_invalid_download_format(
         self, mock_get_from_cache_key, mock_cache_task
     ):
@@ -3893,9 +3893,9 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
     @with_feature_flags(THUMBNAILS=True, ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True)
     @pytest.mark.usefixtures("create_dashboard_with_tag")
-    @patch("superset.dashboards.api.cache_dashboard_screenshot")
-    @patch("superset.dashboards.api.build_pdf_from_screenshots")
-    @patch("superset.dashboards.api.DashboardScreenshot.get_from_cache_key")
+    @patch("axbi.dashboards.api.cache_dashboard_screenshot")
+    @patch("axbi.dashboards.api.build_pdf_from_screenshots")
+    @patch("axbi.dashboards.api.DashboardScreenshot.get_from_cache_key")
     def test_screenshot_filename_in_header(
         self, mock_get_from_cache_key, mock_build_pdf, mock_cache_task
     ):
@@ -3930,9 +3930,9 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
 
     @with_feature_flags(THUMBNAILS=True, ENABLE_DASHBOARD_SCREENSHOT_ENDPOINTS=True)
     @pytest.mark.usefixtures("create_dashboard_with_tag")
-    @patch("superset.dashboards.api.cache_dashboard_screenshot")
-    @patch("superset.dashboards.api.build_pdf_from_screenshots")
-    @patch("superset.dashboards.api.DashboardScreenshot.get_from_cache_key")
+    @patch("axbi.dashboards.api.cache_dashboard_screenshot")
+    @patch("axbi.dashboards.api.build_pdf_from_screenshots")
+    @patch("axbi.dashboards.api.DashboardScreenshot.get_from_cache_key")
     def test_screenshot_filename_in_header_dashboard_with_no_title(
         self, mock_get_from_cache_key, mock_build_pdf, mock_cache_task
     ):
@@ -4124,7 +4124,7 @@ class TestDashboardApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCas
             db.session.commit()
 
 
-class TestDashboardCustomTagsFiltering(SupersetTestCase):
+class TestDashboardCustomTagsFiltering(AxBITestCase):
     """Test dashboard list API tags field behavior.
 
     Note: DASHBOARD_LIST_CUSTOM_TAGS_ONLY config is checked at app startup in
@@ -4139,7 +4139,7 @@ class TestDashboardCustomTagsFiltering(SupersetTestCase):
     def test_dashboard_custom_tags_relationship_filters_correctly(self):
         """Verify custom_tags filtering at model and API level.
 
-        With DASHBOARD_LIST_CUSTOM_TAGS_ONLY=True in superset_test_config.py:
+        With DASHBOARD_LIST_CUSTOM_TAGS_ONLY=True in axbi_test_config.py:
         1. dashboard.tags returns ALL tags (custom + owner + type)
         2. dashboard.custom_tags returns ONLY custom tags
         3. API response returns ONLY custom tags in the "tags" property

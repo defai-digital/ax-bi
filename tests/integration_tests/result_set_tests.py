@@ -18,15 +18,15 @@
 from datetime import datetime
 
 import tests.integration_tests.test_app  # noqa: F401
-from superset.dataframe import df_to_records
-from superset.db_engine_specs import BaseEngineSpec
-from superset.result_set import dedup, SupersetResultSet
-from superset.utils.core import GenericDataType
+from axbi.dataframe import df_to_records
+from axbi.db_engine_specs import BaseEngineSpec
+from axbi.result_set import dedup, AxBIResultSet
+from axbi.utils.core import GenericDataType
 
-from .base_tests import SupersetTestCase
+from .base_tests import AxBITestCase
 
 
-class TestSupersetResultSet(SupersetTestCase):
+class TestAxBIResultSet(AxBITestCase):
     def test_dedup(self):
         assert dedup(["foo", "bar"]) == ["foo", "bar"]
         assert dedup(["foo", "bar", "foo", "bar", "Foo"]) == [
@@ -54,7 +54,7 @@ class TestSupersetResultSet(SupersetTestCase):
     def test_get_columns_basic(self):
         data = [("a1", "b1", "c1"), ("a2", "b2", "c2")]
         cursor_descr = (("a", "string"), ("b", "string"), ("c", "string"))
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns == [
             {
                 "is_dttm": False,
@@ -82,7 +82,7 @@ class TestSupersetResultSet(SupersetTestCase):
     def test_get_columns_with_int(self):
         data = [("a1", 1), ("a2", 2)]
         cursor_descr = (("a", "string"), ("b", "int"))
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns == [
             {
                 "is_dttm": False,
@@ -106,7 +106,7 @@ class TestSupersetResultSet(SupersetTestCase):
             (3.14, 2, "bar", datetime(2019, 10, 19, 23, 39, 16, 660000), False),
         ]
         cursor_descr = (("a", None), ("b", None), ("c", None), ("d", None), ("e", None))
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns == [
             {
                 "is_dttm": False,
@@ -148,7 +148,7 @@ class TestSupersetResultSet(SupersetTestCase):
     def test_is_date(self):
         data = [("a", 1), ("a", 2)]
         cursor_descr = (("a", "string"), ("a", "string"))
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.is_temporal("DATE") is True
         assert results.is_temporal("DATETIME") is True
         assert results.is_temporal("TIME") is True
@@ -160,14 +160,14 @@ class TestSupersetResultSet(SupersetTestCase):
     def test_dedup_with_data(self):
         data = [("a", 1), ("a", 2)]
         cursor_descr = (("a", "string"), ("a", "string"))
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         column_names = [col["column_name"] for col in results.columns]
         self.assertListEqual(column_names, ["a", "a__1"])  # noqa: PT009
 
     def test_int64_with_missing_data(self):
         data = [(None,), (1239162456494753670,), (None,), (None,), (None,), (None,)]
         cursor_descr = [("user_id", "bigint", None, None, None, None, True)]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns[0]["type"] == "BIGINT"
         assert results.columns[0]["type_generic"] == GenericDataType.NUMERIC
 
@@ -177,7 +177,7 @@ class TestSupersetResultSet(SupersetTestCase):
             ("user_id", "INT", None, None, None, None, True),
             ("username", "STRING", None, None, None, None, True),
         ]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         df = results.to_pandas_df()
         assert df_to_records(df) == [
             {"user_id": 1, "username": "a"},
@@ -187,7 +187,7 @@ class TestSupersetResultSet(SupersetTestCase):
     def test_nullable_bool(self):
         data = [(None,), (True,), (None,), (None,), (None,), (None,)]
         cursor_descr = [("is_test", "bool", None, None, None, None, True)]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns[0]["type"] == "BOOL"
         assert results.columns[0]["type_generic"] == GenericDataType.BOOLEAN
         df = results.to_pandas_df()
@@ -216,7 +216,7 @@ class TestSupersetResultSet(SupersetTestCase):
             ),
         ]
         cursor_descr = [("id",), ("dict_arr",), ("num_arr",), ("map_col",)]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns[0]["type"] == "INT"
         assert results.columns[0]["type_generic"] == GenericDataType.NUMERIC
         assert results.columns[1]["type"] == "STRING"
@@ -264,7 +264,7 @@ class TestSupersetResultSet(SupersetTestCase):
             )
         ]
         cursor_descr = [("metadata",)]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns[0]["type"] == "STRING"
         assert results.columns[0]["type_generic"] == GenericDataType.STRING
         df = results.to_pandas_df()
@@ -293,7 +293,7 @@ class TestSupersetResultSet(SupersetTestCase):
     def test_nested_list_types(self):
         data = [([{"TestKey": [123456, "foo"]}],)]
         cursor_descr = [("metadata",)]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns[0]["type"] == "STRING"
         assert results.columns[0]["type_generic"] == GenericDataType.STRING
         df = results.to_pandas_df()
@@ -303,7 +303,7 @@ class TestSupersetResultSet(SupersetTestCase):
     def test_empty_datetime(self):
         data = [(None,)]
         cursor_descr = [("ds", "timestamp", None, None, None, None, True)]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns[0]["type"] == "TIMESTAMP"
         assert results.columns[0]["type_generic"] == GenericDataType.TEMPORAL
 
@@ -313,7 +313,7 @@ class TestSupersetResultSet(SupersetTestCase):
             ("one", "varchar", None, None, None, None, True),
             ("two", "int", None, None, None, None, True),
         ]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert results.columns[0]["type"] == "VARCHAR"
         assert results.columns[0]["type_generic"] == GenericDataType.STRING
         assert results.columns[1]["type"] == "INT"
@@ -325,5 +325,5 @@ class TestSupersetResultSet(SupersetTestCase):
             ("emptyone", "varchar", None, None, None, None, True),
             ("emptytwo", "int", None, None, None, None, True),
         ]
-        results = SupersetResultSet(data, cursor_descr, BaseEngineSpec)
+        results = AxBIResultSet(data, cursor_descr, BaseEngineSpec)
         assert len(results.columns) == 2

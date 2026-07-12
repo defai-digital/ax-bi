@@ -21,7 +21,7 @@ import fetchMock from 'fetch-mock';
 import { thunk } from 'redux-thunk';
 import { fireEvent, render, waitFor } from 'spec/helpers/testing-library';
 import { Store } from 'redux';
-import { SupersetClientClass } from '@superset-ui/core';
+import { AxBIClientClass } from '@ax-bi/ui-core';
 import { initialState } from 'src/SqlLab/fixtures';
 
 import ExploreCtasResultsButton, {
@@ -49,7 +49,7 @@ const setup = (props: Partial<ExploreCtasResultsButtonProps>, store?: Store) =>
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('ExploreCtasResultsButton', () => {
-  const postFormSpy = jest.spyOn(SupersetClientClass.prototype, 'postForm');
+  const postFormSpy = jest.spyOn(AxBIClientClass.prototype, 'postForm');
   postFormSpy.mockImplementation(jest.fn());
 
   test('renders', async () => {

@@ -23,7 +23,7 @@ import {
   fireEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import rison from 'rison';
 import RoleListEditModal from './RoleListEditModal';
 import {
@@ -50,11 +50,11 @@ jest.mock('src/components/MessageToasts/withToasts', () => ({
   useToasts: () => mockToasts,
 }));
 
-jest.mock('@superset-ui/core', () => {
-  const original = jest.requireActual('@superset-ui/core');
+jest.mock('@ax-bi/ui-core', () => {
+  const original = jest.requireActual('@ax-bi/ui-core');
   return {
     ...original,
-    SupersetClient: {
+    AxBIClient: {
       get: jest.fn(),
     },
     t: (str: string) => str,
@@ -64,7 +64,7 @@ jest.mock('@superset-ui/core', () => {
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('RoleListEditModal', () => {
   beforeEach(() => {
-    (SupersetClient.get as jest.Mock).mockResolvedValue({
+    (AxBIClient.get as jest.Mock).mockResolvedValue({
       json: { count: 0, result: [] },
     });
   });
@@ -123,7 +123,7 @@ describe('RoleListEditModal', () => {
     // (e.g. [{value: 10, label: "10"}, {value: 20, label: "20"}]).
     // The submit handler must convert these to plain number arrays
     // before calling the update APIs.
-    (SupersetClient.get as jest.Mock).mockImplementation(({ endpoint }) => {
+    (AxBIClient.get as jest.Mock).mockImplementation(({ endpoint }) => {
       if (endpoint?.includes('/api/v1/security/users/')) {
         return Promise.resolve({
           json: {
@@ -207,7 +207,7 @@ describe('RoleListEditModal', () => {
   });
 
   test('fetches users with correct role relationship filter', async () => {
-    const mockGet = SupersetClient.get as jest.Mock;
+    const mockGet = AxBIClient.get as jest.Mock;
     mockGet.mockResolvedValue({
       json: {
         count: 0,
@@ -249,7 +249,7 @@ describe('RoleListEditModal', () => {
   });
 
   test('preserves missing IDs as numeric fallbacks on partial hydration', async () => {
-    const mockGet = SupersetClient.get as jest.Mock;
+    const mockGet = AxBIClient.get as jest.Mock;
     mockGet.mockImplementation(({ endpoint }) => {
       if (
         endpoint?.includes(`/api/v1/security/roles/${mockRole.id}/permissions/`)
@@ -293,7 +293,7 @@ describe('RoleListEditModal', () => {
 
   test('does not fire fallback toast when hydration fetch fails', async () => {
     mockToasts.addDangerToast.mockClear();
-    const mockGet = SupersetClient.get as jest.Mock;
+    const mockGet = AxBIClient.get as jest.Mock;
     mockGet.mockImplementation(({ endpoint }) => {
       if (
         endpoint?.includes(`/api/v1/security/roles/${mockRole.id}/permissions/`)
@@ -328,7 +328,7 @@ describe('RoleListEditModal', () => {
   });
 
   test('fires warning toast when hydration returns zero rows but IDs were expected', async () => {
-    const mockGet = SupersetClient.get as jest.Mock;
+    const mockGet = AxBIClient.get as jest.Mock;
     mockGet.mockImplementation(({ endpoint }) =>
       Promise.resolve({ json: { count: 0, result: [] } }),
     );
@@ -347,7 +347,7 @@ describe('RoleListEditModal', () => {
   });
 
   test('does not leak state when switching roles', async () => {
-    const mockGet = SupersetClient.get as jest.Mock;
+    const mockGet = AxBIClient.get as jest.Mock;
 
     // Role A: returns permission 10 with label
     const roleA = {
@@ -437,7 +437,7 @@ describe('RoleListEditModal', () => {
   });
 
   test('fetches permissions via role endpoint and groups by id for hydration', async () => {
-    const mockGet = SupersetClient.get as jest.Mock;
+    const mockGet = AxBIClient.get as jest.Mock;
     mockGet.mockResolvedValue({
       json: {
         count: 0,

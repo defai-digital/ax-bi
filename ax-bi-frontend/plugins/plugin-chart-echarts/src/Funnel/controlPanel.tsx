@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ControlPanelConfig,
   ControlSubSectionHeader,
@@ -25,7 +25,7 @@ import {
   D3_NUMBER_FORMAT_DESCRIPTION_VALUES_TEXT,
   getStandardizedControls,
   sharedControls,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   DEFAULT_FORM_DATA,
   EchartsFunnelLabelType,

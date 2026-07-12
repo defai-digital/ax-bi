@@ -16,7 +16,7 @@
 # under the License.
 from pandas import DataFrame
 
-from superset.utils.pandas_postprocessing import histogram
+from axbi.utils.pandas_postprocessing import histogram
 
 data = DataFrame(
     {

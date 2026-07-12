@@ -23,7 +23,7 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { isFeatureEnabled, getExtensionsRegistry } from '@superset-ui/core';
+import { isFeatureEnabled, getExtensionsRegistry } from '@ax-bi/ui-core';
 import Welcome, { resolveHomeUser } from 'src/pages/Home';
 import setupCodeOverrides from 'src/setup/setupCodeOverrides';
 
@@ -141,8 +141,8 @@ const mockedPropsWithoutSqlRole = {
   },
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -212,13 +212,17 @@ test('resolveHomeUser prefers prop userId then redux userId', () => {
   expect(resolveHomeUser(propWithId, storeWithId).userId).toBe(5);
   expect(
     resolveHomeUser(
-      { username: 'g', firstName: 'g', lastName: 'g', isActive: true, isAnonymous: false },
+      {
+        username: 'g',
+        firstName: 'g',
+        lastName: 'g',
+        isActive: true,
+        isAnonymous: false,
+      },
       storeWithId,
     ).userId,
   ).toBe(9);
-  expect(
-    resolveHomeUser(undefined, undefined).userId,
-  ).toBeUndefined();
+  expect(resolveHomeUser(undefined, undefined).userId).toBeUndefined();
 });
 
 test('With sql role - renders all panels on the page on page load', async () => {

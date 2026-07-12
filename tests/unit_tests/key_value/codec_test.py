@@ -20,12 +20,12 @@ from typing import Any
 import pytest
 from marshmallow import Schema
 
-from superset.dashboards.permalink.schemas import DashboardPermalinkSchema
-from superset.key_value.exceptions import (
+from axbi.dashboards.permalink.schemas import DashboardPermalinkSchema
+from axbi.key_value.exceptions import (
     KeyValueCodecDecodeException,
     KeyValueCodecEncodeException,
 )
-from superset.key_value.types import (
+from axbi.key_value.types import (
     JsonKeyValueCodec,
     MarshmallowKeyValueCodec,
     PickleKeyValueCodec,

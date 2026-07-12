@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for superset.views.utils module"""
+"""Tests for axbi.views.utils module"""
 
 from typing import Any
 from unittest.mock import MagicMock, patch
@@ -23,13 +23,13 @@ import msgpack
 import pytest
 from flask import current_app, g
 
-from superset.common.db_query_status import QueryStatus
-from superset.exceptions import SerializationError, SupersetException
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.utils import json
-from superset.utils.core import merge_extra_filters
-from superset.views.utils import (
+from axbi.common.db_query_status import QueryStatus
+from axbi.exceptions import AxBIException, SerializationError
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.utils import json
+from axbi.utils.core import merge_extra_filters
+from axbi.views.utils import (
     _deserialize_results_payload,
     add_sqllab_custom_filters,
     apply_display_max_row_limit,
@@ -171,9 +171,7 @@ def test_bootstrap_user_data_allows_missing_created_on() -> None:
     user.email = "admin@example.com"
     user.login_count = 5
 
-    with patch(
-        "superset.views.utils.security_manager.is_guest_user", return_value=False
-    ):
+    with patch("axbi.views.utils.security_manager.is_guest_user", return_value=False):
         payload = bootstrap_user_data(user)
 
     assert payload["createdOn"] is None
@@ -278,7 +276,7 @@ def test_get_datasource_info_rejects_malformed_datasource_keys() -> None:
         [],
     )
     for datasource in malformed_datasources:
-        with pytest.raises(SupersetException) as excinfo:
+        with pytest.raises(AxBIException) as excinfo:
             get_datasource_info(None, None, {"datasource": datasource})
         assert str(excinfo.value) == (
             "The dataset associated with this chart no longer exists"
@@ -401,7 +399,7 @@ def test_get_dashboard_extra_filters_ignores_non_object_metadata() -> None:
     dashboard = Dashboard(id=1, json_metadata="[]", position_json="{}")
     dashboard.slices = [Slice(id=10)]
 
-    with patch("superset.views.utils.db") as mock_db:
+    with patch("axbi.views.utils.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=10, dashboard_id=1) == []
@@ -422,7 +420,7 @@ def test_get_dashboard_extra_filters_ignores_non_object_filter_params() -> None:
     dashboard.slices = [Slice(id=20)]
     filter_slice = Slice(id=10, params="[]")
 
-    with patch("superset.views.utils.db") as mock_db:
+    with patch("axbi.views.utils.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard, filter_slice)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == [
@@ -444,7 +442,7 @@ def test_get_dashboard_extra_filters_ignores_stale_scope_layout_node() -> None:
     )
     dashboard.slices = [Slice(id=20)]
 
-    with patch("superset.views.utils.db") as mock_db:
+    with patch("axbi.views.utils.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
@@ -466,7 +464,7 @@ def test_get_dashboard_extra_filters_ignores_non_object_default_filter_columns()
     )
     dashboard.slices = [Slice(id=20)]
 
-    with patch("superset.views.utils.db") as mock_db:
+    with patch("axbi.views.utils.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
@@ -486,7 +484,7 @@ def test_get_dashboard_extra_filters_ignores_malformed_explicit_scope() -> None:
     )
     dashboard.slices = [Slice(id=20)]
 
-    with patch("superset.views.utils.db") as mock_db:
+    with patch("axbi.views.utils.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []

@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { JsonValue } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { JsonValue } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 // eslint-disable-next-line no-restricted-imports
-import { Button } from '@superset-ui/core/components/Button';
-import { Form } from '@superset-ui/core/components/Form';
-import Tabs from '@superset-ui/core/components/Tabs';
+import { Button } from '@ax-bi/ui-core/components/Button';
+import { Form } from '@ax-bi/ui-core/components/Form';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 // import type: geostyler packages ship type declarations only; a value
 // import makes jest resolve their d.ts entry as a runtime module
 import type { Data as GsData } from 'geostyler-data';
@@ -303,8 +303,7 @@ export const LayerConfigsPopoverContent: FC<
       const wfsParser = new WfsDataParser();
       try {
         let requestParams: RequestParams1_1_0 | RequestParams2_0_0 = {} as
-          | RequestParams1_1_0
-          | RequestParams2_0_0;
+          RequestParams1_1_0 | RequestParams2_0_0;
         if (conf.version.startsWith('1.')) {
           requestParams = {
             version: conf.version as RequestParams1_1_0['version'],

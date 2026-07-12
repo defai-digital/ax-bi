@@ -20,7 +20,7 @@
 import fetchMock from 'fetch-mock';
 import { renderHook } from '@testing-library/react';
 import { createWrapper, render } from 'spec/helpers/testing-library';
-import { supersetGetCache } from 'src/utils/cachedSupersetGet';
+import { axbiGetCache } from 'src/utils/cachedAxBIGet';
 import { useDatasetMetadataBar } from './useDatasetMetadataBar';
 
 const MOCK_DATASET = {
@@ -40,7 +40,7 @@ const MOCK_DATASET = {
 
 afterEach(() => {
   fetchMock.clearHistory().removeRoutes();
-  supersetGetCache.clear();
+  axbiGetCache.clear();
 });
 
 test('renders dataset metadata bar with dataset prop', async () => {

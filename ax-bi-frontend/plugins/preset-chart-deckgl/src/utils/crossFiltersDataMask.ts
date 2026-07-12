@@ -22,7 +22,7 @@ import {
   FilterState,
   QueryObjectFilterClause,
   SqlaFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import ngeohash from 'ngeohash';
 
 const GEOHASH_PRECISION = 12;
@@ -422,11 +422,7 @@ const getLineColumnFilters = ({
     const obj = data.object ?? {};
     const extraProps = (obj.extraProps ?? {}) as Record<string, unknown>;
     const dimensionVal = (obj[col] ?? extraProps[col]) as
-      | string
-      | number
-      | boolean
-      | null
-      | undefined;
+      string | number | boolean | null | undefined;
 
     if (dimensionVal == null) {
       throw new Error(
@@ -484,11 +480,7 @@ const getGeojsonFilters = ({
       unknown
     >;
     const dimensionVal = properties[col] as
-      | string
-      | number
-      | boolean
-      | null
-      | undefined;
+      string | number | boolean | null | undefined;
 
     if (dimensionVal == null) {
       throw new Error(

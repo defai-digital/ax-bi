@@ -17,14 +17,14 @@
  * under the License.
  */
 import { theme as antdThemeImport } from 'antd';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import {
   type AnyThemeConfig,
-  type SupersetThemeConfig,
+  type AxBIThemeConfig,
   Theme,
   ThemeAlgorithm,
   ThemeMode,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/core/theme';
 import type {
   BootstrapThemeDataConfig,
   CommonBootstrapData,
@@ -242,7 +242,7 @@ test('ThemeController uses BootstrapData themes when available', () => {
   );
 });
 
-test('ThemeController fallbacks to Superset default theme when BootstrapData themes are empty', () => {
+test('ThemeController fallbacks to AxBI default theme when BootstrapData themes are empty', () => {
   mockGetBootstrapData.mockReturnValue(
     createMockBootstrapData({
       default: {},
@@ -420,7 +420,7 @@ test('ThemeController changes theme mode when allowed', () => {
   expect(controller.getCurrentMode()).toBe(ThemeMode.DARK);
   expect(mockLocalStorage.setItem).toHaveBeenCalledTimes(1);
   expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-    'superset-theme-mode',
+    'axbi-theme-mode',
     ThemeMode.DARK,
   );
 });
@@ -565,7 +565,7 @@ test('ThemeController saves theme mode to localStorage', () => {
 
   expect(mockLocalStorage.setItem).toHaveBeenCalledTimes(1);
   expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-    'superset-theme-mode',
+    'axbi-theme-mode',
     ThemeMode.DARK,
   );
 });
@@ -840,7 +840,7 @@ test('ThemeController constructor recovers from corrupted stored theme', () => {
   // Simulate corrupted dev theme override in storage
   const corruptedTheme = { token: { colorPrimary: '#ff0000' } };
   mockLocalStorage.getItem.mockImplementation((key: string) => {
-    if (key === 'superset-dev-theme-override') {
+    if (key === 'axbi-dev-theme-override') {
       return JSON.stringify(corruptedTheme);
     }
     return null;
@@ -872,13 +872,13 @@ test('ThemeController constructor recovers from corrupted stored theme', () => {
 
   // Verify invalid overrides were cleared from storage
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-dev-theme-override',
+    'axbi-dev-theme-override',
   );
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-crud-theme-id',
+    'axbi-crud-theme-id',
   );
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-applied-theme-id',
+    'axbi-applied-theme-id',
   );
 
   // Verify controller is in a valid state
@@ -1199,7 +1199,7 @@ test('setThemeConfig applies appropriate theme after configuration', () => {
     },
   };
 
-  controller.setThemeConfig(themeConfig as SupersetThemeConfig);
+  controller.setThemeConfig(themeConfig as AxBIThemeConfig);
 
   expect(mockSetConfig).toHaveBeenCalledTimes(1);
   expect(mockSetConfig).toHaveBeenCalledWith(
@@ -1326,7 +1326,7 @@ test('setThemeConfig updates stored theme mode', () => {
   controller.setThemeConfig(themeConfig);
 
   expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-    'superset-theme-mode',
+    'axbi-theme-mode',
     expect.any(String),
   );
 });
@@ -1357,10 +1357,10 @@ test('setThemeMode clears dev override and crud theme from storage', () => {
   controller.setThemeMode(ThemeMode.DARK);
 
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-dev-theme-override',
+    'axbi-dev-theme-override',
   );
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-crud-theme-id',
+    'axbi-crud-theme-id',
   );
 });
 
@@ -1388,10 +1388,10 @@ test('setThemeMode can be called with same mode when overrides exist', () => {
   controller.setThemeMode(ThemeMode.DEFAULT);
 
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-dev-theme-override',
+    'axbi-dev-theme-override',
   );
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-crud-theme-id',
+    'axbi-crud-theme-id',
   );
 
   expect(mockSetConfig).toHaveBeenCalled();
@@ -1480,13 +1480,13 @@ test('clearLocalOverrides removes dev override, crud theme, and applied theme ID
   controller.clearLocalOverrides();
 
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-dev-theme-override',
+    'axbi-dev-theme-override',
   );
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-crud-theme-id',
+    'axbi-crud-theme-id',
   );
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-applied-theme-id',
+    'axbi-applied-theme-id',
   );
 
   expect(mockSetConfig).toHaveBeenCalled();
@@ -1494,7 +1494,7 @@ test('clearLocalOverrides removes dev override, crud theme, and applied theme ID
 
 test('getAppliedThemeId returns stored theme ID', () => {
   mockLocalStorage.getItem.mockImplementation((key: string) => {
-    if (key === 'superset-applied-theme-id') {
+    if (key === 'axbi-applied-theme-id') {
       return '42';
     }
     return null;
@@ -1530,7 +1530,7 @@ test('setAppliedThemeId stores theme ID in storage', () => {
   controller.setAppliedThemeId(123);
 
   expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
-    'superset-applied-theme-id',
+    'axbi-applied-theme-id',
     '123',
   );
 });
@@ -1546,14 +1546,14 @@ test('setAppliedThemeId removes theme ID when null is passed', () => {
   controller.setAppliedThemeId(null);
 
   expect(mockLocalStorage.removeItem).toHaveBeenCalledWith(
-    'superset-applied-theme-id',
+    'axbi-applied-theme-id',
   );
 });
 
 // Font loading tests
 test('font loading: injects font URLs as CSS @import when theme has fontUrls', () => {
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
   const fontController = new ThemeController({ themeObject: mockThemeObject });
 
@@ -1565,20 +1565,20 @@ test('font loading: injects font URLs as CSS @import when theme has fontUrls', (
   };
   fontController.setTheme(themeWithFonts);
 
-  const style = document.querySelector('style[data-superset-fonts]');
+  const style = document.querySelector('style[data-axbi-fonts]');
   expect(style).toBeTruthy();
   expect(style?.textContent).toContain(
     '@import url("https://fonts.googleapis.com/css2?family=Roboto")',
   );
 
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
 });
 
 test('font loading: injects multiple font URLs', () => {
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
   const fontController = new ThemeController({ themeObject: mockThemeObject });
 
@@ -1593,7 +1593,7 @@ test('font loading: injects multiple font URLs', () => {
   };
   fontController.setTheme(themeWithFonts);
 
-  const style = document.querySelector('style[data-superset-fonts]');
+  const style = document.querySelector('style[data-axbi-fonts]');
   expect(style).toBeTruthy();
   expect(style?.textContent).toContain(
     '@import url("https://fonts.googleapis.com/css2?family=Roboto")',
@@ -1603,13 +1603,13 @@ test('font loading: injects multiple font URLs', () => {
   );
 
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
 });
 
 test('font loading: does not duplicate font URLs when same theme applied twice', () => {
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
   const fontController = new ThemeController({ themeObject: mockThemeObject });
 
@@ -1622,17 +1622,17 @@ test('font loading: does not duplicate font URLs when same theme applied twice',
   fontController.setTheme(themeWithFonts);
   fontController.setTheme(themeWithFonts);
 
-  const styles = document.querySelectorAll('style[data-superset-fonts]');
+  const styles = document.querySelectorAll('style[data-axbi-fonts]');
   expect(styles.length).toBe(1);
 
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
 });
 
 test('font loading: does not inject styles when fontUrls is empty array', () => {
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
   const fontController = new ThemeController({ themeObject: mockThemeObject });
 
@@ -1644,17 +1644,17 @@ test('font loading: does not inject styles when fontUrls is empty array', () => 
   };
   fontController.setTheme(themeWithEmptyFonts);
 
-  const style = document.querySelector('style[data-superset-fonts]');
+  const style = document.querySelector('style[data-axbi-fonts]');
   expect(style).toBeNull();
 
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
 });
 
 test('font loading: does not inject styles when fontUrls is undefined', () => {
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
   const fontController = new ThemeController({ themeObject: mockThemeObject });
 
@@ -1665,17 +1665,17 @@ test('font loading: does not inject styles when fontUrls is undefined', () => {
   };
   fontController.setTheme(themeWithoutFonts);
 
-  const style = document.querySelector('style[data-superset-fonts]');
+  const style = document.querySelector('style[data-axbi-fonts]');
   expect(style).toBeNull();
 
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
 });
 
 test('font loading: adds new font URLs when switching themes', () => {
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
   const fontController = new ThemeController({ themeObject: mockThemeObject });
 
@@ -1695,7 +1695,7 @@ test('font loading: adds new font URLs when switching themes', () => {
   fontController.setTheme(theme1);
   fontController.setTheme(theme2);
 
-  const styles = document.querySelectorAll('style[data-superset-fonts]');
+  const styles = document.querySelectorAll('style[data-axbi-fonts]');
   expect(styles.length).toBe(2);
 
   const allContent = Array.from(styles)
@@ -1705,7 +1705,7 @@ test('font loading: adds new font URLs when switching themes', () => {
   expect(allContent).toContain('Open+Sans');
 
   document
-    .querySelectorAll('style[data-superset-fonts]')
+    .querySelectorAll('style[data-axbi-fonts]')
     .forEach(el => el.remove());
 });
 
@@ -1856,17 +1856,17 @@ test('getResolvedThemeMode returns dark when default theme is dark but mode is D
   expect(controller.getCurrentModeResolved()).toBe('dark');
 });
 
-test('fallback fetch: uses custom guest token header from SupersetClient when client.get fails', async () => {
+test('fallback fetch: uses custom guest token header from AxBIClient when client.get fails', async () => {
   const originalFetch = global.fetch;
   const mockGet = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockRejectedValue(new Error('Client not configured'));
   const mockGetGuestToken = jest
-    .spyOn(SupersetClient, 'getGuestToken')
+    .spyOn(AxBIClient, 'getGuestToken')
     .mockReturnValue('custom-guest-token-123');
 
   // Define getter for guestTokenHeaderName
-  Object.defineProperty(SupersetClient, 'guestTokenHeaderName', {
+  Object.defineProperty(AxBIClient, 'guestTokenHeaderName', {
     value: 'X-Custom-Guest-Header',
     configurable: true,
   });
@@ -1903,24 +1903,24 @@ test('fallback fetch: uses custom guest token header from SupersetClient when cl
     global.fetch = originalFetch;
     mockGet.mockRestore();
     mockGetGuestToken.mockRestore();
-    Object.defineProperty(SupersetClient, 'guestTokenHeaderName', {
+    Object.defineProperty(AxBIClient, 'guestTokenHeaderName', {
       value: undefined,
       configurable: true,
     });
   }
 });
 
-test('fallback fetch: uses bootstrap config for guest token header when SupersetClient is not configured', async () => {
+test('fallback fetch: uses bootstrap config for guest token header when AxBIClient is not configured', async () => {
   const originalFetch = global.fetch;
   const mockGet = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockRejectedValue(new Error('Client not configured'));
   const mockGetGuestToken = jest
-    .spyOn(SupersetClient, 'getGuestToken')
+    .spyOn(AxBIClient, 'getGuestToken')
     .mockReturnValue('bootstrap-guest-token');
 
-  // Ensure SupersetClient.guestTokenHeaderName is undefined or throws
-  Object.defineProperty(SupersetClient, 'guestTokenHeaderName', {
+  // Ensure AxBIClient.guestTokenHeaderName is undefined or throws
+  Object.defineProperty(AxBIClient, 'guestTokenHeaderName', {
     get: () => {
       throw new Error('Not configured');
     },
@@ -1967,7 +1967,7 @@ test('fallback fetch: uses bootstrap config for guest token header when Superset
     mockGet.mockRestore();
     mockGetGuestToken.mockRestore();
     mockGetBootstrapData.mockReturnValue(createMockBootstrapData());
-    Object.defineProperty(SupersetClient, 'guestTokenHeaderName', {
+    Object.defineProperty(AxBIClient, 'guestTokenHeaderName', {
       value: undefined,
       configurable: true,
     });
@@ -1980,7 +1980,7 @@ test('SDK override toggling and dynamic transitions', () => {
   expect(controller.hasThemeConfigOverride()).toBe(false);
 
   // Set theme config override
-  const sdkThemeConfig: SupersetThemeConfig = {
+  const sdkThemeConfig: AxBIThemeConfig = {
     theme_default: { token: { colorPrimary: '#sdk-default' } },
     theme_dark: { token: { colorPrimary: '#sdk-dark' } },
   };
@@ -1998,30 +1998,30 @@ test('ThemeController cleans up injected fonts on destroy', () => {
   // Inject some fonts
   (controller as any).loadFonts(['https://fonts.example.com/font-test.css']);
 
-  let fontStyle = document.querySelector('style[data-superset-fonts]');
+  let fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).not.toBeNull();
 
   controller.destroy();
 
-  fontStyle = document.querySelector('style[data-superset-fonts]');
+  fontStyle = document.querySelector('style[data-axbi-fonts]');
   expect(fontStyle).toBeNull();
 });
 
 test('fallback fetch: uses bootstrap GUEST_TOKEN_HEADER_NAME when guestTokenHeaderName getter throws', async () => {
   const originalFetch = global.fetch;
 
-  // SupersetClient.get throws so we fall through to native fetch
+  // AxBIClient.get throws so we fall through to native fetch
   const mockGet = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockRejectedValue(new Error('Client not configured'));
 
   // getGuestToken succeeds (we have a guest token)
   const mockGetGuestToken = jest
-    .spyOn(SupersetClient, 'getGuestToken')
+    .spyOn(AxBIClient, 'getGuestToken')
     .mockReturnValue('my-guest-token');
 
   // guestTokenHeaderName getter throws → should fall back to bootstrap config
-  Object.defineProperty(SupersetClient, 'guestTokenHeaderName', {
+  Object.defineProperty(AxBIClient, 'guestTokenHeaderName', {
     get: () => {
       throw new Error('Not configured');
     },
@@ -2054,7 +2054,7 @@ test('fallback fetch: uses bootstrap GUEST_TOKEN_HEADER_NAME when guestTokenHead
     const controller = createController();
     const result = await (controller as any).fetchSystemDefaultTheme();
 
-    // Verify the bootstrap header was used instead of SupersetClient.guestTokenHeaderName
+    // Verify the bootstrap header was used instead of AxBIClient.guestTokenHeaderName
     expect(mockFetch).toHaveBeenCalledWith(
       expect.stringContaining('/api/v1/theme/'),
       expect.objectContaining({
@@ -2069,7 +2069,7 @@ test('fallback fetch: uses bootstrap GUEST_TOKEN_HEADER_NAME when guestTokenHead
     mockGet.mockRestore();
     mockGetGuestToken.mockRestore();
     mockGetBootstrapData.mockReturnValue(createMockBootstrapData());
-    Object.defineProperty(SupersetClient, 'guestTokenHeaderName', {
+    Object.defineProperty(AxBIClient, 'guestTokenHeaderName', {
       value: undefined,
       configurable: true,
     });
@@ -2079,9 +2079,9 @@ test('fallback fetch: uses bootstrap GUEST_TOKEN_HEADER_NAME when guestTokenHead
 test('fetchSystemDefaultTheme: second named-theme fallback fetch succeeds when first API calls fail', async () => {
   const originalFetch = global.fetch;
 
-  // SupersetClient.get always throws (not configured)
+  // AxBIClient.get always throws (not configured)
   const mockGet = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockRejectedValue(new Error('Client not configured'));
 
   const namedTheme = { token: { colorPrimary: '#named-theme' } };
@@ -2120,7 +2120,7 @@ test('fetchSystemDefaultTheme: named-theme fallback succeeds after malformed def
   const originalFetch = global.fetch;
 
   const mockGet = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockRejectedValue(new Error('Client not configured'));
 
   const namedTheme = { token: { colorPrimary: '#named-theme' } };

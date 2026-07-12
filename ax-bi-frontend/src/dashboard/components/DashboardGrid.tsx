@@ -19,11 +19,11 @@
 import { Fragment, useCallback, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import classNames from 'classnames';
-import { addAlpha, FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
-import { Button, EmptyState } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { addAlpha, FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
+import { Button, EmptyState } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
 import { findPermission } from 'src/utils/findPermission';
 import type { LayoutItem, RootState } from 'src/dashboard/types';

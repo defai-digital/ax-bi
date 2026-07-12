@@ -26,7 +26,7 @@ def test_epoch_to_dttm() -> None:
     """
     DB Eng Specs (crate): Test epoch to dttm
     """
-    from superset.db_engine_specs.crate import CrateEngineSpec
+    from axbi.db_engine_specs.crate import CrateEngineSpec
 
     assert CrateEngineSpec.epoch_to_dttm() == "{col} * 1000"
 
@@ -35,7 +35,7 @@ def test_epoch_ms_to_dttm() -> None:
     """
     DB Eng Specs (crate): Test epoch ms to dttm
     """
-    from superset.db_engine_specs.crate import CrateEngineSpec
+    from axbi.db_engine_specs.crate import CrateEngineSpec
 
     assert CrateEngineSpec.epoch_ms_to_dttm() == "{col}"
 
@@ -44,9 +44,9 @@ def test_alter_new_orm_column() -> None:
     """
     DB Eng Specs (crate): Test alter orm column
     """
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.db_engine_specs.crate import CrateEngineSpec
-    from superset.models.core import Database
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.db_engine_specs.crate import CrateEngineSpec
+    from axbi.models.core import Database
 
     database = Database(database_name="crate", sqlalchemy_uri="crate://db")
     tbl = SqlaTable(table_name="tbl", database=database)
@@ -67,6 +67,6 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.crate import CrateEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.crate import CrateEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)

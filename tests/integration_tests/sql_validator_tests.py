@@ -22,17 +22,17 @@ from unittest.mock import MagicMock, patch
 
 from pyhive.exc import DatabaseError
 
-from superset.sql_validators.postgres import PostgreSQLValidator
-from superset.sql_validators.presto_db import (
+from axbi.sql_validators.postgres import PostgreSQLValidator
+from axbi.sql_validators.presto_db import (
     PrestoDBSQLValidator,
     PrestoSQLValidationError,
 )
-from superset.utils.database import get_example_database
+from axbi.utils.database import get_example_database
 
-from .base_tests import SupersetTestCase
+from .base_tests import AxBITestCase
 
 
-class TestPrestoValidator(SupersetTestCase):
+class TestPrestoValidator(AxBITestCase):
     """Testing for the prestodb sql validator"""
 
     def setUp(self):
@@ -50,7 +50,7 @@ class TestPrestoValidator(SupersetTestCase):
         "message": "your query isn't how I like it",
     }
 
-    @patch("superset.utils.core.g")
+    @patch("axbi.utils.core.g")
     def test_validator_success(self, flask_g):
         flask_g.user.username = "nobody"
         sql = "SELECT 1 FROM default.notarealtable"
@@ -60,7 +60,7 @@ class TestPrestoValidator(SupersetTestCase):
 
         assert [] == errors
 
-    @patch("superset.utils.core.g")
+    @patch("axbi.utils.core.g")
     def test_validator_db_error(self, flask_g):
         flask_g.user.username = "nobody"
         sql = "SELECT 1 FROM default.notarealtable"
@@ -72,7 +72,7 @@ class TestPrestoValidator(SupersetTestCase):
         with self.assertRaises(PrestoSQLValidationError):  # noqa: PT027
             self.validator.validate(sql, None, schema, self.database)
 
-    @patch("superset.utils.core.g")
+    @patch("axbi.utils.core.g")
     def test_validator_unexpected_error(self, flask_g):
         flask_g.user.username = "nobody"
         sql = "SELECT 1 FROM default.notarealtable"
@@ -84,7 +84,7 @@ class TestPrestoValidator(SupersetTestCase):
         with self.assertRaises(Exception):  # noqa: B017, PT027
             self.validator.validate(sql, None, schema, self.database)
 
-    @patch("superset.utils.core.g")
+    @patch("axbi.utils.core.g")
     def test_validator_query_error(self, flask_g):
         flask_g.user.username = "nobody"
         sql = "SELECT 1 FROM default.notarealtable"
@@ -98,7 +98,7 @@ class TestPrestoValidator(SupersetTestCase):
         assert 1 == len(errors)
 
 
-class TestPostgreSQLValidator(SupersetTestCase):
+class TestPostgreSQLValidator(AxBITestCase):
     def test_valid_syntax(self):
         if get_example_database().backend != "postgresql":
             return

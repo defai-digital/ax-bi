@@ -16,14 +16,14 @@
 # under the License.
 from unittest import mock
 
-from superset.db_engine_specs import get_engine_spec
-from superset.db_engine_specs.databricks import DatabricksNativeEngineSpec
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.db_engine_specs import get_engine_spec
+from axbi.db_engine_specs.databricks import DatabricksNativeEngineSpec
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.certificates import ssl_certificate
 from tests.integration_tests.fixtures.database import default_db_extra
 
 
-class TestDatabricksDbEngineSpec(SupersetTestCase):
+class TestDatabricksDbEngineSpec(AxBITestCase):
     def test_get_engine_spec(self):
         """
         DB Eng Specs (databricks): Test "databricks" in engine spec
@@ -40,8 +40,8 @@ class TestDatabricksDbEngineSpec(SupersetTestCase):
         assert extras == {
             "engine_params": {
                 "connect_args": {
-                    "_user_agent_entry": "Apache Superset",
-                    "http_headers": [("User-Agent", "Apache Superset")],
+                    "_user_agent_entry": "AX BI",
+                    "http_headers": [("User-Agent", "AX BI")],
                 },
             },
             "metadata_cache_timeout": {},

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import type { SetDataMaskHook } from '@superset-ui/core';
+import type { SetDataMaskHook } from '@ax-bi/ui-core';
 import type { TableOwnState } from '../types/react-table';
 
 export const updateExternalFormData = (

@@ -18,7 +18,7 @@
  */
 import { renderHook, act } from '@testing-library/react';
 import { waitFor } from 'spec/helpers/testing-library';
-import { JsonResponse, SupersetClient } from '@superset-ui/core';
+import { JsonResponse, AxBIClient } from '@ax-bi/ui-core';
 
 import {
   useListViewResource,
@@ -49,7 +49,7 @@ beforeEach(() => {
 
 // useListViewResource
 test('useListViewResource: initial state has loading true and empty collection', () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { permissions: ['can_read'] },
   } as unknown as JsonResponse);
 
@@ -64,7 +64,7 @@ test('useListViewResource: initial state has loading true and empty collection',
 });
 
 test('useListViewResource: fetches permissions on mount', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { permissions: ['can_read', 'can_write'] },
   } as unknown as JsonResponse);
 
@@ -86,7 +86,7 @@ test('useListViewResource: fetches permissions on mount', async () => {
 });
 
 test('useListViewResource: skips permissions fetch when infoEnable is false', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { permissions: [] },
   } as unknown as JsonResponse);
 
@@ -99,7 +99,7 @@ test('useListViewResource: skips permissions fetch when infoEnable is false', as
 });
 
 test('useListViewResource: hasPerm returns false when permissions are empty', async () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {},
   } as unknown as JsonResponse);
 
@@ -115,7 +115,7 @@ test('useListViewResource: fetchData calls correct endpoint and updates state', 
     { id: 1, name: 'Item 1' },
     { id: 2, name: 'Item 2' },
   ];
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: mockData, count: 2 },
   } as unknown as JsonResponse);
 
@@ -147,7 +147,7 @@ test('useListViewResource: fetchData calls correct endpoint and updates state', 
 });
 
 test('useListViewResource: fetchData includes selectColumns in query', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [], count: 0 },
   } as unknown as JsonResponse);
 
@@ -180,7 +180,7 @@ test('useListViewResource: fetchData includes selectColumns in query', async () 
 });
 
 test('useListViewResource: fetchData merges baseFilters with user filters', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [], count: 0 },
   } as unknown as JsonResponse);
 
@@ -214,7 +214,7 @@ test('useListViewResource: fetchData merges baseFilters with user filters', asyn
 });
 
 test('useListViewResource: fetchData filters out empty/null/undefined filter values', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [], count: 0 },
   } as unknown as JsonResponse);
 
@@ -246,7 +246,7 @@ test('useListViewResource: fetchData filters out empty/null/undefined filter val
 
 test('useListViewResource: fetchData sets loading to true then false', async () => {
   let resolveGet: ((value: unknown) => void) | undefined;
-  jest.spyOn(SupersetClient, 'get').mockImplementation(
+  jest.spyOn(AxBIClient, 'get').mockImplementation(
     () =>
       new Promise(resolve => {
         resolveGet = resolve;
@@ -283,7 +283,7 @@ test('useListViewResource: fetchData sets loading to true then false', async () 
 });
 
 test('useListViewResource: refreshData re-fetches with last config', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [], count: 0 },
   } as unknown as JsonResponse);
 
@@ -319,7 +319,7 @@ test('useListViewResource: refreshData re-fetches with last config', async () =>
 });
 
 test('useListViewResource: refreshData returns null when no cached config', () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {},
   } as unknown as JsonResponse);
 
@@ -332,7 +332,7 @@ test('useListViewResource: refreshData returns null when no cached config', () =
 });
 
 test('useListViewResource: toggleBulkSelect toggles bulkSelectEnabled', async () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {},
   } as unknown as JsonResponse);
 
@@ -356,7 +356,7 @@ test('useListViewResource: toggleBulkSelect toggles bulkSelectEnabled', async ()
 });
 
 test('useListViewResource: setResourceCollection updates the collection', async () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {},
   } as unknown as JsonResponse);
 
@@ -374,7 +374,7 @@ test('useListViewResource: setResourceCollection updates the collection', async 
 });
 
 test('useListViewResource: uses desc sort direction when desc is true', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [], count: 0 },
   } as unknown as JsonResponse);
 
@@ -408,7 +408,7 @@ test('useSingleViewResource: initial state has loading false and null resource',
 
 test('useSingleViewResource: fetchResource calls correct endpoint', async () => {
   const mockResult = { id: 42, name: 'Test Chart' };
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: mockResult },
   } as unknown as JsonResponse);
 
@@ -432,7 +432,7 @@ test('useSingleViewResource: fetchResource calls correct endpoint', async () => 
 });
 
 test('useSingleViewResource: fetchResource appends pathSuffix', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: {} },
   } as unknown as JsonResponse);
 
@@ -450,7 +450,7 @@ test('useSingleViewResource: fetchResource appends pathSuffix', async () => {
 });
 
 test('useSingleViewResource: createResource posts to correct endpoint', async () => {
-  const postSpy = jest.spyOn(SupersetClient, 'post').mockResolvedValue({
+  const postSpy = jest.spyOn(AxBIClient, 'post').mockResolvedValue({
     json: { id: 99, result: { name: 'New Chart' } },
   } as unknown as JsonResponse);
 
@@ -478,7 +478,7 @@ test('useSingleViewResource: createResource posts to correct endpoint', async ()
 });
 
 test('useSingleViewResource: updateResource puts to correct endpoint', async () => {
-  const putSpy = jest.spyOn(SupersetClient, 'put').mockResolvedValue({
+  const putSpy = jest.spyOn(AxBIClient, 'put').mockResolvedValue({
     json: { id: 42, result: { name: 'Updated' } },
   } as unknown as JsonResponse);
 
@@ -504,7 +504,7 @@ test('useSingleViewResource: updateResource puts to correct endpoint', async () 
 
 test('useSingleViewResource: clearError resets error to null', async () => {
   // First make a failing request to get an error state
-  jest.spyOn(SupersetClient, 'get').mockRejectedValue('Network error');
+  jest.spyOn(AxBIClient, 'get').mockRejectedValue('Network error');
 
   const { result } = renderHook(() =>
     useSingleViewResource('chart', 'Charts', jest.fn()),
@@ -526,7 +526,7 @@ test('useSingleViewResource: clearError resets error to null', async () => {
 });
 
 test('useSingleViewResource: setResource updates the resource', () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: {},
   } as unknown as JsonResponse);
 
@@ -543,7 +543,7 @@ test('useSingleViewResource: setResource updates the resource', () => {
 
 // useFavoriteStatus
 test('useFavoriteStatus: does not fetch when ids array is empty', async () => {
-  const getSpy = jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  const getSpy = jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
   } as unknown as JsonResponse);
 
@@ -556,11 +556,11 @@ test('useFavoriteStatus: does not fetch when ids array is empty', async () => {
 });
 
 test('useFavoriteStatus: saveFaveStar posts when not starred', async () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
   } as unknown as JsonResponse);
   const postSpy = jest
-    .spyOn(SupersetClient, 'post')
+    .spyOn(AxBIClient, 'post')
     .mockResolvedValue({} as JsonResponse);
 
   const { result } = renderHook(() =>
@@ -578,11 +578,11 @@ test('useFavoriteStatus: saveFaveStar posts when not starred', async () => {
 });
 
 test('useFavoriteStatus: saveFaveStar deletes when already starred', async () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
   } as unknown as JsonResponse);
   const deleteSpy = jest
-    .spyOn(SupersetClient, 'delete')
+    .spyOn(AxBIClient, 'delete')
     .mockResolvedValue({} as JsonResponse);
 
   const { result } = renderHook(() =>
@@ -600,10 +600,10 @@ test('useFavoriteStatus: saveFaveStar deletes when already starred', async () =>
 });
 
 test('useFavoriteStatus: saveFaveStar updates local status on success', async () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
   } as unknown as JsonResponse);
-  jest.spyOn(SupersetClient, 'post').mockResolvedValue({} as JsonResponse);
+  jest.spyOn(AxBIClient, 'post').mockResolvedValue({} as JsonResponse);
 
   const { result } = renderHook(() =>
     useFavoriteStatus('chart', [], jest.fn()),
@@ -620,11 +620,11 @@ test('useFavoriteStatus: saveFaveStar updates local status on success', async ()
 });
 
 test('useFavoriteStatus: saveFaveStar uses correct endpoint per type', async () => {
-  jest.spyOn(SupersetClient, 'get').mockResolvedValue({
+  jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
   } as unknown as JsonResponse);
   const postSpy = jest
-    .spyOn(SupersetClient, 'post')
+    .spyOn(AxBIClient, 'post')
     .mockResolvedValue({} as JsonResponse);
 
   const { result } = renderHook(() =>

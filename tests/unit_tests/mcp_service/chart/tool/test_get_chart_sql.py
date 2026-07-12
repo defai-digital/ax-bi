@@ -24,13 +24,13 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.mcp_service.auth import CLASS_PERMISSION_ATTR, METHOD_PERMISSION_ATTR
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.auth import CLASS_PERMISSION_ATTR, METHOD_PERMISSION_ATTR
+from axbi.mcp_service.chart.schemas import (
     ChartError,
     ChartSql,
     GetChartSqlRequest,
 )
-from superset.mcp_service.chart.tool.get_chart_sql import (
+from axbi.mcp_service.chart.tool.get_chart_sql import (
     _build_query_context_from_form_data,
     _extract_sql_from_result,
     _extract_x_axis_col,
@@ -42,10 +42,10 @@ from superset.mcp_service.chart.tool.get_chart_sql import (
     _resolve_metrics_and_groupby,
     get_chart_sql,
 )
-from superset.mcp_service.utils import sanitize_for_llm_context
+from axbi.mcp_service.utils import sanitize_for_llm_context
 
 _get_chart_sql_mod = importlib.import_module(
-    "superset.mcp_service.chart.tool.get_chart_sql"
+    "axbi.mcp_service.chart.tool.get_chart_sql"
 )
 
 
@@ -211,7 +211,7 @@ class TestExtractSqlFromResult:
 class TestFindChartByIdentifier:
     """Tests for the _find_chart_by_identifier helper."""
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_find_by_numeric_id(self, mock_find):
         """Test finding chart by numeric ID."""
         mock_chart = Mock()
@@ -222,7 +222,7 @@ class TestFindChartByIdentifier:
         mock_find.assert_called_once_with(42)
         assert result == mock_chart
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_find_by_digit_string(self, mock_find):
         """Test finding chart by digit string (treated as numeric ID)."""
         mock_chart = Mock()
@@ -233,7 +233,7 @@ class TestFindChartByIdentifier:
         mock_find.assert_called_once_with(123)
         assert result == mock_chart
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_find_by_uuid_string(self, mock_find):
         """Test finding chart by UUID string."""
         mock_chart = Mock()
@@ -244,7 +244,7 @@ class TestFindChartByIdentifier:
         mock_find.assert_called_once_with("abc-123-def", id_column="uuid")
         assert result == mock_chart
 
-    @patch("superset.daos.chart.ChartDAO.find_by_id")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     def test_not_found_returns_none(self, mock_find):
         """Test that None is returned when chart is not found."""
         mock_find.return_value = None
@@ -385,8 +385,8 @@ class TestBuildQueryContextFromFormData:
     form_data are passed through to QueryContextFactory (not dropped).
     """
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_temporal_fields_passed_to_factory(self, mock_get_ds, mock_factory_cls):
         """time_range, adhoc_filters from form_data are processed and
         forwarded to the factory — not dropped."""
@@ -419,9 +419,7 @@ class TestBuildQueryContextFromFormData:
             "filters": [{"col": "city", "op": "==", "val": "NYC"}],
         }
 
-        with patch(
-            "superset.common.chart_data.ChartDataResultType"
-        ) as mock_result_type:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_result_type:
             mock_result_type.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -442,7 +440,7 @@ class TestBuildQueryContextFromFormData:
         filters = queries[0].get("filters", [])
         assert {"col": "status", "op": "==", "val": "active"} in filters
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
     def test_metrics_and_groupby_in_queries(self, mock_factory_cls):
         """Resolved metrics and groupby are passed in queries parameter."""
         mock_factory = Mock()
@@ -456,9 +454,7 @@ class TestBuildQueryContextFromFormData:
             "groupby": ["product"],
         }
 
-        with patch(
-            "superset.common.chart_data.ChartDataResultType"
-        ) as mock_result_type:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_result_type:
             mock_result_type.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -530,8 +526,8 @@ class TestBuildQueryContextTimeseriesAndMixed:
     charts, and only one query rendered for mixed_timeseries charts.
     """
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_echarts_timeseries_x_axis_included_in_columns(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -553,7 +549,7 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "groupby": ["region"],
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -562,8 +558,8 @@ class TestBuildQueryContextTimeseriesAndMixed:
         assert queries[0]["columns"][0] == "ds"
         assert "region" in queries[0]["columns"]
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_echarts_timeseries_dict_x_axis_included_in_columns(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -585,15 +581,15 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "groupby": [],
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
         queries = mock_factory.create.call_args[1]["queries"]
         assert queries[0]["columns"][0] == "order_date"
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_echarts_timeseries_x_axis_not_duplicated_if_already_in_groupby(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -615,15 +611,15 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "groupby": ["ds"],  # already present
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
         queries = mock_factory.create.call_args[1]["queries"]
         assert queries[0]["columns"].count("ds") == 1
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_non_timeseries_x_axis_not_added(self, mock_get_ds, mock_factory_cls):
         """x_axis is not added for non-timeseries chart types (e.g. table)."""
         mock_ds = Mock()
@@ -643,15 +639,15 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "groupby": ["region"],
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
         queries = mock_factory.create.call_args[1]["queries"]
         assert "ds" not in queries[0]["columns"]
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_mixed_timeseries_produces_two_queries(self, mock_get_ds, mock_factory_cls):
         """mixed_timeseries builds two query dicts — one per series layer."""
         mock_ds = Mock()
@@ -674,7 +670,7 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "time_range": "Last 30 days",
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -693,8 +689,8 @@ class TestBuildQueryContextTimeseriesAndMixed:
         assert queries[1]["metrics"] == ["count"]
         assert queries[1]["time_range"] == "Last 30 days"
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_mixed_timeseries_x_axis_not_duplicated_in_secondary(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -718,15 +714,15 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "groupby_b": ["ds"],  # x_axis already present
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
         queries = mock_factory.create.call_args[1]["queries"]
         assert queries[1]["columns"].count("ds") == 1
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_mixed_timeseries_empty_secondary(self, mock_get_ds, mock_factory_cls):
         """mixed_timeseries with no metrics_b/groupby_b still produces two queries."""
         mock_ds = Mock()
@@ -746,7 +742,7 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "groupby": [],
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -754,8 +750,8 @@ class TestBuildQueryContextTimeseriesAndMixed:
         assert len(queries) == 2
         assert queries[1]["metrics"] == []
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_mixed_timeseries_time_range_b_overrides_secondary(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -781,7 +777,7 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "time_range_b": "Last 7 days",
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -790,8 +786,8 @@ class TestBuildQueryContextTimeseriesAndMixed:
         assert queries[0]["time_range"] == "Last 30 days"
         assert queries[1]["time_range"] == "Last 7 days"
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_mixed_timeseries_row_limit_b_overrides_secondary(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -817,7 +813,7 @@ class TestBuildQueryContextTimeseriesAndMixed:
             "row_limit_b": 50,
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -826,8 +822,8 @@ class TestBuildQueryContextTimeseriesAndMixed:
         assert queries[0]["row_limit"] == 100
         assert queries[1]["row_limit"] == 50
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_mixed_timeseries_adhoc_filters_b_applied_to_secondary(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -860,7 +856,7 @@ class TestBuildQueryContextTimeseriesAndMixed:
             ],
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -869,8 +865,8 @@ class TestBuildQueryContextTimeseriesAndMixed:
         secondary_filters = queries[1].get("filters", [])
         assert {"col": "channel", "op": "==", "val": "organic"} in secondary_filters
 
-    @patch("superset.common.query_context_factory.QueryContextFactory")
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.common.query_context_factory.QueryContextFactory")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_mixed_timeseries_adhoc_filters_b_replaces_primary_sql_clauses(
         self, mock_get_ds, mock_factory_cls
     ):
@@ -913,7 +909,7 @@ class TestBuildQueryContextTimeseriesAndMixed:
             ],
         }
 
-        with patch("superset.common.chart_data.ChartDataResultType") as mock_rt:
+        with patch("axbi.common.chart_data.ChartDataResultType") as mock_rt:
             mock_rt.QUERY = "QUERY"
             _build_query_context_from_form_data(form_data, chart=None)
 
@@ -936,7 +932,7 @@ class TestResolveDatasourceName:
         assert result == "my_dataset"
 
     @patch(
-        "superset.mcp_service.chart.tool.get_chart_sql.DatasourceDAO",
+        "axbi.mcp_service.chart.tool.get_chart_sql.DatasourceDAO",
         create=True,
     )
     def test_resolves_from_form_data_when_chart_is_none(self, mock_dao):
@@ -945,7 +941,7 @@ class TestResolveDatasourceName:
         mock_ds.name = "resolved_dataset"
 
         with patch(
-            "superset.daos.datasource.DatasourceDAO.get_datasource",
+            "axbi.daos.datasource.DatasourceDAO.get_datasource",
             return_value=mock_ds,
         ):
             result = _resolve_datasource_name(
@@ -960,10 +956,10 @@ class TestResolveDatasourceName:
 
     def test_returns_none_when_datasource_not_found(self):
         """Returns None when DAO raises DatasourceNotFound."""
-        from superset.daos.exceptions import DatasourceNotFound
+        from axbi.daos.exceptions import DatasourceNotFound
 
         with patch(
-            "superset.daos.datasource.DatasourceDAO.get_datasource",
+            "axbi.daos.datasource.DatasourceDAO.get_datasource",
             side_effect=DatasourceNotFound(),
         ):
             result = _resolve_datasource_name(
@@ -973,10 +969,10 @@ class TestResolveDatasourceName:
 
     def test_returns_none_on_unsupported_type(self):
         """Returns None when DAO raises DatasourceTypeNotSupportedError."""
-        from superset.daos.exceptions import DatasourceTypeNotSupportedError
+        from axbi.daos.exceptions import DatasourceTypeNotSupportedError
 
         with patch(
-            "superset.daos.datasource.DatasourceDAO.get_datasource",
+            "axbi.daos.datasource.DatasourceDAO.get_datasource",
             side_effect=DatasourceTypeNotSupportedError(),
         ):
             result = _resolve_datasource_name(
@@ -984,7 +980,7 @@ class TestResolveDatasourceName:
             )
         assert result is None
 
-    @patch("superset.daos.datasource.DatasourceDAO.get_datasource")
+    @patch("axbi.daos.datasource.DatasourceDAO.get_datasource")
     def test_resolves_combined_datasource_field(self, mock_get_ds):
         """Handles combined 'datasource' field like '123__table'."""
         mock_ds = Mock()
@@ -1001,7 +997,7 @@ class TestGetChartSqlTool:
     @pytest.fixture(autouse=True)
     def mock_auth(self):
         """Mock authentication for all tests."""
-        with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+        with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
             mock_user = Mock()
             mock_user.id = 1
             mock_user.username = "admin"
@@ -1010,7 +1006,7 @@ class TestGetChartSqlTool:
 
     @pytest.fixture
     def mcp_server(self):
-        from superset.mcp_service.app import mcp
+        from axbi.mcp_service.app import mcp
 
         return mcp
 
@@ -1050,7 +1046,7 @@ class TestGetChartSqlTool:
         """Test successful SQL retrieval via saved query_context."""
         from fastmcp import Client
 
-        from superset.mcp_service.chart.chart_utils import (
+        from axbi.mcp_service.chart.chart_utils import (
             DatasetValidationResult,
         )
 
@@ -1099,7 +1095,7 @@ class TestGetChartSqlTool:
         """Test fallback to form_data path when saved query_context returns None."""
         from fastmcp import Client
 
-        from superset.mcp_service.chart.chart_utils import (
+        from axbi.mcp_service.chart.chart_utils import (
             DatasetValidationResult,
         )
 
@@ -1138,7 +1134,7 @@ class TestGetChartSqlTool:
         """Test that inaccessible dataset returns error."""
         from fastmcp import Client
 
-        from superset.mcp_service.chart.chart_utils import (
+        from axbi.mcp_service.chart.chart_utils import (
             DatasetValidationResult,
         )
 

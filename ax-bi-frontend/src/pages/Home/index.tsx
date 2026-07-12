@@ -18,16 +18,16 @@
  */
 import { useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   isFeatureEnabled,
   FeatureFlag,
   getExtensionsRegistry,
   JsonObject,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import rison from 'rison';
-import { Button, ListViewCard } from '@superset-ui/core/components';
+import { Button, ListViewCard } from '@ax-bi/ui-core/components';
 import {
   BootstrapUser,
   User,
@@ -48,7 +48,7 @@ import {
   getUserOwnedObjects,
   loadingCardCount,
 } from 'src/views/CRUD/utils';
-import { Switch } from '@superset-ui/core/components/Switch';
+import { Switch } from '@ax-bi/ui-core/components/Switch';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { TableTab } from 'src/views/CRUD/types';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
@@ -58,7 +58,7 @@ import ActivityTable from 'src/features/home/ActivityTable';
 import ChartTable from 'src/features/home/ChartTable';
 import SavedQueries from 'src/features/home/SavedQueries';
 import DashboardTable from 'src/features/home/DashboardTable';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
 import {
   AXBIActionRow,

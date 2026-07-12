@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render, screen } from 'spec/helpers/testing-library';
-import { Filter } from '@superset-ui/core';
+import { Filter } from '@ax-bi/ui-core';
 import { FiltersDropdownContent } from '.';
 
 const buildFilter = (id: string, name: string): Filter =>

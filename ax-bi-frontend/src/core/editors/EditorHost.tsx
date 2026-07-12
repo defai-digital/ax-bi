@@ -27,8 +27,8 @@
  */
 
 import { useSyncExternalStore, forwardRef } from 'react';
-import type { editors } from '@apache-superset/core';
-import { useTheme } from '@apache-superset/core/theme';
+import type { editors } from '@ax-bi/core';
+import { useTheme } from '@ax-bi/core/theme';
 import EditorProviders from './EditorProviders';
 import AceEditorProvider from './AceEditorProvider';
 
@@ -44,7 +44,7 @@ export type EditorHostProps = EditorProps;
 /**
  * EditorHost component that dynamically resolves and renders the appropriate editor.
  *
- * This component serves as the main entry point for rendering editors in Superset.
+ * This component serves as the main entry point for rendering editors in AxBI.
  * It checks if an extension has registered a custom editor for the requested language
  * and uses that if available; otherwise, it falls back to the default Ace editor.
  *

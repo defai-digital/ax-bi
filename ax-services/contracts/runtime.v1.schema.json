@@ -85,11 +85,11 @@
       "dependencies": {
         "type": "object",
         "required": [
-          "supersetMetadata"
+          "axbiMetadata"
         ],
         "additionalProperties": false,
         "properties": {
-          "supersetMetadata": {
+          "axbiMetadata": {
             "type": "object",
             "required": [
               "ok",
@@ -248,11 +248,11 @@
       "dependencies": {
         "type": "object",
         "required": [
-          "superset"
+          "axbi"
         ],
         "additionalProperties": false,
         "properties": {
-          "superset": {
+          "axbi": {
             "type": "object",
             "required": [
               "ok",

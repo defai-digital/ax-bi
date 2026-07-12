@@ -26,15 +26,15 @@ from flask_appbuilder.security.sqla.models import Role, User
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import security_manager
-from superset.commands.chart.importers.v1.utils import import_chart
-from superset.commands.exceptions import ImportFailedError
-from superset.commands.importers.v1.utils import import_tag
-from superset.connectors.sqla.models import Database, SqlaTable
-from superset.extensions import feature_flag_manager
-from superset.models.slice import Slice
-from superset.tags.models import TaggedObject
-from superset.utils.core import override_user
+from axbi import security_manager
+from axbi.commands.chart.importers.v1.utils import import_chart
+from axbi.commands.exceptions import ImportFailedError
+from axbi.commands.importers.v1.utils import import_tag
+from axbi.connectors.sqla.models import Database, SqlaTable
+from axbi.extensions import feature_flag_manager
+from axbi.models.slice import Slice
+from axbi.tags.models import TaggedObject
+from axbi.utils.core import override_user
 from tests.integration_tests.fixtures.importexport import chart_config
 
 
@@ -68,7 +68,7 @@ def session_with_data(session: Session) -> Generator[Session, None, None]:
 
 @pytest.fixture
 def session_with_schema(session: Session) -> Generator[Session, None, None]:
-    from superset.connectors.sqla.models import SqlaTable
+    from axbi.connectors.sqla.models import SqlaTable
 
     engine = session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -171,7 +171,7 @@ def test_filter_chart_annotations(session: Session) -> None:
     """
     Test importing a chart.
     """
-    from superset.commands.chart.importers.v1.utils import filter_chart_annotations
+    from axbi.commands.chart.importers.v1.utils import filter_chart_annotations
     from tests.integration_tests.fixtures.importexport import (
         chart_config_with_mixed_annotations,
     )
@@ -189,7 +189,7 @@ def test_filter_chart_annotations_ignores_malformed_params() -> None:
     """
     Malformed params should not break annotation filtering.
     """
-    from superset.commands.chart.importers.v1.utils import filter_chart_annotations
+    from axbi.commands.chart.importers.v1.utils import filter_chart_annotations
 
     config = {"params": "bad-params"}
 
@@ -202,7 +202,7 @@ def test_filter_chart_annotations_ignores_malformed_layers() -> None:
     """
     Malformed annotation layer containers should not break annotation filtering.
     """
-    from superset.commands.chart.importers.v1.utils import filter_chart_annotations
+    from axbi.commands.chart.importers.v1.utils import filter_chart_annotations
 
     config = {
         "params": {
@@ -223,7 +223,7 @@ def test_filter_chart_annotations_replaces_scalar_layers() -> None:
     """
     Scalar annotation layer containers should be treated as empty.
     """
-    from superset.commands.chart.importers.v1.utils import filter_chart_annotations
+    from axbi.commands.chart.importers.v1.utils import filter_chart_annotations
 
     config = {"params": {"annotation_layers": "bad-layers"}}
 

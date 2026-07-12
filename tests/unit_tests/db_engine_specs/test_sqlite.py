@@ -21,7 +21,7 @@ import pytest
 from sqlalchemy import text
 from sqlalchemy.engine import create_engine
 
-from superset.constants import TimeGrain
+from axbi.constants import TimeGrain
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -40,7 +40,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.sqlite import SqliteEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.sqlite import SqliteEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -117,7 +117,7 @@ def test_convert_dttm(
     ],
 )
 def test_time_grain_expressions(dttm: str, grain: str, expected: str) -> None:  # noqa: F811
-    from superset.db_engine_specs.sqlite import SqliteEngineSpec
+    from axbi.db_engine_specs.sqlite import SqliteEngineSpec
 
     engine = create_engine("sqlite://")
     connection = engine.connect()

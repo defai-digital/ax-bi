@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { EchartsSunburstChartProps } from '../../src/Sunburst/types';
 import transformProps from '../../src/Sunburst/transformProps';
 
@@ -40,7 +40,7 @@ const chartProps = new ChartProps({
       ],
     },
   ],
-  theme: supersetTheme,
+  theme: axbiTheme,
 });
 
 test('series label has no textBorderColor or textBorderWidth', () => {

@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { useCallback, useMemo, useState } from 'react';
-import { ConfirmStatusChange, Tooltip } from '@superset-ui/core/components';
+import { ConfirmStatusChange, Tooltip } from '@ax-bi/ui-core/components';
 import {
   ModifiedInfo,
   ListView,
@@ -28,7 +28,7 @@ import {
   type ListViewFilters,
   type ListViewFetchDataConfig as FetchDataConfig,
 } from 'src/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import rison from 'rison';
@@ -87,7 +87,7 @@ function RowLevelSecurityList(props: RLSProps) {
       addSuccessToast: (arg0: string) => void,
       addDangerToast: (arg0: string) => void,
     ) =>
-      SupersetClient.delete({
+      AxBIClient.delete({
         endpoint: `/api/v1/rowlevelsecurity/${id}`,
       }).then(
         () => {
@@ -102,7 +102,7 @@ function RowLevelSecurityList(props: RLSProps) {
   );
   function handleBulkRulesDelete(rulesToDelete: RLSObject[]) {
     const ids = rulesToDelete.map(({ id }) => id);
-    return SupersetClient.delete({
+    return AxBIClient.delete({
       endpoint: `/api/v1/rowlevelsecurity/?q=${rison.encode(ids)}`,
     }).then(
       () => {

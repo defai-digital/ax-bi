@@ -18,7 +18,7 @@
  */
 
 import d3 from 'd3';
-import { getNumberFormatter, ValueFormatter } from '@superset-ui/core';
+import { getNumberFormatter, ValueFormatter } from '@ax-bi/ui-core';
 import WorldMap from '../src/WorldMap';
 import { ColorBy } from '../src/utils';
 
@@ -131,7 +131,7 @@ const baseProps: WorldMapProps = {
   linearColorScheme: 'schemeRdYlBu',
   color: '#61B0B7',
   colorBy: ColorBy.Country,
-  colorScheme: 'supersetColors',
+  colorScheme: 'axbiColors',
   sliceId: 123,
   theme: {
     colorBorder: '#e0e0e0',

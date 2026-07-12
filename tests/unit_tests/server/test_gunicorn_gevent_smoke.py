@@ -17,7 +17,7 @@
 """
 Smoke tests for the gevent gunicorn worker.
 
-Superset is commonly deployed under gunicorn with the gevent worker class
+AxBI is commonly deployed under gunicorn with the gevent worker class
 (``SERVER_WORKER_CLASS=gevent`` in ``docker/entrypoints/run-server.sh``). The
 gevent worker monkey-patches the standard library and relies on gevent
 internals, so a major gevent upgrade can break the worker at boot/serve time in

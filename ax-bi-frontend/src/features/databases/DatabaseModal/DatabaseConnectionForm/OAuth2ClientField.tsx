@@ -18,8 +18,8 @@
  */
 
 import { useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Input, Collapse, Form, FormItem } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Input, Collapse, Form, FormItem } from '@ax-bi/ui-core/components';
 import {
   CustomParametersChangeType,
   Engines,

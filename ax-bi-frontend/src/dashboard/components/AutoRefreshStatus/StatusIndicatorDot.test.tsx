@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render, screen, act } from 'spec/helpers/testing-library';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { getStatusConfig, StatusIndicatorDot } from './StatusIndicatorDot';
 import { AutoRefreshStatus } from '../../types/autoRefresh';
 
@@ -64,9 +64,7 @@ test('renders with paused status', () => {
 });
 
 test('uses the icon color for the paused status outline', () => {
-  expect(
-    getStatusConfig(supersetTheme, AutoRefreshStatus.Paused),
-  ).toMatchObject({
+  expect(getStatusConfig(axbiTheme, AutoRefreshStatus.Paused)).toMatchObject({
     needsBorder: true,
     outlineColor: 'currentColor',
   });

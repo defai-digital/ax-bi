@@ -1,5 +1,5 @@
-import { JsonObject } from '@superset-ui/core';
-import { InputProps } from '@superset-ui/core/components';
+import { JsonObject } from '@ax-bi/ui-core';
+import { InputProps } from '@ax-bi/ui-core/components';
 import { ChangeEvent, EventHandler, FormEvent } from 'react';
 
 /**
@@ -227,7 +227,7 @@ export type DatabaseForm = {
 };
 
 // the values should align with the database
-// model enum in superset/models/core.py
+// model enum in axbi/models/core.py
 export enum ConfigurationMethod {
   SqlalchemyUri = 'sqlalchemy_form',
   DynamicForm = 'dynamic_form',
@@ -296,8 +296,7 @@ type CustomHTMLTextAreaElement = Omit<
   CustomTextType;
 
 export type CustomParametersChangeType<T = CustomTextType> =
-  | FormEvent<InputProps>
-  | { target: T };
+  FormEvent<InputProps> | { target: T };
 
 export type CustomEventHandlerType = EventHandler<
   ChangeEvent<CustomHTMLInputElement | CustomHTMLTextAreaElement>

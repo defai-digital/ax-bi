@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 from datetime import datetime
 from unittest.mock import patch
@@ -27,20 +27,20 @@ from markupsafe import Markup
 from sqlalchemy import and_
 from sqlalchemy.sql import func
 
-from superset import db
-from superset.connectors.sqla.models import SqlaTable
-from superset.daos.tag import TagDAO
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.tags.models import (
+from axbi import db
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.daos.tag import TagDAO
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.tags.models import (
     ObjectType,
     Tag,
     TaggedObject,
     TagType,
     user_favorite_tag_table,
 )
-from superset.utils import json
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.utils import json
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME, ALPHA_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
@@ -68,7 +68,7 @@ TAGS_LIST_COLUMNS = [
 ]
 
 
-class TestTagApi(InsertChartMixin, SupersetTestCase):
+class TestTagApi(InsertChartMixin, AxBITestCase):
     def insert_tag(
         self,
         name: str,
@@ -629,7 +629,7 @@ class TestTagApi(InsertChartMixin, SupersetTestCase):
         assert rv.status_code == 404
 
     @pytest.mark.usefixtures("create_tags")
-    @patch("superset.daos.tag.g")
+    @patch("axbi.daos.tag.g")
     def test_add_tag_user_not_found(self, flask_g):
         self.login(ADMIN_USERNAME)
         flask_g.user = None
@@ -639,7 +639,7 @@ class TestTagApi(InsertChartMixin, SupersetTestCase):
         assert rv.status_code == 422
 
     @pytest.mark.usefixtures("create_tags")
-    @patch("superset.daos.tag.g")
+    @patch("axbi.daos.tag.g")
     def test_delete_favorite_tag_user_not_found(self, flask_g):
         self.login(ADMIN_USERNAME)
         flask_g.user = None

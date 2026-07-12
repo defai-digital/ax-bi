@@ -24,8 +24,8 @@ from packaging.version import Version
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SQLALCHEMY_CODE_ROOTS = (
-    REPO_ROOT / "superset",
-    REPO_ROOT / "superset-core" / "superset_core",
+    REPO_ROOT / "axbi",
+    REPO_ROOT / "ax-bi-core" / "axbi_core",
 )
 
 

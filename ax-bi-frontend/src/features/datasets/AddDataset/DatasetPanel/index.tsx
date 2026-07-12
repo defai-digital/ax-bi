@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useEffect, useState, useRef } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { DatasetObject } from 'src/features/datasets/AddDataset/types';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import { type DatabaseObject } from 'src/components';
@@ -91,7 +91,7 @@ const DatasetPanelWrapper = ({
       schema,
     })}`;
     try {
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: path,
       });
 

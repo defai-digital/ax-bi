@@ -17,8 +17,8 @@
  * under the License.
  */
 import { useResizeDetector } from 'react-resize-detector';
-import { SupersetClient } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
 import { useDatasetMetadataBar } from './useDatasetMetadataBar';
 
 export default {
@@ -51,8 +51,8 @@ export default {
 };
 
 export const DatasetSpecific = () => {
-  SupersetClient.reset();
-  SupersetClient.configure({ csrfToken: '1234' }).init();
+  AxBIClient.reset();
+  AxBIClient.configure({ csrfToken: '1234' }).init();
 
   const mockDataset = {
     changed_on: '2023-01-26T12:06:58.733316',

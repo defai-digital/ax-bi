@@ -17,9 +17,9 @@
  * under the License.
  */
 import type { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled, css } from '@apache-superset/core/theme';
-import { Button } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled, css } from '@ax-bi/core/theme';
+import { Button } from '@ax-bi/ui-core/components';
 
 interface FilterPopoverContentProps {
   children: ReactNode;

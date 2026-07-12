@@ -17,7 +17,7 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import { isFeatureEnabled } from '@superset-ui/core';
+import { isFeatureEnabled } from '@ax-bi/ui-core';
 import {
   screen,
   selectPillOption,
@@ -35,8 +35,8 @@ import {
 
 jest.setTimeout(30000);
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import rison from 'rison';
 import { parse as parseContentDisposition } from 'content-disposition';
 
@@ -81,7 +81,7 @@ export default async function handleResourceExport(
 
   try {
     // Use fetch with blob response instead of iframe to avoid CSP frame-src violations
-    const response = await SupersetClient.get({
+    const response = await AxBIClient.get({
       endpoint,
       headers: {
         Accept: 'application/zip, application/x-zip-compressed, text/plain',

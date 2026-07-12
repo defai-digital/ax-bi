@@ -29,11 +29,7 @@ import * as chartAction from 'src/components/Chart/chartAction';
 import * as saveModalActions from 'src/explore/actions/saveModalActions';
 import * as downloadAsImage from 'src/utils/downloadAsImage';
 import * as exploreUtils from 'src/explore/exploreUtils';
-import {
-  FeatureFlag,
-  VizType,
-  getChartMetadataRegistry,
-} from '@superset-ui/core';
+import { FeatureFlag, VizType, getChartMetadataRegistry } from '@ax-bi/ui-core';
 import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
 import ExploreHeader, { ExploreChartHeaderProps } from '.';
 import fs from 'fs';
@@ -73,7 +69,7 @@ const createProps = (additionalProps = {}) =>
         adhoc_filters: [],
         row_limit: 10000,
         groupby: null,
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         label_colors: {},
         link_length: '25',
         x_axis_label: 'age',
@@ -101,7 +97,7 @@ const createProps = (additionalProps = {}) =>
       form_data: {
         adhoc_filters: [],
         all_columns_x: ['age'],
-        color_scheme: 'supersetColors',
+        color_scheme: 'axbiColors',
         datasource: '49__table',
         granularity_sqla: 'time_start',
         groupby: null,
@@ -119,7 +115,7 @@ const createProps = (additionalProps = {}) =>
       modified: '<span class="no-wrap">7 days ago</span>',
       owners: [
         {
-          text: 'Superset Admin',
+          text: 'AxBI Admin',
           value: 1,
         },
       ],
@@ -369,7 +365,7 @@ describe('ExploreChartHeader', () => {
       adhoc_filters: [],
       row_limit: 10000,
       groupby: null,
-      color_scheme: 'supersetColors',
+      color_scheme: 'axbiColors',
       label_colors: {},
       link_length: '25',
       x_axis_label: 'age',

@@ -17,7 +17,7 @@
  * under the License.
  */
 import rison from 'rison';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import {
   checkUploadExtensions,
   createFetchOwners,
@@ -41,12 +41,10 @@ import { User } from 'src/types/bootstrapTypes';
 import { WelcomeTable } from 'src/features/home/types';
 import { Filter, TableTab } from './types';
 
-const mockSupersetClientGet = (response: object) =>
+const mockAxBIClientGet = (response: object) =>
   jest
-    .spyOn(SupersetClient, 'get')
-    .mockResolvedValue(
-      response as Awaited<ReturnType<typeof SupersetClient.get>>,
-    );
+    .spyOn(AxBIClient, 'get')
+    .mockResolvedValue(response as Awaited<ReturnType<typeof AxBIClient.get>>);
 
 afterEach(() => {
   jest.restoreAllMocks();
@@ -64,7 +62,7 @@ const terminalErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -83,7 +81,7 @@ const terminalErrorsWithOnlyIssuesCode = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -104,7 +102,7 @@ const overwriteNeededErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -126,7 +124,7 @@ const passwordNeededErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -148,7 +146,7 @@ const sshTunnelPasswordNeededErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -170,7 +168,7 @@ const sshTunnelPrivateKeyNeededErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -192,7 +190,7 @@ const sshTunnelPrivateKeyPasswordNeededErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -216,7 +214,7 @@ const encryptedExtraFieldNeededErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -241,7 +239,7 @@ const multipleEncryptedExtraFieldsNeededErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -265,7 +263,7 @@ const encryptedExtraFieldNoLabelErrors = {
           {
             code: 1010,
             message:
-              'Issue 1010 - Superset encountered an error while running a command.',
+              'Issue 1010 - AxBI encountered an error while running a command.',
           },
         ],
       },
@@ -445,7 +443,7 @@ test('does not ask for password when the import type is wrong', () => {
             {
               code: 1010,
               message:
-                'Issue 1010 - Superset encountered an error while running a command.',
+                'Issue 1010 - AxBI encountered an error while running a command.',
             },
           ],
         },
@@ -549,7 +547,7 @@ test('successfully modified rison to encode correctly', () => {
 });
 
 test('createFetchRelated maps API related results to select options', async () => {
-  mockSupersetClientGet({
+  mockAxBIClientGet({
     json: {
       result: [
         { text: 'Main database', value: 1 },
@@ -566,7 +564,7 @@ test('createFetchRelated maps API related results to select options', async () =
     25,
   );
 
-  expect(SupersetClient.get).toHaveBeenCalledWith({
+  expect(AxBIClient.get).toHaveBeenCalledWith({
     endpoint:
       '/api/v1/dataset/related/database?q=(filter:main,page:3,page_size:25)',
   });
@@ -578,7 +576,7 @@ test('createFetchRelated maps API related results to select options', async () =
 });
 
 test('createFetchRelated uses option count when API count is missing', async () => {
-  mockSupersetClientGet({
+  mockAxBIClientGet({
     json: {
       result: [
         { text: 'Main database', value: 1 },
@@ -605,7 +603,7 @@ test('createFetchRelated uses option count when API count is missing', async () 
 
 test('createFetchRelated calls error handler and returns empty options on failure', async () => {
   const error = 'Unable to fetch related databases';
-  jest.spyOn(SupersetClient, 'get').mockRejectedValue(error);
+  jest.spyOn(AxBIClient, 'get').mockRejectedValue(error);
   const handleError = jest.fn();
 
   const result = await createFetchRelated('dataset', 'database', handleError)(
@@ -619,7 +617,7 @@ test('createFetchRelated calls error handler and returns empty options on failur
 });
 
 test('createFetchOwners includes the logged-in user once when present in results', async () => {
-  mockSupersetClientGet({
+  mockAxBIClientGet({
     json: {
       result: [
         {

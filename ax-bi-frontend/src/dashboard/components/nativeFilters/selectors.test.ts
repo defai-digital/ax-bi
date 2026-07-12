@@ -17,7 +17,7 @@
  * under the License.
  */
 import { CHART_TYPE } from 'src/dashboard/util/componentTypes';
-import { NativeFilterType } from '@superset-ui/core';
+import { NativeFilterType } from '@ax-bi/ui-core';
 import {
   extractLabel,
   getAppliedColumnsWithFallback,

@@ -20,9 +20,9 @@ import {
   isDefined,
   JsonObject,
   QueryFormData,
-  SupersetClient,
-} from '@superset-ui/core';
-import Switchboard from '@superset-ui/switchboard';
+  AxBIClient,
+} from '@ax-bi/ui-core';
+import Switchboard from '@ax-bi/switchboard';
 import rison from 'rison';
 import { isEmpty } from 'lodash';
 import {
@@ -170,7 +170,7 @@ function getPermalink(
   endpoint: string,
   jsonPayload: JsonObject,
 ): Promise<PermalinkResult> {
-  return SupersetClient.post({
+  return AxBIClient.post({
     endpoint,
     jsonPayload,
   }).then(result => ({
@@ -199,7 +199,7 @@ async function resolvePermalinkUrl(
         { key },
       );
 
-      // If callback returned a valid URL string, use it; otherwise use Superset's default URL
+      // If callback returned a valid URL string, use it; otherwise use AxBI's default URL
       if (typeof resolvedUrl === 'string' && resolvedUrl.length > 0) {
         return { key, url: resolvedUrl };
       }

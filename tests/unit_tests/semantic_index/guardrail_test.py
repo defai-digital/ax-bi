@@ -20,8 +20,8 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from superset.semantic_index.grounding import build_grounding_contract
-from superset.semantic_index.guardrail import check_config
+from axbi.semantic_index.grounding import build_grounding_contract
+from axbi.semantic_index.guardrail import check_config
 
 _POLICIES = [
     {

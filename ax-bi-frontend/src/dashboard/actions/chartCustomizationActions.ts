@@ -18,7 +18,7 @@
  */
 import { AnyAction } from 'redux';
 import { ThunkAction, ThunkDispatch } from 'redux-thunk';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   makeApi,
   getClientErrorObject,
@@ -27,7 +27,7 @@ import {
   ColumnOption,
   Filter,
   Filters,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import { DashboardInfo, RootState } from 'src/dashboard/types';
 import {

@@ -18,19 +18,19 @@
  */
 
 import { useCallback, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme, SupersetTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme, AxBITheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import UrlFilterTag from './UrlFilterTag';
 import { UrlFilterIndicator, getUrlFilterIdentity } from './urlFilterUtils';
 
-const sectionContainerStyle = (theme: SupersetTheme) => css`
+const sectionContainerStyle = (theme: AxBITheme) => css`
   margin-bottom: ${theme.sizeUnit * 3}px;
   padding: 0 ${theme.sizeUnit * 4}px;
 `;
 
-const sectionHeaderStyle = (theme: SupersetTheme) => css`
+const sectionHeaderStyle = (theme: AxBITheme) => css`
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -46,7 +46,7 @@ const sectionHeaderStyle = (theme: SupersetTheme) => css`
   }
 `;
 
-const sectionTitleStyle = (theme: SupersetTheme) => css`
+const sectionTitleStyle = (theme: AxBITheme) => css`
   margin: 0;
   font-size: ${theme.fontSize}px;
   font-weight: ${theme.fontWeightStrong};
@@ -57,17 +57,17 @@ const sectionTitleStyle = (theme: SupersetTheme) => css`
   gap: ${theme.sizeUnit}px;
 `;
 
-const sectionContentStyle = (theme: SupersetTheme) => css`
+const sectionContentStyle = (theme: AxBITheme) => css`
   padding: ${theme.sizeUnit * 2}px 0;
 `;
 
-const dividerStyle = (theme: SupersetTheme) => css`
+const dividerStyle = (theme: AxBITheme) => css`
   height: 1px;
   background: ${theme.colorSplit};
   margin: ${theme.sizeUnit * 2}px 0;
 `;
 
-const iconStyle = (open: boolean, theme: SupersetTheme) => css`
+const iconStyle = (open: boolean, theme: AxBITheme) => css`
   transform: ${open ? 'rotate(0deg)' : 'rotate(180deg)'};
   transition: transform 0.2s ease;
   color: ${theme.colorTextSecondary};

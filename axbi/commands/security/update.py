@@ -1,0 +1,74 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+
+
+import logging
+from typing import Any
+
+from axbi.commands.base import BaseCommand
+from axbi.commands.exceptions import DatasourceNotFoundValidationError
+from axbi.commands.security.exceptions import RLSRuleNotFoundError
+from axbi.commands.security.utils import raise_for_datasource_access
+from axbi.commands.utils import populate_roles
+from axbi.connectors.sqla.models import RowLevelSecurityFilter, SqlaTable
+from axbi.daos.security import RLSDAO
+from axbi.extensions import db
+from axbi.utils.decorators import transaction
+
+logger = logging.getLogger(__name__)
+
+
+class UpdateRLSRuleCommand(BaseCommand):
+    def __init__(self, model_id: int, data: dict[str, Any]):
+        self._model_id = model_id
+        self._properties = data.copy()
+        self._tables = self._properties.get("tables", [])
+        self._roles = self._properties.get("roles", [])
+        self._model: RowLevelSecurityFilter | None = None
+
+    @transaction()
+    def run(self) -> Any:
+        self.validate()
+        assert self._model
+        return RLSDAO.update(self._model, self._properties)
+
+    def validate(self) -> None:
+        self._model = RLSDAO.find_by_id(int(self._model_id))
+        if not self._model:
+            raise RLSRuleNotFoundError()
+        # Only resolve and overwrite the relationships that are actually present
+        # in the request body. A partial update (e.g. changing only the name)
+        # must leave the rule's existing tables/roles bindings untouched rather
+        # than replacing them with empty lists.
+        if "roles" in self._properties:
+            self._properties["roles"] = populate_roles(self._roles)
+        if "tables" in self._properties:
+            tables = (
+                db.session.query(SqlaTable)
+                .filter(SqlaTable.id.in_(self._tables))  # type: ignore[attr-defined]
+                .all()
+            )
+            if len(tables) != len(self._tables):
+                raise DatasourceNotFoundValidationError()
+            raise_for_datasource_access(tables)
+            self._properties["tables"] = tables
+        else:
+            # A partial update that omits ``tables`` still mutates the rule, so
+            # enforce datasource access against the rule's existing tables to
+            # avoid letting a caller edit a rule bound to datasources they
+            # cannot access.
+            raise_for_datasource_access(self._model.tables)

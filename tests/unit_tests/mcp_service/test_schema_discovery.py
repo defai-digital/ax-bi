@@ -17,13 +17,13 @@
 
 """Tests for MCP schema discovery helpers."""
 
-from superset.mcp_service.common.schema_discovery import (
+from axbi.mcp_service.common.schema_discovery import (
     build_schema_resource,
     CHART_EXTRA_COLUMNS,
     ColumnMetadata,
     get_columns_from_model,
 )
-from superset.models.slice import Slice
+from axbi.models.slice import Slice
 
 
 def test_get_columns_from_model_excludes_matching_extra_columns():

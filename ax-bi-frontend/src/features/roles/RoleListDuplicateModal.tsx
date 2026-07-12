@@ -17,10 +17,10 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { RoleObject } from 'src/pages/RolesList';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
-import { FormModal, Icons } from '@superset-ui/core/components';
+import { FormModal, Icons } from '@ax-bi/ui-core/components';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 import { RoleNameField } from './RoleFormItems';
 import { BaseModalProps, RoleForm } from './types';

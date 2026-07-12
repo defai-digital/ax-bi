@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useEffect, useMemo, useState } from 'react';
-import { JsonObject } from '@superset-ui/core';
-import { styled, css } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { Button, Input, Select } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { JsonObject } from '@ax-bi/ui-core';
+import { styled, css } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Button, Input, Select } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   DISABLE_INPUT_OPERATORS,
   OPERATOR_ENUM_TO_OPERATOR_TYPE,

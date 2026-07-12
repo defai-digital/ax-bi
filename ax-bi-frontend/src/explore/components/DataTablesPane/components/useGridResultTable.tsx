@@ -23,10 +23,10 @@ import {
   TimeFormats,
   getMetricLabel,
   QueryFormMetric,
-} from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { Constants } from '@superset-ui/core/components';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { Constants } from '@ax-bi/ui-core/components';
+import { GenericDataType } from '@ax-bi/core/common';
 import type { IRowNode } from 'ag-grid-community';
 
 const timeFormatter = getTimeFormatter(TimeFormats.DATABASE_DATETIME);

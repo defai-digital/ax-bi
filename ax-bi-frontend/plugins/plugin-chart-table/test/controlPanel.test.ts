@@ -16,7 +16,7 @@ import {
   ControlPanelsContainerProps,
   ControlState,
   CustomControlItem,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import config from '../src/controlPanel';
 
 type VisibilityFn = (

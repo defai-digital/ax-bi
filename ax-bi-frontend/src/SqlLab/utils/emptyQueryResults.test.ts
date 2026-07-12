@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { QueryResponse } from '@superset-ui/core';
+import type { QueryResponse } from '@ax-bi/ui-core';
 import {
   emptyQueryResults,
   clearQueryEditors,

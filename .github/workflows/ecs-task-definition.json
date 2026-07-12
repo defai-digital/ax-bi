@@ -1,8 +1,8 @@
 {
     "containerDefinitions": [
         {
-            "name": "superset-ci",
-            "image": "apache/superset:latest",
+            "name": "axbi-ci",
+            "image": "ghcr.io/defai-digital/ax-bi:latest",
             "cpu": 0,
             "links": [],
             "portMappings": [
@@ -17,11 +17,11 @@
             "command": [],
             "environment": [
                 {
-                    "name": "SUPERSET_LOAD_EXAMPLES",
+                    "name": "AXBI_LOAD_EXAMPLES",
                     "value": "yes"
                 },
                 {
-                    "name": "SUPERSET_PORT",
+                    "name": "AXBI_PORT",
                     "value": "8080"
                 },
                 {
@@ -38,14 +38,14 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/superset-ci",
+                    "awslogs-group": "/ecs/ax-bi-ci",
                     "awslogs-region": "us-west-2",
                     "awslogs-stream-prefix": "ecs"
                 }
             }
         }
     ],
-    "family": "superset-ci",
+    "family": "axbi-ci",
     "taskRoleArn": "ecsTaskExecutionRole",
     "executionRoleArn": "ecsTaskExecutionRole",
     "networkMode": "awsvpc",

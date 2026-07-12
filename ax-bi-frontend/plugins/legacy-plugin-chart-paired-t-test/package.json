@@ -1,21 +1,21 @@
 {
-  "name": "@superset-ui/legacy-plugin-chart-paired-t-test",
+  "name": "@ax-bi/legacy-plugin-chart-paired-t-test",
   "version": "0.20.3",
-  "description": "Superset Legacy Chart - Paired T Test",
+  "description": "AxBI Legacy Chart - Paired T Test",
   "keywords": [
-    "superset"
+    "axbi"
   ],
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/legacy-plugin-chart-paired-t-test#readme",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/legacy-plugin-chart-paired-t-test"
   },
   "license": "Apache-2.0",
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "main": "lib/index.js",
   "module": "esm/index.js",
   "files": [
@@ -28,9 +28,9 @@
     "reactable": "^1.1.0"
   },
   "peerDependencies": {
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
-    "@apache-superset/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
+    "@ax-bi/core": "*",
     "react": "^18.3.0 || ^19.0.0"
   },
   "publishConfig": {

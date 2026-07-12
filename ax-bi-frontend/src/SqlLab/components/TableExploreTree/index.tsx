@@ -27,8 +27,8 @@ import {
 } from 'react';
 import { useSelector, shallowEqual } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
 // Due to performance issues with the virtual list in the existing Ant Design (antd)-based tree view,
 // it has been replaced with react-arborist solution.
@@ -39,7 +39,7 @@ import {
   Input,
   Empty,
   Button,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import type { SqlLabRootState } from 'src/SqlLab/types';
 import useQueryEditor from 'src/SqlLab/hooks/useQueryEditor';
 import { addTable, removeTables } from 'src/SqlLab/actions/sqlLab';

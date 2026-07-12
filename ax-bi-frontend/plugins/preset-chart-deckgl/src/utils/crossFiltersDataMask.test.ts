@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { TimeGranularity } from '@superset-ui/core';
+import { TimeGranularity } from '@ax-bi/ui-core';
 import { PickingInfo } from '@deck.gl/core';
 import {
   getCrossFilterDataMask,

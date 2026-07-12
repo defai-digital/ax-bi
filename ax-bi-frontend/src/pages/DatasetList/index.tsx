@@ -17,14 +17,14 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   getExtensionsRegistry,
-  SupersetClient,
+  AxBIClient,
   isFeatureEnabled,
   FeatureFlag,
-} from '@superset-ui/core';
-import { styled, useTheme, css } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, useTheme, css } from '@ax-bi/core/theme';
 import {
   FunctionComponent,
   useState,
@@ -56,7 +56,7 @@ import {
   DatasetTypeLabel,
   Loading,
   List,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   DatasourceModal,
   GenericLink,
@@ -70,13 +70,13 @@ import {
   type ListViewFetchDataConfig,
 } from 'src/components';
 import type { SelectOption } from 'src/components/ListView/types';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import handleResourceExport from 'src/utils/export';
 import SubMenu, { SubMenuProps, ButtonProps } from 'src/features/home/SubMenu';
 import Owner from 'src/types/Owner';
 import withToasts from 'src/components/MessageToasts/withToasts';
-import { Icons } from '@superset-ui/core/components/Icons';
-import WarningIconWithTooltip from '@superset-ui/core/components/WarningIconWithTooltip';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import WarningIconWithTooltip from '@ax-bi/ui-core/components/WarningIconWithTooltip';
 import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
 import { findPermission } from 'src/utils/findPermission';
 import type { RootState } from 'src/views/store';
@@ -352,7 +352,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
             )(filterValue, page, pageSize)
           : Promise.resolve({ data: [], totalCount: 0 }),
         showSemanticLayers
-          ? SupersetClient.get({
+          ? AxBIClient.get({
               endpoint: `/api/v1/semantic_layer/?q=${rison.encode_uri({
                 ...(filterValue
                   ? {
@@ -456,7 +456,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
         ...(otherFilters.length ? { filters: otherFilters } : {}),
       });
 
-      return SupersetClient.get({
+      return AxBIClient.get({
         endpoint: `/api/v1/datasource/?q=${queryParams}`,
       })
         .then(({ json = {} }) => {
@@ -546,9 +546,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   const canCreate = hasPerm('can_write');
   const canDuplicate = hasPerm('can_duplicate');
   const canExport = hasPerm('can_export');
-  const userRoles = useSelector(
-    (state: RootState) => state.user?.roles,
-  );
+  const userRoles = useSelector((state: RootState) => state.user?.roles);
   const canCreateChart = findPermission('can_write', 'Chart', userRoles);
   const canCreateDashboard = findPermission(
     'can_write',
@@ -572,7 +570,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
 
   const openDatasetEditModal = useCallback(
     ({ id }: Dataset) => {
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/dataset/${id}`,
       })
         .then(({ json = {} }) => {
@@ -609,7 +607,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
 
   const openDatasetDeleteModal = useCallback(
     (dataset: Dataset) =>
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/dataset/${dataset.id}/related_objects`,
       })
         .then(({ json = {} }) => {
@@ -664,7 +662,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   const handleSemanticViewDeleteConfirm = () => {
     if (!svCurrentlyDeleting) return;
     const { id, table_name: tableName } = svCurrentlyDeleting;
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/semantic_view/${id}`,
     }).then(
       () => {
@@ -938,18 +936,12 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
                     className="action-button"
                     onClick={async () => {
                       try {
-                        addSuccessToast(
-                          t('Generating starter dashboard…'),
-                        );
+                        addSuccessToast(t('Generating starter dashboard…'));
                         const { dashboardId, dashboardTitle } =
                           await createStarterDashboard(original.id);
-                        addSuccessToast(
-                          t('Created “%s”', dashboardTitle),
-                        );
+                        addSuccessToast(t('Created “%s”', dashboardTitle));
                         history.push(
-                          ensureAppRoot(
-                            `/superset/dashboard/${dashboardId}/`,
-                          ),
+                          ensureAppRoot(`/ax-bi/dashboard/${dashboardId}/`),
                         );
                       } catch (err) {
                         addDangerToast(
@@ -1328,7 +1320,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   };
 
   const handleDatasetDelete = ({ id, table_name: tableName }: Dataset) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/dataset/${id}`,
     }).then(
       () => {
@@ -1356,7 +1348,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
 
     if (datasets.length) {
       promises.push(
-        SupersetClient.delete({
+        AxBIClient.delete({
           endpoint: `/api/v1/dataset/?q=${rison.encode(
             datasets.map(({ id }) => id),
           )}`,
@@ -1366,7 +1358,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
 
     if (semanticViews.length) {
       promises.push(
-        SupersetClient.delete({
+        AxBIClient.delete({
           endpoint: `/api/v1/semantic_view/?q=${rison.encode(
             semanticViews.map(({ id }) => id),
           )}`,
@@ -1398,7 +1390,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
       );
     }
 
-    SupersetClient.post({
+    AxBIClient.post({
       endpoint: `/api/v1/dataset/duplicate`,
       jsonPayload: {
         base_model_id: datasetCurrentlyDuplicating?.id,

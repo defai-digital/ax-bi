@@ -61,7 +61,7 @@ export function isMessageOriginAllowed(
   }
   // eslint-disable-next-line no-console
   console.warn(
-    `[superset] ignoring embedded message from origin "${origin}" which is not in the list of allowed domains`,
+    `[axbi] ignoring embedded message from origin "${origin}" which is not in the list of allowed domains`,
   );
   return false;
 }

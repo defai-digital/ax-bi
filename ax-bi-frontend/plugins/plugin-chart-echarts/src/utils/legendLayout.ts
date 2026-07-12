@@ -16,16 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { SupersetTheme } from '@apache-superset/core/theme';
+import type { AxBITheme } from '@ax-bi/core/theme';
 import { LegendOrientation, LegendType } from '../types';
 import { getLegendLayoutResult, LegendLayoutResult } from './series';
 
 type LegendDataItem =
-  | string
-  | number
-  | null
-  | undefined
-  | { name?: string | number | null };
+  string | number | null | undefined | { name?: string | number | null };
 
 export type ResolvedLegendLayout = {
   effectiveLegendMargin?: string | number | null;
@@ -43,7 +39,7 @@ export function resolveLegendLayout(args: {
   orientation: LegendOrientation;
   show: boolean;
   showSelectors?: boolean;
-  theme: SupersetTheme;
+  theme: AxBITheme;
   type: LegendType;
 }): ResolvedLegendLayout {
   const legendLayout = getLegendLayoutResult(args);

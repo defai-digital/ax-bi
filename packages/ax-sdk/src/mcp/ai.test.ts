@@ -54,7 +54,7 @@ describe('AIResource', () => {
     const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
       content: [],
       structuredContent: {
-        dashboard_url: 'http://localhost:8088/superset/dashboard/1/',
+        dashboard_url: 'http://localhost:8088/ax-bi/dashboard/1/',
         charts: [],
         warnings: [],
       },
@@ -66,7 +66,7 @@ describe('AIResource', () => {
         prompt: 'Create an executive sales dashboard',
       }),
     ).resolves.toMatchObject({
-      dashboard_url: 'http://localhost:8088/superset/dashboard/1/',
+      dashboard_url: 'http://localhost:8088/ax-bi/dashboard/1/',
     });
     expect(callTool).toHaveBeenCalledWith('prompt_to_dashboard', {
       request: {

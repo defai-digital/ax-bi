@@ -30,7 +30,7 @@ import { TIMEOUT } from '../../utils/constants';
  * - Export as Example (new Parquet + YAML format)
  *
  * Prerequisites:
- * - Superset running with example dashboards loaded
+ * - AxBI running with example dashboards loaded
  * - Admin user authenticated (via global-setup)
  */
 

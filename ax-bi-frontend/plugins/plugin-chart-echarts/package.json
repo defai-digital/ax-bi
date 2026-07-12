@@ -1,21 +1,21 @@
 {
-  "name": "@superset-ui/plugin-chart-echarts",
+  "name": "@ax-bi/plugin-chart-echarts",
   "version": "0.20.3",
-  "description": "Superset Chart - Echarts",
+  "description": "AxBI Chart - Echarts",
   "keywords": [
-    "superset"
+    "axbi"
   ],
   "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/plugin-chart-echarts#readme",
   "bugs": {
-    "url": "https://github.com/apache/superset/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/apache/superset.git",
+    "url": "https://github.com/defai-digital/ax-bi.git",
     "directory": "ax-bi-frontend/plugins/plugin-chart-echarts"
   },
   "license": "Apache-2.0",
-  "author": "Superset",
+  "author": "DEFAI Private Limited",
   "sideEffects": false,
   "main": "lib/index.js",
   "module": "esm/index.js",
@@ -31,9 +31,9 @@
     "zod": "^4.4.3"
   },
   "peerDependencies": {
-    "@apache-superset/core": "*",
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
     "dayjs": "^1.11.21",
     "echarts": "*",
     "memoize-one": "*",

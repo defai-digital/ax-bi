@@ -18,7 +18,7 @@
  */
 import { render, screen, waitFor } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
-import { ThemeProvider, supersetTheme } from '@apache-superset/core/theme';
+import { ThemeProvider, axbiTheme } from '@ax-bi/core/theme';
 import DuplicateDatasetModal from './DuplicateDatasetModal';
 
 // Test-only fixture type that includes all fields from API responses
@@ -69,7 +69,7 @@ const Wrapper = ({
   onHide: jest.Mock;
   onDuplicate: jest.Mock;
 }) => (
-  <ThemeProvider theme={supersetTheme}>
+  <ThemeProvider theme={axbiTheme}>
     <DuplicateDatasetModal
       dataset={dataset}
       onHide={onHide}

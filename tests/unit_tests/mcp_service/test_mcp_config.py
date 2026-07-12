@@ -21,15 +21,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.mcp_service.app import get_default_instructions, init_fastmcp_server
+from axbi.mcp_service.app import get_default_instructions, init_fastmcp_server
 
 
 def test_get_default_instructions_with_default_branding():
-    """Test that default branding produces Apache Superset in instructions."""
+    """Test that default branding produces AX BI in instructions."""
     instructions = get_default_instructions()
 
-    assert "Apache Superset" in instructions
-    assert "Apache Superset MCP" in instructions
+    assert "AX BI" in instructions
+    assert "AX BI MCP" in instructions
     assert "model context protocol" in instructions.lower()
 
 
@@ -40,8 +40,8 @@ def test_get_default_instructions_with_custom_branding():
 
     assert custom_branding in instructions
     assert f"{custom_branding} MCP" in instructions
-    # Should not contain default Apache Superset branding
-    assert "Apache Superset" not in instructions
+    # Should not contain default AX BI branding
+    assert "AX BI" not in instructions
 
 
 def test_get_default_instructions_with_enterprise_branding():
@@ -121,20 +121,20 @@ def _mock_flask_config(app_name: str) -> MagicMock:
 
 
 def test_init_fastmcp_server_with_default_app_name():
-    """Test that default APP_NAME produces Superset branding."""
-    mock_flask_app = _mock_flask_config("Superset")
+    """Test that default APP_NAME produces AX BI branding."""
+    mock_flask_app = _mock_flask_config("AX BI")
 
     # Patch at the import location to avoid actual Flask app creation
     with patch.dict(
         "sys.modules",
-        {"superset.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
+        {"axbi.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
     ):
-        with patch("superset.mcp_service.app.mcp") as mock_mcp:
+        with patch("axbi.mcp_service.app.mcp") as mock_mcp:
             init_fastmcp_server()
 
-            # Verify the global mcp instance was configured with Superset branding
-            assert "Superset MCP" in mock_mcp._mcp_server.instructions
-            assert "Superset dashboards" in mock_mcp._mcp_server.instructions
+            # Verify the global mcp instance was configured with AX BI branding
+            assert "AX BI MCP" in mock_mcp._mcp_server.instructions
+            assert "AX BI dashboards" in mock_mcp._mcp_server.instructions
 
 
 def test_init_fastmcp_server_with_custom_app_name():
@@ -145,15 +145,15 @@ def test_init_fastmcp_server_with_custom_app_name():
     # Patch at the import location to avoid actual Flask app creation
     with patch.dict(
         "sys.modules",
-        {"superset.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
+        {"axbi.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
     ):
-        with patch("superset.mcp_service.app.mcp") as mock_mcp:
+        with patch("axbi.mcp_service.app.mcp") as mock_mcp:
             init_fastmcp_server()
 
             # Verify instructions use custom branding
             assert custom_app_name in mock_mcp._mcp_server.instructions
-            # Should not contain default Apache Superset branding
-            assert "Apache Superset" not in mock_mcp._mcp_server.instructions
+            # Should not contain default AX BI branding
+            assert "AX BI" not in mock_mcp._mcp_server.instructions
 
 
 def test_init_fastmcp_server_derives_server_name_from_app_name():
@@ -165,9 +165,9 @@ def test_init_fastmcp_server_derives_server_name_from_app_name():
     # Patch at the import location to avoid actual Flask app creation
     with patch.dict(
         "sys.modules",
-        {"superset.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
+        {"axbi.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
     ):
-        with patch("superset.mcp_service.app.mcp") as mock_mcp:
+        with patch("axbi.mcp_service.app.mcp") as mock_mcp:
             init_fastmcp_server()
 
             # Verify the global mcp instance got the derived name
@@ -176,14 +176,14 @@ def test_init_fastmcp_server_derives_server_name_from_app_name():
 
 def test_init_fastmcp_server_applies_auth_to_global_instance():
     """Test that auth is applied to the global mcp instance, not a new one."""
-    mock_flask_app = _mock_flask_config("Superset")
+    mock_flask_app = _mock_flask_config("AX BI")
     mock_auth = MagicMock()
 
     with patch.dict(
         "sys.modules",
-        {"superset.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
+        {"axbi.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
     ):
-        with patch("superset.mcp_service.app.mcp") as mock_mcp:
+        with patch("axbi.mcp_service.app.mcp") as mock_mcp:
             result = init_fastmcp_server(auth=mock_auth)
 
             # Auth should be set on the global instance
@@ -194,14 +194,14 @@ def test_init_fastmcp_server_applies_auth_to_global_instance():
 
 def test_init_fastmcp_server_applies_middleware_to_global_instance():
     """Test that middleware is added to the global mcp instance."""
-    mock_flask_app = _mock_flask_config("Superset")
+    mock_flask_app = _mock_flask_config("AX BI")
     mock_mw = MagicMock()
 
     with patch.dict(
         "sys.modules",
-        {"superset.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
+        {"axbi.mcp_service.flask_singleton": MagicMock(app=mock_flask_app)},
     ):
-        with patch("superset.mcp_service.app.mcp") as mock_mcp:
+        with patch("axbi.mcp_service.app.mcp") as mock_mcp:
             init_fastmcp_server(middleware=[mock_mw])
 
             # Middleware should be added via add_middleware
@@ -211,7 +211,7 @@ def test_init_fastmcp_server_applies_middleware_to_global_instance():
 def test_get_mcp_config_includes_mcp_disabled_tools_key() -> None:
     """get_mcp_config must include MCP_DISABLED_TOOLS in its defaults dict so the
     key is available in flask_app.config for the standalone server startup path."""
-    from superset.mcp_service.mcp_config import get_mcp_config
+    from axbi.mcp_service.mcp_config import get_mcp_config
 
     config = get_mcp_config()
     assert "MCP_DISABLED_TOOLS" in config
@@ -221,7 +221,7 @@ def test_get_mcp_config_includes_mcp_disabled_tools_key() -> None:
 def test_get_mcp_config_respects_app_config_override() -> None:
     """When app_config provides MCP_DISABLED_TOOLS, it takes precedence over the
     module-level default."""
-    from superset.mcp_service.mcp_config import get_mcp_config
+    from axbi.mcp_service.mcp_config import get_mcp_config
 
     custom = {"execute_sql", "health_check"}
     config = get_mcp_config({"MCP_DISABLED_TOOLS": custom})
@@ -230,7 +230,7 @@ def test_get_mcp_config_respects_app_config_override() -> None:
 
 def test_build_composite_verifier_string_prefix():
     """A plain-string FAB_API_KEY_PREFIXES is wrapped into a single-element list."""
-    from superset.mcp_service.mcp_config import _build_composite_verifier
+    from axbi.mcp_service.mcp_config import _build_composite_verifier
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -244,7 +244,7 @@ def test_build_composite_verifier_string_prefix():
 
 def test_build_composite_verifier_list_prefix():
     """A list FAB_API_KEY_PREFIXES is passed through as-is."""
-    from superset.mcp_service.mcp_config import _build_composite_verifier
+    from axbi.mcp_service.mcp_config import _build_composite_verifier
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -258,7 +258,7 @@ def test_build_composite_verifier_list_prefix():
 
 def test_build_composite_verifier_invalid_prefix_falls_back_to_default():
     """A non-iterable FAB_API_KEY_PREFIXES (e.g. None) falls back to ['sst_']."""
-    from superset.mcp_service.mcp_config import _build_composite_verifier
+    from axbi.mcp_service.mcp_config import _build_composite_verifier
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -275,7 +275,7 @@ def test_build_composite_verifier_invalid_prefix_falls_back_to_default():
 
 def test_get_mcp_api_key_enabled_explicit_true():
     """MCP_API_KEY_ENABLED=True returns True regardless of FAB setting."""
-    from superset.mcp_service.mcp_config import get_mcp_api_key_enabled
+    from axbi.mcp_service.mcp_config import get_mcp_api_key_enabled
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -287,7 +287,7 @@ def test_get_mcp_api_key_enabled_explicit_true():
 
 def test_get_mcp_api_key_enabled_explicit_false():
     """MCP_API_KEY_ENABLED=False returns False even when FAB setting is True."""
-    from superset.mcp_service.mcp_config import get_mcp_api_key_enabled
+    from axbi.mcp_service.mcp_config import get_mcp_api_key_enabled
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -299,7 +299,7 @@ def test_get_mcp_api_key_enabled_explicit_false():
 
 def test_get_mcp_api_key_enabled_falls_back_to_fab():
     """When MCP_API_KEY_ENABLED is not set, falls back to FAB_API_KEY_ENABLED."""
-    from superset.mcp_service.mcp_config import get_mcp_api_key_enabled
+    from axbi.mcp_service.mcp_config import get_mcp_api_key_enabled
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -313,7 +313,7 @@ def test_get_mcp_api_key_enabled_falls_back_to_fab():
 
 def test_get_mcp_api_key_enabled_both_absent_returns_false():
     """When neither setting is configured, returns False."""
-    from superset.mcp_service.mcp_config import get_mcp_api_key_enabled
+    from axbi.mcp_service.mcp_config import get_mcp_api_key_enabled
 
     mock_app = MagicMock()
     mock_app.config.get.return_value = None
@@ -326,7 +326,7 @@ def test_get_mcp_api_key_enabled_both_absent_returns_false():
 
 def test_create_default_mcp_auth_factory_returns_none_when_disabled():
     """Returns None when neither MCP_AUTH_ENABLED nor API key auth is on."""
-    from superset.mcp_service.mcp_config import create_default_mcp_auth_factory
+    from axbi.mcp_service.mcp_config import create_default_mcp_auth_factory
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -342,8 +342,8 @@ def test_create_default_mcp_auth_factory_returns_none_when_disabled():
 
 def test_create_default_mcp_auth_factory_api_key_only():
     """Returns a CompositeTokenVerifier when only API key auth is enabled."""
-    from superset.mcp_service.composite_token_verifier import CompositeTokenVerifier
-    from superset.mcp_service.mcp_config import create_default_mcp_auth_factory
+    from axbi.mcp_service.composite_token_verifier import CompositeTokenVerifier
+    from axbi.mcp_service.mcp_config import create_default_mcp_auth_factory
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: {
@@ -360,7 +360,7 @@ def test_create_default_mcp_auth_factory_api_key_only():
 
 def test_get_mcp_api_key_enabled_fab_fallback_logs_startup_warning():
     """startup_warning=True logs a warning when the value is inherited from FAB."""
-    from superset.mcp_service.mcp_config import get_mcp_api_key_enabled
+    from axbi.mcp_service.mcp_config import get_mcp_api_key_enabled
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: (
@@ -369,7 +369,7 @@ def test_get_mcp_api_key_enabled_fab_fallback_logs_startup_warning():
         else (True if key == "FAB_API_KEY_ENABLED" else default)
     )
 
-    with patch("superset.mcp_service.mcp_config.logger") as mock_logger:
+    with patch("axbi.mcp_service.mcp_config.logger") as mock_logger:
         result = get_mcp_api_key_enabled(mock_app, startup_warning=True)
 
     assert result is True
@@ -378,7 +378,7 @@ def test_get_mcp_api_key_enabled_fab_fallback_logs_startup_warning():
 
 def test_create_default_mcp_auth_factory_jwt_with_keys():
     """JWT auth with keys configured returns the built JWT verifier."""
-    from superset.mcp_service.mcp_config import create_default_mcp_auth_factory
+    from axbi.mcp_service.mcp_config import create_default_mcp_auth_factory
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: {
@@ -391,7 +391,7 @@ def test_create_default_mcp_auth_factory_jwt_with_keys():
 
     sentinel = object()
     with patch(
-        "superset.mcp_service.mcp_config._build_jwt_verifier", return_value=sentinel
+        "axbi.mcp_service.mcp_config._build_jwt_verifier", return_value=sentinel
     ) as mock_build:
         result = create_default_mcp_auth_factory(mock_app)
 
@@ -401,7 +401,7 @@ def test_create_default_mcp_auth_factory_jwt_with_keys():
 
 def test_create_default_mcp_auth_factory_jwt_enabled_without_keys_fails_closed():
     """MCP_AUTH_ENABLED=True with no keys/secret and no fallback fails closed."""
-    from superset.mcp_service.mcp_config import (
+    from axbi.mcp_service.mcp_config import (
         create_default_mcp_auth_factory,
         MCPAuthConfigError,
     )
@@ -415,7 +415,7 @@ def test_create_default_mcp_auth_factory_jwt_enabled_without_keys_fails_closed()
     }.get(key, default)
 
     with (
-        patch("superset.mcp_service.mcp_config.logger") as mock_logger,
+        patch("axbi.mcp_service.mcp_config.logger") as mock_logger,
         pytest.raises(MCPAuthConfigError, match="no JWT keys/secret configured"),
     ):
         create_default_mcp_auth_factory(mock_app)
@@ -425,7 +425,7 @@ def test_create_default_mcp_auth_factory_jwt_enabled_without_keys_fails_closed()
 
 def test_create_default_mcp_auth_factory_jwt_build_failure_fails_closed():
     """A JWT verifier build failure with no API key fallback fails closed."""
-    from superset.mcp_service.mcp_config import (
+    from axbi.mcp_service.mcp_config import (
         create_default_mcp_auth_factory,
         MCPAuthConfigError,
     )
@@ -441,10 +441,10 @@ def test_create_default_mcp_auth_factory_jwt_build_failure_fails_closed():
 
     with (
         patch(
-            "superset.mcp_service.mcp_config._build_jwt_verifier",
+            "axbi.mcp_service.mcp_config._build_jwt_verifier",
             side_effect=ValueError("bad key"),
         ),
-        patch("superset.mcp_service.mcp_config.logger") as mock_logger,
+        patch("axbi.mcp_service.mcp_config.logger") as mock_logger,
         pytest.raises(MCPAuthConfigError, match="Failed to create MCP JWT verifier"),
     ):
         create_default_mcp_auth_factory(mock_app)
@@ -459,7 +459,7 @@ def test_create_default_mcp_auth_factory_requires_audience_when_jwt_enabled():
     permissive verifier) so the bootstrap refuses to start the service instead
     of accepting same-issuer tokens minted for other services.
     """
-    from superset.mcp_service.mcp_config import (
+    from axbi.mcp_service.mcp_config import (
         create_default_mcp_auth_factory,
         MCPAuthConfigError,
     )
@@ -478,8 +478,8 @@ def test_create_default_mcp_auth_factory_requires_audience_when_jwt_enabled():
 
 def test_create_default_mcp_auth_factory_audience_not_required_for_api_key_only():
     """API-key-only auth (JWT disabled) does not require MCP_JWT_AUDIENCE."""
-    from superset.mcp_service.composite_token_verifier import CompositeTokenVerifier
-    from superset.mcp_service.mcp_config import create_default_mcp_auth_factory
+    from axbi.mcp_service.composite_token_verifier import CompositeTokenVerifier
+    from axbi.mcp_service.mcp_config import create_default_mcp_auth_factory
 
     mock_app = MagicMock()
     mock_app.config.get.side_effect = lambda key, default=None: {

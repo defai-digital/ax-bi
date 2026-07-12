@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useRef, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import type { SelectOption } from './types';
 import { CardSortSelectOption, SortColumn } from './types';
 import CompactFilterTrigger from './Filters/CompactFilterTrigger';

@@ -17,13 +17,13 @@
 from unittest.mock import MagicMock, patch
 
 
-@patch("superset.daos.report.get_user_id", return_value=1)
-@patch("superset.daos.report.db")
+@patch("axbi.daos.report.get_user_id", return_value=1)
+@patch("axbi.daos.report.db")
 def test_validate_unique_creation_method_duplicate_returns_false(
     mock_db: MagicMock,
     mock_uid: MagicMock,
 ) -> None:
-    from superset.daos.report import ReportScheduleDAO
+    from axbi.daos.report import ReportScheduleDAO
 
     # Simulate that a matching report already exists
     mock_db.session.query.return_value.filter_by.return_value.filter.return_value = (
@@ -33,13 +33,13 @@ def test_validate_unique_creation_method_duplicate_returns_false(
     assert ReportScheduleDAO.validate_unique_creation_method(dashboard_id=1) is False
 
 
-@patch("superset.daos.report.get_user_id", return_value=1)
-@patch("superset.daos.report.db")
+@patch("axbi.daos.report.get_user_id", return_value=1)
+@patch("axbi.daos.report.db")
 def test_validate_unique_creation_method_no_duplicate_returns_true(
     mock_db: MagicMock,
     mock_uid: MagicMock,
 ) -> None:
-    from superset.daos.report import ReportScheduleDAO
+    from axbi.daos.report import ReportScheduleDAO
 
     mock_db.session.query.return_value.filter_by.return_value.filter.return_value = (
         MagicMock()
@@ -48,11 +48,11 @@ def test_validate_unique_creation_method_no_duplicate_returns_true(
     assert ReportScheduleDAO.validate_unique_creation_method(dashboard_id=1) is True
 
 
-@patch("superset.daos.report.db")
+@patch("axbi.daos.report.db")
 def test_find_last_error_notification_returns_none_after_success(
     mock_db: MagicMock,
 ) -> None:
-    from superset.daos.report import ReportScheduleDAO
+    from axbi.daos.report import ReportScheduleDAO
 
     schedule = MagicMock()
     error_log = MagicMock()
@@ -72,11 +72,11 @@ def test_find_last_error_notification_returns_none_after_success(
     assert result is None
 
 
-@patch("superset.daos.report.db")
+@patch("axbi.daos.report.db")
 def test_find_last_error_notification_returns_log_when_only_errors(
     mock_db: MagicMock,
 ) -> None:
-    from superset.daos.report import ReportScheduleDAO
+    from axbi.daos.report import ReportScheduleDAO
 
     schedule = MagicMock()
     error_log = MagicMock()

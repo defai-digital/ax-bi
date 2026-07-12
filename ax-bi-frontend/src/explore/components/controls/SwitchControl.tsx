@@ -17,8 +17,8 @@
  * under the License.
  */
 import { type ReactNode } from 'react';
-import { css } from '@apache-superset/core/theme';
-import { Switch } from '@superset-ui/core/components';
+import { css } from '@ax-bi/core/theme';
+import { Switch } from '@ax-bi/ui-core/components';
 import ControlHeader from '../ControlHeader';
 
 interface SwitchControlProps {

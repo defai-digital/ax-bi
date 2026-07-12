@@ -17,7 +17,7 @@
  * under the License.
  */
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DataMask,
   DataMaskStateWithId,
@@ -27,13 +27,8 @@ import {
   NativeFilterTarget,
   Filters,
   NativeFilterType,
-} from '@superset-ui/core';
-import {
-  styled,
-  css,
-  useTheme,
-  SupersetTheme,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, css, useTheme, AxBITheme } from '@ax-bi/core/theme';
 import {
   Typography,
   Select,
@@ -43,14 +38,14 @@ import {
   Icons,
   Tooltip,
   FormItem,
-} from '@superset-ui/core/components';
-import { propertyComparator } from '@superset-ui/core/components/Select/utils';
+} from '@ax-bi/ui-core/components';
+import { propertyComparator } from '@ax-bi/ui-core/components/Select/utils';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'src/dashboard/types';
 import { setPendingChartCustomization } from 'src/dashboard/actions/chartCustomizationActions';
 import { TooltipWithTruncation } from 'src/dashboard/components/nativeFilters/FilterCard/TooltipWithTruncation';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
-import { cachedSupersetGet } from 'src/utils/cachedSupersetGet';
+import { cachedAxBIGet } from 'src/utils/cachedAxBIGet';
 import { dispatchChartCustomizationHoverAction } from './utils';
 import { mergeExtraFormData } from '../../utils';
 import {
@@ -177,7 +172,7 @@ const ToolTipContainer = styled.div`
 
 const RequiredFieldIndicator = () => (
   <span
-    css={(theme: SupersetTheme) => ({
+    css={(theme: AxBITheme) => ({
       color: theme.colorError,
       fontSize: `${theme.fontSizeSM}px`,
       paddingLeft: '1px',
@@ -468,7 +463,7 @@ const GroupByFilterCard: FC<GroupByFilterCardProps> = ({
       setLoading(true);
       try {
         const endpoint = `/api/v1/dataset/${datasetId}`;
-        const { json } = await cachedSupersetGet({ endpoint });
+        const { json } = await cachedAxBIGet({ endpoint });
 
         if (json?.result) {
           if (json.result.table_name) {

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryMode, TimeGranularity, VizType } from '@superset-ui/core';
+import { QueryMode, TimeGranularity, VizType } from '@ax-bi/ui-core';
 import buildQuery, {
   buildQuery as buildQueryUncached,
 } from '../src/buildQuery';

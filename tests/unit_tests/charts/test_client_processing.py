@@ -21,9 +21,9 @@ import pytest
 from flask_babel import lazy_gettext as _
 from sqlalchemy.orm.session import Session
 
-from superset.charts.client_processing import apply_client_processing, pivot_df, table
-from superset.common.chart_data import ChartDataResultFormat
-from superset.utils.core import GenericDataType
+from axbi.charts.client_processing import apply_client_processing, pivot_df, table
+from axbi.common.chart_data import ChartDataResultFormat
+from axbi.utils.core import GenericDataType
 from tests.conftest import with_config
 
 
@@ -2576,9 +2576,9 @@ def test_apply_client_processing_json_format_data_is_none():
 
 
 def test_apply_client_processing_verbose_map(session: Session):
-    from superset import db
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric
-    from superset.models.core import Database
+    from axbi import db
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member

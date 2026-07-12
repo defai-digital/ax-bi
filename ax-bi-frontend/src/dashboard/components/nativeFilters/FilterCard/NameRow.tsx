@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useSelector } from 'react-redux';
-import { isChartCustomization, useTruncation } from '@superset-ui/core';
-import { css, SupersetTheme, useTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { isChartCustomization, useTruncation } from '@ax-bi/ui-core';
+import { css, AxBITheme, useTheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { useFilterConfigModal } from 'src/dashboard/components/nativeFilters/FilterBar/FilterConfigurationLink/useFilterConfigModal';
 import { RootState } from 'src/dashboard/types';
 import { Row, FilterName, InternalRow } from './Styles';
@@ -51,7 +51,7 @@ export const NameRow = ({
 
   return (
     <Row
-      css={(theme: SupersetTheme) => css`
+      css={(theme: AxBITheme) => css`
         margin-bottom: ${theme.sizeUnit * 3}px;
         justify-content: space-between;
       `}
@@ -67,7 +67,7 @@ export const NameRow = ({
         ) : (
           <Icons.FilterOutlined
             iconSize="s"
-            css={(theme: SupersetTheme) => css`
+            css={(theme: AxBITheme) => css`
               margin-right: ${theme.sizeUnit}px;
             `}
           />

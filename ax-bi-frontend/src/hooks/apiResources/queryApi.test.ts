@@ -20,8 +20,8 @@
 import fetchMock from 'fetch-mock';
 import configureStore, { MockStore } from 'redux-mock-store';
 import rison from 'rison';
-import { JsonResponse } from '@superset-ui/core';
-import { supersetClientQuery } from './queryApi';
+import { JsonResponse } from '@ax-bi/ui-core';
+import { axbiClientQuery } from './queryApi';
 
 const getBaseQueryApiMock = (store: MockStore) => ({
   ...new AbortController(),
@@ -39,7 +39,7 @@ afterEach(() => {
   fetchMock.clearHistory().removeRoutes();
 });
 
-test('supersetClientQuery should build the endpoint with rison encoded query string and return data when successful', async () => {
+test('axbiClientQuery should build the endpoint with rison encoded query string and return data when successful', async () => {
   const expectedData = { id: 1, name: 'Test' };
   const expectedUrl = '/api/v1/get-endpoint/';
   const expectedPostUrl = '/api/v1/post-endpoint/';
@@ -48,7 +48,7 @@ test('supersetClientQuery should build the endpoint with rison encoded query str
   const postEndpoint = `glob:*${expectedPostUrl}?q=${rison.encode(urlParams)}`;
   fetchMock.get(getEndpoint, { result: expectedData });
   fetchMock.post(postEndpoint, { result: expectedData });
-  const result = await supersetClientQuery(
+  const result = await axbiClientQuery(
     {
       endpoint: expectedUrl,
       urlParams,
@@ -59,7 +59,7 @@ test('supersetClientQuery should build the endpoint with rison encoded query str
   expect(fetchMock.callHistory.calls(getEndpoint)).toHaveLength(1);
   expect(fetchMock.callHistory.calls(postEndpoint)).toHaveLength(0);
   expect((result.data as JsonResponse).json.result).toEqual(expectedData);
-  await supersetClientQuery(
+  await axbiClientQuery(
     {
       method: 'post',
       endpoint: expectedPostUrl,
@@ -72,12 +72,12 @@ test('supersetClientQuery should build the endpoint with rison encoded query str
   expect(fetchMock.callHistory.calls(postEndpoint)).toHaveLength(1);
 });
 
-test('supersetClientQuery should return error when unsuccessful', async () => {
+test('axbiClientQuery should return error when unsuccessful', async () => {
   const expectedError = 'Request failed';
   const expectedUrl = '/api/v1/get-endpoint/';
   const endpoint = `glob:*${expectedUrl}`;
   fetchMock.get(endpoint, { throws: new Error(expectedError) });
-  const result = await supersetClientQuery(
+  const result = await axbiClientQuery(
     { endpoint },
     getBaseQueryApiMock(store),
     {},
@@ -85,13 +85,13 @@ test('supersetClientQuery should return error when unsuccessful', async () => {
   expect(result.error).toEqual({ error: expectedError, errors: [] });
 });
 
-test('supersetClientQuery should return parsed response by parseMethod', async () => {
+test('axbiClientQuery should return parsed response by parseMethod', async () => {
   const expectedUrl = '/api/v1/get-endpoint/';
   const endpoint = `glob:*${expectedUrl}`;
   const bitIntVal = '9223372036854775807';
   const expectedData = `{ "id": ${bitIntVal} }`;
   fetchMock.get(endpoint, expectedData);
-  const result = await supersetClientQuery(
+  const result = await axbiClientQuery(
     { endpoint, parseMethod: 'json-bigint' },
     getBaseQueryApiMock(store),
     {},

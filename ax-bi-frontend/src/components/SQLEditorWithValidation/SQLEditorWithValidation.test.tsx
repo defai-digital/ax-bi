@@ -22,13 +22,13 @@ import {
   fireEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { SqlExpressionType } from '../../types/SqlExpression';
 import SQLEditorWithValidation from './index';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     post: jest.fn(),
   },
 }));
@@ -93,8 +93,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('shows validating state when validation is in progress', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
 
     // Mock a slow API response
@@ -119,8 +119,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('shows success state when validation passes', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({ json: { result: [] } } as any);
 
@@ -140,8 +140,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('shows error state when validation fails', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({
       json: {
@@ -171,8 +171,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('handles API errors gracefully', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockRejectedValue(new Error('Network error'));
 
@@ -191,8 +191,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('sends correct payload for column expression', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({ json: { result: [] } } as any);
 
@@ -223,8 +223,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('sends correct payload for WHERE expression', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({ json: { result: [] } } as any);
 
@@ -254,8 +254,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('sends correct payload for HAVING expression', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({ json: { result: [] } } as any);
 
@@ -316,8 +316,8 @@ describe('SQLEditorWithValidation', () => {
 
   test('calls onValidationComplete callback when provided', async () => {
     const onValidationComplete = jest.fn();
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({ json: { result: [] } } as any);
 
@@ -340,8 +340,8 @@ describe('SQLEditorWithValidation', () => {
 
   test('calls onValidationComplete with errors when validation fails', async () => {
     const onValidationComplete = jest.fn();
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     const validationError = {
       message: "Column 'invalid_col' does not exist",
@@ -376,8 +376,8 @@ describe('SQLEditorWithValidation', () => {
     const longErrorMessage =
       'This is a very long error message that should be truncated in the display but shown in full in the tooltip when user hovers over it';
 
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({
       json: {
@@ -412,8 +412,8 @@ describe('SQLEditorWithValidation', () => {
   });
 
   test('handles empty response gracefully', async () => {
-    const mockPost = SupersetClient.post as jest.MockedFunction<
-      typeof SupersetClient.post
+    const mockPost = AxBIClient.post as jest.MockedFunction<
+      typeof AxBIClient.post
     >;
     mockPost.mockResolvedValue({ json: { result: null } } as any);
 

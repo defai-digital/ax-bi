@@ -16,7 +16,7 @@
 # under the License.
 import pytest
 
-from superset.runtime_modernization.shadow import (
+from axbi.runtime_modernization.shadow import (
     execute_with_shadow,
     ShadowMismatchReport,
 )

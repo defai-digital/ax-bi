@@ -21,15 +21,15 @@ from flask.ctx import AppContext
 from flask_appbuilder.security.sqla.models import User
 from sqlalchemy.orm import Session  # noqa: F401
 
-from superset import db
-from superset.commands.dashboard.exceptions import (
+from axbi import db
+from axbi.commands.dashboard.exceptions import (
     DashboardAccessDeniedError,  # noqa: F401
 )
-from superset.commands.temporary_cache.entry import Entry
-from superset.extensions import cache_manager
-from superset.models.dashboard import Dashboard
-from superset.temporary_cache.utils import cache_key
-from superset.utils import json
+from axbi.commands.temporary_cache.entry import Entry
+from axbi.extensions import cache_manager
+from axbi.models.dashboard import Dashboard
+from axbi.temporary_cache.utils import cache_key
+from axbi.utils import json
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
     load_world_bank_data,  # noqa: F401

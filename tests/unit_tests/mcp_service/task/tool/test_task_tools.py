@@ -27,14 +27,14 @@ from fastmcp import Client
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.task.schemas import ListTasksRequest, TaskColumnFilter
-from superset.mcp_service.utils import sanitize_for_llm_context
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.task.schemas import ListTasksRequest, TaskColumnFilter
+from axbi.mcp_service.utils import sanitize_for_llm_context
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 SAMPLE_UUID = str(uuid.uuid4())
-list_tasks_module = importlib.import_module("superset.mcp_service.task.tool.list_tasks")
+list_tasks_module = importlib.import_module("axbi.mcp_service.task.tool.list_tasks")
 
 
 def create_mock_task(
@@ -68,7 +68,7 @@ def mcp_server():
 
 @pytest.fixture(autouse=True)
 def mock_auth():
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "testuser"
@@ -91,7 +91,7 @@ class TestTaskColumnFilterSchema:
             TaskColumnFilter(col="uuid", opr="eq", value="some-uuid")
 
 
-@patch("superset.daos.tasks.TaskDAO.list")
+@patch("axbi.daos.tasks.TaskDAO.list")
 @pytest.mark.asyncio
 async def test_list_tasks_basic(mock_list, mcp_server):
     """Basic task listing returns structured response."""
@@ -191,7 +191,7 @@ async def test_list_tasks_serves_valid_sidecar_response(mcp_server):
     )
 
 
-@patch("superset.daos.tasks.TaskDAO.list")
+@patch("axbi.daos.tasks.TaskDAO.list")
 @pytest.mark.asyncio
 async def test_list_tasks_serving_falls_back_on_invalid_candidate(
     mock_list, mcp_server
@@ -237,7 +237,7 @@ async def test_list_tasks_serving_falls_back_on_invalid_candidate(
     )
 
 
-@patch("superset.daos.tasks.TaskDAO.list")
+@patch("axbi.daos.tasks.TaskDAO.list")
 @pytest.mark.asyncio
 async def test_list_tasks_with_status_filter(mock_list, mcp_server):
     """Status filter is passed through to the DAO correctly."""
@@ -263,7 +263,7 @@ async def test_list_tasks_with_status_filter(mock_list, mcp_server):
     assert status_filters[0].value == "pending"
 
 
-@patch("superset.daos.tasks.TaskDAO.list")
+@patch("axbi.daos.tasks.TaskDAO.list")
 @pytest.mark.asyncio
 async def test_list_tasks_taskfilter_scoping_is_applied(mock_list, mcp_server):
     """TaskDAO.list is called with base_filter (TaskFilter) applied via DAO class."""
@@ -277,7 +277,7 @@ async def test_list_tasks_taskfilter_scoping_is_applied(mock_list, mcp_server):
     assert mock_list.called
 
 
-@patch("superset.daos.tasks.TaskDAO.list")
+@patch("axbi.daos.tasks.TaskDAO.list")
 @pytest.mark.asyncio
 async def test_list_tasks_pagination(mock_list, mcp_server):
     """Pagination metadata is correct."""
@@ -297,7 +297,7 @@ async def test_list_tasks_pagination(mock_list, mcp_server):
     assert data["has_next"] is True
 
 
-@patch("superset.daos.tasks.TaskDAO.list")
+@patch("axbi.daos.tasks.TaskDAO.list")
 @pytest.mark.asyncio
 async def test_list_tasks_uuid_in_response(mock_list, mcp_server):
     """Task UUID is returned as a string in the response."""
@@ -312,7 +312,7 @@ async def test_list_tasks_uuid_in_response(mock_list, mcp_server):
     assert data["tasks"][0]["uuid"] == task_uuid
 
 
-@patch("superset.daos.tasks.TaskDAO.find_by_id")
+@patch("axbi.daos.tasks.TaskDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_task_info_by_integer_id(mock_find, mcp_server):
     """get_task_info resolves a task by integer ID."""
@@ -328,7 +328,7 @@ async def test_get_task_info_by_integer_id(mock_find, mcp_server):
     assert data["status"] == "in_progress"
 
 
-@patch("superset.daos.tasks.TaskDAO.find_by_id")
+@patch("axbi.daos.tasks.TaskDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_task_info_by_uuid(mock_find, mcp_server):
     """get_task_info resolves a task by UUID string."""
@@ -349,7 +349,7 @@ async def test_get_task_info_by_uuid(mock_find, mcp_server):
     mock_find.assert_called_once_with(task_uuid, id_column="uuid", query_options=None)
 
 
-@patch("superset.daos.tasks.TaskDAO.find_by_id")
+@patch("axbi.daos.tasks.TaskDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_task_info_sanitizes_task_key_and_name(mock_find, mcp_server):
     """User-controlled task fields are wrapped before entering LLM context."""
@@ -374,7 +374,7 @@ async def test_get_task_info_sanitizes_task_key_and_name(mock_find, mcp_server):
     )
 
 
-@patch("superset.daos.tasks.TaskDAO.find_by_id")
+@patch("axbi.daos.tasks.TaskDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_task_info_not_found(mock_find, mcp_server):
     """get_task_info returns error when task does not exist."""
@@ -389,7 +389,7 @@ async def test_get_task_info_not_found(mock_find, mcp_server):
     assert data["error_type"] == "not_found"
 
 
-@patch("superset.daos.tasks.TaskDAO.list")
+@patch("axbi.daos.tasks.TaskDAO.list")
 @pytest.mark.asyncio
 async def test_list_tasks_non_admin_sees_only_subscribed(mock_list, mcp_server):
     """Non-admin users only receive tasks their subscriptions allow.

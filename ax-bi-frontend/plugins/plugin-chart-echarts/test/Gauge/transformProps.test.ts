@@ -21,8 +21,8 @@ import {
   ChartProps,
   SqlaFormData,
   VizType,
-} from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import transformProps, {
   getIntervalBoundsAndColors,
 } from '../../src/Gauge/transformProps';
@@ -39,7 +39,7 @@ describe('Echarts Gauge transformProps', () => {
     maxVal: 100,
     startAngle: 225,
     endAngle: -45,
-    colorScheme: 'SUPERSET_DEFAULT',
+    colorScheme: 'AXBI_DEFAULT',
     fontSize: 14,
     numberFormat: 'SMART_NUMBER',
     valueFormatter: '{value}',
@@ -71,7 +71,7 @@ describe('Echarts Gauge transformProps', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     };
 
     const chartProps = new ChartProps(chartPropsConfig);
@@ -121,7 +121,7 @@ describe('Echarts Gauge transformProps', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     };
 
     const chartProps = new ChartProps(chartPropsConfig);
@@ -182,7 +182,7 @@ describe('Echarts Gauge transformProps', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     };
 
     const chartProps = new ChartProps(chartPropsConfig);
@@ -246,7 +246,7 @@ describe('Echarts Gauge transformProps', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     };
 
     const chartProps = new ChartProps(chartPropsConfig);
@@ -290,7 +290,7 @@ describe('Min/Max calculation and axis labels', () => {
     rowLimit: 10,
     startAngle: 225,
     endAngle: -45,
-    colorScheme: 'SUPERSET_DEFAULT',
+    colorScheme: 'AXBI_DEFAULT',
     fontSize: 14,
     numberFormat: 'SMART_NUMBER',
     valueFormatter: '{value}',
@@ -323,7 +323,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -351,7 +351,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -379,7 +379,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -407,7 +407,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -435,7 +435,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -463,7 +463,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -491,7 +491,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -520,7 +520,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -553,7 +553,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -584,7 +584,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -619,7 +619,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -647,7 +647,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -676,7 +676,7 @@ describe('Min/Max calculation and axis labels', () => {
       width: 800,
       height: 600,
       queriesData,
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const result = transformProps(chartProps as EchartsGaugeChartProps);
@@ -688,9 +688,7 @@ describe('Min/Max calculation and axis labels', () => {
 
 describe('getIntervalBoundsAndColors', () => {
   test('should generate correct interval bounds and colors', () => {
-    const colorFn = CategoricalColorNamespace.getScale(
-      'supersetColors' as string,
-    );
+    const colorFn = CategoricalColorNamespace.getScale('axbiColors' as string);
     expect(getIntervalBoundsAndColors('', '', colorFn, 0, 10)).toEqual([]);
     expect(getIntervalBoundsAndColors('4, 10', '1, 2', colorFn, 0, 10)).toEqual(
       [

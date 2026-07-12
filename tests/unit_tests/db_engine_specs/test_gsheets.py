@@ -27,15 +27,15 @@ from requests.exceptions import HTTPError
 from shillelagh.exceptions import UnauthenticatedError
 from sqlalchemy.engine.url import make_url
 
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import OAuth2TokenRefreshError, SupersetException
-from superset.sql.parse import Table
-from superset.superset_typing import OAuth2ClientConfig
-from superset.utils import json
-from superset.utils.oauth2 import decode_oauth2_state
+from axbi.axbi_typing import OAuth2ClientConfig
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBIException, OAuth2TokenRefreshError
+from axbi.sql.parse import Table
+from axbi.utils import json
+from axbi.utils.oauth2 import decode_oauth2_state
 
 if TYPE_CHECKING:
-    from superset.db_engine_specs.base import OAuth2State
+    from axbi.db_engine_specs.base import OAuth2State
 
 # Skip these tests if shillelagh can't import pip
 # This happens in some environments where pip is not available as a module
@@ -60,12 +60,12 @@ class ProgrammingError(Exception):
 
 
 def test_validate_parameters_simple(mocker: MockerFixture) -> None:
-    from superset.db_engine_specs.gsheets import (
+    from axbi.db_engine_specs.gsheets import (
         GSheetsEngineSpec,
         GSheetsPropertiesType,
     )
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.org"
 
     properties: GSheetsPropertiesType = {
@@ -79,12 +79,12 @@ def test_validate_parameters_simple(mocker: MockerFixture) -> None:
 
 
 def test_validate_parameters_no_catalog(mocker: MockerFixture) -> None:
-    from superset.db_engine_specs.gsheets import (
+    from axbi.db_engine_specs.gsheets import (
         GSheetsEngineSpec,
         GSheetsPropertiesType,
     )
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.org"
 
     properties: GSheetsPropertiesType = {
@@ -96,9 +96,9 @@ def test_validate_parameters_no_catalog(mocker: MockerFixture) -> None:
     }
     errors = GSheetsEngineSpec.validate_parameters(properties)
     assert errors == [
-        SupersetError(
+        AxBIError(
             message="Sheet name is required",
-            error_type=SupersetErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
+            error_type=AxBIErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
             level=ErrorLevel.WARNING,
             extra={"catalog": {"idx": 0, "name": True}},
         ),
@@ -106,12 +106,12 @@ def test_validate_parameters_no_catalog(mocker: MockerFixture) -> None:
 
 
 def test_validate_parameters_simple_with_in_root_catalog(mocker: MockerFixture) -> None:
-    from superset.db_engine_specs.gsheets import (
+    from axbi.db_engine_specs.gsheets import (
         GSheetsEngineSpec,
         GSheetsPropertiesType,
     )
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.org"
 
     properties: GSheetsPropertiesType = {
@@ -123,9 +123,9 @@ def test_validate_parameters_simple_with_in_root_catalog(mocker: MockerFixture) 
     }
     errors = GSheetsEngineSpec.validate_parameters(properties)
     assert errors == [
-        SupersetError(
+        AxBIError(
             message="Sheet name is required",
-            error_type=SupersetErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
+            error_type=AxBIErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
             level=ErrorLevel.WARNING,
             extra={"catalog": {"idx": 0, "name": True}},
         ),
@@ -135,15 +135,15 @@ def test_validate_parameters_simple_with_in_root_catalog(mocker: MockerFixture) 
 def test_validate_parameters_catalog(
     mocker: MockerFixture,
 ) -> None:
-    from superset.db_engine_specs.gsheets import (
+    from axbi.db_engine_specs.gsheets import (
         GSheetsEngineSpec,
         GSheetsPropertiesType,
     )
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.com"
 
-    create_engine = mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    create_engine = mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
     conn = create_engine.return_value.connect.return_value
     results = conn.execute.return_value
     results.fetchall.side_effect = [
@@ -163,13 +163,13 @@ def test_validate_parameters_catalog(
     errors = GSheetsEngineSpec.validate_parameters(properties)  # ignore: type
 
     assert errors == [
-        SupersetError(
+        AxBIError(
             message=(
                 "The URL could not be identified. Please check for typos "
                 "and make sure that ‘Type of Google Sheets allowed’ "
                 "selection matches the input."
             ),
-            error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.WARNING,
             extra={
                 "catalog": {
@@ -188,13 +188,13 @@ def test_validate_parameters_catalog(
                 ],
             },
         ),
-        SupersetError(
+        AxBIError(
             message=(
                 "The URL could not be identified. Please check for typos "
                 "and make sure that ‘Type of Google Sheets allowed’ "
                 "selection matches the input."
             ),
-            error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.WARNING,
             extra={
                 "catalog": {
@@ -231,15 +231,15 @@ def test_validate_parameters_catalog(
 def test_validate_parameters_catalog_and_credentials(
     mocker: MockerFixture,
 ) -> None:
-    from superset.db_engine_specs.gsheets import (
+    from axbi.db_engine_specs.gsheets import (
         GSheetsEngineSpec,
         GSheetsPropertiesType,
     )
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.com"
 
-    create_engine = mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    create_engine = mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
     conn = create_engine.return_value.connect.return_value
     results = conn.execute.return_value
     results.fetchall.side_effect = [
@@ -261,13 +261,13 @@ def test_validate_parameters_catalog_and_credentials(
     }
     errors = GSheetsEngineSpec.validate_parameters(properties)  # ignore: type
     assert errors == [
-        SupersetError(
+        AxBIError(
             message=(
                 "The URL could not be identified. Please check for typos "
                 "and make sure that ‘Type of Google Sheets allowed’ "
                 "selection matches the input."
             ),
-            error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+            error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
             level=ErrorLevel.WARNING,
             extra={
                 "catalog": {
@@ -305,7 +305,7 @@ def test_mask_encrypted_extra() -> None:
     """
     Test that the private key is masked when the database is edited.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     config = json.dumps(
         {
@@ -330,7 +330,7 @@ def test_unmask_encrypted_extra() -> None:
     """
     Test that the private key can be reused from the previous `encrypted_extra`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     old = json.dumps(
         {
@@ -363,7 +363,7 @@ def test_unmask_encrypted_extra_field_changeed() -> None:
     """
     Test that the private key is not reused when the field has changed.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     old = json.dumps(
         {
@@ -396,7 +396,7 @@ def test_unmask_encrypted_extra_when_old_is_none() -> None:
     """
     Test that a `None` value for the old field works for `encrypted_extra`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     old = None
     new = json.dumps(
@@ -422,7 +422,7 @@ def test_unmask_encrypted_extra_when_new_is_none() -> None:
     """
     Test that a `None` value for the new field works for `encrypted_extra`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     old = json.dumps(
         {
@@ -441,9 +441,9 @@ def test_upload_new(mocker: MockerFixture) -> None:
     """
     Test file upload when the table does not exist.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    mocker.patch("superset.db_engine_specs.gsheets.db")
+    mocker.patch("axbi.db_engine_specs.gsheets.db")
     get_adapter_for_table_name = mocker.patch(
         "shillelagh.backends.apsw.dialects.base.get_adapter_for_table_name"
     )
@@ -493,9 +493,9 @@ def test_upload_new_rejects_malformed_create_response(
     payload: dict[str, Any],
 ) -> None:
     """Malformed Google Sheets create responses should raise a clear error."""
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    mocker.patch("superset.db_engine_specs.gsheets.db")
+    mocker.patch("axbi.db_engine_specs.gsheets.db")
     get_adapter_for_table_name = mocker.patch(
         "shillelagh.backends.apsw.dialects.base.get_adapter_for_table_name"
     )
@@ -509,7 +509,7 @@ def test_upload_new_rejects_malformed_create_response(
     table = Table("sample_data")
 
     with pytest.raises(
-        SupersetException,
+        AxBIException,
         match="Google Sheets API returned an unexpected response",
     ):
         GSheetsEngineSpec.df_to_sql(database, table, df, {})
@@ -529,12 +529,12 @@ def test_do_post_rejects_malformed_response_payloads(
     message: str,
 ) -> None:
     """Malformed Google API responses should not leak raw shape errors."""
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     session = mocker.MagicMock()
     session.post.return_value.json.return_value = payload
 
-    with pytest.raises(SupersetException, match=message):
+    with pytest.raises(AxBIException, match=message):
         GSheetsEngineSpec._do_post(session, "https://docs.example.org", {})
 
 
@@ -542,9 +542,9 @@ def test_upload_existing(mocker: MockerFixture) -> None:
     """
     Test file upload when the table does exist.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    mocker.patch("superset.db_engine_specs.gsheets.db")
+    mocker.patch("axbi.db_engine_specs.gsheets.db")
     get_adapter_for_table_name = mocker.patch(
         "shillelagh.backends.apsw.dialects.base.get_adapter_for_table_name"
     )
@@ -566,11 +566,11 @@ def test_upload_existing(mocker: MockerFixture) -> None:
     df = pd.DataFrame({"col": [1, "foo", 3.0]})
     table = Table("sample_data")
 
-    with pytest.raises(SupersetException) as excinfo:
+    with pytest.raises(AxBIException) as excinfo:
         GSheetsEngineSpec.df_to_sql(database, table, df, {"if_exists": "append"})
     assert str(excinfo.value) == "Append operation not currently supported"
 
-    with pytest.raises(SupersetException) as excinfo:
+    with pytest.raises(AxBIException) as excinfo:
         GSheetsEngineSpec.df_to_sql(database, table, df, {"if_exists": "fail"})
     assert str(excinfo.value) == "Table already exists"
 
@@ -601,12 +601,12 @@ def test_impersonate_user_username(mocker: MockerFixture) -> None:
     """
     Test passing a username to `impersonate_user`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     user = mocker.MagicMock()
     user.email = "alice@example.org"
     mocker.patch(
-        "superset.db_engine_specs.gsheets.security_manager.find_user",
+        "axbi.db_engine_specs.gsheets.security_manager.find_user",
         return_value=user,
     )
     database = mocker.MagicMock()
@@ -624,7 +624,7 @@ def test_impersonate_user_access_token(mocker: MockerFixture) -> None:
     """
     Test passing an access token to `impersonate_user`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     database = mocker.MagicMock()
 
@@ -641,7 +641,7 @@ def test_is_oauth2_enabled_no_config(mocker: MockerFixture) -> None:
     """
     Test `is_oauth2_enabled` when OAuth2 is not configured.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     mocker.patch(
         "flask.current_app.config",
@@ -655,7 +655,7 @@ def test_is_oauth2_enabled_config(mocker: MockerFixture) -> None:
     """
     Test `is_oauth2_enabled` when OAuth2 is configured.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     mocker.patch(
         "flask.current_app.config",
@@ -701,7 +701,7 @@ def test_get_oauth2_authorization_uri(
     """
     Test `get_oauth2_authorization_uri`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     state: OAuth2State = {
         "database_id": 1,
@@ -737,9 +737,9 @@ def test_get_oauth2_token(
     """
     Test `get_oauth2_token`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    requests = mocker.patch("superset.db_engine_specs.base.requests")
+    requests = mocker.patch("axbi.db_engine_specs.base.requests")
     requests.post().json.return_value = {
         "access_token": "access-token",
         "expires_in": 3600,
@@ -775,9 +775,9 @@ def test_get_oauth2_fresh_token(
     """
     Test `get_oauth2_token`.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    requests = mocker.patch("superset.db_engine_specs.base.requests")
+    requests = mocker.patch("axbi.db_engine_specs.base.requests")
     requests.post().json.return_value = {
         "access_token": "access-token",
         "expires_in": 3600,
@@ -815,7 +815,7 @@ def test_update_params_from_encrypted_extra(mocker: MockerFixture) -> None:
       top-level)
     - other keys must remain as top-level params
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     database = mocker.MagicMock(
         encrypted_extra=json.dumps(
@@ -855,9 +855,9 @@ def test_needs_oauth2_with_credentials_error(mocker: MockerFixture) -> None:
     When a token is manually revoked on Google side, google-auth tries to
     refresh credentials but fails with this message.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user = mocker.MagicMock()
 
     ex = Exception("credentials do not contain the necessary fields")
@@ -871,9 +871,9 @@ def test_needs_oauth2_with_default_credentials_not_found(
     Test that needs_oauth2 returns True when Application Default Credentials
     are not configured.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user = mocker.MagicMock()
 
     ex = Exception(
@@ -888,9 +888,9 @@ def test_needs_oauth2_with_other_error(mocker: MockerFixture) -> None:
     """
     Test that needs_oauth2 returns False for other errors.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user = mocker.MagicMock()
 
     ex = Exception("Some other error")
@@ -903,9 +903,9 @@ def test_needs_oauth2_with_shillelagh_unauthenticated_error(
     """
     Test that needs_oauth2 returns True when UnauthenticatedError is raised.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user = mocker.MagicMock()
 
     ex = UnauthenticatedError("Token has been revoked")
@@ -919,9 +919,9 @@ def test_needs_oauth2_with_unrelated_exception_type(
     Test that an unrelated exception type (with no matching message) returns
     False.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user = mocker.MagicMock()
 
     assert GSheetsEngineSpec.needs_oauth2(ValueError("unrelated")) is False
@@ -934,9 +934,9 @@ def test_get_oauth2_fresh_token_success(
     """
     Test that get_oauth2_fresh_token returns token on success.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    requests = mocker.patch("superset.db_engine_specs.base.requests")
+    requests = mocker.patch("axbi.db_engine_specs.base.requests")
     requests.post().json.return_value = {
         "access_token": "new-access-token",
         "expires_in": 3600,
@@ -958,9 +958,9 @@ def test_get_oauth2_fresh_token_invalid_grant(
 
     When a token is revoked on Google side, the refresh request returns 400.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    requests = mocker.patch("superset.db_engine_specs.base.requests")
+    requests = mocker.patch("axbi.db_engine_specs.base.requests")
     requests.post().status_code = 400
     requests.post().text = (
         '{"error": "invalid_grant",'
@@ -978,7 +978,7 @@ def test_get_oauth2_fresh_token_other_http_error(
     """
     Test that get_oauth2_fresh_token re-raises non-invalid_grant HTTP errors.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
     mock_response = mocker.MagicMock()
     mock_response.status_code = 500
@@ -987,7 +987,7 @@ def test_get_oauth2_fresh_token_other_http_error(
     http_error = HTTPError()
     http_error.response = mock_response
 
-    requests = mocker.patch("superset.db_engine_specs.base.requests")
+    requests = mocker.patch("axbi.db_engine_specs.base.requests")
     requests.post().raise_for_status.side_effect = http_error
 
     with pytest.raises(HTTPError):
@@ -998,13 +998,13 @@ def test_get_table_names_triggers_oauth2_dance(mocker: MockerFixture) -> None:
     """
     Test that get_table_names triggers OAuth2 dance when no token exists.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.id = 1
 
     get_oauth2_access_token = mocker.patch(
-        "superset.db_engine_specs.gsheets.get_oauth2_access_token",
+        "axbi.db_engine_specs.gsheets.get_oauth2_access_token",
         return_value=None,
     )
 
@@ -1028,18 +1028,18 @@ def test_get_table_names_does_not_trigger_oauth2_when_token_exists(
     """
     Test that get_table_names does not trigger OAuth2 dance when token exists.
     """
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.id = 1
 
     get_oauth2_access_token = mocker.patch(
-        "superset.db_engine_specs.gsheets.get_oauth2_access_token",
+        "axbi.db_engine_specs.gsheets.get_oauth2_access_token",
         return_value="valid-token",
     )
 
     mocker.patch(
-        "superset.db_engine_specs.shillelagh.ShillelaghEngineSpec.get_table_names",
+        "axbi.db_engine_specs.shillelagh.ShillelaghEngineSpec.get_table_names",
         return_value={"sheet1", "sheet2"},
     )
 
@@ -1067,15 +1067,15 @@ def test_validate_parameters_skips_oauth2_connections_with_parameters(
     When oauth2_client_info is present in parameters, the validation should
     skip URL checks since the user will authenticate via OAuth2.
     """
-    from superset.db_engine_specs.gsheets import (
+    from axbi.db_engine_specs.gsheets import (
         GSheetsEngineSpec,
         GSheetsPropertiesType,
     )
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.org"
 
-    create_engine = mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    create_engine = mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
     conn = create_engine.return_value.connect.return_value
     results = conn.execute.return_value
     results.fetchall.side_effect = ProgrammingError(
@@ -1107,15 +1107,15 @@ def test_validate_parameters_skips_oauth2_connections_with_masked_encrypted_extr
     When oauth2_client_info is present in masked_encrypted_extra (used during
     create/update), the validation should skip URL checks.
     """
-    from superset.db_engine_specs.gsheets import (
+    from axbi.db_engine_specs.gsheets import (
         GSheetsEngineSpec,
         GSheetsPropertiesType,
     )
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.org"
 
-    create_engine = mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    create_engine = mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
     conn = create_engine.return_value.connect.return_value
     results = conn.execute.return_value
     results.fetchall.side_effect = ProgrammingError(
@@ -1148,12 +1148,12 @@ def test_validate_parameters_ignores_malformed_masked_encrypted_extra(
     masked_encrypted_extra: object,
 ) -> None:
     """Malformed masked encrypted extra should not break validation."""
-    from superset.db_engine_specs.gsheets import GSheetsEngineSpec
+    from axbi.db_engine_specs.gsheets import GSheetsEngineSpec
 
-    g = mocker.patch("superset.db_engine_specs.gsheets.g")
+    g = mocker.patch("axbi.db_engine_specs.gsheets.g")
     g.user.email = "admin@example.org"
 
-    create_engine = mocker.patch("superset.db_engine_specs.gsheets.create_engine")
+    create_engine = mocker.patch("axbi.db_engine_specs.gsheets.create_engine")
     conn = create_engine.return_value.connect.return_value
     results = conn.execute.return_value
     results.fetchall.return_value = []

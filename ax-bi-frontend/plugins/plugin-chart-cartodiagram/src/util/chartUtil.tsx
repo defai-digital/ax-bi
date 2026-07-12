@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { AxBITheme } from '@ax-bi/core/theme';
 import { ChartConfig, ChartConfigFeature } from '../types';
 import ChartWrapper from '../components/ChartWrapper';
 
 /**
  * Create a chart component for a location.
  *
- * @param chartVizType The superset visualization type
+ * @param chartVizType The axbi visualization type
  * @param chartConfigs The chart configurations
  * @param chartWidth The chart width
  * @param chartHeight The chart height
@@ -35,7 +35,7 @@ export const createChartComponent = (
   chartConfig: ChartConfigFeature,
   chartWidth: number,
   chartHeight: number,
-  chartTheme: SupersetTheme,
+  chartTheme: AxBITheme,
   chartLocale: string,
 ) => (
   <ChartWrapper

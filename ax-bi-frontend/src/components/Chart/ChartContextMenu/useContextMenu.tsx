@@ -17,7 +17,7 @@
  * under the License.
  */
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { BaseFormData, ContextMenuFilters } from '@superset-ui/core';
+import { BaseFormData, ContextMenuFilters } from '@ax-bi/ui-core';
 import ChartContextMenu, {
   ChartContextMenuRef,
   ContextMenuItem,

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { QueryFormMetric } from '@superset-ui/core';
+import { QueryFormMetric } from '@ax-bi/ui-core';
 
 export const getMetricDisplayName = (
   metric: QueryFormMetric,

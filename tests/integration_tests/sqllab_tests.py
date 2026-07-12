@@ -26,27 +26,27 @@ from sqlalchemy import text
 from unittest import mock
 import rison
 
-from superset import db, security_manager
-from superset.connectors.sqla.models import SqlaTable  # noqa: F401
-from superset.db_engine_specs import BaseEngineSpec
-from superset.db_engine_specs.hive import HiveEngineSpec
-from superset.db_engine_specs.presto import PrestoEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetErrorException, SupersetInvalidCVASException
-from superset.models.sql_lab import Query
-from superset.result_set import SupersetResultSet
-from superset.sqllab.limiting_factor import LimitingFactor
-from superset.sql.parse import CTASMethod
-from superset.sql_lab import (
+from axbi import db, security_manager
+from axbi.connectors.sqla.models import SqlaTable  # noqa: F401
+from axbi.db_engine_specs import BaseEngineSpec
+from axbi.db_engine_specs.hive import HiveEngineSpec
+from axbi.db_engine_specs.presto import PrestoEngineSpec
+from axbi.errors import ErrorLevel, AxBIError, AxBIErrorType
+from axbi.exceptions import AxBIErrorException, AxBIInvalidCVASException
+from axbi.models.sql_lab import Query
+from axbi.result_set import AxBIResultSet
+from axbi.sqllab.limiting_factor import LimitingFactor
+from axbi.sql.parse import CTASMethod
+from axbi.sql_lab import (
     cancel_query,
     execute_sql_statements,
 )
-from superset.utils.core import backend
-from superset.utils import json
-from superset.utils.json import datetime_to_epoch  # noqa: F401
-from superset.utils.database import get_example_database, get_main_database
+from axbi.utils.core import backend
+from axbi.utils import json
+from axbi.utils.json import datetime_to_epoch  # noqa: F401
+from axbi.utils.database import get_example_database, get_main_database
 
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import CTAS_SCHEMA_NAME
 from tests.integration_tests.constants import (
     ADMIN_USERNAME,
@@ -66,7 +66,7 @@ QUERY_3 = "SELECT * FROM birth_names LIMIT 10"
 
 
 @pytest.mark.sql_json_flow
-class TestSqlLab(SupersetTestCase):
+class TestSqlLab(AxBITestCase):
     """Testings for Sql Lab"""
 
     def run_some_queries(self):
@@ -101,7 +101,7 @@ class TestSqlLab(SupersetTestCase):
         if backend() == "presto":
             assert (
                 data["errors"][0]["error_type"]
-                == SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR
+                == AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR
             )
             assert data["errors"][0]["level"] == ErrorLevel.ERROR
             assert data["errors"][0]["extra"] == {
@@ -119,8 +119,7 @@ class TestSqlLab(SupersetTestCase):
             }
         else:
             assert (
-                data["errors"][0]["error_type"]
-                == SupersetErrorType.GENERIC_DB_ENGINE_ERROR
+                data["errors"][0]["error_type"] == AxBIErrorType.GENERIC_DB_ENGINE_ERROR
             )
             assert data["errors"][0]["level"] == ErrorLevel.ERROR
             assert data["errors"][0]["extra"] == {
@@ -144,9 +143,7 @@ class TestSqlLab(SupersetTestCase):
         self.login(ADMIN_USERNAME)
 
         data = self.run_sql("DELETE FROM birth_names", "1")
-        assert (
-            data["errors"][0]["error_type"] == SupersetErrorType.DML_NOT_ALLOWED_ERROR
-        )
+        assert data["errors"][0]["error_type"] == AxBIErrorType.DML_NOT_ALLOWED_ERROR
 
     @parameterized.expand([CTASMethod.TABLE, CTASMethod.VIEW])
     @pytest.mark.skip(
@@ -163,7 +160,7 @@ class TestSqlLab(SupersetTestCase):
             return
 
         with mock.patch(
-            "superset.sqllab.sqllab_execution_context.get_cta_schema_name",
+            "axbi.sqllab.sqllab_execution_context.get_cta_schema_name",
             lambda d, u, s, sql: f"{u.username}_database",
         ):
             old_allow_ctas = examples_db.allow_ctas
@@ -304,7 +301,7 @@ class TestSqlLab(SupersetTestCase):
                 )
 
         # SQL Lab raw query access requires datasource_access on a registered
-        # Superset dataset. schema_access alone is no longer sufficient, so
+        # AxBI dataset. schema_access alone is no longer sufficient, so
         # the SchemaUser is denied here even though they hold schema_access
         # on CTAS_SCHEMA_NAME (the table is created on the fly and is not a
         # registered dataset).
@@ -337,7 +334,7 @@ class TestSqlLab(SupersetTestCase):
     def test_ps_conversion_no_dict(self):
         cols = [["string_col", "string"], ["int_col", "int"], ["float_col", "float"]]
         data = [["a", 4, 4.0]]
-        results = SupersetResultSet(data, cols, BaseEngineSpec)
+        results = AxBIResultSet(data, cols, BaseEngineSpec)
 
         assert len(data) == results.size
         assert len(cols) == len(results.columns)
@@ -345,7 +342,7 @@ class TestSqlLab(SupersetTestCase):
     def test_pa_conversion_tuple(self):
         cols = ["string_col", "int_col", "list_col", "float_col"]
         data = [("Text", 111, [123], 1.0)]
-        results = SupersetResultSet(data, cols, BaseEngineSpec)
+        results = AxBIResultSet(data, cols, BaseEngineSpec)
 
         assert len(data) == results.size
         assert len(cols) == len(results.columns)
@@ -353,7 +350,7 @@ class TestSqlLab(SupersetTestCase):
     def test_pa_conversion_dict(self):
         cols = ["string_col", "dict_col", "int_col"]
         data = [["a", {"c1": 1, "c2": 2, "c3": 3}, 4]]
-        results = SupersetResultSet(data, cols, BaseEngineSpec)
+        results = AxBIResultSet(data, cols, BaseEngineSpec)
 
         assert len(data) == results.size
         assert len(cols) == len(results.columns)
@@ -561,7 +558,7 @@ class TestSqlLab(SupersetTestCase):
     )
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"ENABLE_TEMPLATE_PROCESSING": True},
         clear=True,
     )
@@ -607,7 +604,7 @@ class TestSqlLab(SupersetTestCase):
     )
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"ENABLE_TEMPLATE_PROCESSING": True},
         clear=True,
     )
@@ -630,7 +627,7 @@ class TestSqlLab(SupersetTestCase):
     )
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
+        "axbi.extensions.feature_flag_manager._feature_flags",
         {"ENABLE_TEMPLATE_PROCESSING": True},
         clear=True,
     )
@@ -648,9 +645,9 @@ class TestSqlLab(SupersetTestCase):
         )
         assert data["errors"][0]["error_type"] == "GENERIC_BACKEND_ERROR"
 
-    @mock.patch("superset.sql_lab.db")
-    @mock.patch("superset.sql_lab.get_query")
-    @mock.patch("superset.sql_lab.execute_query")
+    @mock.patch("axbi.sql_lab.db")
+    @mock.patch("axbi.sql_lab.get_query")
+    @mock.patch("axbi.sql_lab.execute_query")
     def test_execute_sql_statements(
         self,
         mock_execute_query,
@@ -690,9 +687,9 @@ class TestSqlLab(SupersetTestCase):
             ]
         )
 
-    @mock.patch("superset.sql_lab.results_backend", None)
-    @mock.patch("superset.sql_lab.get_query")
-    @mock.patch("superset.sql_lab.execute_query")
+    @mock.patch("axbi.sql_lab.results_backend", None)
+    @mock.patch("axbi.sql_lab.get_query")
+    @mock.patch("axbi.sql_lab.execute_query")
     def test_execute_sql_statements_no_results_backend(
         self,
         mock_execute_query,
@@ -714,7 +711,7 @@ class TestSqlLab(SupersetTestCase):
         mock_query.database.db_engine_spec.run_multiple_statements_as_one = False
         mock_get_query.return_value = mock_query
 
-        with pytest.raises(SupersetErrorException) as excinfo:
+        with pytest.raises(AxBIErrorException) as excinfo:
             execute_sql_statements(
                 query_id=1,
                 rendered_query=sql,
@@ -725,9 +722,9 @@ class TestSqlLab(SupersetTestCase):
                 log_params=None,
             )
 
-        assert excinfo.value.error == SupersetError(
+        assert excinfo.value.error == AxBIError(
             message="Results backend is not configured.",
-            error_type=SupersetErrorType.RESULTS_BACKEND_NOT_CONFIGURED_ERROR,
+            error_type=AxBIErrorType.RESULTS_BACKEND_NOT_CONFIGURED_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "issue_codes": [
@@ -742,9 +739,9 @@ class TestSqlLab(SupersetTestCase):
             },
         )
 
-    @mock.patch("superset.sql_lab.db")
-    @mock.patch("superset.sql_lab.get_query")
-    @mock.patch("superset.sql_lab.execute_query")
+    @mock.patch("axbi.sql_lab.db")
+    @mock.patch("axbi.sql_lab.get_query")
+    @mock.patch("axbi.sql_lab.execute_query")
     def test_execute_sql_statements_ctas(
         self,
         mock_execute_query,
@@ -796,7 +793,7 @@ class TestSqlLab(SupersetTestCase):
 
         # try invalid CTAS
         sql = "DROP TABLE my_table"
-        with pytest.raises(SupersetErrorException) as excinfo:
+        with pytest.raises(AxBIErrorException) as excinfo:
             execute_sql_statements(
                 query_id=1,
                 rendered_query=sql,
@@ -806,9 +803,9 @@ class TestSqlLab(SupersetTestCase):
                 expand_data=False,
                 log_params=None,
             )
-        assert excinfo.value.error == SupersetError(
+        assert excinfo.value.error == AxBIError(
             message="CTAS (create table as select) can only be run with a query where the last statement is a SELECT. Please make sure your query has a SELECT as its last statement. Then, try running your query again.",  # noqa: E501
-            error_type=SupersetErrorType.INVALID_CTAS_QUERY_ERROR,
+            error_type=AxBIErrorType.INVALID_CTAS_QUERY_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "issue_codes": [
@@ -829,7 +826,7 @@ class TestSqlLab(SupersetTestCase):
             SELECT /*+ hint */ @value AS foo;
         """
         )
-        with pytest.raises(SupersetInvalidCVASException) as excinfo:
+        with pytest.raises(AxBIInvalidCVASException) as excinfo:
             execute_sql_statements(
                 query_id=1,
                 rendered_query=sql,
@@ -839,9 +836,9 @@ class TestSqlLab(SupersetTestCase):
                 expand_data=False,
                 log_params=None,
             )
-        assert excinfo.value.error == SupersetError(
+        assert excinfo.value.error == AxBIError(
             message="CVAS (create view as select) can only be run with a query with a single SELECT statement. Please make sure your query has only a SELECT statement. Then, try running your query again.",  # noqa: E501
-            error_type=SupersetErrorType.INVALID_CVAS_QUERY_ERROR,
+            error_type=AxBIErrorType.INVALID_CVAS_QUERY_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "issue_codes": [
@@ -884,7 +881,7 @@ class TestSqlLab(SupersetTestCase):
                         "The query was killed after 21600 seconds. It might be too complex, "  # noqa: E501
                         "or the database might be under heavy load."
                     ),
-                    "error_type": SupersetErrorType.SQLLAB_TIMEOUT_ERROR,
+                    "error_type": AxBIErrorType.SQLLAB_TIMEOUT_ERROR,
                     "level": ErrorLevel.ERROR,
                     "extra": {
                         "issue_codes": [

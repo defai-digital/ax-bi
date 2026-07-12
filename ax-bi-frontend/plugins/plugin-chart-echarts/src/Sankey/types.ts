@@ -20,7 +20,7 @@ import {
   QueryFormColumn,
   QueryFormData,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { BaseChartProps, BaseTransformedProps } from '../types';
 
 export type SankeyFormData = QueryFormData & {

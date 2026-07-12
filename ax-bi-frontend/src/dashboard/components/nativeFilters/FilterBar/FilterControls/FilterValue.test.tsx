@@ -20,8 +20,8 @@ import { render, screen, waitFor } from 'spec/helpers/testing-library';
 import { Provider } from 'react-redux';
 import configureStore from 'redux-mock-store';
 import { thunk } from 'redux-thunk';
-import { NativeFilterType } from '@superset-ui/core';
-import type { Filter } from '@superset-ui/core';
+import { NativeFilterType } from '@ax-bi/ui-core';
+import type { Filter } from '@ax-bi/ui-core';
 import FilterValue from './FilterValue';
 
 const mockGetChartDataRequest = jest.fn();
@@ -33,8 +33,8 @@ jest.mock('src/middleware/asyncEvent', () => ({
   waitForAsyncData: jest.fn(),
 }));
 
-jest.mock('@superset-ui/core', () => {
-  const original = jest.requireActual('@superset-ui/core');
+jest.mock('@ax-bi/ui-core', () => {
+  const original = jest.requireActual('@ax-bi/ui-core');
   return {
     ...original,
     getChartMetadataRegistry: () => ({

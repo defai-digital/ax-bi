@@ -19,9 +19,9 @@ from unittest.mock import patch
 
 from flask_appbuilder.security.sqla.models import User
 
-from superset.models.core import Database
-from superset.utils.cache_keys import add_impersonation_cache_key_if_needed
-from superset.utils.core import override_user
+from axbi.models.core import Database
+from axbi.utils.cache_keys import add_impersonation_cache_key_if_needed
+from axbi.utils.core import override_user
 
 
 def _flag(name: str):
@@ -46,7 +46,7 @@ def test_no_per_user_caching_yields_no_key():
         assert "impersonation_key" not in _run(database)
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
 def test_cache_query_by_user_adds_username(feature_flag_mock):
     feature_flag_mock.is_feature_enabled.side_effect = _flag("CACHE_QUERY_BY_USER")
     database = Database(database_name="d", sqlalchemy_uri="sqlite://")
@@ -54,7 +54,7 @@ def test_cache_query_by_user_adds_username(feature_flag_mock):
         assert _run(database)["impersonation_key"] == "alice"
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
 def test_cache_query_by_user_distinct_per_user(feature_flag_mock):
     feature_flag_mock.is_feature_enabled.side_effect = _flag("CACHE_QUERY_BY_USER")
     database = Database(database_name="d", sqlalchemy_uri="sqlite://")
@@ -65,7 +65,7 @@ def test_cache_query_by_user_distinct_per_user(feature_flag_mock):
     assert key_a != key_b
 
 
-@patch("superset.utils.cache_keys.feature_flag_manager")
+@patch("axbi.utils.cache_keys.feature_flag_manager")
 def test_cache_impersonation_requires_database_flag(feature_flag_mock):
     """
     CACHE_IMPERSONATION alone is not enough; ``database.impersonate_user`` must

@@ -23,7 +23,7 @@ import {
   waitFor,
   within,
 } from 'spec/helpers/testing-library';
-import { isFeatureEnabled } from '@superset-ui/core';
+import { isFeatureEnabled } from '@ax-bi/ui-core';
 import {
   mockCharts,
   mockHandleResourceExport,
@@ -34,8 +34,8 @@ import {
 jest.setTimeout(30000);
 
 // Mock the feature flag
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -51,7 +51,7 @@ const mockUser = {
   lastName: 'User',
   roles: {
     Admin: [
-      ['can_sqllab', 'Superset'],
+      ['can_sqllab', 'AxBI'],
       ['can_write', 'Dashboard'],
       ['can_write', 'Chart'],
       ['can_export', 'Chart'],

@@ -18,18 +18,18 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset import db
-from superset.utils.core import DatasourceType
+from axbi import db
+from axbi.utils.core import DatasourceType
 
 
 @pytest.fixture
 def session_with_data(session: Session):
-    from superset.connectors.sqla.models import SqlaTable, TableColumn
-    from superset.models.core import Database
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.models.sql_lab import SavedQuery
-    from superset.tags.models import Tag
+    from axbi.connectors.sqla.models import SqlaTable, TableColumn
+    from axbi.models.core import Database
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.models.sql_lab import SavedQuery
+    from axbi.tags.models import Tag
 
     engine = session.get_bind()
     Tag.metadata.create_all(engine)  # pylint: disable=no-member
@@ -77,18 +77,14 @@ def session_with_data(session: Session):
 
 
 def test_update_command_success(session_with_data: Session, mocker: MockerFixture):
-    from superset.commands.tag.update import UpdateTagCommand
-    from superset.daos.tag import TagDAO
-    from superset.models.dashboard import Dashboard
-    from superset.tags.models import ObjectType, TaggedObject
+    from axbi.commands.tag.update import UpdateTagCommand
+    from axbi.daos.tag import TagDAO
+    from axbi.models.dashboard import Dashboard
+    from axbi.tags.models import ObjectType, TaggedObject
 
     dashboard = db.session.query(Dashboard).first()
-    mocker.patch(
-        "superset.security.SupersetSecurityManager.is_admin", return_value=True
-    )
-    mocker.patch(
-        "superset.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard
-    )
+    mocker.patch("axbi.security.AxBISecurityManager.is_admin", return_value=True)
+    mocker.patch("axbi.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard)
 
     objects_to_tag = [
         (ObjectType.dashboard, dashboard.id),
@@ -113,23 +109,19 @@ def test_update_command_success(session_with_data: Session, mocker: MockerFixtur
 def test_update_command_success_duplicates(
     session_with_data: Session, mocker: MockerFixture
 ):
-    from superset.commands.tag.create import CreateCustomTagWithRelationshipsCommand
-    from superset.commands.tag.update import UpdateTagCommand
-    from superset.daos.tag import TagDAO
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.tags.models import ObjectType, TaggedObject
+    from axbi.commands.tag.create import CreateCustomTagWithRelationshipsCommand
+    from axbi.commands.tag.update import UpdateTagCommand
+    from axbi.daos.tag import TagDAO
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.tags.models import ObjectType, TaggedObject
 
     dashboard = db.session.query(Dashboard).first()
     chart = db.session.query(Slice).first()
 
-    mocker.patch(
-        "superset.security.SupersetSecurityManager.is_admin", return_value=True
-    )
-    mocker.patch("superset.daos.chart.ChartDAO.find_by_id", return_value=chart)
-    mocker.patch(
-        "superset.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard
-    )
+    mocker.patch("axbi.security.AxBISecurityManager.is_admin", return_value=True)
+    mocker.patch("axbi.daos.chart.ChartDAO.find_by_id", return_value=chart)
+    mocker.patch("axbi.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard)
 
     objects_to_tag = [
         (ObjectType.dashboard, dashboard.id),
@@ -163,13 +155,13 @@ def test_update_command_success_duplicates(
 def test_update_command_failed_validation(
     session_with_data: Session, mocker: MockerFixture
 ):
-    from superset.commands.tag.create import CreateCustomTagWithRelationshipsCommand
-    from superset.commands.tag.exceptions import TagInvalidError
-    from superset.commands.tag.update import UpdateTagCommand
-    from superset.daos.tag import TagDAO
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.tags.models import ObjectType
+    from axbi.commands.tag.create import CreateCustomTagWithRelationshipsCommand
+    from axbi.commands.tag.exceptions import TagInvalidError
+    from axbi.commands.tag.update import UpdateTagCommand
+    from axbi.daos.tag import TagDAO
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.tags.models import ObjectType
 
     dashboard = db.session.query(Dashboard).first()
     chart = db.session.query(Slice).first()
@@ -177,13 +169,9 @@ def test_update_command_failed_validation(
         (ObjectType.chart, chart.id),
     ]
 
-    mocker.patch(
-        "superset.security.SupersetSecurityManager.is_admin", return_value=True
-    )
-    mocker.patch("superset.daos.chart.ChartDAO.find_by_id", return_value=chart)
-    mocker.patch(
-        "superset.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard
-    )
+    mocker.patch("axbi.security.AxBISecurityManager.is_admin", return_value=True)
+    mocker.patch("axbi.daos.chart.ChartDAO.find_by_id", return_value=chart)
+    mocker.patch("axbi.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard)
 
     CreateCustomTagWithRelationshipsCommand(
         data={"name": "test_tag", "objects_to_tag": objects_to_tag}
@@ -216,23 +204,19 @@ def test_update_command_remove_all_tagged_objects(
     the tag's 'objects' relationship still held references to deleted
     TaggedObject instances.
     """
-    from superset.commands.tag.create import CreateCustomTagWithRelationshipsCommand
-    from superset.commands.tag.update import UpdateTagCommand
-    from superset.daos.tag import TagDAO
-    from superset.models.dashboard import Dashboard
-    from superset.models.slice import Slice
-    from superset.tags.models import ObjectType, TaggedObject
+    from axbi.commands.tag.create import CreateCustomTagWithRelationshipsCommand
+    from axbi.commands.tag.update import UpdateTagCommand
+    from axbi.daos.tag import TagDAO
+    from axbi.models.dashboard import Dashboard
+    from axbi.models.slice import Slice
+    from axbi.tags.models import ObjectType, TaggedObject
 
     dashboard = db.session.query(Dashboard).first()
     chart = db.session.query(Slice).first()
 
-    mocker.patch(
-        "superset.security.SupersetSecurityManager.is_admin", return_value=True
-    )
-    mocker.patch("superset.daos.chart.ChartDAO.find_by_id", return_value=chart)
-    mocker.patch(
-        "superset.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard
-    )
+    mocker.patch("axbi.security.AxBISecurityManager.is_admin", return_value=True)
+    mocker.patch("axbi.daos.chart.ChartDAO.find_by_id", return_value=chart)
+    mocker.patch("axbi.daos.dashboard.DashboardDAO.find_by_id", return_value=dashboard)
 
     # Create a tag with multiple objects
     objects_to_tag = [

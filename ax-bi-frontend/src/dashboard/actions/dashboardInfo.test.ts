@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { makeApi } from '@superset-ui/core';
+import { makeApi } from '@ax-bi/ui-core';
 import {
   ChartConfiguration,
   DashboardInfo,
@@ -34,8 +34,8 @@ import {
   saveFilterBarOrientation,
 } from './dashboardInfo';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   makeApi: jest.fn(),
 }));
 
@@ -49,7 +49,7 @@ const baseMetadata = {
     scope: { rootPath: ['ROOT_ID'], excluded: [] },
     chartsInScope: [],
   },
-  color_scheme: 'supersetColors',
+  color_scheme: 'axbiColors',
   color_namespace: '',
   color_scheme_domain: [],
   label_colors: {},

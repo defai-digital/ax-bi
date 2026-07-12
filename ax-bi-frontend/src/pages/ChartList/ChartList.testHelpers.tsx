@@ -249,7 +249,7 @@ export const createDefaultStoreState = (user: any) => ({
   user,
   common: {
     conf: {
-      SUPERSET_WEBSERVER_TIMEOUT: 60000,
+      AXBI_WEBSERVER_TIMEOUT: 60000,
     },
   },
   charts: {

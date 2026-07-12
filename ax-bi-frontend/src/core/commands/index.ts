@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { logging } from '@apache-superset/core/utils';
-import { commands as commandsApi } from '@apache-superset/core';
+import { logging } from '@ax-bi/core/utils';
+import { commands as commandsApi } from '@ax-bi/core';
 import { Disposable } from '../models';
 
 type Command = commandsApi.Command;

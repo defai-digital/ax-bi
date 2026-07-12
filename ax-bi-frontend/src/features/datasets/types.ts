@@ -1,5 +1,5 @@
-import { Currency, type DatasourceType } from '@superset-ui/core';
-import { Owner } from '@superset-ui/chart-controls';
+import { Currency, type DatasourceType } from '@ax-bi/ui-core';
+import { Owner } from '@ax-bi/chart-controls';
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one

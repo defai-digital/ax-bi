@@ -47,7 +47,7 @@ SUPPORT_DATETIME_TYPE = "support_datetime_type"
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine
 
-    from superset.connectors.sqla.models import Database
+    from axbi.connectors.sqla.models import Database
     from tests.example_data.data_loading.base_data_loader import DataLoader
     from tests.example_data.data_loading.pandas.pandas_data_loader import (
         TableToDfConvertor,
@@ -119,7 +119,7 @@ def with_config(override_config: dict[str, Any]):
 
     Usage:
 
-        class TestYourFeature(SupersetTestCase):
+        class TestYourFeature(AxBITestCase):
 
             @with_config({"SOME_CONFIG": True})
             def test_your_config(self):

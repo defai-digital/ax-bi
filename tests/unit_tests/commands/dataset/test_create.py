@@ -19,38 +19,38 @@ from unittest.mock import Mock, patch
 import pytest
 from marshmallow import ValidationError
 
-from superset.commands.dataset.create import CreateDatasetCommand
-from superset.commands.dataset.exceptions import DatasetInvalidError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetParseError
-from superset.models.core import Database
+from axbi.commands.dataset.create import CreateDatasetCommand
+from axbi.commands.dataset.exceptions import DatasetInvalidError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBIParseError
+from axbi.models.core import Database
 
 
 def test_create_dataset_invalid_sql_parse_error() -> None:
-    """Test that invalid SQL returns a 4xx error when caught as SupersetParseError."""
+    """Test that invalid SQL returns a 4xx error when caught as AxBIParseError."""
     mock_database = Mock(spec=Database)
     mock_database.id = 1
     mock_database.db_engine_spec.engine = "postgresql"
     mock_database.get_default_catalog.return_value = None
 
     with patch(
-        "superset.commands.dataset.create.DatasetDAO.get_database_by_id",
+        "axbi.commands.dataset.create.DatasetDAO.get_database_by_id",
         return_value=mock_database,
     ):
         with patch(
-            "superset.commands.dataset.create.DatasetDAO.validate_uniqueness",
+            "axbi.commands.dataset.create.DatasetDAO.validate_uniqueness",
             return_value=True,
         ):
             with patch(
-                "superset.commands.dataset.create.security_manager.raise_for_access",
-                side_effect=SupersetParseError(
+                "axbi.commands.dataset.create.security_manager.raise_for_access",
+                side_effect=AxBIParseError(
                     sql="SELECT INVALID SQL SYNTAX",
                     engine="postgresql",
                     message="Invalid SQL syntax: unexpected token 'INVALID'",
                 ),
             ):
                 with patch(
-                    "superset.commands.dataset.create.CreateDatasetCommand.populate_owners",
+                    "axbi.commands.dataset.create.CreateDatasetCommand.populate_owners",
                     return_value=[],
                 ):
                     command = CreateDatasetCommand(
@@ -84,28 +84,28 @@ def test_create_dataset_valid_sql_with_access_error() -> None:
     mock_database.db_engine_spec.engine = "postgresql"
     mock_database.get_default_catalog.return_value = None
 
-    from superset.exceptions import SupersetSecurityException
+    from axbi.exceptions import AxBISecurityException
 
     with patch(
-        "superset.commands.dataset.create.DatasetDAO.get_database_by_id",
+        "axbi.commands.dataset.create.DatasetDAO.get_database_by_id",
         return_value=mock_database,
     ):
         with patch(
-            "superset.commands.dataset.create.DatasetDAO.validate_uniqueness",
+            "axbi.commands.dataset.create.DatasetDAO.validate_uniqueness",
             return_value=True,
         ):
             with patch(
-                "superset.commands.dataset.create.security_manager.raise_for_access",
-                side_effect=SupersetSecurityException(
-                    SupersetError(
-                        error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+                "axbi.commands.dataset.create.security_manager.raise_for_access",
+                side_effect=AxBISecurityException(
+                    AxBIError(
+                        error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
                         message="User does not have access to table 'secret_table'",
                         level=ErrorLevel.ERROR,
                     )
                 ),
             ):
                 with patch(
-                    "superset.commands.dataset.create.CreateDatasetCommand.populate_owners",
+                    "axbi.commands.dataset.create.CreateDatasetCommand.populate_owners",
                     return_value=[],
                 ):
                     command = CreateDatasetCommand(
@@ -123,7 +123,7 @@ def test_create_dataset_valid_sql_with_access_error() -> None:
                     validation_errors = exc_info.value._exceptions
                     assert len(validation_errors) == 1
                     # This should be a DatasetDataAccessIsNotAllowed error
-                    from superset.commands.dataset.exceptions import (
+                    from axbi.commands.dataset.exceptions import (
                         DatasetDataAccessIsNotAllowed,
                     )
 
@@ -136,7 +136,7 @@ def test_create_dataset_valid_sql_with_access_error() -> None:
                     )
 
 
-@patch("superset.commands.dataset.create.security_manager")
+@patch("axbi.commands.dataset.create.security_manager")
 def test_create_dataset_physical_table_no_parse_error(
     mock_security_manager: Mock,
 ) -> None:
@@ -146,19 +146,19 @@ def test_create_dataset_physical_table_no_parse_error(
     mock_database.get_default_catalog.return_value = None
 
     with patch(
-        "superset.commands.dataset.create.DatasetDAO.get_database_by_id",
+        "axbi.commands.dataset.create.DatasetDAO.get_database_by_id",
         return_value=mock_database,
     ):
         with patch(
-            "superset.commands.dataset.create.DatasetDAO.validate_uniqueness",
+            "axbi.commands.dataset.create.DatasetDAO.validate_uniqueness",
             return_value=True,
         ):
             with patch(
-                "superset.commands.dataset.create.DatasetDAO.validate_table_exists",
+                "axbi.commands.dataset.create.DatasetDAO.validate_table_exists",
                 return_value=True,
             ):
                 with patch(
-                    "superset.commands.dataset.create.CreateDatasetCommand.populate_owners",
+                    "axbi.commands.dataset.create.CreateDatasetCommand.populate_owners",
                     return_value=[],
                 ):
                     command = CreateDatasetCommand(

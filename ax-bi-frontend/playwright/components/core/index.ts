@@ -17,7 +17,7 @@
  * under the License.
  */
 
-// Core Playwright Components for Superset
+// Core Playwright Components for AxBI
 export { AceEditor } from './AceEditor';
 export { AgGrid } from './AgGrid';
 export { Button } from './Button';

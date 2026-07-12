@@ -22,7 +22,7 @@ import { Modal } from '../core/Modal';
 
 /**
  * Confirm Dialog component for Ant Design Modal.confirm dialogs.
- * These are the "OK" / "Cancel" confirmation dialogs used throughout Superset.
+ * These are the "OK" / "Cancel" confirmation dialogs used throughout AxBI.
  * Uses getByRole with name to target specific confirm dialogs when multiple are open.
  */
 export class ConfirmDialog extends Modal {

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { styled } from '@apache-superset/core/theme';
-import { FormLabel } from '@superset-ui/core/components';
+import { styled } from '@ax-bi/core/theme';
+import { FormLabel } from '@ax-bi/ui-core/components';
 
 export const StyledFormLabel = styled(FormLabel)`
   display: block;

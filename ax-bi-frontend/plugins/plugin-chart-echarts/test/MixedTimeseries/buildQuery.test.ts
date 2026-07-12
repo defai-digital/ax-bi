@@ -21,7 +21,7 @@ import {
   FreeFormAdhocFilter,
   RollingType,
   TimeGranularity,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import buildQuery from '../../src/MixedTimeseries/buildQuery';
 
 const formDataMixedChart = {

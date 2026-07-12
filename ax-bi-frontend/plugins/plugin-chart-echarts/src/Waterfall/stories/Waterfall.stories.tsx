@@ -20,11 +20,11 @@ import {
   SuperChart,
   VizType,
   getChartTransformPropsRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   EchartsWaterfallChartPlugin,
   WaterfallTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import data from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 

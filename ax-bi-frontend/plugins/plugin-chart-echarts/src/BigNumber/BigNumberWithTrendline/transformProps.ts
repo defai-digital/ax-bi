@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   BRAND_COLOR,
   extractTimegrain,
@@ -27,10 +27,10 @@ import {
   Metric,
   getValueFormatter,
   tooltipHtml,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { EChartsCoreOption, graphic } from 'echarts/core';
-import { aggregationChoices } from '@superset-ui/chart-controls';
+import { aggregationChoices } from '@ax-bi/chart-controls';
 import { TIMESERIES_CONSTANTS } from '../../constants';
 import { getXAxisFormatter } from '../../utils/formatters';
 import {

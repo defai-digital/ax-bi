@@ -17,8 +17,8 @@
  * under the License.
  */
 import { type ComponentProps } from 'react';
-import { reactify, addAlpha } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { reactify, addAlpha } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import Component from './ParallelCoordinates';
 
 const ReactComponent = reactify(Component);
@@ -42,7 +42,7 @@ const ParallelCoordinates = ({
 
 export default styled(ParallelCoordinates)`
   ${({ theme }) => `
-    .superset-legacy-chart-parallel-coordinates {
+    .axbi-legacy-chart-parallel-coordinates {
       div.grid {
         overflow: auto;
         div.row {

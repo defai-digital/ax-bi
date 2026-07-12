@@ -20,15 +20,15 @@ from unittest.mock import patch
 import pytest
 from flask import current_app
 
-from superset import viz
-from superset.common.db_query_status import QueryStatus
-from superset.connectors.sqla.models import SqlaTable
-from superset.errors import SupersetErrorType
-from superset.exceptions import (
+from axbi import viz
+from axbi.common.db_query_status import QueryStatus
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.errors import AxBIErrorType
+from axbi.exceptions import (
     OAuth2RedirectError,
     QueryObjectValidationError,
 )
-from superset.models.core import Database
+from axbi.models.core import Database
 
 QUERY_OBJ: dict[str, Any] = {"row_limit": 100, "from_dttm": None, "to_dttm": None}
 
@@ -104,7 +104,7 @@ def _deck_geojson_viz() -> viz.DeckGeoJson:
 def _resample_df() -> Any:
     import pandas as pd
 
-    from superset.utils.core import DTTM_ALIAS
+    from axbi.utils.core import DTTM_ALIAS
 
     return pd.DataFrame(
         {
@@ -294,31 +294,31 @@ def test_handle_js_int_overflow_skips_non_mapping_records() -> None:
 
 def test_get_df_payload_propagates_oauth2_redirect_error() -> None:
     """
-    OAuth2RedirectError (a SupersetErrorException) must propagate out of
+    OAuth2RedirectError (a AxBIErrorException) must propagate out of
     ``get_df_payload`` so the global Flask error handler can serialize it.
     """
     obj = _viz()
     oauth_exc = OAuth2RedirectError(
         url="https://accounts.example.com/o/oauth2/v2/auth?...",
         tab_id="tab-123",
-        redirect_uri="https://superset.example.com/oauth2/redirect",
+        redirect_uri="https://ax-bi.example.com/oauth2/redirect",
     )
 
     with patch.object(viz.BaseViz, "get_df", side_effect=oauth_exc):
         with pytest.raises(OAuth2RedirectError) as exc_info:
             obj.get_df_payload(QUERY_OBJ)
 
-    assert exc_info.value.error.error_type == SupersetErrorType.OAUTH2_REDIRECT
+    assert exc_info.value.error.error_type == AxBIErrorType.OAUTH2_REDIRECT
     assert exc_info.value.error.extra == {
         "url": "https://accounts.example.com/o/oauth2/v2/auth?...",
         "tab_id": "tab-123",
-        "redirect_uri": "https://superset.example.com/oauth2/redirect",
+        "redirect_uri": "https://ax-bi.example.com/oauth2/redirect",
     }
 
 
 def test_get_df_payload_captures_generic_exception_as_viz_get_df_error() -> None:
     """
-    Non-Superset exception raised by ``get_df`` are downgraded to a
+    Non-AxBI exception raised by ``get_df`` are downgraded to a
     ``VIZ_GET_DF_ERROR`` entry on ``self.errors``.
     """
     obj = _viz()
@@ -329,7 +329,7 @@ def test_get_df_payload_captures_generic_exception_as_viz_get_df_error() -> None
     assert obj.status == QueryStatus.FAILED
     assert payload["status"] == QueryStatus.FAILED
     assert len(obj.errors) == 1
-    assert obj.errors[0]["error_type"] == SupersetErrorType.VIZ_GET_DF_ERROR
+    assert obj.errors[0]["error_type"] == AxBIErrorType.VIZ_GET_DF_ERROR
     assert obj.errors[0]["message"] == "boom"
 
 
@@ -349,7 +349,7 @@ def test_get_df_payload_captures_query_object_validation_error() -> None:
     assert obj.status == QueryStatus.FAILED
     assert payload["status"] == QueryStatus.FAILED
     assert len(obj.errors) == 1
-    assert obj.errors[0]["error_type"] == SupersetErrorType.VIZ_GET_DF_ERROR
+    assert obj.errors[0]["error_type"] == AxBIErrorType.VIZ_GET_DF_ERROR
     assert obj.errors[0]["message"] == "bad query"
 
 

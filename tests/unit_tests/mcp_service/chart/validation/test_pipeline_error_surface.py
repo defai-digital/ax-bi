@@ -34,10 +34,10 @@ from unittest.mock import patch
 
 import pytest
 
-from superset.mcp_service.chart.schemas import GenerateChartRequest
-from superset.mcp_service.chart.validation.pipeline import ValidationPipeline
-from superset.mcp_service.dashboard.schemas import GenerateDashboardRequest
-from superset.mcp_service.utils.error_builder import ChartErrorBuilder
+from axbi.mcp_service.chart.schemas import GenerateChartRequest
+from axbi.mcp_service.chart.validation.pipeline import ValidationPipeline
+from axbi.mcp_service.dashboard.schemas import GenerateDashboardRequest
+from axbi.mcp_service.utils.error_builder import ChartErrorBuilder
 
 
 def _passthrough_normalize(request, *_args, **_kwargs):

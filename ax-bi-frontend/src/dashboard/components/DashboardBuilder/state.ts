@@ -21,7 +21,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { URL_PARAMS } from 'src/constants';
 import { getUrlParam } from 'src/utils/urlUtils';
 import { RootState } from 'src/dashboard/types';
-import { Filter, isFeatureEnabled, FeatureFlag } from '@superset-ui/core';
+import { Filter, isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import {
   useFilters,
   useNativeFiltersDataMask,

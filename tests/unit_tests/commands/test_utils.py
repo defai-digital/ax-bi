@@ -21,8 +21,8 @@ from unittest.mock import call, MagicMock, patch
 
 import pytest
 
-from superset.commands.exceptions import TagForbiddenError, TagNotFoundValidationError
-from superset.commands.utils import (
+from axbi.commands.exceptions import TagForbiddenError, TagNotFoundValidationError
+from axbi.commands.utils import (
     compute_owner_list,
     populate_owner_list,
     Tag,
@@ -32,8 +32,8 @@ from superset.commands.utils import (
     User,
     validate_tags,
 )
-from superset.tags.models import ObjectType
-from superset.utils import json
+from axbi.tags.models import ObjectType
+from axbi.utils import json
 
 OBJECT_TYPES = {ObjectType.chart, ObjectType.chart}
 MOCK_TAGS = [
@@ -76,7 +76,7 @@ DATASET_INFO = {
 }
 
 
-@patch("superset.commands.utils.g")
+@patch("axbi.commands.utils.g")
 def test_populate_owner_list_default_to_user(mock_user):
     """
     Test the ``populate_owner_list`` method when no owners are provided
@@ -86,7 +86,7 @@ def test_populate_owner_list_default_to_user(mock_user):
     assert owner_list == [mock_user.user]
 
 
-@patch("superset.commands.utils.g")
+@patch("axbi.commands.utils.g")
 def test_populate_owner_list_default_to_user_handle_none(mock_user):
     """
     Test the ``populate_owner_list`` method when owners is None
@@ -96,9 +96,9 @@ def test_populate_owner_list_default_to_user_handle_none(mock_user):
     assert owner_list == [mock_user.user]
 
 
-@patch("superset.commands.utils.g")
-@patch("superset.commands.utils.security_manager")
-@patch("superset.commands.utils.get_user_id")
+@patch("axbi.commands.utils.g")
+@patch("axbi.commands.utils.security_manager")
+@patch("axbi.commands.utils.get_user_id")
 def test_populate_owner_list_admin_user(mock_user_id, mock_sm, mock_g):
     """
     Test the ``populate_owner_list`` method when an admin is setting
@@ -114,9 +114,9 @@ def test_populate_owner_list_admin_user(mock_user_id, mock_sm, mock_g):
     assert owner_list == [test_user]
 
 
-@patch("superset.commands.utils.g")
-@patch("superset.commands.utils.security_manager")
-@patch("superset.commands.utils.get_user_id")
+@patch("axbi.commands.utils.g")
+@patch("axbi.commands.utils.security_manager")
+@patch("axbi.commands.utils.get_user_id")
 def test_populate_owner_list_admin_user_empty_list(mock_user_id, mock_sm, mock_g):
     """
     Test the ``populate_owner_list`` method when an admin is setting an empty list
@@ -129,9 +129,9 @@ def test_populate_owner_list_admin_user_empty_list(mock_user_id, mock_sm, mock_g
     assert owner_list == []
 
 
-@patch("superset.commands.utils.g")
-@patch("superset.commands.utils.security_manager")
-@patch("superset.commands.utils.get_user_id")
+@patch("axbi.commands.utils.g")
+@patch("axbi.commands.utils.security_manager")
+@patch("axbi.commands.utils.get_user_id")
 def test_populate_owner_list_non_admin(mock_user_id, mock_sm, mock_g):
     """
     Test the ``populate_owner_list`` method when a non admin is adding
@@ -147,7 +147,7 @@ def test_populate_owner_list_non_admin(mock_user_id, mock_sm, mock_g):
     assert owner_list == [mock_g.user, test_user]
 
 
-@patch("superset.commands.utils.populate_owner_list")
+@patch("axbi.commands.utils.populate_owner_list")
 def test_compute_owner_list_new_owners(mock_populate_owner_list):
     """
     Test the ``compute_owner_list`` method when replacing the owner list.
@@ -159,7 +159,7 @@ def test_compute_owner_list_new_owners(mock_populate_owner_list):
     mock_populate_owner_list.assert_called_once_with(new_owners, default_to_user=False)
 
 
-@patch("superset.commands.utils.populate_owner_list")
+@patch("axbi.commands.utils.populate_owner_list")
 def test_compute_owner_list_no_new_owners(mock_populate_owner_list):
     """
     Test the ``compute_owner_list`` method when replacing new_owners is None.
@@ -171,7 +171,7 @@ def test_compute_owner_list_no_new_owners(mock_populate_owner_list):
     mock_populate_owner_list.assert_called_once_with([1, 2, 3], default_to_user=False)
 
 
-@patch("superset.commands.utils.populate_owner_list")
+@patch("axbi.commands.utils.populate_owner_list")
 def test_compute_owner_list_new_owner_empty_list(mock_populate_owner_list):
     """
     Test the ``compute_owner_list`` method when new_owners is an empty list.
@@ -183,7 +183,7 @@ def test_compute_owner_list_new_owner_empty_list(mock_populate_owner_list):
     mock_populate_owner_list.assert_called_once_with(new_owners, default_to_user=False)
 
 
-@patch("superset.commands.utils.populate_owner_list")
+@patch("axbi.commands.utils.populate_owner_list")
 def test_compute_owner_list_no_owners(mock_populate_owner_list):
     """
     Test the ``compute_owner_list`` method when current ownership is an empty list.
@@ -195,7 +195,7 @@ def test_compute_owner_list_no_owners(mock_populate_owner_list):
     mock_populate_owner_list.assert_called_once_with(new_owners, default_to_user=False)
 
 
-@patch("superset.commands.utils.populate_owner_list")
+@patch("axbi.commands.utils.populate_owner_list")
 def test_compute_owner_list_no_owners_handle_none(mock_populate_owner_list):
     """
     Test the ``compute_owner_list`` method when current ownership is None.
@@ -281,7 +281,7 @@ def test_update_chart_config_dataset_ignores_malformed_nested_context() -> None:
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
+@patch("axbi.commands.utils.security_manager")
 def test_validate_tags_new_tags_is_none(mock_sm, object_type):
     """
     Test the ``validate_tags`` method when new_tags is None.
@@ -291,7 +291,7 @@ def test_validate_tags_new_tags_is_none(mock_sm, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
+@patch("axbi.commands.utils.security_manager")
 def test_validate_tags_empty_list_can_write_on_tag(mock_sm, object_type):
     """
     Test the ``validate_tags`` method when new_tags is an empty list and
@@ -303,7 +303,7 @@ def test_validate_tags_empty_list_can_write_on_tag(mock_sm, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
+@patch("axbi.commands.utils.security_manager")
 def test_validate_tags_empty_list_can_tag_on_object(mock_sm, object_type):
     """
     Test the ``validate_tags`` method when new_tags is an empty list and
@@ -317,7 +317,7 @@ def test_validate_tags_empty_list_can_tag_on_object(mock_sm, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
+@patch("axbi.commands.utils.security_manager")
 def test_validate_tags_empty_list_missing_permission(mock_sm, object_type):
     """
     Test the ``validate_tags`` method when new_tags is an empty list and
@@ -332,7 +332,7 @@ def test_validate_tags_empty_list_missing_permission(mock_sm, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
+@patch("axbi.commands.utils.security_manager")
 def test_validate_tags_no_changes_can_write_on_tag(mock_sm, object_type):
     """
     Test the ``validate_tags`` method when new_tags is equal to existing tags
@@ -344,7 +344,7 @@ def test_validate_tags_no_changes_can_write_on_tag(mock_sm, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
+@patch("axbi.commands.utils.security_manager")
 def test_validate_tags_no_changes_can_tag_on_object(mock_sm, object_type):
     """
     Test the ``validate_tags`` method when new_tags is equal to existing tags
@@ -356,7 +356,7 @@ def test_validate_tags_no_changes_can_tag_on_object(mock_sm, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
+@patch("axbi.commands.utils.security_manager")
 def test_validate_tags_no_changes_missing_permission(mock_sm, object_type):
     """
     Test the ``validate_tags`` method when new_tags is equal to existing tags
@@ -368,8 +368,8 @@ def test_validate_tags_no_changes_missing_permission(mock_sm, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
-@patch("superset.commands.utils.TagDAO.find_by_id")
+@patch("axbi.commands.utils.security_manager")
+@patch("axbi.commands.utils.TagDAO.find_by_id")
 def test_validate_tags_add_new_tags_can_write_on_tag(
     mock_tag_find_by_id, mock_sm, object_type
 ):
@@ -394,8 +394,8 @@ def test_validate_tags_add_new_tags_can_write_on_tag(
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
-@patch("superset.commands.utils.TagDAO.find_by_id")
+@patch("axbi.commands.utils.security_manager")
+@patch("axbi.commands.utils.TagDAO.find_by_id")
 def test_validate_tags_add_new_tags_can_tag_on_object(
     mock_tag_find_by_id, mock_sm, object_type
 ):
@@ -419,8 +419,8 @@ def test_validate_tags_add_new_tags_can_tag_on_object(
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
-@patch("superset.commands.utils.TagDAO.find_by_name")
+@patch("axbi.commands.utils.security_manager")
+@patch("axbi.commands.utils.TagDAO.find_by_name")
 def test_validate_tags_can_write_on_tag_unable_to_find_tag(
     mock_tag_find_by_id, mock_sm, object_type
 ):
@@ -437,8 +437,8 @@ def test_validate_tags_can_write_on_tag_unable_to_find_tag(
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.security_manager")
-@patch("superset.commands.utils.TagDAO.find_by_name")
+@patch("axbi.commands.utils.security_manager")
+@patch("axbi.commands.utils.TagDAO.find_by_name")
 def test_validate_tags_can_tag_on_object_unable_to_find_tag(
     mock_tag_find_by_id, mock_sm, object_type
 ):
@@ -457,7 +457,7 @@ def test_validate_tags_can_tag_on_object_unable_to_find_tag(
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.TagDAO")
+@patch("axbi.commands.utils.TagDAO")
 def test_update_tags_adding_tags(mock_tag_dao, object_type):
     """
     Test the ``update_tags`` method when adding tags.
@@ -479,7 +479,7 @@ def test_update_tags_adding_tags(mock_tag_dao, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.TagDAO")
+@patch("axbi.commands.utils.TagDAO")
 def test_update_tags_removing_tags(mock_tag_dao, object_type):
     """
     Test the ``update_tags`` method when removing existing tags.
@@ -497,7 +497,7 @@ def test_update_tags_removing_tags(mock_tag_dao, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.TagDAO")
+@patch("axbi.commands.utils.TagDAO")
 def test_update_tags_adding_and_removing_tags(mock_tag_dao, object_type):
     """
     Test the ``update_tags`` method when adding and removing existing tags.
@@ -522,7 +522,7 @@ def test_update_tags_adding_and_removing_tags(mock_tag_dao, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.TagDAO")
+@patch("axbi.commands.utils.TagDAO")
 def test_update_tags_removing_all_tags(mock_tag_dao, object_type):
     """
     Test the ``update_tags`` method when removing all tags.
@@ -540,7 +540,7 @@ def test_update_tags_removing_all_tags(mock_tag_dao, object_type):
 
 
 @pytest.mark.parametrize("object_type", OBJECT_TYPES)
-@patch("superset.commands.utils.TagDAO")
+@patch("axbi.commands.utils.TagDAO")
 def test_update_tags_no_tags(mock_tag_dao, object_type):
     """
     Test the ``update_tags`` method when the asset only has system tags.

@@ -18,13 +18,9 @@
  */
 
 import { useCallback, useEffect, useState } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  SupersetClient,
-  FeatureFlag,
-  isFeatureEnabled,
-} from '@superset-ui/core';
-import { css, useTheme, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
+import { css, useTheme, styled } from '@ax-bi/core/theme';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { Descriptions } from 'src/components/Descriptions';
@@ -33,7 +29,7 @@ import {
   UserInfoEditModal,
   UserInfoResetPasswordModal,
 } from 'src/features/userInfo/UserInfoModal';
-import { Icons, Collapse } from '@superset-ui/core/components';
+import { Icons, Collapse } from '@ax-bi/ui-core/components';
 import { ApiKeyList } from 'src/features/apiKeys/ApiKeyList';
 
 const StyledHeader = styled.div`
@@ -100,7 +96,7 @@ export function UserInfo({ user }: { user: UserWithPermissionsAndRoles }) {
   const [userDetails, setUserDetails] = useState(user);
 
   const getUserDetails = useCallback(() => {
-    SupersetClient.get({ endpoint: '/api/v1/me/' })
+    AxBIClient.get({ endpoint: '/api/v1/me/' })
       .then(({ json }) => {
         const transformedUser = {
           ...json.result,

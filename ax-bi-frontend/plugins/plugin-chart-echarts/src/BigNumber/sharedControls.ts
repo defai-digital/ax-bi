@@ -18,8 +18,8 @@
  */
 
 // These are control configurations that are shared ONLY within the BigNumberWithTrendline viz plugin repo.
-import { t } from '@apache-superset/core/translation';
-import { CustomControlItem } from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { CustomControlItem } from '@ax-bi/chart-controls';
 
 const FONT_SIZE_OPTIONS_SMALL = [
   { label: t('Tiny'), value: 0.125 },

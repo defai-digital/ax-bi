@@ -23,7 +23,7 @@ import {
   createWrapper,
   defaultStore as store,
 } from 'spec/helpers/testing-library';
-import { QueryState } from '@superset-ui/core';
+import { QueryState } from '@ax-bi/ui-core';
 import { api } from 'src/hooks/apiResources/queryApi';
 import { mapQueryResponse, useEditorQueriesQuery } from './queries';
 

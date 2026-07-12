@@ -17,9 +17,9 @@
  * under the License.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { HandlerFunction, JsonValue } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { sharedControlComponents } from '@superset-ui/chart-controls';
+import { HandlerFunction, JsonValue } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { sharedControlComponents } from '@ax-bi/chart-controls';
 import { AreaChartStackControlOptions } from '../constants';
 
 const { RadioButtonControl } = sharedControlComponents;

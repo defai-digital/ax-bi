@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import uuid
 
-from superset.models.ai import (
+from axbi.models.ai import (
     AIEvaluationRun,
     AIGeneratedArtifact,
     AISemanticAlias,

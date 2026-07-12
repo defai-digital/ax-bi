@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from superset.semantic_index.evaluation import (
+from axbi.semantic_index.evaluation import (
     build_generation_cases,
     build_guardrail_cases,
     evaluate_contract,
@@ -29,7 +29,7 @@ from superset.semantic_index.evaluation import (
     evaluate_guardrail,
     GenerationCase,
 )
-from superset.semantic_index.grounding import build_grounding_contract
+from axbi.semantic_index.grounding import build_grounding_contract
 
 _POLICIES = [
     {

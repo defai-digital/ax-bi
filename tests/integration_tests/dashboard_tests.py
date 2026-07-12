@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset"""
+"""Unit tests for AxBI"""
 
 import re
 from random import random
@@ -26,10 +26,10 @@ from flask import Response, url_for
 from markupsafe import escape
 from sqlalchemy import func
 
-from superset import db, security_manager
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
+from axbi import db, security_manager
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
 from tests.integration_tests.constants import (
     ADMIN_USERNAME,
     ALPHA_USERNAME,
@@ -53,10 +53,10 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_data,  # noqa: F401
 )
 
-from .base_tests import DEFAULT_PASSWORD, SupersetTestCase
+from .base_tests import DEFAULT_PASSWORD, AxBITestCase
 
 
-class TestDashboard(SupersetTestCase):
+class TestDashboard(AxBITestCase):
     @pytest.fixture
     def load_dashboard(self):
         table = db.session.query(SqlaTable).filter_by(table_name="energy_usage").one()
@@ -109,8 +109,8 @@ class TestDashboard(SupersetTestCase):
                 as_text=True
             )
 
-    def test_superset_dashboard_url(self):
-        url_for("Superset.dashboard", dashboard_id_or_slug=1)
+    def test_axbi_dashboard_url(self):
+        url_for("AxBI.dashboard", dashboard_id_or_slug=1)
 
     def test_new_dashboard(self):
         self.login(ADMIN_USERNAME)

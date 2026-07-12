@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getNumberFormatter, NumberFormats } from '@superset-ui/core';
+import { getNumberFormatter, NumberFormats } from '@ax-bi/ui-core';
 import { SeriesOption } from 'echarts';
 import {
   extractForecastSeriesContext,

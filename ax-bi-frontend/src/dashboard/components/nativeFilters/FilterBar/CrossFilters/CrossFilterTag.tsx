@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { getColumnLabel, useCSSTextTruncation } from '@superset-ui/core';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
+import { getColumnLabel, useCSSTextTruncation } from '@ax-bi/ui-core';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
 import { CrossFilterIndicator } from 'src/dashboard/components/nativeFilters/selectors';
 import { Tag } from 'src/components/Tag';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { FilterBarOrientation } from 'src/dashboard/types';
 import { ellipsisCss } from './styles';
 
@@ -67,13 +67,15 @@ const CrossFilterTag = (props: {
   return (
     <StyledTag
       css={css`
-        ${orientation === FilterBarOrientation.Vertical
-          ? `
+        ${
+          orientation === FilterBarOrientation.Vertical
+            ? `
             margin-top: ${theme.sizeUnit * 2}px;
           `
-          : `
+            : `
             margin-left: ${theme.sizeUnit * 2}px;
-          `}
+          `
+        }
       `}
       closable
       onClose={() => removeCrossFilter(filter.emitterId)}

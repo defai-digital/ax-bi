@@ -21,10 +21,10 @@ from unittest import mock
 
 import pytest
 
-from superset import db
-from superset.daos.dashboard import EmbeddedDashboardDAO
-from superset.models.dashboard import Dashboard
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.daos.dashboard import EmbeddedDashboardDAO
+from axbi.models.dashboard import Dashboard
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
@@ -32,13 +32,13 @@ from tests.integration_tests.fixtures.birth_names_dashboard import (
 )
 
 
-class TestEmbeddedDashboardApi(SupersetTestCase):
+class TestEmbeddedDashboardApi(AxBITestCase):
     resource_name = "embedded_dashboard"
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @mock.patch.dict(
-        "superset.extensions.feature_flag_manager._feature_flags",
-        EMBEDDED_SUPERSET=True,
+        "axbi.extensions.feature_flag_manager._feature_flags",
+        EMBEDDED_AXBI=True,
     )
     def test_get_embedded_dashboard(self):
         self.login(ADMIN_USERNAME)

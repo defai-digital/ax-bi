@@ -16,8 +16,8 @@
 # under the License.
 import pytest
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils.pandas_postprocessing.select import select
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils.pandas_postprocessing.select import select
 from tests.unit_tests.fixtures.dataframes import timeseries_df
 
 

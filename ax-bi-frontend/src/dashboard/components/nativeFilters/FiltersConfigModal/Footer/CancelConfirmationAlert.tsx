@@ -17,9 +17,9 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Button, type OnClickHandler } from '@superset-ui/core/components';
-import { Alert } from '@apache-superset/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Button, type OnClickHandler } from '@ax-bi/ui-core/components';
+import { Alert } from '@ax-bi/core/components';
 
 export interface ConfirmationAlertProps {
   title: string;

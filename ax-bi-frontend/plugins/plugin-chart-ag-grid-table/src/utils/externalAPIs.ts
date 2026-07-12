@@ -17,7 +17,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SetDataMaskHook } from '@superset-ui/core';
+import { SetDataMaskHook } from '@ax-bi/ui-core';
 import { SortByItem } from '../types';
 
 interface TableOwnState {

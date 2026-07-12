@@ -85,7 +85,7 @@ export type LocalStorageValues = {
  * guarantees that the globally namespaced localstorage key is correct.
  *
  * Instead, use getItem and setItem. Any legacy uses should be updated/migrated in future
- * Superset versions (as they may require breaking changes).
+ * AxBI versions (as they may require breaking changes).
  * */
 export function dangerouslyGetItemDoNotUse(
   key: string,
@@ -107,7 +107,7 @@ export function dangerouslyGetItemDoNotUse(
  * guarantees that the globally namespaced localstorage key is correct.
  *
  * Instead, use getItem and setItem. Any legacy uses should be updated/migrated in future
- * Superset versions (as they may require breaking changes).
+ * AxBI versions (as they may require breaking changes).
  * */
 export function dangerouslySetItemDoNotUse(key: string, value: any): void {
   try {

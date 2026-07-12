@@ -25,7 +25,7 @@ import {
   useMemo,
 } from 'react';
 import { isEmpty } from 'lodash';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   Behavior,
   BinaryQueryObjectFilterClause,
@@ -33,10 +33,10 @@ import {
   getChartMetadataRegistry,
   QueryFormData,
   removeHTMLTags,
-} from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, styled } from '@ax-bi/core/theme';
 import { useSelector } from 'react-redux';
-import { type ItemType } from '@superset-ui/core/components/Menu';
+import { type ItemType } from '@ax-bi/ui-core/components/Menu';
 import { RootState } from 'src/dashboard/types';
 import { getSubmenuYOffset } from '../utils';
 import { MenuItemTooltip } from '../DisabledMenuItemTooltip';

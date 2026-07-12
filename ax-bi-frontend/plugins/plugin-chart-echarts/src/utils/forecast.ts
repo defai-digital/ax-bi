@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataRecord, DTTM_ALIAS, ValueFormatter } from '@superset-ui/core';
+import { DataRecord, DTTM_ALIAS, ValueFormatter } from '@ax-bi/ui-core';
 import type { OptionName, SeriesOption } from 'echarts/types/src/util/types';
 import type { TooltipMarker } from 'echarts/types/src/util/format';
 import {

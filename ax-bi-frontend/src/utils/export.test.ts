@@ -16,19 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { parse as parseContentDisposition } from 'content-disposition';
 import handleResourceExport, { getFilenameFromResponse } from './export';
 
 // Mock dependencies
-jest.mock('@superset-ui/core', () => ({
-  SupersetClient: {
+jest.mock('@ax-bi/ui-core', () => ({
+  AxBIClient: {
     get: jest.fn(),
   },
 }));
 
-jest.mock('@apache-superset/core/utils', () => ({
+jest.mock('@ax-bi/core/utils', () => ({
   logging: {
     warn: jest.fn(),
     error: jest.fn(),
@@ -66,8 +66,8 @@ beforeEach(() => {
     blob: jest.fn().mockResolvedValue(mockBlob),
   } as unknown as Response;
 
-  // Mock SupersetClient.get
-  (SupersetClient.get as jest.Mock).mockResolvedValue(mockResponse);
+  // Mock AxBIClient.get
+  (AxBIClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
   // Mock DOM APIs
   const mockAnchor = document.createElement('a');
@@ -102,7 +102,7 @@ test('exports resource with correct endpoint and headers', async () => {
   const doneMock = jest.fn();
   await handleResourceExport('dashboard', [1, 2, 3], doneMock);
 
-  expect(SupersetClient.get).toHaveBeenCalledWith({
+  expect(AxBIClient.get).toHaveBeenCalledWith({
     endpoint: '/api/v1/dashboard/export/?q=!(1,2,3)',
     headers: {
       Accept: 'application/zip, application/x-zip-compressed, text/plain',
@@ -149,7 +149,7 @@ test('uses default filename when Content-Disposition is missing', async () => {
     headers: new Headers(),
     blob: jest.fn().mockResolvedValue(mockBlob),
   } as unknown as Response;
-  (SupersetClient.get as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
   const doneMock = jest.fn();
   await handleResourceExport('chart', [42], doneMock);
@@ -174,7 +174,7 @@ test('handles Content-Disposition parsing errors gracefully', async () => {
 
 test('handles API errors and calls done callback', async () => {
   const apiError = new Error('API Error');
-  (SupersetClient.get as jest.Mock).mockRejectedValue(apiError);
+  (AxBIClient.get as jest.Mock).mockRejectedValue(apiError);
 
   const doneMock = jest.fn();
 
@@ -188,7 +188,7 @@ test('handles API errors and calls done callback', async () => {
 test('handles blob conversion errors', async () => {
   const blobError = new Error('Blob conversion failed');
   mockResponse.blob = jest.fn().mockRejectedValue(blobError);
-  (SupersetClient.get as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
   const doneMock = jest.fn();
 
@@ -203,7 +203,7 @@ test('exports multiple resources with correct IDs', async () => {
   const doneMock = jest.fn();
   await handleResourceExport('dataset', [10, 20, 30, 40], doneMock);
 
-  expect(SupersetClient.get).toHaveBeenCalledWith(
+  expect(AxBIClient.get).toHaveBeenCalledWith(
     expect.objectContaining({
       endpoint: '/api/v1/dataset/export/?q=!(10,20,30,40)',
     }),
@@ -233,7 +233,7 @@ test('warns when export exceeds maximum blob size', async () => {
     }),
     blob: jest.fn().mockResolvedValue(mockBlob),
   } as unknown as Response;
-  (SupersetClient.get as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
   const doneMock = jest.fn();
   await handleResourceExport('dashboard', [1], doneMock);
@@ -248,35 +248,35 @@ test('handles various resource types', async () => {
   const doneMock = jest.fn();
 
   await handleResourceExport('dashboard', [1], doneMock);
-  expect(SupersetClient.get).toHaveBeenCalledWith(
+  expect(AxBIClient.get).toHaveBeenCalledWith(
     expect.objectContaining({
       endpoint: '/api/v1/dashboard/export/?q=!(1)',
     }),
   );
 
   await handleResourceExport('chart', [1], doneMock);
-  expect(SupersetClient.get).toHaveBeenCalledWith(
+  expect(AxBIClient.get).toHaveBeenCalledWith(
     expect.objectContaining({
       endpoint: '/api/v1/chart/export/?q=!(1)',
     }),
   );
 
   await handleResourceExport('dataset', [1], doneMock);
-  expect(SupersetClient.get).toHaveBeenCalledWith(
+  expect(AxBIClient.get).toHaveBeenCalledWith(
     expect.objectContaining({
       endpoint: '/api/v1/dataset/export/?q=!(1)',
     }),
   );
 
   await handleResourceExport('database', [1], doneMock);
-  expect(SupersetClient.get).toHaveBeenCalledWith(
+  expect(AxBIClient.get).toHaveBeenCalledWith(
     expect.objectContaining({
       endpoint: '/api/v1/database/export/?q=!(1)',
     }),
   );
 
   await handleResourceExport('query', [1], doneMock);
-  expect(SupersetClient.get).toHaveBeenCalledWith(
+  expect(AxBIClient.get).toHaveBeenCalledWith(
     expect.objectContaining({
       endpoint: '/api/v1/query/export/?q=!(1)',
     }),
@@ -287,7 +287,7 @@ test('handles various resource types', async () => {
 
 test('handles network errors and logs them', async () => {
   const networkError = new Error('Network request failed');
-  (SupersetClient.get as jest.Mock).mockRejectedValue(networkError);
+  (AxBIClient.get as jest.Mock).mockRejectedValue(networkError);
 
   const doneMock = jest.fn();
 
@@ -304,7 +304,7 @@ test('handles network errors and logs them', async () => {
 
 test('handles 404 errors when resource not found', async () => {
   const notFoundError = new Error('Not found');
-  (SupersetClient.get as jest.Mock).mockRejectedValue(notFoundError);
+  (AxBIClient.get as jest.Mock).mockRejectedValue(notFoundError);
 
   const doneMock = jest.fn();
 
@@ -323,7 +323,7 @@ test('handles empty response from server', async () => {
     }),
     blob: jest.fn().mockResolvedValue(emptyBlob),
   } as unknown as Response;
-  (SupersetClient.get as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
   const doneMock = jest.fn();
   await handleResourceExport('dashboard', [1], doneMock);
@@ -361,7 +361,7 @@ test('handles malformed Content-Disposition header', async () => {
     }),
     blob: jest.fn().mockResolvedValue(mockBlob),
   } as unknown as Response;
-  (SupersetClient.get as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
   (parseContentDisposition as jest.Mock).mockImplementationOnce(() => {
     throw new Error('Parse error');
@@ -384,7 +384,7 @@ test('handles missing headers object', async () => {
     headers: new Headers(),
     blob: jest.fn().mockResolvedValue(mockBlob),
   } as unknown as Response;
-  (SupersetClient.get as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.get as jest.Mock).mockResolvedValue(mockResponse);
 
   const doneMock = jest.fn();
   await handleResourceExport('chart', [7], doneMock);
@@ -398,7 +398,7 @@ test('handles export with empty IDs array', async () => {
   const doneMock = jest.fn();
   await handleResourceExport('dashboard', [], doneMock);
 
-  expect(SupersetClient.get).toHaveBeenCalledWith(
+  expect(AxBIClient.get).toHaveBeenCalledWith(
     expect.objectContaining({
       endpoint: '/api/v1/dashboard/export/?q=!()',
     }),
@@ -410,19 +410,19 @@ const { ensureAppRoot } = jest.requireMock('./pathUtils');
 const doublePrefixTestCases = [
   {
     name: 'subdirectory prefix',
-    appRoot: '/superset',
+    appRoot: '/ax-bi',
     resource: 'dashboard',
     ids: [1],
   },
   {
     name: 'subdirectory prefix (dataset)',
-    appRoot: '/superset',
+    appRoot: '/ax-bi',
     resource: 'dataset',
     ids: [1],
   },
   {
     name: 'nested prefix',
-    appRoot: '/my-app/superset',
+    appRoot: '/my-app/ax-bi',
     resource: 'dataset',
     ids: [1, 2],
   },
@@ -439,14 +439,12 @@ test.each(doublePrefixTestCases)(
     const doneMock = jest.fn();
     await handleResourceExport(resource, ids, doneMock);
 
-    // The endpoint passed to SupersetClient.get should NOT have the appRoot prefix
-    // because SupersetClient.getUrl() adds it when building the full URL.
+    // The endpoint passed to AxBIClient.get should NOT have the appRoot prefix
+    // because AxBIClient.getUrl() adds it when building the full URL.
     const expectedEndpoint = `/api/v1/${resource}/export/?q=!(${ids.join(',')})`;
 
     // Explicitly verify no prefix in endpoint - this will fail if ensureAppRoot is used
-    const callArgs = (SupersetClient.get as jest.Mock).mock.calls.slice(
-      -1,
-    )[0][0];
+    const callArgs = (AxBIClient.get as jest.Mock).mock.calls.slice(-1)[0][0];
     expect(callArgs.endpoint).not.toContain(appRoot);
     expect(callArgs.endpoint).toBe(expectedEndpoint);
 

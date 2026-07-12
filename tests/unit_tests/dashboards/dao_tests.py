@@ -25,12 +25,12 @@ from flask import g
 from pytest_mock import MockerFixture
 from sqlalchemy.orm.session import Session
 
-from superset.utils import json
+from axbi.utils import json
 
 
 @pytest.fixture
 def session_with_data(session: Session) -> Iterator[Session]:
-    from superset.models.dashboard import Dashboard
+    from axbi.models.dashboard import Dashboard
 
     engine = session.get_bind()
     Dashboard.metadata.create_all(engine)  # pylint: disable=no-member
@@ -50,7 +50,7 @@ def session_with_data(session: Session) -> Iterator[Session]:
 
 
 def test_add_favorite(session: Session) -> None:
-    from superset.daos.dashboard import DashboardDAO
+    from axbi.daos.dashboard import DashboardDAO
 
     dashboard = DashboardDAO.find_by_id(100, skip_base_filter=True)
     if not dashboard:
@@ -65,7 +65,7 @@ def test_add_favorite(session: Session) -> None:
 
 
 def test_remove_favorite(session: Session) -> None:
-    from superset.daos.dashboard import DashboardDAO
+    from axbi.daos.dashboard import DashboardDAO
 
     dashboard = DashboardDAO.find_by_id(100, skip_base_filter=True)
     if not dashboard:
@@ -85,12 +85,12 @@ def test_remove_favorite(session: Session) -> None:
 def test_set_dash_metadata_ignores_non_object_filter_metadata(
     mocker: MockerFixture,
 ) -> None:
-    from superset.daos.dashboard import DashboardDAO
-    from superset.models.dashboard import Dashboard
+    from axbi.daos.dashboard import DashboardDAO
+    from axbi.models.dashboard import Dashboard
 
     chart_uuid = uuid4()
     mock_slice = MagicMock(id=10, uuid=chart_uuid)
-    query = mocker.patch("superset.daos.dashboard.db").session.query.return_value
+    query = mocker.patch("axbi.daos.dashboard.db").session.query.return_value
     query.filter.return_value.all.return_value = [mock_slice]
 
     dashboard = Dashboard(json_metadata="{}", position_json="{}")
@@ -118,10 +118,10 @@ def test_set_dash_metadata_ignores_non_object_filter_metadata(
 def test_set_dash_metadata_ignores_non_object_positions(
     mocker: MockerFixture,
 ) -> None:
-    from superset.daos.dashboard import DashboardDAO
-    from superset.models.dashboard import Dashboard
+    from axbi.daos.dashboard import DashboardDAO
+    from axbi.models.dashboard import Dashboard
 
-    query = mocker.patch("superset.daos.dashboard.db").session.query.return_value
+    query = mocker.patch("axbi.daos.dashboard.db").session.query.return_value
     query.filter.return_value.all.return_value = []
 
     dashboard = Dashboard(json_metadata="{}", position_json='{"stale": true}')
@@ -143,10 +143,10 @@ def test_copy_dashboard_ignores_non_object_metadata_positions(
     app: Any,
     mocker: MockerFixture,
 ) -> None:
-    from superset.daos.dashboard import DashboardDAO
+    from axbi.daos.dashboard import DashboardDAO
 
-    mocker.patch("superset.daos.dashboard.is_feature_enabled", return_value=False)
-    mock_db = mocker.patch("superset.daos.dashboard.db")
+    mocker.patch("axbi.daos.dashboard.is_feature_enabled", return_value=False)
+    mock_db = mocker.patch("axbi.daos.dashboard.db")
     mock_slice = MagicMock(id=10)
     mock_slice.clone.return_value = MagicMock(id=100, dashboards=[])
     original_dash = MagicMock(slices=[mock_slice], params="{}")
@@ -170,11 +170,11 @@ def test_copy_dashboard_skips_malformed_position_meta(
     app: Any,
     mocker: MockerFixture,
 ) -> None:
-    from superset.daos.dashboard import DashboardDAO
+    from axbi.daos.dashboard import DashboardDAO
 
     chart_uuid = uuid4()
-    mocker.patch("superset.daos.dashboard.is_feature_enabled", return_value=False)
-    mock_db = mocker.patch("superset.daos.dashboard.db")
+    mocker.patch("axbi.daos.dashboard.is_feature_enabled", return_value=False)
+    mock_db = mocker.patch("axbi.daos.dashboard.db")
     mock_db.session.query.return_value.filter.return_value.all.return_value = [
         MagicMock(id=100, uuid=chart_uuid)
     ]

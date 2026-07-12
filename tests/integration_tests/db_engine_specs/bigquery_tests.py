@@ -21,13 +21,13 @@ import pytest
 from pandas import DataFrame
 from sqlalchemy import column
 
-from superset import db
-from superset.connectors.sqla.models import TableColumn
-from superset.db_engine_specs.base import BaseEngineSpec
-from superset.db_engine_specs.bigquery import BigQueryEngineSpec
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.sql.parse import Table
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.connectors.sqla.models import TableColumn
+from axbi.db_engine_specs.base import BaseEngineSpec
+from axbi.db_engine_specs.bigquery import BigQueryEngineSpec
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.sql.parse import Table
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -43,7 +43,7 @@ def mock_engine_with_credentials(*args, **kwargs):
     yield engine_mock
 
 
-class TestBigQueryDbEngineSpec(SupersetTestCase):
+class TestBigQueryDbEngineSpec(AxBITestCase):
     def test_bigquery_sqla_column_label(self):
         """
         DB Eng Specs (bigquery): Test column label
@@ -163,9 +163,9 @@ class TestBigQueryDbEngineSpec(SupersetTestCase):
             },
         }
 
-    @mock.patch("superset.db_engine_specs.bigquery.BigQueryEngineSpec.get_engine")
-    @mock.patch("superset.db_engine_specs.bigquery.pandas_gbq")
-    @mock.patch("superset.db_engine_specs.bigquery.service_account")
+    @mock.patch("axbi.db_engine_specs.bigquery.BigQueryEngineSpec.get_engine")
+    @mock.patch("axbi.db_engine_specs.bigquery.pandas_gbq")
+    @mock.patch("axbi.db_engine_specs.bigquery.service_account")
     def test_df_to_sql(self, mock_service_account, mock_pandas_gbq, mock_get_engine):
         """
         DB Eng Specs (bigquery): Test DataFrame to SQL contract
@@ -200,9 +200,9 @@ class TestBigQueryDbEngineSpec(SupersetTestCase):
         msg = "403 POST https://bigquery.googleapis.com/bigquery/v2/projects/test-keel-310804/jobs?prettyPrint=false: Access Denied: Project profound-keel-310804: User does not have bigquery.jobs.create permission in project profound-keel-310804"  # noqa: E501
         result = BigQueryEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Unable to connect. Verify that the following roles are set on the service account: "BigQuery Data Viewer", "BigQuery Metadata Viewer", "BigQuery Job User" and the following permissions are set "bigquery.readsessions.create", "bigquery.readsessions.getData"',  # noqa: E501
-                error_type=SupersetErrorType.CONNECTION_DATABASE_PERMISSIONS_ERROR,
+                error_type=AxBIErrorType.CONNECTION_DATABASE_PERMISSIONS_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google BigQuery",
@@ -219,9 +219,9 @@ class TestBigQueryDbEngineSpec(SupersetTestCase):
         msg = "bigquery error: 404 Not found: Dataset fakeDataset:bogusSchema was not found in location"  # noqa: E501
         result = BigQueryEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='The schema "bogusSchema" does not exist. A valid schema must be used to run this query.',  # noqa: E501
-                error_type=SupersetErrorType.SCHEMA_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.SCHEMA_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google BigQuery",
@@ -242,9 +242,9 @@ class TestBigQueryDbEngineSpec(SupersetTestCase):
         msg = 'Table name "badtable" missing dataset while no default dataset is set in the request'  # noqa: E501
         result = BigQueryEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='The table "badtable" does not exist. A valid table must be used to run this query.',  # noqa: E501
-                error_type=SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google BigQuery",
@@ -265,9 +265,9 @@ class TestBigQueryDbEngineSpec(SupersetTestCase):
         msg = "Unrecognized name: badColumn at [1:8]"
         result = BigQueryEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='We can\'t seem to resolve column "badColumn" at line 1:8.',
-                error_type=SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
+                error_type=AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google BigQuery",
@@ -288,9 +288,9 @@ class TestBigQueryDbEngineSpec(SupersetTestCase):
         msg = 'Syntax error: Expected end of input but got identifier "from_"'
         result = BigQueryEngineSpec.extract_errors(Exception(msg))
         assert result == [
-            SupersetError(
+            AxBIError(
                 message='Please check your query for syntax errors at or near "from_". Then, try running your query again.',  # noqa: E501
-                error_type=SupersetErrorType.SYNTAX_ERROR,
+                error_type=AxBIErrorType.SYNTAX_ERROR,
                 level=ErrorLevel.ERROR,
                 extra={
                     "engine_name": "Google BigQuery",
@@ -304,10 +304,10 @@ class TestBigQueryDbEngineSpec(SupersetTestCase):
             )
         ]
 
-    @mock.patch("superset.models.core.Database.db_engine_spec", BigQueryEngineSpec)
+    @mock.patch("axbi.models.core.Database.db_engine_spec", BigQueryEngineSpec)
     @mock.patch("sqlalchemy_bigquery._helpers.create_bigquery_client", mock.Mock)
     @mock.patch(
-        "superset.db_engine_specs.bigquery.BigQueryEngineSpec.adjust_engine_params",
+        "axbi.db_engine_specs.bigquery.BigQueryEngineSpec.adjust_engine_params",
         new=lambda uri, connect_args, catalog=None, schema=None, **kw: (
             uri,
             connect_args,

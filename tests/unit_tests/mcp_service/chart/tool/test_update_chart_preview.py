@@ -25,8 +25,8 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.schemas import (
     AxisConfig,
     ColumnRef,
     FilterConfig,
@@ -42,7 +42,7 @@ from superset.mcp_service.chart.schemas import (
 # lookup of ``...update_chart_preview.<attr>`` can resolve to the function on
 # some Python versions. Hold a direct module reference for ``patch.object``.
 update_chart_preview_module = importlib.import_module(
-    "superset.mcp_service.chart.tool.update_chart_preview"
+    "axbi.mcp_service.chart.tool.update_chart_preview"
 )
 
 
@@ -54,7 +54,7 @@ def mcp_server():
 @pytest.fixture
 def mock_auth():
     """Mock authentication for tool-invocation tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         user = Mock()
         user.id = 1
         user.username = "admin"
@@ -539,7 +539,7 @@ class TestUpdateChartPreview:
         assert request.config.sort_by == ["sales", "profit"]
         assert len(request.config.columns) == 3
 
-    @patch("superset.commands.explore.form_data.get.GetFormDataCommand")
+    @patch("axbi.commands.explore.form_data.get.GetFormDataCommand")
     def test_get_previous_form_data_parses_json_cache_hit(
         self,
         mock_get_form_data_command,
@@ -570,7 +570,7 @@ class TestUpdateChartPreview:
         command_params = mock_get_form_data_command.call_args.args[0]
         assert command_params.key == "valid_key_12345"
 
-    @patch("superset.commands.explore.form_data.get.GetFormDataCommand")
+    @patch("axbi.commands.explore.form_data.get.GetFormDataCommand")
     def test_get_previous_form_data_returns_none_for_cache_failure(
         self,
         mock_get_form_data_command,
@@ -588,13 +588,13 @@ class TestUpdateChartPreview:
 
     @patch.object(update_chart_preview_module, "validate_and_compile")
     @patch.object(update_chart_preview_module, "has_dataset_access", return_value=True)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch.object(update_chart_preview_module, "analyze_chart_semantics")
     @patch.object(update_chart_preview_module, "analyze_chart_capabilities")
     @patch.object(update_chart_preview_module, "generate_explore_link")
     @patch.object(update_chart_preview_module, "_get_previous_form_data")
     @patch.object(update_chart_preview_module, "_find_dataset")
-    @patch("superset.mcp_service.auth.get_user_from_request")
+    @patch("axbi.mcp_service.auth.get_user_from_request")
     @pytest.mark.asyncio
     async def test_warns_when_previous_form_data_key_is_missing(
         self,
@@ -652,13 +652,13 @@ class TestUpdateChartPreview:
 
     @patch.object(update_chart_preview_module, "validate_and_compile")
     @patch.object(update_chart_preview_module, "has_dataset_access", return_value=True)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch.object(update_chart_preview_module, "analyze_chart_semantics")
     @patch.object(update_chart_preview_module, "analyze_chart_capabilities")
     @patch.object(update_chart_preview_module, "generate_explore_link")
     @patch.object(update_chart_preview_module, "_get_previous_form_data")
     @patch.object(update_chart_preview_module, "_find_dataset")
-    @patch("superset.mcp_service.auth.get_user_from_request")
+    @patch("axbi.mcp_service.auth.get_user_from_request")
     @pytest.mark.asyncio
     async def test_preserves_previous_adhoc_filters_without_warning(
         self,
@@ -725,14 +725,14 @@ class TestUpdateChartPreview:
 
     @patch.object(update_chart_preview_module, "validate_and_compile")
     @patch.object(update_chart_preview_module, "has_dataset_access", return_value=True)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch.object(update_chart_preview_module, "generate_preview_from_form_data")
     @patch.object(update_chart_preview_module, "analyze_chart_semantics")
     @patch.object(update_chart_preview_module, "analyze_chart_capabilities")
     @patch.object(update_chart_preview_module, "generate_explore_link")
     @patch.object(update_chart_preview_module, "_get_previous_form_data")
     @patch.object(update_chart_preview_module, "_find_dataset")
-    @patch("superset.mcp_service.auth.get_user_from_request")
+    @patch("axbi.mcp_service.auth.get_user_from_request")
     @pytest.mark.asyncio
     async def test_returns_requested_table_preview(
         self,
@@ -840,11 +840,9 @@ class TestUpdateChartPreviewValidation:
 
     @patch.object(update_chart_preview_module, "_find_dataset")
     @patch.object(update_chart_preview_module, "has_dataset_access", return_value=True)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
     @patch.object(update_chart_preview_module, "validate_and_compile")
-    @patch(
-        "superset.mcp_service.commands.create_form_data.MCPCreateFormDataCommand.run"
-    )
+    @patch("axbi.mcp_service.commands.create_form_data.MCPCreateFormDataCommand.run")
     @pytest.mark.asyncio
     async def test_validation_failure_skips_cache_write(
         self,
@@ -857,8 +855,8 @@ class TestUpdateChartPreviewValidation:
         mock_auth,
     ):
         """Bad column ref → structured error with suggestions, no cache write."""
-        from superset.mcp_service.chart.compile import CompileResult
-        from superset.mcp_service.common.error_schemas import ChartGenerationError
+        from axbi.mcp_service.chart.compile import CompileResult
+        from axbi.mcp_service.common.error_schemas import ChartGenerationError
 
         mock_find_dataset.return_value = _mock_dataset(id=3)
         mock_find_by_id.return_value = _mock_dataset(id=3)
@@ -901,10 +899,8 @@ class TestUpdateChartPreviewValidation:
 
     @patch.object(update_chart_preview_module, "_find_dataset")
     @patch.object(update_chart_preview_module, "has_dataset_access", return_value=False)
-    @patch("superset.daos.dataset.DatasetDAO.find_by_id")
-    @patch(
-        "superset.mcp_service.commands.create_form_data.MCPCreateFormDataCommand.run"
-    )
+    @patch("axbi.daos.dataset.DatasetDAO.find_by_id")
+    @patch("axbi.mcp_service.commands.create_form_data.MCPCreateFormDataCommand.run")
     @pytest.mark.asyncio
     async def test_dataset_access_denied_short_circuits(
         self,

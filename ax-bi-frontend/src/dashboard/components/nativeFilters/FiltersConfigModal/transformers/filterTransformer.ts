@@ -24,7 +24,7 @@ import {
   ChartCustomization,
   ChartCustomizationType,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { getInitialDataMask } from 'src/dataMask/reducer';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
 import {
@@ -47,9 +47,7 @@ type NativeFilterFormOrSaved = NativeFiltersFormItem | Filter;
 function isCustomizationType(
   formInputs: FilterFormInput,
 ): formInputs is
-  | ChartCustomizationsFormItem
-  | ChartCustomization
-  | ChartCustomizationDivider {
+  ChartCustomizationsFormItem | ChartCustomization | ChartCustomizationDivider {
   return (
     'type' in formInputs &&
     (formInputs.type === ChartCustomizationType.ChartCustomization ||

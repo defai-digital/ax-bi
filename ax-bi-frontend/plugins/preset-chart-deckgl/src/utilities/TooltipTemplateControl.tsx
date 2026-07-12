@@ -19,10 +19,10 @@
 
 import { useCallback } from 'react';
 import { debounce } from 'lodash';
-import { t } from '@apache-superset/core/translation';
-import { useTheme } from '@apache-superset/core/theme';
-import { InfoTooltip, Constants } from '@superset-ui/core/components';
-import { ControlHeader } from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { useTheme } from '@ax-bi/core/theme';
+import { InfoTooltip, Constants } from '@ax-bi/ui-core/components';
+import { ControlHeader } from '@ax-bi/chart-controls';
 import { TooltipTemplateEditor } from './TooltipTemplateEditor';
 
 interface TooltipTemplateControlProps {

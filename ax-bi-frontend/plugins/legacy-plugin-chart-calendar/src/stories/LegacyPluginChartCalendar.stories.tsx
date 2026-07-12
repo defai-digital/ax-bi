@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart } from '@superset-ui/core';
-import CalendarChartPlugin from '@superset-ui/legacy-plugin-chart-calendar';
+import { SuperChart } from '@ax-bi/ui-core';
+import CalendarChartPlugin from '@ax-bi/legacy-plugin-chart-calendar';
 import data from './data';
 import { dummyDatasource, withResizableChartDemo } from '@storybook-shared';
 

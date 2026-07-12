@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 import type { GraphNodeItemOption } from 'echarts/types/src/chart/graph/GraphSeries';
 import type { SeriesTooltipOption } from 'echarts/types/src/util/types';
 import {

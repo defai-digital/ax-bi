@@ -19,7 +19,7 @@
 import { createRef, act } from 'react';
 import { render, screen, waitFor } from 'spec/helpers/testing-library';
 import userEvent from '@testing-library/user-event';
-import { NO_TIME_RANGE, SupersetClient } from '@superset-ui/core';
+import { NO_TIME_RANGE, AxBIClient } from '@ax-bi/ui-core';
 import TimeRangeFilter from './TimeRange';
 import type { FilterHandler } from './types';
 
@@ -72,7 +72,7 @@ let getSpy: jest.SpyInstance;
 
 beforeEach(() => {
   getSpy = jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockResolvedValue(MOCK_TIME_RANGE_RESULT as any);
 });
 

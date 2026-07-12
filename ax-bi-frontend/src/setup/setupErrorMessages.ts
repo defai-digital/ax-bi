@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ErrorTypeEnum } from '@superset-ui/core';
+import { ErrorTypeEnum } from '@ax-bi/ui-core';
 import {
   getErrorMessageComponentRegistry,
   TimeoutErrorMessage,

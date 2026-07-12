@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render, screen } from 'spec/helpers/testing-library';
-import { Icons } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components';
 import { ModalTitleWithIcon } from '.';
 
 // ModalTitleWithIcon

@@ -16,7 +16,7 @@
 # under the License.
 from os import path
 
-from superset.utils import json
+from axbi.utils import json
 
 FIXTURES_DIR = "tests/integration_tests/fixtures"
 

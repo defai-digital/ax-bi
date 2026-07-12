@@ -18,14 +18,14 @@
  */
 import { FunctionComponent, useState, useEffect, ChangeEvent } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { useSingleViewResource } from 'src/views/CRUD/hooks';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import withToasts from 'src/components/MessageToasts/withToasts';
-import { Input, Modal, RangePicker } from '@superset-ui/core/components';
-import { useJsonValidation } from '@superset-ui/core/components/AsyncAceEditor';
-import type { editors } from '@apache-superset/core';
+import { Input, Modal, RangePicker } from '@ax-bi/ui-core/components';
+import { useJsonValidation } from '@ax-bi/ui-core/components/AsyncAceEditor';
+import type { editors } from '@ax-bi/core';
 import { EditorHost } from 'src/core/editors';
 import { OnlyKeyWithType } from 'src/utils/types';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';

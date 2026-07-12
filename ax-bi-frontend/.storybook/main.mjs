@@ -21,7 +21,7 @@
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
-// Superset's webpack.config.js
+// AxBI's webpack.config.js
 import customConfig from '../webpack.config.js';
 
 const require = createRequire(import.meta.url);
@@ -86,7 +86,7 @@ const disableDevModeInRules = rules =>
 export default {
   stories: [
     '../src/**/*.stories.tsx',
-    '../packages/superset-ui-core/src/**/*.stories.tsx',
+    '../packages/ax-bi-ui-core/src/**/*.stories.tsx',
     '../plugins/*/src/**/*.stories.tsx',
   ],
 

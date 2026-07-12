@@ -21,16 +21,16 @@ from flask_appbuilder import Model
 from jinja2.exceptions import TemplateError
 from pytest_mock import MockerFixture
 
-from superset.commands.dataset.exceptions import DatasetNotFoundError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import (
-    SupersetParseError,
-    SupersetSecurityException,
-    SupersetTemplateException,
+from axbi.commands.dataset.exceptions import DatasetNotFoundError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import (
+    AxBIParseError,
+    AxBISecurityException,
+    AxBITemplateException,
 )
-from superset.models import sql_lab as sql_lab_module
-from superset.models.sql_lab import Query, SavedQuery, TableSchema
-from superset.utils import json
+from axbi.models import sql_lab as sql_lab_module
+from axbi.models.sql_lab import Query, SavedQuery, TableSchema
+from axbi.utils import json
 
 
 @pytest.mark.parametrize(
@@ -46,9 +46,9 @@ from superset.utils import json
         # Original silent handler — security/parse/template errors are
         # expected during list rendering and produce no log noise.
         (
-            SupersetSecurityException(
-                SupersetError(
-                    error_type=SupersetErrorType.QUERY_SECURITY_ACCESS_ERROR,
+            AxBISecurityException(
+                AxBIError(
+                    error_type=AxBIErrorType.QUERY_SECURITY_ACCESS_ERROR,
                     message="",
                     level=ErrorLevel.ERROR,
                 )
@@ -56,7 +56,7 @@ from superset.utils import json
             False,
         ),
         (
-            SupersetParseError(
+            AxBIParseError(
                 sql="INVALID SQL",
                 message="Invalid SQL syntax",
             ),
@@ -70,7 +70,7 @@ from superset.utils import json
         # pinned here so a future refactor that collapses the case into
         # the silent handler fails this test.
         (DatasetNotFoundError("Dataset 1 not found!"), True),
-        (SupersetTemplateException("Template rendering failed"), True),
+        (AxBITemplateException("Template rendering failed"), True),
     ],
 )
 def test_sql_tables_mixin_sql_tables_exception(
@@ -80,7 +80,7 @@ def test_sql_tables_mixin_sql_tables_exception(
     mocker: MockerFixture,
 ) -> None:
     mocker.patch(
-        "superset.models.sql_lab.process_jinja_sql",
+        "axbi.models.sql_lab.process_jinja_sql",
         side_effect=exception,
     )
     warning_spy = mocker.spy(sql_lab_module.logger, "warning")
@@ -121,8 +121,8 @@ def test_sql_tables_mixin_invalid_sql_returns_empty_list(
 ) -> None:
     """Test that SqlTablesMixin returns empty list when SQL parsing fails."""
     mocker.patch(
-        "superset.models.sql_lab.process_jinja_sql",
-        side_effect=SupersetParseError(
+        "axbi.models.sql_lab.process_jinja_sql",
+        side_effect=AxBIParseError(
             sql=invalid_sql or "INVALID SQL",
             message=f"Failed to parse SQL: {invalid_sql}",
         ),

@@ -18,13 +18,13 @@
  */
 import { CSSProperties, ReactNode, useCallback } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { useCSSTextTruncation } from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { useCSSTextTruncation } from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Tooltip } from '@superset-ui/core/components/Tooltip';
-import { Typography } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Tooltip } from '@ax-bi/ui-core/components/Tooltip';
+import { Typography } from '@ax-bi/ui-core/components';
 import DatasourcePanelDragOption from './DatasourcePanelDragOption';
 import { DndItemType } from '../DndItemType';
 import { DndItemValue, FlattenedItem, Folder } from './types';

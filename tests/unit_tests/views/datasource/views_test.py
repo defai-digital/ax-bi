@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Unit tests for resource-level authorization in superset/views/datasource/views.py.
+"""Unit tests for resource-level authorization in axbi/views/datasource/views.py.
 
 Tests use ``inspect.unwrap`` to call the underlying view logic directly,
 bypassing the Flask-AppBuilder permission decorator machinery.
@@ -25,16 +25,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
-from superset.utils import json as superset_json
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
+from axbi.utils import json as axbi_json
 
 
-def _security_exception() -> SupersetSecurityException:
-    return SupersetSecurityException(
-        SupersetError(
+def _security_exception() -> AxBISecurityException:
+    return AxBISecurityException(
+        AxBIError(
             message="Access denied",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.WARNING,
         )
     )
@@ -42,7 +42,7 @@ def _security_exception() -> SupersetSecurityException:
 
 def _get_view_func(name: str):
     """Return the unwrapped body of a Datasource view method."""
-    from superset.views.datasource.views import Datasource
+    from axbi.views.datasource.views import Datasource
 
     return inspect.unwrap(getattr(Datasource, name))
 
@@ -59,8 +59,8 @@ def _view_self() -> MagicMock:
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
 def test_get_raises_when_access_denied(
     mock_get_datasource: MagicMock,
     mock_security_manager: MagicMock,
@@ -71,7 +71,7 @@ def test_get_raises_when_access_denied(
     mock_security_manager.raise_for_access.side_effect = _security_exception()
 
     raw_get = _get_view_func("get")
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         raw_get(_view_self(), "table", 1)
 
     mock_security_manager.raise_for_access.assert_called_once_with(
@@ -79,9 +79,9 @@ def test_get_raises_when_access_denied(
     )
 
 
-@patch("superset.views.datasource.views.sanitize_datasource_data")
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views.sanitize_datasource_data")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
 def test_get_succeeds_for_authorised_user(
     mock_get_datasource: MagicMock,
     mock_security_manager: MagicMock,
@@ -109,8 +109,8 @@ def test_get_succeeds_for_authorised_user(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
 def test_external_metadata_raises_when_access_denied(
     mock_get_datasource: MagicMock,
     mock_security_manager: MagicMock,
@@ -120,7 +120,7 @@ def test_external_metadata_raises_when_access_denied(
     mock_security_manager.raise_for_access.side_effect = _security_exception()
 
     raw_fn = _get_view_func("external_metadata")
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         raw_fn(_view_self(), "table", 1)
 
     mock_security_manager.raise_for_access.assert_called_once_with(
@@ -128,8 +128,8 @@ def test_external_metadata_raises_when_access_denied(
     )
 
 
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
 def test_external_metadata_succeeds_for_authorised_user(
     mock_get_datasource: MagicMock,
     mock_security_manager: MagicMock,
@@ -154,9 +154,9 @@ def test_external_metadata_succeeds_for_authorised_user(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.SqlaTable.get_datasource_by_name")
-@patch("superset.views.datasource.views.ExternalMetadataSchema")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.SqlaTable.get_datasource_by_name")
+@patch("axbi.views.datasource.views.ExternalMetadataSchema")
 def test_external_metadata_by_name_known_datasource_raises_when_access_denied(
     mock_schema_cls: MagicMock,
     mock_get_by_name: MagicMock,
@@ -175,7 +175,7 @@ def test_external_metadata_by_name_known_datasource_raises_when_access_denied(
     mock_security_manager.raise_for_access.side_effect = _security_exception()
 
     raw_fn = _get_view_func("external_metadata_by_name")
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         raw_fn(_view_self(), rison=params)
 
     mock_security_manager.raise_for_access.assert_called_once_with(
@@ -183,10 +183,10 @@ def test_external_metadata_by_name_known_datasource_raises_when_access_denied(
     )
 
 
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.SqlaTable.get_datasource_by_name")
-@patch("superset.views.datasource.views.ExternalMetadataSchema")
-@patch("superset.views.datasource.views.db")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.SqlaTable.get_datasource_by_name")
+@patch("axbi.views.datasource.views.ExternalMetadataSchema")
+@patch("axbi.views.datasource.views.db")
 def test_external_metadata_by_name_no_datasource_raises_when_access_denied(
     mock_db: MagicMock,
     mock_schema_cls: MagicMock,
@@ -209,7 +209,7 @@ def test_external_metadata_by_name_no_datasource_raises_when_access_denied(
     mock_security_manager.raise_for_access.side_effect = _security_exception()
 
     raw_fn = _get_view_func("external_metadata_by_name")
-    with pytest.raises(SupersetSecurityException):
+    with pytest.raises(AxBISecurityException):
         raw_fn(_view_self(), rison=params)
 
     mock_security_manager.raise_for_access.assert_called_once()
@@ -262,11 +262,9 @@ def test_samples_rejects_malformed_json_body() -> None:
         ),
     ],
 )
-@patch(
-    "superset.views.datasource.views._", side_effect=lambda message, **kwargs: message
-)
-@patch("superset.views.datasource.views.json_error_response", return_value="error")
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views._", side_effect=lambda message, **kwargs: message)
+@patch("axbi.views.datasource.views.json_error_response", return_value="error")
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
 def test_save_rejects_malformed_datasource_payload(
     mock_get_datasource: MagicMock,
     mock_json_error_response: MagicMock,
@@ -292,8 +290,8 @@ def test_save_rejects_malformed_datasource_payload(
     mock_gettext.assert_called_once_with("Invalid datasource payload.")
 
 
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
 def test_save_always_checks_ownership_even_without_owners_field(
     mock_get_datasource: MagicMock,
     mock_security_manager: MagicMock,
@@ -302,17 +300,17 @@ def test_save_always_checks_ownership_even_without_owners_field(
     mock_orm = MagicMock()
     mock_orm.owner_class = MagicMock()  # not None — model supports ownership
     mock_get_datasource.return_value = mock_orm
-    mock_security_manager.raise_for_ownership.side_effect = SupersetSecurityException(
-        SupersetError(
+    mock_security_manager.raise_for_ownership.side_effect = AxBISecurityException(
+        AxBIError(
             message="Not an owner",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.WARNING,
         )
     )
 
     from flask import Flask
 
-    from superset.commands.dataset.exceptions import DatasetForbiddenError
+    from axbi.commands.dataset.exceptions import DatasetForbiddenError
 
     raw_save = _get_view_func("save")
     app = Flask(__name__)
@@ -320,7 +318,7 @@ def test_save_always_checks_ownership_even_without_owners_field(
         "/datasource/save/",
         method="POST",
         data={
-            "data": superset_json.dumps(
+            "data": axbi_json.dumps(
                 {
                     "id": 1,
                     "type": "table",
@@ -337,10 +335,10 @@ def test_save_always_checks_ownership_even_without_owners_field(
     mock_security_manager.raise_for_ownership.assert_called_once_with(mock_orm)
 
 
-@patch("superset.views.datasource.views.sanitize_datasource_data", return_value={})
-@patch("superset.views.datasource.views.populate_owner_list", return_value=[])
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
-@patch("superset.views.datasource.views.db")
+@patch("axbi.views.datasource.views.sanitize_datasource_data", return_value={})
+@patch("axbi.views.datasource.views.populate_owner_list", return_value=[])
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views.db")
 def test_save_accepts_missing_owners_after_ownership_check(
     mock_db: MagicMock,
     mock_get_datasource: MagicMock,
@@ -361,7 +359,7 @@ def test_save_accepts_missing_owners_after_ownership_check(
         "/datasource/save/",
         method="POST",
         data={
-            "data": superset_json.dumps(
+            "data": axbi_json.dumps(
                 {
                     "id": 1,
                     "type": "table",
@@ -378,8 +376,8 @@ def test_save_accepts_missing_owners_after_ownership_check(
     mock_db.session.commit.assert_called_once()
 
 
-@patch("superset.views.datasource.views.security_manager", new_callable=MagicMock)
-@patch("superset.views.datasource.views.DatasourceDAO.get_datasource")
+@patch("axbi.views.datasource.views.security_manager", new_callable=MagicMock)
+@patch("axbi.views.datasource.views.DatasourceDAO.get_datasource")
 def test_save_non_owner_with_owners_field_is_rejected(
     mock_get_datasource: MagicMock,
     mock_security_manager: MagicMock,
@@ -388,17 +386,17 @@ def test_save_non_owner_with_owners_field_is_rejected(
     mock_orm = MagicMock()
     mock_orm.owner_class = MagicMock()
     mock_get_datasource.return_value = mock_orm
-    mock_security_manager.raise_for_ownership.side_effect = SupersetSecurityException(
-        SupersetError(
+    mock_security_manager.raise_for_ownership.side_effect = AxBISecurityException(
+        AxBIError(
             message="Not an owner",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.WARNING,
         )
     )
 
     from flask import Flask
 
-    from superset.commands.dataset.exceptions import DatasetForbiddenError
+    from axbi.commands.dataset.exceptions import DatasetForbiddenError
 
     raw_save = _get_view_func("save")
     app = Flask(__name__)
@@ -406,7 +404,7 @@ def test_save_non_owner_with_owners_field_is_rejected(
         "/datasource/save/",
         method="POST",
         data={
-            "data": superset_json.dumps(
+            "data": axbi_json.dumps(
                 {
                     "id": 1,
                     "type": "table",

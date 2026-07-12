@@ -23,7 +23,7 @@ from unittest.mock import MagicMock, patch
 
 from flask import current_app
 
-from superset.mcp_service.ai.asset_search import (
+from axbi.mcp_service.ai.asset_search import (
     _build_reason,
     _dataset_name_candidates,
     _filter_sidecar_results_by_access,
@@ -33,11 +33,11 @@ from superset.mcp_service.ai.asset_search import (
     _search_assets_python,
     search_assets,
 )
-from superset.mcp_service.ai.schemas import AssetResult
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.ai.schemas import AssetResult
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
 )
-from superset.runtime_modernization.ax_services import AxServicesResponse
+from axbi.runtime_modernization.ax_services import AxServicesResponse
 
 
 def test_score_result_name_match() -> None:
@@ -164,9 +164,9 @@ def test_asset_result_escapes_llm_context_delimiters() -> None:
     assert result.tags == [f"tag {LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER}"]
 
 
-@patch("superset.mcp_service.ai.asset_search._search_datasets")
-@patch("superset.mcp_service.ai.asset_search._search_charts")
-@patch("superset.mcp_service.ai.asset_search._search_dashboards")
+@patch("axbi.mcp_service.ai.asset_search._search_datasets")
+@patch("axbi.mcp_service.ai.asset_search._search_charts")
+@patch("axbi.mcp_service.ai.asset_search._search_dashboards")
 def test_search_assets_calls_correct_types(
     mock_dashboards: MagicMock,
     mock_charts: MagicMock,
@@ -183,15 +183,15 @@ def test_search_assets_calls_correct_types(
     mock_dashboards.assert_not_called()
 
 
-@patch("superset.mcp_service.ai.asset_search._search_datasets")
-@patch("superset.mcp_service.ai.asset_search._search_charts")
-@patch("superset.mcp_service.ai.asset_search._search_dashboards")
+@patch("axbi.mcp_service.ai.asset_search._search_datasets")
+@patch("axbi.mcp_service.ai.asset_search._search_charts")
+@patch("axbi.mcp_service.ai.asset_search._search_dashboards")
 def test_search_assets_respects_limit(
     mock_dashboards: MagicMock,
     mock_charts: MagicMock,
     mock_datasets: MagicMock,
 ) -> None:
-    from superset.mcp_service.ai.schemas import AssetResult
+    from axbi.mcp_service.ai.schemas import AssetResult
 
     # Create more results than the limit
     mock_datasets.return_value = [
@@ -215,15 +215,15 @@ def test_search_assets_respects_limit(
     assert len(results) == 3
 
 
-@patch("superset.mcp_service.ai.asset_search._search_datasets")
-@patch("superset.mcp_service.ai.asset_search._search_charts")
-@patch("superset.mcp_service.ai.asset_search._search_dashboards")
+@patch("axbi.mcp_service.ai.asset_search._search_datasets")
+@patch("axbi.mcp_service.ai.asset_search._search_charts")
+@patch("axbi.mcp_service.ai.asset_search._search_dashboards")
 def test_search_assets_sorts_by_relevance(
     mock_dashboards: MagicMock,
     mock_charts: MagicMock,
     mock_datasets: MagicMock,
 ) -> None:
-    from superset.mcp_service.ai.schemas import AssetResult
+    from axbi.mcp_service.ai.schemas import AssetResult
 
     mock_datasets.return_value = [
         AssetResult(
@@ -297,19 +297,19 @@ def test_search_assets_merges_semantic_dataset_with_other_requested_types(
         tags=[],
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_assets_semantic",
+        "axbi.mcp_service.ai.asset_search._search_assets_semantic",
         return_value=[semantic_dataset],
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_datasets",
+        "axbi.mcp_service.ai.asset_search._search_datasets",
         return_value=[lexical_duplicate],
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_charts",
+        "axbi.mcp_service.ai.asset_search._search_charts",
         return_value=[chart],
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_dashboards",
+        "axbi.mcp_service.ai.asset_search._search_dashboards",
         return_value=[],
     )
 
@@ -357,7 +357,7 @@ def test_rank_asset_results_uses_rust_when_enabled(
         ),
     ]
     rust_ranker = mocker.patch(
-        "superset.mcp_service.ai.asset_search.rank_assets_with_rust",
+        "axbi.mcp_service.ai.asset_search.rank_assets_with_rust",
         return_value=[
             {
                 "asset_type": "dataset",
@@ -386,11 +386,11 @@ def test_rank_asset_results_uses_rust_when_enabled(
         ],
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.rust_asset_ranking_kernel_available",
+        "axbi.mcp_service.ai.asset_search.rust_asset_ranking_kernel_available",
         return_value=True,
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        "axbi.mcp_service.ai.asset_search.is_feature_enabled",
         side_effect=lambda flag: flag == "RUST_ASSET_RANKING_KERNEL",
     )
 
@@ -431,15 +431,15 @@ def test_rank_asset_results_falls_back_when_rust_fails(
         ),
     ]
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.rank_assets_with_rust",
+        "axbi.mcp_service.ai.asset_search.rank_assets_with_rust",
         side_effect=RuntimeError("boom"),
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.rust_asset_ranking_kernel_available",
+        "axbi.mcp_service.ai.asset_search.rust_asset_ranking_kernel_available",
         return_value=True,
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        "axbi.mcp_service.ai.asset_search.is_feature_enabled",
         side_effect=lambda flag: flag == "RUST_ASSET_RANKING_KERNEL",
     )
 
@@ -470,15 +470,15 @@ def test_search_assets_shadow_disabled_returns_python_results(
         )
     ]
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_assets_python",
+        "axbi.mcp_service.ai.asset_search._search_assets_python",
         return_value=python_results,
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        "axbi.mcp_service.ai.asset_search.is_feature_enabled",
         return_value=False,
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.ai.asset_search.AxServicesClient"
+        "axbi.mcp_service.ai.asset_search.AxServicesClient"
     ).return_value
 
     results = search_assets("sales", asset_types=["dataset"])
@@ -512,16 +512,16 @@ def test_search_assets_shadows_ax_services_when_enabled(
         )
     ]
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_assets_python",
+        "axbi.mcp_service.ai.asset_search._search_assets_python",
         return_value=python_results,
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        "axbi.mcp_service.ai.asset_search.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.ai.asset_search.AxServicesClient"
+        "axbi.mcp_service.ai.asset_search.AxServicesClient"
     ).return_value
     ax_services_client.asset_search.return_value = AxServicesResponse(
         ok=True,
@@ -563,7 +563,7 @@ def test_search_assets_reports_shadow_mismatch(
 
     caplog.set_level(
         logging.WARNING,
-        logger="superset.mcp_service.ai.asset_search",
+        logger="axbi.mcp_service.ai.asset_search",
     )
     stats_logger = MagicMock()
     current_app.config["STATS_LOGGER"] = stats_logger
@@ -581,16 +581,16 @@ def test_search_assets_reports_shadow_mismatch(
         )
     ]
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_assets_python",
+        "axbi.mcp_service.ai.asset_search._search_assets_python",
         return_value=python_results,
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        "axbi.mcp_service.ai.asset_search.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"RUNTIME_SHADOW_EXECUTION", "TS_MCP_ORCHESTRATION"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.ai.asset_search.AxServicesClient"
+        "axbi.mcp_service.ai.asset_search.AxServicesClient"
     ).return_value
     ax_services_client.asset_search.return_value = AxServicesResponse(
         ok=True,
@@ -631,15 +631,15 @@ def test_search_assets_serves_ax_services_when_serving_enabled(
     stats_logger = MagicMock()
     current_app.config["STATS_LOGGER"] = stats_logger
     python_search = mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_assets_python"
+        "axbi.mcp_service.ai.asset_search._search_assets_python"
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        "axbi.mcp_service.ai.asset_search.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"TS_MCP_ORCHESTRATION", "TS_ASSET_SEARCH_SERVING"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.ai.asset_search.AxServicesClient"
+        "axbi.mcp_service.ai.asset_search.AxServicesClient"
     ).return_value
     ax_services_client.asset_search.return_value = AxServicesResponse(
         ok=True,
@@ -663,7 +663,7 @@ def test_search_assets_serves_ax_services_when_serving_enabled(
         },
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search._filter_sidecar_results_by_access",
+        "axbi.mcp_service.ai.asset_search._filter_sidecar_results_by_access",
         side_effect=lambda results: results,
     )
 
@@ -685,11 +685,11 @@ def test_sidecar_results_are_filtered_by_caller_access(mocker) -> None:
     """The sidecar's service credential must not define MCP visibility."""
 
     mocker.patch(
-        "superset.daos.dataset.DatasetDAO.find_by_ids",
+        "axbi.daos.dataset.DatasetDAO.find_by_ids",
         return_value=[MagicMock(id=7)],
     )
-    mocker.patch("superset.daos.chart.ChartDAO.find_by_ids", return_value=[])
-    mocker.patch("superset.daos.dashboard.DashboardDAO.find_by_ids", return_value=[])
+    mocker.patch("axbi.daos.chart.ChartDAO.find_by_ids", return_value=[])
+    mocker.patch("axbi.daos.dashboard.DashboardDAO.find_by_ids", return_value=[])
 
     results = _filter_sidecar_results_by_access(
         [
@@ -737,16 +737,16 @@ def test_search_assets_serving_falls_back_to_python_on_invalid_candidate(
         )
     ]
     python_search = mocker.patch(
-        "superset.mcp_service.ai.asset_search._search_assets_python",
+        "axbi.mcp_service.ai.asset_search._search_assets_python",
         return_value=python_results,
     )
     mocker.patch(
-        "superset.mcp_service.ai.asset_search.is_feature_enabled",
+        "axbi.mcp_service.ai.asset_search.is_feature_enabled",
         side_effect=lambda flag: flag
         in {"TS_MCP_ORCHESTRATION", "TS_ASSET_SEARCH_SERVING"},
     )
     ax_services_client = mocker.patch(
-        "superset.mcp_service.ai.asset_search.AxServicesClient"
+        "axbi.mcp_service.ai.asset_search.AxServicesClient"
     ).return_value
     ax_services_client.asset_search.return_value = AxServicesResponse(
         ok=True,

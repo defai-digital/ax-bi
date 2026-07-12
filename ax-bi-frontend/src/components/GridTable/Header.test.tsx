@@ -21,12 +21,12 @@ import { act, fireEvent, render } from 'spec/helpers/testing-library';
 import { Header } from './Header';
 import { PIVOT_COL_ID } from './constants';
 
-jest.mock('@superset-ui/core/components/Dropdown', () => ({
+jest.mock('@ax-bi/ui-core/components/Dropdown', () => ({
   Dropdown: () => <div data-test="mock-dropdown" />,
 }));
 
-jest.mock('@superset-ui/core/components/Icons', () => {
-  const actualIcons = jest.requireActual('@superset-ui/core/components/Icons');
+jest.mock('@ax-bi/ui-core/components/Icons', () => {
+  const actualIcons = jest.requireActual('@ax-bi/ui-core/components/Icons');
   return {
     __esModule: true,
     Icons: {

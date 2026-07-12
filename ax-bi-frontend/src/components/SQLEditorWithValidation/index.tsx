@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useCallback, useState, useEffect, forwardRef } from 'react';
-import { t } from '@apache-superset/core/translation';
-import type { editors } from '@apache-superset/core';
-import { SupersetClient } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { Button, Icons, Tooltip, Flex } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import type { editors } from '@ax-bi/core';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { Button, Icons, Tooltip, Flex } from '@ax-bi/ui-core/components';
 import { EditorHost } from 'src/core/editors';
 import {
   ExpressionType,
@@ -141,7 +141,7 @@ const SQLEditorWithValidation = forwardRef<
           clause,
         };
 
-        const response = await SupersetClient.post({
+        const response = await AxBIClient.post({
           endpoint,
           body: JSON.stringify(payload),
           headers: { 'Content-Type': 'application/json' },

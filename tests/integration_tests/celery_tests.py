@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 # isort:skip_file
-"""Unit tests for Superset Celery worker"""
+"""Unit tests for AxBI Celery worker"""
 
 import datetime
 import random
@@ -32,16 +32,16 @@ from sqlalchemy import text
 import flask  # noqa: F401
 from flask import current_app, has_app_context  # noqa: F401
 
-from superset import db, sql_lab
-from superset.common.db_query_status import QueryStatus
-from superset.result_set import SupersetResultSet
-from superset.db_engine_specs.base import BaseEngineSpec
-from superset.errors import ErrorLevel, SupersetErrorType
-from superset.extensions import celery_app
-from superset.models.sql_lab import Query
-from superset.sql.parse import CTASMethod
-from superset.utils.core import backend
-from superset.utils.database import get_example_database
+from axbi import db, sql_lab
+from axbi.common.db_query_status import QueryStatus
+from axbi.result_set import AxBIResultSet
+from axbi.db_engine_specs.base import BaseEngineSpec
+from axbi.errors import ErrorLevel, AxBIErrorType
+from axbi.extensions import celery_app
+from axbi.models.sql_lab import Query
+from axbi.sql.parse import CTASMethod
+from axbi.utils.core import backend
+from axbi.utils.database import get_example_database
 from tests.integration_tests.conftest import CTAS_SCHEMA_NAME
 from tests.integration_tests.test_app import app
 
@@ -173,7 +173,7 @@ def test_run_sync_query_dont_exist(test_client, ctas_method):
     elif backend() == "presto":
         assert (
             result["errors"][0]["error_type"]
-            == SupersetErrorType.TABLE_DOES_NOT_EXIST_ERROR
+            == AxBIErrorType.TABLE_DOES_NOT_EXIST_ERROR
         )
         assert result["errors"][0]["level"] == ErrorLevel.ERROR
         assert result["errors"][0]["extra"] == {
@@ -191,8 +191,7 @@ def test_run_sync_query_dont_exist(test_client, ctas_method):
         }
     else:
         assert (
-            result["errors"][0]["error_type"]
-            == SupersetErrorType.GENERIC_DB_ENGINE_ERROR
+            result["errors"][0]["error_type"] == AxBIErrorType.GENERIC_DB_ENGINE_ERROR
         )
         assert result["errors"][0]["level"] == ErrorLevel.ERROR
         assert result["errors"][0]["extra"] == {
@@ -240,7 +239,7 @@ def test_run_sync_query_cta_no_data(test_client):
 @pytest.mark.usefixtures("load_birth_names_data", "login_as_admin")
 @pytest.mark.parametrize("ctas_method", [CTASMethod.TABLE, CTASMethod.VIEW])
 @mock.patch(  # noqa: PT008
-    "superset.sqllab.sqllab_execution_context.get_cta_schema_name",
+    "axbi.sqllab.sqllab_execution_context.get_cta_schema_name",
     lambda d, u, s, sql: CTAS_SCHEMA_NAME,
 )
 def test_run_sync_query_cta_config(
@@ -273,7 +272,7 @@ def test_run_sync_query_cta_config(
 @pytest.mark.usefixtures("load_birth_names_data", "login_as_admin")
 @pytest.mark.parametrize("ctas_method", [CTASMethod.TABLE, CTASMethod.VIEW])
 @mock.patch(  # noqa: PT008
-    "superset.sqllab.sqllab_execution_context.get_cta_schema_name",
+    "axbi.sqllab.sqllab_execution_context.get_cta_schema_name",
     lambda d, u, s, sql: CTAS_SCHEMA_NAME,
 )
 def test_run_async_query_cta_config(
@@ -388,7 +387,7 @@ CURSOR_DESCR = (
 
 def test_default_data_serialization():
     db_engine_spec = BaseEngineSpec()
-    results = SupersetResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
+    results = AxBIResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
 
     with mock.patch.object(
         db_engine_spec, "expand_data", wraps=db_engine_spec.expand_data
@@ -400,7 +399,7 @@ def test_default_data_serialization():
 
 def test_new_data_serialization():
     db_engine_spec = BaseEngineSpec()
-    results = SupersetResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
+    results = AxBIResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
 
     with mock.patch.object(
         db_engine_spec, "expand_data", wraps=db_engine_spec.expand_data
@@ -414,7 +413,7 @@ def test_new_data_serialization():
 def test_default_payload_serialization():
     use_new_deserialization = False
     db_engine_spec = BaseEngineSpec()
-    results = SupersetResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
+    results = AxBIResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
     query = {
         "database_id": 1,
         "sql": "SELECT * FROM birth_names LIMIT 100",
@@ -447,7 +446,7 @@ def test_default_payload_serialization():
 def test_msgpack_payload_serialization():
     use_new_deserialization = True
     db_engine_spec = BaseEngineSpec()
-    results = SupersetResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
+    results = AxBIResultSet(SERIALIZATION_DATA, CURSOR_DESCR, db_engine_spec)
     query = {
         "database_id": 1,
         "sql": "SELECT * FROM birth_names LIMIT 100",
@@ -499,20 +498,20 @@ def test_in_app_context():
 def test_teardown_without_app_context():
     """Test teardown skips db.session.remove() outside app context.
 
-    Regression test for https://github.com/apache/superset/issues/36892
+    Regression test for https://github.com/defai-digital/ax-bi/issues/36892
     The task_postrun signal can fire after the app context is torn down,
     so teardown() must check has_app_context() before calling db.session.remove().
     """
-    # Guard: if superset.tasks.celery_app hasn't been imported yet, its module-level
+    # Guard: if axbi.tasks.celery_app hasn't been imported yet, its module-level
     # `flask_app = create_app()` would spin up a second Flask app and corrupt the
     # Flask-AppBuilder view-registry singleton used by the rest of the test suite.
     # Patching create_app to return the already-created test app prevents that.
-    with mock.patch("superset.create_app", return_value=app):
-        from superset.tasks.celery_app import teardown
+    with mock.patch("axbi.create_app", return_value=app):
+        from axbi.tasks.celery_app import teardown
 
     with (
-        mock.patch("superset.tasks.celery_app.has_app_context", return_value=False),
-        mock.patch("superset.tasks.celery_app.db.session.remove") as mock_remove,
+        mock.patch("axbi.tasks.celery_app.has_app_context", return_value=False),
+        mock.patch("axbi.tasks.celery_app.db.session.remove") as mock_remove,
     ):
         teardown(retval="success")
         mock_remove.assert_not_called()
@@ -520,12 +519,12 @@ def test_teardown_without_app_context():
 
 def test_teardown_with_app_context():
     """Test teardown calls db.session.remove() inside app context."""
-    with mock.patch("superset.create_app", return_value=app):
-        from superset.tasks.celery_app import teardown
+    with mock.patch("axbi.create_app", return_value=app):
+        from axbi.tasks.celery_app import teardown
 
     with (
-        mock.patch("superset.tasks.celery_app.has_app_context", return_value=True),
-        mock.patch("superset.tasks.celery_app.db.session.remove") as mock_remove,
+        mock.patch("axbi.tasks.celery_app.has_app_context", return_value=True),
+        mock.patch("axbi.tasks.celery_app.db.session.remove") as mock_remove,
     ):
         teardown(retval="success")
         mock_remove.assert_called_once()

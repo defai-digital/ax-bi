@@ -25,20 +25,20 @@ from unittest.mock import MagicMock, patch
 
 import pyarrow as pa
 import pytest
-from superset_core.semantic_layers.types import (
+from axbi_core.semantic_layers.types import (
     Dimension,
     Grains,
     Metric,
 )
 
-from superset.semantic_layers.models import (
+from axbi.semantic_layers.models import (
     ColumnMetadata,
     get_column_type,
     MetricMetadata,
     SemanticLayer,
     SemanticView,
 )
-from superset.utils.core import GenericDataType
+from axbi.utils.core import GenericDataType
 
 # =============================================================================
 # get_column_type tests
@@ -243,7 +243,7 @@ def test_semantic_layer_implementation() -> None:
     mock_class.from_configuration.return_value = mock_impl
 
     with patch.dict(
-        "superset.semantic_layers.models.registry",
+        "axbi.semantic_layers.models.registry",
         {"test_type": mock_class},
     ):
         # Clear cached property if it exists
@@ -279,7 +279,7 @@ def test_semantic_layer_implementation_tolerates_invalid_configuration(
     mock_class.from_configuration.return_value = mock_impl
 
     with patch.dict(
-        "superset.semantic_layers.models.registry",
+        "axbi.semantic_layers.models.registry",
         {"test_type": mock_class},
     ):
         result = layer.implementation
@@ -507,7 +507,7 @@ def test_semantic_view_get_perm_without_layer() -> None:
     view = SemanticView()
     view.id = 1
     view.name = "Orphan View"
-    view.semantic_layer = None  # type: ignore
+    view.semantic_layer = None
     assert view.get_perm() == "[unknown].[Orphan View](id:1)"
 
 
@@ -658,7 +658,7 @@ def test_semantic_view_data(
     mock_metrics: list[Metric],
 ) -> None:
     """Test SemanticView data property."""
-    from superset.semantic_layers.models import SemanticLayer
+    from axbi.semantic_layers.models import SemanticLayer
 
     layer = SemanticLayer()
     layer.name = "My Semantic Layer"
@@ -730,7 +730,7 @@ def test_semantic_view_get_query_result(
     mock_result = MagicMock()
 
     with patch(
-        "superset.semantic_layers.models.get_results",
+        "axbi.semantic_layers.models.get_results",
         return_value=mock_result,
     ) as mock_get_results:
         result = view.get_query_result(mock_query_object)
@@ -745,7 +745,7 @@ def test_semantic_view_data_for_slices(
     mock_metrics: list[Metric],
 ) -> None:
     """Test SemanticView data_for_slices returns same as data."""
-    from superset.semantic_layers.models import SemanticLayer
+    from axbi.semantic_layers.models import SemanticLayer
 
     layer = SemanticLayer()
     layer.name = "My Semantic Layer"
@@ -912,7 +912,7 @@ def test_semantic_layer_get_perm_special_characters() -> None:
 
 def test_semantic_view_raise_for_access_all_datasources(app: Any) -> None:
     """Test raise_for_access passes when user has all_datasource_access."""
-    from superset import security_manager
+    from axbi import security_manager
 
     layer = SemanticLayer()
     layer.name = "Layer"
@@ -930,7 +930,7 @@ def test_semantic_view_raise_for_access_all_datasources(app: Any) -> None:
 
 def test_semantic_view_raise_for_access_view_perm(app: Any) -> None:
     """Test raise_for_access passes when user has view-level perm."""
-    from superset import security_manager
+    from axbi import security_manager
 
     layer = SemanticLayer()
     layer.name = "Layer"
@@ -959,7 +959,7 @@ def test_semantic_view_raise_for_access_view_perm(app: Any) -> None:
 
 def test_semantic_view_raise_for_access_layer_perm(app: Any) -> None:
     """Test raise_for_access passes via layer perm when view perm is denied."""
-    from superset import security_manager
+    from axbi import security_manager
 
     layer = SemanticLayer()
     layer.name = "Layer"
@@ -989,9 +989,9 @@ def test_semantic_view_raise_for_access_layer_perm(app: Any) -> None:
 
 
 def test_semantic_view_raise_for_access_denied(app: Any) -> None:
-    """Test raise_for_access raises SupersetSecurityException when denied."""
-    from superset import security_manager
-    from superset.exceptions import SupersetSecurityException
+    """Test raise_for_access raises AxBISecurityException when denied."""
+    from axbi import security_manager
+    from axbi.exceptions import AxBISecurityException
 
     layer = SemanticLayer()
     layer.name = "Layer"
@@ -1010,7 +1010,7 @@ def test_semantic_view_raise_for_access_denied(app: Any) -> None:
         ),
         patch.object(security_manager, "can_access", return_value=False),
     ):
-        with pytest.raises(SupersetSecurityException):
+        with pytest.raises(AxBISecurityException):
             view.raise_for_access()
 
 
@@ -1021,8 +1021,8 @@ def test_semantic_view_raise_for_access_denied(app: Any) -> None:
 
 def test_create_missing_perms_backfills_semantic_layer_perm(app: Any) -> None:
     """Test that create_missing_perms sets perm on layers with perm=NULL."""
-    from superset import security_manager
-    from superset.extensions import db
+    from axbi import security_manager
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Backfill Layer"
@@ -1049,8 +1049,8 @@ def test_create_missing_perms_backfills_semantic_layer_perm(app: Any) -> None:
 
 def test_create_missing_perms_backfills_semantic_view_perm(app: Any) -> None:
     """Test that create_missing_perms sets perm on views with perm=NULL."""
-    from superset import security_manager
-    from superset.extensions import db
+    from axbi import security_manager
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Backfill Layer"
@@ -1091,7 +1091,7 @@ def test_semantic_view_get_perm_explicit_layer_name() -> None:
     view = SemanticView()
     view.id = 5
     view.name = "My View"
-    view.semantic_layer = None  # type: ignore
+    view.semantic_layer = None
     assert (
         view.get_perm(layer_name="Explicit Layer") == "[Explicit Layer].[My View](id:5)"
     )
@@ -1104,7 +1104,7 @@ def test_semantic_view_get_perm_explicit_layer_name() -> None:
 
 def test_semantic_view_after_insert_sets_perm(app: Any) -> None:
     """Test that the after_insert event listener sets the perm column."""
-    from superset.extensions import db
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Event Layer"
@@ -1127,7 +1127,7 @@ def test_semantic_view_after_insert_sets_perm(app: Any) -> None:
 
 def test_semantic_view_before_update_updates_perm(app: Any) -> None:
     """Test that renaming a view updates its perm via the before_update event."""
-    from superset.extensions import db
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Update Layer"
@@ -1152,7 +1152,7 @@ def test_semantic_view_before_update_updates_perm(app: Any) -> None:
 
 def test_semantic_layer_after_delete_calls_security_manager() -> None:
     """Test SemanticLayer.after_delete delegates to security manager."""
-    from superset import security_manager
+    from axbi import security_manager
 
     mapper = MagicMock()
     connection = MagicMock()
@@ -1166,7 +1166,7 @@ def test_semantic_layer_after_delete_calls_security_manager() -> None:
 
 def test_semantic_view_after_delete_calls_security_manager() -> None:
     """Test SemanticView.after_delete delegates to security manager."""
-    from superset import security_manager
+    from axbi import security_manager
 
     mapper = MagicMock()
     connection = MagicMock()
@@ -1180,7 +1180,7 @@ def test_semantic_view_after_delete_calls_security_manager() -> None:
 
 def test_semantic_layer_rename_cascades_to_view_perms(app: Any) -> None:
     """Test that renaming a layer cascades the perm update to its views."""
-    from superset.extensions import db
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Old Layer"
@@ -1215,9 +1215,9 @@ def test_semantic_layer_rename_cascades_to_view_perms(app: Any) -> None:
 
 def test_build_semantic_view_query_view_perm_grants_access(app: Any) -> None:
     """Test that view-level perm grants access in build_semantic_view_query."""
-    from superset import security_manager
-    from superset.daos.datasource import DatasourceDAO
-    from superset.extensions import db
+    from axbi import security_manager
+    from axbi.daos.datasource import DatasourceDAO
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Query Layer"
@@ -1255,9 +1255,9 @@ def test_build_semantic_view_query_view_perm_grants_access(app: Any) -> None:
 
 def test_build_semantic_view_query_layer_perm_grants_access(app: Any) -> None:
     """Test that layer-level perm grants access in build_semantic_view_query."""
-    from superset import security_manager
-    from superset.daos.datasource import DatasourceDAO
-    from superset.extensions import db
+    from axbi import security_manager
+    from axbi.daos.datasource import DatasourceDAO
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Query Layer 2"
@@ -1295,9 +1295,9 @@ def test_build_semantic_view_query_layer_perm_grants_access(app: Any) -> None:
 
 def test_build_semantic_view_query_no_perm_excludes(app: Any) -> None:
     """Test that views are excluded when user has neither view nor layer perm."""
-    from superset import security_manager
-    from superset.daos.datasource import DatasourceDAO
-    from superset.extensions import db
+    from axbi import security_manager
+    from axbi.daos.datasource import DatasourceDAO
+    from axbi.extensions import db
 
     layer = SemanticLayer()
     layer.name = "Query Layer 3"

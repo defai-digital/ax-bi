@@ -22,7 +22,7 @@ import {
   DataRecord,
   FilterState,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
 
 interface PluginFilterTimeCustomizeProps {

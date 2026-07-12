@@ -23,13 +23,13 @@ import {
   waitFor,
   within,
 } from 'spec/helpers/testing-library';
-import { ThemeMode } from '@apache-superset/core/theme';
-import { Menu } from '@superset-ui/core/components';
+import { ThemeMode } from '@ax-bi/core/theme';
+import { Menu } from '@ax-bi/ui-core/components';
 import { ThemeSubMenuProps, useThemeMenuItems } from './useThemeMenuItems';
 
 // Mock the translation function
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   t: (key: string) => key,
 }));
 

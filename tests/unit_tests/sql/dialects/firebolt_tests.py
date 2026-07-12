@@ -18,7 +18,7 @@
 import pytest
 import sqlglot
 
-from superset.sql.dialects.firebolt import Firebolt, FireboltOld
+from axbi.sql.dialects.firebolt import Firebolt, FireboltOld
 
 
 def test_not_sql() -> None:  # pylint: disable=invalid-name

@@ -18,7 +18,7 @@
  */
 
 import PropTypes from 'prop-types';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 
 type SortFunction = (
   a: string | number | null,
@@ -295,7 +295,7 @@ function createHierarchicalComparator(
  * @param top true = subtotals at top/left, false = subtotals at bottom/right
  * @param asc true = ascending sort, false = descending sort
  *
- * @see https://github.com/apache/superset/issues/20564
+ * @see https://github.com/defai-digital/ax-bi/issues/20564
  */
 export function groupingValueSort(
   keys: string[][],
@@ -900,8 +900,7 @@ class PivotData {
   props: Record<string, unknown>;
   aggregator: (...args: unknown[]) => Aggregator;
   formattedAggregators:
-    | Record<string, Record<string, (...args: unknown[]) => Aggregator>>
-    | false;
+    Record<string, Record<string, (...args: unknown[]) => Aggregator>> | false;
   tree: Record<string, Record<string, Aggregator>>;
   rowKeys: string[][];
   colKeys: string[][];

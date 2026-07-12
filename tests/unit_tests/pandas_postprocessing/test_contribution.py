@@ -23,9 +23,9 @@ from numpy import nan
 from numpy.testing import assert_array_equal
 from pandas import DataFrame, isna, Series
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils.core import DTTM_ALIAS, PostProcessingContributionOrientation
-from superset.utils.pandas_postprocessing import contribution
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils.core import DTTM_ALIAS, PostProcessingContributionOrientation
+from axbi.utils.pandas_postprocessing import contribution
 
 df_template = DataFrame(
     {

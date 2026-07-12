@@ -27,7 +27,7 @@ import {
   getColumnLabel,
   getValueFormatter,
   tooltipHtml,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { HistogramChartProps, HistogramTransformedProps } from './types';
 import { LegendOrientation, LegendType, Refs } from '../types';
 import { defaultGrid, defaultYAxis } from '../defaults';

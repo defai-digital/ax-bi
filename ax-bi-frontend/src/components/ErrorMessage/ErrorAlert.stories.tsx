@@ -17,7 +17,7 @@
  * under the License.
  */
 import { Meta, StoryFn } from '@storybook/react-webpack5';
-import { Card, Col, Layout, Row } from '@superset-ui/core/components';
+import { Card, Col, Layout, Row } from '@ax-bi/ui-core/components';
 import { ErrorAlert } from './ErrorAlert';
 
 const { Content } = Layout;

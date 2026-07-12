@@ -28,7 +28,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import ValidationError
 
-from superset.mcp_service.dashboard.schemas import (
+from axbi.mcp_service.dashboard.schemas import (
     _extract_cross_filters_enabled,
     _extract_native_filters,
     dashboard_serializer,
@@ -37,11 +37,11 @@ from superset.mcp_service.dashboard.schemas import (
     serialize_chart_summary,
     serialize_dashboard_object,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
-from superset.utils.json import dumps as json_dumps
+from axbi.utils.json import dumps as json_dumps
 
 
 def _wrapped(value: str) -> str:
@@ -96,7 +96,7 @@ def _mock_dashboard(
 class TestSerializeDashboardObject:
     """Tests for serialize_dashboard_object slug handling."""
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_slug_none_returns_empty_string(self, mock_base_url):
         """Dashboards with slug=None should return slug="" for consistency
         with dashboard_serializer."""
@@ -107,7 +107,7 @@ class TestSerializeDashboardObject:
 
         assert result.slug == ""
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_slug_empty_string_returns_empty_string(self, mock_base_url):
         """Dashboards with slug="" should return slug=""."""
         mock_base_url.return_value = "http://localhost:8088"
@@ -117,7 +117,7 @@ class TestSerializeDashboardObject:
 
         assert result.slug == ""
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_slug_with_value_preserved(self, mock_base_url):
         """Dashboards with a real slug should preserve it."""
         mock_base_url.return_value = "http://localhost:8088"
@@ -127,7 +127,7 @@ class TestSerializeDashboardObject:
 
         assert result.slug == "my-dashboard"
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_url_uses_id_when_no_slug(self, mock_base_url):
         """URL should use dashboard id when slug is None."""
         mock_base_url.return_value = "http://localhost:8088"
@@ -137,7 +137,7 @@ class TestSerializeDashboardObject:
 
         assert result.url == "http://localhost:8088/ax-bi/dashboard/42/"
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_url_uses_slug_when_available(self, mock_base_url):
         """URL should use slug when available."""
         mock_base_url.return_value = "http://localhost:8088"
@@ -147,7 +147,7 @@ class TestSerializeDashboardObject:
 
         assert result.url == "http://localhost:8088/ax-bi/dashboard/my-dashboard/"
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_no_json_metadata_or_position_json_in_response(self, mock_base_url):
         """DashboardInfo should not contain json_metadata or position_json."""
         mock_base_url.return_value = "http://localhost:8088"
@@ -158,8 +158,8 @@ class TestSerializeDashboardObject:
         assert not hasattr(result, "json_metadata")
         assert not hasattr(result, "position_json")
 
-    @patch("superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_native_filters_extracted_from_json_metadata(
         self,
         mock_base_url,
@@ -188,7 +188,7 @@ class TestSerializeDashboardObject:
                 },
             ],
             "cross_filters_enabled": True,
-            "color_scheme": "supersetColors",
+            "color_scheme": "axbiColors",
             "shared_label_colors": {"Sales": "#1FA8C9"},
         }
         dashboard = _mock_dashboard(id=1)
@@ -204,8 +204,8 @@ class TestSerializeDashboardObject:
         assert result.native_filters[1].name == _wrapped("Date Range")
         assert result.cross_filters_enabled is True
 
-    @patch("superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_restricted_user_redacts_native_filter_targets(
         self,
         mock_base_url,
@@ -238,8 +238,8 @@ class TestSerializeDashboardObject:
         assert result.native_filters[0].targets == []
         assert result.cross_filters_enabled is True
 
-    @patch("superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_chart_summaries_are_lightweight(
         self,
         mock_base_url,
@@ -270,8 +270,8 @@ class TestSerializeDashboardObject:
         assert not hasattr(result.charts[0], "tags")
         assert not hasattr(result.charts[0], "owners")
 
-    @patch("superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_restricted_user_redacts_chart_datasource_name(
         self,
         mock_base_url,
@@ -296,8 +296,8 @@ class TestSerializeDashboardObject:
         assert result.charts[0].datasource_name is None
         assert result.charts[0].url == "http://localhost:8088/explore/?slice_id=5"
 
-    @patch("superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_dashboard_serializer_restricted_user_redacts_data_model_metadata(
         self,
         mock_base_url,
@@ -335,8 +335,8 @@ class TestSerializeDashboardObject:
         assert result.charts[0].datasource_name is None
         assert result.native_filters[0].targets == []
 
-    @patch("superset.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.dashboard.schemas.user_can_view_data_model_metadata")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_descriptive_fields_are_sanitized(
         self,
         mock_base_url: MagicMock,
@@ -520,7 +520,7 @@ class TestOmittedFieldsBuilder:
     """Tests for the shared OmittedFieldsBuilder utility."""
 
     def test_builder_basic(self):
-        from superset.mcp_service.utils.response_utils import OmittedFieldsBuilder
+        from axbi.mcp_service.utils.response_utils import OmittedFieldsBuilder
 
         result = (
             OmittedFieldsBuilder()
@@ -535,7 +535,7 @@ class TestOmittedFieldsBuilder:
         assert "extracted" in result["meta_field"]
 
     def test_builder_none_values(self):
-        from superset.mcp_service.utils.response_utils import OmittedFieldsBuilder
+        from axbi.mcp_service.utils.response_utils import OmittedFieldsBuilder
 
         result = (
             OmittedFieldsBuilder()
@@ -546,7 +546,7 @@ class TestOmittedFieldsBuilder:
         assert "empty" in result["empty_field"]
         assert "empty" in result["also_empty"]
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_omitted_fields_in_serialized_dashboard(self, mock_base_url):
         """omitted_fields should describe what was stripped and include sizes."""
         mock_base_url.return_value = "http://localhost:8088"
@@ -564,7 +564,7 @@ class TestOmittedFieldsBuilder:
         assert "extracted" in result.omitted_fields["json_metadata"]
         assert "layout tree" in result.omitted_fields["position_json"].lower()
 
-    @patch("superset.mcp_service.utils.url_utils.get_superset_base_url")
+    @patch("axbi.mcp_service.utils.url_utils.get_axbi_base_url")
     def test_omitted_fields_with_none_values(self, mock_base_url):
         """omitted_fields should still be present when raw fields are None."""
         mock_base_url.return_value = "http://localhost:8088"

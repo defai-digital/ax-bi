@@ -16,7 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { withRouter, type RouteComponentProps } from 'src/components/withRouter';
+import {
+  withRouter,
+  type RouteComponentProps,
+} from 'src/components/withRouter';
 import { useHistory } from 'src/hooks/useAppHistory';
 import {
   MouseEvent,
@@ -28,8 +31,8 @@ import {
   RefObject,
 } from 'react';
 
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
-import { t } from '@apache-superset/core/translation';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
+import { t } from '@ax-bi/core/translation';
 import {
   Behavior,
   isFeatureEnabled,
@@ -38,20 +41,20 @@ import {
   VizType,
   BinaryQueryObjectFilterClause,
   QueryFormData,
-} from '@superset-ui/core';
-import { css, useTheme, styled } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, useTheme, styled } from '@ax-bi/core/theme';
 import { useSelector } from 'react-redux';
-import { Menu, MenuItem } from '@superset-ui/core/components/Menu';
+import { Menu, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import {
   NoAnimationDropdown,
   Tooltip,
   Button,
   ModalTrigger,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { useShareMenuItems } from 'src/dashboard/components/menu/ShareMenuItems';
 import downloadAsImage from 'src/utils/downloadAsImage';
 import { getSliceHeaderTooltip } from 'src/dashboard/util/getSliceHeaderTooltip';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import ViewQueryModal from 'src/explore/components/controls/ViewQueryModal';
 import { ResultsPaneOnDashboard } from 'src/explore/components/DataTablesPane';
 import { useDrillDetailMenuItems } from 'src/components/Chart/useDrillDetailMenuItems';
@@ -139,9 +142,9 @@ export interface SliceHeaderControlsProps {
   addDangerToast: (message: string) => void;
   addSuccessToast: (message: string) => void;
 
-  supersetCanExplore?: boolean;
-  supersetCanShare?: boolean;
-  supersetCanCSV?: boolean;
+  axbiCanExplore?: boolean;
+  axbiCanShare?: boolean;
+  axbiCanCSV?: boolean;
 
   crossFiltersEnabled?: boolean;
 }
@@ -187,7 +190,7 @@ const SliceHeaderControls = (
     getChartMetadataRegistry()
       .get(props.slice.viz_type)
       ?.behaviors?.includes(Behavior.InteractiveChart);
-  const canExplore = props.supersetCanExplore;
+  const canExplore = props.axbiCanExplore;
   const { canDrillToDetail, canViewQuery, canViewTable } = usePermissions();
 
   const datasetResource = useDatasetDrillInfo(
@@ -370,7 +373,7 @@ const SliceHeaderControls = (
     updatedDttm = null,
     addSuccessToast = () => {},
     addDangerToast = () => {},
-    supersetCanShare = false,
+    axbiCanShare = false,
     isCached = [],
   } = props;
   const isTable = slice.viz_type === VizType.Table;
@@ -498,7 +501,7 @@ const SliceHeaderControls = (
       key: MenuKeys.ViewResults,
       label: (
         <ViewResultsModalTrigger
-          canExplore={props.supersetCanExplore}
+          canExplore={props.axbiCanExplore}
           exploreUrl={props.exploreUrl}
           triggerNode={
             <div data-test="view-query-menu-item">{t('View as table')}</div>
@@ -512,7 +515,7 @@ const SliceHeaderControls = (
               dataSize={20}
               isRequest
               isVisible
-              canDownload={!!props.supersetCanCSV}
+              canDownload={!!props.axbiCanCSV}
               columnDisplayNames={datasetWithVerboseMap?.verbose_map}
             />
           }
@@ -551,11 +554,11 @@ const SliceHeaderControls = (
     newMenuItems.push({ type: 'divider' });
   }
 
-  if (supersetCanShare) {
+  if (axbiCanShare) {
     newMenuItems.push(shareMenuItems);
   }
 
-  if (props.supersetCanCSV) {
+  if (props.axbiCanCSV) {
     newMenuItems.push({
       type: 'submenu',
       key: MenuKeys.Download,
@@ -586,7 +589,7 @@ const SliceHeaderControls = (
           icon: <Icons.FileOutlined css={dropdownIconsStyles} />,
         },
         ...(isFeatureEnabled(FeatureFlag.AllowFullCsvExport) &&
-        props.supersetCanCSV &&
+        props.axbiCanCSV &&
         isTable
           ? [
               {

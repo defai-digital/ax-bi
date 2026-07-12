@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { VizType } from '@superset-ui/core';
+import { VizType } from '@ax-bi/ui-core';
 import {
   EchartsBoxPlotChartPlugin,
   EchartsPieChartPlugin,
@@ -41,7 +41,7 @@ import {
 
 import { EchartsChartPlugin } from '../src/types';
 
-test('@superset-ui/plugin-chart-echarts exists', () => {
+test('@ax-bi/plugin-chart-echarts exists', () => {
   expect(EchartsBoxPlotChartPlugin).toBeDefined();
   expect(EchartsPieChartPlugin).toBeDefined();
   expect(EchartsTimeseriesChartPlugin).toBeDefined();
@@ -63,7 +63,7 @@ test('@superset-ui/plugin-chart-echarts exists', () => {
   expect(EchartsSunburstChartPlugin).toBeDefined();
 });
 
-test('@superset-ui/plugin-chart-echarts-parsemethod-validation', () => {
+test('@ax-bi/plugin-chart-echarts-parsemethod-validation', () => {
   const plugins: EchartsChartPlugin[] = [
     new EchartsBoxPlotChartPlugin().configure({
       key: VizType.BoxPlot,

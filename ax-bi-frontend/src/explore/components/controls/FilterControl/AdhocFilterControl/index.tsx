@@ -17,10 +17,10 @@
  * under the License.
  */
 import { Component, ReactNode } from 'react';
-import { SupersetClient, ensureIsArray } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
-import { withTheme, type SupersetTheme } from '@apache-superset/core/theme';
+import { AxBIClient, ensureIsArray } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
+import { withTheme, type AxBITheme } from '@ax-bi/core/theme';
 
 import ControlHeader from 'src/explore/components/ControlHeader';
 import AdhocMetric, {
@@ -36,8 +36,8 @@ import {
   HeaderContainer,
   LabelsContainer,
 } from 'src/explore/components/controls/OptionControls';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Modal } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Modal } from '@ax-bi/ui-core/components';
 import AdhocFilterPopoverTrigger from 'src/explore/components/controls/FilterControl/AdhocFilterPopoverTrigger';
 import AdhocFilterOption from 'src/explore/components/controls/FilterControl/AdhocFilterOption';
 import AdhocFilter, {
@@ -85,7 +85,7 @@ export interface AdhocFilterControlProps {
     filter: AdhocFilter,
     allFilters: AdhocFilter[],
   ) => string | boolean | undefined;
-  theme?: SupersetTheme;
+  theme?: AxBITheme;
 }
 
 interface FilterOption {
@@ -207,7 +207,7 @@ class AdhocFilterControl extends Component<
       } = datasource;
 
       if (!isSqllabView && dbId && name && schema) {
-        SupersetClient.get({
+        AxBIClient.get({
           endpoint: `/api/v1/database/${dbId}/table_metadata/extra/${toQueryString(
             {
               name,

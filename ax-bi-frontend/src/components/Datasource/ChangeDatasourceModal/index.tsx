@@ -25,10 +25,10 @@ import {
   ChangeEvent,
 } from 'react';
 
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
 import {
   Button,
   Constants,
@@ -37,11 +37,11 @@ import {
   Loading,
   Modal,
   TableView,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   ServerPagination,
   SortByType,
-} from '@superset-ui/core/components/TableView/types';
+} from '@ax-bi/ui-core/components/TableView/types';
 import { FacePile } from 'src/components';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import Dataset from 'src/types/Dataset';
@@ -173,7 +173,7 @@ const ChangeDatasourceModal: FunctionComponent<ChangeDatasourceModalProps> = ({
 
   const handleChangeConfirm = async () => {
     try {
-      const { json } = await SupersetClient.get({
+      const { json } = await AxBIClient.get({
         endpoint: `/api/v1/dataset/${confirmedDataset?.id}`,
       });
       // eslint-disable-next-line no-param-reassign

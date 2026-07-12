@@ -18,7 +18,7 @@
  */
 import {
   isValidTokenName,
-  isSupersetCustomToken,
+  isAxBICustomToken,
   getAllValidTokenNames,
 } from './antdTokenNames';
 
@@ -29,7 +29,7 @@ test('isValidTokenName recognizes standard Ant Design tokens', () => {
   expect(isValidTokenName('borderRadius')).toBe(true);
 });
 
-test('isValidTokenName recognizes Superset custom tokens', () => {
+test('isValidTokenName recognizes AxBI custom tokens', () => {
   expect(isValidTokenName('brandLogoUrl')).toBe(true);
   expect(isValidTokenName('brandSpinnerSvg')).toBe(true);
   expect(isValidTokenName('fontSizeXS')).toBe(true);
@@ -47,27 +47,27 @@ test('isValidTokenName handles edge cases', () => {
   expect(isValidTokenName('  ')).toBe(false);
 });
 
-test('isSupersetCustomToken identifies Superset-specific tokens', () => {
-  expect(isSupersetCustomToken('brandLogoUrl')).toBe(true);
-  expect(isSupersetCustomToken('brandSpinnerSvg')).toBe(true);
-  expect(isSupersetCustomToken('fontSizeXS')).toBe(true);
-  expect(isSupersetCustomToken('fontUrls')).toBe(true);
+test('isAxBICustomToken identifies AxBI-specific tokens', () => {
+  expect(isAxBICustomToken('brandLogoUrl')).toBe(true);
+  expect(isAxBICustomToken('brandSpinnerSvg')).toBe(true);
+  expect(isAxBICustomToken('fontSizeXS')).toBe(true);
+  expect(isAxBICustomToken('fontUrls')).toBe(true);
 });
 
-test('isSupersetCustomToken returns false for Ant Design tokens', () => {
-  expect(isSupersetCustomToken('colorPrimary')).toBe(false);
-  expect(isSupersetCustomToken('fontSize')).toBe(false);
+test('isAxBICustomToken returns false for Ant Design tokens', () => {
+  expect(isAxBICustomToken('colorPrimary')).toBe(false);
+  expect(isAxBICustomToken('fontSize')).toBe(false);
 });
 
-test('isSupersetCustomToken returns false for unknown tokens', () => {
-  expect(isSupersetCustomToken('fooBar')).toBe(false);
+test('isAxBICustomToken returns false for unknown tokens', () => {
+  expect(isAxBICustomToken('fooBar')).toBe(false);
 });
 
 test('getAllValidTokenNames returns categorized token names', () => {
   const result = getAllValidTokenNames();
 
   expect(result).toHaveProperty('antdTokens');
-  expect(result).toHaveProperty('supersetTokens');
+  expect(result).toHaveProperty('axbiTokens');
   expect(result).toHaveProperty('total');
 });
 
@@ -80,23 +80,23 @@ test('getAllValidTokenNames has reasonable token counts', () => {
   expect(result.antdTokens).toContain('fontSize');
   expect(result.antdTokens).toContain('borderRadius');
 
-  // Superset custom tokens should exist
-  expect(result.supersetTokens.length).toBeGreaterThan(0);
-  expect(result.supersetTokens).toContain('brandLogoUrl');
-  expect(result.supersetTokens).toContain('fontUrls');
+  // AxBI custom tokens should exist
+  expect(result.axbiTokens.length).toBeGreaterThan(0);
+  expect(result.axbiTokens).toContain('brandLogoUrl');
+  expect(result.axbiTokens).toContain('fontUrls');
 
   // Total should be sum of both
   expect(result.total).toBe(
-    result.antdTokens.length + result.supersetTokens.length,
+    result.antdTokens.length + result.axbiTokens.length,
   );
 });
 
-test('getAllValidTokenNames includes known Superset tokens', () => {
+test('getAllValidTokenNames includes known AxBI tokens', () => {
   const result = getAllValidTokenNames();
 
-  expect(result.supersetTokens).toContain('brandLogoUrl');
-  expect(result.supersetTokens).toContain('brandSpinnerSvg');
-  expect(result.supersetTokens).toContain('fontSizeXS');
+  expect(result.axbiTokens).toContain('brandLogoUrl');
+  expect(result.axbiTokens).toContain('brandSpinnerSvg');
+  expect(result.axbiTokens).toContain('fontSizeXS');
 });
 
 test('getAllValidTokenNames includes known Ant Design tokens', () => {
@@ -107,7 +107,7 @@ test('getAllValidTokenNames includes known Ant Design tokens', () => {
   expect(result.antdTokens).toContain('padding');
 });
 
-test('label variant tokens are recognized as valid Superset custom tokens', () => {
+test('label variant tokens are recognized as valid AxBI custom tokens', () => {
   const labelTokens = [
     // Published/Draft
     'labelPublishedColor',
@@ -131,6 +131,6 @@ test('label variant tokens are recognized as valid Superset custom tokens', () =
 
   labelTokens.forEach(token => {
     expect(isValidTokenName(token)).toBe(true);
-    expect(isSupersetCustomToken(token)).toBe(true);
+    expect(isAxBICustomToken(token)).toBe(true);
   });
 });

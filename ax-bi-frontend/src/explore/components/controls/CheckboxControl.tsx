@@ -17,8 +17,8 @@
  * under the License.
  */
 import { Component, type ReactNode } from 'react';
-import { styled, css } from '@apache-superset/core/theme';
-import { Checkbox } from '@superset-ui/core/components';
+import { styled, css } from '@ax-bi/core/theme';
+import { Checkbox } from '@ax-bi/ui-core/components';
 import ControlHeader from '../ControlHeader';
 
 interface CheckboxControlProps {

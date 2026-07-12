@@ -17,17 +17,17 @@
 
 from unittest.mock import call, Mock, patch
 
-from superset.extensions import machine_auth_provider_factory
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.extensions import machine_auth_provider_factory
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class MachineAuthProviderTests(SupersetTestCase):
+class MachineAuthProviderTests(AxBITestCase):
     def test_get_auth_cookies(self):
         user = self.get_user("admin")
         auth_cookies = machine_auth_provider_factory.instance.get_auth_cookies(user)
         assert auth_cookies["session"] is not None
 
-    @patch("superset.utils.machine_auth.MachineAuthProvider.get_auth_cookies")
+    @patch("axbi.utils.machine_auth.MachineAuthProvider.get_auth_cookies")
     def test_auth_driver_user(self, get_auth_cookies):
         user = self.get_user("admin")
         driver = Mock()
@@ -43,7 +43,7 @@ class MachineAuthProviderTests(SupersetTestCase):
             ]
         )
 
-    @patch("superset.utils.machine_auth.request")
+    @patch("axbi.utils.machine_auth.request")
     def test_auth_driver_request(self, request):
         driver = Mock()
         request.cookies = {"session": "session_val", "other_cookie": "other_val"}

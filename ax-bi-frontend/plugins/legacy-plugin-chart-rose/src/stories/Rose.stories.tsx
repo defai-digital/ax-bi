@@ -18,8 +18,8 @@
  */
 
 /* eslint-disable no-magic-numbers, sort-keys */
-import { SuperChart, VizType } from '@superset-ui/core';
-import RoseChartPlugin from '@superset-ui/legacy-plugin-chart-rose';
+import { SuperChart, VizType } from '@ax-bi/ui-core';
+import RoseChartPlugin from '@ax-bi/legacy-plugin-chart-rose';
 import data from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 
@@ -38,12 +38,7 @@ export default {
   argTypes: {
     colorScheme: {
       control: 'select',
-      options: [
-        'supersetColors',
-        'd3Category10',
-        'bnbColors',
-        'googleCategory20c',
-      ],
+      options: ['axbiColors', 'd3Category10', 'bnbColors', 'googleCategory20c'],
     },
     numberFormat: {
       control: 'select',

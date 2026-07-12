@@ -18,9 +18,9 @@
  */
 
 import { useState } from 'react';
-import { styled } from '@apache-superset/core/theme';
-import { Popover } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { styled } from '@ax-bi/core/theme';
+import { Popover } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 const PayloadContainer = styled.div`
   max-width: 400px;

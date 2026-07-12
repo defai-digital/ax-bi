@@ -19,11 +19,11 @@ from __future__ import annotations
 
 import pytest
 
-from superset.mcp_service.utils import url_utils
-from superset.mcp_service.utils.url_utils import (
+from axbi.mcp_service.utils import url_utils
+from axbi.mcp_service.utils.url_utils import (
     extract_permalink_key_from_url,
+    get_axbi_base_url,
     get_mcp_service_url,
-    get_superset_base_url,
 )
 
 
@@ -55,27 +55,27 @@ def test_extract_permalink_key_from_url_malformed_url():
 
 
 def test_extract_permalink_key_from_url_with_path_prefix():
-    url = "https://example.com/superset/explore/p/xyz789/"
+    url = "https://example.com/ax-bi/explore/p/xyz789/"
     assert extract_permalink_key_from_url(url) == "xyz789"
 
 
-def test_get_superset_base_url_reads_user_friendly_url(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
+def test_get_axbi_base_url_reads_user_friendly_url(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setattr(url_utils, "get_axbi_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
-        lambda: "https://superset.example/",
+        lambda: "https://ax-bi.example/",
     )
 
-    assert get_superset_base_url() == "https://superset.example"
+    assert get_axbi_base_url() == "https://ax-bi.example"
 
 
-def test_get_superset_base_url_prefers_webserver_address(
+def test_get_axbi_base_url_prefers_webserver_address(
     monkeypatch: pytest.MonkeyPatch,
 ):
     monkeypatch.setattr(
         url_utils,
-        "get_superset_webserver_address",
+        "get_axbi_webserver_address",
         lambda: "http://127.0.0.1:8080/",
     )
     monkeypatch.setattr(
@@ -84,49 +84,49 @@ def test_get_superset_base_url_prefers_webserver_address(
         lambda: "http://0.0.0.0:8080/",
     )
 
-    assert get_superset_base_url() == "http://127.0.0.1:8080"
+    assert get_axbi_base_url() == "http://127.0.0.1:8080"
 
 
-def test_get_superset_base_url_strips_whitespace(
+def test_get_axbi_base_url_strips_whitespace(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
+    monkeypatch.setattr(url_utils, "get_axbi_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
-        lambda: " https://superset.example/ ",
+        lambda: " https://ax-bi.example/ ",
     )
 
-    assert get_superset_base_url() == "https://superset.example"
+    assert get_axbi_base_url() == "https://ax-bi.example"
 
 
-def test_get_superset_base_url_falls_back_for_blank_config(
+def test_get_axbi_base_url_falls_back_for_blank_config(
     monkeypatch: pytest.MonkeyPatch,
 ):
-    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
+    monkeypatch.setattr(url_utils, "get_axbi_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
         lambda: "   ",
     )
 
-    assert get_superset_base_url() == "http://localhost:9001"
+    assert get_axbi_base_url() == "http://localhost:9001"
 
 
-def test_get_superset_base_url_falls_back_when_config_read_fails(
+def test_get_axbi_base_url_falls_back_when_config_read_fails(
     monkeypatch: pytest.MonkeyPatch,
 ):
     def raise_key_error():
         raise KeyError("WEBDRIVER_BASEURL_USER_FRIENDLY")
 
-    monkeypatch.setattr(url_utils, "get_superset_webserver_address", lambda: "")
+    monkeypatch.setattr(url_utils, "get_axbi_webserver_address", lambda: "")
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
         raise_key_error,
     )
 
-    assert get_superset_base_url() == "http://localhost:9001"
+    assert get_axbi_base_url() == "http://localhost:9001"
 
 
 def test_get_mcp_service_url_prefers_explicit_override(
@@ -140,7 +140,7 @@ def test_get_mcp_service_url_prefers_explicit_override(
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
-        lambda: "https://superset.example",
+        lambda: "https://ax-bi.example",
     )
 
     assert get_mcp_service_url() == "https://mcp.example"
@@ -177,23 +177,23 @@ def test_get_mcp_service_url_ignores_blank_explicit_override(
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
-        lambda: "https://superset.example/",
+        lambda: "https://ax-bi.example/",
     )
 
-    assert get_mcp_service_url() == "https://superset.example/mcp"
+    assert get_mcp_service_url() == "https://ax-bi.example/mcp"
 
 
-def test_get_mcp_service_url_uses_public_superset_url_for_remote_host(
+def test_get_mcp_service_url_uses_public_axbi_url_for_remote_host(
     monkeypatch: pytest.MonkeyPatch,
 ):
     monkeypatch.setattr(url_utils, "get_mcp_service_url_config", lambda: None)
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
-        lambda: "https://superset.example/",
+        lambda: "https://ax-bi.example/",
     )
 
-    assert get_mcp_service_url() == "https://superset.example/mcp"
+    assert get_mcp_service_url() == "https://ax-bi.example/mcp"
 
 
 def test_get_mcp_service_url_falls_back_for_local_host(

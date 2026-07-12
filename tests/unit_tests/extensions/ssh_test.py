@@ -38,10 +38,10 @@ from paramiko import (
     SSHException,
 )
 
-from superset.commands.database.ssh_tunnel.exceptions import (
+from axbi.commands.database.ssh_tunnel.exceptions import (
     SSHTunnelHostKeyVerificationError,
 )
-from superset.extensions.ssh import SSHManager, SSHManagerFactory
+from axbi.extensions.ssh import SSHManager, SSHManagerFactory
 
 
 def _make_manager(strict: bool = False) -> SSHManager:
@@ -52,7 +52,7 @@ def _make_manager(strict: bool = False) -> SSHManager:
         "SSH_TUNNEL_LOCAL_BIND_ADDRESS": "127.0.0.1",
         "SSH_TUNNEL_TIMEOUT_SEC": 123.0,
         "SSH_TUNNEL_PACKET_TIMEOUT_SEC": 321.0,
-        "SSH_TUNNEL_MANAGER_CLASS": "superset.extensions.ssh.SSHManager",
+        "SSH_TUNNEL_MANAGER_CLASS": "axbi.extensions.ssh.SSHManager",
         "SSH_TUNNEL_STRICT_HOST_KEY_CHECKING": strict,
     }
     return SSHManager(app)
@@ -93,7 +93,7 @@ def test_ssh_tunnel_timeout_setting() -> None:
         "SSH_TUNNEL_LOCAL_BIND_ADDRESS": "test",
         "SSH_TUNNEL_TIMEOUT_SEC": 123.0,
         "SSH_TUNNEL_PACKET_TIMEOUT_SEC": 321.0,
-        "SSH_TUNNEL_MANAGER_CLASS": "superset.extensions.ssh.SSHManager",
+        "SSH_TUNNEL_MANAGER_CLASS": "axbi.extensions.ssh.SSHManager",
     }
     factory = SSHManagerFactory()
     factory.init_app(app)
@@ -118,7 +118,7 @@ def test_create_tunnel_accepts_ed25519_private_key() -> None:
     code unconditionally calls ``RSAKey.from_private_key`` regardless of
     key type, which mis-parses the ed25519 byte stream.
 
-    The Superset UI accepts any key the user pastes, so the fix is to
+    The AxBI UI accepts any key the user pastes, so the fix is to
     detect the key type (or use ``paramiko.PKey.from_private_key`` once
     paramiko exposes a polymorphic loader) rather than hard-coding RSA.
 
@@ -130,7 +130,7 @@ def test_create_tunnel_accepts_ed25519_private_key() -> None:
     manager = _make_manager()
     ssh_tunnel = _make_ssh_tunnel(_make_ed25519_pem())
 
-    with patch("superset.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
+    with patch("axbi.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
         manager.create_tunnel(
             ssh_tunnel, "postgresql://user:pass@db.example.com:5432/x"
         )
@@ -161,7 +161,7 @@ def test_create_tunnel_accepts_rsa_private_key_unchanged() -> None:
     manager = _make_manager()
     ssh_tunnel = _make_ssh_tunnel(rsa_pem)
 
-    with patch("superset.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
+    with patch("axbi.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
         manager.create_tunnel(
             ssh_tunnel, "postgresql://user:pass@db.example.com:5432/x"
         )
@@ -189,7 +189,7 @@ def test_create_tunnel_accepts_ecdsa_private_key() -> None:
     manager = _make_manager()
     ssh_tunnel = _make_ssh_tunnel(ecdsa_pem)
 
-    with patch("superset.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
+    with patch("axbi.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
         manager.create_tunnel(
             ssh_tunnel, "postgresql://user:pass@db.example.com:5432/x"
         )
@@ -218,7 +218,7 @@ def test_create_tunnel_passphrase_protected_key_without_password() -> None:
     manager = _make_manager()
     ssh_tunnel = _make_ssh_tunnel(encrypted_pem, private_key_password=None)
 
-    with patch("superset.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
+    with patch("axbi.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
         with pytest.raises(PasswordRequiredException):
             manager.create_tunnel(
                 ssh_tunnel, "postgresql://user:pass@db.example.com:5432/x"
@@ -236,7 +236,7 @@ def test_create_tunnel_invalid_key_raises_combined_error() -> None:
     manager = _make_manager()
     ssh_tunnel = _make_ssh_tunnel("not a valid private key")
 
-    with patch("superset.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
+    with patch("axbi.extensions.ssh.sshtunnel.open_tunnel") as mock_open:
         with pytest.raises(SSHException) as exc_info:
             manager.create_tunnel(
                 ssh_tunnel, "postgresql://user:pass@db.example.com:5432/x"
@@ -249,8 +249,8 @@ def test_create_tunnel_invalid_key_raises_combined_error() -> None:
     assert not mock_open.called
 
 
-@patch("superset.extensions.ssh.socket.create_connection")
-@patch("superset.extensions.ssh.paramiko.Transport")
+@patch("axbi.extensions.ssh.socket.create_connection")
+@patch("axbi.extensions.ssh.paramiko.Transport")
 def test_verify_host_key_match(
     mock_transport_cls: Mock, mock_create_connection: Mock
 ) -> None:
@@ -276,8 +276,8 @@ def test_verify_host_key_match(
     assert result == server_key
 
 
-@patch("superset.extensions.ssh.socket.create_connection")
-@patch("superset.extensions.ssh.paramiko.Transport")
+@patch("axbi.extensions.ssh.socket.create_connection")
+@patch("axbi.extensions.ssh.paramiko.Transport")
 def test_verify_host_key_mismatch_raises(
     mock_transport_cls: Mock, mock_create_connection: Mock
 ) -> None:
@@ -297,7 +297,7 @@ def test_verify_host_key_mismatch_raises(
     transport.close.assert_called_once()
 
 
-@patch("superset.extensions.ssh.socket.create_connection")
+@patch("axbi.extensions.ssh.socket.create_connection")
 def test_verify_host_key_connect_failure_raises(
     mock_create_connection: Mock,
 ) -> None:
@@ -312,7 +312,7 @@ def test_verify_host_key_connect_failure_raises(
         manager._verify_host_key(tunnel)
 
 
-@patch("superset.extensions.ssh.paramiko.Transport")
+@patch("axbi.extensions.ssh.paramiko.Transport")
 def test_verify_host_key_unset_non_strict_skips(mock_transport_cls: Mock) -> None:
     """Back-compat: no expected key + strict checking off => no verification at all."""
     manager = _make_manager(strict=False)
@@ -323,7 +323,7 @@ def test_verify_host_key_unset_non_strict_skips(mock_transport_cls: Mock) -> Non
     mock_transport_cls.assert_not_called()
 
 
-@patch("superset.extensions.ssh.paramiko.Transport")
+@patch("axbi.extensions.ssh.paramiko.Transport")
 def test_verify_host_key_unset_strict_raises(mock_transport_cls: Mock) -> None:
     """Fail-closed: no expected key + strict checking on => reject."""
     manager = _make_manager(strict=True)
@@ -335,8 +335,8 @@ def test_verify_host_key_unset_strict_raises(mock_transport_cls: Mock) -> None:
     mock_transport_cls.assert_not_called()
 
 
-@patch("superset.extensions.ssh.socket.create_connection")
-@patch("superset.extensions.ssh.paramiko.Transport")
+@patch("axbi.extensions.ssh.socket.create_connection")
+@patch("axbi.extensions.ssh.paramiko.Transport")
 def test_verify_host_key_match_ignores_comment_and_whitespace(
     mock_transport_cls: Mock,
     mock_create_connection: Mock,
@@ -382,9 +382,9 @@ def test_verify_host_key_unknown_key_type_raises() -> None:
         manager._verify_host_key(tunnel)
 
 
-@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
-@patch("superset.extensions.ssh.socket.create_connection")
-@patch("superset.extensions.ssh.paramiko.Transport")
+@patch("axbi.extensions.ssh.sshtunnel.open_tunnel")
+@patch("axbi.extensions.ssh.socket.create_connection")
+@patch("axbi.extensions.ssh.paramiko.Transport")
 def test_create_tunnel_pins_verified_host_key(
     mock_transport_cls: Mock,
     mock_create_connection: Mock,
@@ -412,7 +412,7 @@ def test_create_tunnel_pins_verified_host_key(
     assert kwargs["ssh_host_key"] == server_key
 
 
-@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+@patch("axbi.extensions.ssh.sshtunnel.open_tunnel")
 def test_create_tunnel_without_host_key_does_not_pin(mock_open_tunnel: Mock) -> None:
     # No expected key configured (non-strict): nothing is pinned, preserving the
     # prior behavior.
@@ -428,7 +428,7 @@ def test_create_tunnel_without_host_key_does_not_pin(mock_open_tunnel: Mock) -> 
     assert "ssh_host_key" not in kwargs
 
 
-@patch("superset.extensions.ssh.sshtunnel.open_tunnel")
+@patch("axbi.extensions.ssh.sshtunnel.open_tunnel")
 def test_create_tunnel_disables_stale_dss_key_scan_on_paramiko_5(
     mock_open_tunnel: Mock,
 ) -> None:
@@ -450,7 +450,7 @@ def test_create_tunnel_disables_stale_dss_key_scan_on_paramiko_5(
 
 def test_ssh_tunnel_schema_round_trips_server_host_key() -> None:
     """The schema accepts and preserves the public host key field."""
-    from superset.databases.schemas import DatabaseSSHTunnel
+    from axbi.databases.schemas import DatabaseSSHTunnel
 
     server_key = paramiko.RSAKey.generate(2048)
     authorized = _authorized_key(server_key)

@@ -19,13 +19,13 @@ from unittest.mock import patch
 
 import pytest
 
-from superset.commands.explore.get import _get_slice_metadata, GetExploreCommand
-from superset.commands.explore.parameters import CommandParameters
-from superset.explore.permalink.exceptions import ExplorePermalinkGetFailedError
-from superset.explore.permalink.schemas import ExplorePermalinkSchema
-from superset.key_value.exceptions import KeyValueCodecDecodeException
-from superset.key_value.types import MarshmallowKeyValueCodec
-from superset.models.slice import Slice
+from axbi.commands.explore.get import _get_slice_metadata, GetExploreCommand
+from axbi.commands.explore.parameters import CommandParameters
+from axbi.explore.permalink.exceptions import ExplorePermalinkGetFailedError
+from axbi.explore.permalink.schemas import ExplorePermalinkSchema
+from axbi.key_value.exceptions import KeyValueCodecDecodeException
+from axbi.key_value.types import MarshmallowKeyValueCodec
+from axbi.models.slice import Slice
 
 
 def test_slice_metadata_handles_missing_timestamps(app: Any) -> None:
@@ -78,7 +78,7 @@ def test_get_explore_rejects_malformed_permalink_state(
     )
 
     with patch(
-        "superset.commands.explore.get.GetExplorePermalinkCommand.run",
+        "axbi.commands.explore.get.GetExplorePermalinkCommand.run",
         return_value=permalink_value,
     ):
         with pytest.raises(ExplorePermalinkGetFailedError):

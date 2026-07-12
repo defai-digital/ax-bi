@@ -17,12 +17,8 @@
  * under the License.
  */
 
-import { QueryResponse } from '@superset-ui/core';
-import {
-  ColumnMeta,
-  ControlPanelState,
-  Dataset,
-} from '@superset-ui/chart-controls';
+import { QueryResponse } from '@ax-bi/ui-core';
+import { ColumnMeta, ControlPanelState, Dataset } from '@ax-bi/chart-controls';
 
 export function columnChoices(datasource: Dataset | QueryResponse | null) {
   if (datasource?.columns) {

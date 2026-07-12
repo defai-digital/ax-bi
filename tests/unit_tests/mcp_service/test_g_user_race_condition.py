@@ -44,7 +44,7 @@ BOB = _make_user(2, "bob")
 
 
 def _get_user_id() -> int | None:
-    """Mirrors superset.utils.core.get_user_id."""
+    """Mirrors axbi.utils.core.get_user_id."""
     try:
         return g.user.id
     except AttributeError:

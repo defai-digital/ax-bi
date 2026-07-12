@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ControlPanelConfig } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { ControlPanelConfig } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 
 const config: ControlPanelConfig = {
   controlPanelSections: [

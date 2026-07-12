@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 import {
   FormLabel,
   LabeledErrorBoundInput as ValidatedInput,
-} from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Typography } from '@superset-ui/core/components/Typography';
+} from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { StyledFooterButton, StyledCatalogTable } from '../styles';
 import { CatalogObject, Engines, FieldPropTypes } from '../../types';
 
@@ -69,7 +69,7 @@ export const TableCatalog = ({
               />
               {tableCatalog?.length > 1 && (
                 <Icons.CloseOutlined
-                  css={(theme: SupersetTheme) => css`
+                  css={(theme: AxBITheme) => css`
                     align-self: center;
                     background: ${theme.colorFillSecondary};
                     margin: 5px 5px 8px 5px;

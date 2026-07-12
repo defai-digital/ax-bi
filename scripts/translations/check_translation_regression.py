@@ -55,7 +55,7 @@ Use a translations directory other than the repo default (used by CI to count
 against a separate base-branch worktree):
 
     python check_translation_regression.py --count \\
-        --translations-dir /tmp/base-worktree/superset/translations
+        --translations-dir /tmp/base-worktree/ax-bi/translations
 
 Typical CI workflow
 -------------------
@@ -80,7 +80,7 @@ import sys
 from pathlib import Path
 
 DEFAULT_TRANSLATIONS_DIR = (
-    Path(__file__).resolve().parent.parent.parent / "superset" / "translations"
+    Path(__file__).resolve().parent.parent.parent / "axbi" / "translations"
 )
 
 # English .po files use empty msgstr by convention (source language == target),
@@ -203,20 +203,20 @@ def build_regression_report(regressions: list[tuple[str, int, int]]) -> str:
         "### How to fix\n\n"
         "**1. Install dependencies** (if not already set up):\n\n"
         "```bash\n"
-        "pip install -r superset/translations/requirements.txt\n"
+        "pip install -r axbi/translations/requirements.txt\n"
         "sudo apt-get install gettext   # or: brew install gettext\n"
         "```\n\n"
         "**2. Re-extract strings and sync `.po` files:**\n\n"
         "```bash\n"
         "./scripts/translations/babel_update.sh\n"
         "```\n\n"
-        "This rewrites `superset/translations/messages.pot` from the current "
+        "This rewrites `axbi/translations/messages.pot` from the current "
         "source files and merges the changes into every `.po` file. Strings "
         "whose `msgid` changed will be marked `#, fuzzy`.\n\n"
         f"**3. Resolve the fuzzy entries** in the affected language files "
         f"({affected}):\n\n"
         "```bash\n"
-        "grep -n '#, fuzzy' superset/translations/<lang>/LC_MESSAGES/messages.po\n"
+        "grep -n '#, fuzzy' axbi/translations/<lang>/LC_MESSAGES/messages.po\n"
         "```\n\n"
         "For each fuzzy entry, either rewrite the `msgstr` to match the new "
         "string and remove the `#, fuzzy` line, or clear the `msgstr` to "
@@ -326,7 +326,7 @@ def main() -> None:
         default=DEFAULT_TRANSLATIONS_DIR,
         help=(
             "Path to the translations directory containing per-language "
-            "LC_MESSAGES/messages.po files (default: <repo>/superset/translations)."
+            "LC_MESSAGES/messages.po files (default: <repo>/ax-bi/translations)."
         ),
     )
     args = parser.parse_args()

@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset.commands.chart.importers.v1.utils import migrate_chart
-from superset.utils import json
+from axbi.commands.chart.importers.v1.utils import migrate_chart
+from axbi.utils import json
 
 
 def test_migrate_chart_area() -> None:
@@ -45,7 +45,7 @@ def test_migrate_chart_area() -> None:
                 ],
                 "annotation_layers": [],
                 "x_axis_title_margin": "auto",
-                "color_scheme": "supersetColors",
+                "color_scheme": "axbiColors",
                 "comparison_type": "values",
                 "dashboards": [],
                 "datasource": "21__table",

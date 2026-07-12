@@ -18,7 +18,7 @@
  */
 import { isValidElement } from 'react';
 import { render, screen } from 'spec/helpers/testing-library';
-import { QueryState, type QueryResponse } from '@superset-ui/core';
+import { QueryState, type QueryResponse } from '@ax-bi/ui-core';
 import QueryStatusBar from '.';
 
 jest.mock('../QueryStateLabel', () => ({

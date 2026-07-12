@@ -24,7 +24,7 @@ import {
   Divider,
   ChartCustomization,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { Dispatch } from 'redux';
 import { RootState } from 'src/dashboard/types';
 import { cloneDeep } from 'lodash';

@@ -19,7 +19,7 @@ from unittest import mock
 
 import pytest
 
-from superset.common.utils.time_range_utils import (
+from axbi.common.utils.time_range_utils import (
     get_since_until_from_query_object,
     get_since_until_from_time_range,
 )
@@ -37,7 +37,7 @@ def test__get_since_until_from_time_range():
         datetime(2001, 12, 31, 16, 0, 0),
     )
     with mock.patch(
-        "superset.utils.date_parser.EvalDateTruncFunc.eval",
+        "axbi.utils.date_parser.EvalDateTruncFunc.eval",
         return_value=datetime(2000, 1, 1, 0, 0, 0),
     ):
         assert (
@@ -49,7 +49,7 @@ def test__get_since_until_from_time_range():
             )
         )[1] == datetime(2100, 1, 1, 0, 0)
     with mock.patch(
-        "superset.utils.date_parser.EvalDateTruncFunc.eval",
+        "axbi.utils.date_parser.EvalDateTruncFunc.eval",
         return_value=datetime(2000, 1, 1, 0, 0, 0),
     ):
         assert (

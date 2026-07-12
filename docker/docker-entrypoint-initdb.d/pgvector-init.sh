@@ -17,8 +17,8 @@
 #
 set -euo pipefail
 
-db_name="${POSTGRES_DB:-superset}"
-db_user="${POSTGRES_USER:-superset}"
+db_name="${POSTGRES_DB:-axbi}"
+db_user="${POSTGRES_USER:-axbi}"
 
 if psql -v ON_ERROR_STOP=1 --username "$db_user" --dbname "$db_name" -tAc \
     "SELECT 1 FROM pg_available_extensions WHERE name = 'vector'" | grep -q 1; then

@@ -20,14 +20,14 @@ import {
   ColorFormatters,
   getColorFormatters,
   Metric,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import {
   getMetricLabel,
   extractTimegrain,
   QueryFormData,
   getValueFormatter,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { BigNumberTotalChartProps, BigNumberVizProps } from '../types';
 import { PROPORTION } from '../constants';
 import { getDateFormatter, getOriginalLabel, parseMetricValue } from '../utils';

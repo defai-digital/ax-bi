@@ -26,15 +26,15 @@ import {
 } from 'react';
 import { omit } from 'lodash';
 
-import { t } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import { useSingleViewResource } from 'src/views/CRUD/hooks';
 import { useThemeContext } from 'src/theme/ThemeProvider';
 import { useBeforeUnload } from 'src/hooks/useBeforeUnload';
-import SupersetText from 'src/utils/textUtils';
+import AxBIText from 'src/utils/textUtils';
 
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import {
   Button,
@@ -43,10 +43,10 @@ import {
   Modal,
   Space,
   Tooltip,
-} from '@superset-ui/core/components';
-import type { editors } from '@apache-superset/core';
+} from '@ax-bi/ui-core/components';
+import type { editors } from '@ax-bi/core';
 import { EditorHost } from 'src/core/editors';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { useThemeValidation } from 'src/theme/hooks/useThemeValidation';
 import { OnlyKeyWithType } from 'src/utils/types';
 import { ThemeObject } from './types';
@@ -136,7 +136,7 @@ const ThemeModal: FunctionComponent<ThemeModalProps> = ({
   theme = null,
   canDevelop = false,
 }) => {
-  const supersetTheme = useTheme();
+  const axbiTheme = useTheme();
   const { setTemporaryTheme } = useThemeContext();
   const [disableSave, setDisableSave] = useState<boolean>(true);
   const [currentTheme, setCurrentTheme] = useState<ThemeObject | null>(null);
@@ -149,13 +149,13 @@ const ThemeModal: FunctionComponent<ThemeModalProps> = ({
 
   const canDevelopThemes = canDevelop;
 
-  // SupersetText URL configurations
+  // AxBIText URL configurations
   const themeEditorUrl =
-    SupersetText?.THEME_MODAL?.THEME_EDITOR_URL ||
+    AxBIText?.THEME_MODAL?.THEME_EDITOR_URL ||
     'https://ant.design/theme-editor';
   const documentationUrl =
-    SupersetText?.THEME_MODAL?.DOCUMENTATION_URL ||
-    'https://superset.apache.org/docs/configuration/theming/';
+    AxBIText?.THEME_MODAL?.DOCUMENTATION_URL ||
+    'https://github.com/defai-digital/ax-bi/docs/configuration/theming/';
 
   // Theme validation (structure + token names)
   const validation = useThemeValidation(currentTheme?.json_data || '', {
@@ -291,11 +291,11 @@ const ThemeModal: FunctionComponent<ThemeModalProps> = ({
       <Icon
         iconSize="l"
         css={css`
-          margin: auto ${supersetTheme.sizeUnit * 2}px auto 0;
+          margin: auto ${axbiTheme.sizeUnit * 2}px auto 0;
         `}
       />
     );
-  }, [isEditMode, supersetTheme.sizeUnit]);
+  }, [isEditMode, axbiTheme.sizeUnit]);
 
   const onThemeNameChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {

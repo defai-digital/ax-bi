@@ -17,11 +17,11 @@
 
 import pytest
 
-from superset.mcp_service.chart.schemas import ChartError
-from superset.mcp_service.common.error_schemas import sanitize_error_text
-from superset.mcp_service.dashboard.schemas import DashboardError
-from superset.mcp_service.dataset.schemas import DatasetError
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.chart.schemas import ChartError
+from axbi.mcp_service.common.error_schemas import sanitize_error_text
+from axbi.mcp_service.dashboard.schemas import DashboardError
+from axbi.mcp_service.dataset.schemas import DatasetError
+from axbi.mcp_service.utils.sanitization import (
     _check_dangerous_patterns,
     _check_sql_patterns,
     _normalize_field_name,
@@ -628,7 +628,7 @@ def test_sanitize_for_llm_context_recurses_through_nested_payloads():
 
 def test_sanitize_for_llm_context_preserves_excluded_operational_fields():
     payload = {
-        "url": "https://superset.example.com/dashboard/7",
+        "url": "https://ax-bi.example.com/dashboard/7",
         "uuid": "9f6b69e8-0d89-4b43-92b4-a5f645b37363",
         "slug": "north-america-sales",
         "cache_key": "dashboard-cache-key",
@@ -877,14 +877,14 @@ def test_sanitize_error_text_uses_prompt_facing_error_policy() -> None:
 #   2. the on\w+= event-handler check is NOT inherited (would false-positive
 #      on `monthly = 12`),
 #   3. statement stacking / comments / DDL+DML / XSS are rejected, while
-#      subqueries pass through (subquery policy lives in Superset core's
+#      subqueries pass through (subquery policy lives in AxBI core's
 #      ALLOW_ADHOC_SUBQUERY feature flag, not here).
 # ---------------------------------------------------------------------------
 
 
 def _sanitize_sql():
     """Import lazily so the import error surfaces as a per-test failure."""
-    from superset.mcp_service.utils.sanitization import sanitize_sql_expression
+    from axbi.mcp_service.utils.sanitization import sanitize_sql_expression
 
     return sanitize_sql_expression
 
@@ -911,7 +911,7 @@ def test_sanitize_sql_expression_allows_abs_and_casts():
 
 
 def test_sanitize_sql_expression_allows_subquery():
-    """Subquery policy belongs to Superset core (ALLOW_ADHOC_SUBQUERY).
+    """Subquery policy belongs to AxBI core (ALLOW_ADHOC_SUBQUERY).
     The MCP-layer sanitizer must NOT block SELECT — otherwise it would
     override the admin's feature-flag choice."""
     sanitize_sql_expression = _sanitize_sql()

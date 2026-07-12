@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { buildQueryContext, QueryFormOrderBy } from '@superset-ui/core';
+import { buildQueryContext, QueryFormOrderBy } from '@ax-bi/ui-core';
 import { WordCloudFormData } from '../types';
 
 export default function buildQuery(formData: WordCloudFormData) {

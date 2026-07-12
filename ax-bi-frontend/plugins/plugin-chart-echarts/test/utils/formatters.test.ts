@@ -22,7 +22,7 @@ import {
   SMART_DATE_VERBOSE_ID,
   TimeFormatter,
   TimeGranularity,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   getPercentFormatter,
   getTooltipTimeFormatter,

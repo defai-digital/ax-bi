@@ -24,13 +24,13 @@ chart generation succeeds even when warnings are present.
 
 from unittest.mock import patch
 
-from superset.mcp_service.chart.schemas import (
+from axbi.mcp_service.chart.schemas import (
     AxisConfig,
     ColumnRef,
     TableChartConfig,
     XYChartConfig,
 )
-from superset.mcp_service.chart.validation.runtime import RuntimeValidator
+from axbi.mcp_service.chart.validation.runtime import RuntimeValidator
 
 
 class TestRuntimeValidatorNonBlocking:
@@ -60,7 +60,7 @@ class TestRuntimeValidatorNonBlocking:
 
         # Mock the format validator to return warnings
         with patch(
-            "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+            "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
             "_validate_format_compatibility"
         ) as mock_format:
             mock_format.return_value = [
@@ -89,7 +89,7 @@ class TestRuntimeValidatorNonBlocking:
 
         # Mock the cardinality validator to return warnings
         with patch(
-            "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+            "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
             "_validate_cardinality"
         ) as mock_cardinality:
             mock_cardinality.return_value = (
@@ -119,7 +119,7 @@ class TestRuntimeValidatorNonBlocking:
 
         # Mock the chart type suggester to return suggestions
         with patch(
-            "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+            "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
             "_validate_chart_type"
         ) as mock_suggester:
             mock_suggester.return_value = (
@@ -151,15 +151,15 @@ class TestRuntimeValidatorNonBlocking:
         # Mock all validators to return warnings
         with (
             patch(
-                "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+                "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
                 "_validate_format_compatibility"
             ) as mock_format,
             patch(
-                "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+                "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
                 "_validate_cardinality"
             ) as mock_cardinality,
             patch(
-                "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+                "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
                 "_validate_chart_type"
             ) as mock_type,
         ):
@@ -196,12 +196,10 @@ class TestRuntimeValidatorNonBlocking:
 
         with (
             patch(
-                "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+                "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
                 "_validate_format_compatibility"
             ) as mock_format,
-            patch(
-                "superset.mcp_service.chart.validation.runtime.logger"
-            ) as mock_logger,
+            patch("axbi.mcp_service.chart.validation.runtime.logger") as mock_logger,
         ):
             mock_format.return_value = ["Test warning message"]
 
@@ -229,15 +227,15 @@ class TestRuntimeValidatorNonBlocking:
         # These should not be called for table charts
         with (
             patch(
-                "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+                "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
                 "_validate_format_compatibility"
             ) as mock_format,
             patch(
-                "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+                "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
                 "_validate_cardinality"
             ) as mock_cardinality,
             patch(
-                "superset.mcp_service.chart.validation.runtime.RuntimeValidator."
+                "axbi.mcp_service.chart.validation.runtime.RuntimeValidator."
                 "_validate_chart_type"
             ) as mock_chart_type,
         ):
@@ -266,7 +264,7 @@ class TestRuntimeValidatorNonBlocking:
         )
 
         with patch(
-            "superset.mcp_service.chart.validation.runtime."
+            "axbi.mcp_service.chart.validation.runtime."
             "cardinality_validator.CardinalityValidator.check_cardinality"
         ) as mock_check:
             warnings, suggestions = RuntimeValidator._validate_cardinality(

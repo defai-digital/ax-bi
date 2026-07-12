@@ -16,12 +16,12 @@
 # under the License.
 import uuid
 
-from superset.themes.schemas import (
+from axbi.themes.schemas import (
     ImportV1ThemeSchema,
     ThemePostSchema,
     ThemePutSchema,
 )
-from superset.utils import json
+from axbi.utils import json
 
 
 def test_theme_post_schema_returns_sanitized_json_data() -> None:

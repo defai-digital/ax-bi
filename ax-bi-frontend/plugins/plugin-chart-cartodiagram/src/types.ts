@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataRecord, TimeseriesDataRecord } from '@superset-ui/core';
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { DataRecord, TimeseriesDataRecord } from '@ax-bi/ui-core';
+import { AxBITheme } from '@ax-bi/core/theme';
 import { RenderFunction } from 'ol/layer/Layer';
 import { Extent } from 'ol/extent';
 import Source from 'ol/source/Source';
@@ -30,7 +30,7 @@ import type { Style } from 'geostyler-style';
 export interface CartodiagramPluginStylesProps {
   height: number;
   width: number;
-  theme: SupersetTheme;
+  theme: AxBITheme;
 }
 
 // TODO find a way to reference props from other charts
@@ -202,7 +202,7 @@ export type CartodiagramPluginConstructorOpts = {
 
 export type ChartWrapperProps = {
   vizType: string;
-  theme: SupersetTheme;
+  theme: AxBITheme;
   width: number;
   height: number;
   chartConfig: ChartConfigFeature;

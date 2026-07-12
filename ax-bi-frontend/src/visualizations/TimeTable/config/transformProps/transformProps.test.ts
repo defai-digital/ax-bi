@@ -16,13 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  DatasourceType,
-  ChartProps,
-  Behavior,
-  Metric,
-} from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { DatasourceType, ChartProps, Behavior, Metric } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { transformProps, TableChartProps } from './transformProps';
 
 interface ExtendedMetric extends Omit<Metric, 'uuid'> {
@@ -111,7 +106,7 @@ function createMockChartProps(
     queriesData: defaultQueryData,
     width: 800,
     behaviors: [] as Behavior[],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   const tableChartProps: TableChartProps = {

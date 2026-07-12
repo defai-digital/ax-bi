@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ChartDataResponseResult,
   QueryFormMetric,
   validateNumber,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ControlPanelConfig,
   ControlSubSectionHeader,
@@ -34,7 +34,7 @@ import {
   ControlFormItemSpec,
   getStandardizedControls,
   DEFAULT_TIME_FORMAT,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { DEFAULT_FORM_DATA } from './types';
 import { LabelPositionEnum } from '../types';
 import { legendSection } from '../controls';
@@ -221,8 +221,7 @@ const config: ControlPanelConfig = {
 
                 return {
                   queryResponse: chart?.queriesResponse?.[0] as
-                    | ChartDataResponseResult
-                    | undefined,
+                    ChartDataResponseResult | undefined,
                   appliedColumnNames: metricColumn,
                   columnsPropsObject: { colnames, coltypes },
                 };

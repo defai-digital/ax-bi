@@ -30,7 +30,7 @@ import {
   FilterState,
   ExtraFormData,
   ChartCustomization,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   NATIVE_FILTER_PREFIX,
   isChartCustomization,
@@ -126,7 +126,7 @@ function fillNativeFilters(
       !(
         // Treat all-null arrays (range filters use [null, null] as their
         // canonical cleared value) and empty arrays as "no value".
-        (Array.isArray(loadedValue) && loadedValue.every(v => v === null))
+        Array.isArray(loadedValue) && loadedValue.every(v => v === null)
       );
     const loadedHasExtraFormData =
       !!loaded?.extraFormData && Object.keys(loaded.extraFormData).length > 0;

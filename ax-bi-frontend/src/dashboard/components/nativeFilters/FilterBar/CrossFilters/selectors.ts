@@ -17,11 +17,7 @@
  * under the License.
  */
 
-import {
-  DataMaskStateWithId,
-  getColumnLabel,
-  isDefined,
-} from '@superset-ui/core';
+import { DataMaskStateWithId, getColumnLabel, isDefined } from '@ax-bi/ui-core';
 import { LayoutItem } from 'src/dashboard/types';
 import { CrossFilterIndicator, getCrossFilterIndicator } from '../../selectors';
 

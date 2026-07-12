@@ -16,7 +16,7 @@
 # specific language governing permissions and limitations
 # under the License.
 """
-Extract feature flag metadata from superset/config.py.
+Extract feature flag metadata from axbi/config.py.
 
 This script parses the annotated feature flags in config.py and outputs
 a JSON file that can be consumed by the documentation site to generate
@@ -161,7 +161,7 @@ def parse_comment_lines(
 
 def main() -> None:
     parser = ArgumentParser(
-        description="Extract feature flag metadata from superset/config.py.",
+        description="Extract feature flag metadata from axbi/config.py.",
         epilog=__doc__,
         formatter_class=RawDescriptionHelpFormatter,
     )
@@ -170,7 +170,7 @@ def main() -> None:
     # Find config.py relative to this script
     script_dir = Path(__file__).parent
     repo_root = script_dir.parent
-    config_path = repo_root / "superset" / "config.py"
+    config_path = repo_root / "axbi" / "config.py"
 
     if not config_path.exists():
         print(f"ERROR: Could not find {config_path}", file=sys.stderr)
@@ -197,7 +197,7 @@ def main() -> None:
 
     output = {
         "generated": True,
-        "source": "superset/config.py",
+        "source": "axbi/config.py",
         "flags": grouped,
     }
 

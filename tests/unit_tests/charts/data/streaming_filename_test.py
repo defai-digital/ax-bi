@@ -23,14 +23,12 @@ from tests.conftest import with_config
 
 
 def _build_response(filename: str | None):
-    from superset.charts.data.api import ChartDataRestApi
+    from axbi.charts.data.api import ChartDataRestApi
 
     api = ChartDataRestApi.__new__(ChartDataRestApi)
     result = {"query_context": MagicMock()}
 
-    with patch(
-        "superset.charts.data.api.StreamingCSVExportCommand"
-    ) as mock_command_cls:
+    with patch("axbi.charts.data.api.StreamingCSVExportCommand") as mock_command_cls:
         mock_command = mock_command_cls.return_value
         mock_command.run.return_value = lambda: iter([b"a,b\n"])
         return api._create_streaming_csv_response(result, filename=filename)
@@ -63,7 +61,7 @@ def test_blank_filename_falls_back_to_default() -> None:
 
 
 def _should_use_streaming(result: dict[str, Any], form_data: dict[str, Any]) -> bool:
-    from superset.charts.data.api import ChartDataRestApi
+    from axbi.charts.data.api import ChartDataRestApi
 
     api = ChartDataRestApi.__new__(ChartDataRestApi)
     return api._should_use_streaming(result, form_data=form_data)

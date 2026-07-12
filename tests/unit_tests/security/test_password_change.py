@@ -21,7 +21,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import Flask
 
-from superset.security.password_change import (
+from axbi.security.password_change import (
     _get_user_attribute,
     _is_exempt_endpoint,
     password_change_required,
@@ -40,8 +40,8 @@ from superset.security.password_change import (
         ("AuthOAuthView.login", True),
         ("SomeBlueprint.static", True),
         ("health", True),
-        ("SupersetIndexView.index", False),
-        ("Superset.dashboard", False),
+        ("AxBIIndexView.index", False),
+        ("AxBI.dashboard", False),
         # Substring over-matching must NOT exempt these (they merely share a
         # substring with an exempt token).
         ("AuthorView.list", False),
@@ -62,9 +62,7 @@ def test_password_change_required() -> None:
     user = MagicMock()
     user.id = 5
 
-    with patch(
-        "superset.security.password_change._get_user_attribute"
-    ) as mock_get_attr:
+    with patch("axbi.security.password_change._get_user_attribute") as mock_get_attr:
         mock_get_attr.return_value = MagicMock(password_must_change=True)
         assert password_change_required(user) is True
 
@@ -97,8 +95,8 @@ def test_get_user_attribute_deterministic_with_duplicates() -> None:
     query.first.return_value = sentinel
 
     with (
-        patch("superset.extensions.db", db),
-        patch("superset.models.user_attributes.UserAttribute") as user_attribute,
+        patch("axbi.extensions.db", db),
+        patch("axbi.models.user_attributes.UserAttribute") as user_attribute,
     ):
         result = _get_user_attribute(5)
 
@@ -116,7 +114,7 @@ def enforcement_app() -> Flask:
     user, used to exercise the before-request redirect behavior end to end."""
     from flask import g
 
-    from superset.security.password_change import (
+    from axbi.security.password_change import (
         register_password_change_enforcement,
     )
 
@@ -147,8 +145,8 @@ def _no_babel_flash() -> Iterator[None]:
     the enforcement hook's translation + flash calls don't blow up. These are
     incidental to the redirect-target logic under test."""
     with (
-        patch("superset.security.password_change.flash"),
-        patch("superset.security.password_change.__", side_effect=lambda s: s),
+        patch("axbi.security.password_change.flash"),
+        patch("axbi.security.password_change.__", side_effect=lambda s: s),
     ):
         yield
 
@@ -158,11 +156,11 @@ def test_enforcement_redirects_to_reset_view(enforcement_app: Flask) -> None:
     # there (an exempt route) — no loop.
     with (
         patch(
-            "superset.security.password_change.password_change_required",
+            "axbi.security.password_change.password_change_required",
             return_value=True,
         ),
         patch(
-            "superset.security.password_change.url_for",
+            "axbi.security.password_change.url_for",
             return_value="/resetmypassword/form",
         ),
     ):
@@ -186,11 +184,11 @@ def test_enforcement_falls_back_to_exempt_logout_not_index(
 
     with (
         patch(
-            "superset.security.password_change.password_change_required",
+            "axbi.security.password_change.password_change_required",
             return_value=True,
         ),
         patch(
-            "superset.security.password_change.url_for",
+            "axbi.security.password_change.url_for",
             side_effect=fake_url_for,
         ),
     ):
@@ -209,11 +207,11 @@ def test_enforcement_no_resolvable_target_returns_error_not_loop(
     # rather than redirect, so the flagged user can never get stuck in a loop.
     with (
         patch(
-            "superset.security.password_change.password_change_required",
+            "axbi.security.password_change.password_change_required",
             return_value=True,
         ),
         patch(
-            "superset.security.password_change.url_for",
+            "axbi.security.password_change.url_for",
             side_effect=RuntimeError("no endpoints"),
         ),
     ):

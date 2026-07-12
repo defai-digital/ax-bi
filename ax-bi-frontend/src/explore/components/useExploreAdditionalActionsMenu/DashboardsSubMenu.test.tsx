@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render, screen } from 'spec/helpers/testing-library';
-import type { MenuItemType } from '@superset-ui/core/components';
+import type { MenuItemType } from '@ax-bi/ui-core/components';
 import { useDashboardsMenuItems } from './DashboardsSubMenu';
 import { SEARCH_THRESHOLD } from './index';
 

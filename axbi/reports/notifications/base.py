@@ -1,0 +1,92 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+from dataclasses import dataclass
+from typing import Any
+
+import pandas as pd
+
+from axbi.reports.models import ReportRecipients, ReportRecipientType
+from axbi.reports.notifications.exceptions import NotificationParamException
+from axbi.utils import json
+from axbi.utils.core import HeaderDataType
+
+
+@dataclass
+class NotificationContent:
+    name: str
+    header_data: HeaderDataType  # this is optional to account for error states
+    csv: bytes | None = None  # bytes for csv file
+    pdf: bytes | None = None  # bytes for PDF file
+    screenshots: list[bytes] | None = None  # bytes for a list of screenshots
+    text: str | None = None
+    description: str | None = ""
+    url: str | None = None  # url to chart/dashboard for this screenshot
+    embedded_data: pd.DataFrame | None = None
+
+
+class BaseNotification:  # pylint: disable=too-few-public-methods
+    """
+    Serves has base for all notifications and creates a simple plugin system
+    for extending future implementations.
+    Child implementations get automatically registered and should identify the
+    notification type
+    """
+
+    plugins: list[type["BaseNotification"]] = []
+    type: ReportRecipientType | None = None
+    """
+    Child classes set their notification type ex: `type = "email"` this string will be
+    used by ReportRecipients.type to map to the correct implementation
+    """
+
+    def __init_subclass__(cls, *args: Any, **kwargs: Any) -> None:
+        super().__init_subclass__(*args, **kwargs)
+        cls.plugins.append(cls)
+
+    def __init__(
+        self, recipient: ReportRecipients, content: NotificationContent
+    ) -> None:
+        self._recipient = recipient
+        self._content = content
+
+    def send(self) -> None:
+        raise NotImplementedError()
+
+
+def parse_recipient_config(
+    config_json: str | None, error_message: str
+) -> dict[str, Any]:
+    try:
+        config = json.loads(config_json or "{}")
+    except (TypeError, ValueError) as ex:
+        raise NotificationParamException(error_message) from ex
+    if not isinstance(config, dict):
+        raise NotificationParamException(error_message)
+    return config
+
+
+def get_recipient_config_target(
+    config_json: str | None,
+    error_message: str,
+    *,
+    allow_empty: bool = False,
+) -> str:
+    config = parse_recipient_config(config_json, error_message)
+    target = config.get("target")
+    if not isinstance(target, str) or (not target and not allow_empty):
+        raise NotificationParamException(error_message)
+    return target

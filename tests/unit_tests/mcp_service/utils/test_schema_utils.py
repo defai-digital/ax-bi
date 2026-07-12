@@ -22,7 +22,7 @@ Unit tests for MCP service schema utilities.
 import pytest
 from pydantic import BaseModel, ValidationError
 
-from superset.mcp_service.utils.schema_utils import (
+from axbi.mcp_service.utils.schema_utils import (
     ensure_search_and_filters_not_combined,
     JSONParseError,
     parse_filters,

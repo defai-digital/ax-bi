@@ -24,14 +24,14 @@ import {
   waitFor,
   within,
 } from 'spec/helpers/testing-library';
-import { isFeatureEnabled, FeatureFlag, CACHE_KEY } from '@superset-ui/core';
+import { isFeatureEnabled, FeatureFlag, CACHE_KEY } from '@ax-bi/ui-core';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
 import { CommandPaletteProvider } from 'src/components/CommandPalette';
 import RightMenu from './RightMenu';
 import { RightMenuProps } from './types';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -163,7 +163,7 @@ test('shows logout button when embedded but flag is disabled', async () => {
 test('shows logout button when not embedded even if flag is enabled', async () => {
   mockIsEmbedded.mockReturnValue(false);
   mockIsFeatureEnabled.mockImplementation(
-    (flag: FeatureFlag) => flag === FeatureFlag.DisableEmbeddedSupersetLogout,
+    (flag: FeatureFlag) => flag === FeatureFlag.DisableEmbeddedAxBILogout,
   );
   render(<RightMenu {...createProps()} />, {
     useRedux: true,
@@ -178,7 +178,7 @@ test('shows logout button when not embedded even if flag is enabled', async () =
 test('hides logout button when embedded and flag is enabled', async () => {
   mockIsEmbedded.mockReturnValue(true);
   mockIsFeatureEnabled.mockImplementation(
-    (flag: FeatureFlag) => flag === FeatureFlag.DisableEmbeddedSupersetLogout,
+    (flag: FeatureFlag) => flag === FeatureFlag.DisableEmbeddedAxBILogout,
   );
   render(<RightMenu {...createProps()} />, {
     useRedux: true,

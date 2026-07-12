@@ -1,9 +1,9 @@
 {
-  "name": "superset-cypress",
+  "name": "axbi-cypress",
   "version": "1.0.0",
-  "description": "run cypress against superset",
+  "description": "run cypress against axbi",
   "license": "Apache-2.0",
-  "author": "Apache",
+  "author": "DEFAI Private Limited",
   "scripts": {
     "cypress": "cypress",
     "cypress-debug": "cypress open --config watchForFileChanges=true",

@@ -9,8 +9,8 @@
   "include": ["src/**/*", "types/**/*"],
   "exclude": ["src/**/*.test.*", "src/**/*.stories.*"],
   "references": [
-    { "path": "../../packages/superset-core" },
-    { "path": "../../packages/superset-ui-core" },
-    { "path": "../../packages/superset-ui-chart-controls" }
+    { "path": "../../packages/ax-bi-core" },
+    { "path": "../../packages/ax-bi-ui-core" },
+    { "path": "../../packages/ax-bi-chart-controls" }
   ]
 }

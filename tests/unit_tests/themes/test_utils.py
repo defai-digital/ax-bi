@@ -20,8 +20,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from marshmallow import ValidationError
 
-from superset.themes.types import ThemeMode
-from superset.themes.utils import (
+from axbi.themes.types import ThemeMode
+from axbi.themes.utils import (
     _is_valid_algorithm,
     _is_valid_theme_mode,
     is_valid_theme,
@@ -140,7 +140,7 @@ def test_validate_font_urls_none_returns_empty_list():
     assert result == []
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_valid_google_fonts(mock_current_app, mock_app_config):
     """Test that valid Google Fonts URL passes validation."""
     mock_current_app.config = mock_app_config.config
@@ -152,7 +152,7 @@ def test_validate_font_urls_valid_google_fonts(mock_current_app, mock_app_config
     assert result[0] == urls[0]
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_valid_typekit(mock_current_app, mock_app_config):
     """Test that valid Adobe Fonts (Typekit) URL passes validation."""
     mock_current_app.config = mock_app_config.config
@@ -164,7 +164,7 @@ def test_validate_font_urls_valid_typekit(mock_current_app, mock_app_config):
     assert result[0] == urls[0]
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_multiple_valid_urls(mock_current_app, mock_app_config):
     """Test that multiple valid font URLs pass validation."""
     mock_current_app.config = mock_app_config.config
@@ -180,7 +180,7 @@ def test_validate_font_urls_multiple_valid_urls(mock_current_app, mock_app_confi
     assert result == urls
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_rejects_http(mock_current_app, mock_app_config):
     """Test that HTTP URLs are rejected (HTTPS required)."""
     mock_current_app.config = mock_app_config.config
@@ -189,7 +189,7 @@ def test_validate_font_urls_rejects_http(mock_current_app, mock_app_config):
         validate_font_urls(["http://fonts.googleapis.com/css2?family=Roboto"])
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_rejects_unlisted_domain(mock_current_app, mock_app_config):
     """Test that URLs from non-whitelisted domains are rejected."""
     mock_current_app.config = mock_app_config.config
@@ -198,7 +198,7 @@ def test_validate_font_urls_rejects_unlisted_domain(mock_current_app, mock_app_c
         validate_font_urls(["https://evil.com/malicious-font.css"])
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_rejects_javascript_scheme(
     mock_current_app, mock_app_config
 ):
@@ -209,7 +209,7 @@ def test_validate_font_urls_rejects_javascript_scheme(
         validate_font_urls(["javascript:alert('xss')"])
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_rejects_data_scheme(mock_current_app, mock_app_config):
     """Test that data: URLs are rejected."""
     mock_current_app.config = mock_app_config.config
@@ -218,7 +218,7 @@ def test_validate_font_urls_rejects_data_scheme(mock_current_app, mock_app_confi
         validate_font_urls(["data:text/css,body{color:red}"])
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_max_urls_enforced(mock_current_app):
     """Test that maximum URL count is enforced."""
     # Create a fresh config mock with max_urls set to 3
@@ -247,7 +247,7 @@ def test_validate_font_urls_rejects_non_string_elements():
         validate_font_urls([123, "https://fonts.googleapis.com/css"])
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_strips_whitespace(mock_current_app, mock_app_config):
     """Test that whitespace is stripped from URLs."""
     mock_current_app.config = mock_app_config.config
@@ -259,7 +259,7 @@ def test_validate_font_urls_strips_whitespace(mock_current_app, mock_app_config)
     assert result[0] == "https://fonts.googleapis.com/css2?family=Roboto"
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_empty_array_returns_empty(
     mock_current_app, mock_app_config
 ):
@@ -270,7 +270,7 @@ def test_validate_font_urls_empty_array_returns_empty(
     assert result == []
 
 
-@patch("superset.themes.utils.current_app")
+@patch("axbi.themes.utils.current_app")
 def test_validate_font_urls_case_insensitive_domain(mock_current_app, mock_app_config):
     """Test that domain matching is case-insensitive."""
     mock_current_app.config = mock_app_config.config

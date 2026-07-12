@@ -24,17 +24,17 @@ import yaml
 from freezegun import freeze_time
 from pytest_mock import MockerFixture
 
-from superset.extensions import feature_flag_manager
+from axbi.extensions import feature_flag_manager
 
 
 def test_export_assets_command(mocker: MockerFixture) -> None:
     """
     Test that all assets are exported correctly.
     """
-    from superset.commands.export.assets import ExportAssetsCommand
+    from axbi.commands.export.assets import ExportAssetsCommand
 
     ExportDatabasesCommand = mocker.patch(  # noqa: N806
-        "superset.commands.export.assets.ExportDatabasesCommand"
+        "axbi.commands.export.assets.ExportDatabasesCommand"
     )
     ExportDatabasesCommand.return_value.run.return_value = [
         (
@@ -48,7 +48,7 @@ def test_export_assets_command(mocker: MockerFixture) -> None:
         ("databases/example.yaml", lambda: "<DATABASE CONTENTS>"),
     ]
     ExportDatasetsCommand = mocker.patch(  # noqa: N806
-        "superset.commands.export.assets.ExportDatasetsCommand"
+        "axbi.commands.export.assets.ExportDatasetsCommand"
     )
     ExportDatasetsCommand.return_value.run.return_value = [
         (
@@ -62,7 +62,7 @@ def test_export_assets_command(mocker: MockerFixture) -> None:
         ("datasets/example/dataset.yaml", lambda: "<DATASET CONTENTS>"),
     ]
     ExportChartsCommand = mocker.patch(  # noqa: N806
-        "superset.commands.export.assets.ExportChartsCommand"
+        "axbi.commands.export.assets.ExportChartsCommand"
     )
     ExportChartsCommand.return_value.run.return_value = [
         (
@@ -74,7 +74,7 @@ def test_export_assets_command(mocker: MockerFixture) -> None:
         ("charts/pie.yaml", lambda: "<CHART CONTENTS>"),
     ]
     ExportDashboardsCommand = mocker.patch(  # noqa: N806
-        "superset.commands.export.assets.ExportDashboardsCommand"
+        "axbi.commands.export.assets.ExportDashboardsCommand"
     )
     ExportDashboardsCommand.return_value.run.return_value = [
         (
@@ -88,7 +88,7 @@ def test_export_assets_command(mocker: MockerFixture) -> None:
         ("dashboards/sales.yaml", lambda: "<DASHBOARD CONTENTS>"),
     ]
     ExportSavedQueriesCommand = mocker.patch(  # noqa: N806
-        "superset.commands.export.assets.ExportSavedQueriesCommand"
+        "axbi.commands.export.assets.ExportSavedQueriesCommand"
     )
     ExportSavedQueriesCommand.return_value.run.return_value = [
         (
@@ -103,7 +103,7 @@ def test_export_assets_command(mocker: MockerFixture) -> None:
     ]
 
     ExportTagsCommand = mocker.patch(  # noqa: N806
-        "superset.commands.export.assets.ExportTagsCommand.export"
+        "axbi.commands.export.assets.ExportTagsCommand.export"
     )
 
     ExportTagsCommand.return_value = [
@@ -129,7 +129,7 @@ def test_export_assets_command(mocker: MockerFixture) -> None:
 
 @pytest.fixture
 def mock_export_tags_command_charts_dashboards(mocker):
-    export_tags = mocker.patch("superset.commands.tag.export.ExportTagsCommand")
+    export_tags = mocker.patch("axbi.commands.tag.export.ExportTagsCommand")
 
     def _mock_export(dashboard_ids=None, chart_ids=None):
         if not feature_flag_manager.is_feature_enabled("TAGGING_SYSTEM"):
@@ -191,11 +191,11 @@ def test_export_tags_for_charts_filters_by_custom_tag_type(
     """
     Chart tag export should exclude implicit system tags regardless of tag name.
     """
-    from superset.commands.tag.export import ExportTagsCommand
-    from superset.tags.models import TagType
+    from axbi.commands.tag.export import ExportTagsCommand
+    from axbi.tags.models import TagType
 
     mocker.patch(
-        "superset.commands.tag.export.ChartDAO.find_by_id"
+        "axbi.commands.tag.export.ChartDAO.find_by_id"
     ).return_value = SimpleNamespace(
         tags=[
             SimpleNamespace(

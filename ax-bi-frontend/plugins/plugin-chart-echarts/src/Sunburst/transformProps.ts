@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   CategoricalColorNamespace,
   DataRecordValue,
@@ -29,7 +29,7 @@ import {
   NumberFormats,
   tooltipHtml,
   ValueFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import { NULL_STRING, OpacityEnum } from '../constants';

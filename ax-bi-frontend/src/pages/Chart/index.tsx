@@ -20,7 +20,7 @@ import { useHistory } from 'src/hooks/useAppHistory';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import type { Location, Action } from 'history';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   getLabelsColorMap,
   isDefined,
@@ -28,8 +28,8 @@ import {
   makeApi,
   LabelsColorMapSource,
   getClientErrorObject,
-} from '@superset-ui/core';
-import { Loading } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { Loading } from '@ax-bi/ui-core/components';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import { getUrlParam } from 'src/utils/urlUtils';
 import { URL_PARAMS } from 'src/constants';
@@ -194,8 +194,8 @@ export default function ExplorePage() {
           );
         })
         .catch(err => {
-          // Silently ignore aborted requests - AbortError may be wrapped in SupersetApiError by makeApi
-          // or come through with statusText === 'abort' from SupersetClient
+          // Silently ignore aborted requests - AbortError may be wrapped in AxBIApiError by makeApi
+          // or come through with statusText === 'abort' from AxBIClient
           if (
             err.name === 'AbortError' ||
             err.statusText === 'abort' ||
@@ -303,8 +303,7 @@ export default function ExplorePage() {
   useEffect(() => {
     const unlisten = history.listen((loc: Location, action: Action) => {
       const saveAction = (loc.state as Record<string, unknown>)?.saveAction as
-        | SaveActionType
-        | undefined;
+        SaveActionType | undefined;
       if (action === 'PUSH' || action === 'POP') {
         setIsLoaded(false);
         loadExploreData(loc, saveAction);

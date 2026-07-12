@@ -25,8 +25,8 @@ from uuid import uuid4
 import pytest
 import yaml
 
-from superset.commands.dashboard.exceptions import DashboardNotFoundError
-from superset.commands.dashboard.export_example import (
+from axbi.commands.dashboard.exceptions import DashboardNotFoundError
+from axbi.commands.dashboard.export_example import (
     _make_bytes_generator,
     _make_yaml_generator,
     export_chart,
@@ -36,10 +36,10 @@ from superset.commands.dashboard.export_example import (
     ExportExampleCommand,
     sanitize_filename,
 )
-from superset.common.db_query_status import QueryStatus
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
-from superset.utils import json as superset_json
+from axbi.common.db_query_status import QueryStatus
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
+from axbi.utils import json as axbi_json
 
 
 def test_sanitize_filename_basic():
@@ -107,7 +107,7 @@ def test_export_dashboard_yaml_ignores_malformed_nested_metadata():
     """Malformed nested metadata should not break example export."""
     mock_dashboard = MagicMock()
     mock_dashboard.position = "not-a-dict"
-    mock_dashboard.json_metadata = superset_json.dumps(
+    mock_dashboard.json_metadata = axbi_json.dumps(
         {
             "native_filter_configuration": [
                 "not-a-filter",
@@ -286,7 +286,7 @@ def test_export_chart():
 
 def test_export_example_command_not_found():
     """Test ExportExampleCommand raises error for non-existent dashboard."""
-    with patch("superset.commands.dashboard.export_example.DashboardDAO") as mock_dao:
+    with patch("axbi.commands.dashboard.export_example.DashboardDAO") as mock_dao:
         mock_dao.find_by_id.return_value = None
 
         command = ExportExampleCommand(dashboard_id=9999)
@@ -348,9 +348,9 @@ def test_export_example_command_single_dataset():
     mock_dashboard.slices = [mock_chart]
 
     with (
-        patch("superset.commands.dashboard.export_example.DashboardDAO") as mock_dao,
+        patch("axbi.commands.dashboard.export_example.DashboardDAO") as mock_dao,
         patch(
-            "superset.commands.dashboard.export_example.export_dataset_data"
+            "axbi.commands.dashboard.export_example.export_dataset_data"
         ) as mock_export_data,
     ):
         mock_dao.find_by_id.return_value = mock_dashboard
@@ -422,7 +422,7 @@ def test_export_example_command_no_data():
     mock_dashboard.json_metadata = "{}"
     mock_dashboard.slices = [mock_chart]
 
-    with patch("superset.commands.dashboard.export_example.DashboardDAO") as mock_dao:
+    with patch("axbi.commands.dashboard.export_example.DashboardDAO") as mock_dao:
         mock_dao.find_by_id.return_value = mock_dashboard
 
         command = ExportExampleCommand(dashboard_id=1, export_data=False)
@@ -453,8 +453,8 @@ def _make_data_export_dataset(rows: list[dict[str, Any]]) -> MagicMock:
 
 @pytest.fixture
 def patched_db() -> Iterator[MagicMock]:
-    """Patch ``superset.db`` so merge() returns the dataset unchanged."""
-    with patch("superset.db") as mock_db:
+    """Patch ``axbi.db`` so merge() returns the dataset unchanged."""
+    with patch("axbi.db") as mock_db:
         mock_db.session.merge.side_effect = lambda d: d
         yield mock_db
 
@@ -465,10 +465,10 @@ def test_export_dataset_data_skips_when_access_denied(patched_db: MagicMock) -> 
     underlying rows must never be fetched (no fallback raw read).
     """
     dataset = _make_data_export_dataset([{"uid": 1, "data": "secret"}])
-    dataset.raise_for_access.side_effect = SupersetSecurityException(
-        SupersetError(
+    dataset.raise_for_access.side_effect = AxBISecurityException(
+        AxBIError(
             message="denied",
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             level=ErrorLevel.ERROR,
         )
     )

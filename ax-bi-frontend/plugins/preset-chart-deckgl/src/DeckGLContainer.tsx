@@ -32,14 +32,14 @@ import { Map as MapLibreMap } from 'react-map-gl/maplibre';
 import { Map as MapboxMap } from 'react-map-gl/mapbox';
 import mapboxgl from 'mapbox-gl';
 import type { Layer } from '@deck.gl/core';
-import { JsonObject, JsonValue, usePrevious } from '@superset-ui/core';
+import { JsonObject, JsonValue, usePrevious } from '@ax-bi/ui-core';
 import {
   resolveMapStyle,
   type MapProvider,
   type ResolvedMapStyle,
-} from '@superset-ui/core/utils/mapStyles';
-import { styled, useTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core/utils/mapStyles';
+import { styled, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import DeckGLOverlayMapLibre from './components/DeckGLOverlayMapLibre';
 import DeckGLOverlayMapbox from './components/DeckGLOverlayMapbox';
 import Tooltip, { TooltipProps } from './components/Tooltip';

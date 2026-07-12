@@ -22,7 +22,7 @@ import {
   Filter,
   NativeFiltersState,
   NativeFilterType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export const nativeFilters: NativeFiltersState = {
   filters: {

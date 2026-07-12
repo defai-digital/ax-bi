@@ -22,7 +22,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from 'react';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   AdhocMetric,
   BinaryQueryObjectFilterClause,
@@ -39,8 +39,8 @@ import {
   isPhysicalColumn,
   normalizeCurrency,
   NumberFormatter,
-} from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import { aggregatorTemplates, PivotTable, sortAs } from './react-pivottable';
 import {
   FilterType,
@@ -219,7 +219,7 @@ const aggregatorsFactory = (formatter: NumberFormatter) => ({
 });
 
 /* If you change this logic, please update the corresponding Python
- * function (https://github.com/defai-digital/ax-bi/blob/main/superset/charts/post_processing.py),
+ * function (https://github.com/defai-digital/ax-bi/blob/main/axbi/charts/post_processing.py),
  * or reach out to @betodealmeida.
  */
 export default function PivotTableChart(props: PivotTableProps) {

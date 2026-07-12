@@ -17,12 +17,12 @@
  * under the License.
  */
 
-import { ErrorLevel, ErrorSource, ErrorTypeEnum } from '@superset-ui/core';
+import { ErrorLevel, ErrorSource, ErrorTypeEnum } from '@ax-bi/ui-core';
 import { render, screen } from 'spec/helpers/testing-library';
 import { DatasetNotFoundErrorMessage } from './DatasetNotFoundErrorMessage';
 
 jest.mock(
-  '@superset-ui/core/components/Icons/AsyncIcon',
+  '@ax-bi/ui-core/components/Icons/AsyncIcon',
   () =>
     ({ fileName }: { fileName: string }) => (
       <span role="img" aria-label={fileName.replace('_', '-')} />

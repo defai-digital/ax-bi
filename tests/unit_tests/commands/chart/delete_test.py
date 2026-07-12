@@ -17,16 +17,16 @@
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.commands.chart.delete import DeleteChartCommand
-from superset.commands.chart.exceptions import ChartForbiddenError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
+from axbi.commands.chart.delete import DeleteChartCommand
+from axbi.commands.chart.exceptions import ChartForbiddenError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
 
 
-def _ownership_exc() -> SupersetSecurityException:
-    return SupersetSecurityException(
-        SupersetError(
-            error_type=SupersetErrorType.MISSING_OWNERSHIP_ERROR,
+def _ownership_exc() -> AxBISecurityException:
+    return AxBISecurityException(
+        AxBIError(
+            error_type=AxBIErrorType.MISSING_OWNERSHIP_ERROR,
             message="User does not own this chart",
             level=ErrorLevel.ERROR,
         )
@@ -39,14 +39,14 @@ def test_delete_chart_checks_ownership_before_reports(
     """Unauthorized deletes should not expose associated report details."""
     chart = mocker.MagicMock(id=1)
     find_by_ids = mocker.patch(
-        "superset.commands.chart.delete.ChartDAO.find_by_ids",
+        "axbi.commands.chart.delete.ChartDAO.find_by_ids",
         return_value=[chart],
     )
     find_reports = mocker.patch(
-        "superset.commands.chart.delete.ReportScheduleDAO.find_by_chart_ids"
+        "axbi.commands.chart.delete.ReportScheduleDAO.find_by_chart_ids"
     )
     raise_for_ownership = mocker.patch(
-        "superset.commands.chart.delete.security_manager.raise_for_ownership",
+        "axbi.commands.chart.delete.security_manager.raise_for_ownership",
         side_effect=_ownership_exc(),
     )
 

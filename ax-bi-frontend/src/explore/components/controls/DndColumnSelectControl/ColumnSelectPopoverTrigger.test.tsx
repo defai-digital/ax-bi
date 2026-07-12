@@ -25,8 +25,8 @@ import {
   screen,
   userEvent,
 } from 'spec/helpers/testing-library';
-import { AdhocColumn } from '@superset-ui/core';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { AdhocColumn } from '@ax-bi/ui-core';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import ColumnSelectPopoverTriggerWrapper from './ColumnSelectPopoverTrigger';
 
 const createStore = (datasource = {}) =>

@@ -17,9 +17,9 @@
  * under the License.
  */
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@superset-ui/core/spec';
-import { QueryMode, TimeGranularity, SMART_DATE_ID } from '@superset-ui/core';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { render, screen, waitFor } from '@ax-bi/ui-core/spec';
+import { QueryMode, TimeGranularity, SMART_DATE_ID } from '@ax-bi/ui-core';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import AgGridTableChart from '../src/AgGridTableChart';
 import transformProps from '../src/transformProps';
 import { ProviderWrapper } from '../../plugin-chart-table/test/testHelpers';

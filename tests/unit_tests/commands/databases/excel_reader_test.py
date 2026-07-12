@@ -24,8 +24,8 @@ import xlsxwriter
 from werkzeug.datastructures import FileStorage
 from xlsxwriter.workbook import Worksheet
 
-from superset.commands.database.exceptions import DatabaseUploadFailed
-from superset.commands.database.uploaders.excel_reader import (
+from axbi.commands.database.exceptions import DatabaseUploadFailed
+from axbi.commands.database.uploaders.excel_reader import (
     ExcelReader,
     ExcelReaderOptions,
 )

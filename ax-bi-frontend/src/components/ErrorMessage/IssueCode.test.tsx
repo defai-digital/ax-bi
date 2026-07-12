@@ -40,6 +40,6 @@ test('should render the link', () => {
   const link = screen.getByRole('link');
   expect(link).toHaveAttribute(
     'href',
-    `https://superset.apache.org/docs/using-superset/issue-codes#issue-${mockedProps.code}`,
+    `https://github.com/defai-digital/ax-bi/docs/using-axbi/issue-codes#issue-${mockedProps.code}`,
   );
 });

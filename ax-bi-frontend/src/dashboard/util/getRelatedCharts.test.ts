@@ -21,7 +21,7 @@ import {
   AppliedCrossFilterType,
   Filter,
   NativeFilterType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { getRelatedCharts } from './getRelatedCharts';
 
 const slices = {

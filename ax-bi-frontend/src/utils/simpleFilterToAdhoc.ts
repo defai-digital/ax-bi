@@ -21,7 +21,7 @@ import {
   isAdhocColumn,
   QueryObjectFilterClause,
   SimpleAdhocFilter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   Clauses,
   ExpressionTypes,

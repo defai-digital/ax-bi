@@ -20,7 +20,7 @@ import {
   NO_TIME_RANGE,
   JsonObject,
   customTimeRangeDecode,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { useSelector } from 'react-redux';
 import {
   COMMON_RANGE_VALUES_SET,

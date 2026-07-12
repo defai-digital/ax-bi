@@ -19,15 +19,15 @@
 
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useTheme, SupersetTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Tooltip } from '@superset-ui/core/components';
+import { useTheme, AxBITheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import type { RootState } from 'src/views/store';
 import { TaskStatus } from './types';
 import { formatProgressTooltip } from './timeUtils';
 
-function getStatusColor(status: TaskStatus, theme: SupersetTheme): string {
+function getStatusColor(status: TaskStatus, theme: AxBITheme): string {
   switch (status) {
     case TaskStatus.Pending:
       return theme.colorPrimaryText;

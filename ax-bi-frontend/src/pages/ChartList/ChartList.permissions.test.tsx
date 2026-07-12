@@ -23,15 +23,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
-import { isFeatureEnabled } from '@superset-ui/core';
+import { isFeatureEnabled } from '@ax-bi/ui-core';
 import ChartList from 'src/pages/ChartList';
 import { API_ENDPOINTS, mockCharts, setupMocks } from './ChartList.testHelpers';
 
 // Increase default timeout for all tests
 jest.setTimeout(30000);
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -58,7 +58,7 @@ const createMockUser = (overrides = {}) => ({
   lastName: 'User',
   roles: {
     Admin: [
-      ['can_sqllab', 'Superset'],
+      ['can_sqllab', 'AxBI'],
       ['can_write', 'Dashboard'],
       ['can_write', 'Chart'],
     ],
@@ -93,7 +93,7 @@ const createStoreStateWithPermissions = (
     : {},
   common: {
     conf: {
-      SUPERSET_WEBSERVER_TIMEOUT: 60000,
+      AXBI_WEBSERVER_TIMEOUT: 60000,
     },
   },
   charts: {

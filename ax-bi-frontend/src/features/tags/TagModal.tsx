@@ -27,10 +27,10 @@ import {
   FormLabel,
   Input,
   Modal,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { styled, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import { Tag } from 'src/views/CRUD/types';
 import { fetchObjectsByTagIds } from 'src/features/tags/tags';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
@@ -161,7 +161,7 @@ const TagModal: FC<TagModalProps> = ({
       order_column: orderColumn,
     });
 
-    const { json } = await SupersetClient.get({
+    const { json } = await AxBIClient.get({
       endpoint: `/api/v1/${endpoint}/?q=${queryParams}`,
     });
     const { result, count } = json;
@@ -230,7 +230,7 @@ const TagModal: FC<TagModalProps> = ({
     const savedQueries = savedQueriesToTag.map(q => ['query', q.value]);
 
     if (isEditMode) {
-      SupersetClient.put({
+      AxBIClient.put({
         endpoint: `/api/v1/tag/${editTag.id}`,
         jsonPayload: {
           description,
@@ -248,7 +248,7 @@ const TagModal: FC<TagModalProps> = ({
           addDangerToast(err.message || 'Error Updating Tag');
         });
     } else {
-      SupersetClient.post({
+      AxBIClient.post({
         endpoint: `/api/v1/tag/`,
         jsonPayload: {
           description,

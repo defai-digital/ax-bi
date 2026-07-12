@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient, ClientConfig } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+import { AxBIClient, ClientConfig } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import parseCookie from 'src/utils/parseCookie';
 import getBootstrapData from 'src/utils/getBootstrapData';
 
@@ -37,10 +37,9 @@ function getDefaultConfiguration(): ClientConfig {
 
   // Create exponential backoff delay function with jitter
   const createRetryDelayFunction = () => {
-    const baseDelay = retryConfig.SUPERSET_CLIENT_RETRY_DELAY || 1000;
-    const multiplier =
-      retryConfig.SUPERSET_CLIENT_RETRY_BACKOFF_MULTIPLIER || 2;
-    const maxDelay = retryConfig.SUPERSET_CLIENT_RETRY_MAX_DELAY || 10000;
+    const baseDelay = retryConfig.AXBI_CLIENT_RETRY_DELAY || 1000;
+    const multiplier = retryConfig.AXBI_CLIENT_RETRY_BACKOFF_MULTIPLIER || 2;
+    const maxDelay = retryConfig.AXBI_CLIENT_RETRY_MAX_DELAY || 10000;
 
     return (attempt: number) => {
       // Calculate exponential backoff: baseDelay * Math.pow(multiplier, attempt)
@@ -58,9 +57,9 @@ function getDefaultConfiguration(): ClientConfig {
   };
 
   const fetchRetryOptions = {
-    retries: retryConfig.SUPERSET_CLIENT_RETRY_ATTEMPTS || 3,
+    retries: retryConfig.AXBI_CLIENT_RETRY_ATTEMPTS || 3,
     retryDelay: createRetryDelayFunction(),
-    retryOn: retryConfig.SUPERSET_CLIENT_RETRY_STATUS_CODES || [502, 503, 504],
+    retryOn: retryConfig.AXBI_CLIENT_RETRY_STATUS_CODES || [502, 503, 504],
   };
 
   return {
@@ -74,12 +73,12 @@ function getDefaultConfiguration(): ClientConfig {
 }
 
 export default function setupClient(customConfig: Partial<ClientConfig> = {}) {
-  SupersetClient.configure({
+  AxBIClient.configure({
     ...getDefaultConfiguration(),
     ...customConfig,
   })
     .init()
     .catch(error => {
-      logging.warn('Error initializing SupersetClient', error);
+      logging.warn('Error initializing AxBIClient', error);
     });
 }

@@ -29,8 +29,8 @@ import {
   TimeseriesAnnotationLayer,
   TimeseriesDataRecord,
   ValueFormatter,
-} from '@superset-ui/core';
-import { SupersetTheme, isThemeDark } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { AxBITheme, isThemeDark } from '@ax-bi/core/theme';
 import type {
   CallbackDataParams,
   DefaultStatesMixin,
@@ -226,7 +226,7 @@ export function transformSeries(
     queryIndex?: number;
     timeCompare?: string[];
     timeShiftColor?: boolean;
-    theme?: SupersetTheme;
+    theme?: AxBITheme;
     hasDimensions?: boolean;
     colorByPrimaryAxis?: boolean;
   },
@@ -497,7 +497,7 @@ export function transformIntervalAnnotation(
   data: TimeseriesDataRecord[],
   annotationData: AnnotationData,
   colorScale: CategoricalColorScale,
-  theme: SupersetTheme,
+  theme: AxBITheme,
   sliceId?: number,
   orientation?: OrientationType,
 ): SeriesOption[] {
@@ -523,8 +523,7 @@ export function transformIntervalAnnotation(
   });
 
   const allIntervalData: (
-    | MarkArea1DDataItemOption
-    | MarkArea2DDataItemOption
+    MarkArea1DDataItemOption | MarkArea2DDataItemOption
   )[] = annotations.map(annotation => {
     const { intervalEnd, time = '' } = annotation;
     const combinedLabel = (intervalsByStartTime.get(time) || []).join('\n');
@@ -590,7 +589,7 @@ export function transformEventAnnotation(
   data: TimeseriesDataRecord[],
   annotationData: AnnotationData,
   colorScale: CategoricalColorScale,
-  theme: SupersetTheme,
+  theme: AxBITheme,
   sliceId?: number,
   orientation?: OrientationType,
 ): SeriesOption[] {

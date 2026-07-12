@@ -22,7 +22,7 @@ import {
   userEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { createMemoryHistory } from 'history';
 import { unstable_HistoryRouter as HistoryRouter } from 'react-router-dom';
 import { configureStore } from '@reduxjs/toolkit';
@@ -118,7 +118,7 @@ const store = configureStore({
 });
 
 beforeEach(() => {
-  jest.spyOn(SupersetClient, 'get').mockImplementation(() =>
+  jest.spyOn(AxBIClient, 'get').mockImplementation(() =>
     Promise.resolve({
       json: {
         result: mockDashboards[0],

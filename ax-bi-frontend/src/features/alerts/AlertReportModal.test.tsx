@@ -33,8 +33,8 @@ import AlertReportModal, { AlertReportModalProps } from './AlertReportModal';
 import * as navigationUtils from 'src/utils/navigationUtils';
 import { AlertObject, NotificationMethodOption } from './types';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: () => true,
 }));
 
@@ -77,7 +77,7 @@ const generateMockPayload = (dashboard = true) => {
     name: 'Test Alert',
     owners: [
       {
-        first_name: 'Superset',
+        first_name: 'AxBI',
         id: 1,
         last_name: 'Admin',
       },
@@ -344,7 +344,7 @@ const validAlert: AlertObject = {
   name: 'Test Alert',
   owners: [
     {
-      first_name: 'Superset',
+      first_name: 'AxBI',
       id: 1,
       last_name: 'Admin',
     },

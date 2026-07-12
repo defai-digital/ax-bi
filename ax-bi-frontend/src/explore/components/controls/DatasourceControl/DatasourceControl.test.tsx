@@ -20,7 +20,7 @@
 import type React from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import fetchMock from 'fetch-mock';
-import { DatasourceType, JsonObject, SupersetClient } from '@superset-ui/core';
+import { DatasourceType, JsonObject, AxBIClient } from '@ax-bi/ui-core';
 import {
   render,
   screen,
@@ -252,7 +252,7 @@ test('Should show SQL Lab for sql_lab role', async () => {
 test('Click on Swap dataset option', async () => {
   const props = createProps();
   jest
-    .spyOn(SupersetClient, 'get')
+    .spyOn(AxBIClient, 'get')
     .mockImplementation(async ({ endpoint }: { endpoint: string }) => {
       if (endpoint.includes('_info')) {
         return {
@@ -318,9 +318,7 @@ test('Click on View in SQL Lab', async () => {
     const location = useLocation();
 
     return (
-      <div data-test="mock-sqllab-route">
-        {JSON.stringify(location.state)}
-      </div>
+      <div data-test="mock-sqllab-route">{JSON.stringify(location.state)}</div>
     );
   };
 

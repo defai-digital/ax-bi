@@ -19,7 +19,7 @@
 
 import logging
 
-from superset.mcp_service.utils.error_sanitization import _sanitize_validation_error
+from axbi.mcp_service.utils.error_sanitization import _sanitize_validation_error
 
 
 def test_sanitize_redacts_table_name():
@@ -35,7 +35,7 @@ def test_sanitize_logs_original_by_default(caplog):
     error = ValueError("Invalid reference to table secret_revenue in query")
 
     with caplog.at_level(
-        logging.INFO, logger="superset.mcp_service.utils.error_sanitization"
+        logging.INFO, logger="axbi.mcp_service.utils.error_sanitization"
     ):
         result = _sanitize_validation_error(error)
 
@@ -54,7 +54,7 @@ def test_sanitize_can_suppress_original_log(caplog):
     error = ValueError("Invalid reference to table secret_revenue in query")
 
     with caplog.at_level(
-        logging.INFO, logger="superset.mcp_service.utils.error_sanitization"
+        logging.INFO, logger="axbi.mcp_service.utils.error_sanitization"
     ):
         _sanitize_validation_error(error, log_original=False)
 

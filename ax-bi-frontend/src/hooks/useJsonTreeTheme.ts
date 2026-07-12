@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useTheme } from '@apache-superset/core/theme';
+import { useTheme } from '@ax-bi/core/theme';
 
 export const useJsonTreeTheme = () => {
   const theme = useTheme();

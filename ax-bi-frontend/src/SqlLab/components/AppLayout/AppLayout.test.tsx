@@ -52,8 +52,8 @@ jest.mock('src/components/Splitter', () => {
   );
   return { Splitter };
 });
-jest.mock('@superset-ui/core/components/Grid', () => ({
-  ...jest.requireActual('@superset-ui/core/components/Grid'),
+jest.mock('@ax-bi/ui-core/components/Grid', () => ({
+  ...jest.requireActual('@ax-bi/ui-core/components/Grid'),
   useBreakpoint: jest.fn().mockReturnValue(true),
 }));
 

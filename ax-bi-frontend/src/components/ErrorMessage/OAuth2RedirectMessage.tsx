@@ -25,8 +25,8 @@ import { RootState } from 'src/dashboard/types';
 import { reRunQuery } from 'src/SqlLab/actions/sqlLab';
 import { triggerQuery } from 'src/components/Chart/chartAction';
 import { onRefresh } from 'src/dashboard/actions/dashboardState';
-import { t } from '@apache-superset/core/translation';
-import { QueryResponse } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { QueryResponse } from '@ax-bi/ui-core';
 
 import type { ErrorMessageComponentProps } from './types';
 import { ErrorAlert } from './ErrorAlert';
@@ -49,8 +49,8 @@ interface OAuth2RedirectExtra {
  *
  * The component has a URL that is used to start the OAuth2 dance for the given
  * database. When the user clicks the link a new browser tab will open, where they can
- * authorize Superset to access the data. Once authorization is successful the user will
- * be redirected back to Superset, and their personal access token is stored, so it can
+ * authorize AxBI to access the data. Once authorization is successful the user will
+ * be redirected back to AxBI, and their personal access token is stored, so it can
  * be used in subsequent connections. If a refresh token is also present in the response,
  * it will also be stored.
  *

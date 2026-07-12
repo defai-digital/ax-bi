@@ -19,7 +19,7 @@
 
 // Run this from the ax-bi-frontend directory with
 // `node ../scripts/generate_frontend_ts_tasklist.js `, then copy and paste the output into
-// https://github.com/apache/superset/discussions/26076
+// https://github.com/defai-digital/ax-bi/discussions/26076
 const { readdirSync, readFileSync } = require("fs");
 const process = require("process");
 

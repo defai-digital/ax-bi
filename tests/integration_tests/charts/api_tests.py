@@ -28,19 +28,19 @@ from parameterized import parameterized
 from sqlalchemy import and_
 from sqlalchemy.sql import func
 
-from superset.commands.chart.data.get_data_command import ChartDataCommand
-from superset.commands.chart.exceptions import ChartDataQueryFailedError
-from superset.connectors.sqla.models import SqlaTable
-from superset.extensions import cache_manager, db, security_manager
-from superset.models.core import Database, FavStar, FavStarClassName
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.reports.models import ReportSchedule, ReportScheduleType
-from superset.tags.models import ObjectType, Tag, TaggedObject, TagType
-from superset.utils import json
-from superset.utils.core import get_example_default_schema
+from axbi.commands.chart.data.get_data_command import ChartDataCommand
+from axbi.commands.chart.exceptions import ChartDataQueryFailedError
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.extensions import cache_manager, db, security_manager
+from axbi.models.core import Database, FavStar, FavStarClassName
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.reports.models import ReportSchedule, ReportScheduleType
+from axbi.tags.models import ObjectType, Tag, TaggedObject, TagType
+from axbi.utils import json
+from axbi.utils.core import get_example_default_schema
 from tests.integration_tests.base_api_tests import ApiOwnersTestCaseMixin
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import (
     ADMIN_USERNAME,
     ALPHA_USERNAME,
@@ -78,7 +78,7 @@ from tests.integration_tests.utils.get_dashboards import get_dashboards_ids
 CHARTS_FIXTURE_COUNT = 10
 
 
-class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
+class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, AxBITestCase):
     resource_name = "chart"
 
     @pytest.fixture(autouse=True)
@@ -466,10 +466,10 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         Chart API: Test delete try not owned
         """
         user_alpha1 = self.create_user(
-            "alpha1", "password", "Alpha", email="alpha1@superset.org"
+            "alpha1", "password", "Alpha", email="alpha1@axbi.org"
         )
         user_alpha2 = self.create_user(
-            "alpha2", "password", "Alpha", email="alpha2@superset.org"
+            "alpha2", "password", "Alpha", email="alpha2@axbi.org"
         )
         chart = self.insert_chart("title", [user_alpha1.id], 1)
         self.login(username="alpha2", password="password")  # noqa: S106
@@ -486,10 +486,10 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         Chart API: Test delete bulk try not owned
         """
         user_alpha1 = self.create_user(
-            "alpha1", "password", "Alpha", email="alpha1@superset.org"
+            "alpha1", "password", "Alpha", email="alpha1@axbi.org"
         )
         user_alpha2 = self.create_user(
-            "alpha2", "password", "Alpha", email="alpha2@superset.org"
+            "alpha2", "password", "Alpha", email="alpha2@axbi.org"
         )
 
         chart_count = 4
@@ -679,7 +679,7 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
 
         admin = self.get_user("admin")
         gamma = self.get_user("gamma")
-        birth_names_table_id = SupersetTestCase.get_table(name="birth_names").id
+        birth_names_table_id = AxBITestCase.get_table(name="birth_names").id
         chart_id = self.insert_chart(
             "title", [admin.id], birth_names_table_id, admin
         ).id
@@ -726,7 +726,7 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         Chart API: Tests that no username is returned
         """
         admin = self.get_user("admin")
-        birth_names_table_id = SupersetTestCase.get_table(name="birth_names").id
+        birth_names_table_id = AxBITestCase.get_table(name="birth_names").id
         chart_id = self.insert_chart("title", [admin.id], birth_names_table_id).id
         chart_data = {
             "slice_name": (new_name := "title1_changed"),
@@ -755,7 +755,7 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         Chart API: Tests that no username is returned
         """
         admin = self.get_user("admin")
-        birth_names_table_id = SupersetTestCase.get_table(name="birth_names").id
+        birth_names_table_id = AxBITestCase.get_table(name="birth_names").id
         chart_id = self.insert_chart("title", [admin.id], birth_names_table_id).id
         chart_data = {
             "slice_name": (new_name := "title1_changed"),
@@ -899,10 +899,10 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         Chart API: Test update not owned
         """
         user_alpha1 = self.create_user(
-            "alpha1", "password", "Alpha", email="alpha1@superset.org"
+            "alpha1", "password", "Alpha", email="alpha1@axbi.org"
         )
         user_alpha2 = self.create_user(
-            "alpha2", "password", "Alpha", email="alpha2@superset.org"
+            "alpha2", "password", "Alpha", email="alpha2@axbi.org"
         )
         chart = self.insert_chart("title", [user_alpha1.id], 1)
 
@@ -921,10 +921,10 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         Chart API: Test update chart which is linked to not owned dashboard
         """
         user_alpha1 = self.create_user(
-            "alpha1", "password", "Alpha", email="alpha1@superset.org"
+            "alpha1", "password", "Alpha", email="alpha1@axbi.org"
         )
         user_alpha2 = self.create_user(
-            "alpha2", "password", "Alpha", email="alpha2@superset.org"
+            "alpha2", "password", "Alpha", email="alpha2@axbi.org"
         )
         chart = self.insert_chart("title", [user_alpha1.id], 1)
 
@@ -1897,7 +1897,7 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
 
         assert rv.status_code == 404
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_chart(self, mock_add_permissions):
         """
         Chart API: Test import chart
@@ -1935,7 +1935,7 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_chart_overwrite(self, mock_add_permissions):
         """
         Chart API: Test import existing chart
@@ -1999,7 +1999,7 @@ class TestChartApi(ApiOwnersTestCaseMixin, InsertChartMixin, SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_chart_invalid(self, mock_add_permissions):
         """
         Chart API: Test import invalid chart

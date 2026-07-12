@@ -25,8 +25,8 @@ from unittest.mock import patch
 
 from pydantic import BaseModel
 
-from superset.mcp_service.utils import token_utils
-from superset.mcp_service.utils.token_utils import (
+from axbi.mcp_service.utils import token_utils
+from axbi.mcp_service.utils.token_utils import (
     _replace_collections_with_summaries,
     _summarize_large_dicts,
     _truncate_lists,

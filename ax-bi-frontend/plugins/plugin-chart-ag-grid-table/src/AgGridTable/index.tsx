@@ -29,7 +29,7 @@ import {
   type RefObject,
 } from 'react';
 
-import { Constants, ThemedAgGridReact } from '@superset-ui/core/components';
+import { Constants, ThemedAgGridReact } from '@ax-bi/ui-core/components';
 import {
   AgGridReact,
   AllCommunityModule,
@@ -41,14 +41,14 @@ import {
   GridState,
   CellClickedEvent,
   SelectionChangedEvent,
-} from '@superset-ui/core/components/ThemedAgGridReact';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core/components/ThemedAgGridReact';
+import { t } from '@ax-bi/core/translation';
 import {
   AgGridChartState,
   DataRecordValue,
   DataRecord,
   JsonObject,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { SearchOutlined } from '@ant-design/icons';
 import { debounce, isEqual } from 'lodash';
 import Pagination from './components/Pagination';

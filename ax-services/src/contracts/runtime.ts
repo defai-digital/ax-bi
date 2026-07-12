@@ -96,7 +96,7 @@ export interface ReadinessResponseContract {
   service: 'ax-services';
   status: 'ready' | 'not_ready';
   dependencies: {
-    superset: DependencyHealthContract;
+    axbi: DependencyHealthContract;
   };
 }
 
@@ -126,7 +126,7 @@ export interface MetadataResponseContract {
   service: 'ax-services';
   status: 'ok' | 'not_ready';
   dependencies: {
-    supersetMetadata: DependencyMetadataContract;
+    axbiMetadata: DependencyMetadataContract;
   };
 }
 
@@ -214,10 +214,10 @@ export const readinessResponseSchema = {
     status: { enum: ['ready', 'not_ready'] },
     dependencies: {
       type: 'object',
-      required: ['superset'],
+      required: ['axbi'],
       additionalProperties: false,
       properties: {
-        superset: dependencyHealthSchema,
+        axbi: dependencyHealthSchema,
       },
     },
   },
@@ -268,10 +268,10 @@ export const metadataResponseSchema = {
     status: { enum: ['ok', 'not_ready'] },
     dependencies: {
       type: 'object',
-      required: ['supersetMetadata'],
+      required: ['axbiMetadata'],
       additionalProperties: false,
       properties: {
-        supersetMetadata: dependencyMetadataSchema,
+        axbiMetadata: dependencyMetadataSchema,
       },
     },
   },

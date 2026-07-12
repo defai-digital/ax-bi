@@ -27,9 +27,9 @@ import {
   Icons,
   Popover,
   Typography,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { styled, css } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled, css } from '@ax-bi/core/theme';
 import type { SchemaOption, CatalogOption } from 'src/hooks/apiResources';
 import { DatabaseSelector, type DatabaseObject } from 'src/components';
 import { EMPTY_STATE_QE_ID } from 'src/SqlLab/hooks/useQueryEditor';

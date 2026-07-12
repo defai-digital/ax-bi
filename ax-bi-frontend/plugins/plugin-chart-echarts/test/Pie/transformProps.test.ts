@@ -16,12 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  ChartProps,
-  getNumberFormatter,
-  SqlaFormData,
-} from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps, getNumberFormatter, SqlaFormData } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import type { PieSeriesOption } from 'echarts/charts';
 import type {
   LabelFormatterCallback,
@@ -57,7 +53,7 @@ describe('Pie transformProps', () => {
         ],
       },
     ],
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
 
   test('should transform chart props for viz', () => {
@@ -87,7 +83,7 @@ describe('Pie transformProps', () => {
   });
 
   test('renders every slice when a NULL group value is mixed with named ones', () => {
-    // Regression guard for https://github.com/apache/superset/issues/33174:
+    // Regression guard for https://github.com/defai-digital/ax-bi/issues/33174:
     // a Pie chart whose groupby dimension contains a NULL/empty value alongside
     // named values reportedly dropped the named slices (or rendered only the
     // NULL one). This asserts the transform keeps one slice per row, mapping the
@@ -112,7 +108,7 @@ describe('Pie transformProps', () => {
           ],
         },
       ],
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const series = (
@@ -162,7 +158,7 @@ describe('Pie transformProps', () => {
           ],
         },
       ],
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
     const transformed = transformProps(
@@ -241,7 +237,7 @@ describe('Pie label string template', () => {
           ],
         },
       ],
-      theme: supersetTheme,
+      theme: axbiTheme,
     }) as EchartsPieChartProps;
   };
 
@@ -342,7 +338,7 @@ describe('Total value positioning with legends', () => {
           ],
         },
       ],
-      theme: supersetTheme,
+      theme: axbiTheme,
     }) as EchartsPieChartProps;
   };
 
@@ -515,7 +511,7 @@ describe('Other category', () => {
           ],
         },
       ],
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
   test('generates Other category', () => {
@@ -586,7 +582,7 @@ describe('legend sorting', () => {
           ],
         },
       ],
-      theme: supersetTheme,
+      theme: axbiTheme,
     });
 
   test('sort legend by data', () => {

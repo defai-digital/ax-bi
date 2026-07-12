@@ -23,5 +23,5 @@ import { CopyButton } from '.';
 test('Render a button', () => {
   render(<CopyButton>btn</CopyButton>);
   expect(screen.getByRole('button')).toBeInTheDocument();
-  expect(screen.getByRole('button')).toHaveClass('superset-button');
+  expect(screen.getByRole('button')).toHaveClass('axbi-button');
 });

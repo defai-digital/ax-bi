@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   CategoricalColorNamespace,
   getColumnLabel,
@@ -28,7 +28,7 @@ import {
   getValueFormatter,
   tooltipHtml,
   DataRecord,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { PieSeriesOption } from 'echarts/charts';

@@ -21,16 +21,11 @@ import { useMemo, FC } from 'react';
 import { bindActionCreators } from 'redux';
 import { useSelector, shallowEqual } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { MenuDotsDropdown } from '@superset-ui/core/components';
-import { Menu, MenuItemType } from '@superset-ui/core/components/Menu';
-import { t } from '@apache-superset/core/translation';
-import { QueryState } from '@superset-ui/core';
-import {
-  styled,
-  css,
-  SupersetTheme,
-  useTheme,
-} from '@apache-superset/core/theme';
+import { MenuDotsDropdown } from '@ax-bi/ui-core/components';
+import { Menu, MenuItemType } from '@ax-bi/ui-core/components/Menu';
+import { t } from '@ax-bi/core/translation';
+import { QueryState } from '@ax-bi/ui-core';
+import { styled, css, AxBITheme, useTheme } from '@ax-bi/core/theme';
 import {
   removeQueryEditor,
   removeAllOtherQueryEditors,
@@ -39,7 +34,7 @@ import {
   toggleLeftBar,
 } from 'src/SqlLab/actions/sqlLab';
 import { QueryEditor, SqlLabRootState } from 'src/SqlLab/types';
-import { Icons, type IconType } from '@superset-ui/core/components/Icons';
+import { Icons, type IconType } from '@ax-bi/ui-core/components/Icons';
 
 const TabTitleWrapper = styled.div`
   display: flex;
@@ -115,7 +110,7 @@ const SqlEditorTabHeader: FC<Props> = ({ queryEditor }) => {
       actions.queryEditorSetTitle(qe, newTitle, qe.id);
     }
   }
-  const getStatusColor = (state: QueryState, theme: SupersetTheme): string => {
+  const getStatusColor = (state: QueryState, theme: AxBITheme): string => {
     const statusColors: Record<QueryState, string> = {
       [QueryState.Running]: theme.colorInfo,
       [QueryState.Success]: theme.colorSuccess,

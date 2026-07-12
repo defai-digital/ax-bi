@@ -20,7 +20,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from flask import Flask
 
-from superset.datasource.api import DatasourceRestApi
+from axbi.datasource.api import DatasourceRestApi
 
 
 def test_parse_validation_request_rejects_non_object_body() -> None:
@@ -33,8 +33,8 @@ def test_parse_validation_request_rejects_non_object_body() -> None:
             api._parse_validation_request()
 
 
-@patch("superset.datasource.api.cache_manager")
-@patch("superset.datasource.api.DatasourceDAO")
+@patch("axbi.datasource.api.cache_manager")
+@patch("axbi.datasource.api.DatasourceDAO")
 def test_compatible_ignores_malformed_selection_body(
     mock_dao: MagicMock,
     mock_cache_manager: MagicMock,

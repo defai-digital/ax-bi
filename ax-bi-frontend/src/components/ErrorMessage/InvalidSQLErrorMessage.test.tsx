@@ -17,7 +17,7 @@
  */
 
 import { render, cleanup } from 'spec/helpers/testing-library';
-import { ErrorLevel, ErrorSource, ErrorTypeEnum } from '@superset-ui/core';
+import { ErrorLevel, ErrorSource, ErrorTypeEnum } from '@ax-bi/ui-core';
 import { InvalidSQLErrorMessage } from './InvalidSQLErrorMessage';
 
 const defaultProps = {

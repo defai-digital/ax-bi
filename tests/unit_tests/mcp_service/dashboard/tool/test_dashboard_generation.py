@@ -27,27 +27,27 @@ from unittest.mock import Mock, patch
 import pytest
 from fastmcp import Client
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.chart.chart_utils import DatasetValidationResult
-from superset.mcp_service.dashboard.constants import generate_id
-from superset.mcp_service.dashboard.tool.add_chart_to_existing_dashboard import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.chart.chart_utils import DatasetValidationResult
+from axbi.mcp_service.dashboard.constants import generate_id
+from axbi.mcp_service.dashboard.tool.add_chart_to_existing_dashboard import (
     _add_chart_to_layout,
     _collect_available_tab_names,
     _ensure_layout_structure,
     _find_next_row_position,
     _find_tab_insert_target,
 )
-from superset.mcp_service.dashboard.tool.generate_dashboard import (
+from axbi.mcp_service.dashboard.tool.generate_dashboard import (
     _generate_title_from_charts,
 )
-from superset.utils import json
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 add_chart_to_existing_dashboard_module = import_module(
-    "superset.mcp_service.dashboard.tool.add_chart_to_existing_dashboard"
+    "axbi.mcp_service.dashboard.tool.add_chart_to_existing_dashboard"
 )
 generate_dashboard_module = import_module(
-    "superset.mcp_service.dashboard.tool.generate_dashboard"
+    "axbi.mcp_service.dashboard.tool.generate_dashboard"
 )
 
 
@@ -59,8 +59,8 @@ def mcp_server():
 @pytest.fixture(autouse=True)
 def mock_auth():
     """Mock authentication for all tests."""
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
-        with patch("superset.security_manager.raise_for_ownership"):
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
+        with patch("axbi.security_manager.raise_for_ownership"):
             mock_user = Mock()
             mock_user.id = 1
             mock_user.username = "admin"
@@ -72,7 +72,7 @@ def mock_auth():
 def mock_chart_access():
     """Mock chart dataset validation so tests don't hit real security manager."""
     with patch(
-        "superset.mcp_service.auth.check_chart_data_access",
+        "axbi.mcp_service.auth.check_chart_data_access",
         return_value=DatasetValidationResult(
             is_valid=True,
             dataset_id=1,
@@ -170,9 +170,9 @@ def _setup_generate_dashboard_mocks(
 class TestGenerateDashboard:
     """Tests for generate_dashboard MCP tool."""
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_basic(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -207,9 +207,9 @@ class TestGenerateDashboard:
             assert result.structured_content["dashboard"]["chart_count"] == 2
             assert "/ax-bi/dashboard/10/" in result.structured_content["dashboard_url"]
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_restricted_user_redacts_chart_datasource_name(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -240,7 +240,7 @@ class TestGenerateDashboard:
             is None
         )
 
-    @patch("superset.db.session")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_missing_charts(self, mock_db_session, mcp_server):
         """Test error handling when some charts don't exist."""
@@ -261,7 +261,7 @@ class TestGenerateDashboard:
             assert result.structured_content["dashboard"] is None
             assert result.structured_content["dashboard_url"] is None
 
-    @patch("superset.db.session")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_inaccessible_charts(
         self, mock_db_session, mock_chart_access, mcp_server
@@ -303,7 +303,7 @@ class TestGenerateDashboard:
             )
 
         with patch(
-            "superset.mcp_service.auth.check_chart_data_access",
+            "axbi.mcp_service.auth.check_chart_data_access",
             side_effect=mock_validate,
         ):
             request = {
@@ -322,9 +322,9 @@ class TestGenerateDashboard:
                 assert result.structured_content["dashboard"] is None
                 assert result.structured_content["dashboard_url"] is None
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_single_chart(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -349,9 +349,9 @@ class TestGenerateDashboard:
             assert result.structured_content["dashboard"]["chart_count"] == 1
             assert result.structured_content["dashboard"]["published"] is False
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_many_charts(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -419,8 +419,8 @@ class TestGenerateDashboard:
                 assert row_data["type"] == "ROW"
                 assert column_key in row_data["children"]
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_creation_failure(
         self, mock_db_session, mock_dashboard_cls, mcp_server
@@ -458,9 +458,9 @@ class TestGenerateDashboard:
             # rollback called by tool + event_logger error handling
             assert mock_db_session.rollback.call_count >= 1
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_minimal_request(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -490,9 +490,9 @@ class TestGenerateDashboard:
             created = mock_dashboard_cls.return_value
             assert created.published is False
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_explicit_published(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -517,9 +517,9 @@ class TestGenerateDashboard:
             created = mock_dashboard_cls.return_value
             assert created.published is True
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_auto_title_from_charts(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -546,9 +546,9 @@ class TestGenerateDashboard:
             created = mock_dashboard_cls.return_value
             assert created.dashboard_title == "Sales Revenue & Customer Count"
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_empty_string_title_preserved(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -576,9 +576,9 @@ class TestGenerateDashboard:
 class TestAddChartToExistingDashboard:
     """Tests for add_chart_to_existing_dashboard MCP tool."""
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_to_dashboard_basic(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -662,9 +662,9 @@ class TestAddChartToExistingDashboard:
             assert column_key in layout
             assert layout[column_key]["type"] == "COLUMN"
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_restricted_user_redacts_chart_datasource_name(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -700,7 +700,7 @@ class TestAddChartToExistingDashboard:
             is None
         )
 
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_dashboard_not_found(self, mock_find_dashboard, mcp_server):
         """Test error when dashboard doesn't exist."""
@@ -716,8 +716,8 @@ class TestAddChartToExistingDashboard:
                 "Dashboard with ID 999 not found" in result.structured_content["error"]
             )
 
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_chart_not_found(
         self, mock_db_session, mock_find_dashboard, mcp_server
@@ -734,8 +734,8 @@ class TestAddChartToExistingDashboard:
             assert result.structured_content["error"] is not None
             assert "Chart with ID 999 not found" in result.structured_content["error"]
 
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_dataset_not_accessible(
         self, mock_db_session, mock_find_dashboard, mcp_server
@@ -747,7 +747,7 @@ class TestAddChartToExistingDashboard:
 
         # Override autouse fixture: chart 7 has inaccessible dataset
         with patch(
-            "superset.mcp_service.auth.check_chart_data_access",
+            "axbi.mcp_service.auth.check_chart_data_access",
             return_value=DatasetValidationResult(
                 is_valid=False,
                 dataset_id=10,
@@ -771,8 +771,8 @@ class TestAddChartToExistingDashboard:
                 assert "7" in result.structured_content["error"]
                 assert result.structured_content["dashboard"] is None
 
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_already_in_dashboard(
         self, mock_db_session, mock_find_dashboard, mcp_server
@@ -794,9 +794,9 @@ class TestAddChartToExistingDashboard:
                 in result.structured_content["error"]
             )
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_empty_dashboard(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -850,9 +850,9 @@ class TestAddChartToExistingDashboard:
             assert "ROOT_ID" in chart_parents
             assert "GRID_ID" in chart_parents
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_to_tabbed_dashboard(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -952,9 +952,9 @@ class TestAddChartToExistingDashboard:
             assert "TABS-abc123" in chart_parents
             assert "TAB-tab1" in chart_parents
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_to_specific_tab_by_name(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -1055,9 +1055,9 @@ class TestAddChartToExistingDashboard:
             assert "TAB-tab2" in chart_parents
             assert "TAB-tab1" not in chart_parents
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_target_tab_not_found(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -1121,9 +1121,9 @@ class TestAddChartToExistingDashboard:
             # No layout mutation should have been persisted
             mock_update_command.assert_not_called()
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_target_tab_on_non_tabbed_dashboard(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -1161,16 +1161,16 @@ class TestAddChartToExistingDashboard:
             # No layout mutation should have been persisted
             mock_update_command.assert_not_called()
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_to_tabbed_dashboard_tabs_under_root(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """Test adding chart when TABS are under ROOT_ID (real-world layout).
 
-        Real Superset dashboards place TABS directly under ROOT_ID with an
+        Real AxBI dashboards place TABS directly under ROOT_ID with an
         empty GRID_ID, unlike test fixtures that place TABS under GRID_ID.
         The tool must NOT inject GRID_ID into ROOT_ID.children alongside
         TABS, as the frontend hides non-TABS content when a TABS container
@@ -1273,9 +1273,9 @@ class TestAddChartToExistingDashboard:
             assert "TAB-BCIJF4NvgQ" in chart_parents
             assert "GRID_ID" not in chart_parents
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_dashboard_with_nanoid_rows(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -1566,7 +1566,7 @@ class TestLayoutHelpers:
         """Test _ensure_layout_structure does NOT add GRID_ID to ROOT_ID
         when TABS already exists as a ROOT_ID child.
 
-        Real Superset tabbed dashboards place TABS under ROOT_ID, not
+        Real AxBI tabbed dashboards place TABS under ROOT_ID, not
         GRID_ID.  Adding GRID_ID as a sibling of TABS confuses the
         frontend and makes charts invisible.
         """
@@ -1668,9 +1668,9 @@ class TestGenerateTitleFromCharts:
 class TestDashboardSerializationEagerLoading:
     """Tests for eager loading fix in dashboard serialization paths."""
 
-    @patch("superset.models.dashboard.Dashboard")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.models.dashboard.Dashboard")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_generate_dashboard_refetches_via_dao(
         self, mock_db_session, mock_find_by_id, mock_dashboard_cls, mcp_server
@@ -1698,9 +1698,9 @@ class TestDashboardSerializationEagerLoading:
             # Verify DashboardDAO.find_by_id was called for re-fetch
             mock_find_by_id.assert_called()
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_refetches_dashboard_via_dao(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
@@ -1733,9 +1733,9 @@ class TestDashboardSerializationEagerLoading:
             # DashboardDAO.find_by_id called twice: validation + re-fetch
             assert mock_find_dashboard.call_count == 2
 
-    @patch("superset.commands.dashboard.update.UpdateDashboardCommand")
-    @patch("superset.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("superset.db.session")
+    @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
+    @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
+    @patch("axbi.db.session")
     @pytest.mark.asyncio
     async def test_add_chart_falls_back_on_refetch_failure(
         self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server

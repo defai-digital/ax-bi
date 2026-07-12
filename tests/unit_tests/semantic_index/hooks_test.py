@@ -21,8 +21,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
-from superset.semantic_index import hooks
-from superset.semantic_index.hooks import (
+from axbi.semantic_index import hooks
+from axbi.semantic_index.hooks import (
     _after_commit,
     _after_rollback,
     _on_child_change,
@@ -103,10 +103,8 @@ def test_after_commit_enqueues_and_clears() -> None:
     delay = MagicMock()
 
     with (
-        patch("superset.is_feature_enabled", return_value=True),
-        patch(
-            "superset.semantic_index.tasks.reindex_dataset_semantic_documents"
-        ) as task,
+        patch("axbi.is_feature_enabled", return_value=True),
+        patch("axbi.semantic_index.tasks.reindex_dataset_semantic_documents") as task,
     ):
         task.delay = delay
         _after_commit(session)
@@ -121,10 +119,8 @@ def test_after_commit_noop_when_feature_disabled() -> None:
     session = SimpleNamespace(info={_PENDING_KEY: {1}})
 
     with (
-        patch("superset.is_feature_enabled", return_value=False),
-        patch(
-            "superset.semantic_index.tasks.reindex_dataset_semantic_documents"
-        ) as task,
+        patch("axbi.is_feature_enabled", return_value=False),
+        patch("axbi.semantic_index.tasks.reindex_dataset_semantic_documents") as task,
     ):
         _after_commit(session)
 
@@ -136,9 +132,7 @@ def test_after_commit_noop_when_feature_disabled() -> None:
 def test_after_commit_without_pending_is_noop() -> None:
     session = SimpleNamespace(info={})
 
-    with patch(
-        "superset.semantic_index.tasks.reindex_dataset_semantic_documents"
-    ) as task:
+    with patch("axbi.semantic_index.tasks.reindex_dataset_semantic_documents") as task:
         _after_commit(session)
 
     task.delay.assert_not_called()
@@ -148,10 +142,8 @@ def test_after_commit_swallows_enqueue_errors() -> None:
     session = SimpleNamespace(info={_PENDING_KEY: {5}})
 
     with (
-        patch("superset.is_feature_enabled", return_value=True),
-        patch(
-            "superset.semantic_index.tasks.reindex_dataset_semantic_documents"
-        ) as task,
+        patch("axbi.is_feature_enabled", return_value=True),
+        patch("axbi.semantic_index.tasks.reindex_dataset_semantic_documents") as task,
     ):
         task.delay.side_effect = RuntimeError("no broker")
         # A missing broker must not propagate to the committing caller.

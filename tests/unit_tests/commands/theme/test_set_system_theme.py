@@ -19,21 +19,21 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.theme.exceptions import ThemeNotFoundError
-from superset.commands.theme.set_system_theme import (
+from axbi.commands.theme.exceptions import ThemeNotFoundError
+from axbi.commands.theme.set_system_theme import (
     ClearSystemDarkThemeCommand,
     ClearSystemDefaultThemeCommand,
     SetSystemDarkThemeCommand,
     SetSystemDefaultThemeCommand,
 )
-from superset.models.core import Theme
+from axbi.models.core import Theme
 
 
 class TestSetSystemDefaultThemeCommand:
     """Test SetSystemDefaultThemeCommand"""
 
-    @patch("superset.commands.theme.set_system_theme.db.session")
-    @patch("superset.commands.theme.set_system_theme.ThemeDAO")
+    @patch("axbi.commands.theme.set_system_theme.db.session")
+    @patch("axbi.commands.theme.set_system_theme.ThemeDAO")
     def test_set_system_default_success(self, mock_dao, mock_session):
         """Test successfully setting a theme as system default"""
         # Create a mock theme
@@ -65,7 +65,7 @@ class TestSetSystemDefaultThemeCommand:
         # Verify the result
         assert result == mock_theme
 
-    @patch("superset.commands.theme.set_system_theme.ThemeDAO")
+    @patch("axbi.commands.theme.set_system_theme.ThemeDAO")
     def test_set_system_default_theme_not_found(self, mock_dao):
         """Test setting system default when theme doesn't exist"""
         # Mock theme not found
@@ -84,8 +84,8 @@ class TestSetSystemDefaultThemeCommand:
 class TestSetSystemDarkThemeCommand:
     """Test SetSystemDarkThemeCommand"""
 
-    @patch("superset.commands.theme.set_system_theme.db.session")
-    @patch("superset.commands.theme.set_system_theme.ThemeDAO")
+    @patch("axbi.commands.theme.set_system_theme.db.session")
+    @patch("axbi.commands.theme.set_system_theme.ThemeDAO")
     def test_set_system_dark_success(self, mock_dao, mock_session):
         """Test successfully setting a theme as system dark"""
         # Create a mock theme
@@ -117,7 +117,7 @@ class TestSetSystemDarkThemeCommand:
         # Verify the result
         assert result == mock_theme
 
-    @patch("superset.commands.theme.set_system_theme.ThemeDAO")
+    @patch("axbi.commands.theme.set_system_theme.ThemeDAO")
     def test_set_system_dark_theme_not_found(self, mock_dao):
         """Test setting system dark when theme doesn't exist"""
         # Mock theme not found
@@ -136,7 +136,7 @@ class TestSetSystemDarkThemeCommand:
 class TestClearSystemDefaultThemeCommand:
     """Test ClearSystemDefaultThemeCommand"""
 
-    @patch("superset.commands.theme.set_system_theme.db.session")
+    @patch("axbi.commands.theme.set_system_theme.db.session")
     def test_clear_system_default_success(self, mock_session):
         """Test successfully clearing system default theme"""
         # Mock the update query
@@ -157,7 +157,7 @@ class TestClearSystemDefaultThemeCommand:
 class TestClearSystemDarkThemeCommand:
     """Test ClearSystemDarkThemeCommand"""
 
-    @patch("superset.commands.theme.set_system_theme.db.session")
+    @patch("axbi.commands.theme.set_system_theme.db.session")
     def test_clear_system_dark_success(self, mock_session):
         """Test successfully clearing system dark theme"""
         # Mock the update query
@@ -178,8 +178,8 @@ class TestClearSystemDarkThemeCommand:
 class TestSystemThemeConstraints:
     """Test system theme uniqueness constraints"""
 
-    @patch("superset.commands.theme.set_system_theme.db.session")
-    @patch("superset.commands.theme.set_system_theme.ThemeDAO")
+    @patch("axbi.commands.theme.set_system_theme.db.session")
+    @patch("axbi.commands.theme.set_system_theme.ThemeDAO")
     def test_only_one_system_default(self, mock_dao, mock_session):
         """Test that setting a new system default clears all others"""
         # Create mock themes
@@ -204,8 +204,8 @@ class TestSystemThemeConstraints:
         # Verify it's an update statement (can't directly check SQL content with mocks)
         assert sql_expr is not None
 
-    @patch("superset.commands.theme.set_system_theme.db.session")
-    @patch("superset.commands.theme.set_system_theme.ThemeDAO")
+    @patch("axbi.commands.theme.set_system_theme.db.session")
+    @patch("axbi.commands.theme.set_system_theme.ThemeDAO")
     def test_only_one_system_dark(self, mock_dao, mock_session):
         """Test that setting a new system dark clears all others"""
         # Create mock themes

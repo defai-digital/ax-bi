@@ -23,9 +23,9 @@ import {
   AsyncSelect,
   EmptyState,
   ColorPicker,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
-  SupersetClient,
+  AxBIClient,
   getCategoricalSchemeRegistry,
   getChartMetadataRegistry,
   validateNonEmpty,
@@ -33,17 +33,13 @@ import {
   getColumnLabel,
   VizType,
   type QueryFormColumn,
-} from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import {
-  styled,
-  withTheme,
-  type SupersetTheme,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { styled, withTheme, type AxBITheme } from '@ax-bi/core/theme';
 import SelectControl from 'src/explore/components/controls/SelectControl';
 import TextControl from 'src/explore/components/controls/TextControl';
 import CheckboxControl from 'src/explore/components/controls/CheckboxControl';
-import PopoverSection from '@superset-ui/core/components/PopoverSection';
+import PopoverSection from '@ax-bi/ui-core/components/PopoverSection';
 import ControlHeader from 'src/explore/components/ControlHeader';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 import {
@@ -113,7 +109,7 @@ interface AnnotationLayerProps {
   vizType?: string;
   error?: string;
   colorScheme?: string;
-  theme: SupersetTheme;
+  theme: AxBITheme;
   addAnnotationLayer?: (annotation: Record<string, unknown>) => void;
   removeAnnotationLayer?: () => void;
   close?: () => void;
@@ -447,7 +443,7 @@ class AnnotationLayer extends PureComponent<
       page_size: pageSize,
     });
 
-    const { json } = await SupersetClient.get({
+    const { json } = await AxBIClient.get({
       endpoint: `/api/v1/annotation_layer/?q=${queryParams}`,
     });
 
@@ -486,7 +482,7 @@ class AnnotationLayer extends PureComponent<
       page,
       page_size: pageSize,
     });
-    const { json } = await SupersetClient.get({
+    const { json } = await AxBIClient.get({
       endpoint: `/api/v1/chart/?q=${queryParams}`,
     });
 
@@ -527,7 +523,7 @@ class AnnotationLayer extends PureComponent<
     const queryParams = rison.encode({
       columns: ['query_context'],
     });
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/chart/${id}?q=${queryParams}`,
     }).then(({ json }) => {
       const { result } = json;
@@ -553,7 +549,7 @@ class AnnotationLayer extends PureComponent<
     const queryParams = rison.encode({
       columns: ['slice_name', 'query_context', 'viz_type'],
     });
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/chart/${id}?q=${queryParams}`,
     }).then(({ json }) => {
       const { result } = json;
@@ -584,7 +580,7 @@ class AnnotationLayer extends PureComponent<
   }
 
   fetchAppliedNativeAnnotation(id: string | number): void {
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/annotation_layer/${id}`,
     }).then(({ json }) => {
       const { result } = json;
@@ -811,11 +807,7 @@ class AnnotationLayer extends PureComponent<
                 value={intervalEndColumn}
                 onChange={(
                   value:
-                    | string
-                    | number
-                    | (string | number)[]
-                    | null
-                    | undefined,
+                    string | number | (string | number)[] | null | undefined,
                 ) => this.setState({ intervalEndColumn: String(value ?? '') })}
               />
             )}
@@ -845,11 +837,7 @@ class AnnotationLayer extends PureComponent<
                 value={descriptionColumns}
                 onChange={(
                   value:
-                    | string
-                    | number
-                    | (string | number)[]
-                    | null
-                    | undefined,
+                    string | number | (string | number)[] | null | undefined,
                 ) => {
                   const cols = Array.isArray(value) ? value.map(String) : [];
                   this.setState({ descriptionColumns: cols });

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { EmptyState } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
+import { EmptyState } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
 
 const ExtensionPlaceholder = ({ id }: { id: string }) => (
   <EmptyState

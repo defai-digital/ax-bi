@@ -16,12 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { AxisType, ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
-import {
-  LegendOrientation,
-  LegendType,
-} from '@superset-ui/plugin-chart-echarts';
+import { AxisType, ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
+import { LegendOrientation, LegendType } from '@ax-bi/plugin-chart-echarts';
 import transformProps from '../../src/Gantt/transformProps';
 import {
   EchartsGanttChartProps,
@@ -82,7 +79,7 @@ const queriesData = [
 const chartPropsConfig = {
   formData,
   queriesData,
-  theme: supersetTheme,
+  theme: axbiTheme,
 };
 
 describe('Gantt transformProps', () => {

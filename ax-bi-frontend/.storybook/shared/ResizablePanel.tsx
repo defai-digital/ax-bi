@@ -19,7 +19,7 @@
 
 import { ReactNode, SyntheticEvent } from 'react';
 import { ResizableBox, ResizeCallbackData } from 'react-resizable';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 
 import 'react-resizable/css/styles.css';
 

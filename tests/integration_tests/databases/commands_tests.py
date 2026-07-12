@@ -22,9 +22,9 @@ import pytest
 import yaml
 from sqlalchemy.exc import DBAPIError
 
-from superset import db, event_logger, security_manager  # noqa: F401
-from superset.commands.database.create import CreateDatabaseCommand
-from superset.commands.database.exceptions import (
+from axbi import db, event_logger, security_manager  # noqa: F401
+from axbi.commands.database.create import CreateDatabaseCommand
+from axbi.commands.database.exceptions import (
     DatabaseInvalidError,
     DatabaseNotFoundError,
     DatabaseSecurityUnsafeError,
@@ -32,27 +32,27 @@ from superset.commands.database.exceptions import (
     DatabaseTestConnectionDriverError,  # noqa: F401
     DatabaseTestConnectionUnexpectedError,
 )
-from superset.commands.database.export import ExportDatabasesCommand
-from superset.commands.database.importers.v1 import ImportDatabasesCommand
-from superset.commands.database.tables import TablesDatabaseCommand
-from superset.commands.database.test_connection import TestConnectionDatabaseCommand
-from superset.commands.database.validate import ValidateDatabaseParametersCommand
-from superset.commands.exceptions import CommandInvalidError
-from superset.commands.importers.exceptions import IncorrectVersionError
-from superset.connectors.sqla.models import SqlaTable
-from superset.databases.schemas import DatabaseTestConnectionSchema  # noqa: F401
-from superset.databases.ssh_tunnel.models import SSHTunnel
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import (
-    SupersetErrorsException,
-    SupersetException,
-    SupersetSecurityException,
-    SupersetTimeoutException,
+from axbi.commands.database.export import ExportDatabasesCommand
+from axbi.commands.database.importers.v1 import ImportDatabasesCommand
+from axbi.commands.database.tables import TablesDatabaseCommand
+from axbi.commands.database.test_connection import TestConnectionDatabaseCommand
+from axbi.commands.database.validate import ValidateDatabaseParametersCommand
+from axbi.commands.exceptions import CommandInvalidError
+from axbi.commands.importers.exceptions import IncorrectVersionError
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.databases.schemas import DatabaseTestConnectionSchema  # noqa: F401
+from axbi.databases.ssh_tunnel.models import SSHTunnel
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import (
+    AxBIErrorsException,
+    AxBIException,
+    AxBISecurityException,
+    AxBITimeoutException,
 )
-from superset.models.core import Database
-from superset.utils.core import backend
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.models.core import Database
+from axbi.utils.core import backend
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -74,9 +74,9 @@ from tests.integration_tests.fixtures.importexport import (
 )
 
 
-class TestCreateDatabaseCommand(SupersetTestCase):
-    @patch("superset.commands.database.test_connection.event_logger.log_with_context")
-    @patch("superset.utils.core.g")
+class TestCreateDatabaseCommand(AxBITestCase):
+    @patch("axbi.commands.database.test_connection.event_logger.log_with_context")
+    @patch("axbi.utils.core.g")
     def test_create_duplicate_error(self, mock_g, mock_logger):
         example_db = get_example_database()
         mock_g.user = security_manager.find_user("admin")
@@ -94,8 +94,8 @@ class TestCreateDatabaseCommand(SupersetTestCase):
             "DatabaseRequiredFieldValidationError"
         )
 
-    @patch("superset.commands.database.test_connection.event_logger.log_with_context")
-    @patch("superset.utils.core.g")
+    @patch("axbi.commands.database.test_connection.event_logger.log_with_context")
+    @patch("axbi.utils.core.g")
     def test_multiple_error_logging(self, mock_g, mock_logger):
         mock_g.user = security_manager.find_user("admin")
         command = CreateDatabaseCommand({})
@@ -110,9 +110,9 @@ class TestCreateDatabaseCommand(SupersetTestCase):
         )
 
 
-class TestExportDatabasesCommand(SupersetTestCase):
+class TestExportDatabasesCommand(AxBITestCase):
     @skip("Flaky")
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures(
         "load_birth_names_dashboard_with_slices", "load_energy_table_with_slice"
     )
@@ -330,7 +330,7 @@ class TestExportDatabasesCommand(SupersetTestCase):
         expected_metadata["columns"].sort(key=lambda x: x["column_name"])
         assert metadata == expected_metadata
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_database_command_no_access(self, mock_g):
         """Test that users can't export databases they don't have access to"""
         mock_g.user = security_manager.find_user("gamma")
@@ -341,7 +341,7 @@ class TestExportDatabasesCommand(SupersetTestCase):
         with self.assertRaises(DatabaseNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_database_command_invalid_database(self, mock_g):
         """Test that an error is raised when exporting an invalid database"""
         mock_g.user = security_manager.find_user("admin")
@@ -350,7 +350,7 @@ class TestExportDatabasesCommand(SupersetTestCase):
         with self.assertRaises(DatabaseNotFoundError):  # noqa: PT027
             next(contents)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_database_command_key_order(self, mock_g):
         """Test that they keys in the YAML have the same order as export_fields"""
         mock_g.user = security_manager.find_user("admin")
@@ -377,7 +377,7 @@ class TestExportDatabasesCommand(SupersetTestCase):
             "version",
         ]
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures(
         "load_birth_names_dashboard_with_slices", "load_energy_table_with_slice"
     )
@@ -396,7 +396,7 @@ class TestExportDatabasesCommand(SupersetTestCase):
         assert "databases" in prefixes
         assert "datasets" not in prefixes
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     def test_export_database_command_unicode_chars(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
         db.session.query(Database).filter_by(database_name="中文").delete()
@@ -421,9 +421,9 @@ class TestExportDatabasesCommand(SupersetTestCase):
             db.session.commit()
 
 
-class TestImportDatabasesCommand(SupersetTestCase):
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+class TestImportDatabasesCommand(AxBITestCase):
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database(self, mock_add_permissions, mock_g):
         """Test that a database can be imported"""
         mock_g.user = security_manager.find_user("admin")
@@ -453,13 +453,13 @@ class TestImportDatabasesCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_broken_csv_fields(self, mock_add_permissions, mock_g):
         """
         Test that a database can be imported with broken schema.
 
-        https://github.com/apache/superset/pull/16756 renamed some fields, changing
+        https://github.com/defai-digital/ax-bi/pull/16756 renamed some fields, changing
         the V1 schema. This test ensures that we can import databases that were
         exported with the broken schema.
         """
@@ -494,8 +494,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_multiple(self, mock_add_permissions, mock_g):
         """Test that a database can be imported multiple times"""
         mock_g.user = security_manager.find_user("admin")
@@ -539,8 +539,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_with_dataset(self, mock_add_permissions, mock_g):
         """Test that a database can be imported with datasets"""
         mock_g.user = security_manager.find_user("admin")
@@ -563,8 +563,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_with_dataset_multiple(
         self, mock_add_permissions, mock_g
     ):
@@ -605,7 +605,7 @@ class TestImportDatabasesCommand(SupersetTestCase):
         db.session.delete(dataset.database)
         db.session.commit()
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_validation(self, mock_add_permissions):
         """Test different validations applied when importing a database"""
         # metadata.yaml must be present
@@ -655,7 +655,7 @@ class TestImportDatabasesCommand(SupersetTestCase):
             }
         }
 
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_masked_password(self, mock_add_permissions):
         """Test that database imports with masked passwords are rejected"""
         masked_database_config = database_config.copy()
@@ -676,8 +676,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
             }
         }
 
-    @patch("superset.databases.schemas.is_feature_enabled")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.databases.schemas.is_feature_enabled")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_masked_ssh_tunnel_password(
         self,
         mock_add_permissions,
@@ -700,8 +700,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
             }
         }
 
-    @patch("superset.databases.schemas.is_feature_enabled")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.databases.schemas.is_feature_enabled")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_masked_ssh_tunnel_private_key_and_password(
         self,
         mock_add_permissions,
@@ -727,9 +727,9 @@ class TestImportDatabasesCommand(SupersetTestCase):
             }
         }
 
-    @patch("superset.databases.schemas.is_feature_enabled")
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.databases.schemas.is_feature_enabled")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_with_ssh_tunnel_password(
         self,
         mock_add_permissions,
@@ -773,9 +773,9 @@ class TestImportDatabasesCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.databases.schemas.is_feature_enabled")
-    @patch("superset.security.manager.g")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.databases.schemas.is_feature_enabled")
+    @patch("axbi.security.manager.g")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_with_ssh_tunnel_private_key_and_password(
         self,
         mock_add_permissions,
@@ -822,8 +822,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
         db.session.delete(database)
         db.session.commit()
 
-    @patch("superset.databases.schemas.is_feature_enabled")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.databases.schemas.is_feature_enabled")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_masked_ssh_tunnel_no_credentials(
         self,
         mock_add_permissions,
@@ -846,8 +846,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
             "{'ssh_tunnel': {'password': 'Either password or private_key is required'}}"
         )
 
-    @patch("superset.databases.schemas.is_feature_enabled")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.databases.schemas.is_feature_enabled")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_masked_ssh_tunnel_multiple_credentials(
         self,
         mock_add_permissions,
@@ -869,8 +869,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
             str(excinfo.value) == "Cannot have multiple credentials for the SSH Tunnel"
         )
 
-    @patch("superset.databases.schemas.is_feature_enabled")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.databases.schemas.is_feature_enabled")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_database_masked_ssh_tunnel_only_priv_key_psswd(
         self,
         mock_add_permissions,
@@ -900,8 +900,8 @@ class TestImportDatabasesCommand(SupersetTestCase):
             }
         }
 
-    @patch("superset.commands.database.importers.v1.import_dataset")
-    @patch("superset.commands.database.importers.v1.utils.add_permissions")
+    @patch("axbi.commands.database.importers.v1.import_dataset")
+    @patch("axbi.commands.database.importers.v1.utils.add_permissions")
     def test_import_v1_rollback(self, mock_add_permissions, mock_import_dataset):
         """Test than on an exception everything is rolled back"""
         num_databases = db.session.query(Database).count()
@@ -925,10 +925,10 @@ class TestImportDatabasesCommand(SupersetTestCase):
         assert new_num_databases == num_databases
 
 
-class TestTestConnectionDatabaseCommand(SupersetTestCase):
-    @patch("superset.models.core.Database._get_sqla_engine")
-    @patch("superset.commands.database.test_connection.event_logger.log_with_context")
-    @patch("superset.utils.core.g")
+class TestTestConnectionDatabaseCommand(AxBITestCase):
+    @patch("axbi.models.core.Database._get_sqla_engine")
+    @patch("axbi.commands.database.test_connection.event_logger.log_with_context")
+    @patch("axbi.utils.core.g")
     def test_connection_db_exception(
         self, mock_g, mock_event_logger, mock_get_sqla_engine
     ):
@@ -947,9 +947,9 @@ class TestTestConnectionDatabaseCommand(SupersetTestCase):
             )
         mock_event_logger.assert_called()
 
-    @patch("superset.models.core.Database._get_sqla_engine")
-    @patch("superset.commands.database.test_connection.event_logger.log_with_context")
-    @patch("superset.utils.core.g")
+    @patch("axbi.models.core.Database._get_sqla_engine")
+    @patch("axbi.commands.database.test_connection.event_logger.log_with_context")
+    @patch("axbi.utils.core.g")
     def test_connection_do_ping_exception(
         self, mock_g, mock_event_logger, mock_get_sqla_engine
     ):
@@ -963,24 +963,23 @@ class TestTestConnectionDatabaseCommand(SupersetTestCase):
         json_payload = {"sqlalchemy_uri": db_uri}
         command_without_db_name = TestConnectionDatabaseCommand(json_payload)
 
-        with pytest.raises(SupersetErrorsException) as excinfo:
+        with pytest.raises(AxBIErrorsException) as excinfo:
             command_without_db_name.run()
         assert (
-            excinfo.value.errors[0].error_type
-            == SupersetErrorType.GENERIC_DB_ENGINE_ERROR
+            excinfo.value.errors[0].error_type == AxBIErrorType.GENERIC_DB_ENGINE_ERROR
         )
 
-    @patch("superset.commands.database.utils.timeout")
-    @patch("superset.commands.database.test_connection.event_logger.log_with_context")
-    @patch("superset.utils.core.g")
+    @patch("axbi.commands.database.utils.timeout")
+    @patch("axbi.commands.database.test_connection.event_logger.log_with_context")
+    @patch("axbi.utils.core.g")
     def test_connection_do_ping_timeout(
         self, mock_g, mock_event_logger, mock_func_timeout
     ):
         """Test to make sure do_ping exceptions gets captured"""
         database = get_example_database()
         mock_g.user = security_manager.find_user("admin")
-        mock_func_timeout.side_effect = SupersetTimeoutException(
-            error_type=SupersetErrorType.BACKEND_TIMEOUT_ERROR,
+        mock_func_timeout.side_effect = AxBITimeoutException(
+            error_type=AxBIErrorType.BACKEND_TIMEOUT_ERROR,
             message="ERROR",
             level=ErrorLevel.ERROR,
         )
@@ -988,26 +987,25 @@ class TestTestConnectionDatabaseCommand(SupersetTestCase):
         json_payload = {"sqlalchemy_uri": db_uri}
         command_without_db_name = TestConnectionDatabaseCommand(json_payload)
 
-        with pytest.raises(SupersetTimeoutException) as excinfo:
+        with pytest.raises(AxBITimeoutException) as excinfo:
             command_without_db_name.run()
         assert excinfo.value.status == 408
         assert (
-            excinfo.value.error.error_type
-            == SupersetErrorType.CONNECTION_DATABASE_TIMEOUT
+            excinfo.value.error.error_type == AxBIErrorType.CONNECTION_DATABASE_TIMEOUT
         )
 
-    @patch("superset.models.core.Database._get_sqla_engine")
-    @patch("superset.commands.database.test_connection.event_logger.log_with_context")
-    @patch("superset.utils.core.g")
-    def test_connection_superset_security_connection(
+    @patch("axbi.models.core.Database._get_sqla_engine")
+    @patch("axbi.commands.database.test_connection.event_logger.log_with_context")
+    @patch("axbi.utils.core.g")
+    def test_connection_axbi_security_connection(
         self, mock_g, mock_event_logger, mock_get_sqla_engine
     ):
         """Test to make sure event_logger is called when security
         connection exc is raised"""
         database = get_example_database()
         mock_g.user = security_manager.find_user("admin")
-        mock_get_sqla_engine.side_effect = SupersetSecurityException(
-            SupersetError(error_type=500, message="test", level="info")
+        mock_get_sqla_engine.side_effect = AxBISecurityException(
+            AxBIError(error_type=500, message="test", level="info")
         )
         db_uri = database.sqlalchemy_uri_decrypted
         json_payload = {"sqlalchemy_uri": db_uri}
@@ -1019,9 +1017,9 @@ class TestTestConnectionDatabaseCommand(SupersetTestCase):
 
         mock_event_logger.assert_called()
 
-    @patch("superset.models.core.Database._get_sqla_engine")
-    @patch("superset.commands.database.test_connection.event_logger.log_with_context")
-    @patch("superset.utils.core.g")
+    @patch("axbi.models.core.Database._get_sqla_engine")
+    @patch("axbi.commands.database.test_connection.event_logger.log_with_context")
+    @patch("axbi.utils.core.g")
     def test_connection_db_api_exc(
         self, mock_g, mock_event_logger, mock_get_sqla_engine
     ):
@@ -1035,7 +1033,7 @@ class TestTestConnectionDatabaseCommand(SupersetTestCase):
         json_payload = {"sqlalchemy_uri": db_uri}
         command_without_db_name = TestConnectionDatabaseCommand(json_payload)
 
-        with pytest.raises(SupersetErrorsException) as excinfo:  # noqa: PT012
+        with pytest.raises(AxBIErrorsException) as excinfo:  # noqa: PT012
             command_without_db_name.run()
             assert str(excinfo.value) == (
                 "Connection failed, please check your connection settings"
@@ -1044,9 +1042,9 @@ class TestTestConnectionDatabaseCommand(SupersetTestCase):
         mock_event_logger.assert_called()
 
 
-@patch("superset.db_engine_specs.base.is_hostname_valid")
-@patch("superset.db_engine_specs.base.is_port_open")
-@patch("superset.commands.database.validate.DatabaseDAO")
+@patch("axbi.db_engine_specs.base.is_hostname_valid")
+@patch("axbi.db_engine_specs.base.is_port_open")
+@patch("axbi.commands.database.validate.DatabaseDAO")
 def test_validate(
     mock_database_dao,  # noqa: N803
     is_port_open,
@@ -1064,8 +1062,8 @@ def test_validate(
         "parameters": {
             "host": "localhost",
             "port": 5432,
-            "username": "superset",
-            "password": "superset",
+            "username": "axbi",
+            "password": "axbi",
             "database": "test",
             "query": {},
         },
@@ -1074,8 +1072,8 @@ def test_validate(
     command.run()
 
 
-@patch("superset.db_engine_specs.base.is_hostname_valid")
-@patch("superset.db_engine_specs.base.is_port_open")
+@patch("axbi.db_engine_specs.base.is_hostname_valid")
+@patch("axbi.db_engine_specs.base.is_port_open")
 def test_validate_partial(is_port_open, is_hostname_valid, app_context):
     """
     Test parameter validation when only some parameters are present.
@@ -1089,18 +1087,18 @@ def test_validate_partial(is_port_open, is_hostname_valid, app_context):
             "host": "localhost",
             "port": 5432,
             "username": "",
-            "password": "superset",
+            "password": "axbi",
             "database": "test",
             "query": {},
         },
     }
     command = ValidateDatabaseParametersCommand(payload)
-    with pytest.raises(SupersetErrorsException) as excinfo:
+    with pytest.raises(AxBIErrorsException) as excinfo:
         command.run()
     assert excinfo.value.errors == [
-        SupersetError(
+        AxBIError(
             message="One or more parameters are missing: username",
-            error_type=SupersetErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
+            error_type=AxBIErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
             level=ErrorLevel.WARNING,
             extra={
                 "missing": ["username"],
@@ -1115,7 +1113,7 @@ def test_validate_partial(is_port_open, is_hostname_valid, app_context):
     ]
 
 
-@patch("superset.db_engine_specs.base.is_hostname_valid")
+@patch("axbi.db_engine_specs.base.is_hostname_valid")
 def test_validate_partial_invalid_hostname(is_hostname_valid, app_context):
     """
     Test parameter validation when only some parameters are present.
@@ -1134,12 +1132,12 @@ def test_validate_partial_invalid_hostname(is_hostname_valid, app_context):
         },
     }
     command = ValidateDatabaseParametersCommand(payload)
-    with pytest.raises(SupersetErrorsException) as excinfo:
+    with pytest.raises(AxBIErrorsException) as excinfo:
         command.run()
     assert excinfo.value.errors == [
-        SupersetError(
+        AxBIError(
             message="One or more parameters are missing: database, port, username",
-            error_type=SupersetErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
+            error_type=AxBIErrorType.CONNECTION_MISSING_PARAMETERS_ERROR,
             level=ErrorLevel.WARNING,
             extra={
                 "missing": ["database", "port", "username"],
@@ -1151,9 +1149,9 @@ def test_validate_partial_invalid_hostname(is_hostname_valid, app_context):
                 ],
             },
         ),
-        SupersetError(
+        AxBIError(
             message="The hostname provided can't be resolved.",
-            error_type=SupersetErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
+            error_type=AxBIErrorType.CONNECTION_INVALID_HOSTNAME_ERROR,
             level=ErrorLevel.ERROR,
             extra={
                 "invalid": ["host"],
@@ -1168,8 +1166,8 @@ def test_validate_partial_invalid_hostname(is_hostname_valid, app_context):
     ]
 
 
-class TestTablesDatabaseCommand(SupersetTestCase):
-    @patch("superset.daos.database.DatabaseDAO.find_by_id")
+class TestTablesDatabaseCommand(AxBITestCase):
+    @patch("axbi.daos.database.DatabaseDAO.find_by_id")
     def test_database_tables_list_with_unknown_database(self, mock_find_by_id):
         mock_find_by_id.return_value = None
         command = TablesDatabaseCommand(1, None, "test", False)
@@ -1178,10 +1176,10 @@ class TestTablesDatabaseCommand(SupersetTestCase):
             command.run()
             assert str(excinfo.value) == ("Database not found.")
 
-    @patch("superset.daos.database.DatabaseDAO.find_by_id")
-    @patch("superset.security.manager.SupersetSecurityManager.can_access_database")
-    @patch("superset.utils.core.g")
-    def test_database_tables_superset_exception(
+    @patch("axbi.daos.database.DatabaseDAO.find_by_id")
+    @patch("axbi.security.manager.AxBISecurityManager.can_access_database")
+    @patch("axbi.utils.core.g")
+    def test_database_tables_axbi_exception(
         self, mock_g, mock_can_access_database, mock_find_by_id
     ):
         database = get_example_database()
@@ -1189,17 +1187,17 @@ class TestTablesDatabaseCommand(SupersetTestCase):
             return
 
         mock_find_by_id.return_value = database
-        mock_can_access_database.side_effect = SupersetException("Test Error")
+        mock_can_access_database.side_effect = AxBIException("Test Error")
         mock_g.user = security_manager.find_user("admin")
 
         command = TablesDatabaseCommand(database.id, None, "main", False)
-        with pytest.raises(SupersetException) as excinfo:  # noqa: PT012
+        with pytest.raises(AxBIException) as excinfo:  # noqa: PT012
             command.run()
             assert str(excinfo.value) == "Test Error"
 
-    @patch("superset.daos.database.DatabaseDAO.find_by_id")
-    @patch("superset.security.manager.SupersetSecurityManager.can_access_database")
-    @patch("superset.utils.core.g")
+    @patch("axbi.daos.database.DatabaseDAO.find_by_id")
+    @patch("axbi.security.manager.AxBISecurityManager.can_access_database")
+    @patch("axbi.utils.core.g")
     def test_database_tables_exception(
         self, mock_g, mock_can_access_database, mock_find_by_id
     ):
@@ -1216,9 +1214,9 @@ class TestTablesDatabaseCommand(SupersetTestCase):
                 == "Unexpected error occurred, please check your logs for details"
             )
 
-    @patch("superset.daos.database.DatabaseDAO.find_by_id")
-    @patch("superset.security.manager.SupersetSecurityManager.can_access_database")
-    @patch("superset.utils.core.g")
+    @patch("axbi.daos.database.DatabaseDAO.find_by_id")
+    @patch("axbi.security.manager.AxBISecurityManager.can_access_database")
+    @patch("axbi.utils.core.g")
     def test_database_tables_list_tables(
         self, mock_g, mock_can_access_database, mock_find_by_id
     ):
@@ -1238,9 +1236,9 @@ class TestTablesDatabaseCommand(SupersetTestCase):
         assert len(result["result"]) > 0
         assert len(result["result"]) == result["count"]
 
-    @patch("superset.daos.database.DatabaseDAO.find_by_id")
-    @patch("superset.security.manager.SupersetSecurityManager.can_access_database")
-    @patch("superset.utils.core.g")
+    @patch("axbi.daos.database.DatabaseDAO.find_by_id")
+    @patch("axbi.security.manager.AxBISecurityManager.can_access_database")
+    @patch("axbi.utils.core.g")
     def test_database_tables_list_tables_default_catalog(
         self, mock_g, mock_can_access_database, mock_find_by_id
     ):

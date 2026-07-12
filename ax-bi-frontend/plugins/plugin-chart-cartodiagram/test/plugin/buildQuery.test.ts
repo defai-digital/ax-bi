@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getChartBuildQueryRegistry } from '@superset-ui/core';
+import { getChartBuildQueryRegistry } from '@ax-bi/ui-core';
 import buildQuery from '../../src/plugin/buildQuery';
 
 describe('CartodiagramPlugin buildQuery', () => {

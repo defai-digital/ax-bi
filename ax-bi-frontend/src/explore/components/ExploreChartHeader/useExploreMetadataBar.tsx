@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { tn } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
+import { tn } from '@ax-bi/core/translation';
 import MetadataBar, {
   MetadataType,
-} from '@superset-ui/core/components/MetadataBar';
+} from '@ax-bi/ui-core/components/MetadataBar';
 import { ExplorePageInitialData } from 'src/explore/types';
 
 export const useExploreMetadataBar = (

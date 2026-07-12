@@ -17,7 +17,7 @@
 
 """Tests for Hive dialect support in sqlglot."""
 
-from superset.sql.parse import SQLScript, Table
+from axbi.sql.parse import SQLScript, Table
 
 
 def test_hive_sql_parsing() -> None:

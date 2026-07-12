@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { extensions as extensionsApi } from '@apache-superset/core';
+import { extensions as extensionsApi } from '@ax-bi/core';
 import ExtensionsLoader from 'src/extensions/ExtensionsLoader';
 
 const getExtension: typeof extensionsApi.getExtension = id =>

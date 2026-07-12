@@ -36,6 +36,6 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.kylin import KylinEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.kylin import KylinEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataMaskStateWithId, JsonObject } from '@superset-ui/core';
+import { DataMaskStateWithId, JsonObject } from '@ax-bi/ui-core';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { store } from '../views/store';
 import { getDashboardPermalink as getDashboardPermalinkUtil } from '../utils/urlUtils';
@@ -31,7 +31,7 @@ type Size = {
   height: number;
 };
 
-type EmbeddedSupersetApi = {
+type EmbeddedAxBIApi = {
   getScrollSize: () => Size;
   getDashboardPermalink: ({ anchor }: { anchor: string }) => Promise<string>;
   getActiveTabs: () => string[];
@@ -95,7 +95,7 @@ const getChartDataPayloads = async (params?: {
   return getChartDataPayloadsUtil(state, params);
 };
 
-export const embeddedApi: EmbeddedSupersetApi = {
+export const embeddedApi: EmbeddedAxBIApi = {
   getScrollSize,
   getDashboardPermalink,
   getActiveTabs,

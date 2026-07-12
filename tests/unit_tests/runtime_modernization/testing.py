@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from superset.stats_logger import BaseStatsLogger
+from axbi.stats_logger import BaseStatsLogger
 
 
 @dataclass

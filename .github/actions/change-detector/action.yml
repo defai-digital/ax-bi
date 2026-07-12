@@ -26,12 +26,12 @@ outputs:
   ax-sdk:
     description: Whether AX SDK package-related files were changed
     value: ${{ steps.change-detector.outputs.ax-sdk }}
-  superset-rust:
-    description: Whether superset-rust package-related files were changed
-    value: ${{ steps.change-detector.outputs.superset-rust }}
-  superset-extensions-cli:
-    description: Whether superset-extensions-cli package-related files were changed
-    value: ${{ steps.change-detector.outputs.superset-extensions-cli }}
+  ax-bi-rust:
+    description: Whether ax-bi-rust package-related files were changed
+    value: ${{ steps.change-detector.outputs.ax-bi-rust }}
+  ax-bi-extensions-cli:
+    description: Whether ax-bi-extensions-cli package-related files were changed
+    value: ${{ steps.change-detector.outputs.ax-bi-extensions-cli }}
 runs:
   using: composite
   steps:

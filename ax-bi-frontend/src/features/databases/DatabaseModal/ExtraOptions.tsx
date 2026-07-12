@@ -18,13 +18,13 @@
  */
 import { ChangeEvent, EventHandler, useState, useEffect } from 'react';
 import cx from 'classnames';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DatabaseConnectionExtension,
   isFeatureEnabled,
   FeatureFlag,
-} from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
 import {
   Input,
   Checkbox,
@@ -32,8 +32,8 @@ import {
   InfoTooltip,
   CollapseLabelInModal,
   type CheckboxChangeEvent,
-} from '@superset-ui/core/components';
-import { useJsonValidation } from '@superset-ui/core/components/AsyncAceEditor';
+} from '@ax-bi/ui-core/components';
+import { useJsonValidation } from '@ax-bi/ui-core/components/AsyncAceEditor';
 import {
   StyledInputContainer,
   StyledJsonEditor,

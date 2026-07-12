@@ -26,7 +26,7 @@ import {
   ChartCustomizationDivider,
   ColumnOption,
   ChartCustomization,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { ReactNode } from 'react';
 
 export interface NativeFiltersFormItem {

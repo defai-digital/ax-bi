@@ -18,10 +18,10 @@
  */
 import { render, screen, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { supersetTheme, ThemeProvider } from '@apache-superset/core/theme';
+import { axbiTheme, ThemeProvider } from '@ax-bi/core/theme';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { DatasourceType, SupersetClient } from '@superset-ui/core';
+import { DatasourceType, AxBIClient } from '@ax-bi/ui-core';
 import DeckMulti from './Multi';
 import * as fitViewportModule from '../utils/fitViewport';
 
@@ -38,10 +38,10 @@ jest.mock('../DeckGLContainer', () => ({
   ),
 }));
 
-// Mock SupersetClient
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
-  SupersetClient: {
+// Mock AxBIClient
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
+  AxBIClient: {
     get: jest.fn(),
   },
 }));
@@ -121,14 +121,14 @@ const baseMockProps = {
 const renderWithProviders = (component: React.ReactElement) =>
   render(
     <Provider store={mockStore}>
-      <ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>
+      <ThemeProvider theme={axbiTheme}>{component}</ThemeProvider>
     </Provider>,
   );
 
 describe('DeckMulti Autozoom Functionality', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (SupersetClient.get as jest.Mock).mockResolvedValue({
+    (AxBIClient.get as jest.Mock).mockResolvedValue({
       json: {
         data: {
           features: [],
@@ -451,7 +451,7 @@ describe('DeckMulti Autozoom Functionality', () => {
 describe('DeckMulti Component Rendering', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    (SupersetClient.get as jest.Mock).mockResolvedValue({
+    (AxBIClient.get as jest.Mock).mockResolvedValue({
       json: {
         data: {
           features: [],
@@ -498,11 +498,11 @@ describe('DeckMulti Component Rendering', () => {
 
     // Wait for child slice requests
     await waitFor(() => {
-      expect(SupersetClient.get).toHaveBeenCalled();
+      expect(AxBIClient.get).toHaveBeenCalled();
     });
 
     // Check that all requests include the dashboardId
-    const { calls } = (SupersetClient.get as jest.Mock).mock;
+    const { calls } = (AxBIClient.get as jest.Mock).mock;
     calls.forEach(call => {
       const url = call[0].endpoint;
       const urlParams = new URLSearchParams(url.split('?')[1]);
@@ -525,11 +525,11 @@ describe('DeckMulti Component Rendering', () => {
 
     // Wait for child slice requests
     await waitFor(() => {
-      expect(SupersetClient.get).toHaveBeenCalled();
+      expect(AxBIClient.get).toHaveBeenCalled();
     });
 
     // Check that requests don't include dashboardId
-    const { calls } = (SupersetClient.get as jest.Mock).mock;
+    const { calls } = (AxBIClient.get as jest.Mock).mock;
     calls.forEach(call => {
       const url = call[0].endpoint;
       const formData = JSON.parse(
@@ -553,11 +553,11 @@ describe('DeckMulti Component Rendering', () => {
 
     // Wait for child slice requests
     await waitFor(() => {
-      expect(SupersetClient.get).toHaveBeenCalled();
+      expect(AxBIClient.get).toHaveBeenCalled();
     });
 
     // Verify dashboardId is preserved with filters
-    const { calls } = (SupersetClient.get as jest.Mock).mock;
+    const { calls } = (AxBIClient.get as jest.Mock).mock;
     calls.forEach(call => {
       const url = call[0].endpoint;
       const formData = JSON.parse(
@@ -588,7 +588,7 @@ describe('DeckMulti Component Rendering', () => {
 
     rerender(
       <Provider store={mockStore}>
-        <ThemeProvider theme={supersetTheme}>
+        <ThemeProvider theme={axbiTheme}>
           <DeckMulti {...updatedProps} />
         </ThemeProvider>
       </Provider>,
@@ -621,7 +621,7 @@ test('includes parent_slice_id in child slice requests when parent has slice_id'
       },
     },
   });
-  (SupersetClient.get as jest.Mock) = mockGet;
+  (AxBIClient.get as jest.Mock) = mockGet;
   const parentSliceId = 99;
   const dashboardId = 5;
 
@@ -669,7 +669,7 @@ test('includes parent_slice_id in embedded mode', async () => {
       },
     },
   });
-  (SupersetClient.get as jest.Mock) = mockGet;
+  (AxBIClient.get as jest.Mock) = mockGet;
   const parentSliceId = 200;
   const dashboardId = 10;
 
@@ -715,7 +715,7 @@ test('does not include parent_slice_id when parent has no slice_id', async () =>
       },
     },
   });
-  (SupersetClient.get as jest.Mock) = mockGet;
+  (AxBIClient.get as jest.Mock) = mockGet;
 
   const props = {
     ...baseMockProps,

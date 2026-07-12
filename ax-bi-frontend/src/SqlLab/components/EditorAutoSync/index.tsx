@@ -21,7 +21,7 @@ import { useRef, useEffect, FC, useMemo } from 'react';
 
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
-import { logging } from '@apache-superset/core/utils';
+import { logging } from '@ax-bi/core/utils';
 import {
   SqlLabRootState,
   QueryEditor,

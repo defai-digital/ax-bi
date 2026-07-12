@@ -17,7 +17,7 @@
  * under the License.
  */
 import memoizeOne from 'memoize-one';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ComparisonType,
   Currency,
@@ -36,14 +36,14 @@ import {
   TimeFormatter,
   AgGridChartState,
   AgGridFilterModel,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { isEmpty, isEqual, merge } from 'lodash';
 import {
   ConditionalFormattingConfig,
   getColorFormatters,
   ColorSchemeEnum,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import isEqualColumns from './utils/isEqualColumns';
 import DateWithFormatter from './utils/DateWithFormatter';
 import {
@@ -739,8 +739,7 @@ const transformProps = (
 
   // Strip saved filter from chartState after initial application to prevent re-injection
   let chartState = serverPaginationData?.chartState as
-    | AgGridChartState
-    | undefined;
+    AgGridChartState | undefined;
   const chartStateHasFilter = !!(
     chartState?.filterModel && Object.keys(chartState.filterModel).length > 0
   );

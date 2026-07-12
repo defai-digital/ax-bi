@@ -38,7 +38,7 @@ from sqlalchemy.dialects.mysql import (
 )
 from sqlalchemy.engine.url import make_url, URL  # noqa: F401
 
-from superset.utils.core import GenericDataType
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -79,7 +79,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec as spec  # noqa: N813
 
     assert_column_spec(spec, native_type, sqla_type, attrs, generic_type, is_dttm)
 
@@ -100,7 +100,7 @@ def test_convert_dttm(
     expected_result: str | None,
     dttm: datetime,  # noqa: F811
 ) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec as spec  # noqa: N813
 
     assert_convert_dttm(spec, target_type, expected_result, dttm)
 
@@ -117,7 +117,7 @@ def test_convert_dttm(
     ],
 )
 def test_validate_database_uri(sqlalchemy_uri: str, error: bool) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     url = make_url(sqlalchemy_uri)
     if error:
@@ -173,7 +173,7 @@ def test_validate_database_uri(sqlalchemy_uri: str, error: bool) -> None:
 def test_adjust_engine_params(
     sqlalchemy_uri: str, connect_args: dict[str, Any], returns: dict[str, Any]
 ) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     url = make_url(sqlalchemy_uri)
     returned_url, returned_connect_args = MySQLEngineSpec.adjust_engine_params(
@@ -184,8 +184,8 @@ def test_adjust_engine_params(
 
 @patch("sqlalchemy.engine.Engine.connect")
 def test_get_cancel_query_id(engine_mock: Mock) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -195,8 +195,8 @@ def test_get_cancel_query_id(engine_mock: Mock) -> None:
 
 @patch("sqlalchemy.engine.Engine.connect")
 def test_cancel_query(engine_mock: Mock) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.return_value.__enter__.return_value
@@ -205,8 +205,8 @@ def test_cancel_query(engine_mock: Mock) -> None:
 
 @patch("sqlalchemy.engine.Engine.connect")
 def test_cancel_query_failed(engine_mock: Mock) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
-    from superset.models.sql_lab import Query
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.models.sql_lab import Query
 
     query = Query()
     cursor_mock = engine_mock.raiseError.side_effect = Exception()
@@ -217,7 +217,7 @@ def test_get_schema_from_engine_params() -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
     """
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     assert (
         MySQLEngineSpec.get_schema_from_engine_params(
@@ -257,7 +257,7 @@ def test_column_type_mutator(
     description: list[Any],
     expected_result: list[tuple[Any, ...]],
 ):
-    from superset.db_engine_specs.mysql import MySQLEngineSpec as spec  # noqa: N813
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec as spec  # noqa: N813
 
     mock_cursor = Mock()
     mock_cursor.fetchall.return_value = data
@@ -268,7 +268,7 @@ def test_column_type_mutator(
 
 def test_get_datatype_pymysql_fallback():
     """get_datatype() falls back to pymysql when MySQLdb is not installed."""
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     # Reset cached type_code_map so the import path is exercised
     original_type_code_map = MySQLEngineSpec.type_code_map

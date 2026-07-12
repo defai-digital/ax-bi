@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Filter, NativeFilterType } from '@superset-ui/core';
+import { Filter, NativeFilterType } from '@ax-bi/ui-core';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
 import { SET_DIRECT_PATH } from 'src/dashboard/actions/dashboardState';
@@ -193,8 +193,8 @@ const baseFilter: Filter = {
   description: '',
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getChartMetadataRegistry: () => ({
     get: (type: string) => {
       if (type === 'filter_select') {

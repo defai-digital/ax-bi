@@ -18,18 +18,18 @@
  */
 import type React from 'react';
 import { createRef, Component, type RefObject } from 'react';
-import { type SupersetTheme } from '@apache-superset/core/theme';
-import { Button, Icons, Select } from '@superset-ui/core/components';
+import { type AxBITheme } from '@ax-bi/core/theme';
+import { Button, Icons, Select } from '@ax-bi/ui-core/components';
 import { ErrorBoundary } from 'src/components';
-import { SupersetClient } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 
-import Tabs from '@superset-ui/core/components/Tabs';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 import AdhocFilter from 'src/explore/components/controls/FilterControl/AdhocFilter';
 import AdhocFilterEditPopoverSimpleTabContent from 'src/explore/components/controls/FilterControl/AdhocFilterEditPopoverSimpleTabContent';
 import AdhocFilterEditPopoverSqlTabContent from 'src/explore/components/controls/FilterControl/AdhocFilterEditPopoverSqlTabContent';
-import type { Dataset } from '@superset-ui/chart-controls';
+import type { Dataset } from '@ax-bi/chart-controls';
 import type { ColumnType } from 'src/explore/components/controls/FilterControl/AdhocFilterEditPopoverSimpleTabContent';
 import {
   POPOVER_INITIAL_HEIGHT,
@@ -60,7 +60,7 @@ interface AdhocFilterEditPopoverProps {
   options: FilterOption[];
   datasource?: Record<string, unknown>;
   partitionColumn?: string;
-  theme?: SupersetTheme;
+  theme?: AxBITheme;
   sections?: string[];
   operators?: string[];
   requireSave?: boolean;
@@ -148,14 +148,12 @@ export default class AdhocFilterEditPopover extends Component<
 
     // Load layer options if deck_slices exist
     const deckSlices = this.props.adhocFilter?.deck_slices as
-      | number[]
-      | undefined;
+      number[] | undefined;
     if (deckSlices && deckSlices.length > 0) {
       this.loadLayerOptions(0, 100).then(result => {
         this.setState({ layerOptions: result.data });
         const layerFilterScope = this.props.adhocFilter?.layerFilterScope as
-          | number[]
-          | undefined;
+          number[] | undefined;
         if (layerFilterScope) {
           const selectedLayers = layerFilterScope.map(item => {
             const layerOption = result.data.find(
@@ -186,8 +184,7 @@ export default class AdhocFilterEditPopover extends Component<
 
   onSave() {
     const deckSlices = this.state.adhocFilter.deck_slices as
-      | number[]
-      | undefined;
+      number[] | undefined;
     const hasDeckSlices = deckSlices && deckSlices.length > 0;
 
     if (!hasDeckSlices) {
@@ -256,7 +253,7 @@ export default class AdhocFilterEditPopover extends Component<
       order_direction: 'asc',
     });
 
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/chart/?q=${query}`,
     }).then(response => {
       if (!response?.json?.result) {

@@ -21,9 +21,9 @@ import { isEqual } from 'lodash';
 import {
   ControlType,
   ControlComponentProps as BaseControlComponentProps,
-} from '@superset-ui/chart-controls';
-import { JsonValue, QueryFormData, usePrevious } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+} from '@ax-bi/chart-controls';
+import { JsonValue, QueryFormData, usePrevious } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { ErrorBoundary } from 'src/components';
 import { ExploreActions } from 'src/explore/actions/exploreActions';
 import controlMap from './controls';

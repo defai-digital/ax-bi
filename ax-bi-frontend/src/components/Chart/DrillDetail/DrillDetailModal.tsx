@@ -19,13 +19,10 @@
 
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useCallback, useContext, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  BinaryQueryObjectFilterClause,
-  QueryFormData,
-} from '@superset-ui/core';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Button, Modal } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { BinaryQueryObjectFilterClause, QueryFormData } from '@ax-bi/ui-core';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Button, Modal } from '@ax-bi/ui-core/components';
 import { useSelector } from 'react-redux';
 import { DashboardPageIdContext } from 'src/dashboard/containers/DashboardPage';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
@@ -105,7 +102,7 @@ export default function DrillDetailModal({
       state.sliceEntities?.slices?.[chartId] || {},
   );
   const canExplore = useSelector((state: RootState) =>
-    findPermission('can_explore', 'Superset', state.user?.roles),
+    findPermission('can_explore', 'AxBI', state.user?.roles),
   );
 
   const exploreUrl = useMemo(

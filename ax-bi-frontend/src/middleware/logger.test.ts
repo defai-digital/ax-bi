@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import logger from 'src/middleware/loggerMiddleware';
 import { LOG_EVENT } from 'src/logger/actions';
 import {
@@ -68,7 +68,7 @@ describe('logger middleware', () => {
   let postStub: jest.SpyInstance;
   beforeEach(() => {
     postStub = jest
-      .spyOn(SupersetClient, 'post')
+      .spyOn(AxBIClient, 'post')
       .mockImplementation(() => undefined as any);
   });
   afterEach(() => {
@@ -169,7 +169,7 @@ describe('logger middleware', () => {
       writable: true,
       value: beaconMock,
     });
-    SupersetClient.configure({ guestToken: 'token' });
+    AxBIClient.configure({ guestToken: 'token' });
 
     (logger as Function)(mockStore)(next)(action);
     expect(beaconMock.mock.calls.length).toBe(0);

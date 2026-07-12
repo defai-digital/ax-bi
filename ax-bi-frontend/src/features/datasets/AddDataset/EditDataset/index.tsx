@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import useGetDatasetRelatedCounts from 'src/features/datasets/hooks/useGetDatasetRelatedCounts';
-import { Badge } from '@superset-ui/core/components';
-import Tabs from '@superset-ui/core/components/Tabs';
+import { Badge } from '@ax-bi/ui-core/components';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
 
 const StyledTabs = styled(Tabs)`
   ${({ theme }) => `

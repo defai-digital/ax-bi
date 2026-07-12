@@ -19,11 +19,11 @@
 import pandas as pd
 import pytest
 
-from superset.reports.notifications.exceptions import (
+from axbi.reports.notifications.exceptions import (
     NotificationParamException,
 )
-from superset.reports.notifications.webhook import WebhookNotification
-from superset.utils.core import HeaderDataType
+from axbi.reports.notifications.webhook import WebhookNotification
+from axbi.utils.core import HeaderDataType
 
 
 @pytest.fixture
@@ -45,8 +45,8 @@ def test_get_webhook_url(mock_header_data) -> None:
     Test the _get_webhook_url function to ensure it correctly extracts
     the webhook URL from recipient configuration
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     content = NotificationContent(
         name="test alert",
@@ -71,8 +71,8 @@ def test_get_webhook_url_missing_url(mock_header_data) -> None:
     """
     Test that _get_webhook_url raises an exception when URL is missing
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     content = NotificationContent(
         name="test alert",
@@ -95,8 +95,8 @@ def test_get_req_payload_basic(mock_header_data) -> None:
     """
     Test that _get_req_payload returns correct payload structure
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     content = NotificationContent(
         name="Payload Name",
@@ -131,8 +131,8 @@ def test_get_files_includes_all_content_types(mock_header_data) -> None:
     Test that _get_files correctly includes csv, pdf, and multiple screenshot attachments
     """  # noqa: E501
 
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     csv_bytes = b"col1,col2\n1,2"
     pdf_bytes = b"%PDF-1.4"
@@ -173,8 +173,8 @@ def test_get_files_empty_when_no_content(mock_header_data) -> None:
     """
     Test that _get_files returns empty list when no files present
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     content = NotificationContent(
         name="no files",
@@ -196,8 +196,8 @@ def test_send_http_only_https_check(monkeypatch, mock_header_data) -> None:
     """
     Test send raises when URL is not HTTPS and config enforces HTTPS only
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     content = NotificationContent(
         name="test alert", header_data=mock_header_data, description="Test description"
@@ -214,10 +214,10 @@ def test_send_http_only_https_check(monkeypatch, mock_header_data) -> None:
         config = {"ALERT_REPORTS_WEBHOOK_HTTPS_ONLY": True}
 
     monkeypatch.setattr(
-        "superset.reports.notifications.webhook.current_app", MockCurrentApp
+        "axbi.reports.notifications.webhook.current_app", MockCurrentApp
     )
     monkeypatch.setattr(
-        "superset.reports.notifications.webhook.feature_flag_manager.is_feature_enabled",
+        "axbi.reports.notifications.webhook.feature_flag_manager.is_feature_enabled",
         lambda flag: True,
     )
 
@@ -231,8 +231,8 @@ def test_send_treats_redirect_as_failure(monkeypatch, mock_header_data) -> None:
     (allow_redirects=False), so the request never reached the final target and
     must not be reported as success.
     """
-    from superset.reports.models import ReportRecipients, ReportRecipientType
-    from superset.reports.notifications.base import NotificationContent
+    from axbi.reports.models import ReportRecipients, ReportRecipientType
+    from axbi.reports.notifications.base import NotificationContent
 
     content = NotificationContent(
         name="test alert", header_data=mock_header_data, description="Test description"
@@ -256,14 +256,14 @@ def test_send_treats_redirect_as_failure(monkeypatch, mock_header_data) -> None:
         text = ""
 
     monkeypatch.setattr(
-        "superset.reports.notifications.webhook.current_app", MockCurrentApp
+        "axbi.reports.notifications.webhook.current_app", MockCurrentApp
     )
     monkeypatch.setattr(
-        "superset.reports.notifications.webhook.feature_flag_manager.is_feature_enabled",
+        "axbi.reports.notifications.webhook.feature_flag_manager.is_feature_enabled",
         lambda flag: True,
     )
     monkeypatch.setattr(
-        "superset.reports.notifications.webhook.requests.post",
+        "axbi.reports.notifications.webhook.requests.post",
         lambda *args, **kwargs: MockResponse(),
     )
 

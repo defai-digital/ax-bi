@@ -18,9 +18,9 @@
  */
 
 import { memo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Metric } from '@superset-ui/core';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { t } from '@ax-bi/core/translation';
+import { Metric } from '@ax-bi/ui-core';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import { FoldersEditorItemType } from '../../types';
 import { FlattenedTreeItem, isDefaultFolder } from '../constants';
 import { TreeItem } from '../TreeItem';

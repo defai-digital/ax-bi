@@ -35,12 +35,12 @@ from unittest.mock import patch
 
 import pytest
 
-from superset.core.mcp.core_mcp_injection import (
+from axbi.core.mcp.core_mcp_injection import (
     create_prompt_decorator,
     create_tool_decorator,
 )
-from superset.mcp_service.app import assert_all_tools_protected
-from superset.mcp_service.auth import (
+from axbi.mcp_service.app import assert_all_tools_protected
+from axbi.mcp_service.auth import (
     check_tool_permission,
     FEATURE_FLAGS_ATTR,
     mcp_auth_hook,
@@ -82,12 +82,12 @@ def test_tool_feature_flags_require_every_declared_flag() -> None:
     setattr(sample_tool, FEATURE_FLAGS_ATTR, ("GENAI_BI", "GENAI_BI_MCP_TOOLS"))
 
     with patch(
-        "superset.is_feature_enabled",
+        "axbi.is_feature_enabled",
         side_effect=lambda flag: flag == "GENAI_BI",
     ):
         assert tool_feature_flags_enabled(sample_tool) is False
 
-    with patch("superset.is_feature_enabled", return_value=True):
+    with patch("axbi.is_feature_enabled", return_value=True):
         assert tool_feature_flags_enabled(sample_tool) is True
 
 
@@ -99,7 +99,7 @@ def test_disabled_feature_flag_denies_execution_before_rbac_lookup() -> None:
 
     setattr(sample_tool, FEATURE_FLAGS_ATTR, ("GENAI_BI",))
 
-    with patch("superset.is_feature_enabled", return_value=False):
+    with patch("axbi.is_feature_enabled", return_value=False):
         assert check_tool_permission(sample_tool) is False
 
 
@@ -179,7 +179,7 @@ def test_assert_all_tools_protected_respects_allowlist() -> None:
     # Replace the module-level frozenset so the function under test sees a
     # deterministic allowlist regardless of which real tools exist.
     with patch(
-        "superset.mcp_service.app.ALLOWED_UNPROTECTED",
+        "axbi.mcp_service.app.ALLOWED_UNPROTECTED",
         frozenset({"public_health_probe"}),
     ):
         # Should not raise — the tool is allowlisted.
@@ -264,7 +264,7 @@ def test_assert_all_tools_protected_warns_when_no_tools_found(
         local_provider=SimpleNamespace(_components={}),
     )
 
-    with caplog.at_level(logging.WARNING, logger="superset.mcp_service.app"):
+    with caplog.at_level(logging.WARNING, logger="axbi.mcp_service.app"):
         assert_all_tools_protected(mcp)
 
     assert any(

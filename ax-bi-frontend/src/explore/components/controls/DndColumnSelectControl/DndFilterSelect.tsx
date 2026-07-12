@@ -17,20 +17,20 @@
  * under the License.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
 import {
   Metric,
   QueryFormData,
   QueryFormMetric,
-  SupersetClient,
-} from '@superset-ui/core';
+  AxBIClient,
+} from '@ax-bi/ui-core';
 import {
   ColumnMeta,
   isColumnMeta,
   isTemporalColumn,
-} from '@superset-ui/chart-controls';
-import { Modal } from '@superset-ui/core/components';
+} from '@ax-bi/chart-controls';
+import { Modal } from '@ax-bi/ui-core/components';
 import {
   OPERATOR_ENUM_TO_OPERATOR_TYPE,
   Operators,
@@ -186,7 +186,7 @@ const DndFilterSelect = (props: DndFilterSelectProps) => {
       } = datasource;
 
       if (!isSqllabView && dbId && name && schema) {
-        SupersetClient.get({
+        AxBIClient.get({
           endpoint: `/api/v1/database/${dbId}/table_metadata/extra/${toQueryString(
             {
               name,

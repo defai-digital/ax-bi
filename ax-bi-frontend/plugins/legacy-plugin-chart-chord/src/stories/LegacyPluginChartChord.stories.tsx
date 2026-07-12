@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { SuperChart, VizType } from '@superset-ui/core';
-import ChordChartPlugin from '@superset-ui/legacy-plugin-chart-chord';
+import { SuperChart, VizType } from '@ax-bi/ui-core';
+import ChordChartPlugin from '@ax-bi/legacy-plugin-chart-chord';
 import data from './data';
 import { withResizableChartDemo } from '@storybook-shared';
 
@@ -35,12 +35,7 @@ export default {
   argTypes: {
     colorScheme: {
       control: 'select',
-      options: [
-        'supersetColors',
-        'd3Category10',
-        'bnbColors',
-        'googleCategory20c',
-      ],
+      options: ['axbiColors', 'd3Category10', 'bnbColors', 'googleCategory20c'],
     },
     yAxisFormat: {
       control: 'select',

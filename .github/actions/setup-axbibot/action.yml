@@ -1,0 +1,43 @@
+name: 'Setup axbibot'
+description: 'Sets up axbibot npm lib from the repo or npm'
+inputs:
+  from-npm:
+    description: 'Install from npm instead of local setup'
+    required: false
+    default: 'true' # Defaults to using the local setup
+runs:
+  using: 'composite'
+  steps:
+
+    - name: Setup Node Env
+      uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+      with:
+        node-version: '20'
+
+    - name: Install axbibot from npm
+      if: ${{ inputs.from-npm == 'true' }}
+      shell: bash
+      # zizmor: ignore[adhoc-packages] - axbibot is a CLI release helper used by trusted automation.
+      run: npm install -g axbibot
+
+    - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
+      if: ${{ inputs.from-npm == 'false' }}
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: false
+        repository: ax-bi/axbibot
+        path: axbibot
+
+    - name: Setup axbibot from repo
+      if: ${{ inputs.from-npm == 'false' }}
+      shell: bash
+      working-directory: axbibot
+      # zizmor: ignore[adhoc-packages] - the locally packed CLI is installed only for trusted release automation.
+      run: |
+        # simple trick to install globally with dependencies
+        npm pack
+        npm install -g ./axbibot*.tgz
+
+    - name: echo axbibot version
+      shell: bash
+      run: axbibot version

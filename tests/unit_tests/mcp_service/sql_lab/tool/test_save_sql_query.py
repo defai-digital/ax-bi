@@ -28,11 +28,11 @@ from unittest.mock import MagicMock, Mock, patch
 import pytest
 from pydantic import ValidationError
 
-from superset.mcp_service.sql_lab.schemas import (
+from axbi.mcp_service.sql_lab.schemas import (
     SaveSqlQueryRequest,
     SaveSqlQueryResponse,
 )
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_ESCAPED_CLOSE_DELIMITER,
     LLM_CONTEXT_ESCAPED_OPEN_DELIMITER,
     sanitize_for_llm_context,
@@ -148,9 +148,9 @@ class TestSaveSqlQueryResponse:
 
 
 def _force_passthrough_decorators():
-    """Force superset_core MCP tool decorator to be a passthrough.
+    """Force axbi_core MCP tool decorator to be a passthrough.
 
-    In CI, superset_core is fully installed and the real @tool decorator
+    In CI, axbi_core is fully installed and the real @tool decorator
     includes authentication middleware. For unit tests we want to bypass
     auth and test the tool logic directly, so we always replace the
     decorator with a passthrough regardless of installation state.
@@ -176,26 +176,26 @@ def _force_passthrough_decorators():
     saved_modules: dict[str, types.ModuleType] = {}
 
     # Only mock the specific decorator submodules, NOT the top-level
-    # superset_core package. Replacing sys.modules["superset_core"] with
-    # a MagicMock causes 'superset_core' is not a package errors for
+    # axbi_core package. Replacing sys.modules["axbi_core"] with
+    # a MagicMock causes 'axbi_core' is not a package errors for
     # other submodules (queries, common) that are imported by sibling
     # tool files during test collection.
     mock_keys = [
-        "superset_core.api",
-        "superset_core.api.mcp",
-        "superset_core.api.types",
-        "superset_core.mcp",
-        "superset_core.mcp.decorators",
+        "axbi_core.api",
+        "axbi_core.api.mcp",
+        "axbi_core.api.types",
+        "axbi_core.mcp",
+        "axbi_core.mcp.decorators",
     ]
     for key in mock_keys:
         if key in sys.modules:
             saved_modules[key] = sys.modules[key]
 
-    sys.modules["superset_core.api"] = mock_api
-    sys.modules["superset_core.api.mcp"] = mock_mcp
-    sys.modules["superset_core.mcp"] = mock_mcp
-    sys.modules["superset_core.mcp.decorators"] = mock_decorators
-    sys.modules.setdefault("superset_core.api.types", MagicMock())
+    sys.modules["axbi_core.api"] = mock_api
+    sys.modules["axbi_core.api.mcp"] = mock_mcp
+    sys.modules["axbi_core.mcp"] = mock_mcp
+    sys.modules["axbi_core.mcp.decorators"] = mock_decorators
+    sys.modules.setdefault("axbi_core.api.types", MagicMock())
 
     return saved_modules
 
@@ -203,12 +203,12 @@ def _force_passthrough_decorators():
 def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
     """Restore original sys.modules entries after passthrough mocking."""
     # Remove mock entries for decorator paths and tool modules imported
-    # under patched decorators. Do NOT remove the top-level superset_core
+    # under patched decorators. Do NOT remove the top-level axbi_core
     # package or unrelated submodules (queries, common, etc.).
     mock_prefixes = (
-        "superset_core.api",
-        "superset_core.mcp",
-        "superset.mcp_service.sql_lab.tool",
+        "axbi_core.api",
+        "axbi_core.mcp",
+        "axbi.mcp_service.sql_lab.tool",
     )
     for key in list(sys.modules.keys()):
         if any(key.startswith(prefix) for prefix in mock_prefixes):
@@ -226,10 +226,10 @@ def _get_tool_module():
     # Clear cached module imports so we get a fresh import with mocked
     # decorators. This is necessary because in CI the real @tool decorator
     # may have been applied during a previous import.
-    mod_name = "superset.mcp_service.sql_lab.tool.save_sql_query"
+    mod_name = "axbi.mcp_service.sql_lab.tool.save_sql_query"
     saved_tool_modules: dict[str, object] = {}
     for key in list(sys.modules.keys()):
-        if key.startswith("superset.mcp_service.sql_lab.tool"):
+        if key.startswith("axbi.mcp_service.sql_lab.tool"):
             saved_tool_modules[key] = sys.modules.pop(key)
     saved_modules.update(saved_tool_modules)
     mod = importlib.import_module(mod_name)
@@ -253,7 +253,7 @@ class TestSaveSqlQueryToolLogic:
     """Test save_sql_query tool internal logic.
 
     The tool function uses lazy imports inside its body (from flask import g,
-    from superset import db, etc.). We patch at the import source so that
+    from axbi import db, etc.). We patch at the import source so that
     when the function runs, it picks up our mocks.
 
     With passthrough decorators, we call the tool function directly
@@ -301,11 +301,11 @@ class TestSaveSqlQueryToolLogic:
             mock_g.user = Mock(id=1)
 
             with (
-                patch("superset.db", mock_db_session),
-                patch("superset.security_manager", mock_sm),
-                patch("superset.daos.query.SavedQueryDAO", mock_dao),
+                patch("axbi.db", mock_db_session),
+                patch("axbi.security_manager", mock_sm),
+                patch("axbi.daos.query.SavedQueryDAO", mock_dao),
                 patch(
-                    "superset.mcp_service.utils.url_utils.get_superset_base_url",
+                    "axbi.mcp_service.utils.url_utils.get_axbi_base_url",
                     return_value="http://localhost:8088",
                 ),
                 patch("flask.g", mock_g),
@@ -350,13 +350,13 @@ class TestSaveSqlQueryToolLogic:
             mock_g.user = Mock(id=1)
 
             with (
-                patch("superset.db", mock_db_session),
+                patch("axbi.db", mock_db_session),
                 patch("flask.g", mock_g),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
-                from superset.exceptions import SupersetErrorException
+                from axbi.exceptions import AxBIErrorException
 
-                with pytest.raises(SupersetErrorException, match="not found"):
+                with pytest.raises(AxBIErrorException, match="not found"):
                     await mod.save_sql_query(request, mock_ctx)
         finally:
             _restore_modules(saved)
@@ -389,14 +389,14 @@ class TestSaveSqlQueryToolLogic:
             mock_g.user = Mock(id=1)
 
             with (
-                patch("superset.db", mock_db_session),
-                patch("superset.security_manager", mock_sm),
+                patch("axbi.db", mock_db_session),
+                patch("axbi.security_manager", mock_sm),
                 patch("flask.g", mock_g),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
-                from superset.exceptions import SupersetSecurityException
+                from axbi.exceptions import AxBISecurityException
 
-                with pytest.raises(SupersetSecurityException, match="Access denied"):
+                with pytest.raises(AxBISecurityException, match="Access denied"):
                     await mod.save_sql_query(request, mock_ctx)
         finally:
             _restore_modules(saved)
@@ -443,11 +443,11 @@ class TestSaveSqlQueryToolLogic:
             mock_g.user = Mock(id=1)
 
             with (
-                patch("superset.db", mock_db_session),
-                patch("superset.security_manager", mock_sm),
-                patch("superset.daos.query.SavedQueryDAO", mock_dao),
+                patch("axbi.db", mock_db_session),
+                patch("axbi.security_manager", mock_sm),
+                patch("axbi.daos.query.SavedQueryDAO", mock_dao),
                 patch(
-                    "superset.mcp_service.utils.url_utils.get_superset_base_url",
+                    "axbi.mcp_service.utils.url_utils.get_axbi_base_url",
                     return_value="http://localhost:8088",
                 ),
                 patch("flask.g", mock_g),

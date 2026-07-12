@@ -29,7 +29,7 @@ import {
 } from 'react';
 import { useSelector } from 'react-redux';
 
-import { styled, useTheme } from '@apache-superset/core/theme';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import { use, init, EChartsType, registerLocale } from 'echarts/core';
 import {
   SankeyChart,
@@ -76,7 +76,7 @@ import { mergeEchartsThemeOverrides } from '../utils/themeOverrides';
 type LocaleModule = { default: Parameters<typeof registerLocale>[1] };
 
 // Define this interface here to avoid creating a dependency back to ax-bi-frontend,
-// TODO: to move the type to @superset-ui/core
+// TODO: to move the type to @ax-bi/ui-core
 interface ExplorePageState {
   common?: {
     locale?: string;

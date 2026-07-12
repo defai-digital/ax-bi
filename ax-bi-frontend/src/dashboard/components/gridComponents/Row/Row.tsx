@@ -28,10 +28,10 @@ import {
   RefObject,
 } from 'react';
 import cx from 'classnames';
-import { t } from '@apache-superset/core/translation';
-import { FeatureFlag, isFeatureEnabled, JsonObject } from '@superset-ui/core';
-import { css, styled, SupersetTheme } from '@apache-superset/core/theme';
-import { Icons } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { FeatureFlag, isFeatureEnabled, JsonObject } from '@ax-bi/ui-core';
+import { css, styled, AxBITheme } from '@ax-bi/core/theme';
+import { Icons } from '@ax-bi/ui-core/components';
 import {
   Draggable,
   Droppable,
@@ -123,7 +123,7 @@ const GridRow = styled.div<{ editMode: boolean }>`
   `}
 `;
 
-const emptyRowContentStyles = (theme: SupersetTheme) => css`
+const emptyRowContentStyles = (theme: AxBITheme) => css`
   position: absolute;
   width: 100%;
   height: 100%;

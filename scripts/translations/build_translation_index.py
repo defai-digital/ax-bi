@@ -31,7 +31,7 @@ is a dict mapping lang -> {0: "...", 1: "..."} (or null if untranslated).
 Usage:
   python scripts/translations/build_translation_index.py
   python scripts/translations/build_translation_index.py \
-    --translations-dir superset/translations \
+    --translations-dir axbi/translations \
     --output /tmp/translation_index.json
 """
 
@@ -47,10 +47,10 @@ from typing import Any
 
 _POEntry = Any
 
-TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "superset" / "translations"
+TRANSLATIONS_DIR = Path(__file__).parent.parent.parent / "axbi" / "translations"
 DEFAULT_OUTPUT = (
     Path(__file__).parent.parent.parent
-    / "superset"
+    / "axbi"
     / "translations"
     / "translation_index.json"
 )
@@ -127,7 +127,7 @@ def main() -> None:
         "--translations-dir",
         type=Path,
         default=TRANSLATIONS_DIR,
-        help="Path to the translations directory (default: superset/translations)",
+        help="Path to the translations directory (default: axbi/translations)",
     )
     parser.add_argument(
         "--output",
@@ -135,8 +135,7 @@ def main() -> None:
         type=Path,
         default=DEFAULT_OUTPUT,
         help=(
-            "Output JSON file path"
-            " (default: superset/translations/translation_index.json)"
+            "Output JSON file path (default: axbi/translations/translation_index.json)"
         ),
     )
     args = parser.parse_args()

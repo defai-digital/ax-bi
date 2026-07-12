@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import rison from 'rison';
 import {
   clearPermissionSearchCache,
@@ -24,7 +24,7 @@ import {
   fetchPermissionOptions,
 } from './utils';
 
-const getMock = jest.spyOn(SupersetClient, 'get');
+const getMock = jest.spyOn(AxBIClient, 'get');
 
 afterEach(() => {
   getMock.mockReset();

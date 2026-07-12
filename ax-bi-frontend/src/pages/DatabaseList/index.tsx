@@ -17,14 +17,14 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   getExtensionsRegistry,
-  SupersetClient,
+  AxBIClient,
   isFeatureEnabled,
   FeatureFlag,
-} from '@superset-ui/core';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import type { CellProps } from 'react-table';
 import rison from 'rison';
@@ -47,7 +47,7 @@ import {
   Tooltip,
   List,
   Loading,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import {
   ModifiedInfo,
   ListView,
@@ -55,10 +55,10 @@ import {
   ListViewFilters,
   type ListViewFetchDataConfig,
 } from 'src/components';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { getUrlParam } from 'src/utils/urlUtils';
 import { URL_PARAMS } from 'src/constants';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
 import handleResourceExport from 'src/utils/export';
 import { ExtensionConfigs } from 'src/features/home/types';
@@ -202,7 +202,7 @@ function DatabaseList({
         ...(otherFilters.length ? { filters: otherFilters } : {}),
       });
 
-      return SupersetClient.get({
+      return AxBIClient.get({
         endpoint: `/api/v1/semantic_layer/connections/?q=${queryParams}`,
       })
         .then(({ json = {} }) => {
@@ -291,7 +291,7 @@ function DatabaseList({
 
   const openDatabaseDeleteModal = useCallback(
     (database: DatabaseObject) =>
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/database/${database.id}/related_objects/`,
       })
         .then(({ json = {} }) => {
@@ -315,7 +315,7 @@ function DatabaseList({
 
   function handleDatabaseDelete(database: DatabaseObject) {
     const { id, database_name: dbName } = database;
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/database/${id}`,
     }).then(
       () => {
@@ -424,7 +424,7 @@ function DatabaseList({
         { col: 'allow_file_upload', opr: 'upload_is_enabled', value: true },
       ],
     };
-    SupersetClient.get({
+    AxBIClient.get({
       endpoint: `/api/v1/database/?q=${rison.encode(payload)}`,
     }).then(({ json }: Record<string, any>) => {
       // There might be some existing Gsheets and Clickhouse DBs
@@ -543,7 +543,7 @@ function DatabaseList({
       } else {
         addInfoToast(t('Syncing permissions for %s', database.database_name));
       }
-      SupersetClient.post({
+      AxBIClient.post({
         endpoint: `/api/v1/database/${database.id}/sync_permissions/`,
       }).then(
         ({ response }) => {
@@ -583,7 +583,7 @@ function DatabaseList({
   const initialSort = [{ id: 'changed_on_delta_humanized', desc: true }];
 
   function handleSemanticLayerDelete(item: ConnectionItem) {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/semantic_layer/${item.uuid}`,
     }).then(
       () => {

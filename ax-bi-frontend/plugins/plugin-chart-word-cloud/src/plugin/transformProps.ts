@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ChartProps, getColumnLabel } from '@superset-ui/core';
+import { ChartProps, getColumnLabel } from '@ax-bi/ui-core';
 import { WordCloudProps, WordCloudEncoding } from '../chart/WordCloud';
 import { WordCloudFormData } from '../types';
 

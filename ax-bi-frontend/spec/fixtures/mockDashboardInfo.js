@@ -49,7 +49,7 @@ export default {
   dash_edit_perm: true,
   dash_save_perm: true,
   common: {
-    conf: { SUPERSET_WEBSERVER_TIMEOUT: 60 },
+    conf: { AXBI_WEBSERVER_TIMEOUT: 60 },
   },
   filterBarOrientation: FilterBarOrientation.Vertical,
 };

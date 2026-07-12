@@ -17,7 +17,7 @@
  * under the License.
  */
 import { isEmpty } from 'lodash';
-import type { AgGridChartState } from '@superset-ui/core';
+import type { AgGridChartState } from '@ax-bi/ui-core';
 
 const getInitialFilterModel = (
   chartState?: Partial<AgGridChartState>,

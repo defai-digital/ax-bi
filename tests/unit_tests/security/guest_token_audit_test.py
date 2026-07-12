@@ -18,7 +18,7 @@
 
 import hashlib
 
-from superset.security.guest_token import build_guest_token_audit_payload
+from axbi.security.guest_token import build_guest_token_audit_payload
 
 
 def test_build_guest_token_audit_payload_captures_issuance_metadata() -> None:

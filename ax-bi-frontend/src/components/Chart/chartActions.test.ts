@@ -21,7 +21,7 @@ import fetchMock from 'fetch-mock';
 
 import {
   FeatureFlag,
-  SupersetClient,
+  AxBIClient,
   getChartMetadataRegistry,
   getChartBuildQueryRegistry,
   QueryFormData,
@@ -30,7 +30,7 @@ import {
   AnnotationType,
   AnnotationSourceType,
   AnnotationStyle,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import * as toastActions from 'src/components/MessageToasts/actions';
 import { LOG_EVENT } from 'src/logger/actions';
 import * as exploreUtils from 'src/explore/exploreUtils';
@@ -55,7 +55,7 @@ interface MockState {
   };
   common: {
     conf: {
-      SUPERSET_WEBSERVER_TIMEOUT?: number;
+      AXBI_WEBSERVER_TIMEOUT?: number;
     };
   };
 }
@@ -77,8 +77,8 @@ const mockGetState = (): MockState => ({
   },
 });
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   getChartMetadataRegistry: jest.fn(),
   getChartBuildQueryRegistry: jest.fn(),
 }));
@@ -175,7 +175,7 @@ describe('chart actions', () => {
       },
       common: {
         conf: {
-          SUPERSET_WEBSERVER_TIMEOUT: 60,
+          AXBI_WEBSERVER_TIMEOUT: 60,
         },
       },
     };
@@ -247,7 +247,7 @@ describe('chart actions', () => {
       },
       common: {
         conf: {
-          SUPERSET_WEBSERVER_TIMEOUT: 60,
+          AXBI_WEBSERVER_TIMEOUT: 60,
         },
       },
     };
@@ -711,11 +711,11 @@ describe('chart actions', () => {
       } as AnnotationLayer;
       const key = undefined;
 
-      const postSpy = jest.spyOn(SupersetClient, 'post');
+      const postSpy = jest.spyOn(AxBIClient, 'post');
       postSpy.mockImplementation(
         () =>
           Promise.resolve({ json: { result: [] } }) as unknown as ReturnType<
-            typeof SupersetClient.post
+            typeof AxBIClient.post
           >,
       );
       const buildV1ChartDataPayloadSpy = jest.spyOn(
@@ -751,11 +751,11 @@ describe('chart actions timeout', () => {
   });
 
   test('should use the timeout from arguments when given', async () => {
-    const postSpy = jest.spyOn(SupersetClient, 'post');
+    const postSpy = jest.spyOn(AxBIClient, 'post');
     postSpy.mockImplementation(
       () =>
         Promise.resolve({ json: { result: [] } }) as unknown as ReturnType<
-          typeof SupersetClient.post
+          typeof AxBIClient.post
         >,
     );
     const timeout = 10; // Set the timeout value here
@@ -789,11 +789,11 @@ describe('chart actions timeout', () => {
   });
 
   test('should use the timeout from common.conf when not passed as an argument', async () => {
-    const postSpy = jest.spyOn(SupersetClient, 'post');
+    const postSpy = jest.spyOn(AxBIClient, 'post');
     postSpy.mockImplementation(
       () =>
         Promise.resolve({ json: { result: [] } }) as unknown as ReturnType<
-          typeof SupersetClient.post
+          typeof AxBIClient.post
         >,
     );
     const formData: Partial<QueryFormData> = { datasource: 'table__1' }; // Set the formData here
@@ -820,9 +820,9 @@ describe('chart actions timeout', () => {
       timeout:
         (
           initialState.common.conf as unknown as {
-            SUPERSET_WEBSERVER_TIMEOUT: number;
+            AXBI_WEBSERVER_TIMEOUT: number;
           }
-        ).SUPERSET_WEBSERVER_TIMEOUT * 1000,
+        ).AXBI_WEBSERVER_TIMEOUT * 1000,
       headers: { 'Content-Type': 'application/json' },
       jsonPayload: expect.any(Object) as JsonObject,
     };

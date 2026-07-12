@@ -23,14 +23,11 @@ import {
   ensureIsArray,
   getExtensionsRegistry,
   QueryFormData,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+} from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { useEffect, useState } from 'react';
 import { Dataset } from 'src/components/Chart/types';
-import {
-  cachedSupersetGet,
-  supersetGetCache,
-} from 'src/utils/cachedSupersetGet';
+import { cachedAxBIGet, axbiGetCache } from 'src/utils/cachedAxBIGet';
 import { Resource, ResourceStatus } from './apiResources';
 
 /**
@@ -98,12 +95,12 @@ export const useDatasetDrillInfo = (
         } else {
           const endpoint = `/api/v1/dataset/${numericDatasetId}/drill_info/?q=(dashboard_id:${dashboardId})`;
           try {
-            const { json } = await cachedSupersetGet({ endpoint });
+            const { json } = await cachedAxBIGet({ endpoint });
             const { result: datasetResult } = json;
             result = datasetResult;
           } catch (error) {
             logging.error('Failed to load dataset: ', error);
-            supersetGetCache.delete(endpoint);
+            axbiGetCache.delete(endpoint);
             throw error;
           }
         }

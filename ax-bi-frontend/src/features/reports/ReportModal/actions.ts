@@ -17,8 +17,8 @@
  * under the License.
  */
 /* eslint camelcase: 0 */
-import { SupersetClient } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import rison from 'rison';
 import {
   addDangerToast,
@@ -105,7 +105,7 @@ export function fetchUISpecificReport({
     ],
   });
   return function fetchUISpecificReportThunk(dispatch: Dispatch<AnyAction>) {
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/report/?q=${queryParams}`,
     })
       .then(({ json }) => {
@@ -161,7 +161,7 @@ export interface AddReportAction {
 
 export const addReport =
   (report: Partial<ReportObject>) => (dispatch: Dispatch<AnyAction>) =>
-    SupersetClient.post({
+    AxBIClient.post({
       endpoint: `/api/v1/report/`,
       jsonPayload: report,
     })
@@ -183,7 +183,7 @@ export interface SubscribeReportAction {
 
 export const subscribeReport =
   (report: Partial<ReportObject>) => (dispatch: Dispatch<AnyAction>) =>
-    SupersetClient.post({
+    AxBIClient.post({
       endpoint: `/api/v1/report/subscribe`,
       jsonPayload: report,
     })
@@ -206,7 +206,7 @@ export interface EditReportAction {
 export const editReport =
   (id: number, report: Partial<ReportObject>) =>
   (dispatch: Dispatch<AnyAction>) =>
-    SupersetClient.put({
+    AxBIClient.put({
       endpoint: `/api/v1/report/${id}`,
       jsonPayload: report,
     })
@@ -223,7 +223,7 @@ export function toggleActive(report: ReportObject, isActive: boolean) {
   return function toggleActiveThunk(
     dispatch: ThunkDispatch<ReportRootState, unknown, AnyAction>,
   ) {
-    return SupersetClient.put({
+    return AxBIClient.put({
       endpoint: encodeURI(`/api/v1/report/${report.id}`),
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -261,7 +261,7 @@ export interface DeleteReportAction {
 
 export function deleteActiveReport(report: DeletableReport) {
   return function deleteActiveReportThunk(dispatch: Dispatch<AnyAction>) {
-    return SupersetClient.delete({
+    return AxBIClient.delete({
       endpoint: encodeURI(`/api/v1/report/${report.id}`),
     })
       .then(() => {

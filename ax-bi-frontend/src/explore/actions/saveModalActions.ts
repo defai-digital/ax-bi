@@ -18,13 +18,13 @@
  */
 import rison from 'rison';
 import { Dispatch } from 'redux';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   DatasourceType,
   type QueryFormData,
   SimpleAdhocFilter,
-  SupersetClient,
-} from '@superset-ui/core';
+  AxBIClient,
+} from '@ax-bi/ui-core';
 import { addSuccessToast } from 'src/components/MessageToasts/actions';
 import { isEmpty } from 'lodash';
 import { Slice } from 'src/dashboard/types';
@@ -237,7 +237,7 @@ export const updateSlice =
     const { slice_id: sliceId, owners, form_data: formDataFromSlice } = slice;
     const formData = getState().explore?.form_data;
     try {
-      const response = await SupersetClient.put({
+      const response = await AxBIClient.put({
         endpoint: `/api/v1/chart/${sliceId}`,
         jsonPayload: await getSlicePayload(
           sliceName,
@@ -269,7 +269,7 @@ export const createSlice =
   async (dispatch: Dispatch, getState: () => Partial<QueryFormData>) => {
     const formData = getState().explore?.form_data;
     try {
-      const response = await SupersetClient.post({
+      const response = await AxBIClient.post({
         endpoint: `/api/v1/chart/`,
         jsonPayload: await getSlicePayload(
           sliceName,
@@ -292,7 +292,7 @@ export const createSlice =
 export const createDashboard =
   (dashboardName: string) => async (dispatch: Dispatch) => {
     try {
-      const response = await SupersetClient.post({
+      const response = await AxBIClient.post({
         endpoint: `/api/v1/dashboard/`,
         jsonPayload: { dashboard_title: dashboardName },
       });
@@ -307,7 +307,7 @@ export const createDashboard =
 export const getSliceDashboards =
   (slice: Partial<Slice>) => async (dispatch: Dispatch) => {
     try {
-      const response = await SupersetClient.get({
+      const response = await AxBIClient.get({
         endpoint: `/api/v1/chart/${slice.slice_id}?q=${rison.encode({
           select_columns: ['dashboards.id'],
         })}`,

@@ -18,7 +18,7 @@
 from __future__ import annotations
 
 import pyarrow as pa
-from superset_core.semantic_layers.types import AggregationType, Metric
+from axbi_core.semantic_layers.types import AggregationType, Metric
 
 
 def test_metric_aggregation_defaults_to_none() -> None:

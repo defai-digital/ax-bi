@@ -24,9 +24,9 @@ import pytest
 from pytest_mock import MockerFixture
 from sqlglot import Dialects, errors, exp, parse_one
 
-from superset.exceptions import QueryClauseValidationException, SupersetParseError
-from superset.jinja_context import JinjaTemplateProcessor
-from superset.sql.parse import (
+from axbi.exceptions import AxBIParseError, QueryClauseValidationException
+from axbi.jinja_context import JinjaTemplateProcessor
+from axbi.sql.parse import (
     CTASMethod,
     extract_tables_from_statement,
     JinjaSQLResult,
@@ -379,19 +379,19 @@ def test_extract_tables_illdefined() -> None:
     """
     Test that ill-defined tables return an empty set.
     """
-    with pytest.raises(SupersetParseError) as excinfo:
+    with pytest.raises(AxBIParseError) as excinfo:
         extract_tables_from_sql("SELECT * FROM schemaname.")
     assert str(excinfo.value) == "Error parsing near '.' at line 1:25"
 
-    with pytest.raises(SupersetParseError) as excinfo:
+    with pytest.raises(AxBIParseError) as excinfo:
         extract_tables_from_sql("SELECT * FROM catalogname.schemaname.")
     assert str(excinfo.value) == "Error parsing near '.' at line 1:37"
 
-    with pytest.raises(SupersetParseError) as excinfo:
+    with pytest.raises(AxBIParseError) as excinfo:
         extract_tables_from_sql("SELECT * FROM catalogname..")
     assert str(excinfo.value) == "Error parsing near '.' at line 1:27"
 
-    with pytest.raises(SupersetParseError) as excinfo:
+    with pytest.raises(AxBIParseError) as excinfo:
         extract_tables_from_sql('SELECT * FROM "tbname')
     assert str(excinfo.value) == "Unable to parse script"
 
@@ -884,13 +884,13 @@ def test_sqlscript_uses_rust_sql_kernel_when_enabled(
         calls.append((sql, use_rust))
         return "SELECT 1"
 
-    monkeypatch.setattr("superset.is_feature_enabled", lambda flag: True)
+    monkeypatch.setattr("axbi.is_feature_enabled", lambda flag: True)
     monkeypatch.setattr(
-        "superset.runtime_modernization.rust_sql.rust_sql_kernel_available",
+        "axbi.runtime_modernization.rust_sql.rust_sql_kernel_available",
         lambda: True,
     )
     monkeypatch.setattr(
-        "superset.runtime_modernization.rust_sql.normalize_sql_whitespace",
+        "axbi.runtime_modernization.rust_sql.normalize_sql_whitespace",
         normalize_sql_whitespace,
     )
 
@@ -913,13 +913,13 @@ def test_sqlscript_skips_rust_sql_kernel_for_special_engines(
         calls.append((sql, use_rust))
         return sql
 
-    monkeypatch.setattr("superset.is_feature_enabled", lambda flag: True)
+    monkeypatch.setattr("axbi.is_feature_enabled", lambda flag: True)
     monkeypatch.setattr(
-        "superset.runtime_modernization.rust_sql.rust_sql_kernel_available",
+        "axbi.runtime_modernization.rust_sql.rust_sql_kernel_available",
         lambda: True,
     )
     monkeypatch.setattr(
-        "superset.runtime_modernization.rust_sql.normalize_sql_whitespace",
+        "axbi.runtime_modernization.rust_sql.normalize_sql_whitespace",
         normalize_sql_whitespace,
     )
 
@@ -940,13 +940,13 @@ def test_sqlscript_falls_back_when_rust_sql_kernel_fails(
     def normalize_sql_whitespace(sql: str, use_rust: bool | None = None) -> str:
         raise RuntimeError("kernel failed")
 
-    monkeypatch.setattr("superset.is_feature_enabled", lambda flag: True)
+    monkeypatch.setattr("axbi.is_feature_enabled", lambda flag: True)
     monkeypatch.setattr(
-        "superset.runtime_modernization.rust_sql.rust_sql_kernel_available",
+        "axbi.runtime_modernization.rust_sql.rust_sql_kernel_available",
         lambda: True,
     )
     monkeypatch.setattr(
-        "superset.runtime_modernization.rust_sql.normalize_sql_whitespace",
+        "axbi.runtime_modernization.rust_sql.normalize_sql_whitespace",
         normalize_sql_whitespace,
     )
 
@@ -1055,11 +1055,11 @@ def test_kustokqlstatement() -> None:
     # predicate parsing is also no-op
     assert statement.parse_predicate("a > 1") == "a > 1"
 
-    with pytest.raises(SupersetParseError, match="Invalid engine: invalid-engine"):
+    with pytest.raises(AxBIParseError, match="Invalid engine: invalid-engine"):
         KustoKQLStatement("foo | take 100", "invalid-engine")
 
     with pytest.raises(
-        SupersetParseError,
+        AxBIParseError,
         match="KustoKQLStatement should have exactly one statement",
     ):
         KustoKQLStatement("foo | take 1; bar | take 2", "kustokql")
@@ -1468,7 +1468,7 @@ def test_custom_dialect(app: None) -> None:
         "solr",
         "sqlite",
         "starrocks",
-        "superset",
+        "axbi",
         "teradatasql",
         "trino",
         "vertica",
@@ -1820,7 +1820,7 @@ def test_kusto_is_destructive(kql: str, expected: bool) -> None:
     """
     Test ``is_destructive`` on KustoKQLStatement.
     """
-    from superset.sql.parse import KustoKQLStatement
+    from axbi.sql.parse import KustoKQLStatement
 
     assert KustoKQLStatement(kql, "kustokql").is_destructive() == expected
 
@@ -1914,8 +1914,8 @@ def test_firebolt_old() -> None:
     """
     Test the dialect for the old Firebolt syntax.
     """
-    from superset.sql.dialects import FireboltOld
-    from superset.sql.parse import SQLGLOT_DIALECTS
+    from axbi.sql.dialects import FireboltOld
+    from axbi.sql.parse import SQLGLOT_DIALECTS
 
     SQLGLOT_DIALECTS["firebolt"] = FireboltOld
 
@@ -1934,8 +1934,8 @@ def test_firebolt_old_escape_string() -> None:
     """
     Test the dialect for the old Firebolt syntax.
     """
-    from superset.sql.dialects import FireboltOld
-    from superset.sql.parse import SQLGLOT_DIALECTS
+    from axbi.sql.dialects import FireboltOld
+    from axbi.sql.parse import SQLGLOT_DIALECTS
 
     SQLGLOT_DIALECTS["firebolt"] = FireboltOld
 
@@ -2277,7 +2277,7 @@ def test_set_kql_limit_value_invalid_method(method: LimitMethod) -> None:
     statement = KustoKQLStatement("foo", "kustokql")
 
     with pytest.raises(
-        SupersetParseError,
+        AxBIParseError,
         match="Kusto KQL only supports the FORCE_LIMIT method.",
     ):
         statement.set_limit_value(10, method)
@@ -3238,7 +3238,7 @@ def test_is_valid_cvas(sql: str, engine: str, expected: bool) -> None:
         ("col1 = 1) AND (col2 = 2", QueryClauseValidationException, "base"),
         ("(col1 = 1)) AND ((col2 = 2)", QueryClauseValidationException, "base"),
         ("TRUE; SELECT 1", QueryClauseValidationException, "base"),
-        # Regression test for https://github.com/apache/superset/issues/39223:
+        # Regression test for https://github.com/defai-digital/ax-bi/issues/39223:
         # dialects with `MULTI_ARG_DISTINCT=False` (Postgres, Presto, Trino,
         # DuckDB) must not rewrite user-defined multi-argument DISTINCT
         # aggregates into row-expression null guards. Dremio is included
@@ -3305,7 +3305,7 @@ def test_sanitize_clause(sql: str, expected: str | Exception, engine: str) -> No
 )
 def test_sqlstatement_format_preserves_multi_arg_distinct(engine: str) -> None:
     """
-    Regression guard for https://github.com/apache/superset/issues/39223:
+    Regression guard for https://github.com/defai-digital/ax-bi/issues/39223:
     ``SQLStatement.format()`` must not rewrite user-defined multi-argument
     DISTINCT aggregates into row-expression null guards. This is the SQL Lab /
     executor path; the metric-expression path is covered by
@@ -3396,7 +3396,7 @@ def test_extract_tables_from_jinja_sql_invalid_function(mocker: MockerFixture) -
     processor = JinjaTemplateProcessor(database)
     processor.env.globals["my_table"] = lambda: "t"
     mocker.patch(
-        "superset.jinja_context.get_template_processor",
+        "axbi.jinja_context.get_template_processor",
         return_value=processor,
     )
 
@@ -3446,7 +3446,7 @@ def test_process_jinja_sql_template_params_parameter(mocker: MockerFixture) -> N
 
     processor = JinjaTemplateProcessor(database)
     mocker.patch(
-        "superset.jinja_context.get_template_processor",
+        "axbi.jinja_context.get_template_processor",
         return_value=processor,
     )
 
@@ -3686,7 +3686,7 @@ def test_quoted_column_name_with_spaces_is_not_subquery(sql: str, engine: str) -
     chart. Snake-case aliases worked; multi-word display names did not.
     The check that raises that error is
     ``parsed_statement.has_subquery()`` in
-    ``superset/models/helpers.py:206``.
+    ``axbi/models/helpers.py:206``.
     """
     assert not SQLStatement(sql, engine).has_subquery(), (
         f"Quoted identifier {sql!r} on {engine!r} was misclassified as a "
@@ -3783,30 +3783,30 @@ def test_backtick_invalid_sql_still_fails() -> None:
     """
     # Invalid SQL that should fail even with MySQL dialect
     sql = "SELECT * FROM `table` WHERE"
-    with pytest.raises(SupersetParseError):
+    with pytest.raises(AxBIParseError):
         SQLScript(sql, "base")
 
 
 def test_parse_error_with_incomplete_location_metadata() -> None:
-    """Incomplete sqlglot error metadata should still raise SupersetParseError."""
+    """Incomplete sqlglot error metadata should still raise AxBIParseError."""
     with patch(
-        "superset.sql.parse.sqlglot.parse",
+        "axbi.sql.parse.sqlglot.parse",
         side_effect=errors.ParseError(
             "missing location", errors=[{"description": "bad SQL"}]
         ),
     ):
-        with pytest.raises(SupersetParseError):
+        with pytest.raises(AxBIParseError):
             SQLScript("SELECT", "base")
 
 
 def test_parse_error_without_error_metadata() -> None:
-    """A sqlglot ParseError with no structured errors raises SupersetParseError
+    """A sqlglot ParseError with no structured errors raises AxBIParseError
     without location details instead of crashing on the missing metadata."""
     with patch(
-        "superset.sql.parse.sqlglot.parse",
+        "axbi.sql.parse.sqlglot.parse",
         side_effect=errors.ParseError("no metadata", errors=[]),
     ):
-        with pytest.raises(SupersetParseError):
+        with pytest.raises(AxBIParseError):
             SQLScript("SELECT", "base")
 
 
@@ -3819,7 +3819,7 @@ def test_backtick_fallback_logs_warning(caplog: pytest.LogCaptureFixture) -> Non
     via a warning log.
     """
     sql = "SELECT * FROM `my_table`"
-    with caplog.at_level(logging.WARNING, logger="superset.sql.parse"):
+    with caplog.at_level(logging.WARNING, logger="axbi.sql.parse"):
         SQLScript(sql, "base")
 
     assert any(

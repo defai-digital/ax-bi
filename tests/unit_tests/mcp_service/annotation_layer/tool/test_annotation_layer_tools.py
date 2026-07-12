@@ -24,26 +24,26 @@ from fastmcp import Client
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.annotation_layer.schemas import (
+from axbi.mcp_service.annotation_layer.schemas import (
     AnnotationFilter,
     AnnotationLayerFilter,
     ListAnnotationLayersRequest,
     ListLayerAnnotationsRequest,
 )
-from superset.mcp_service.app import mcp
-from superset.mcp_service.utils.sanitization import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.utils.sanitization import (
     LLM_CONTEXT_CLOSE_DELIMITER,
     LLM_CONTEXT_OPEN_DELIMITER,
 )
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 list_annotation_layers_module = importlib.import_module(
-    "superset.mcp_service.annotation_layer.tool.list_annotation_layers"
+    "axbi.mcp_service.annotation_layer.tool.list_annotation_layers"
 )
 list_layer_annotations_module = importlib.import_module(
-    "superset.mcp_service.annotation_layer.tool.list_layer_annotations"
+    "axbi.mcp_service.annotation_layer.tool.list_layer_annotations"
 )
 
 
@@ -99,7 +99,7 @@ def mcp_server():
 def mock_auth():
     from unittest.mock import Mock
 
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -152,7 +152,7 @@ class TestAnnotationFilterSchema:
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.list")
 @pytest.mark.asyncio
 async def test_list_annotation_layers_basic(mock_list, mcp_server):
     """Basic listing returns structured response with annotation layers."""
@@ -243,7 +243,7 @@ async def test_list_annotation_layers_serves_valid_sidecar_response(mcp_server):
     )
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.list")
 @pytest.mark.asyncio
 async def test_list_annotation_layers_falls_back_on_invalid_candidate(
     mock_list, mcp_server
@@ -296,7 +296,7 @@ async def test_list_annotation_layers_falls_back_on_invalid_candidate(
     )
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.list")
 @pytest.mark.asyncio
 async def test_list_annotation_layers_empty(mock_list, mcp_server):
     """Empty result set returns zero count."""
@@ -310,7 +310,7 @@ async def test_list_annotation_layers_empty(mock_list, mcp_server):
     assert data["total_count"] == 0
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.list")
 @pytest.mark.asyncio
 async def test_list_annotation_layers_search(mock_list, mcp_server):
     """Search parameter is passed through to DAO."""
@@ -329,7 +329,7 @@ async def test_list_annotation_layers_search(mock_list, mcp_server):
     assert call_kwargs["search"] == "release"
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.list")
 @pytest.mark.asyncio
 async def test_list_annotation_layers_pagination(mock_list, mcp_server):
     """Pagination metadata is correctly computed."""
@@ -356,7 +356,7 @@ async def test_list_annotation_layers_pagination(mock_list, mcp_server):
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_annotation_layer_info_found(mock_find, mcp_server):
     """Returns annotation layer data when found."""
@@ -374,7 +374,7 @@ async def test_get_annotation_layer_info_found(mock_find, mcp_server):
     mock_find.assert_called_once_with(5, query_options=None)
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_annotation_layer_info_not_found(mock_find, mcp_server):
     """Returns error response when layer is not found."""
@@ -396,8 +396,8 @@ async def test_get_annotation_layer_info_not_found(mock_find, mcp_server):
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.list")
 @pytest.mark.asyncio
 async def test_list_layer_annotations_basic(mock_list, mock_layer_find, mcp_server):
     """Annotations are listed and scoped to the specified layer."""
@@ -514,8 +514,8 @@ async def test_list_layer_annotations_serves_valid_sidecar_response(mcp_server):
     )
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.list")
 @pytest.mark.asyncio
 async def test_list_layer_annotations_falls_back_on_candidate_warning(
     mock_list, mock_layer_find, mcp_server
@@ -548,7 +548,7 @@ async def test_list_layer_annotations_falls_back_on_candidate_warning(
                     "layerId": 5,
                     "columnsRequested": ["id", "short_descr", "layer_id"],
                     "columnsLoaded": [],
-                    "warnings": ["annotation list returned status 404 from Superset"],
+                    "warnings": ["annotation list returned status 404 from AxBI"],
                 },
             )
 
@@ -579,8 +579,8 @@ async def test_list_layer_annotations_falls_back_on_candidate_warning(
     )
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.list")
 @pytest.mark.asyncio
 async def test_list_layer_annotations_layer_id_filter_prepended(
     mock_list, mock_layer_find, mcp_server
@@ -608,7 +608,7 @@ async def test_list_layer_annotations_layer_id_filter_prepended(
     assert val == 3
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_list_layer_annotations_layer_not_found(mock_layer_find, mcp_server):
     """Returns error when the layer does not exist."""
@@ -625,8 +625,8 @@ async def test_list_layer_annotations_layer_not_found(mock_layer_find, mcp_serve
     assert "42" in data["error"]
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.list")
 @pytest.mark.asyncio
 async def test_list_layer_annotations_only_returns_own_layer(
     mock_list, mock_layer_find, mcp_server
@@ -659,8 +659,8 @@ async def test_list_layer_annotations_only_returns_own_layer(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_layer_annotation_info_found(
     mock_ann_find, mock_layer_find, mcp_server
@@ -681,7 +681,7 @@ async def test_get_layer_annotation_info_found(
     assert data["short_descr"] == _wrapped("Deploy")
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_layer_annotation_info_layer_not_found(mock_layer_find, mcp_server):
     """Returns error when the layer does not exist."""
@@ -698,8 +698,8 @@ async def test_get_layer_annotation_info_layer_not_found(mock_layer_find, mcp_se
     assert "99" in data["error"]
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_layer_annotation_info_annotation_not_found(
     mock_ann_find, mock_layer_find, mcp_server
@@ -719,8 +719,8 @@ async def test_get_layer_annotation_info_annotation_not_found(
     assert "999" in data["error"]
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_layer_annotation_info_wrong_layer(
     mock_ann_find, mock_layer_find, mcp_server
@@ -746,7 +746,7 @@ async def test_get_layer_annotation_info_wrong_layer(
 # ---------------------------------------------------------------------------
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.list")
 @pytest.mark.asyncio
 async def test_list_annotation_layers_name_with_injection_is_sanitized(
     mock_list, mcp_server
@@ -765,7 +765,7 @@ async def test_list_annotation_layers_name_with_injection_is_sanitized(
     assert injected_name in entry["name"]
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_annotation_layer_info_name_with_injection_is_sanitized(
     mock_find, mcp_server
@@ -784,8 +784,8 @@ async def test_get_annotation_layer_info_name_with_injection_is_sanitized(
     assert injected_name in data["name"]
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.list")
 @pytest.mark.asyncio
 async def test_list_layer_annotations_short_descr_with_injection_is_sanitized(
     mock_list, mock_layer_find, mcp_server
@@ -807,8 +807,8 @@ async def test_list_layer_annotations_short_descr_with_injection_is_sanitized(
     assert injected_descr in entry["short_descr"]
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.list")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.list")
 @pytest.mark.asyncio
 async def test_list_layer_annotations_json_metadata_with_injection_is_sanitized(
     mock_list, mock_layer_find, mcp_server
@@ -832,8 +832,8 @@ async def test_list_layer_annotations_json_metadata_with_injection_is_sanitized(
     assert "evil-example-host" in entry["json_metadata"]
 
 
-@patch("superset.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
-@patch("superset.daos.annotation_layer.AnnotationDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationLayerDAO.find_by_id")
+@patch("axbi.daos.annotation_layer.AnnotationDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_layer_annotation_info_short_descr_with_injection_is_sanitized(
     mock_ann_find, mock_layer_find, mcp_server

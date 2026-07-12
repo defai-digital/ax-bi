@@ -19,10 +19,7 @@
  */
 /* eslint-disable no-param-reassign, react/sort-prop-types */
 import d3 from 'd3';
-import {
-  getNumberFormatter,
-  CategoricalColorNamespace,
-} from '@superset-ui/core';
+import { getNumberFormatter, CategoricalColorNamespace } from '@ax-bi/ui-core';
 
 interface ChordData {
   matrix: number[][];
@@ -44,7 +41,7 @@ function Chord(element: HTMLElement, props: ChordProps) {
   element.innerHTML = '';
 
   const div = d3.select(element);
-  div.classed('superset-legacy-chart-chord', true);
+  div.classed('axbi-legacy-chart-chord', true);
   const { nodes, matrix } = data;
   const f = getNumberFormatter(numberFormat);
   const colorFn = CategoricalColorNamespace.getScale(colorScheme);

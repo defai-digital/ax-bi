@@ -16,21 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { postFormData, putFormData } from './formData';
 
-jest.mock('@superset-ui/core', () => ({
-  SupersetClient: {
+jest.mock('@ax-bi/ui-core', () => ({
+  AxBIClient: {
     post: jest.fn(),
     put: jest.fn(),
   },
 }));
 
-test('postFormData should call SupersetClient.post with correct payload and return key', async () => {
+test('postFormData should call AxBIClient.post with correct payload and return key', async () => {
   const mockKey = '123abc';
   const mockResponse = { json: { key: mockKey } };
 
-  (SupersetClient.post as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.post as jest.Mock).mockResolvedValue(mockResponse);
 
   const result = await postFormData(
     1,
@@ -40,7 +40,7 @@ test('postFormData should call SupersetClient.post with correct payload and retu
     'tab-7',
   );
 
-  expect(SupersetClient.post).toHaveBeenCalledWith({
+  expect(AxBIClient.post).toHaveBeenCalledWith({
     endpoint: 'api/v1/explore/form_data?tab_id=tab-7',
     jsonPayload: {
       datasource_id: 1,
@@ -53,11 +53,11 @@ test('postFormData should call SupersetClient.post with correct payload and retu
   expect(result).toBe(mockKey);
 });
 
-test('putFormData should call SupersetClient.put with correct payload and return message', async () => {
+test('putFormData should call AxBIClient.put with correct payload and return message', async () => {
   const mockMessage = 'Form data updated';
   const mockResponse = { json: { message: mockMessage } };
 
-  (SupersetClient.put as jest.Mock).mockResolvedValue(mockResponse);
+  (AxBIClient.put as jest.Mock).mockResolvedValue(mockResponse);
 
   const result = await putFormData(
     10,
@@ -68,7 +68,7 @@ test('putFormData should call SupersetClient.put with correct payload and return
     'tab-5',
   );
 
-  expect(SupersetClient.put).toHaveBeenCalledWith({
+  expect(AxBIClient.put).toHaveBeenCalledWith({
     endpoint: 'api/v1/explore/form_data/abc123?tab_id=tab-5',
     jsonPayload: {
       datasource_id: 10,
@@ -81,13 +81,13 @@ test('putFormData should call SupersetClient.put with correct payload and return
 });
 
 test('postFormData without optional params should work', async () => {
-  (SupersetClient.post as jest.Mock).mockResolvedValue({
+  (AxBIClient.post as jest.Mock).mockResolvedValue({
     json: { key: 'abc' },
   });
 
   await postFormData(2, 'table', { foo: 'bar' });
 
-  expect(SupersetClient.post).toHaveBeenCalledWith({
+  expect(AxBIClient.post).toHaveBeenCalledWith({
     endpoint: 'api/v1/explore/form_data',
     jsonPayload: {
       datasource_id: 2,

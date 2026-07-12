@@ -25,11 +25,11 @@ import {
   useRef,
   useState,
 } from 'react';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import {
   LineEditableTabs,
   TabsProps as AntdTabsProps,
-} from '@superset-ui/core/components/Tabs';
+} from '@ax-bi/ui-core/components/Tabs';
 import type { DragEndEvent } from '@dnd-kit/core';
 import {
   DndContext,

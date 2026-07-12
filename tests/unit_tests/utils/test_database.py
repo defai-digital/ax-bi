@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Tests for superset.utils.database module."""
+"""Tests for axbi.utils.database module."""
 
 import pytest
 from sqlalchemy import Sequence
@@ -22,7 +22,7 @@ from sqlalchemy.dialects import mysql, postgresql
 from sqlalchemy.schema import CreateSequence
 from sqlalchemy.sql.compiler import DDLCompiler
 
-from superset.utils.database import apply_mariadb_ddl_fix
+from axbi.utils.database import apply_mariadb_ddl_fix
 
 
 @pytest.fixture(scope="module", autouse=True)

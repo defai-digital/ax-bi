@@ -21,8 +21,8 @@ from unittest.mock import patch
 
 from flask import Flask
 
-from superset.utils import json
-from superset.utils.log import (
+from axbi.utils import json
+from axbi.utils.log import (
     AbstractEventLogger,
     collect_request_payload,
     DBEventLogger,
@@ -124,7 +124,7 @@ def test_collect_request_payload_ignores_non_object_json() -> None:
     assert payload == {"path": "/log", "query": "1", "url_rule": "None"}
 
 
-@patch("superset.db")
+@patch("axbi.db")
 def test_db_event_logger_normalizes_direct_dict_records(mock_db: Any) -> None:
     logger = DBEventLogger()
 

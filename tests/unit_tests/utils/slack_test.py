@@ -17,7 +17,7 @@
 
 import pytest
 
-from superset.utils.slack import get_channels_with_search, SlackChannelTypes
+from axbi.utils.slack import get_channels_with_search, SlackChannelTypes
 
 
 class MockResponse:
@@ -43,7 +43,7 @@ class TestGetChannelsWithSearch:
 
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search()
         assert result == [{"name": "general", "id": "C12345"}]
@@ -58,7 +58,7 @@ class TestGetChannelsWithSearch:
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search(search_string="")
         assert result == [{"name": "general", "id": "C12345"}]
@@ -78,7 +78,7 @@ class TestGetChannelsWithSearch:
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         # Call the function with a search string that matches a single channel
         result = get_channels_with_search(search_string="general", exact_match=True)
@@ -99,7 +99,7 @@ class TestGetChannelsWithSearch:
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search(
             search_string="general,random", exact_match=True
@@ -122,7 +122,7 @@ class TestGetChannelsWithSearch:
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search(search_string="general,random")
         assert result == [
@@ -146,7 +146,7 @@ class TestGetChannelsWithSearch:
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search(search_string="general", exact_match=True)
 
@@ -155,15 +155,15 @@ class TestGetChannelsWithSearch:
     def test_handle_slack_client_error_listing_channels(self, mocker):
         from slack_sdk.errors import SlackApiError
 
-        from superset.exceptions import SupersetException
+        from axbi.exceptions import AxBIException
 
         mock_client = mocker.Mock()
         mock_client.conversations_list.side_effect = SlackApiError(
             "foo", "missing scope: channels:read"
         )
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
-        with pytest.raises(SupersetException) as ex:
+        with pytest.raises(AxBIException) as ex:
             get_channels_with_search()
 
         assert str(ex.value) == (
@@ -207,7 +207,7 @@ The server responded with: missing scope: channels:read"""
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search(types=types)
         assert {channel["id"] for channel in result} == expected_channel_ids
@@ -233,7 +233,7 @@ The server responded with: missing scope: channels:read"""
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search(types=[SlackChannelTypes.PUBLIC])
 
@@ -264,7 +264,7 @@ The server responded with: missing scope: channels:read"""
             mock_response_instance_page1,
             mock_response_instance_page2,
         ]
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search()
         assert result == [
@@ -281,7 +281,7 @@ The server responded with: missing scope: channels:read"""
         mock_response_instance = MockResponse(mock_data)
         mock_client = mocker.Mock()
         mock_client.conversations_list.return_value = mock_response_instance
-        mocker.patch("superset.utils.slack.get_slack_client", return_value=mock_client)
+        mocker.patch("axbi.utils.slack.get_slack_client", return_value=mock_client)
 
         result = get_channels_with_search()
 

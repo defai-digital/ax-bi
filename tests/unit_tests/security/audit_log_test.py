@@ -19,17 +19,17 @@ from unittest.mock import MagicMock, patch
 
 from flask_appbuilder.security.sqla.models import Group, Role, User
 
-from superset.security.manager import (
+from axbi.security.manager import (
     _log_audit_event,
-    SupersetGroupApi,
-    SupersetRoleApi,
-    SupersetSecurityManager,
-    SupersetUserApi,
+    AxBIGroupApi,
+    AxBIRoleApi,
+    AxBISecurityManager,
+    AxBIUserApi,
 )
 
 
-@patch("superset.extensions.event_logger")
-@patch("superset.security.manager.get_user_id", return_value=1)
+@patch("axbi.extensions.event_logger")
+@patch("axbi.security.manager.get_user_id", return_value=1)
 def test_log_audit_event_calls_event_logger(
     mock_get_user_id: MagicMock,
     mock_event_logger: MagicMock,
@@ -50,8 +50,8 @@ def test_log_audit_event_calls_event_logger(
     )
 
 
-@patch("superset.extensions.event_logger")
-@patch("superset.security.manager.get_user_id", return_value=1)
+@patch("axbi.extensions.event_logger")
+@patch("axbi.security.manager.get_user_id", return_value=1)
 def test_log_audit_event_handles_logger_error(
     mock_get_user_id: MagicMock,
     mock_event_logger: MagicMock,
@@ -65,10 +65,10 @@ def test_log_audit_event_handles_logger_error(
 # --- Role CRUD ---
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_role_api_post_add_logs_event(mock_log: MagicMock) -> None:
-    """SupersetRoleApi.post_add logs a RoleCreated event."""
-    api = SupersetRoleApi.__new__(SupersetRoleApi)
+    """AxBIRoleApi.post_add logs a RoleCreated event."""
+    api = AxBIRoleApi.__new__(AxBIRoleApi)
     role = MagicMock(spec=Role)
     role.name = "TestRole"
     role.id = 42
@@ -78,10 +78,10 @@ def test_role_api_post_add_logs_event(mock_log: MagicMock) -> None:
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_role_api_post_update_logs_event(mock_log: MagicMock) -> None:
-    """SupersetRoleApi.post_update logs a RoleUpdated event."""
-    api = SupersetRoleApi.__new__(SupersetRoleApi)
+    """AxBIRoleApi.post_update logs a RoleUpdated event."""
+    api = AxBIRoleApi.__new__(AxBIRoleApi)
     role = MagicMock(spec=Role)
     role.name = "TestRole"
     role.id = 42
@@ -91,10 +91,10 @@ def test_role_api_post_update_logs_event(mock_log: MagicMock) -> None:
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_role_api_post_delete_logs_event(mock_log: MagicMock) -> None:
-    """SupersetRoleApi.post_delete logs a RoleDeleted event."""
-    api = SupersetRoleApi.__new__(SupersetRoleApi)
+    """AxBIRoleApi.post_delete logs a RoleDeleted event."""
+    api = AxBIRoleApi.__new__(AxBIRoleApi)
     role = MagicMock(spec=Role)
     role.name = "TestRole"
     role.id = 42
@@ -107,10 +107,10 @@ def test_role_api_post_delete_logs_event(mock_log: MagicMock) -> None:
 # --- User CRUD ---
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_user_api_post_add_logs_event(mock_log: MagicMock) -> None:
-    """SupersetUserApi.post_add logs a UserCreated event."""
-    api = SupersetUserApi.__new__(SupersetUserApi)
+    """AxBIUserApi.post_add logs a UserCreated event."""
+    api = AxBIUserApi.__new__(AxBIUserApi)
     user = MagicMock(spec=User)
     user.username = "testuser"
     user.id = 7
@@ -126,10 +126,10 @@ def test_user_api_post_add_logs_event(mock_log: MagicMock) -> None:
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_user_api_post_update_logs_event(mock_log: MagicMock) -> None:
-    """SupersetUserApi.post_update logs a UserUpdated event."""
-    api = SupersetUserApi.__new__(SupersetUserApi)
+    """AxBIUserApi.post_update logs a UserUpdated event."""
+    api = AxBIUserApi.__new__(AxBIUserApi)
     user = MagicMock(spec=User)
     user.username = "testuser"
     user.id = 7
@@ -147,10 +147,10 @@ def test_user_api_post_update_logs_event(mock_log: MagicMock) -> None:
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_user_api_post_delete_logs_event(mock_log: MagicMock) -> None:
-    """SupersetUserApi.post_delete logs a UserDeleted event."""
-    api = SupersetUserApi.__new__(SupersetUserApi)
+    """AxBIUserApi.post_delete logs a UserDeleted event."""
+    api = AxBIUserApi.__new__(AxBIUserApi)
     user = MagicMock(spec=User)
     user.username = "testuser"
     user.id = 7
@@ -164,10 +164,10 @@ def test_user_api_post_delete_logs_event(mock_log: MagicMock) -> None:
 # --- Group CRUD ---
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_group_api_post_add_logs_event(mock_log: MagicMock) -> None:
-    """SupersetGroupApi.post_add logs a GroupCreated event."""
-    api = SupersetGroupApi.__new__(SupersetGroupApi)
+    """AxBIGroupApi.post_add logs a GroupCreated event."""
+    api = AxBIGroupApi.__new__(AxBIGroupApi)
     group = MagicMock(spec=Group)
     group.name = "TestGroup"
     group.id = 10
@@ -177,10 +177,10 @@ def test_group_api_post_add_logs_event(mock_log: MagicMock) -> None:
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_group_api_post_update_logs_event(mock_log: MagicMock) -> None:
-    """SupersetGroupApi.post_update logs a GroupUpdated event."""
-    api = SupersetGroupApi.__new__(SupersetGroupApi)
+    """AxBIGroupApi.post_update logs a GroupUpdated event."""
+    api = AxBIGroupApi.__new__(AxBIGroupApi)
     group = MagicMock(spec=Group)
     group.name = "TestGroup"
     group.id = 10
@@ -190,10 +190,10 @@ def test_group_api_post_update_logs_event(mock_log: MagicMock) -> None:
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_group_api_post_delete_logs_event(mock_log: MagicMock) -> None:
-    """SupersetGroupApi.post_delete logs a GroupDeleted event."""
-    api = SupersetGroupApi.__new__(SupersetGroupApi)
+    """AxBIGroupApi.post_delete logs a GroupDeleted event."""
+    api = AxBIGroupApi.__new__(AxBIGroupApi)
     group = MagicMock(spec=Group)
     group.name = "TestGroup"
     group.id = 10
@@ -206,13 +206,13 @@ def test_group_api_post_delete_logs_event(mock_log: MagicMock) -> None:
 # --- Login / Logout ---
 
 
-@patch("superset.security.session_invalidation.stamp_login_time")
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.session_invalidation.stamp_login_time")
+@patch("axbi.security.manager._log_audit_event")
 def test_on_user_login_logs_event(
     mock_log: MagicMock, mock_stamp_login_time: MagicMock
 ) -> None:
     """on_user_login logs a UserLoggedIn event and stamps the session."""
-    sm = SupersetSecurityManager.__new__(SupersetSecurityManager)
+    sm = AxBISecurityManager.__new__(AxBISecurityManager)
     user = MagicMock(spec=User)
     user.username = "testuser"
     user.id = 7
@@ -225,10 +225,10 @@ def test_on_user_login_logs_event(
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_on_user_login_failed_logs_event(mock_log: MagicMock) -> None:
     """on_user_login_failed logs a UserLoginFailed event."""
-    sm = SupersetSecurityManager.__new__(SupersetSecurityManager)
+    sm = AxBISecurityManager.__new__(AxBISecurityManager)
     user = MagicMock(spec=User)
     user.username = "testuser"
     user.id = 7
@@ -240,10 +240,10 @@ def test_on_user_login_failed_logs_event(mock_log: MagicMock) -> None:
     )
 
 
-@patch("superset.security.manager._log_audit_event")
+@patch("axbi.security.manager._log_audit_event")
 def test_on_user_logout_logs_event(mock_log: MagicMock) -> None:
     """on_user_logout logs a UserLoggedOut event."""
-    sm = SupersetSecurityManager.__new__(SupersetSecurityManager)
+    sm = AxBISecurityManager.__new__(AxBISecurityManager)
     user = MagicMock(spec=User)
     user.username = "testuser"
     user.id = 7

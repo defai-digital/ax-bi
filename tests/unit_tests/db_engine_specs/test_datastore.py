@@ -30,13 +30,13 @@ from sqlalchemy.sql import sqltypes
 pytest.importorskip("sqlalchemy_datastore")
 from sqlalchemy_datastore import CloudDatastoreDialect  # noqa: E402
 
-from superset.db_engine_specs.datastore import (
+from axbi.axbi_typing import ResultSetColumnType
+from axbi.db_engine_specs.datastore import (
     DatastoreEngineSpec,
     DatastoreParametersType,
 )
-from superset.sql.parse import Table
-from superset.superset_typing import ResultSetColumnType
-from superset.utils import json
+from axbi.sql.parse import Table
+from axbi.utils import json
 from tests.unit_tests.db_engine_specs.utils import assert_convert_dttm
 from tests.unit_tests.fixtures.common import dttm  # noqa: F401
 
@@ -396,7 +396,7 @@ def test_get_default_catalog(mocker: MockerFixture) -> None:
     """
     Test that we get the default catalog from the connection URI.
     """
-    from superset.models.core import Database
+    from axbi.models.core import Database
 
     mocker.patch.object(Database, "get_sqla_engine")
     get_client = mocker.patch.object(DatastoreEngineSpec, "_get_client")
@@ -487,11 +487,9 @@ def test_get_client_passes_database_from_url(mocker: MockerFixture) -> None:
     from the engine URL through to ``datastore.Client``.
     """
 
-    mock_client_cls = mocker.patch(
-        "superset.db_engine_specs.datastore.datastore.Client"
-    )
+    mock_client_cls = mocker.patch("axbi.db_engine_specs.datastore.datastore.Client")
     mocker.patch(
-        "superset.db_engine_specs.datastore.service_account"
+        "axbi.db_engine_specs.datastore.service_account"
         ".Credentials.from_service_account_info",
         return_value=mocker.MagicMock(),
     )
@@ -512,11 +510,9 @@ def test_get_client_passes_none_when_no_database(mocker: MockerFixture) -> None:
     has no ``database`` query parameter.
     """
 
-    mock_client_cls = mocker.patch(
-        "superset.db_engine_specs.datastore.datastore.Client"
-    )
+    mock_client_cls = mocker.patch("axbi.db_engine_specs.datastore.datastore.Client")
     mocker.patch(
-        "superset.db_engine_specs.datastore.service_account"
+        "axbi.db_engine_specs.datastore.service_account"
         ".Credentials.from_service_account_info",
         return_value=mocker.MagicMock(),
     )
@@ -539,9 +535,7 @@ def test_get_client_default_credentials_passes_database(
     to default credentials.
     """
 
-    mock_client_cls = mocker.patch(
-        "superset.db_engine_specs.datastore.datastore.Client"
-    )
+    mock_client_cls = mocker.patch("axbi.db_engine_specs.datastore.datastore.Client")
 
     engine = mocker.MagicMock()
     engine.dialect.credentials_info = None
@@ -573,7 +567,7 @@ def test_execute_with_cursor_no_warnings(mocker: MockerFixture) -> None:
     """
 
     mocker.patch(
-        "superset.db_engine_specs.base.BaseEngineSpec.execute_with_cursor",
+        "axbi.db_engine_specs.base.BaseEngineSpec.execute_with_cursor",
     )
 
     cursor = mocker.MagicMock()
@@ -591,7 +585,7 @@ def test_execute_with_cursor_with_warnings(mocker: MockerFixture) -> None:
     """
 
     mocker.patch(
-        "superset.db_engine_specs.base.BaseEngineSpec.execute_with_cursor",
+        "axbi.db_engine_specs.base.BaseEngineSpec.execute_with_cursor",
     )
 
     cursor = mocker.MagicMock()
@@ -611,7 +605,7 @@ def test_execute_with_cursor_no_warnings_attr(mocker: MockerFixture) -> None:
     """
 
     mocker.patch(
-        "superset.db_engine_specs.base.BaseEngineSpec.execute_with_cursor",
+        "axbi.db_engine_specs.base.BaseEngineSpec.execute_with_cursor",
     )
 
     cursor = mocker.MagicMock(spec=[])  # no attributes at all
@@ -623,34 +617,34 @@ def test_execute_with_cursor_no_warnings_attr(mocker: MockerFixture) -> None:
 
 def test_get_client_dependencies_not_installed(mocker: MockerFixture) -> None:
     """
-    Test that ``_get_client`` raises ``SupersetException`` when the
+    Test that ``_get_client`` raises ``AxBIException`` when the
     google-cloud-datastore package is not installed.
     """
-    from superset.exceptions import SupersetException
+    from axbi.exceptions import AxBIException
 
     mocker.patch(
-        "superset.db_engine_specs.datastore.dependencies_installed",
+        "axbi.db_engine_specs.datastore.dependencies_installed",
         False,
     )
 
     engine = mocker.MagicMock()
     database = mocker.MagicMock()
 
-    with pytest.raises(SupersetException, match="Could not import libraries"):
+    with pytest.raises(AxBIException, match="Could not import libraries"):
         DatastoreEngineSpec._get_client(engine, database)
 
 
 def test_get_client_default_credentials_error(mocker: MockerFixture) -> None:
     """
-    Test that ``_get_client`` raises ``SupersetDBAPIConnectionError`` when
+    Test that ``_get_client`` raises ``AxBIDBAPIConnectionError`` when
     google.auth.default() fails.
     """
     from google.auth.exceptions import DefaultCredentialsError
 
-    from superset.db_engine_specs.exceptions import SupersetDBAPIConnectionError
+    from axbi.db_engine_specs.exceptions import AxBIDBAPIConnectionError
 
     mocker.patch(
-        "superset.db_engine_specs.datastore.google.auth.default",
+        "axbi.db_engine_specs.datastore.google.auth.default",
         side_effect=DefaultCredentialsError("No credentials found"),
     )
 
@@ -660,7 +654,7 @@ def test_get_client_default_credentials_error(mocker: MockerFixture) -> None:
     database = mocker.MagicMock()
 
     with pytest.raises(
-        SupersetDBAPIConnectionError,
+        AxBIDBAPIConnectionError,
         match="database credentials could not be found",
     ):
         DatastoreEngineSpec._get_client(engine, database)
@@ -670,7 +664,7 @@ def test_fetch_data_regular_tuples(mocker: MockerFixture) -> None:
     """
     Test ``fetch_data`` with regular tuple rows passes them through unchanged.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
     data = [(1, "foo"), (2, "bar")]
     mocker.patch.object(BaseEngineSpec, "fetch_data", return_value=data)
@@ -684,7 +678,7 @@ def test_fetch_data_with_row_objects(mocker: MockerFixture) -> None:
     Test ``fetch_data`` with google.cloud.datastore Row-like objects that
     have a ``values()`` method.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
     class Row:
         def __init__(self, val: tuple[int, str]) -> None:
@@ -704,7 +698,7 @@ def test_fetch_data_empty(mocker: MockerFixture) -> None:
     """
     Test ``fetch_data`` with an empty result set.
     """
-    from superset.db_engine_specs.base import BaseEngineSpec
+    from axbi.db_engine_specs.base import BaseEngineSpec
 
     mocker.patch.object(BaseEngineSpec, "fetch_data", return_value=[])
 
@@ -900,15 +894,15 @@ def test_get_view_names(mocker: MockerFixture) -> None:
 def test_get_dbapi_exception_mapping() -> None:
     """
     Test that the DBAPI exception mapping maps ``DefaultCredentialsError``
-    to ``SupersetDBAPIConnectionError``.
+    to ``AxBIDBAPIConnectionError``.
     """
-    from superset.db_engine_specs.exceptions import SupersetDBAPIConnectionError
+    from axbi.db_engine_specs.exceptions import AxBIDBAPIConnectionError
 
     mapping = DatastoreEngineSpec.get_dbapi_exception_mapping()
     assert len(mapping) == 1
     exc_cls = next(iter(mapping))
     assert exc_cls.__name__ == "DefaultCredentialsError"
-    assert mapping[exc_cls] is SupersetDBAPIConnectionError
+    assert mapping[exc_cls] is AxBIDBAPIConnectionError
 
 
 def test_mutate_label_simple() -> None:
@@ -995,7 +989,7 @@ def test_get_catalog_names(mocker: MockerFixture) -> None:
     inspector.bind.execute.return_value = []
 
     mocker.patch(
-        "superset.db_engine_specs.base.BaseEngineSpec.get_catalog_names",
+        "axbi.db_engine_specs.base.BaseEngineSpec.get_catalog_names",
         return_value={"my-project"},
     )
 

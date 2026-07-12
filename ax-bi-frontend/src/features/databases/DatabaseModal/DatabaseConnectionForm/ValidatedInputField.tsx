@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { LabeledErrorBoundInput as ValidatedInput } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { LabeledErrorBoundInput as ValidatedInput } from '@ax-bi/ui-core/components';
 import { DatabaseParameters, FieldPropTypes } from '../../types';
 
 const FIELD_TEXT_MAP = {

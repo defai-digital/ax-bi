@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { CurrencyFormatter, getNumberFormatter } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { CurrencyFormatter, getNumberFormatter } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { formatColumnValue } from '../../src/utils/formatValue';
 import { DataColumnMeta } from '../../src/types';
 

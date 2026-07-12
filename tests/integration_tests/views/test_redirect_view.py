@@ -16,7 +16,7 @@
 # under the License.
 
 from tests.conftest import with_config
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.conftest import with_feature_flags
 
 REDIRECT_CONFIG = {
@@ -25,7 +25,7 @@ REDIRECT_CONFIG = {
 }
 
 
-class TestRedirectView(SupersetTestCase):
+class TestRedirectView(AxBITestCase):
     """Integration tests for the /redirect/ endpoint."""
 
     @with_feature_flags(ALERT_REPORTS=True)

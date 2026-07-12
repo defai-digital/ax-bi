@@ -22,10 +22,10 @@ import {
   type OnClickHandler,
   Icons,
   Flex,
-} from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { Alert } from '@apache-superset/core/components';
-import { styled, css, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { Alert } from '@ax-bi/core/components';
+import { styled, css, useTheme } from '@ax-bi/core/theme';
 import { BaseExpandButtonWrapper } from './SharedStyles';
 
 const StyledAlert = styled(Alert)`

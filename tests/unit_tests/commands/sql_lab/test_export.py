@@ -20,7 +20,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from superset.exceptions import SerializationError, SupersetErrorException
+from axbi.exceptions import AxBIErrorException, SerializationError
 
 
 def _query() -> Mock:
@@ -31,18 +31,18 @@ def _query() -> Mock:
 
 
 def _run_export_with_payload(payload: dict[str, Any] | Exception) -> None:
-    from superset.commands.sql_lab.export import SqlResultExportCommand
+    from axbi.commands.sql_lab.export import SqlResultExportCommand
 
     query = _query()
     with (
-        patch("superset.commands.sql_lab.export.db") as mock_db,
-        patch("superset.commands.sql_lab.export.results_backend") as mock_backend,
+        patch("axbi.commands.sql_lab.export.db") as mock_db,
+        patch("axbi.commands.sql_lab.export.results_backend") as mock_backend,
         patch(
-            "superset.commands.sql_lab.export.utils.zlib_decompress",
+            "axbi.commands.sql_lab.export.utils.zlib_decompress",
             return_value=b"payload",
         ),
         patch(
-            "superset.commands.sql_lab.export._deserialize_results_payload"
+            "axbi.commands.sql_lab.export._deserialize_results_payload"
         ) as mock_deserialize,
     ):
         query_filter = mock_db.session.query.return_value.filter_by.return_value
@@ -57,8 +57,8 @@ def _run_export_with_payload(payload: dict[str, Any] | Exception) -> None:
 
 
 def test_export_wraps_results_payload_deserialization_error() -> None:
-    """Stale result-backend payloads should raise a Superset error."""
-    with pytest.raises(SupersetErrorException) as exc_info:
+    """Stale result-backend payloads should raise a AxBI error."""
+    with pytest.raises(AxBIErrorException) as exc_info:
         _run_export_with_payload(SerializationError("Unable to deserialize table"))
 
     assert exc_info.value.status == 404
@@ -76,7 +76,7 @@ def test_export_wraps_results_payload_deserialization_error() -> None:
 )
 def test_export_wraps_malformed_results_payload(payload: dict[str, Any]) -> None:
     """Malformed cached export payloads should not leak raw key/type errors."""
-    with pytest.raises(SupersetErrorException) as exc_info:
+    with pytest.raises(AxBIErrorException) as exc_info:
         _run_export_with_payload(payload)
 
     assert exc_info.value.status == 404

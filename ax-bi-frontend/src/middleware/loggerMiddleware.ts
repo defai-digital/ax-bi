@@ -19,7 +19,7 @@
 /* eslint-disable camelcase */
 /* eslint prefer-const: 2 */
 import { nanoid } from 'nanoid';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import type { Middleware, Dispatch, Action } from 'redux';
 
 import { safeStringify } from '../utils/safeStringify';
@@ -34,11 +34,7 @@ import type { DashboardInfo, DashboardLayoutState } from '../dashboard/types';
 import type { QueryEditor } from '../SqlLab/types';
 
 type LogEventSource =
-  | 'dashboard'
-  | 'embedded_dashboard'
-  | 'explore'
-  | 'sqlLab'
-  | 'slice';
+  'dashboard' | 'embedded_dashboard' | 'explore' | 'sqlLab' | 'slice';
 
 interface LogEventData {
   source?: LogEventSource;
@@ -113,13 +109,13 @@ const sendBeacon = (events: LogEventData[]): void => {
   if (navigator.sendBeacon) {
     const formData = new FormData();
     formData.append('events', safeStringify(events));
-    if (SupersetClient.getGuestToken()) {
+    if (AxBIClient.getGuestToken()) {
       // if we have a guest token, we need to send it for auth via the form
-      formData.append('guest_token', SupersetClient.getGuestToken() as string);
+      formData.append('guest_token', AxBIClient.getGuestToken() as string);
     }
     navigator.sendBeacon(ensureAppRoot(endpoint), formData);
   } else {
-    SupersetClient.post({
+    AxBIClient.post({
       endpoint,
       postPayload: { events },
       parseMethod: null,

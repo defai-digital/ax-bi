@@ -1,0 +1,70 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * "License"); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+import {
+  CategoricalAirbnb,
+  CategoricalEcharts,
+  CategoricalAxBI,
+  CategoricalPreset,
+  CategoricalD3,
+  CategoricalGoogle,
+  CategoricalJapandi,
+  CategoricalLyft,
+  SequentialCommon,
+  SequentialD3,
+  CategoricalScheme,
+  SequentialScheme,
+} from '@ax-bi/ui-core';
+
+describe('Color Schemes', () => {
+  describe('categorical', () => {
+    test('returns an array of CategoricalScheme', () => {
+      [
+        CategoricalAirbnb,
+        CategoricalEcharts,
+        CategoricalD3,
+        CategoricalGoogle,
+        CategoricalJapandi,
+        CategoricalLyft,
+        CategoricalAxBI,
+        CategoricalPreset,
+      ].forEach(group => {
+        expect(group).toBeInstanceOf(Array);
+        group.forEach(scheme =>
+          expect(scheme).toBeInstanceOf(CategoricalScheme),
+        );
+      });
+    });
+
+    test('japandiColors is the product default categorical scheme', () => {
+      expect(CategoricalJapandi[0].id).toBe('japandiColors');
+      expect(CategoricalJapandi[0].isDefault).toBe(true);
+      expect(CategoricalJapandi[0].colors.length).toBeGreaterThanOrEqual(10);
+    });
+  });
+  describe('sequential', () => {
+    test('returns an array of SequentialScheme', () => {
+      [SequentialCommon, SequentialD3].forEach(group => {
+        expect(group).toBeInstanceOf(Array);
+        group.forEach(scheme =>
+          expect(scheme).toBeInstanceOf(SequentialScheme),
+        );
+      });
+    });
+  });
+});

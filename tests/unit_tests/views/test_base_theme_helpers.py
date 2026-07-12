@@ -17,8 +17,8 @@
 
 from unittest.mock import MagicMock, mock_open, patch
 
-from superset.themes.types import ThemeMode
-from superset.views.base import (
+from axbi.themes.types import ThemeMode
+from axbi.views.base import (
     _load_theme_from_model,
     _merge_theme_dicts,
     _process_theme,
@@ -242,7 +242,7 @@ class TestThemeHelpers:
         assert result["token"]["colorInfo"] == "#0000ff"  # New from database
         assert result["algorithm"] == "dark"  # From database
 
-    @patch("superset.views.base.logger")
+    @patch("axbi.views.base.logger")
     def test_load_theme_from_model_invalid_json(self, mock_logger):
         """Test _load_theme_from_model with invalid JSON"""
         mock_model = MagicMock()
@@ -256,7 +256,7 @@ class TestThemeHelpers:
             "Invalid JSON in system %s theme %s", "default", 1
         )
 
-    @patch("superset.views.base.logger")
+    @patch("axbi.views.base.logger")
     def test_load_theme_from_model_null_json(self, mock_logger):
         """Test _load_theme_from_model with null JSON data"""
         mock_model = MagicMock()
@@ -270,7 +270,7 @@ class TestThemeHelpers:
             "Invalid JSON in system %s theme %s", "default", 1
         )
 
-    @patch("superset.views.base.logger")
+    @patch("axbi.views.base.logger")
     def test_load_theme_from_model_non_object_json(self, mock_logger):
         """Test _load_theme_from_model with non-object JSON"""
         mock_model = MagicMock()
@@ -294,13 +294,13 @@ class TestThemeHelpers:
         result = _process_theme({}, ThemeMode.DEFAULT)
         assert result == {}
 
-    @patch("superset.views.base.is_valid_theme")
+    @patch("axbi.views.base.is_valid_theme")
     def test_process_theme_invalid(self, mock_is_valid):
         """Test _process_theme with invalid theme"""
         mock_is_valid.return_value = False
         theme = {"invalid": "theme"}
 
-        with patch("superset.views.base.logger") as mock_logger:
+        with patch("axbi.views.base.logger") as mock_logger:
             result = _process_theme(theme, ThemeMode.DEFAULT)
             assert result == {}
             mock_logger.warning.assert_called_once_with(
@@ -309,7 +309,7 @@ class TestThemeHelpers:
                 theme,
             )
 
-    @patch("superset.views.base.is_valid_theme")
+    @patch("axbi.views.base.is_valid_theme")
     def test_process_theme_valid(self, mock_is_valid):
         """Test _process_theme with valid theme"""
         mock_is_valid.return_value = True
@@ -327,9 +327,9 @@ class TestThemeHelpers:
 class TestGetThemeBootstrapData:
     """Test get_theme_bootstrap_data function with various scenarios"""
 
-    @patch("superset.views.base.app")
-    @patch("superset.views.base.get_config_value")
-    @patch("superset.views.base.ThemeDAO")
+    @patch("axbi.views.base.app")
+    @patch("axbi.views.base.get_config_value")
+    @patch("axbi.views.base.ThemeDAO")
     def test_ui_admin_enabled_with_db_themes(
         self,
         mock_dao,
@@ -367,8 +367,8 @@ class TestGetThemeBootstrapData:
         assert "baseThemeDefault" not in result["theme"]
         assert "baseThemeDark" not in result["theme"]
 
-    @patch("superset.views.base.app")
-    @patch("superset.views.base.get_config_value")
+    @patch("axbi.views.base.app")
+    @patch("axbi.views.base.get_config_value")
     def test_ui_admin_disabled(self, mock_get_config, mock_app):
         """Test with UI admin disabled, uses config themes"""
         # Setup
@@ -391,9 +391,9 @@ class TestGetThemeBootstrapData:
         assert result["theme"]["default"]["token"]["colorPrimary"] == "#config1"
         assert result["theme"]["dark"]["token"]["colorPrimary"] == "#config2"
 
-    @patch("superset.views.base.app")
-    @patch("superset.views.base.get_config_value")
-    @patch("superset.views.base.ThemeDAO")
+    @patch("axbi.views.base.app")
+    @patch("axbi.views.base.get_config_value")
+    @patch("axbi.views.base.ThemeDAO")
     def test_ui_admin_enabled_minimal_db_theme(
         self,
         mock_dao,
@@ -465,9 +465,9 @@ class TestGetThemeBootstrapData:
         assert result["theme"]["dark"]["token"]["colorWarning"] == "#orange"  # From DB
         assert result["theme"]["dark"]["algorithm"] == "dark"  # From DB
 
-    @patch("superset.views.base.app")
-    @patch("superset.views.base.get_config_value")
-    @patch("superset.views.base.ThemeDAO")
+    @patch("axbi.views.base.app")
+    @patch("axbi.views.base.get_config_value")
+    @patch("axbi.views.base.ThemeDAO")
     def test_ui_admin_enabled_no_db_themes(
         self,
         mock_dao,
@@ -499,9 +499,9 @@ class TestGetThemeBootstrapData:
         assert result["theme"]["default"]["token"]["colorPrimary"] == "#config1"
         assert result["theme"]["dark"]["token"]["colorPrimary"] == "#config2"
 
-    @patch("superset.views.base.app")
-    @patch("superset.views.base.get_config_value")
-    @patch("superset.views.base.ThemeDAO")
+    @patch("axbi.views.base.app")
+    @patch("axbi.views.base.get_config_value")
+    @patch("axbi.views.base.ThemeDAO")
     def test_ui_admin_enabled_invalid_db_theme(
         self,
         mock_dao,
@@ -530,15 +530,15 @@ class TestGetThemeBootstrapData:
         mock_dao.find_system_default.return_value = mock_default_theme
         mock_dao.find_system_dark.return_value = None
 
-        with patch("superset.views.base.logger") as mock_logger:
+        with patch("axbi.views.base.logger") as mock_logger:
             result = get_theme_bootstrap_data()
 
             # Should fall back to config theme (merged with base defaults)
             assert result["theme"]["default"]["token"]["colorPrimary"] == "#config1"
             mock_logger.error.assert_called_once()
 
-    @patch("superset.views.base.app")
-    @patch("superset.views.base.get_config_value")
+    @patch("axbi.views.base.app")
+    @patch("axbi.views.base.get_config_value")
     def test_ui_admin_disabled_no_config_themes(self, mock_get_config, mock_app):
         """Test with UI admin disabled and no config themes (empty themes)"""
         # Setup
@@ -559,22 +559,22 @@ class TestGetThemeBootstrapData:
         assert result["theme"]["default"] == {}
         assert result["theme"]["dark"] == {}
 
-    @patch("superset.views.base.app")
-    @patch("superset.views.base.get_config_value")
+    @patch("axbi.views.base.app")
+    @patch("axbi.views.base.get_config_value")
     def test_partial_theme_override_preserves_base_tokens(
         self, mock_get_config, mock_app
     ):
         """Regression test for #40375: partial THEME_DEFAULT override must
         preserve unspecified token fields from the built-in defaults so the
         frontend does not crash on undefined values."""
-        from superset.config import _THEME_DARK_BASE, _THEME_DEFAULT_BASE
+        from axbi.config import _THEME_DARK_BASE, _THEME_DEFAULT_BASE
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
             "ENABLE_UI_THEME_ADMINISTRATION": False,
         }.get(k, d)
 
-        # Simulate a minimal user override in superset_config.py
+        # Simulate a minimal user override in axbi_config.py
         partial_default = {
             "token": {"colorPrimary": "#ff0000"},
             "algorithm": "default",
@@ -621,11 +621,11 @@ class TestGetThemeBootstrapData:
 class TestBrandAppNameFallback:
     """Test brandAppName fallback mechanism for APP_NAME migration (issue #34865)"""
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_uses_theme_value_when_set(self, mock_app, mock_payload):
         """Test that explicit brandAppName in theme takes precedence"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         # Use a plain dict for config to mirror Flask's config mapping behavior
         mock_app.config = {"APP_NAME": "Fallback App Name"}
@@ -652,25 +652,25 @@ class TestBrandAppNameFallback:
         theme_tokens = result["theme_tokens"]
         assert theme_tokens["brandAppName"] == "My Custom App"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_falls_back_to_app_name_config(self, mock_app, mock_payload):
         """Test fallback to APP_NAME config when brandAppName not in theme"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
             "APP_NAME": "My Test Analytics Platform",
         }.get(k, d)
 
-        # Mock payload with default "Superset" brandAppName
+        # Mock payload with default "AX BI" brandAppName
         mock_payload.return_value = {
             "common": {
                 "theme": {
                     "default": {
                         "token": {
-                            "brandAppName": "Superset",  # Default value
-                            "brandLogoAlt": "Apache Superset",
+                            "brandAppName": "AX BI",  # Default value
+                            "brandLogoAlt": "AX BI",
                         }
                     }
                 }
@@ -685,27 +685,27 @@ class TestBrandAppNameFallback:
         theme_tokens = result["theme_tokens"]
         assert theme_tokens["brandAppName"] == "My Test Analytics Platform"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
-    def test_brandappname_uses_superset_default_when_nothing_set(
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
+    def test_brandappname_uses_axbi_default_when_nothing_set(
         self, mock_app, mock_payload
     ):
-        """Test fallback to 'Superset' when neither is customized"""
-        from superset.views.base import get_spa_template_context
+        """Test fallback to 'AX BI' when neither is customized"""
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
-            "APP_NAME": "Superset",  # Default value
+            "APP_NAME": "AX BI",  # Default value
         }.get(k, d)
 
-        # Mock payload with default "Superset" brandAppName
+        # Mock payload with default "AX BI" brandAppName
         mock_payload.return_value = {
             "common": {
                 "theme": {
                     "default": {
                         "token": {
-                            "brandAppName": "Superset",  # Default value
-                            "brandLogoAlt": "Apache Superset",
+                            "brandAppName": "AX BI",  # Default value
+                            "brandLogoAlt": "AX BI",
                         }
                     }
                 }
@@ -714,17 +714,17 @@ class TestBrandAppNameFallback:
 
         result = get_spa_template_context("app")
 
-        # Should use default "Superset"
-        assert result["default_title"] == "Superset"
-        # Theme tokens should keep "Superset"
+        # Should use default "AX BI"
+        assert result["default_title"] == "AX BI"
+        # Theme tokens should keep "AX BI"
         theme_tokens = result["theme_tokens"]
-        assert theme_tokens["brandAppName"] == "Superset"
+        assert theme_tokens["brandAppName"] == "AX BI"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_empty_string_falls_back(self, mock_app, mock_payload):
         """Test that empty string brandAppName triggers fallback"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
@@ -752,11 +752,11 @@ class TestBrandAppNameFallback:
         theme_tokens = result["theme_tokens"]
         assert theme_tokens["brandAppName"] == "Custom App"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_none_falls_back(self, mock_app, mock_payload):
         """Test that missing brandAppName triggers fallback"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
@@ -775,13 +775,13 @@ class TestBrandAppNameFallback:
         theme_tokens = result["theme_tokens"]
         assert theme_tokens["brandAppName"] == "Analytics Dashboard"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_updates_both_default_and_dark_themes(
         self, mock_app, mock_payload
     ):
         """Test that brandAppName fallback applies to both default and dark themes"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
@@ -794,7 +794,7 @@ class TestBrandAppNameFallback:
                 "theme": {
                     "default": {
                         "token": {
-                            "brandAppName": "Superset",  # Default value
+                            "brandAppName": "AX BI",  # Default value
                             "colorPrimary": "#111",
                         }
                     },
@@ -817,11 +817,11 @@ class TestBrandAppNameFallback:
         assert theme_tokens["brandAppName"] == "Multi Theme App"
         assert theme_tokens["colorPrimary"] == "#111"  # Preserved
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_does_not_mutate_cached_payload(self, mock_app, mock_payload):
         """Test that brandAppName fallback doesn't mutate the cached payload"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = MagicMock()
         mock_app.config.get.side_effect = lambda k, d=None: {
@@ -832,7 +832,7 @@ class TestBrandAppNameFallback:
         original_theme_data = {
             "default": {
                 "token": {
-                    "brandAppName": "Superset",
+                    "brandAppName": "AX BI",
                     "colorPrimary": "#333",
                 }
             }
@@ -854,11 +854,11 @@ class TestBrandAppNameFallback:
         # without more complex mocking, but we've verified the result is correct
         assert result["default_title"] == "Test App"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_handles_empty_theme_config(self, mock_app, mock_payload):
         """Test that empty theme configs are skipped gracefully"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = {"APP_NAME": "Test App"}
 
@@ -866,7 +866,7 @@ class TestBrandAppNameFallback:
         mock_payload.return_value = {
             "common": {
                 "theme": {
-                    "default": {"token": {"brandAppName": "Superset"}},
+                    "default": {"token": {"brandAppName": "AX BI"}},
                     "dark": {},  # Empty theme config
                 }
             }
@@ -877,11 +877,11 @@ class TestBrandAppNameFallback:
         # Should handle empty theme gracefully and still update default
         assert result["default_title"] == "Test App"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_creates_token_dict_when_missing(self, mock_app, mock_payload):
         """Test that token dict is created when missing from theme config"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = {"APP_NAME": "Token Test App"}
 
@@ -901,15 +901,15 @@ class TestBrandAppNameFallback:
         assert result["default_title"] == "Token Test App"
         assert result["theme_tokens"]["brandAppName"] == "Token Test App"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_handles_missing_common_in_payload(
         self, mock_app, mock_payload
     ):
         """Test handling when common dict is missing from payload"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
-        mock_app.config = {"APP_NAME": "Superset"}
+        mock_app.config = {"APP_NAME": "AX BI"}
 
         # Mock payload without common dict
         mock_payload.return_value = {}
@@ -917,43 +917,43 @@ class TestBrandAppNameFallback:
         result = get_spa_template_context("app")
 
         # Should handle gracefully and use default title
-        assert result["default_title"] == "Superset"
+        assert result["default_title"] == "AX BI"
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_handles_malformed_common_payload(
         self, mock_app, mock_payload
     ):
         """Test handling when common payload is not a dict"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
-        mock_app.config = {"APP_NAME": "Superset"}
+        mock_app.config = {"APP_NAME": "AX BI"}
         mock_payload.return_value = {"common": ["bad-common"]}
 
         result = get_spa_template_context("app")
 
-        assert result["default_title"] == "Superset"
+        assert result["default_title"] == "AX BI"
         assert result["theme_tokens"] == {}
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_handles_malformed_theme_payload(self, mock_app, mock_payload):
         """Test handling when theme payload is not a dict"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
-        mock_app.config = {"APP_NAME": "Superset"}
+        mock_app.config = {"APP_NAME": "AX BI"}
         mock_payload.return_value = {"common": {"theme": ["bad-theme"]}}
 
         result = get_spa_template_context("app")
 
-        assert result["default_title"] == "Superset"
+        assert result["default_title"] == "AX BI"
         assert result["theme_tokens"] == {}
 
-    @patch("superset.views.base.get_spa_payload")
-    @patch("superset.views.base.app")
+    @patch("axbi.views.base.get_spa_payload")
+    @patch("axbi.views.base.app")
     def test_brandappname_handles_malformed_token_payload(self, mock_app, mock_payload):
         """Test handling when theme token payload is not a dict"""
-        from superset.views.base import get_spa_template_context
+        from axbi.views.base import get_spa_template_context
 
         mock_app.config = {"APP_NAME": "Custom App"}
         mock_payload.return_value = {
@@ -973,11 +973,11 @@ class TestBrandAppNameFallback:
 class TestGetDefaultSpinnerSvg:
     """Test get_default_spinner_svg function"""
 
-    @patch("superset.views.base.logger")
+    @patch("axbi.views.base.logger")
     @patch("builtins.open")
     def test_get_default_spinner_svg_file_missing(self, mock_open, mock_logger):
         """Test that missing spinner asset returns None and logs a warning"""
-        from superset.views.base import get_default_spinner_svg
+        from axbi.views.base import get_default_spinner_svg
 
         mock_open.side_effect = FileNotFoundError()
 
@@ -989,11 +989,11 @@ class TestGetDefaultSpinnerSvg:
         warning_msg = mock_logger.warning.call_args[0][0]
         assert "Could not load default spinner SVG" in warning_msg
 
-    @patch("superset.views.base.logger")
+    @patch("axbi.views.base.logger")
     @patch("builtins.open")
     def test_get_default_spinner_svg_other_error(self, mock_open, mock_logger):
         """Test that other unexpected errors during loading log a warning"""
-        from superset.views.base import get_default_spinner_svg
+        from axbi.views.base import get_default_spinner_svg
 
         mock_open.side_effect = PermissionError("Permission denied")
 
@@ -1008,7 +1008,7 @@ class TestGetDefaultSpinnerSvg:
     @patch("builtins.open", new_callable=mock_open, read_data="<svg>spinner</svg>")
     def test_get_default_spinner_svg_success(self, mock_open):
         """Test that successfully reading SVG returns the content"""
-        from superset.views.base import get_default_spinner_svg
+        from axbi.views.base import get_default_spinner_svg
 
         result = get_default_spinner_svg()
 
@@ -1016,7 +1016,7 @@ class TestGetDefaultSpinnerSvg:
 
     def test_get_default_spinner_svg_real_file_exists(self):
         """Test that the default spinner SVG file exists and is loadable"""
-        from superset.views.base import get_default_spinner_svg
+        from axbi.views.base import get_default_spinner_svg
 
         result = get_default_spinner_svg()
         assert result is not None
@@ -1027,22 +1027,22 @@ class TestGetDefaultSpinnerSvg:
 class TestThemeCacheInvalidation:
     """Test theme cache invalidation event listeners"""
 
-    @patch("superset.extensions.cache_manager.cache.delete_memoized")
+    @patch("axbi.extensions.cache_manager.cache.delete_memoized")
     def test_clear_bootstrap_cache_event(self, mock_delete_memoized):
         """Test that the event listener triggers delete_memoized"""
-        from superset.models.core import clear_bootstrap_cache
-        from superset.views.base import cached_common_bootstrap_data
+        from axbi.models.core import clear_bootstrap_cache
+        from axbi.views.base import cached_common_bootstrap_data
 
         # Call clear_bootstrap_cache with dummy mapper, connection, and Theme
         clear_bootstrap_cache(MagicMock(), MagicMock(), MagicMock())
 
         mock_delete_memoized.assert_called_once_with(cached_common_bootstrap_data)
 
-    @patch("superset.extensions.cache_manager.cache.delete_memoized")
-    @patch("superset.models.core.logger")
+    @patch("axbi.extensions.cache_manager.cache.delete_memoized")
+    @patch("axbi.models.core.logger")
     def test_clear_bootstrap_cache_event_error(self, mock_logger, mock_delete_memoized):
         """Test that the event listener handles errors gracefully and logs them"""
-        from superset.models.core import clear_bootstrap_cache
+        from axbi.models.core import clear_bootstrap_cache
 
         mock_delete_memoized.side_effect = Exception("Cache error")
         clear_bootstrap_cache(MagicMock(), MagicMock(), MagicMock())

@@ -17,7 +17,7 @@
 
 import pytest
 
-from superset.views.datasource.utils import replace_verbose_with_column
+from axbi.views.datasource.utils import replace_verbose_with_column
 
 
 class Column:

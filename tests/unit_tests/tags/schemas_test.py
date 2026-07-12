@@ -17,7 +17,7 @@
 import pytest
 from marshmallow import ValidationError
 
-from superset.tags.schemas import TagPostBulkSchema
+from axbi.tags.schemas import TagPostBulkSchema
 
 
 def test_tag_post_bulk_schema_requires_tags() -> None:

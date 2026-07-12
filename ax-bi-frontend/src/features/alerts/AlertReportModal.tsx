@@ -26,20 +26,15 @@ import {
   ReactNode,
 } from 'react';
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   isFeatureEnabled,
   FeatureFlag,
-  SupersetClient,
+  AxBIClient,
   VizType,
   getExtensionsRegistry,
-} from '@superset-ui/core';
-import {
-  css,
-  styled,
-  SupersetTheme,
-  useTheme,
-} from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css, styled, AxBITheme, useTheme } from '@ax-bi/core/theme';
 import rison from 'rison';
 import { useSingleViewResource } from 'src/views/CRUD/hooks';
 import withToasts from 'src/components/MessageToasts/withToasts';
@@ -51,7 +46,7 @@ import {
   OWNER_OPTION_FILTER_PROPS,
 } from 'src/features/owners/OwnerSelectLabel';
 // import { Form as AntdForm } from 'src/components/Form';
-import { propertyComparator } from '@superset-ui/core/components/Select/utils';
+import { propertyComparator } from '@ax-bi/ui-core/components/Select/utils';
 import {
   AsyncSelect,
   Checkbox,
@@ -68,12 +63,12 @@ import {
   TreeSelect,
   Button,
   type CheckboxChangeEvent,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 
 import { navigateTo } from 'src/utils/navigationUtils';
 
-import TimezoneSelector from '@superset-ui/core/components/TimezoneSelector';
-import { timezoneOptionsCache } from '@superset-ui/core/components/TimezoneSelector/TimezoneOptionsCache';
+import TimezoneSelector from '@ax-bi/ui-core/components/TimezoneSelector';
+import { timezoneOptionsCache } from '@ax-bi/ui-core/components/TimezoneSelector/TimezoneOptionsCache';
 import TextAreaControl from 'src/explore/components/controls/TextAreaControl';
 import { useCommonConf } from 'src/features/databases/state';
 import {
@@ -102,7 +97,7 @@ import { useSelector } from 'react-redux';
 import { UserWithPermissionsAndRoles } from 'src/types/bootstrapTypes';
 import { getChartDataRequest } from 'src/components/Chart/chartAction';
 import DateFilterControl from 'src/explore/components/controls/DateFilterControl';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { StandardModal, ModalFormField } from 'src/components/Modal';
 import NumberInput from './components/NumberInput';
 import { AlertReportCronScheduler } from './components/AlertReportCronScheduler';
@@ -459,7 +454,7 @@ const StyledNotificationMethodWrapper = styled.div`
   }
 `;
 
-const inputSpacer = (theme: SupersetTheme) => css`
+const inputSpacer = (theme: AxBITheme) => css`
   margin-right: ${theme.sizeUnit * 3}px;
 `;
 
@@ -1044,7 +1039,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/report/related/created_by?q=${query}`,
         }).then(response => ({
           data: response.json.result.map(
@@ -1106,7 +1101,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/report/related/database?q=${query}`,
         }).then(response => {
           const list = response.json.result.map(
@@ -1127,7 +1122,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
     if (!tabsEnabled && !filtersEnabled) return;
 
     if (dashboard?.value) {
-      SupersetClient.get({
+      AxBIClient.get({
         endpoint: `/api/v1/dashboard/${dashboard.value}/tabs`,
       })
         .then(response => {
@@ -1228,7 +1223,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/report/related/dashboard?q=${query}`,
         }).then(response => {
           const list = response.json.result.map(
@@ -1301,7 +1296,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/report/related/chart?q=${query}`,
         }).then(response => {
           const list = response.json.result.map(
@@ -1322,7 +1317,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
     if (!chart || typeof chart !== 'object' || chart.value === undefined) {
       return;
     }
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/chart/${chart.value}`,
     }).then(response => setChartVizType(response.json.result.viz_type));
   };
@@ -1619,9 +1614,10 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
     getChartDataRequest(filterValues).then(response => {
       const newFilterValues = (response.json.result?.[0]?.data || []).map(
         (item: any) => ({
-        value: item[columnName],
-        label: item[columnName],
-      }));
+          value: item[columnName],
+          label: item[columnName],
+        }),
+      );
 
       setNativeFilterData(
         nativeFilterData.map((filter, index) =>
@@ -1645,12 +1641,7 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
   const onChangeDashboardFilterValue = (
     idx: number,
     filterValues:
-      | SelectValue
-      | SelectValue[]
-      | string
-      | string[]
-      | number
-      | number[],
+      SelectValue | SelectValue[] | string | string[] | number | number[],
   ) => {
     let values: any;
     if (typeof filterValues === 'string') {
@@ -1819,12 +1810,10 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
   };
   const validateContentSection = () => {
     const errors = [];
-    if (
-      !(
-        (contentType === ContentType.Dashboard && !!currentAlert?.dashboard) ||
-        (contentType === ContentType.Chart && !!currentAlert?.chart)
-      )
-    ) {
+    if (!(
+      (contentType === ContentType.Dashboard && !!currentAlert?.dashboard) ||
+      (contentType === ContentType.Chart && !!currentAlert?.chart)
+    )) {
       errors.push(TRANSLATIONS.CONTENT_ERROR_TEXT);
     }
 
@@ -1859,13 +1848,11 @@ const AlertReportModal: FunctionComponent<AlertReportModalProps> = ({
     if (!currentAlert?.sql?.length) {
       errors.push(TRANSLATIONS.SQL_ERROR_TEXT);
     }
-    if (
-      !(
-        (conditionNotNull || !!currentAlert?.validator_config_json?.op) &&
-        (conditionNotNull ||
-          currentAlert?.validator_config_json?.threshold !== undefined)
-      )
-    ) {
+    if (!(
+      (conditionNotNull || !!currentAlert?.validator_config_json?.op) &&
+      (conditionNotNull ||
+        currentAlert?.validator_config_json?.threshold !== undefined)
+    )) {
       errors.push(TRANSLATIONS.ALERT_CONDITION_ERROR_TEXT);
     }
     updateValidationStatus(Sections.Alert, errors);

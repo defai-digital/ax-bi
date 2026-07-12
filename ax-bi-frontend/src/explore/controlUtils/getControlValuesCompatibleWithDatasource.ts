@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { ControlState, Dataset, Metric } from '@superset-ui/chart-controls';
+import { ControlState, Dataset, Metric } from '@ax-bi/chart-controls';
 import {
   Column,
   isAdhocMetricSimple,
@@ -26,7 +26,7 @@ import {
   isSimpleAdhocFilter,
   JsonValue,
   SimpleAdhocFilter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { isEmpty } from 'lodash';
 import AdhocMetric from 'src/explore/components/controls/MetricControl/AdhocMetric';
 

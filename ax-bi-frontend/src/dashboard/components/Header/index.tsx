@@ -22,20 +22,20 @@ import {
   isFeatureEnabled,
   FeatureFlag,
   getExtensionsRegistry,
-} from '@superset-ui/core';
-import { styled, css, SupersetTheme } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+} from '@ax-bi/ui-core';
+import { styled, css, AxBITheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import { Global } from '@emotion/react';
 import { shallowEqual, useDispatch, useSelector } from 'react-redux';
 import { bindActionCreators } from 'redux';
 import { LOG_ACTIONS_TOGGLE_EDIT_DASHBOARD } from 'src/logger/LogUtils';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   Button,
   Tooltip,
   DeleteModal,
   UnsavedChangesModal,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { findPermission } from 'src/utils/findPermission';
 import { safeStringify } from 'src/utils/safeStringify';
 import Role from 'src/types/Role';
@@ -59,7 +59,7 @@ import {
   deleteActiveReport,
   DeletableReport,
 } from 'src/features/reports/ReportModal/actions';
-import { PageHeaderWithActions } from '@superset-ui/core/components/PageHeaderWithActions';
+import { PageHeaderWithActions } from '@ax-bi/ui-core/components/PageHeaderWithActions';
 import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
 import DashboardEmbedModal from '../EmbeddedModal';
 import OverwriteConfirm from '../OverwriteConfirm';
@@ -157,15 +157,15 @@ type HeaderRootState = Omit<
 
 const extensionsRegistry = getExtensionsRegistry();
 
-const headerContainerStyle = (theme: SupersetTheme) => css`
+const headerContainerStyle = (theme: AxBITheme) => css`
   border-bottom: 1px solid ${theme.colorBorder};
 `;
 
-const editButtonStyle = (theme: SupersetTheme) => css`
+const editButtonStyle = (theme: AxBITheme) => css`
   color: ${theme.colorPrimary};
 `;
 
-const actionButtonsStyle = (theme: SupersetTheme) => css`
+const actionButtonsStyle = (theme: AxBITheme) => css`
   display: flex;
   align-items: center;
 
@@ -187,22 +187,22 @@ const StyledUndoRedoButton = styled(Button)`
   }
 `;
 
-const undoRedoStyle = (theme: SupersetTheme) => css`
+const undoRedoStyle = (theme: AxBITheme) => css`
   color: ${theme.colorIcon};
   &:hover {
     color: ${theme.colorIconHover};
   }
 `;
 
-const undoRedoEmphasized = (theme: SupersetTheme) => css`
+const undoRedoEmphasized = (theme: AxBITheme) => css`
   color: ${theme.colorIcon};
 `;
 
-const undoRedoDisabled = (theme: SupersetTheme) => css`
+const undoRedoDisabled = (theme: AxBITheme) => css`
   color: ${theme.colorTextDisabled};
 `;
 
-const saveBtnStyle = (theme: SupersetTheme) => css`
+const saveBtnStyle = (theme: AxBITheme) => css`
   min-width: ${theme.sizeUnit * 17}px;
   height: ${theme.sizeUnit * 8}px;
   span > :first-of-type {
@@ -210,7 +210,7 @@ const saveBtnStyle = (theme: SupersetTheme) => css`
   }
 `;
 
-const discardBtnStyle = (theme: SupersetTheme) => css`
+const discardBtnStyle = (theme: AxBITheme) => css`
   min-width: ${theme.sizeUnit * 22}px;
   height: ${theme.sizeUnit * 8}px;
 `;
@@ -463,7 +463,7 @@ const Header = (): JSX.Element => {
     // make sure positions data less than DB storage limitation:
     const positionJSONLength = safeStringify(layout).length;
     const limit =
-      dashboardInfo.common?.conf?.SUPERSET_DASHBOARD_POSITION_DATA_LIMIT ||
+      dashboardInfo.common?.conf?.AXBI_DASHBOARD_POSITION_DATA_LIMIT ||
       DASHBOARD_POSITION_DATA_LIMIT;
     if (positionJSONLength >= limit) {
       boundActionCreators.addDangerToast(
@@ -488,7 +488,7 @@ const Header = (): JSX.Element => {
     customCss,
     dashboardInfo.certification_details,
     dashboardInfo.certified_by,
-    dashboardInfo.common?.conf?.SUPERSET_DASHBOARD_POSITION_DATA_LIMIT,
+    dashboardInfo.common?.conf?.AXBI_DASHBOARD_POSITION_DATA_LIMIT,
     dashboardInfo.id,
     dashboardInfo.metadata,
     dashboardInfo.owners,
@@ -550,7 +550,7 @@ const Header = (): JSX.Element => {
   const userCanShare = !!dashboardInfo.dash_share_perm;
   const userCanSaveAs = !!dashboardInfo.dash_save_perm;
   const userCanCurate =
-    isFeatureEnabled(FeatureFlag.EmbeddedSuperset) &&
+    isFeatureEnabled(FeatureFlag.EmbeddedAxBI) &&
     findPermission('can_set_embedded', 'Dashboard', user.roles);
   const userCanExport = !!dashboardInfo.dash_export_perm;
   const isEmbedded = !dashboardInfo?.userId;

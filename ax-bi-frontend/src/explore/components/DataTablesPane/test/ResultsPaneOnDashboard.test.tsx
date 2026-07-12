@@ -23,8 +23,8 @@ import {
   waitForElementToBeRemoved,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { ChartMetadata, ChartPlugin, VizType } from '@superset-ui/core';
-import { setupAGGridModules } from '@superset-ui/core/components/ThemedAgGridReact';
+import { ChartMetadata, ChartPlugin, VizType } from '@ax-bi/ui-core';
+import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { ResultsPaneOnDashboard } from '../components';
 import { createResultsPaneOnDashboardProps } from './fixture';
 

@@ -147,7 +147,7 @@ export async function getDatasetByName(
   page: Page,
   tableName: string,
 ): Promise<DatasetResult | null> {
-  // Use Superset's filter API to search by table_name
+  // Use AxBI's filter API to search by table_name
   const filter = {
     filters: [
       {

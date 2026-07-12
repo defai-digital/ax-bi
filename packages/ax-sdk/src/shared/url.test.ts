@@ -20,11 +20,11 @@
 import { normalizeHttpBaseUrl, stripTrailingSlashes } from './url.js';
 
 test('stripTrailingSlashes removes only trailing slash characters', () => {
-  expect(stripTrailingSlashes('https://example.test/superset///')).toBe(
-    'https://example.test/superset',
+  expect(stripTrailingSlashes('https://example.test/ax-bi///')).toBe(
+    'https://example.test/ax-bi',
   );
-  expect(stripTrailingSlashes('https://example.test/superset/path')).toBe(
-    'https://example.test/superset/path',
+  expect(stripTrailingSlashes('https://example.test/ax-bi/path')).toBe(
+    'https://example.test/ax-bi/path',
   );
 });
 
@@ -32,8 +32,8 @@ test('normalizeHttpBaseUrl canonicalizes HTTP service bases', () => {
   expect(normalizeHttpBaseUrl(' http://localhost:8088/ ')).toBe(
     'http://localhost:8088',
   );
-  expect(normalizeHttpBaseUrl('https://example.test/superset///')).toBe(
-    'https://example.test/superset',
+  expect(normalizeHttpBaseUrl('https://example.test/ax-bi///')).toBe(
+    'https://example.test/ax-bi',
   );
 });
 

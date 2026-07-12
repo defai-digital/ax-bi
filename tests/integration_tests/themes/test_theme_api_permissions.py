@@ -18,15 +18,15 @@
 
 import uuid
 
-from superset import db
-from superset.models.core import Theme
-from superset.utils import json
+from axbi import db
+from axbi.models.core import Theme
+from axbi.utils import json
 from tests.conftest import with_config
-from tests.integration_tests.base_tests import SupersetTestCase
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME, GAMMA_USERNAME
 
 
-class TestThemeAPIPermissions(SupersetTestCase):
+class TestThemeAPIPermissions(AxBITestCase):
     """Test theme API permissions and system theme functionality"""
 
     def setUp(self):

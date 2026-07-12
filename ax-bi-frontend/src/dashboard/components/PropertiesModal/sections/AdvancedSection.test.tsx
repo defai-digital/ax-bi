@@ -20,7 +20,7 @@ import { render, screen } from 'spec/helpers/testing-library';
 import AdvancedSection from './AdvancedSection';
 
 const defaultProps = {
-  jsonMetadata: '{"color_scheme": "supersetColors"}',
+  jsonMetadata: '{"color_scheme": "axbiColors"}',
   jsonAnnotations: [],
   validationStatus: {
     advanced: { hasErrors: false, errors: [], name: 'Advanced' },

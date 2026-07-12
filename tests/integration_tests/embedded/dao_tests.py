@@ -18,17 +18,17 @@
 import pytest
 
 import tests.integration_tests.test_app  # pylint: disable=unused-import  # noqa: F401
-from superset import db
-from superset.daos.dashboard import EmbeddedDashboardDAO
-from superset.models.dashboard import Dashboard
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.daos.dashboard import EmbeddedDashboardDAO
+from axbi.models.dashboard import Dashboard
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.fixtures.world_bank_dashboard import (
     load_world_bank_dashboard_with_slices,  # noqa: F401
     load_world_bank_data,  # noqa: F401
 )
 
 
-class TestEmbeddedDashboardDAO(SupersetTestCase):
+class TestEmbeddedDashboardDAO(AxBITestCase):
     @pytest.mark.usefixtures("load_world_bank_dashboard_with_slices")
     def test_upsert(self):
         dash = db.session.query(Dashboard).filter_by(slug="world_health").first()

@@ -17,11 +17,11 @@
  * under the License.
  */
 import { useState, useEffect } from 'react';
-import { Button, Row, Col } from '@superset-ui/core/components';
-import Tabs from '@superset-ui/core/components/Tabs';
-import { t } from '@apache-superset/core/translation';
-import { legacyValidateInteger } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { Button, Row, Col } from '@ax-bi/ui-core/components';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
+import { t } from '@ax-bi/core/translation';
+import { legacyValidateInteger } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import ControlHeader from '../../ControlHeader';
 import TextControl from '../TextControl';
 import ColorPickerControl from '../ColorPickerControl';

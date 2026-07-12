@@ -23,13 +23,13 @@ from typing import Any, cast
 
 import pytest
 
-from superset.semantic_index.embedding import (
+from axbi.semantic_index.embedding import (
     _validate_embeddings,
     build_query_text,
     EmbeddingProviderError,
     HashDevEmbeddingProvider,
 )
-from superset.semantic_index.repository import vector_literal
+from axbi.semantic_index.repository import vector_literal
 
 
 def test_build_query_text_adds_instruction() -> None:

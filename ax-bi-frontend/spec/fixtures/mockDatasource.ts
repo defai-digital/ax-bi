@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DatasourceType } from '@superset-ui/core';
+import { DatasourceType } from '@ax-bi/ui-core';
 
 export const id = 7;
 export const datasourceId = `${id}__table`;

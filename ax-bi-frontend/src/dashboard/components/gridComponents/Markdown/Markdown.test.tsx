@@ -25,7 +25,7 @@ import {
   userEvent,
   RenderResult,
 } from 'spec/helpers/testing-library';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { mockStore } from 'spec/fixtures/mockStore';
 import { dashboardLayout as mockLayout } from 'spec/fixtures/mockDashboardLayout';
 import MarkdownConnected from './Markdown';
@@ -463,6 +463,6 @@ test('should have fontWeightStrong in theme for bold markdown rendering', async 
   // font-weight: undefined on <strong> tags, breaking bold markdown rendering
   // Must be >= 600 (semibold) to show a true visual difference when bolded
   // Values < 600 (like 500/medium) are too subtle and appear similar to normal (400)
-  expect(supersetTheme.fontWeightStrong).toBeDefined();
-  expect(supersetTheme.fontWeightStrong).toBeGreaterThanOrEqual(600);
+  expect(axbiTheme.fontWeightStrong).toBeDefined();
+  expect(axbiTheme.fontWeightStrong).toBeGreaterThanOrEqual(600);
 });

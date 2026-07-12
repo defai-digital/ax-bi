@@ -21,7 +21,7 @@
  * MINIMAL ESLint flat config - ONLY for rules OXC doesn't support.
  *
  * This config is run alongside the OXC (oxlint) linter, which handles the
- * bulk of linting. ESLint here only covers the custom Superset plugins and
+ * bulk of linting. ESLint here only covers the custom AxBI plugins and
  * Prettier formatting that oxlint cannot express. It is consumed by
  * `scripts/oxlint-metrics-uploader.js` (`npm run lint-stats`).
  *
@@ -29,7 +29,7 @@
  * config for ESLint v9+/v10, where eslintrc is no longer supported.
  *
  * Only covers:
- * - Custom Superset plugins (theme-colors, icons, i18n-strings)
+ * - Custom AxBI plugins (theme-colors, icons, i18n-strings)
  * - Prettier formatting
  */
 
@@ -96,7 +96,7 @@ module.exports = [
       // Prettier integration (formatting)
       'prettier/prettier': 'error',
 
-      // Custom Superset plugins
+      // Custom AxBI plugins
       'theme-colors/no-literal-colors': 'error',
       'icons/no-fa-icons-usage': 'error',
       'i18n-strings/no-template-vars': 'error',

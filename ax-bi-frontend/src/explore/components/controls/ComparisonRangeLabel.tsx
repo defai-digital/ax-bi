@@ -20,7 +20,7 @@
 import { useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { isEmpty, isEqual, noop } from 'lodash';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   BinaryAdhocFilter,
   ensureIsArray,
@@ -28,14 +28,14 @@ import {
   getTimeOffset,
   parseDttmToDate,
   SimpleAdhocFilter,
-} from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
 import ControlHeader, {
   ControlHeaderProps,
 } from 'src/explore/components/ControlHeader';
 import { RootState } from 'src/views/store';
-import { DEFAULT_DATE_PATTERN } from '@superset-ui/chart-controls';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { DEFAULT_DATE_PATTERN } from '@ax-bi/chart-controls';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 
 const DAYJS_FORMAT = 'YYYY-MM-DD';
 

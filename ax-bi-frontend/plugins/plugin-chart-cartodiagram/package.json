@@ -1,5 +1,5 @@
 {
-  "name": "@superset-ui/plugin-chart-cartodiagram",
+  "name": "@ax-bi/plugin-chart-cartodiagram",
   "version": "0.0.1",
   "description": "An OpenLayers map that displays charts for single features.",
   "sideEffects": false,
@@ -11,16 +11,17 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/apache-superset/superset-ui.git"
+    "url": "git+https://github.com/defai-digital/ax-bi.git",
+    "directory": "ax-bi-frontend/plugins/plugin-chart-cartodiagram"
   },
   "keywords": [
-    "superset"
+    "axbi"
   ],
   "license": "Apache-2.0",
   "bugs": {
-    "url": "https://github.com/apache-superset/superset-ui/issues"
+    "url": "https://github.com/defai-digital/ax-bi/issues"
   },
-  "homepage": "https://github.com/apache-superset/superset-ui#readme",
+  "homepage": "https://github.com/defai-digital/ax-bi/tree/main/ax-bi-frontend/plugins/plugin-chart-cartodiagram#readme",
   "contributors": [
     "terrestris GmbH & Co. KG <info@terrestris.de> (https://www.terrestris.de)",
     "meggsimum - Büro für Geoinformatik <info@meggsimum.de> (https://meggsimum.de)"
@@ -35,10 +36,10 @@
   },
   "peerDependencies": {
     "@ant-design/icons": "^5.6.1",
-    "@apache-superset/core": "*",
+    "@ax-bi/core": "*",
     "@reduxjs/toolkit": "*",
-    "@superset-ui/chart-controls": "*",
-    "@superset-ui/core": "*",
+    "@ax-bi/chart-controls": "*",
+    "@ax-bi/ui-core": "*",
     "geostyler": "^18.3.1",
     "geostyler-data": "^1.0.0",
     "geostyler-openlayers-parser": "^5.4.0",

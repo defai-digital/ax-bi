@@ -17,12 +17,12 @@
  * under the License.
  */
 import { Component } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { Collapse, Label } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Collapse, Label } from '@ax-bi/ui-core/components';
 import TextControl from 'src/explore/components/controls/TextControl';
 import MetricsControl from 'src/explore/components/controls/MetricControl/MetricsControl';
 import ControlHeader from 'src/explore/components/ControlHeader';
-import PopoverSection from '@superset-ui/core/components/PopoverSection';
+import PopoverSection from '@ax-bi/ui-core/components/PopoverSection';
 
 const controlTypes = {
   fixed: 'fix',

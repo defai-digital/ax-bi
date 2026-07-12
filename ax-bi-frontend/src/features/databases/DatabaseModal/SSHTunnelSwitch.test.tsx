@@ -20,12 +20,12 @@ import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import SSHTunnelSwitch from './SSHTunnelSwitch';
 import { DatabaseForm, DatabaseObject } from '../types';
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn().mockReturnValue(true),
 }));
 
-jest.mock('@superset-ui/core/components/Switch', () => ({
+jest.mock('@ax-bi/ui-core/components/Switch', () => ({
   Switch: ({
     checked,
     onChange,

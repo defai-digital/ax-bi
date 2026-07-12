@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { normalizeTimestamp, QueryState } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import { normalizeTimestamp, QueryState } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import { isEqual, omit } from 'lodash';
 import { shallowEqual } from 'react-redux';
-import { now } from '@superset-ui/core/utils/dates';
+import { now } from '@ax-bi/ui-core/utils/dates';
 import type { SqlLabRootState, QueryEditor, Table } from '../types';
 import * as actions from '../actions/sqlLab';
 import type { SqlLabAction } from '../actions/sqlLab';
@@ -625,8 +625,7 @@ export default function sqlLabReducer(
           ? actionId
           : ((
               getFromArr(state.queryEditors, actionId, 'tabViewId') as
-                | QueryEditor
-                | undefined
+                QueryEditor | undefined
             )?.id ?? actionId);
       if (
         unsavedQueryEditor?.id === normalizedId &&

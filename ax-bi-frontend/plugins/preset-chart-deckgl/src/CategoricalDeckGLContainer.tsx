@@ -35,7 +35,7 @@ import {
   QueryFormData,
   SetDataMaskHook,
   getMapProviderMapStyle,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { Layer } from '@deck.gl/core';
 import Legend from './components/Legend';
 import { hexToRGB } from './utils/colors';

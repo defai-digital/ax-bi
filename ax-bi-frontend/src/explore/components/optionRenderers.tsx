@@ -17,13 +17,13 @@
  * under the License.
  */
 
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import {
   MetricOption,
   ColumnOption,
   MetricOptionProps,
   ColumnOptionProps,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 
 const OptionContainer = styled.div`
   width: 100%;

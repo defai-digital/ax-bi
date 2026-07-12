@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { SafeMarkdown } from '@superset-ui/core/components';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { SafeMarkdown } from '@ax-bi/ui-core/components';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 import Handlebars from 'handlebars';
 import { useMemo, useState } from 'react';
 import { isPlainObject } from 'lodash';

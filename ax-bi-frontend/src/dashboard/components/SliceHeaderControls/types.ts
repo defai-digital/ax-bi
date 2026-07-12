@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormData } from '@superset-ui/core';
+import { QueryFormData } from '@ax-bi/ui-core';
 
 export interface SliceHeaderControlsProps {
   slice: {
@@ -55,9 +55,9 @@ export interface SliceHeaderControlsProps {
   addDangerToast: (message: string) => void;
   addSuccessToast: (message: string) => void;
 
-  supersetCanExplore?: boolean;
-  supersetCanShare?: boolean;
-  supersetCanCSV?: boolean;
+  axbiCanExplore?: boolean;
+  axbiCanShare?: boolean;
+  axbiCanCSV?: boolean;
 
   crossFiltersEnabled?: boolean;
 }

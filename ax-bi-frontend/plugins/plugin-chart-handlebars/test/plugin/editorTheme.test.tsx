@@ -17,9 +17,9 @@
  * under the License.
  */
 import { ComponentType } from 'react';
-import { CustomControlItem } from '@superset-ui/chart-controls';
+import { CustomControlItem } from '@ax-bi/chart-controls';
 import { render } from 'spec/helpers/testing-library';
-import { useThemeMode } from '@apache-superset/core/theme';
+import { useThemeMode } from '@ax-bi/core/theme';
 import { handlebarsTemplateControlSetItem } from '../../src/plugin/controls/handlebarTemplate';
 import { styleControlSetItem } from '../../src/plugin/controls/style';
 
@@ -29,8 +29,8 @@ jest.mock('../../src/components/CodeEditor/CodeEditor', () => ({
   CodeEditor: (props: { theme?: string }) => mockCodeEditor(props),
 }));
 
-jest.mock('@apache-superset/core/theme', () => ({
-  ...jest.requireActual('@apache-superset/core/theme'),
+jest.mock('@ax-bi/core/theme', () => ({
+  ...jest.requireActual('@ax-bi/core/theme'),
   useThemeMode: jest.fn(),
 }));
 

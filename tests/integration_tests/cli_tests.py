@@ -28,12 +28,12 @@ from flask.ctx import AppContext
 from freezegun import freeze_time
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesGcmEngine
 
-import superset.cli.importexport
-import superset.cli.thumbnails
-import superset.cli.update
-import superset.utils.encrypt
-from superset import db
-from superset.models.dashboard import Dashboard
+import axbi.cli.importexport
+import axbi.cli.thumbnails
+import axbi.cli.update
+import axbi.utils.encrypt
+from axbi import db
+from axbi.models.dashboard import Dashboard
 from tests.integration_tests.fixtures.birth_names_dashboard import (
     load_birth_names_dashboard_with_slices,  # noqa: F401
     load_birth_names_data,  # noqa: F401
@@ -59,15 +59,15 @@ def test_export_dashboards_versioned_export(app_context, fs):
     Test that a ZIP file is exported.
     """
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_dashboards correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     runner = current_app.test_cli_runner()
     with freeze_time("2021-01-01T00:00:00Z"):
-        response = runner.invoke(superset.cli.importexport.export_dashboards, ())
+        response = runner.invoke(axbi.cli.importexport.export_dashboards, ())
 
     assert response.exit_code == 0
     assert Path("dashboard_export_20210101T000000.zip").exists()
@@ -76,7 +76,7 @@ def test_export_dashboards_versioned_export(app_context, fs):
 
 
 @mock.patch(
-    "superset.commands.dashboard.export.ExportDashboardsCommand.run",
+    "axbi.commands.dashboard.export.ExportDashboardsCommand.run",
     side_effect=Exception(),
 )
 def test_failing_export_dashboards_versioned_export(
@@ -88,15 +88,15 @@ def test_failing_export_dashboards_versioned_export(
     caplog.set_level(logging.DEBUG)
 
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_dashboards correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     runner = current_app.test_cli_runner()
     with freeze_time("2021-01-01T00:00:00Z"):
-        response = runner.invoke(superset.cli.importexport.export_dashboards, ())
+        response = runner.invoke(axbi.cli.importexport.export_dashboards, ())
 
     assert_cli_fails_properly(response, caplog)
 
@@ -107,15 +107,15 @@ def test_export_datasources_versioned_export(app_context, fs):
     Test that a ZIP file is exported.
     """
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_dashboards correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     runner = current_app.test_cli_runner()
     with freeze_time("2021-01-01T00:00:00Z"):
-        response = runner.invoke(superset.cli.importexport.export_datasources, ())
+        response = runner.invoke(axbi.cli.importexport.export_datasources, ())
 
     assert response.exit_code == 0
     assert Path("dataset_export_20210101T000000.zip").exists()
@@ -124,7 +124,7 @@ def test_export_datasources_versioned_export(app_context, fs):
 
 
 @mock.patch(
-    "superset.commands.dashboard.export.ExportDatasetsCommand.run",
+    "axbi.commands.dashboard.export.ExportDatasetsCommand.run",
     side_effect=Exception(),
 )
 def test_failing_export_datasources_versioned_export(
@@ -134,30 +134,30 @@ def test_failing_export_datasources_versioned_export(
     Test that failing to export ZIP file is done elegantly.
     """
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_dashboards correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     runner = current_app.test_cli_runner()
     with freeze_time("2021-01-01T00:00:00Z"):
-        response = runner.invoke(superset.cli.importexport.export_datasources, ())
+        response = runner.invoke(axbi.cli.importexport.export_datasources, ())
 
     assert_cli_fails_properly(response, caplog)
 
 
-@mock.patch("superset.commands.dashboard.importers.dispatcher.ImportDashboardsCommand")
+@mock.patch("axbi.commands.dashboard.importers.dispatcher.ImportDashboardsCommand")
 def test_import_dashboards_versioned_export(import_dashboards_command, app_context, fs):
     """
     Test that both ZIP and JSON can be imported.
     """
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_dashboards correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     # write JSON file
     with open("dashboards.json", "w") as fp:
@@ -165,7 +165,7 @@ def test_import_dashboards_versioned_export(import_dashboards_command, app_conte
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_dashboards,
+        axbi.cli.importexport.import_dashboards,
         ("-p", "dashboards.json", "-u", "admin"),
     )
 
@@ -180,7 +180,7 @@ def test_import_dashboards_versioned_export(import_dashboards_command, app_conte
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_dashboards,
+        axbi.cli.importexport.import_dashboards,
         ("-p", "dashboards.zip", "-u", "admin"),
     )
 
@@ -190,7 +190,7 @@ def test_import_dashboards_versioned_export(import_dashboards_command, app_conte
 
 
 @mock.patch(
-    "superset.commands.dashboard.importers.dispatcher.ImportDashboardsCommand.run",
+    "axbi.commands.dashboard.importers.dispatcher.ImportDashboardsCommand.run",
     side_effect=Exception(),
 )
 def test_failing_import_dashboards_versioned_export(
@@ -200,11 +200,11 @@ def test_failing_import_dashboards_versioned_export(
     Test that failing to import either ZIP and JSON is done elegantly.
     """
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_dashboards correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     # write JSON file
     with open("dashboards.json", "w") as fp:
@@ -212,7 +212,7 @@ def test_failing_import_dashboards_versioned_export(
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_dashboards,
+        axbi.cli.importexport.import_dashboards,
         ("-p", "dashboards.json", "-u", "admin"),
     )
 
@@ -225,24 +225,24 @@ def test_failing_import_dashboards_versioned_export(
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_dashboards,
+        axbi.cli.importexport.import_dashboards,
         ("-p", "dashboards.zip", "-u", "admin"),
     )
 
     assert_cli_fails_properly(response, caplog)
 
 
-@mock.patch("superset.commands.dataset.importers.dispatcher.ImportDatasetsCommand")
+@mock.patch("axbi.commands.dataset.importers.dispatcher.ImportDatasetsCommand")
 def test_import_datasets_versioned_export(import_datasets_command, app_context, fs):
     """
     Test that both ZIP and YAML can be imported.
     """
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_datasets correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     # write YAML file
     with open("datasets.yaml", "w") as fp:
@@ -250,7 +250,7 @@ def test_import_datasets_versioned_export(import_datasets_command, app_context, 
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_datasources, ("-p", "datasets.yaml")
+        axbi.cli.importexport.import_datasources, ("-p", "datasets.yaml")
     )
 
     assert response.exit_code == 0
@@ -264,7 +264,7 @@ def test_import_datasets_versioned_export(import_datasets_command, app_context, 
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_datasources, ("-p", "datasets.zip")
+        axbi.cli.importexport.import_datasources, ("-p", "datasets.zip")
     )
 
     assert response.exit_code == 0
@@ -273,7 +273,7 @@ def test_import_datasets_versioned_export(import_datasets_command, app_context, 
 
 
 @mock.patch(
-    "superset.commands.dataset.importers.dispatcher.ImportDatasetsCommand.run",
+    "axbi.commands.dataset.importers.dispatcher.ImportDatasetsCommand.run",
     side_effect=Exception(),
 )
 def test_failing_import_datasets_versioned_export(
@@ -283,11 +283,11 @@ def test_failing_import_datasets_versioned_export(
     Test that failing to import either ZIP or YAML is done elegantly.
     """
     # pylint: disable=reimported, redefined-outer-name
-    import superset.cli.importexport  # noqa: F811
+    import axbi.cli.importexport  # noqa: F811
 
     # reload to define export_datasets correctly based on the
     # feature flags
-    importlib.reload(superset.cli.importexport)
+    importlib.reload(axbi.cli.importexport)
 
     # write YAML file
     with open("datasets.yaml", "w") as fp:
@@ -295,7 +295,7 @@ def test_failing_import_datasets_versioned_export(
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_datasources, ("-p", "datasets.yaml")
+        axbi.cli.importexport.import_datasources, ("-p", "datasets.yaml")
     )
 
     assert_cli_fails_properly(response, caplog)
@@ -307,20 +307,20 @@ def test_failing_import_datasets_versioned_export(
 
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.importexport.import_datasources, ("-p", "datasets.zip")
+        axbi.cli.importexport.import_datasources, ("-p", "datasets.zip")
     )
 
     assert_cli_fails_properly(response, caplog)
 
 
 @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
-@mock.patch("superset.tasks.thumbnails.cache_dashboard_thumbnail")
+@mock.patch("axbi.tasks.thumbnails.cache_dashboard_thumbnail")
 def test_compute_thumbnails(thumbnail_mock, app_context, fs):
     thumbnail_mock.return_value = None
     runner = current_app.test_cli_runner()
     dashboard = db.session.query(Dashboard).filter_by(slug="births").first()
     response = runner.invoke(
-        superset.cli.thumbnails.compute_thumbnails,
+        axbi.cli.thumbnails.compute_thumbnails,
         ["-d", "-i", dashboard.id],
     )
 
@@ -337,8 +337,8 @@ def test_re_encrypt_secrets_without_previous_key_is_noop(app_context):
     """
     current_app.config.pop("PREVIOUS_SECRET_KEY", None)
     runner = current_app.test_cli_runner()
-    with mock.patch.object(superset.cli.update.SecretsMigrator, "run") as run_mock:
-        response = runner.invoke(superset.cli.update.re_encrypt_secrets, [])
+    with mock.patch.object(axbi.cli.update.SecretsMigrator, "run") as run_mock:
+        response = runner.invoke(axbi.cli.update.re_encrypt_secrets, [])
 
     assert response.exit_code == 0
     assert "nothing to re-encrypt" in response.output.lower()
@@ -353,12 +353,12 @@ def test_re_encrypt_secrets_failure_exits_nonzero(app_context):
     """
     runner = current_app.test_cli_runner()
     with mock.patch.object(
-        superset.cli.update.SecretsMigrator,
+        axbi.cli.update.SecretsMigrator,
         "run",
         side_effect=Exception("Re-encryption failed for 2 value(s)"),
     ):
         response = runner.invoke(
-            superset.cli.update.re_encrypt_secrets,
+            axbi.cli.update.re_encrypt_secrets,
             ["--previous_secret_key", "old-key"],
         )
 
@@ -379,14 +379,14 @@ def test_re_encrypt_secrets_engine_option_invokes_migrator(
     current_app.config.pop("PREVIOUS_SECRET_KEY", None)
     runner = current_app.test_cli_runner()
     with mock.patch.object(
-        superset.cli.update,
+        axbi.cli.update,
         "SecretsMigrator",
     ) as migrator_mock:
         migrator_mock.return_value.run.return_value = (
-            superset.utils.encrypt.ReEncryptStats()
+            axbi.utils.encrypt.ReEncryptStats()
         )
         response = runner.invoke(
-            superset.cli.update.re_encrypt_secrets,
+            axbi.cli.update.re_encrypt_secrets,
             ["--engine", "aes-gcm"],
         )
 
@@ -406,14 +406,14 @@ def test_re_encrypt_secrets_engine_option_case_insensitive(
     current_app.config.pop("PREVIOUS_SECRET_KEY", None)
     runner = current_app.test_cli_runner()
     with mock.patch.object(
-        superset.cli.update,
+        axbi.cli.update,
         "SecretsMigrator",
     ) as migrator_mock:
         migrator_mock.return_value.run.return_value = (
-            superset.utils.encrypt.ReEncryptStats()
+            axbi.utils.encrypt.ReEncryptStats()
         )
         response = runner.invoke(
-            superset.cli.update.re_encrypt_secrets,
+            axbi.cli.update.re_encrypt_secrets,
             ["--engine", "AES-GCM"],
         )
 
@@ -433,14 +433,14 @@ def test_re_encrypt_secrets_combined_key_rotation_and_engine(
     current_app.config.pop("PREVIOUS_SECRET_KEY", None)
     runner = current_app.test_cli_runner()
     with mock.patch.object(
-        superset.cli.update,
+        axbi.cli.update,
         "SecretsMigrator",
     ) as migrator_mock:
         migrator_mock.return_value.run.return_value = (
-            superset.utils.encrypt.ReEncryptStats()
+            axbi.utils.encrypt.ReEncryptStats()
         )
         response = runner.invoke(
-            superset.cli.update.re_encrypt_secrets,
+            axbi.cli.update.re_encrypt_secrets,
             ["--previous_secret_key", "old-key", "--engine", "aes-gcm"],
         )
 
@@ -459,7 +459,7 @@ def test_re_encrypt_secrets_engine_option_invalid_raises_usage(
     """
     runner = current_app.test_cli_runner()
     response = runner.invoke(
-        superset.cli.update.re_encrypt_secrets,
+        axbi.cli.update.re_encrypt_secrets,
         ["--engine", "nonexistent-engine"],
     )
 

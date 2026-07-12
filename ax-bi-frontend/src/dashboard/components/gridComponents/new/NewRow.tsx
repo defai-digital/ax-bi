@@ -16,9 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 
-import { Icons } from '@superset-ui/core/components';
+import { Icons } from '@ax-bi/ui-core/components';
 import { ROW_TYPE } from '../../../util/componentTypes';
 import { NEW_ROW_ID } from '../../../util/constants';
 import DraggableNewComponent from './DraggableNewComponent';

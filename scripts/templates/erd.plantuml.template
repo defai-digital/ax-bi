@@ -18,7 +18,7 @@
 #}
 @startuml entity-relationship-diagram
 
-title Apache Superset ERD
+title AX BI ERD
 
 !theme blueprint
 

@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Metric } from '@superset-ui/core';
+import { Metric } from '@ax-bi/ui-core';
 import { transformDatasourceWithFolders } from './transformDatasourceFolders';
 import { DatasourceFolder, DatasourcePanelColumn } from './types';
 import { FoldersEditorItemType } from 'src/components/Datasource/types';

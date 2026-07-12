@@ -25,7 +25,7 @@ import yaml
 
 def test_get_dataset_config_from_yaml_extracts_uuid():
     """Test that UUID is extracted from dataset.yaml."""
-    from superset.examples.data_loading import get_dataset_config_from_yaml
+    from axbi.examples.data_loading import get_dataset_config_from_yaml
 
     with TemporaryDirectory() as tmpdir:
         example_dir = Path(tmpdir)
@@ -49,7 +49,7 @@ def test_get_dataset_config_from_yaml_extracts_uuid():
 
 def test_get_dataset_config_from_yaml_without_uuid():
     """Test that missing UUID returns None."""
-    from superset.examples.data_loading import get_dataset_config_from_yaml
+    from axbi.examples.data_loading import get_dataset_config_from_yaml
 
     with TemporaryDirectory() as tmpdir:
         example_dir = Path(tmpdir)
@@ -71,7 +71,7 @@ def test_get_dataset_config_from_yaml_without_uuid():
 
 def test_get_dataset_config_from_yaml_no_file():
     """Test behavior when dataset.yaml doesn't exist."""
-    from superset.examples.data_loading import get_dataset_config_from_yaml
+    from axbi.examples.data_loading import get_dataset_config_from_yaml
 
     with TemporaryDirectory() as tmpdir:
         example_dir = Path(tmpdir)
@@ -85,7 +85,7 @@ def test_get_dataset_config_from_yaml_no_file():
 
 def test_get_dataset_config_from_yaml_treats_main_schema_as_none():
     """Test that SQLite's 'main' schema is treated as None."""
-    from superset.examples.data_loading import get_dataset_config_from_yaml
+    from axbi.examples.data_loading import get_dataset_config_from_yaml
 
     with TemporaryDirectory() as tmpdir:
         example_dir = Path(tmpdir)
@@ -106,7 +106,7 @@ def test_get_dataset_config_from_yaml_treats_main_schema_as_none():
 
 def test_get_multi_dataset_config_extracts_uuid():
     """Test that UUID is extracted from datasets/{name}.yaml."""
-    from superset.examples.data_loading import _get_multi_dataset_config
+    from axbi.examples.data_loading import _get_multi_dataset_config
 
     with TemporaryDirectory() as tmpdir:
         example_dir = Path(tmpdir)
@@ -132,7 +132,7 @@ def test_get_multi_dataset_config_extracts_uuid():
 
 def test_get_multi_dataset_config_without_yaml():
     """Test behavior when datasets/{name}.yaml doesn't exist."""
-    from superset.examples.data_loading import _get_multi_dataset_config
+    from axbi.examples.data_loading import _get_multi_dataset_config
 
     with TemporaryDirectory() as tmpdir:
         example_dir = Path(tmpdir)
@@ -146,7 +146,7 @@ def test_get_multi_dataset_config_without_yaml():
 
 def test_get_multi_dataset_config_treats_main_schema_as_none():
     """Test that SQLite's 'main' schema is treated as None in multi-dataset config."""
-    from superset.examples.data_loading import _get_multi_dataset_config
+    from axbi.examples.data_loading import _get_multi_dataset_config
 
     with TemporaryDirectory() as tmpdir:
         example_dir = Path(tmpdir)
@@ -170,7 +170,7 @@ def test_get_multi_dataset_config_treats_main_schema_as_none():
 
 def test_discover_datasets_passes_uuid_to_loader():
     """Test that discover_datasets passes UUID from YAML to create_generic_loader."""
-    from superset.examples.data_loading import discover_datasets
+    from axbi.examples.data_loading import discover_datasets
 
     with TemporaryDirectory() as tmpdir:
         examples_dir = Path(tmpdir)
@@ -189,11 +189,11 @@ def test_discover_datasets_passes_uuid_to_loader():
         )
 
         with patch(
-            "superset.examples.data_loading.get_examples_directory",
+            "axbi.examples.data_loading.get_examples_directory",
             return_value=examples_dir,
         ):
             with patch(
-                "superset.examples.data_loading.create_generic_loader"
+                "axbi.examples.data_loading.create_generic_loader"
             ) as mock_create:
                 mock_create.return_value = lambda: None
 

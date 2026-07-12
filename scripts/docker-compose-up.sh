@@ -17,7 +17,7 @@
 #
 
 # -----------------------------------------------------------------------
-# Smart docker-compose wrapper for running multiple Superset instances
+# Smart docker-compose wrapper for running multiple AxBI instances
 #
 # Features:
 #   - Auto-generates unique project name from directory
@@ -95,7 +95,7 @@ find_and_claim_port() {
 
 # Base ports (defaults from docker-compose.yml)
 BASE_NGINX=80
-BASE_SUPERSET=8088
+BASE_AXBI=8088
 BASE_NODE=9000
 BASE_WEBSOCKET=8080
 BASE_CYPRESS=8081
@@ -105,7 +105,7 @@ BASE_REDIS=6379
 # Find available ports (no subshells - claims persist correctly)
 echo "🔍 Finding available ports..."
 find_and_claim_port $BASE_NGINX NGINX_PORT
-find_and_claim_port $BASE_SUPERSET SUPERSET_PORT
+find_and_claim_port $BASE_AXBI AXBI_PORT
 find_and_claim_port $BASE_NODE NODE_PORT
 find_and_claim_port $BASE_WEBSOCKET WEBSOCKET_PORT
 find_and_claim_port $BASE_CYPRESS CYPRESS_PORT
@@ -133,7 +133,7 @@ cd "$REPO_ROOT"
 if docker compose ps --status running 2>/dev/null | grep -q "$PROJECT_NAME"; then
     # Containers are running - get actual ports
     NGINX_PORT=$(get_running_port nginx 80 $NGINX_PORT)
-    SUPERSET_PORT=$(get_running_port ax-bi 8088 $SUPERSET_PORT)
+    AXBI_PORT=$(get_running_port ax-bi 8088 $AXBI_PORT)
     NODE_PORT=$(get_running_port ax-bi-node 9000 $NODE_PORT)
     WEBSOCKET_PORT=$(get_running_port ax-bi-websocket 8080 $WEBSOCKET_PORT)
     DATABASE_PORT=$(get_running_port db 5432 $DATABASE_PORT)
@@ -141,7 +141,7 @@ if docker compose ps --status running 2>/dev/null | grep -q "$PROJECT_NAME"; the
 fi
 
 export NGINX_PORT
-export SUPERSET_PORT
+export AXBI_PORT
 export NODE_PORT
 export WEBSOCKET_PORT
 export CYPRESS_PORT
@@ -151,9 +151,9 @@ export REDIS_PORT
 # Function to print connection info
 print_connection_info() {
     echo ""
-    echo "🐳 Superset ($PROJECT_NAME):"
+    echo "🐳 AxBI ($PROJECT_NAME):"
     echo "   Dev Server: http://localhost:$NODE_PORT  ← Use this for development"
-    echo "   Superset:   http://localhost:$SUPERSET_PORT"
+    echo "   AxBI:   http://localhost:$AXBI_PORT"
     echo "   Nginx:      http://localhost:$NGINX_PORT"
     echo "   WebSocket:  localhost:$WEBSOCKET_PORT"
     echo "   Database:   localhost:$DATABASE_PORT"
@@ -185,7 +185,7 @@ case "${1:-}" in
         # Output as sourceable environment variables
         echo "export COMPOSE_PROJECT_NAME='$PROJECT_NAME'"
         echo "export NGINX_PORT=$NGINX_PORT"
-        echo "export SUPERSET_PORT=$SUPERSET_PORT"
+        echo "export AXBI_PORT=$AXBI_PORT"
         echo "export NODE_PORT=$NODE_PORT"
         echo "export WEBSOCKET_PORT=$WEBSOCKET_PORT"
         echo "export CYPRESS_PORT=$CYPRESS_PORT"

@@ -22,7 +22,7 @@ import {
   getColumnLabel,
   getNumberFormatter,
   getTimeFormatter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { SunburstTransformedProps } from './types';
 import Echart from '../components/Echart';
 import { EventHandlers, TreePathInfo } from '../types';

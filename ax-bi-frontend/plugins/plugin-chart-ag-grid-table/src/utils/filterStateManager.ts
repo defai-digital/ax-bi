@@ -24,7 +24,7 @@ import type {
   AgGridFilterModel,
   SQLAlchemyFilter,
 } from './agGridFilterConverter';
-import type { AgGridReact } from '@superset-ui/core/components/ThemedAgGridReact';
+import type { AgGridReact } from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import type { FilterInputPosition, AGGridFilterInstance } from '../types';
 import { FILTER_INPUT_POSITIONS, FILTER_CONDITION_BODY_INDEX } from '../consts';
 

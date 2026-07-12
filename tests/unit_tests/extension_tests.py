@@ -17,10 +17,10 @@
 from os.path import dirname, join
 from unittest.mock import Mock
 
-from superset.extensions import UIManifestProcessor
+from axbi.extensions import UIManifestProcessor
 
 APP_DIR = f"{dirname(__file__)}/fixtures"
-SUPERSET_DIR = join(dirname(__file__), "..", "..", "superset")
+AXBI_DIR = join(dirname(__file__), "..", "..", "axbi")
 
 
 def test_get_manifest_with_prefix():
@@ -56,7 +56,7 @@ def test_spa_template_includes_css_bundles():
     """
     Verify spa.html loads CSS bundles for production builds.
     """
-    template_path = join(SUPERSET_DIR, "templates", "superset", "spa.html")
+    template_path = join(AXBI_DIR, "templates", "axbi", "spa.html")
     with open(template_path) as f:
         template_content = f.read()
 
@@ -74,7 +74,7 @@ def test_spa_template_standalone_body_has_min_height():
     """Standalone body must be measurable so screenshot waits don't time out."""
     from jinja2 import DictLoader, Environment
 
-    template_path = join(SUPERSET_DIR, "templates", "superset", "spa.html")
+    template_path = join(AXBI_DIR, "templates", "axbi", "spa.html")
     with open(template_path) as f:
         template_content = f.read()
 
@@ -84,11 +84,11 @@ def test_spa_template_standalone_body_has_min_height():
                 "spa.html": template_content,
                 # Stub out includes/imports that are not relevant for this test.
                 "appbuilder/general/lib.html": "",
-                "superset/partials/asset_bundle.html": (
+                "axbi/partials/asset_bundle.html": (
                     "{% macro css_bundle(prefix, entry) %}{% endmacro %}"
                     "{% macro js_bundle(prefix, entry) %}{% endmacro %}"
                 ),
-                "superset/macros.html": ("{% macro get_nonce() %}{% endmacro %}"),
+                "axbi/macros.html": ("{% macro get_nonce() %}{% endmacro %}"),
                 "tail_js_custom_extra.html": "",
                 "head_custom_extra.html": "",
             }

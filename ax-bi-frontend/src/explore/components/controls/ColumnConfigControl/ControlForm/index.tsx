@@ -22,9 +22,9 @@ import {
   FunctionComponentElement,
   useMemo,
 } from 'react';
-import { JsonObject, JsonValue } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
-import { Constants } from '@superset-ui/core/components';
+import { JsonObject, JsonValue } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
+import { Constants } from '@ax-bi/ui-core/components';
 import { debounce } from 'lodash';
 import { ControlFormItemNode } from './ControlFormItem';
 

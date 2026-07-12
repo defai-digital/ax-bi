@@ -20,7 +20,7 @@
 import {
   GridState,
   SortModelItem,
-} from '@superset-ui/core/components/ThemedAgGridReact';
+} from '@ax-bi/ui-core/components/ThemedAgGridReact';
 import { SortByItem } from '../types';
 
 const getInitialSortState = (sortBy?: SortByItem[]): SortModelItem[] => {

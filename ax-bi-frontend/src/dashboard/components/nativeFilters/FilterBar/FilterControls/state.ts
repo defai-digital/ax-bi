@@ -18,7 +18,7 @@
  */
 import { useMemo } from 'react';
 import { shallowEqual, useSelector } from 'react-redux';
-import { DataMaskStateWithId, ExtraFormData } from '@superset-ui/core';
+import { DataMaskStateWithId, ExtraFormData } from '@ax-bi/ui-core';
 import { RootState } from 'src/dashboard/types';
 import { mergeExtraFormData } from '../../utils';
 import {

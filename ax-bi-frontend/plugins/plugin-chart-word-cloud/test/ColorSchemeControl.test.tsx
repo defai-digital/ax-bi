@@ -39,7 +39,7 @@ test('renders color scheme control', () => {
 
 test('renders select with value', () => {
   // Get a color scheme from the registry to use as a test value
-  const { getCategoricalSchemeRegistry } = require('@superset-ui/core');
+  const { getCategoricalSchemeRegistry } = require('@ax-bi/ui-core');
   const registry = getCategoricalSchemeRegistry();
   const firstScheme = registry.keys()[0];
 
@@ -51,7 +51,7 @@ test('renders select with value', () => {
 
 test('calls onChange when value changes', async () => {
   const onChange = jest.fn();
-  const { getCategoricalSchemeRegistry } = require('@superset-ui/core');
+  const { getCategoricalSchemeRegistry } = require('@ax-bi/ui-core');
   const registry = getCategoricalSchemeRegistry();
   const schemes = registry.keys();
 

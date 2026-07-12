@@ -17,16 +17,16 @@
 
 from unittest.mock import MagicMock, patch
 
-from superset.security.manager import SupersetSecurityManager
+from axbi.security.manager import AxBISecurityManager
 
 
 def test_granular_export_permissions_registered_in_create_custom_permissions(
     app_context: None,
 ) -> None:
     """Verify that create_custom_permissions registers all granular export perms."""
-    from superset.extensions import appbuilder
+    from axbi.extensions import appbuilder
 
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     sm.add_permission_view_menu = MagicMock()
 
     sm.create_custom_permissions()
@@ -35,58 +35,54 @@ def test_granular_export_permissions_registered_in_create_custom_permissions(
         (call.args[0], call.args[1])
         for call in sm.add_permission_view_menu.call_args_list
     ]
-    assert ("can_export_data", "Superset") in calls
-    assert ("can_export_image", "Superset") in calls
-    assert ("can_copy_clipboard", "Superset") in calls
+    assert ("can_export_data", "AxBI") in calls
+    assert ("can_export_image", "AxBI") in calls
+    assert ("can_copy_clipboard", "AxBI") in calls
 
 
 def test_sqllab_extra_permission_views_include_export_perms() -> None:
     """Verify SQLLAB_EXTRA_PERMISSION_VIEWS includes granular export perms."""
-    assert ("can_export_data", "Superset") in (
-        SupersetSecurityManager.SQLLAB_EXTRA_PERMISSION_VIEWS
+    assert ("can_export_data", "AxBI") in (
+        AxBISecurityManager.SQLLAB_EXTRA_PERMISSION_VIEWS
     )
-    assert ("can_copy_clipboard", "Superset") in (
-        SupersetSecurityManager.SQLLAB_EXTRA_PERMISSION_VIEWS
+    assert ("can_copy_clipboard", "AxBI") in (
+        AxBISecurityManager.SQLLAB_EXTRA_PERMISSION_VIEWS
     )
 
 
 def test_gamma_excluded_pvms_excludes_export_data_and_image() -> None:
     """Verify GAMMA_EXCLUDED_PVMS excludes can_export_data and can_export_image."""
-    assert ("can_export_data", "Superset") in (
-        SupersetSecurityManager.GAMMA_EXCLUDED_PVMS
-    )
-    assert ("can_export_image", "Superset") in (
-        SupersetSecurityManager.GAMMA_EXCLUDED_PVMS
-    )
+    assert ("can_export_data", "AxBI") in (AxBISecurityManager.GAMMA_EXCLUDED_PVMS)
+    assert ("can_export_image", "AxBI") in (AxBISecurityManager.GAMMA_EXCLUDED_PVMS)
 
 
 def test_gamma_excluded_pvms_allows_copy_clipboard() -> None:
     """Verify GAMMA_EXCLUDED_PVMS does NOT exclude can_copy_clipboard."""
-    assert ("can_copy_clipboard", "Superset") not in (
-        SupersetSecurityManager.GAMMA_EXCLUDED_PVMS
+    assert ("can_copy_clipboard", "AxBI") not in (
+        AxBISecurityManager.GAMMA_EXCLUDED_PVMS
     )
 
 
 def test_is_gamma_pvm_excludes_export_data(app_context: None) -> None:
     """Verify _is_gamma_pvm returns False for can_export_data."""
-    from superset.extensions import appbuilder
+    from axbi.extensions import appbuilder
 
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     pvm = MagicMock()
     pvm.permission.name = "can_export_data"
-    pvm.view_menu.name = "Superset"
+    pvm.view_menu.name = "AxBI"
 
     assert sm._is_gamma_pvm(pvm) is False
 
 
 def test_is_gamma_pvm_excludes_export_image(app_context: None) -> None:
     """Verify _is_gamma_pvm returns False for can_export_image."""
-    from superset.extensions import appbuilder
+    from axbi.extensions import appbuilder
 
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     pvm = MagicMock()
     pvm.permission.name = "can_export_image"
-    pvm.view_menu.name = "Superset"
+    pvm.view_menu.name = "AxBI"
 
     assert sm._is_gamma_pvm(pvm) is False
 
@@ -99,17 +95,17 @@ def test_api_key_view_menu_is_admin_only() -> None:
     endpoints.  A rename or removal of the entry would silently re-open
     that access hole.
     """
-    assert "ApiKey" in SupersetSecurityManager.ADMIN_ONLY_VIEW_MENUS
+    assert "ApiKey" in AxBISecurityManager.ADMIN_ONLY_VIEW_MENUS
 
 
 def test_is_gamma_pvm_allows_copy_clipboard(app_context: None) -> None:
     """Verify _is_gamma_pvm returns True for can_copy_clipboard."""
-    from superset.extensions import appbuilder
+    from axbi.extensions import appbuilder
 
-    sm = SupersetSecurityManager(appbuilder)
+    sm = AxBISecurityManager(appbuilder)
     pvm = MagicMock()
     pvm.permission.name = "can_copy_clipboard"
-    pvm.view_menu.name = "Superset"
+    pvm.view_menu.name = "AxBI"
     # Ensure the pvm doesn't trigger other exclusion checks
     with (
         patch.object(sm, "_is_user_defined_permission", return_value=False),

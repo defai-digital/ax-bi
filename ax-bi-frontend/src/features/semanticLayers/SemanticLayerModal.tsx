@@ -17,10 +17,10 @@
  * under the License.
  */
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
-import { Input, Select, Button } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
+import { Input, Select, Button } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { JsonForms } from '@jsonforms/react';
 import type { JsonSchema, UISchemaElement } from '@jsonforms/core';
 import { cellRegistryEntries } from '@great-expectations/jsonforms-antd-renderers';
@@ -31,7 +31,7 @@ import {
   MODAL_STANDARD_WIDTH,
   MODAL_MEDIUM_WIDTH,
 } from 'src/components/Modal';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import {
   renderers,
   sanitizeSchema,
@@ -94,7 +94,7 @@ export default function SemanticLayerModal({
   const fetchTypes = useCallback(async () => {
     setLoading(true);
     try {
-      const { json } = await SupersetClient.get({
+      const { json } = await AxBIClient.get({
         endpoint: '/api/v1/semantic_layer/types',
       });
       setTypes(json.result ?? []);
@@ -122,7 +122,7 @@ export default function SemanticLayerModal({
       if (isInitialFetch) setLoading(true);
       else setRefreshingSchema(true);
       try {
-        const { json } = await SupersetClient.post({
+        const { json } = await AxBIClient.post({
           endpoint: '/api/v1/semantic_layer/schema/configuration',
           jsonPayload: { type, configuration },
         });
@@ -156,7 +156,7 @@ export default function SemanticLayerModal({
     async (uuid: string) => {
       setLoading(true);
       try {
-        const { json } = await SupersetClient.get({
+        const { json } = await AxBIClient.get({
           endpoint: `/api/v1/semantic_layer/${uuid}`,
         });
         const layer = json.result;
@@ -168,7 +168,7 @@ export default function SemanticLayerModal({
         // configuration so that dynamic dropdowns (account, project,
         // environment) show their human-readable labels immediately rather
         // than flashing raw IDs while the background refresh completes.
-        const { json: schemaJson } = await SupersetClient.post({
+        const { json: schemaJson } = await AxBIClient.post({
           endpoint: '/api/v1/semantic_layer/schema/configuration',
           jsonPayload: { type: layer.type, configuration: layer.configuration },
         });
@@ -235,13 +235,13 @@ export default function SemanticLayerModal({
     setSaving(true);
     try {
       if (isEditMode && semanticLayerUuid) {
-        await SupersetClient.put({
+        await AxBIClient.put({
           endpoint: `/api/v1/semantic_layer/${semanticLayerUuid}`,
           jsonPayload: { name, configuration: formData },
         });
         addSuccessToast(t('Semantic layer updated'));
       } else {
-        await SupersetClient.post({
+        await AxBIClient.post({
           endpoint: '/api/v1/semantic_layer/',
           jsonPayload: { name, type: selectedType, configuration: formData },
         });

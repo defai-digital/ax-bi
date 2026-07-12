@@ -16,9 +16,9 @@
 # under the License.
 import pytest
 
-from superset.exceptions import InvalidPostProcessingError
-from superset.utils.core import PostProcessingBoxplotWhiskerType
-from superset.utils.pandas_postprocessing import boxplot
+from axbi.exceptions import InvalidPostProcessingError
+from axbi.utils.core import PostProcessingBoxplotWhiskerType
+from axbi.utils.pandas_postprocessing import boxplot
 from tests.unit_tests.fixtures.dataframes import names_df
 
 

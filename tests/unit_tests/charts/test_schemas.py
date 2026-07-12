@@ -19,7 +19,7 @@ import pytest
 from flask import current_app
 from marshmallow import ValidationError
 
-from superset.charts.schemas import (
+from axbi.charts.schemas import (
     ChartDataProphetOptionsSchema,
     ChartDataQueryObjectSchema,
     ChartDataRollingOptionsSchema,

@@ -17,8 +17,8 @@
  * under the License.
  */
 import getOwnerName from 'src/utils/getOwnerName';
-import { t } from '@apache-superset/core/translation';
-import { Tooltip } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import type { AuditInfoProps } from './types';
 
 export const ModifiedInfo = ({ user, date }: AuditInfoProps) => {

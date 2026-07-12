@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render, screen } from 'spec/helpers/testing-library';
-import { Input } from '@superset-ui/core/components';
+import { Input } from '@ax-bi/ui-core/components';
 import { ModalFormField } from './ModalFormField';
 
 test('renders field with label and input', () => {

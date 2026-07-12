@@ -20,17 +20,17 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useMemo, useState } from 'react';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
 import { Link } from 'react-router-dom';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import { DEFAULT_LIST_PAGE_SIZE } from 'src/views/CRUD/constants';
 import { createFetchRelated, createErrorHandler } from 'src/views/CRUD/utils';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import SubMenu, { SubMenuProps } from 'src/features/home/SubMenu';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 
-import { DeleteModal, ConfirmStatusChange } from '@superset-ui/core/components';
+import { DeleteModal, ConfirmStatusChange } from '@ax-bi/ui-core/components';
 import {
   ModifiedInfo,
   ListView,
@@ -43,7 +43,7 @@ import {
 import AnnotationLayerModal from 'src/features/annotationLayers/AnnotationLayerModal';
 import { AnnotationLayerObject } from 'src/features/annotationLayers/types';
 import { QueryObjectColumns } from 'src/views/CRUD/types';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
 import { WIDER_DROPDOWN_WIDTH } from 'src/components/ListView/utils';
 
@@ -90,7 +90,7 @@ function AnnotationLayersList({
     useState<AnnotationLayerObject | null>(null);
 
   const handleLayerDelete = ({ id, name }: AnnotationLayerObject) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/annotation_layer/${id}`,
     }).then(
       () => {
@@ -105,7 +105,7 @@ function AnnotationLayersList({
   };
 
   const handleBulkLayerDelete = (layersToDelete: AnnotationLayerObject[]) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/annotation_layer/?q=${rison.encode(
         layersToDelete.map(({ id }) => id),
       )}`,

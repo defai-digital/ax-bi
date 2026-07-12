@@ -24,76 +24,50 @@ under the License.
 
 # AX BI Rename Policy
 
-AX BI follows an external rename strategy. User-facing app text uses the
-AX BI name. Public commands, local development paths, routes, images, and
-protocol tokens keep their established technical identifiers unless there is a
-dedicated migration plan. Core Superset Python modules, package namespaces,
-extension contracts, migrations, and upstream compatibility surfaces keep their
-Superset names unless there is a dedicated migration plan.
+AX BI uses a clean-break product namespace. The project is independently
+maintained by DEFAI Private Limited and does not provide aliases for the former
+product name, package names, commands, routes, environment variables, or
+extension scopes.
 
-This keeps the product experience branded as AX BI while preserving upstream
-syncability, import compatibility, extension compatibility, and migration
-history.
-
-## Renamed Surfaces
-
-Use AX BI display names for surfaces users see in the app. Use technical
-identifiers for surfaces that users, operators, and developers invoke directly:
+## Canonical Names
 
 | Surface | Name or identifier |
 | --- | --- |
+| Product display name | `AX BI` |
+| Python and JavaScript namespace | `axbi` |
+| Python class prefix | `AxBI` |
+| Repository and filesystem slug | `ax-bi` |
 | Main CLI command | `ax-bi` |
 | MCP wrapper command | `ax-bi-mcp` |
+| Extension CLI command | `ax-bi-extensions` |
+| Backend package | `axbi` |
+| Shared Python package | `axbi_core` in `ax-bi-core/` |
 | Frontend workspace directory | `ax-bi-frontend/` |
+| Frontend package scope | `@ax-bi/*` |
 | Route prefix | `/ax-bi` |
 | Docker image | `ghcr.io/defai-digital/ax-bi` |
+| Helm chart | `helm/ax-bi` |
 | Repository links | `https://github.com/defai-digital/ax-bi` |
-| Local development docs | `cd ax-bi-frontend`, `ax-bi run`, `ax-bi mcp run` |
-| App name (UI title, logo alt) | `AX BI` |
 | User-Agent header | `AX-BI` |
 
-Legacy `/superset/*` routes redirect to `/ax-bi/*` for compatibility with
-upstream Superset route history.
+`/api/v1/*` remains the REST API root because it is a protocol path rather than
+a product-name namespace.
 
-The CLI command is `ax-bi`.
+## Clean-Break Rules
 
-New public documentation should not introduce `superset run`,
-`superset mcp run`, `superset db`, `superset load-examples`,
-`superset-frontend`, or `superset-mcp`.
+- Do not add compatibility imports, command aliases, route redirects, package
+  aliases, environment-variable fallbacks, or dual-published packages for the
+  former namespace.
+- New deployment configuration uses `AXBI_*` variables, except the canonical
+  secret and test controls `AX_BI_SECRET_KEY` and `AX_BI_TESTENV`.
+- Current code, tests, fixtures, generated metadata, package manifests, CI,
+  containers, and release artifacts must use the canonical names above.
+- The former product name is permitted only in legal notices, attribution,
+  historical release notes, and documentation that explicitly discusses the
+  upstream project or migration history.
+- References to the upstream project must not be executable examples or imply
+  runtime compatibility.
 
-## Kept Superset Names
-
-Keep the following Superset names unless the work is explicitly scoped as a
-full compatibility migration:
-
-| Surface | Reason to keep |
-| --- | --- |
-| `superset/` Python package | Thousands of imports, Flask config paths, migrations, plugins, and upstream patches depend on it. |
-| `superset_config.py`, `SUPERSET_CONFIG`, `SUPERSET_HOME`, `SUPERSET_ENV` | Established deployment contract for operators and Docker/Kubernetes configs. |
-| `superset-core/` and `superset_core.*` | Shared extension/core package compatibility. |
-| `superset-extensions-cli/` and `superset-extensions` | Extension ecosystem compatibility. |
-| `superset-websocket/`, `superset-desktop/`, `superset-embedded-sdk/` | Sub-project compatibility. |
-| `@superset-ui/*` and `@apache-superset/core` | Existing chart plugin and extension dependency contracts. |
-| `apache_superset` / `apache-superset-*` package metadata | Python packaging and upgrade compatibility. |
-| `helm/superset` and chart internals | Helm chart compatibility with upstream values and deployment conventions. |
-| Permission resource `'Superset'` | RBAC compatibility; used in `findPermission` calls across frontend. |
-| `/api/v1/*` REST API paths | API contract stability for clients and integrations. |
-| Alembic migration files | Database migration history integrity. |
-
-## When a Full Rename Is Justified
-
-Do not rename internal Superset namespaces opportunistically. A full rename
-requires a separate migration plan covering at least:
-
-- Import aliases and deprecation windows.
-- Database migration history and Alembic references.
-- Flask config, environment variables, and operator documentation.
-- Frontend package names, extension peer dependencies, and Module Federation
-  runtime globals.
-- Docker, Helm, CI, release artifacts, and published package names.
-- Upstream sync strategy and conflict handling.
-- Compatibility tests for existing dashboards, embedded deployments,
-  extensions, and operator configs.
-
-Until that plan exists, treat remaining `superset*` directories as deliberate
-compatibility surfaces, not unfinished rename work.
+Run `python scripts/check_axbi_branding.py` before committing. The check rejects
+former-name tokens in runtime and build surfaces while allowing documentation
+and legal attribution.

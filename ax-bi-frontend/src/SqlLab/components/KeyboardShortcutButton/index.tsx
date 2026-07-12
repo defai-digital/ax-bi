@@ -17,9 +17,9 @@
  * under the License.
  */
 import { FC, ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled, css } from '@apache-superset/core/theme';
-import { ModalTrigger } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled, css } from '@ax-bi/core/theme';
+import { ModalTrigger } from '@ax-bi/ui-core/components';
 import { detectOS } from 'src/utils/common';
 
 const userOS = detectOS();

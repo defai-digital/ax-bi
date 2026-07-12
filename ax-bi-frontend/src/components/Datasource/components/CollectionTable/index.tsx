@@ -18,9 +18,9 @@
  */
 import { PureComponent, ReactNode } from 'react';
 import { nanoid } from 'nanoid';
-import { t } from '@apache-superset/core/translation';
-import { styled, css, SupersetTheme } from '@apache-superset/core/theme';
-import { Icons, Button, InfoTooltip } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled, css, AxBITheme } from '@ax-bi/core/theme';
+import { Icons, Button, InfoTooltip } from '@ax-bi/ui-core/components';
 import { FilterValue } from 'react-table';
 import Table, {
   type ColumnsType,
@@ -28,7 +28,7 @@ import Table, {
   type SorterResult,
   type TablePaginationConfig,
   TableSize,
-} from '@superset-ui/core/components/Table';
+} from '@ax-bi/ui-core/components/Table';
 import Fieldset from '../Fieldset';
 import { recurseReactClone } from '../../utils';
 import {
@@ -386,7 +386,7 @@ export default class CRUDCollection extends PureComponent<
           <span
             data-test="crud-delete-option"
             className="text-primary"
-            css={(theme: SupersetTheme) => css`
+            css={(theme: AxBITheme) => css`
               display: flex;
               justify-content: center;
               color: ${theme.colorTextTertiary};

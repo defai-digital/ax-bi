@@ -21,17 +21,17 @@ from unittest.mock import MagicMock
 import pytest
 from pytest_mock import MockerFixture
 
-from superset import db
-from superset.commands.database.exceptions import (
+from axbi import db
+from axbi.commands.database.exceptions import (
     DatabaseConnectionFailedError,
     DatabaseNotFoundError,
     MissingOAuth2TokenError,
     UserNotFoundInSessionError,
 )
-from superset.commands.database.sync_permissions import SyncPermissionsCommand
-from superset.db_engine_specs.base import GenericDBException
-from superset.exceptions import OAuth2RedirectError
-from superset.extensions import security_manager
+from axbi.commands.database.sync_permissions import SyncPermissionsCommand
+from axbi.db_engine_specs.base import GenericDBException
+from axbi.exceptions import OAuth2RedirectError
+from axbi.extensions import security_manager
 from tests.conftest import with_config
 
 
@@ -44,14 +44,14 @@ def test_sync_permissions_command_sync_mode(
     Test ``SyncPermissionsCommand`` in sync mode.
     """
     user_mock = mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.get_user_by_username"
+        "axbi.commands.database.sync_permissions.security_manager.get_user_by_username"
     )
-    mocker.patch("superset.commands.database.sync_permissions.ping", return_value=True)
+    mocker.patch("axbi.commands.database.sync_permissions.ping", return_value=True)
     find_pvm_mock = mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.find_permission_view_menu"
+        "axbi.commands.database.sync_permissions.security_manager.find_permission_view_menu"
     )
     find_pvm_mock.side_effect = [mocker.MagicMock(), None]
-    add_pvm_mock = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm_mock = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     cmmd = SyncPermissionsCommand(
         1,
@@ -97,16 +97,16 @@ def test_sync_permissions_command_async_mode(
     Test ``SyncPermissionsCommand`` in async mode.
     """
     mock_database_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     mock_database_dao.find_by_id.return_value = database_with_catalog
     mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.get_user_by_username"
+        "axbi.commands.database.sync_permissions.security_manager.get_user_by_username"
     )
     async_task_mock = mocker.patch(
-        "superset.commands.database.sync_permissions.sync_database_permissions_task"
+        "axbi.commands.database.sync_permissions.sync_database_permissions_task"
     )
-    mocker.patch("superset.commands.database.sync_permissions.ping", return_value=True)
+    mocker.patch("axbi.commands.database.sync_permissions.ping", return_value=True)
 
     cmmd = SyncPermissionsCommand(1, "admin")
     cmmd.run()
@@ -121,12 +121,12 @@ def test_sync_permissions_command_passing_all_values(
     Test ``SyncPermissionsCommand`` when providing all arguments to the constructor.
     """
     mock_database_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.get_user_by_username"
+        "axbi.commands.database.sync_permissions.security_manager.get_user_by_username"
     )
-    mocker.patch("superset.commands.database.sync_permissions.ping", return_value=True)
+    mocker.patch("axbi.commands.database.sync_permissions.ping", return_value=True)
 
     cmmd = SyncPermissionsCommand(
         1,
@@ -152,16 +152,16 @@ def test_sync_permissions_command_raise(
     Test ``SyncPermissionsCommand`` when an exception is raised.
     """
     mock_database_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     mock_database_dao.find_by_id.return_value = database_without_catalog
     mock_user = mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.get_user_by_username"
+        "axbi.commands.database.sync_permissions.security_manager.get_user_by_username"
     )
 
     # Connection issues
     mock_ping = mocker.patch(
-        "superset.commands.database.sync_permissions.ping", return_value=False
+        "axbi.commands.database.sync_permissions.ping", return_value=False
     )
     with pytest.raises(DatabaseConnectionFailedError):
         SyncPermissionsCommand(1, "admin").run()
@@ -198,7 +198,7 @@ def test_sync_permissions_command_new_db_name(
     Test ``SyncPermissionsCommand`` when the database name changed.
     """
     mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.get_user_by_username"
+        "axbi.commands.database.sync_permissions.security_manager.get_user_by_username"
     )
     cmmd = SyncPermissionsCommand(
         1,
@@ -220,10 +220,10 @@ def test_sync_permissions_command_async_mode_new_db_name(
     database name changed.
     """
     mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.get_user_by_username"
+        "axbi.commands.database.sync_permissions.security_manager.get_user_by_username"
     )
     async_task_mock = mocker.patch(
-        "superset.commands.database.sync_permissions.sync_database_permissions_task"
+        "axbi.commands.database.sync_permissions.sync_database_permissions_task"
     )
     cmmd = SyncPermissionsCommand(
         1,
@@ -325,10 +325,10 @@ def test_sync_permissions_command_refresh_schemas(
     Test the ``_refresh_schemas`` method.
     """
     find_pvm_mock = mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.find_permission_view_menu"
+        "axbi.commands.database.sync_permissions.security_manager.find_permission_view_menu"
     )
     find_pvm_mock.side_effect = [mocker.MagicMock(), None]
-    add_pvm_mock = mocker.patch("superset.commands.database.sync_permissions.add_pvm")
+    add_pvm_mock = mocker.patch("axbi.commands.database.sync_permissions.add_pvm")
 
     cmmd = SyncPermissionsCommand(1, None, db_connection=database_with_catalog)
     cmmd._refresh_schemas("catalog1", ["schema1", "schema2"])
@@ -348,7 +348,7 @@ def test_sync_permissions_command_rename_db_in_perms(
     Test the ``_rename_database_in_permissions`` method.
     """
     find_pvm_mock = mocker.patch(
-        "superset.commands.database.sync_permissions.security_manager.find_permission_view_menu"
+        "axbi.commands.database.sync_permissions.security_manager.find_permission_view_menu"
     )
     mock_catalog_perm = mocker.MagicMock()
     mock_catalog_perm.view_menu.name = "[old_name].[catalog]"
@@ -369,14 +369,14 @@ def test_sync_permissions_command_rename_db_in_perms(
     mock_chart.schema_perm = "[old_name].[catalog1].[schema1]"
 
     mock_database_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatabaseDAO"
+        "axbi.commands.database.sync_permissions.DatabaseDAO"
     )
     mock_database_dao.get_datasets.side_effect = [
         [mock_dataset],
         [],
     ]
     mock_dataset_dao = mocker.patch(
-        "superset.commands.database.sync_permissions.DatasetDAO"
+        "axbi.commands.database.sync_permissions.DatasetDAO"
     )
     mock_dataset_dao.get_related_objects.return_value = {"charts": [mock_chart]}
 

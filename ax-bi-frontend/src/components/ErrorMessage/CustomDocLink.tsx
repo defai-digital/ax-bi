@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { Flex, Icons } from '@superset-ui/core/components';
+import { Flex, Icons } from '@ax-bi/ui-core/components';
 
 export type CustomDocLinkProps = {
   url: string;

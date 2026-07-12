@@ -17,7 +17,7 @@
  * under the License.
  */
 import { Component, ErrorInfo } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import { ErrorAlert } from '../ErrorMessage';
 import type { ErrorBoundaryProps, ErrorBoundaryState } from './types';
 

@@ -22,17 +22,17 @@ from uuid import UUID
 import yaml
 from sqlalchemy.orm.session import Session
 
-from superset import db
-from superset.utils import json
+from axbi import db
+from axbi.utils import json
 
 
 def test_export(session: Session) -> None:
     """
     Test exporting a dataset.
     """
-    from superset.commands.dataset.export import ExportDatasetsCommand
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-    from superset.models.core import Database
+    from axbi.commands.dataset.export import ExportDatasetsCommand
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -321,9 +321,9 @@ def test_export_two_datasets_same_table_name_different_schema(
     dataset id, so this test pins that behavior so it can't silently
     regress.
     """
-    from superset.commands.dataset.export import ExportDatasetsCommand
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
+    from axbi.commands.dataset.export import ExportDatasetsCommand
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -365,9 +365,9 @@ def test_export_related_database_replaces_non_object_extra(
     """
     Test exporting a dataset with malformed related database extra metadata.
     """
-    from superset.commands.dataset.export import ExportDatasetsCommand
-    from superset.connectors.sqla.models import SqlaTable
-    from superset.models.core import Database
+    from axbi.commands.dataset.export import ExportDatasetsCommand
+    from axbi.connectors.sqla.models import SqlaTable
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -397,9 +397,9 @@ def test_file_content_replaces_non_object_json_fields(
     """
     Test exporting a dataset with JSON fields that decode to non-object values.
     """
-    from superset.commands.dataset.export import ExportDatasetsCommand
-    from superset.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
-    from superset.models.core import Database
+    from axbi.commands.dataset.export import ExportDatasetsCommand
+    from axbi.connectors.sqla.models import SqlaTable, SqlMetric, TableColumn
+    from axbi.models.core import Database
 
     engine = db.session.get_bind()
     SqlaTable.metadata.create_all(engine)  # pylint: disable=no-member
@@ -443,7 +443,7 @@ def test_file_content_replaces_non_object_json_fields(
 
 def test_file_content_ignores_malformed_column_metric_entries() -> None:
     """Malformed column/metric entries should not crash dataset export."""
-    from superset.commands.dataset.export import ExportDatasetsCommand
+    from axbi.commands.dataset.export import ExportDatasetsCommand
 
     model = MagicMock()
     model.cache_timeout = None

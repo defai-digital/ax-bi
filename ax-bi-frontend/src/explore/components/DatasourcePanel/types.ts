@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ColumnMeta, Metric } from '@superset-ui/chart-controls';
+import { ColumnMeta, Metric } from '@ax-bi/chart-controls';
 import { FoldersEditorItemType } from 'src/components/Datasource/types';
 import { DndItemType } from '../DndItemType';
 

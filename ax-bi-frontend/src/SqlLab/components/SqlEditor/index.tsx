@@ -28,21 +28,21 @@ import {
   FC,
 } from 'react';
 
-import type { editors } from '@apache-superset/core';
+import type { editors } from '@ax-bi/core';
 import useEffectEvent from 'src/hooks/useEffectEvent';
 import { shallowEqual, useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   FeatureFlag,
   isFeatureEnabled,
   getExtensionsRegistry,
   QueryResponse,
   Query,
-} from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+} from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import type {
   QueryEditor,
   SqlLabRootState,
@@ -57,11 +57,11 @@ import {
   EmptyState,
   Input,
   Modal,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { Splitter } from 'src/components/Splitter';
-import { Skeleton } from '@superset-ui/core/components/Skeleton';
-import { Switch } from '@superset-ui/core/components/Switch';
-import { Menu, MenuItemType } from '@superset-ui/core/components/Menu';
+import { Skeleton } from '@ax-bi/ui-core/components/Skeleton';
+import { Switch } from '@ax-bi/ui-core/components/Switch';
+import { Menu, MenuItemType } from '@ax-bi/ui-core/components/Menu';
 import { detectOS } from 'src/utils/common';
 import {
   addNewQueryEditor,

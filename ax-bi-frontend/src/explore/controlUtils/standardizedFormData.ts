@@ -23,13 +23,13 @@ import {
   QueryFormColumn,
   QueryFormData,
   QueryFormMetric,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   getStandardizedControls,
   isStandardizedFormData,
   StandardizedControls,
   StandardizedFormDataInterface,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { getControlsState } from 'src/explore/store';
 import { getFormDataFromControls } from './getFormDataFromControls';
 
@@ -167,8 +167,7 @@ export class StandardizedFormData {
     controlsState: Record<string, unknown>,
   ): void {
     const control = controlsState?.time_compare as
-      | { value?: unknown; choices?: unknown }
-      | undefined;
+      { value?: unknown; choices?: unknown } | undefined;
     if (!control || !Array.isArray(control.value)) {
       return;
     }

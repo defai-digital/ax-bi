@@ -21,7 +21,7 @@ import fetchMock from 'fetch-mock';
 import { storeWithState } from 'spec/fixtures/mockStore';
 import mockState from 'spec/fixtures/mockState';
 import { sliceId } from 'spec/fixtures/mockChartQueries';
-import { ChartCustomizationType, NativeFilterType } from '@superset-ui/core';
+import { ChartCustomizationType, NativeFilterType } from '@ax-bi/ui-core';
 import { CHART_TYPE } from '../../util/componentTypes';
 import DashboardContainer from './DashboardContainer';
 import * as nativeFiltersActions from '../../actions/nativeFilters';
@@ -79,8 +79,7 @@ const defaultTestFilter = {
 function createTestState(overrides: Record<string, unknown> = {}) {
   const nativeFilterConfig = (
     overrides.dashboardInfo as
-      | { metadata?: { native_filter_configuration?: unknown[] } }
-      | undefined
+      { metadata?: { native_filter_configuration?: unknown[] } } | undefined
   )?.metadata?.native_filter_configuration ?? [defaultTestFilter];
 
   const nativeFiltersMap: Record<string, unknown> = {};

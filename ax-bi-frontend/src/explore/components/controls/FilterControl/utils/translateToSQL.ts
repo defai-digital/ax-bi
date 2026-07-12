@@ -21,7 +21,7 @@ import {
   isFreeFormAdhocFilter,
   isSimpleAdhocFilter,
   SimpleAdhocFilter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   OPERATOR_ENUM_TO_OPERATOR_TYPE,
   Operators,

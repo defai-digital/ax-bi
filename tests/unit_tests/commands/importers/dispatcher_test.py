@@ -21,9 +21,9 @@ from typing import Any
 
 import pytest
 
-from superset.commands.exceptions import CommandInvalidError
-from superset.commands.importers.dispatcher import ImportersCommand
-from superset.commands.importers.exceptions import IncorrectVersionError
+from axbi.commands.exceptions import CommandInvalidError
+from axbi.commands.importers.dispatcher import ImportersCommand
+from axbi.commands.importers.exceptions import IncorrectVersionError
 
 
 def test_importers_command_dispatches_to_first_matching_version() -> None:

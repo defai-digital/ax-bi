@@ -17,14 +17,14 @@
  * under the License.
  */
 import { render, waitFor } from 'spec/helpers/testing-library';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
 import fetchMock from 'fetch-mock';
 import ExtensionsStartup from './ExtensionsStartup';
 import ExtensionsLoader from './ExtensionsLoader';
 
 // Mock the isFeatureEnabled function
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 
@@ -42,8 +42,8 @@ const mockInitialStateNoUser = {
 
 // Clean up global state before each test
 beforeEach(() => {
-  // Clear the window.superset object
-  delete (window as any).superset;
+  // Clear the window.axbi object
+  delete (window as any).axbi;
 
   // Clear any existing ExtensionsLoader instance
   (ExtensionsLoader as any).instance = undefined;
@@ -61,7 +61,7 @@ beforeEach(() => {
 
 afterEach(() => {
   // Clean up after each test
-  delete (window as any).superset;
+  delete (window as any).axbi;
   (ExtensionsLoader as any).instance = undefined;
 
   // Reset mocks
@@ -79,7 +79,7 @@ test('renders without crashing', () => {
   expect(true).toBe(true);
 });
 
-test('sets up global superset object when user is logged in', async () => {
+test('sets up global axbi object when user is logged in', async () => {
   // Mock initializeExtensions to avoid API calls in this test
   const loader = ExtensionsLoader.getInstance();
   const initializeSpy = jest
@@ -92,21 +92,21 @@ test('sets up global superset object when user is logged in', async () => {
   });
 
   await waitFor(() => {
-    // Verify the global superset object is set up
-    expect((window as any).superset).toBeDefined();
-    expect((window as any).superset.authentication).toBeDefined();
-    expect((window as any).superset.core).toBeDefined();
-    expect((window as any).superset.commands).toBeDefined();
-    expect((window as any).superset.extensions).toBeDefined();
-    expect((window as any).superset.menus).toBeDefined();
-    expect((window as any).superset.views).toBeDefined();
-    expect((window as any).superset.sqlLab).toBeDefined();
+    // Verify the global axbi object is set up
+    expect((window as any).axbi).toBeDefined();
+    expect((window as any).axbi.authentication).toBeDefined();
+    expect((window as any).axbi.core).toBeDefined();
+    expect((window as any).axbi.commands).toBeDefined();
+    expect((window as any).axbi.extensions).toBeDefined();
+    expect((window as any).axbi.menus).toBeDefined();
+    expect((window as any).axbi.views).toBeDefined();
+    expect((window as any).axbi.sqlLab).toBeDefined();
   });
 
   initializeSpy.mockRestore();
 });
 
-test('does not set up global superset object when user is not logged in', async () => {
+test('does not set up global axbi object when user is not logged in', async () => {
   render(<ExtensionsStartup />, {
     useRedux: true,
     initialState: mockInitialStateNoUser,
@@ -114,7 +114,7 @@ test('does not set up global superset object when user is not logged in', async 
 
   // Wait for the useEffect to complete and verify the global object is not set up
   await waitFor(() => {
-    expect((window as any).superset).toBeUndefined();
+    expect((window as any).axbi).toBeUndefined();
   });
 });
 
@@ -242,8 +242,8 @@ test('does not initialize ExtensionsLoader when EnableExtensions feature flag is
     expect(mockIsFeatureEnabled).toHaveBeenCalledWith(
       FeatureFlag.EnableExtensions,
     );
-    // Verify the global superset object is still set up
-    expect((window as any).superset).toBeDefined();
+    // Verify the global axbi object is still set up
+    expect((window as any).axbi).toBeDefined();
     // But extensions should not be initialized
     expect(initializeSpy).not.toHaveBeenCalled();
   });

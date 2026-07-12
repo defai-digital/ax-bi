@@ -17,9 +17,9 @@
  * under the License.
  */
 import { FC, useMemo } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { Modal } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { Modal } from '@ax-bi/ui-core/components';
 import { useShortcutContext } from './ShortcutProvider';
 import { formatShortcutForDisplay, RegisteredShortcut } from './types';
 
@@ -57,8 +57,7 @@ const Description = styled.div`
 const Keys = styled.kbd`
   font-family: ${({ theme }) => theme.fontFamilyCode};
   font-size: ${({ theme }) => theme.fontSizeSM}px;
-  padding: ${({ theme }) =>
-    `${theme.sizeUnit}px ${theme.sizeUnit * 2}px`};
+  padding: ${({ theme }) => `${theme.sizeUnit}px ${theme.sizeUnit * 2}px`};
   background: ${({ theme }) => theme.colorFillSecondary};
   border-radius: ${({ theme }) => theme.borderRadiusSM}px;
   color: ${({ theme }) => theme.colorText};
@@ -78,7 +77,8 @@ function groupKey(shortcut: RegisteredShortcut): string {
  * Lists registered keyboard shortcuts. Controlled by ShortcutProvider isHelpOpen.
  */
 export const ShortcutHelpModal: FC = () => {
-  const { isHelpOpen, closeHelp, getShortcuts, platform } = useShortcutContext();
+  const { isHelpOpen, closeHelp, getShortcuts, platform } =
+    useShortcutContext();
 
   const groups = useMemo(() => {
     const map = new Map<string, RegisteredShortcut[]>();

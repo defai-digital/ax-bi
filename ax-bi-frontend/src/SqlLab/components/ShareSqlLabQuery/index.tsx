@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import { getClientErrorObject, SupersetClient } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
-import { Button } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { getClientErrorObject, AxBIClient } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
+import { Button } from '@ax-bi/ui-core/components';
 import { CopyToClipboard } from 'src/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import useQueryEditor from 'src/SqlLab/hooks/useQueryEditor';
 import { LOG_ACTIONS_SQLLAB_COPY_LINK } from 'src/logger/LogUtils';
@@ -45,7 +45,7 @@ const ShareSqlLabQuery = ({
   const getCopyUrlForPermalink = (callback: Function) => {
     const sharedQuery = { dbId, name, schema, autorun, sql, templateParams };
 
-    return SupersetClient.post({
+    return AxBIClient.post({
       endpoint: '/api/v1/sqllab/permalink',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sharedQuery),

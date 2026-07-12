@@ -20,7 +20,7 @@ import {
   buildQueryContext,
   getMetricLabel,
   QueryFormData,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { getContributionLabel } from './utils';
 
 export default function buildQuery(formData: QueryFormData) {

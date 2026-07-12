@@ -26,7 +26,7 @@ import {
   getNumberFormatter,
   LegendState,
   ensureIsArray,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type {
   ECElementEvent,
   ViewRootGroup,

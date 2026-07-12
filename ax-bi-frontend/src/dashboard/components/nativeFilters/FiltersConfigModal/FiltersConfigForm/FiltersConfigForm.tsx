@@ -17,8 +17,8 @@
  * under the License.
  */
 /* eslint-disable react-hooks/rules-of-hooks */
-import { ColumnMeta, Metric } from '@superset-ui/chart-controls';
-import { t } from '@apache-superset/core/translation';
+import { ColumnMeta, Metric } from '@ax-bi/chart-controls';
+import { t } from '@ax-bi/core/translation';
 import {
   Behavior,
   ChartDataResponseResult,
@@ -31,13 +31,13 @@ import {
   getChartMetadataRegistry,
   JsonResponse,
   NativeFilterType,
-  SupersetApiError,
+  AxBIApiError,
   ClientErrorObject,
   getClientErrorObject,
   getExtensionsRegistry,
-} from '@superset-ui/core';
-import { styled, useTheme, css } from '@apache-superset/core/theme';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { styled, useTheme, css } from '@ax-bi/core/theme';
+import { GenericDataType } from '@ax-bi/core/common';
 import { debounce, isEqual } from 'lodash';
 import {
   forwardRef,
@@ -69,12 +69,12 @@ import {
   Flex,
   Input,
   Loading,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { BasicErrorAlert, ErrorMessageWithStackTrace } from 'src/components';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
-import { Radio } from '@superset-ui/core/components/Radio';
-import Tabs from '@superset-ui/core/components/Tabs';
-import { cachedSupersetGet } from 'src/utils/cachedSupersetGet';
+import { Radio } from '@ax-bi/ui-core/components/Radio';
+import Tabs from '@ax-bi/ui-core/components/Tabs';
+import { cachedAxBIGet } from 'src/utils/cachedAxBIGet';
 import {
   Chart,
   ChartsState,
@@ -330,8 +330,7 @@ const FiltersConfigForm = (
     time_grains?: string[];
   };
   const filterToEditWithTimeGrains = filterToEdit as
-    | (Filter & { time_grains?: string[] })
-    | undefined;
+    (Filter & { time_grains?: string[] }) | undefined;
 
   const handleModifyFilter = useCallback(() => {
     if (onModifyFilter) {
@@ -743,7 +742,7 @@ const FiltersConfigForm = (
 
   useEffect(() => {
     if (datasetId) {
-      cachedSupersetGet({
+      cachedAxBIGet({
         endpoint: `/api/v1/dataset/${datasetId}?q=${rison.encode({
           columns: [
             'columns.column_name',
@@ -777,7 +776,7 @@ const FiltersConfigForm = (
           dataset.filter_select = true;
           setDatasetDetails(dataset);
         })
-        .catch((response: SupersetApiError) => {
+        .catch((response: AxBIApiError) => {
           addDangerToast(response.message);
         });
     }
@@ -1900,10 +1899,12 @@ const FiltersConfigForm = (
                                             iconSize="xl"
                                             iconColor={theme.colorPrimary}
                                             css={css`
-                                              margin-left: ${theme.sizeUnit *
-                                              2}px;
-                                              margin-top: ${theme.sizeUnit *
-                                              1.5}px;
+                                              margin-left: ${
+                                                theme.sizeUnit * 2
+                                              }px;
+                                              margin-top: ${
+                                                theme.sizeUnit * 1.5
+                                              }px;
                                             `}
                                             onClick={() => refreshHandler(true)}
                                           />

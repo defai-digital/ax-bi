@@ -20,15 +20,15 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.commands.dataset.exceptions import DatasetAccessDeniedError
-from superset.errors import ErrorLevel, SupersetError, SupersetErrorType
-from superset.exceptions import SupersetSecurityException
+from axbi.commands.dataset.exceptions import DatasetAccessDeniedError
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
+from axbi.exceptions import AxBISecurityException
 
 
-def _security_exception() -> SupersetSecurityException:
-    return SupersetSecurityException(
-        SupersetError(
-            error_type=SupersetErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
+def _security_exception() -> AxBISecurityException:
+    return AxBISecurityException(
+        AxBIError(
+            error_type=AxBIErrorType.DATASOURCE_SECURITY_ACCESS_ERROR,
             message="Access denied to dataset",
             level=ErrorLevel.ERROR,
         )
@@ -38,22 +38,22 @@ def _security_exception() -> SupersetSecurityException:
 def test_duplicate_dataset_forbidden_when_no_access() -> None:
     """DuplicateDatasetCommand.validate() must raise DatasetAccessDeniedError
     when the caller lacks read access to the source dataset."""
-    from superset.commands.dataset.duplicate import DuplicateDatasetCommand
+    from axbi.commands.dataset.duplicate import DuplicateDatasetCommand
 
     mock_dataset = MagicMock()
     mock_dataset.id = 1
     mock_dataset.kind = "virtual"
 
     with patch(
-        "superset.commands.dataset.duplicate.DatasetDAO.find_by_id",
+        "axbi.commands.dataset.duplicate.DatasetDAO.find_by_id",
         return_value=mock_dataset,
     ):
         with patch(
-            "superset.commands.dataset.duplicate.security_manager.raise_for_access",
+            "axbi.commands.dataset.duplicate.security_manager.raise_for_access",
             side_effect=_security_exception(),
         ):
             with patch(
-                "superset.commands.dataset.duplicate.DuplicateDatasetCommand.populate_owners",
+                "axbi.commands.dataset.duplicate.DuplicateDatasetCommand.populate_owners",
                 return_value=[],
             ):
                 command = DuplicateDatasetCommand(
@@ -70,25 +70,25 @@ def test_duplicate_dataset_forbidden_when_no_access() -> None:
 def test_duplicate_dataset_access_check_passes_through() -> None:
     """DuplicateDatasetCommand.validate() must not raise DatasetAccessDeniedError
     when security_manager.raise_for_access() does not raise."""
-    from superset.commands.dataset.duplicate import DuplicateDatasetCommand
+    from axbi.commands.dataset.duplicate import DuplicateDatasetCommand
 
     mock_dataset = MagicMock()
     mock_dataset.id = 1
     mock_dataset.kind = "virtual"
 
     with patch(
-        "superset.commands.dataset.duplicate.DatasetDAO.find_by_id",
+        "axbi.commands.dataset.duplicate.DatasetDAO.find_by_id",
         return_value=mock_dataset,
     ):
         with patch(
-            "superset.commands.dataset.duplicate.security_manager.raise_for_access"
+            "axbi.commands.dataset.duplicate.security_manager.raise_for_access"
         ) as mock_access:
             with patch(
-                "superset.commands.dataset.duplicate.DatasetDAO.find_one_or_none",
+                "axbi.commands.dataset.duplicate.DatasetDAO.find_one_or_none",
                 return_value=None,
             ):
                 with patch(
-                    "superset.commands.dataset.duplicate.DuplicateDatasetCommand.populate_owners",
+                    "axbi.commands.dataset.duplicate.DuplicateDatasetCommand.populate_owners",
                     return_value=[],
                 ):
                     command = DuplicateDatasetCommand(

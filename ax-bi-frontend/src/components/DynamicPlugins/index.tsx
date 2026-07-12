@@ -32,8 +32,8 @@ import {
   FeatureFlag,
   getChartMetadataRegistry,
   makeApi,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+} from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { omitBy } from 'lodash';
 import type { Plugin, PluginAction, PluginContextType } from './types';
 
@@ -58,7 +58,7 @@ export const PluginContext = createContext(dummyPluginContext);
  * It also provides loading info for the plugins' javascript bundles.
  *
  * Note: This does not include any information about static plugins.
- * Those are compiled into the Superset bundle at build time.
+ * Those are compiled into the AxBI bundle at build time.
  * Dynamic plugins are added by the end user and can be any webhosted javascript.
  */
 export const usePluginContext = () => useContext(PluginContext);
@@ -125,8 +125,8 @@ const sharedModules = {
   react: () => import('react'),
   lodash: () => import('lodash'),
   'react-dom': () => import('react-dom'),
-  '@superset-ui/chart-controls': () => import('@superset-ui/chart-controls'),
-  '@superset-ui/core': () => import('@superset-ui/core'),
+  '@ax-bi/chart-controls': () => import('@ax-bi/chart-controls'),
+  '@ax-bi/ui-core': () => import('@ax-bi/ui-core'),
 };
 
 export const DynamicPluginProvider: FC<{ children?: ReactNode }> = ({

@@ -17,7 +17,7 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import { FeatureFlag, isFeatureEnabled, QueryState } from '@superset-ui/core';
+import { FeatureFlag, isFeatureEnabled, QueryState } from '@ax-bi/ui-core';
 import { render, screen, waitFor } from 'spec/helpers/testing-library';
 import QueryHistory from 'src/SqlLab/components/QueryHistory';
 import {
@@ -75,8 +75,8 @@ const fakeApiResult = {
   ],
 };
 
-jest.mock('@superset-ui/core', () => ({
-  ...jest.requireActual('@superset-ui/core'),
+jest.mock('@ax-bi/ui-core', () => ({
+  ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
 }));
 

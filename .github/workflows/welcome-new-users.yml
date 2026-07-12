@@ -18,12 +18,12 @@ jobs:
         with:
           repo_token: ${{ github.token }}
           issue_message: |-
-            Congrats on opening your first issue and thank you for contributing to Superset! :tada: :heart:
+            Congrats on opening your first issue and thank you for contributing to AxBI! :tada: :heart:
 
-            Please read our [New Contributor Welcome & Expectations](https://github.com/apache/superset/wiki/New-Contributor-Welcome-&-Expectations) guide.
+            Please read our [New Contributor Welcome & Expectations](https://github.com/defai-digital/ax-bi/wiki/New-Contributor-Welcome-&-Expectations) guide.
           pr_message: |-
-            Congrats on making your first PR and thank you for contributing to Superset! :tada: :heart:
+            Congrats on making your first PR and thank you for contributing to AxBI! :tada: :heart:
 
-            Please read our [New Contributor Welcome & Expectations](https://github.com/apache/superset/wiki/New-Contributor-Welcome-&-Expectations) guide.
+            Please read our [New Contributor Welcome & Expectations](https://github.com/defai-digital/ax-bi/wiki/New-Contributor-Welcome-&-Expectations) guide.
 
-            We hope to see you in our [Slack](https://apache-superset.slack.com/) community too! Not signed up? Use our [Slack App](http://bit.ly/join-superset-slack) to self-register.
+            We hope to see you in our [Slack](https://ax-bi.slack.com/) community too! Not signed up? Use our [Slack App](http://bit.ly/join-axbi-slack) to self-register.

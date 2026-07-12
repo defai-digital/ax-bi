@@ -2,13 +2,13 @@ name: Check DB migration conflict
 on:
   push:
     paths:
-      - "superset/migrations/**"
+      - "axbi/migrations/**"
     branches:
       - "master"
       - "[0-9].[0-9]*"
   pull_request:
     paths:
-      - "superset/migrations/**"
+      - "axbi/migrations/**"
     types: [synchronize, opened, reopened, ready_for_review]
 
 # cancel previous workflow jobs for PRs
@@ -58,7 +58,7 @@ jobs:
               });
               const files = await github.paginate(listFilesOpts);
               if (
-                files.some(x => x.contents_url.includes('/contents/superset/migrations'))
+                files.some(x => x.contents_url.includes('/contents/ax-bi/migrations'))
               ) {
                 console.log(`PR #${pull.number} "${pull.title}" also added db migration`)
                 await github.rest.issues.createComment({
@@ -69,9 +69,9 @@ jobs:
                   body:
                     `# 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️ 🙅‍♂️` +
                     `❗ @${pull.user.login} Your base branch \`${currentBranch}\` has ` +
-                    'also updated `superset/migrations`.\n' +
+                    'also updated `axbi/migrations`.\n' +
                     '\n' +
-                    '**Please consider rebasing your branch and [resolving potential db migration conflicts](https://superset.apache.org/docs/contributing/development#merging-db-migrations).**',
+                    '**Please consider rebasing your branch and [resolving potential db migration conflicts](https://github.com/defai-digital/ax-bi/docs/contributing/development#merging-db-migrations).**',
                 });
               }
             }

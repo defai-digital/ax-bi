@@ -17,13 +17,10 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import {
-  ChartCustomization,
-  ChartCustomizationDivider,
-} from '@superset-ui/core';
-import { css, SupersetTheme } from '@apache-superset/core/theme';
-import { Collapse } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { ChartCustomization, ChartCustomizationDivider } from '@ax-bi/ui-core';
+import { css, AxBITheme } from '@ax-bi/core/theme';
+import { Collapse } from '@ax-bi/ui-core/components';
 
 export interface CustomizationsOutOfScopeCollapsibleProps {
   customizationsOutOfScope: (ChartCustomization | ChartCustomizationDivider)[];
@@ -49,7 +46,7 @@ export const CustomizationsOutOfScopeCollapsible = ({
         key: 'out-of-scope-customizations',
         label: (
           <span
-            css={(theme: SupersetTheme) => css`
+            css={(theme: AxBITheme) => css`
               font-size: ${theme.fontSizeSM}px;
             `}
           >

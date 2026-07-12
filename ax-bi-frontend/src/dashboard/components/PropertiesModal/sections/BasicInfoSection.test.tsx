@@ -17,7 +17,7 @@
  * under the License.
  */
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
-import { Form } from '@superset-ui/core/components';
+import { Form } from '@ax-bi/ui-core/components';
 import BasicInfoSection from './BasicInfoSection';
 
 const defaultProps = {

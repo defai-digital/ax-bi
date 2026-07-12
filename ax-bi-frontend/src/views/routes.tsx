@@ -17,7 +17,7 @@
  * under the License.
  */
 
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
 import {
   lazy,
   ComponentType,

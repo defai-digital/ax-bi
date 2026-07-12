@@ -209,7 +209,7 @@ interface StoreState {
   user?: any;
   common?: {
     conf?: {
-      SUPERSET_WEBSERVER_TIMEOUT?: number;
+      AXBI_WEBSERVER_TIMEOUT?: number;
     };
   };
   dashboards?: {
@@ -236,7 +236,7 @@ export const createDefaultStoreState = (user: any): StoreState => ({
   user,
   common: {
     conf: {
-      SUPERSET_WEBSERVER_TIMEOUT: 60000,
+      AXBI_WEBSERVER_TIMEOUT: 60000,
     },
   },
   dashboards: {

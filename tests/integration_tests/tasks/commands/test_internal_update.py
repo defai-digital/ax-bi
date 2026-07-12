@@ -18,14 +18,14 @@
 
 from uuid import UUID
 
-from superset_core.tasks.types import TaskScope, TaskStatus
+from axbi_core.tasks.types import TaskScope, TaskStatus
 
-from superset import db
-from superset.commands.tasks.internal_update import (
+from axbi import db
+from axbi.commands.tasks.internal_update import (
     InternalStatusTransitionCommand,
     InternalUpdateTaskCommand,
 )
-from superset.daos.tasks import TaskDAO
+from axbi.daos.tasks import TaskDAO
 
 
 def test_internal_update_properties(app_context, get_user, login_as) -> None:

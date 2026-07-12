@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { SupersetTheme } from '@apache-superset/core/theme';
+import { AxBITheme } from '@ax-bi/core/theme';
 
-export const getAccessibleColorBounds = (theme: SupersetTheme): string[] => [
+export const getAccessibleColorBounds = (theme: AxBITheme): string[] => [
   theme.colorError, // Red variant for negative/danger
   theme.colorPrimary, // Blue variant for positive/primary
 ];

@@ -18,7 +18,7 @@
  */
 /* eslint-disable camelcase */
 import { invert } from 'lodash';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   AnnotationLayer,
   AxisType,
@@ -41,14 +41,14 @@ import {
   TimeseriesChartDataResponseResult,
   TimeseriesDataRecord,
   NumberFormats,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   extractExtraMetrics,
   getOriginalSeries,
   getTimeOffset,
   isDerivedSeries,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import type { EChartsCoreOption } from 'echarts/core';
 import type {
   LineStyleOption,

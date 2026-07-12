@@ -41,26 +41,26 @@ def _force_passthrough_decorators() -> dict[str, types.ModuleType]:
     mock_decorators.ToolAnnotations = dict
 
     saved_modules: dict[str, types.ModuleType] = {}
-    for key in ("superset_core.mcp", "superset_core.mcp.decorators"):
+    for key in ("axbi_core.mcp", "axbi_core.mcp.decorators"):
         if key in sys.modules:
             saved_modules[key] = sys.modules[key]
 
-    sys.modules["superset_core.mcp"] = MagicMock()
-    sys.modules["superset_core.mcp.decorators"] = mock_decorators
+    sys.modules["axbi_core.mcp"] = MagicMock()
+    sys.modules["axbi_core.mcp.decorators"] = mock_decorators
     return saved_modules
 
 
 def _restore_modules(saved_modules: dict[str, types.ModuleType]) -> None:
     for key in list(sys.modules.keys()):
-        if key.startswith("superset_core.mcp"):
+        if key.startswith("axbi_core.mcp"):
             del sys.modules[key]
     sys.modules.update(saved_modules)
 
 
 _saved = _force_passthrough_decorators()
 try:
-    module = import_module("superset.mcp_service.ai.tool.validate_chart")
-    from superset.mcp_service.ai.schemas import (
+    module = import_module("axbi.mcp_service.ai.tool.validate_chart")
+    from axbi.mcp_service.ai.schemas import (
         ValidateChartRequest,
         ValidateChartResponse,
     )
@@ -133,12 +133,12 @@ class TestValidateChartLogic:
         with patch.dict(
             "sys.modules",
             {
-                "superset.mcp_service.chart.validation.pipeline": MagicMock(
+                "axbi.mcp_service.chart.validation.pipeline": MagicMock(
                     ValidationPipeline=mock_pipeline
                 ),
             },
         ):
-            from superset.mcp_service.ai.tool.validate_chart import _run_validation
+            from axbi.mcp_service.ai.tool.validate_chart import _run_validation
 
             result = _run_validation(dataset_id=1, config={"chart_type": "banana"})
             assert result["is_valid"] is False
@@ -164,12 +164,12 @@ class TestValidateChartLogic:
         with patch.dict(
             "sys.modules",
             {
-                "superset.mcp_service.chart.validation.pipeline": MagicMock(
+                "axbi.mcp_service.chart.validation.pipeline": MagicMock(
                     ValidationPipeline=mock_pipeline
                 ),
             },
         ):
-            from superset.mcp_service.ai.tool.validate_chart import _run_validation
+            from axbi.mcp_service.ai.tool.validate_chart import _run_validation
 
             result = _run_validation(
                 dataset_id=1,

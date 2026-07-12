@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import 'react-checkbox-tree/lib/react-checkbox-tree.css';
 
 import {
   CheckboxChecked,
   CheckboxUnchecked,
   CheckboxHalfChecked,
-} from '@superset-ui/core/components/Checkbox/CheckboxIcons';
+} from '@ax-bi/ui-core/components/Checkbox/CheckboxIcons';
 
 const treeIcons = {
   check: <CheckboxChecked />,

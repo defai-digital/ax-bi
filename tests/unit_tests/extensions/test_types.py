@@ -18,13 +18,13 @@
 """Tests for extension configuration and manifest Pydantic models."""
 
 import pytest
-from pydantic import ValidationError
-from superset_core.extensions.types import (
+from axbi_core.extensions.types import (
     ExtensionConfig,
     ExtensionConfigBackend,
     Manifest,
     ManifestBackend,
 )
+from pydantic import ValidationError
 
 # =============================================================================
 # ExtensionConfig (extension.json) tests

@@ -26,7 +26,7 @@ import {
   ValueFormatter,
   getValueFormatter,
   tooltipHtml,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { TreemapSeriesNodeItemOption } from 'echarts/types/src/chart/treemap/TreemapSeries';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { TreemapSeriesOption } from 'echarts/charts';

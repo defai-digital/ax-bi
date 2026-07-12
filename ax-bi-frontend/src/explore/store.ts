@@ -21,8 +21,8 @@ import {
   DatasourceType,
   getChartControlPanelRegistry,
   VizType,
-} from '@superset-ui/core';
-import type { QueryFormData } from '@superset-ui/core';
+} from '@ax-bi/ui-core';
+import type { QueryFormData } from '@ax-bi/ui-core';
 import { getAllControlsState, getFormDataFromControls } from './controlUtils';
 import { controls } from './controls';
 

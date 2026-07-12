@@ -22,7 +22,7 @@ from pytest_mock import MockerFixture
 from sqlalchemy import JSON, types
 from sqlalchemy.engine.url import make_url
 
-from superset.db_engine_specs.starrocks import (
+from axbi.db_engine_specs.starrocks import (
     ARRAY,
     BITMAP,
     DOUBLE,
@@ -33,7 +33,7 @@ from superset.db_engine_specs.starrocks import (
     STRUCT,
     TINYINT,
 )
-from superset.utils.core import GenericDataType
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.conftest import with_feature_flags
 from tests.unit_tests.db_engine_specs.utils import assert_column_spec
 
@@ -67,7 +67,7 @@ def test_get_column_spec(
     generic_type: GenericDataType,
     is_dttm: bool,
 ) -> None:
-    from superset.db_engine_specs.starrocks import (
+    from axbi.db_engine_specs.starrocks import (
         StarRocksEngineSpec as spec,  # noqa: N813
     )
 
@@ -103,7 +103,7 @@ def test_adjust_engine_params(
     return_schema: str | None,
     return_connect_args: dict[str, Any],
 ) -> None:
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     url = make_url(sqlalchemy_uri)
     returned_url, returned_connect_args = StarRocksEngineSpec.adjust_engine_params(
@@ -117,7 +117,7 @@ def test_get_schema_from_engine_params() -> None:
     """
     Test the ``get_schema_from_engine_params`` method.
     """
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     # With catalog.schema format
     assert (
@@ -152,7 +152,7 @@ def test_impersonation_username(mocker: MockerFixture) -> None:
     Test impersonation and make sure that `impersonate_user` leaves the URL
     unchanged and that `get_prequeries` returns the appropriate impersonation query.
     """
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     database = mocker.MagicMock()
     database.impersonate_user = True
@@ -181,7 +181,7 @@ def test_impersonation_disabled(mocker: MockerFixture) -> None:
     Test that impersonation is not applied when the feature is disabled in
     `impersonate_user` and `get_prequeries`.
     """
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     database = mocker.MagicMock()
     database.impersonate_user = False
@@ -202,7 +202,7 @@ def test_get_default_catalog(mocker: MockerFixture) -> None:
     """
     Test the ``get_default_catalog`` method.
     """
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     # Test case 1: Catalog is in the URI
     database = mocker.MagicMock()
@@ -221,7 +221,7 @@ def test_get_catalog_names(mocker: MockerFixture) -> None:
     """
     Test the ``get_catalog_names`` method.
     """
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     database = mocker.MagicMock()
     inspector = mocker.MagicMock()
@@ -282,7 +282,7 @@ def test_adjust_engine_params_with_catalog(
     """
     Test the ``adjust_engine_params`` method with catalog parameter.
     """
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     url = make_url(uri)
     returned_url, _ = StarRocksEngineSpec.adjust_engine_params(
@@ -294,12 +294,12 @@ def test_adjust_engine_params_with_catalog(
 @with_feature_flags(IMPERSONATE_WITH_EMAIL_PREFIX=True)
 def test_get_prequeries_with_email_prefix(mocker: MockerFixture) -> None:
     """Test that get_prequeries uses email prefix when IMPERSONATE_WITH_EMAIL_PREFIX"""
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     user = mocker.MagicMock()
     user.email = "alice@example.org"
     mocker.patch(
-        "superset.db_engine_specs.starrocks.security_manager.find_user",
+        "axbi.db_engine_specs.starrocks.security_manager.find_user",
         return_value=user,
     )
 
@@ -318,12 +318,12 @@ def test_get_prequeries_with_email_prefix_dotted_local_part(
     mocker: MockerFixture,
 ) -> None:
     """Test that get_prequeries uses email prefix when IMPERSONATE_WITH_EMAIL_PREFIX"""
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     user = mocker.MagicMock()
     user.email = "alice.doe@example.org"
     mocker.patch(
-        "superset.db_engine_specs.starrocks.security_manager.find_user",
+        "axbi.db_engine_specs.starrocks.security_manager.find_user",
         return_value=user,
     )
 
@@ -342,12 +342,12 @@ def test_get_prequeries_with_email_prefix_from_user_email_when_effective_user_di
     mocker: MockerFixture,
 ) -> None:
     """Use looked-up user.email local part when effective username is different."""
-    from superset.db_engine_specs.starrocks import StarRocksEngineSpec
+    from axbi.db_engine_specs.starrocks import StarRocksEngineSpec
 
     user = mocker.MagicMock()
     user.email = "alice.doe@example.org"
     mocker.patch(
-        "superset.db_engine_specs.starrocks.security_manager.find_user",
+        "axbi.db_engine_specs.starrocks.security_manager.find_user",
         return_value=user,
     )
 

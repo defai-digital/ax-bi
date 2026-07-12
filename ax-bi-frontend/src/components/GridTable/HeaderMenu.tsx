@@ -17,17 +17,17 @@
  * under the License.
  */
 import { useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import type { Column, ColumnPinnedType, GridApi } from 'ag-grid-community';
 
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Menu, MenuItem } from '@superset-ui/core/components/Menu';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Menu, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import copyTextToClipboard from 'src/utils/copy';
 import {
   MenuDotsDropdown,
   type DropdownProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { PIVOT_COL_ID } from './constants';
 
 const IconEmpty = styled.span`

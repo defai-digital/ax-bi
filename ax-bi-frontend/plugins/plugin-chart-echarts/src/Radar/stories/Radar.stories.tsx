@@ -21,11 +21,11 @@ import {
   SuperChart,
   VizType,
   getChartTransformPropsRegistry,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   EchartsRadarChartPlugin,
   RadarTransformProps,
-} from '@superset-ui/plugin-chart-echarts';
+} from '@ax-bi/plugin-chart-echarts';
 import { withResizableChartDemo } from '@storybook-shared';
 import { basic } from './data';
 
@@ -40,7 +40,7 @@ export default {
   title: 'Chart Plugins/plugin-chart-echarts/Radar',
   decorators: [withResizableChartDemo],
   args: {
-    colorScheme: 'supersetColors',
+    colorScheme: 'axbiColors',
     showLegend: true,
     isCircle: false,
     labelType: 'key',
@@ -50,12 +50,7 @@ export default {
   argTypes: {
     colorScheme: {
       control: 'select',
-      options: [
-        'supersetColors',
-        'd3Category10',
-        'bnbColors',
-        'googleCategory20c',
-      ],
+      options: ['axbiColors', 'd3Category10', 'bnbColors', 'googleCategory20c'],
     },
     showLegend: { control: 'boolean' },
     isCircle: {

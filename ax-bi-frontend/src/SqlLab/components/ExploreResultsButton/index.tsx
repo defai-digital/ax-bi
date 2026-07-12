@@ -16,12 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import {
-  Button,
-  type OnClickHandler,
-  Icons,
-} from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { Button, type OnClickHandler, Icons } from '@ax-bi/ui-core/components';
 
 export interface ExploreResultsButtonProps {
   database?: {

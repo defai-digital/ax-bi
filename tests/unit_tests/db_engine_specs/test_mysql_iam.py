@@ -24,19 +24,19 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from superset.utils import json
+from axbi.utils import json
 from tests.unit_tests.conftest import with_feature_flags
 
 
 def test_mysql_encrypted_extra_sensitive_fields() -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     assert "$.aws_iam.external_id" in MySQLEngineSpec.encrypted_extra_sensitive_fields
     assert "$.aws_iam.role_arn" in MySQLEngineSpec.encrypted_extra_sensitive_fields
 
 
 def test_mysql_update_params_no_encrypted_extra() -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = None
@@ -48,7 +48,7 @@ def test_mysql_update_params_no_encrypted_extra() -> None:
 
 
 def test_mysql_update_params_empty_encrypted_extra() -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps({})
@@ -60,7 +60,7 @@ def test_mysql_update_params_empty_encrypted_extra() -> None:
 
 
 def test_mysql_update_params_iam_disabled() -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -69,7 +69,7 @@ def test_mysql_update_params_iam_disabled() -> None:
                 "enabled": False,
                 "role_arn": "arn:aws:iam::123456789012:role/TestRole",
                 "region": "us-east-1",
-                "db_username": "superset_user",
+                "db_username": "axbi_user",
             }
         }
     )
@@ -82,8 +82,8 @@ def test_mysql_update_params_iam_disabled() -> None:
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_mysql_update_params_with_iam() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -92,7 +92,7 @@ def test_mysql_update_params_with_iam() -> None:
                 "enabled": True,
                 "role_arn": "arn:aws:iam::123456789012:role/TestRole",
                 "region": "us-east-1",
-                "db_username": "superset_iam_user",
+                "db_username": "axbi_iam_user",
             }
         }
     )
@@ -122,15 +122,15 @@ def test_mysql_update_params_with_iam() -> None:
 
     assert "connect_args" in params
     assert params["connect_args"]["password"] == "iam-auth-token"  # noqa: S105
-    assert params["connect_args"]["user"] == "superset_iam_user"
+    assert params["connect_args"]["user"] == "axbi_iam_user"
     # Note: ssl_mode is not set because MySQL drivers don't support it.
     # SSL should be configured via the database's extra settings.
 
 
 @with_feature_flags(AWS_DATABASE_IAM_AUTH=True)
 def test_mysql_update_params_iam_uses_mysql_port() -> None:
-    from superset.db_engine_specs.aws_iam import AWSIAMAuthMixin
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.aws_iam import AWSIAMAuthMixin
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -139,7 +139,7 @@ def test_mysql_update_params_iam_uses_mysql_port() -> None:
                 "enabled": True,
                 "role_arn": "arn:aws:iam::123456789012:role/TestRole",
                 "region": "us-east-1",
-                "db_username": "superset_iam_user",
+                "db_username": "axbi_iam_user",
             }
         }
     )
@@ -174,7 +174,7 @@ def test_mysql_update_params_iam_uses_mysql_port() -> None:
 
 
 def test_mysql_update_params_merges_remaining_encrypted_extra() -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = json.dumps(
@@ -193,7 +193,7 @@ def test_mysql_update_params_merges_remaining_encrypted_extra() -> None:
 
 @pytest.mark.parametrize("encrypted_extra", ["not-valid-json", ["not-json"]])
 def test_mysql_update_params_invalid_json(encrypted_extra: object) -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     database = MagicMock()
     database.encrypted_extra = encrypted_extra
@@ -205,7 +205,7 @@ def test_mysql_update_params_invalid_json(encrypted_extra: object) -> None:
 
 
 def test_mysql_mask_encrypted_extra() -> None:
-    from superset.db_engine_specs.mysql import MySQLEngineSpec
+    from axbi.db_engine_specs.mysql import MySQLEngineSpec
 
     encrypted_extra = json.dumps(
         {
@@ -214,7 +214,7 @@ def test_mysql_mask_encrypted_extra() -> None:
                 "role_arn": "arn:aws:iam::123456789012:role/SecretRole",
                 "external_id": "secret-external-id-12345",
                 "region": "us-east-1",
-                "db_username": "superset_user",
+                "db_username": "axbi_user",
             }
         }
     )
@@ -234,4 +234,4 @@ def test_mysql_mask_encrypted_extra() -> None:
     # Non-sensitive fields should remain unchanged
     assert masked_config["aws_iam"]["enabled"] is True
     assert masked_config["aws_iam"]["region"] == "us-east-1"
-    assert masked_config["aws_iam"]["db_username"] == "superset_user"
+    assert masked_config["aws_iam"]["db_username"] == "axbi_user"

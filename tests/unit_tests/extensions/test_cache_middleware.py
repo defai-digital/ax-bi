@@ -17,7 +17,7 @@
 from collections.abc import Callable
 from typing import Any
 
-from superset.extensions.cache_middleware import ExtensionCacheMiddleware
+from axbi.extensions.cache_middleware import ExtensionCacheMiddleware
 
 ResponseHeaders = list[tuple[str, str]]
 

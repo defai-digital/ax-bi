@@ -17,15 +17,15 @@
  * under the License.
  */
 
-// Re-export AG Grid types from @superset-ui/core for convenience
-import type { AgGridChartState } from '@superset-ui/core';
+// Re-export AG Grid types from @ax-bi/ui-core for convenience
+import type { AgGridChartState } from '@ax-bi/ui-core';
 
 export type {
   AgGridSortModel,
   AgGridFilter,
   AgGridFilterModel,
   AgGridChartState,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 
 export interface ChartState {
   chartId: number;

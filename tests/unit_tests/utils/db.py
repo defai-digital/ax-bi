@@ -16,7 +16,7 @@
 # under the License.
 from typing import Any
 
-from superset import security_manager
+from axbi import security_manager
 
 
 def get_test_user(id_: int, username: str) -> Any:

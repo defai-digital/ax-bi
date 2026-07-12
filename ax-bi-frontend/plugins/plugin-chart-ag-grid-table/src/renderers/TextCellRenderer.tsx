@@ -18,10 +18,10 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { isProbablyHTML, sanitizeHtml } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { isProbablyHTML, sanitizeHtml } from '@ax-bi/ui-core';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Tooltip } from '@superset-ui/core/components';
+import { Tooltip } from '@ax-bi/ui-core/components';
 import { CellRendererProps } from '../types';
 import { SummaryContainer, SummaryText } from '../styles';
 

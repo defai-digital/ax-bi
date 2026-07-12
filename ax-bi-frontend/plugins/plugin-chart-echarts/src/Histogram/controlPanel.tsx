@@ -16,13 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
-import {
-  validateInteger,
-  validateNonEmpty,
-  withLabel,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { t } from '@ax-bi/core/translation';
+import { validateInteger, validateNonEmpty, withLabel } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import {
   ControlPanelConfig,
   formatSelectOptionsForRange,
@@ -31,7 +27,7 @@ import {
   D3_FORMAT_OPTIONS,
   D3_FORMAT_DOCS,
   D3_NUMBER_FORMAT_DESCRIPTION_VALUES_TEXT,
-} from '@superset-ui/chart-controls';
+} from '@ax-bi/chart-controls';
 import { showLegendControl, showValueControl } from '../controls';
 
 const config: ControlPanelConfig = {

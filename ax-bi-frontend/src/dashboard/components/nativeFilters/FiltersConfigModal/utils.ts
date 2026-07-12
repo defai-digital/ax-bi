@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { FormInstance } from '@superset-ui/core/components';
+import type { FormInstance } from '@ax-bi/ui-core/components';
 import { nanoid } from 'nanoid';
 import { getInitialDataMask } from 'src/dataMask/reducer';
 import {
@@ -29,8 +29,8 @@ import {
   ChartCustomizationConfiguration,
   ChartCustomization,
   ChartCustomizationDivider,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+} from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
 import {
   ChartCustomizationsForm,

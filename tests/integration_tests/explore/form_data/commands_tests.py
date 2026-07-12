@@ -20,23 +20,23 @@ from unittest.mock import patch
 import pytest
 from flask import current_app
 
-from superset import db, security_manager
-from superset.commands.exceptions import DatasourceTypeInvalidError
-from superset.commands.explore.form_data.create import CreateFormDataCommand
-from superset.commands.explore.form_data.delete import DeleteFormDataCommand
-from superset.commands.explore.form_data.get import GetFormDataCommand
-from superset.commands.explore.form_data.parameters import CommandParameters
-from superset.commands.explore.form_data.update import UpdateFormDataCommand
-from superset.connectors.sqla.models import SqlaTable
-from superset.models.slice import Slice
-from superset.models.sql_lab import Query
-from superset.utils import json
-from superset.utils.core import DatasourceType, get_example_default_schema
-from superset.utils.database import get_example_database
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db, security_manager
+from axbi.commands.exceptions import DatasourceTypeInvalidError
+from axbi.commands.explore.form_data.create import CreateFormDataCommand
+from axbi.commands.explore.form_data.delete import DeleteFormDataCommand
+from axbi.commands.explore.form_data.get import GetFormDataCommand
+from axbi.commands.explore.form_data.parameters import CommandParameters
+from axbi.commands.explore.form_data.update import UpdateFormDataCommand
+from axbi.connectors.sqla.models import SqlaTable
+from axbi.models.slice import Slice
+from axbi.models.sql_lab import Query
+from axbi.utils import json
+from axbi.utils.core import DatasourceType, get_example_default_schema
+from axbi.utils.database import get_example_database
+from tests.integration_tests.base_tests import AxBITestCase
 
 
-class TestCreateFormDataCommand(SupersetTestCase):
+class TestCreateFormDataCommand(AxBITestCase):
     @pytest.fixture
     def create_dataset(self):
         with self.create_app().app_context():
@@ -97,7 +97,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
             db.session.delete(query)
             db.session.commit()
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice")
     def test_create_form_data_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -119,7 +119,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
 
         assert isinstance(command.run(), str)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice", "create_query")
     def test_create_form_data_command_invalid_type(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -145,7 +145,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
 
         assert "Datasource type is invalid" in str(exc.value)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice", "create_query")
     def test_create_form_data_command_type_as_string(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -170,7 +170,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
 
         assert isinstance(command.run(), str)
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice")
     def test_get_form_data_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -199,7 +199,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
 
         assert cache_data.get("datasource") == datasource
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice", "create_query")
     def test_update_form_data_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -249,7 +249,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
 
         assert cache_data.get("datasource") == query_datasource
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice", "create_query")
     def test_update_form_data_command_same_form_data(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -297,7 +297,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
 
         assert cache_data.get("datasource") == datasource
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice", "create_query")
     def test_delete_form_data_command(self, mock_g):
         mock_g.user = security_manager.find_user("admin")
@@ -329,7 +329,7 @@ class TestCreateFormDataCommand(SupersetTestCase):
 
         assert response is True  # noqa: E712
 
-    @patch("superset.security.manager.g")
+    @patch("axbi.security.manager.g")
     @pytest.mark.usefixtures("create_dataset", "create_slice", "create_query")
     def test_delete_form_data_command_key_expired(self, mock_g):
         mock_g.user = security_manager.find_user("admin")

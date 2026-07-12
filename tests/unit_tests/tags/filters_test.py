@@ -20,10 +20,10 @@ from flask_appbuilder import Model
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from sqlalchemy.orm.session import Session
 
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.models.sql_lab import SavedQuery
-from superset.tags.filters import BaseTagIdFilter, BaseTagNameFilter
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.models.sql_lab import SavedQuery
+from axbi.tags.filters import BaseTagIdFilter, BaseTagNameFilter
 
 FILTER_MODELS = [Slice, Dashboard, SavedQuery]
 OBJECT_TYPES = {

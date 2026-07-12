@@ -18,18 +18,18 @@
 # Python version installed; we need 3.12
 PYTHON=`command -v python3.12`
 
-.PHONY: install superset venv pre-commit up down logs ps nuke ports open
+.PHONY: install axbi venv pre-commit up down logs ps nuke ports open
 
-install: superset pre-commit
+install: axbi pre-commit
 
-superset:
+axbi:
 	# Bootstrap uv (the project's installer) into the active environment
 	pip install uv
 
 	# Install external dependencies
 	uv pip install -r requirements/development.txt
 
-	# Install Superset in editable (development) mode
+	# Install AxBI in editable (development) mode
 	uv pip install -e .
 
 	# Create an admin user in your metadata database
@@ -37,7 +37,7 @@ superset:
                     --username admin \
                     --firstname "Admin I."\
                     --lastname Strator \
-                    --email admin@superset.io \
+                    --email admin@axbi.io \
                     --password general
 
 	# Initialize the database
@@ -61,7 +61,7 @@ update-py:
 	# Install external dependencies
 	uv pip install -r requirements/development.txt
 
-	# Install Superset in editable (development) mode
+	# Install AxBI in editable (development) mode
 	uv pip install -e .
 
 	# Initialize the database
@@ -112,10 +112,10 @@ open-cypress:
 	cd ax-bi-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:$(port) npm run cypress open
 
 report-celery-worker:
-	celery --app=superset.tasks.celery_app:app worker
+	celery --app=axbi.tasks.celery_app:app worker
 
 report-celery-beat:
-	celery --app=superset.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid --schedule /tmp/celerybeat-schedulecd
+	celery --app=axbi.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid --schedule /tmp/celerybeat-schedulecd
 
 admin-user:
 	ax-bi fab create-admin

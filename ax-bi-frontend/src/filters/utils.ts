@@ -22,8 +22,8 @@ import {
   QueryObjectFilterClause,
   TimeFormatter,
   ExtraFormData,
-} from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+} from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 import { FALSE_STRING, NULL_STRING, TRUE_STRING } from 'src/utils/common';
 import {
   Clauses,

@@ -27,11 +27,11 @@ def test_load_examples_run_skips_auto_discovered_loaders(
     mocker: MockerFixture,
 ) -> None:
     """YAML config import owns bundled Parquet examples."""
-    from superset.cli.examples import load_examples_run
+    from axbi.cli.examples import load_examples_run
 
     calls: list[tuple[str, bool | None]] = []
-    examples_pkg = cast(Any, ModuleType("superset.examples"))
-    examples = cast(Any, ModuleType("superset.examples.data_loading"))
+    examples_pkg = cast(Any, ModuleType("axbi.examples"))
+    examples = cast(Any, ModuleType("axbi.examples.data_loading"))
     examples_pkg.data_loading = examples
     examples.AUTO_DISCOVERED_LOADERS = frozenset({"load_auto_dataset"})
 
@@ -58,12 +58,12 @@ def test_load_examples_run_skips_auto_discovered_loaders(
     mocker.patch.dict(
         sys.modules,
         {
-            "superset.examples": examples_pkg,
-            "superset.examples.data_loading": examples,
+            "axbi.examples": examples_pkg,
+            "axbi.examples.data_loading": examples,
         },
     )
     mocker.patch(
-        "superset.cli.examples.database_utils.get_example_database",
+        "axbi.cli.examples.database_utils.get_example_database",
         return_value="examples",
     )
 

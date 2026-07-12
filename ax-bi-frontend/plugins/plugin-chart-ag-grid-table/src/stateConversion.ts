@@ -24,7 +24,7 @@ import {
   type AgGridSortModel,
   type AgGridFilterModel,
   type AgGridFilter,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import {
   getStartOfDay,
   getEndOfDay,

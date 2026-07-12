@@ -24,7 +24,7 @@ import {
   defaultStore as store,
 } from 'spec/helpers/testing-library';
 import fetchMock from 'fetch-mock';
-import { Modal } from '@superset-ui/core/components';
+import { Modal } from '@ax-bi/ui-core/components';
 import mockDatasource from 'spec/fixtures/mockDatasource';
 import DatasourceModal from '.';
 

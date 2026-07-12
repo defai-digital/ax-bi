@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { buildQueryContext } from '@superset-ui/core';
-import { histogramOperator } from '@superset-ui/chart-controls';
+import { buildQueryContext } from '@ax-bi/ui-core';
+import { histogramOperator } from '@ax-bi/chart-controls';
 import { HistogramFormData } from './types';
 
 export default function buildQuery(formData: HistogramFormData) {

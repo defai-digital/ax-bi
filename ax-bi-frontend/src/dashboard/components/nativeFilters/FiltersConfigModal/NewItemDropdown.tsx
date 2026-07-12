@@ -17,11 +17,11 @@
  * under the License.
  */
 import { FC } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { NativeFilterType, ChartCustomizationType } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
-import { Button, Dropdown, Menu } from '@superset-ui/core/components';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { t } from '@ax-bi/core/translation';
+import { NativeFilterType, ChartCustomizationType } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
+import { Button, Dropdown, Menu } from '@ax-bi/ui-core/components';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 interface Props {
   onAddFilter: (type: NativeFilterType) => void;

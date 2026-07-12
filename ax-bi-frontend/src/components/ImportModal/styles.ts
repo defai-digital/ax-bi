@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { css, SupersetTheme } from '@apache-superset/core/theme';
+import { css, AxBITheme } from '@ax-bi/core/theme';
 
-export const antdWarningAlertStyles = (theme: SupersetTheme) => css`
+export const antdWarningAlertStyles = (theme: AxBITheme) => css`
   margin: ${theme.sizeUnit * 4}px 0;
 
   .ant-alert-message {

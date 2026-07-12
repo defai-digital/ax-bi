@@ -26,17 +26,17 @@ from fastmcp.exceptions import ToolError
 from flask import current_app
 from pydantic import ValidationError
 
-from superset.mcp_service.app import mcp
-from superset.mcp_service.saved_query.schemas import (
+from axbi.mcp_service.app import mcp
+from axbi.mcp_service.saved_query.schemas import (
     ListSavedQueriesRequest,
     SavedQueryFilter,
 )
-from superset.runtime_modernization.ax_services import AxServicesResponse
-from superset.utils import json
+from axbi.runtime_modernization.ax_services import AxServicesResponse
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 list_saved_queries_module = importlib.import_module(
-    "superset.mcp_service.saved_query.tool.list_saved_queries"
+    "axbi.mcp_service.saved_query.tool.list_saved_queries"
 )
 
 
@@ -116,7 +116,7 @@ def mock_auth():
     """Mock authentication for all tests."""
     from unittest.mock import Mock, patch
 
-    with patch("superset.mcp_service.auth.get_user_from_request") as mock_get_user:
+    with patch("axbi.mcp_service.auth.get_user_from_request") as mock_get_user:
         mock_user = Mock()
         mock_user.id = 1
         mock_user.username = "admin"
@@ -124,7 +124,7 @@ def mock_auth():
         yield mock_get_user
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_basic(mock_list, mcp_server):
     """Test basic saved query listing functionality."""
@@ -152,7 +152,7 @@ async def test_list_saved_queries_basic(mock_list, mcp_server):
         assert data["saved_queries"][0]["label"] == "My Query"
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_with_search(mock_list, mcp_server):
     """Test saved query listing with search functionality."""
@@ -174,7 +174,7 @@ async def test_list_saved_queries_with_search(mock_list, mcp_server):
         assert data["saved_queries"][0]["label"] == "Production Query"
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_with_filters(mock_list, mcp_server):
     """Test saved query listing with filters."""
@@ -211,7 +211,7 @@ def test_list_saved_queries_request_rejects_both_search_and_filters():
         )
 
 
-@patch("superset.daos.query.SavedQueryDAO.find_by_id")
+@patch("axbi.daos.query.SavedQueryDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_saved_query_info_basic(mock_find, mcp_server):
     """Test basic get saved query info functionality."""
@@ -229,7 +229,7 @@ async def test_get_saved_query_info_basic(mock_find, mcp_server):
         assert data["db_id"] == 1
 
 
-@patch("superset.daos.query.SavedQueryDAO.find_by_id")
+@patch("axbi.daos.query.SavedQueryDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_saved_query_info_not_found(mock_find, mcp_server):
     """Test get saved query info when saved query does not exist."""
@@ -241,7 +241,7 @@ async def test_get_saved_query_info_not_found(mock_find, mcp_server):
         assert result.data["error_type"] == "not_found"
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_empty(mock_list, mcp_server):
     """Test saved query listing returns empty list when no results."""
@@ -258,7 +258,7 @@ async def test_list_saved_queries_empty(mock_list, mcp_server):
         assert data["total_count"] == 0
 
 
-@patch("superset.daos.query.SavedQueryDAO.find_by_id")
+@patch("axbi.daos.query.SavedQueryDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_saved_query_info_by_uuid(mock_find, mcp_server):
     """Test get saved query info by UUID string."""
@@ -275,7 +275,7 @@ async def test_get_saved_query_info_by_uuid(mock_find, mcp_server):
         assert data["uuid"] == "a1b2c3d4-5678-90ab-cdef-1234567890ab"
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_pagination_info(mock_list, mcp_server):
     """Test that pagination info is correctly returned."""
@@ -296,7 +296,7 @@ async def test_list_saved_queries_pagination_info(mock_list, mcp_server):
         assert data["has_previous"] is False
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_select_columns_projects_fields(mock_list, mcp_server):
     """select_columns limits which fields appear in each saved query result."""
@@ -318,7 +318,7 @@ async def test_list_saved_queries_select_columns_projects_fields(mock_list, mcp_
         assert sq["label"] == "My Query"
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_select_columns_keeps_schema_alias(
     mock_list, mcp_server
@@ -340,7 +340,7 @@ async def test_list_saved_queries_select_columns_keeps_schema_alias(
         assert sq["schema"] == "public"
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_serves_valid_sidecar_response(
     mock_list,
@@ -408,7 +408,7 @@ async def test_list_saved_queries_serves_valid_sidecar_response(
     )
 
 
-@patch("superset.daos.query.SavedQueryDAO.list")
+@patch("axbi.daos.query.SavedQueryDAO.list")
 @pytest.mark.asyncio
 async def test_list_saved_queries_serving_falls_back_on_invalid_candidate(
     mock_list,
@@ -464,7 +464,7 @@ async def test_list_saved_queries_invalid_order_column_raises(mcp_server):
             )
 
 
-@patch("superset.daos.query.SavedQueryDAO.find_by_id")
+@patch("axbi.daos.query.SavedQueryDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_get_saved_query_info_internal_error(mock_find, mcp_server):
     """Unexpected exception in get_saved_query_info returns InternalError."""

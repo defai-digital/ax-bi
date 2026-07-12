@@ -17,9 +17,9 @@
  * under the License.
  */
 import { FC } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
-import { Button, Icons, Space } from '@superset-ui/core/components';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
+import { Button, Icons, Space } from '@ax-bi/ui-core/components';
 import { usePWAInstall } from '../../hooks/usePWAInstall';
 
 const InstallBanner = styled.div`

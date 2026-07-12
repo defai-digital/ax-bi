@@ -16,22 +16,20 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { withRouter, type RouteComponentProps } from 'src/components/withRouter';
+import {
+  withRouter,
+  type RouteComponentProps,
+} from 'src/components/withRouter';
 import { PureComponent, ReactNode } from 'react';
 import rison from 'rison';
-import { t } from '@apache-superset/core/translation';
-import { isDefined, JsonResponse, SupersetClient } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { isDefined, JsonResponse, AxBIClient } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { withTheme, Theme } from '@emotion/react';
 import { getUrlParam } from 'src/utils/urlUtils';
 import { FilterPlugins, URL_PARAMS } from 'src/constants';
 import { Link } from 'react-router-dom';
-import {
-  AsyncSelect,
-  Button,
-  Loading,
-  Steps,
-} from '@superset-ui/core/components';
+import { AsyncSelect, Button, Loading, Steps } from '@ax-bi/ui-core/components';
 import withToasts from 'src/components/MessageToasts/withToasts';
 
 import VizTypeGallery, {
@@ -44,7 +42,7 @@ import {
   Dataset,
   DatasetSelectLabel,
 } from 'src/features/datasets/DatasetSelectLabel';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   datasetLabel,
   datasetLabelLower,
@@ -273,7 +271,7 @@ export class ChartCreation extends PureComponent<
       order_column: 'table_name',
       order_direction: 'asc',
     });
-    return SupersetClient.get({
+    return AxBIClient.get({
       endpoint: `/api/v1/dataset/?q=${query}`,
     }).then((response: JsonResponse) => {
       const list: {
@@ -305,7 +303,7 @@ export class ChartCreation extends PureComponent<
         </Link>{' '}
         {t('or')}{' '}
         <a
-          href="https://superset.apache.org/docs/creating-charts-dashboards/creating-your-first-dashboard/#registering-a-new-table"
+          href="https://github.com/defai-digital/ax-bi/docs/creating-charts-dashboards/creating-your-first-dashboard/#registering-a-new-table"
           rel="noopener noreferrer"
           target="_blank"
           data-test="add-chart-new-dataset-instructions"
@@ -318,7 +316,7 @@ export class ChartCreation extends PureComponent<
     ) : (
       <span data-test="no-dataset-write">
         <a
-          href="https://superset.apache.org/docs/creating-charts-dashboards/creating-your-first-dashboard/#registering-a-new-table"
+          href="https://github.com/defai-digital/ax-bi/docs/creating-charts-dashboards/creating-your-first-dashboard/#registering-a-new-table"
           rel="noopener noreferrer"
           target="_blank"
         >

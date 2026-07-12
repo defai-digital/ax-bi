@@ -23,7 +23,7 @@ from sqlalchemy import String
 from sqlalchemy.engine import make_url
 from sqlalchemy_utils.types.encrypted.encrypted_type import AesEngine, AesGcmEngine
 
-from superset.utils.encrypt import (
+from axbi.utils.encrypt import (
     EncryptedType,
     ReEncryptStats,
     resolve_encryption_engine,

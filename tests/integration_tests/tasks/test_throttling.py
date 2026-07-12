@@ -25,15 +25,15 @@ from __future__ import annotations
 
 import uuid
 
-from superset_core.tasks.types import TaskScope, TaskStatus
+from axbi_core.tasks.types import TaskScope, TaskStatus
 
-from superset.daos.tasks import TaskDAO
-from superset.extensions import db
-from superset.models.tasks import Task
-from superset.tasks.ambient_context import get_context
-from superset.tasks.registry import TaskRegistry
-from superset.tasks.scheduler import execute_task
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi.daos.tasks import TaskDAO
+from axbi.extensions import db
+from axbi.models.tasks import Task
+from axbi.tasks.ambient_context import get_context
+from axbi.tasks.registry import TaskRegistry
+from axbi.tasks.scheduler import execute_task
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 
 
@@ -56,7 +56,7 @@ def _register_test_tasks() -> None:
         TaskRegistry.register("test_throttle_combined", task_with_throttled_updates)
 
 
-class TestUpdateTaskThrottling(SupersetTestCase):
+class TestUpdateTaskThrottling(AxBITestCase):
     """Integration test for update_task() throttling behavior."""
 
     def setUp(self) -> None:
@@ -109,8 +109,8 @@ class TestUpdateTaskThrottling(SupersetTestCase):
         """
         from flask import current_app
 
-        from superset.commands.tasks.submit import SubmitTaskCommand
-        from superset.tasks.context import TaskContext
+        from axbi.commands.tasks.submit import SubmitTaskCommand
+        from axbi.tasks.context import TaskContext
 
         # Get throttle interval from config (default: 2 seconds)
         throttle_interval = current_app.config["TASK_PROGRESS_UPDATE_THROTTLE_INTERVAL"]

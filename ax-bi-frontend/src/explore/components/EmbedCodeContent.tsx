@@ -24,14 +24,14 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { LatestQueryFormData } from '@superset-ui/core';
-import { css } from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
-import { Input, Space, Typography } from '@superset-ui/core/components';
+import { LatestQueryFormData } from '@ax-bi/ui-core';
+import { css } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { Input, Space, Typography } from '@ax-bi/ui-core/components';
 import { CopyToClipboard } from 'src/components';
 import { URL_PARAMS } from 'src/constants';
 import { getChartPermalink } from 'src/utils/urlUtils';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 
 export interface EmbedCodeContentProps {
   formData?: LatestQueryFormData;

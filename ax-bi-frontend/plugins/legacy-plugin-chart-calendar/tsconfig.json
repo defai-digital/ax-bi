@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     // Path Resolution: Override baseUrl to maintain correct path mappings from parent config
-    // (e.g., "@apache-superset/core" -> "./packages/superset-core/src")
+    // (e.g., "@ax-bi/core" -> "./packages/ax-bi-core/src")
     "baseUrl": "../..",
 
     // Directory Overrides: Parent config paths are relative to frontend root,
@@ -18,8 +18,8 @@
     "src/**/*.test.*",
     "src/**/*.stories.*"],
   "references": [
-    { "path": "../../packages/superset-core" },
-    { "path": "../../packages/superset-ui-core" },
-    { "path": "../../packages/superset-ui-chart-controls" }
+    { "path": "../../packages/ax-bi-core" },
+    { "path": "../../packages/ax-bi-ui-core" },
+    { "path": "../../packages/ax-bi-chart-controls" }
   ]
 }

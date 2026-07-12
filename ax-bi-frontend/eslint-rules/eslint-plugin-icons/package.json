@@ -8,7 +8,7 @@
   },
   "keywords": [],
   "license": "Apache-2.0",
-  "author": "Apache",
+  "author": "DEFAI Private Limited",
   "dependencies": {},
   "peerDependencies": {
     "eslint": ">=0.8.0"

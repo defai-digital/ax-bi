@@ -17,7 +17,7 @@
  * under the License.
  */
 import { ActionCreators as UndoActionCreators } from 'redux-undo';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import type { AnyAction } from 'redux';
 import type { ThunkDispatch } from 'redux-thunk';
 import { addWarningToast } from 'src/components/MessageToasts/actions';
@@ -312,7 +312,7 @@ export function handleComponentDrop(dropResult: DropResult) {
       source &&
       !(
         // ensure it has moved
-        (destination.id === source.id && destination.index === source.index)
+        destination.id === source.id && destination.index === source.index
       )
     ) {
       dispatch(moveComponent(dropResult));

@@ -17,11 +17,11 @@
  * under the License.
  */
 
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import { Link } from 'react-router-dom';
 import type { TagType } from 'src/types/TagType';
-import { Tag as AntdTag } from '@superset-ui/core/components/Tag';
-import { Tooltip } from '@superset-ui/core/components/Tooltip';
+import { Tag as AntdTag } from '@ax-bi/ui-core/components/Tag';
+import { Tooltip } from '@ax-bi/ui-core/components/Tooltip';
 import type { TagProps } from 'antd/es';
 import type { CheckableTagProps } from 'antd/es/tag';
 import { useMemo } from 'react';
@@ -35,7 +35,7 @@ const StyledTag = styled(AntdTag)`
 
 const MAX_DISPLAY_CHAR = 20;
 
-const SupersetTag = ({
+const AxBITag = ({
   name,
   id,
   index = undefined,
@@ -100,7 +100,7 @@ const SupersetTag = ({
   return tagElem;
 };
 
-export const Tag = Object.assign(SupersetTag, {
+export const Tag = Object.assign(AxBITag, {
   CheckableTag: AntdTag.CheckableTag,
 });
 export type { TagProps, CheckableTagProps, TagType };

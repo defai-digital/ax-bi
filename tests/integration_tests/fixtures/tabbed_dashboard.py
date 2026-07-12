@@ -17,11 +17,11 @@
 
 import pytest
 
-from superset import db
-from superset.models.dashboard import Dashboard
-from superset.utils import json
-from superset.utils.core import shortid
-from tests.integration_tests.dashboards.superset_factory_util import create_dashboard
+from axbi import db
+from axbi.models.dashboard import Dashboard
+from axbi.utils import json
+from axbi.utils.core import shortid
+from tests.integration_tests.dashboards.axbi_factory_util import create_dashboard
 
 
 @pytest.fixture

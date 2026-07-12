@@ -25,7 +25,7 @@
  */
 
 import React, { ReactElement, useSyncExternalStore } from 'react';
-import type { views as viewsApi } from '@apache-superset/core';
+import type { views as viewsApi } from '@ax-bi/core';
 import { ErrorBoundary } from 'src/components/ErrorBoundary';
 import ExtensionPlaceholder from 'src/extensions/ExtensionPlaceholder';
 import { Disposable } from '../models';

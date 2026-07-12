@@ -19,8 +19,8 @@
 import Supercluster, {
   type Options as SuperclusterOptions,
 } from 'supercluster';
-import { ChartProps, getMapProviderMapStyle } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
+import { ChartProps, getMapProviderMapStyle } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
 import { DEFAULT_POINT_RADIUS, DEFAULT_MAX_ZOOM } from './MapLibre';
 import roundDecimal from './utils/roundDecimal';
 

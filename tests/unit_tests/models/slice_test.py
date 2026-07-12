@@ -22,7 +22,7 @@ from unittest.mock import MagicMock, patch, PropertyMock
 import pytest
 from parameterized import parameterized
 
-from superset.models.slice import id_or_uuid_filter, Slice
+from axbi.models.slice import id_or_uuid_filter, Slice
 
 
 class TestSlice:
@@ -36,7 +36,7 @@ class TestSlice:
     )
     def test_slice_get_calls_filter_correctly(self, test_name, id_or_uuid):
         """Test Slice.get() calls filter() correctly for ID and UUID."""
-        with patch("superset.models.slice.db") as mock_db:
+        with patch("axbi.models.slice.db") as mock_db:
             # Setup mock chain
             mock_query = MagicMock()
             mock_filtered_query = MagicMock()

@@ -26,22 +26,18 @@ import {
   Route,
 } from 'react-router-dom';
 import { Global } from '@emotion/react';
-import { t } from '@apache-superset/core/translation';
-import { makeApi } from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
-import {
-  type SupersetThemeConfig,
-  ThemeMode,
-  css,
-} from '@apache-superset/core/theme';
-import Switchboard from '@superset-ui/switchboard';
+import { t } from '@ax-bi/core/translation';
+import { makeApi } from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
+import { type AxBIThemeConfig, ThemeMode, css } from '@ax-bi/core/theme';
+import Switchboard from '@ax-bi/switchboard';
 import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
 import { history } from 'src/utils/history';
 import setupClient from 'src/setup/setupClient';
 import setupPlugins from 'src/setup/setupPlugins';
 import { useUiConfig } from 'src/components/UiConfigContext';
 import { store, USER_LOADED } from 'src/views/store';
-import { Loading } from '@superset-ui/core/components';
+import { Loading } from '@ax-bi/ui-core/components';
 import { ErrorBoundary } from 'src/components';
 import { addDangerToast } from 'src/components/MessageToasts/actions';
 import ToastContainer from 'src/components/MessageToasts/ToastContainer';
@@ -62,7 +58,7 @@ const debugMode = process.env.WEBPACK_MODE === 'development';
 const bootstrapData = getBootstrapData();
 
 function log(...info: unknown[]) {
-  if (debugMode) logging.debug(`[superset]`, ...info);
+  if (debugMode) logging.debug(`[axbi]`, ...info);
 }
 
 const LazyDashboardPage = lazy(
@@ -125,7 +121,10 @@ const EmbeddedApp = () => (
   <HistoryRouter history={history}>
     <Routes>
       {/* todo (embedded) remove this line after uuids are deployed */}
-      <Route path="/dashboard/:idOrSlug/embedded/" element={<EmbeddedRoute />} />
+      <Route
+        path="/dashboard/:idOrSlug/embedded/"
+        element={<EmbeddedRoute />}
+      />
       <Route path="/embedded/:uuid/" element={<EmbeddedRoute />} />
     </Routes>
   </HistoryRouter>
@@ -151,7 +150,7 @@ let started = false;
 
 /**
  * If there is a problem with the guest token, we will start getting
- * 401 errors from the api and SupersetClient will call this function.
+ * 401 errors from the api and AxBIClient will call this function.
  */
 function guestUnauthorizedHandler() {
   if (displayedUnauthorizedToast) return; // no need to display this message every time we get another 401
@@ -209,7 +208,7 @@ function start() {
 }
 
 /**
- * Configures SupersetClient with the correct settings for the embedded dashboard page.
+ * Configures AxBIClient with the correct settings for the embedded dashboard page.
  */
 function setupGuestClient(guestToken: string) {
   setupClient({
@@ -232,7 +231,7 @@ window.addEventListener('message', function embeddedPageInitializer(event) {
 
     Switchboard.init({
       port,
-      name: 'superset',
+      name: 'axbi',
       debug: debugMode,
     });
 
@@ -258,7 +257,7 @@ window.addEventListener('message', function embeddedPageInitializer(event) {
     );
     Switchboard.defineMethod(
       'setThemeConfig',
-      (payload: { themeConfig: SupersetThemeConfig }) => {
+      (payload: { themeConfig: AxBIThemeConfig }) => {
         const { themeConfig } = payload;
         log('Received setThemeConfig request:', themeConfig);
 

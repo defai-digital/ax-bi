@@ -17,18 +17,18 @@
  * under the License.
  */
 import { Fragment, useMemo, useCallback, RefObject, createRef } from 'react';
-import { extendedDayjs } from '@superset-ui/core/utils/dates';
+import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import { useDispatch } from 'react-redux';
 import ReactDiffViewer from 'react-diff-viewer-continued';
 import { useInView } from 'react-intersection-observer';
-import { Button, Modal } from '@superset-ui/core/components';
+import { Button, Modal } from '@ax-bi/ui-core/components';
 import { DashboardState } from 'src/dashboard/types';
 import {
   saveDashboardRequest,
   setOverrideConfirm,
 } from 'src/dashboard/actions/dashboardState';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { SAVE_TYPE_OVERWRITE_CONFIRMED } from 'src/dashboard/util/constants';
 
 const STICKY_HEADER_TOP = 16;

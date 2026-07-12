@@ -57,7 +57,7 @@ export async function createTestChart(
   const dataset = await getDatasetByName(page, 'members_channels_2');
   if (!dataset) {
     throw new Error(
-      'members_channels_2 dataset not found — run Superset with --load-examples',
+      'members_channels_2 dataset not found — run AxBI with --load-examples',
     );
   }
 

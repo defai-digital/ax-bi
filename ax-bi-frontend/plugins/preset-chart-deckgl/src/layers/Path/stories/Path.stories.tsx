@@ -19,9 +19,9 @@
 
 /* eslint-disable sort-keys */
 /* eslint-disable no-magic-numbers */
-import { SuperChart } from '@superset-ui/core';
-import { useTheme } from '@apache-superset/core/theme';
-import { PathChartPlugin } from '@superset-ui/preset-chart-deckgl';
+import { SuperChart } from '@ax-bi/ui-core';
+import { useTheme } from '@ax-bi/core/theme';
+import { PathChartPlugin } from '@ax-bi/preset-chart-deckgl';
 import { withResizableChartDemo, dummyDatasource } from '@storybook-shared';
 import payload from './payload';
 

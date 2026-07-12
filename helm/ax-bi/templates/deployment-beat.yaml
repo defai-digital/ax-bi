@@ -1,0 +1,173 @@
+{{/*
+
+ Licensed to the Apache Software Foundation (ASF) under one or more
+ contributor license agreements.  See the NOTICE file distributed with
+ this work for additional information regarding copyright ownership.
+ The ASF licenses this file to You under the Apache License, Version 2.0
+ (the "License"); you may not use this file except in compliance with
+ the License.  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+
+*/}}
+
+{{- if .Values.axbiCeleryBeat.enabled -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "axbi.fullname" . }}-celerybeat
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: {{ template "axbi.name" . }}-celerybeat
+    chart: {{ template "axbi.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+    {{- if .Values.extraLabels }}
+      {{- toYaml .Values.extraLabels | nindent 4 }}
+    {{- end }}
+  {{- if .Values.axbiCeleryBeat.deploymentAnnotations }}
+  annotations: {{- toYaml .Values.axbiCeleryBeat.deploymentAnnotations | nindent 4 }}
+  {{- end }}
+spec:
+  # This must be a singleton
+  replicas: 1
+  selector:
+    matchLabels:
+    {{- include "axbiCeleryBeat.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/axbi_config.py: {{ include "axbi-config" . | sha256sum }}
+        checksum/axbi_bootstrap.sh: {{ tpl .Values.bootstrapScript . | sha256sum }}
+        checksum/connections: {{ .Values.axbiNode.connections | toYaml | sha256sum }}
+        checksum/extraConfigs: {{ .Values.extraConfigs | toYaml | sha256sum }}
+        checksum/extraSecrets: {{ .Values.extraSecrets | toYaml | sha256sum }}
+        checksum/extraSecretEnv: {{ .Values.extraSecretEnv | toYaml | sha256sum }}
+        checksum/configOverrides: {{ .Values.configOverrides | toYaml | sha256sum }}
+        checksum/configOverridesFiles: {{ .Values.configOverridesFiles | toYaml | sha256sum }}
+        {{- if .Values.axbiCeleryBeat.forceReload }}
+        # Optionally force the thing to reload
+        force-reload: {{ randAlphaNum 5 | quote }}
+        {{- end }}
+        {{- if .Values.axbiCeleryBeat.podAnnotations }}
+          {{- toYaml .Values.axbiCeleryBeat.podAnnotations | nindent 8 }}
+        {{- end }}
+      labels:
+        app: "{{ template "axbi.name" . }}-celerybeat"
+        release: {{ .Release.Name }}
+        {{- if .Values.extraLabels }}
+          {{- toYaml .Values.extraLabels | nindent 8 }}
+        {{- end }}
+        {{- if .Values.axbiCeleryBeat.podLabels }}
+          {{- toYaml .Values.axbiCeleryBeat.podLabels | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- if or (.Values.serviceAccount.create) (.Values.serviceAccountName) }}
+      serviceAccountName: {{ template "axbi.serviceAccountName" . }}
+      {{- end }}
+      securityContext:
+        runAsUser: {{ .Values.runAsUser }}
+        {{- if .Values.axbiCeleryBeat.podSecurityContext }}
+          {{- toYaml .Values.axbiCeleryBeat.podSecurityContext | nindent 8 }}
+        {{- end }}
+      {{- if .Values.axbiCeleryBeat.initContainers }}
+      initContainers: {{-  tpl (toYaml .Values.axbiCeleryBeat.initContainers) . | nindent 6 }}
+      {{- end }}
+      {{- with .Values.hostAliases }}
+      hostAliases: {{- toYaml . | nindent 6 }}
+      {{- end }}
+      containers:
+        - name: "{{ .Chart.Name }}-celerybeat"
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.axbiCeleryBeat.containerSecurityContext }}
+          securityContext: {{- toYaml .Values.axbiCeleryBeat.containerSecurityContext | nindent 12 }}
+          {{- end }}
+          command: {{  tpl (toJson .Values.axbiCeleryBeat.command) . }}
+          env:
+            - name: "AXBI_PORT"
+              value: {{ .Values.service.port | quote}}
+            {{- range $key, $value := .Values.extraEnv }}
+            - name: {{ $key | quote}}
+              value: {{ $value | quote }}
+            {{- end }}
+            {{- if .Values.extraEnvRaw }}
+              {{- toYaml .Values.extraEnvRaw | nindent 12 }}
+            {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ tpl .Values.envFromSecret . | quote }}
+            {{- range .Values.envFromSecrets }}
+            - secretRef:
+                name: {{ tpl . $ | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: axbi-config
+              mountPath: {{ .Values.configMountPath | quote }}
+              readOnly: true
+            {{- if .Values.extraConfigs }}
+            - name: axbi-extra-config
+              mountPath: {{ .Values.extraConfigMountPath | quote }}
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+              {{- tpl (toYaml .) $ | nindent 12 }}
+            {{- end }}
+          resources:
+            {{- if .Values.axbiCeleryBeat.resources }}
+              {{- toYaml .Values.axbiCeleryBeat.resources | nindent 12 }}
+            {{- else }}
+              {{- toYaml .Values.resources | nindent 12 }}
+            {{- end }}
+        {{- if .Values.axbiCeleryBeat.extraContainers }}
+            {{- tpl (toYaml .Values.axbiCeleryBeat.extraContainers) . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.affinity .Values.axbiCeleryBeat.affinity }}
+      affinity:
+        {{- with .Values.affinity }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.axbiCeleryBeat.affinity }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- if .Values.axbiCeleryBeat.priorityClassName }}
+      priorityClassName: {{ .Values.axbiCeleryBeat.priorityClassName }}
+      {{- end }}
+      {{- if or .Values.topologySpreadConstraints .Values.axbiCeleryBeat.topologySpreadConstraints }}
+      topologySpreadConstraints:
+        {{- with .Values.topologySpreadConstraints }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        {{- with .Values.axbiCeleryBeat.topologySpreadConstraints }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations: {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets: {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: axbi-config
+          secret:
+            secretName: {{ tpl .Values.configFromSecret . }}
+        {{- if .Values.extraConfigs }}
+        - name: axbi-extra-config
+          configMap:
+            name: {{ template "axbi.fullname" . }}-extra-config
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+          {{- tpl (toYaml .) $ | nindent 8 -}}
+        {{- end }}
+{{- end -}}

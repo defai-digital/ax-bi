@@ -1,0 +1,322 @@
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements.  See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership.  The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License.  You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied.  See the License for the
+# specific language governing permissions and limitations
+# under the License.
+import logging
+import textwrap
+from functools import partial
+from typing import Any
+
+from flask import current_app
+from flask_appbuilder.models.sqla import Model
+from marshmallow import ValidationError
+
+from axbi import db, security_manager
+from axbi.commands.base import BaseCommand, UpdateMixin
+from axbi.commands.dashboard.create import load_json_object
+from axbi.commands.dashboard.exceptions import (
+    DashboardChartCustomizationsUpdateFailedError,
+    DashboardColorsConfigUpdateFailedError,
+    DashboardForbiddenError,
+    DashboardInvalidError,
+    DashboardNativeFiltersUpdateFailedError,
+    DashboardNotFoundError,
+    DashboardSlugExistsValidationError,
+    DashboardUpdateFailedError,
+)
+from axbi.commands.utils import populate_roles, update_tags, validate_tags
+from axbi.daos.dashboard import DashboardDAO
+from axbi.daos.report import ReportScheduleDAO
+from axbi.exceptions import AxBISecurityException
+from axbi.models.dashboard import Dashboard
+from axbi.models.helpers import json_to_dict
+from axbi.reports.models import ReportSchedule
+from axbi.tags.models import ObjectType
+from axbi.utils import json
+from axbi.utils.core import send_email_smtp
+from axbi.utils.decorators import on_error, transaction
+
+logger = logging.getLogger(__name__)
+
+
+def _get_native_filter_ids(json_metadata: str | None) -> set[str]:
+    metadata = json_to_dict(json_metadata or "")
+    native_filter_configuration = metadata.get("native_filter_configuration") or []
+    if not isinstance(native_filter_configuration, list):
+        return set()
+    return {
+        filter_config["id"]
+        for filter_config in native_filter_configuration
+        if isinstance(filter_config, dict) and isinstance(filter_config.get("id"), str)
+    }
+
+
+class UpdateDashboardCommand(UpdateMixin, BaseCommand):
+    def __init__(self, model_id: int, data: dict[str, Any]):
+        self._model_id = model_id
+        self._properties = data.copy()
+        self._model: Dashboard | None = None
+
+    @transaction(on_error=partial(on_error, reraise=DashboardUpdateFailedError))
+    def run(self) -> Model:
+        self.validate()
+        assert self._model is not None
+        self.process_tab_diff()
+        self.process_native_filter_diff()
+
+        # Update tags
+        if (tags := self._properties.pop("tags", None)) is not None:
+            update_tags(ObjectType.dashboard, self._model.id, self._model.tags, tags)
+
+        # Re-serialize position_json to escape 4-byte Unicode characters
+        if position_json := self._properties.get("position_json"):
+            self._properties["position_json"] = json.dumps(
+                load_json_object(position_json, "position_json")
+            )
+
+        dashboard = DashboardDAO.update(self._model, self._properties)
+        if self._properties.get("json_metadata"):
+            DashboardDAO.set_dash_metadata(
+                dashboard,
+                data=load_json_object(
+                    self._properties.get("json_metadata", "{}"),
+                    "json_metadata",
+                ),
+            )
+        return dashboard
+
+    def _validate_json_fields(self, exceptions: list[ValidationError]) -> None:
+        for field_name in ("json_metadata", "position_json"):
+            if value := self._properties.get(field_name):
+                try:
+                    load_json_object(value, field_name)
+                except ValidationError as ex:
+                    exceptions.append(ex)
+
+    def validate(self) -> None:
+        exceptions: list[ValidationError] = []
+        owner_ids: list[int] | None = self._properties.get("owners")
+        roles_ids: list[int] | None = self._properties.get("roles")
+        slug: str | None = self._properties.get("slug")
+        tag_ids: list[int] | None = self._properties.get("tags")
+
+        self._validate_json_fields(exceptions)
+
+        # Validate/populate model exists
+        self._model = DashboardDAO.find_by_id(self._model_id)
+        if not self._model:
+            raise DashboardNotFoundError()
+        # Check ownership
+        try:
+            security_manager.raise_for_ownership(self._model)
+        except AxBISecurityException as ex:
+            raise DashboardForbiddenError() from ex
+
+        # Validate slug uniqueness
+        if not DashboardDAO.validate_update_slug_uniqueness(self._model_id, slug):
+            exceptions.append(DashboardSlugExistsValidationError())
+        if exceptions:
+            raise DashboardInvalidError(exceptions=exceptions)
+
+        # Validate/Populate owner
+        try:
+            owners = self.compute_owners(
+                self._model.owners,
+                owner_ids,
+            )
+            self._properties["owners"] = owners
+        except ValidationError as ex:
+            exceptions.append(ex)
+
+        # validate tags
+        try:
+            validate_tags(ObjectType.dashboard, self._model.tags, tag_ids)
+        except ValidationError as ex:
+            exceptions.append(ex)
+
+        # Validate/Populate role
+        if roles_ids is None:
+            roles_ids = [role.id for role in self._model.roles]
+        try:
+            roles = populate_roles(roles_ids)
+            self._properties["roles"] = roles
+        except ValidationError as ex:
+            exceptions.append(ex)
+        if exceptions:
+            raise DashboardInvalidError(exceptions=exceptions)
+
+    @staticmethod
+    def _send_deactivated_report_email(
+        report: ReportSchedule, description: str
+    ) -> None:
+        html_content = textwrap.dedent(
+            f"""
+                <html>
+                <head>
+                    <style type="text/css">
+                    table, th, td {{
+                        border-collapse: collapse;
+                        border-color: rgb(200, 212, 227);
+                        color: rgb(42, 63, 95);
+                        padding: 4px 8px;
+                    }}
+                    .image{{
+                        margin-bottom: 18px;
+                    }}
+                    </style>
+                </head>
+                <body>
+                    <div>{description}</div>
+                    <br>
+                </body>
+                </html>
+                """
+        )
+        for report_owner in report.owners:
+            if email := report_owner.email:
+                send_email_smtp(
+                    to=email,
+                    subject=f"[Report: {report.name}] Deactivated",
+                    html_content=html_content,
+                    config=current_app.config,
+                )
+
+    def _find_reports_containing_tabs(self, tabs: list[str]) -> list[ReportSchedule]:
+        assert self._model is not None
+        seen: set[int] = set()
+        reports: list[ReportSchedule] = []
+        for tab in tabs:
+            for report in ReportScheduleDAO.find_by_extra_metadata(tab):
+                if report.dashboard_id != self._model.id:
+                    continue
+                if report.id not in seen:
+                    seen.add(report.id)
+                    reports.append(report)
+        return reports
+
+    def process_tab_diff(self) -> None:
+        def find_deleted_tabs() -> list[str]:
+            position_json = self._properties.get("position_json", "")
+            current_tabs = self._model.tabs  # type: ignore
+            if position_json and current_tabs:
+                position = json.loads(position_json)
+                return [tab for tab in current_tabs["all_tabs"] if tab not in position]
+            return []
+
+        def send_deactivated_email_warning(report: ReportSchedule) -> None:
+            description = textwrap.dedent(
+                """
+                The dashboard tab used in this report has been deleted and your report has been deactivated.
+                Please update your report settings to remove or change the tab used.
+                """  # noqa: E501
+            )
+            self._send_deactivated_report_email(report, description)
+
+        def deactivate_reports(reports_list: list[ReportSchedule]) -> None:
+            for report in reports_list:
+                ReportScheduleDAO.update(report, {"active": False})
+                send_deactivated_email_warning(report)
+
+        deleted_tabs = find_deleted_tabs()
+        reports = self._find_reports_containing_tabs(deleted_tabs)
+        deactivate_reports(reports)
+
+    def process_native_filter_diff(self) -> None:
+        def find_deleted_native_filter_ids() -> list[str]:
+            new_json_metadata = self._properties.get("json_metadata", "")
+            if not new_json_metadata:
+                return []
+            current_filter_ids = _get_native_filter_ids(
+                self._model.json_metadata  # type: ignore
+            )
+            new_filter_ids = _get_native_filter_ids(new_json_metadata)
+            return list(current_filter_ids - new_filter_ids)
+
+        def find_reports_containing_native_filters(
+            filter_ids: list[str],
+        ) -> list[ReportSchedule]:
+            seen: set[int] = set()
+            reports: list[ReportSchedule] = []
+            for filter_id in filter_ids:
+                for report in ReportScheduleDAO.find_by_native_filter_id(filter_id):
+                    if report.dashboard_id != self._model.id:  # type: ignore
+                        continue
+                    if report.id not in seen:
+                        seen.add(report.id)
+                        reports.append(report)
+            return reports
+
+        description = textwrap.dedent(
+            """
+            The dashboard filter used in this report has been deleted and your report has not been sent.
+            Please update your report settings to remove or change the filter used.
+            """  # noqa: E501
+        )
+        deleted_filter_ids = find_deleted_native_filter_ids()
+        for report in find_reports_containing_native_filters(deleted_filter_ids):
+            ReportScheduleDAO.update(report, {"active": False})
+            self._send_deactivated_report_email(report, description)
+
+
+class UpdateDashboardNativeFiltersCommand(UpdateDashboardCommand):
+    @transaction(
+        on_error=partial(on_error, reraise=DashboardNativeFiltersUpdateFailedError)
+    )
+    def run(self) -> Model:
+        super().validate()
+        assert self._model
+
+        return DashboardDAO.update_native_filters_config(self._model, self._properties)
+
+
+class UpdateDashboardChartCustomizationsCommand(UpdateDashboardCommand):
+    @transaction(
+        on_error=partial(
+            on_error, reraise=DashboardChartCustomizationsUpdateFailedError
+        )
+    )
+    def run(self) -> Model:
+        super().validate()
+        assert self._model
+
+        return DashboardDAO.update_chart_customizations_config(
+            self._model, self._properties
+        )
+
+
+class UpdateDashboardColorsConfigCommand(UpdateDashboardCommand):
+    def __init__(
+        self, model_id: int, data: dict[str, Any], mark_updated: bool = True
+    ) -> None:
+        super().__init__(model_id, data)
+        self._mark_updated = mark_updated
+
+    @transaction(
+        on_error=partial(on_error, reraise=DashboardColorsConfigUpdateFailedError)
+    )
+    def run(self) -> Model:
+        super().validate()
+        assert self._model
+
+        original_changed_on = self._model.changed_on
+
+        DashboardDAO.update_colors_config(self._model, self._properties)
+
+        if not self._mark_updated:
+            db.session.commit()  # pylint: disable=consider-using-transaction
+            # restore the original changed_on value
+            self._model.changed_on = original_changed_on
+
+        return self._model

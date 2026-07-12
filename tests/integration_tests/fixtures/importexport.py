@@ -17,7 +17,7 @@
 from copy import deepcopy
 from typing import Any
 
-from superset.utils import json
+from axbi.utils import json
 
 # example V0 import/export format
 dataset_ui_export: list[dict[str, Any]] = [
@@ -56,7 +56,7 @@ dataset_cli_export: dict[str, Any] = {
         {
             "allow_run_async": True,
             "database_name": "examples",
-            "sqlalchemy_uri": "sqlite:////Users/beto/.superset/superset.db",
+            "sqlalchemy_uri": "sqlite:////Users/beto/.axbi/ax-bi.db",
             "tables": dataset_ui_export,
         }
     ]

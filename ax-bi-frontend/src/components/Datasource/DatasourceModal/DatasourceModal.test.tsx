@@ -25,7 +25,7 @@ import {
   defaultStore as store,
 } from 'spec/helpers/testing-library';
 import fetchMock from 'fetch-mock';
-import { SupersetClient } from '@superset-ui/core';
+import { AxBIClient } from '@ax-bi/ui-core';
 import mockDatasource from 'spec/fixtures/mockDatasource';
 import React from 'react';
 import DatasourceModalComponent, { buildExtraJsonObject } from '.';
@@ -129,7 +129,7 @@ describe('DatasourceModal', () => {
 
   test('should render error dialog', async () => {
     const putSpy = jest
-      .spyOn(SupersetClient, 'put')
+      .spyOn(AxBIClient, 'put')
       .mockRejectedValue(new Error('Something went wrong'));
 
     const saveButton = screen.getByTestId('datasource-modal-save');

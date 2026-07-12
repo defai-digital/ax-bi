@@ -17,8 +17,8 @@
  * under the License.
  */
 // @ts-nocheck -- legacy reactified component with untyped `this` context from reactify callbacks
-import { reactify } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { reactify } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import PropTypes from 'prop-types';
 import Component from './NVD3Vis';
 import { hideTooltips, removeTooltip } from './utils';
@@ -45,8 +45,8 @@ NVD3.propTypes = {
 };
 
 export default styled(NVD3)`
-  .superset-legacy-chart-nvd3-dist-bar,
-  .superset-legacy-chart-nvd3-bar {
+  .axbi-legacy-chart-nvd3-dist-bar,
+  .axbi-legacy-chart-nvd3-bar {
     overflow-x: auto !important;
     svg {
       &.nvd3-svg {
@@ -55,11 +55,11 @@ export default styled(NVD3)`
       }
     }
   }
-  .superset-legacy-chart-nvd3 {
+  .axbi-legacy-chart-nvd3 {
     nv-x text {
       font-size: ${({ theme }) => theme.fontSize};
     }
-    g.superset path {
+    g.axbi path {
       stroke-dasharray: 5, 5;
     }
     .nvtooltip {
@@ -151,12 +151,12 @@ export default styled(NVD3)`
       font-weight: ${({ theme }) => theme.fontWeightNormal};
     }
   }
-  .superset-legacy-chart-nvd3-tr-highlight {
+  .axbi-legacy-chart-nvd3-tr-highlight {
     border-top: 1px solid;
     border-bottom: 1px solid;
     font-weight: ${({ theme }) => theme.fontWeightStrong};
   }
-  .superset-legacy-chart-nvd3-tr-total {
+  .axbi-legacy-chart-nvd3-tr-total {
     font-weight: ${({ theme }) => theme.fontWeightStrong};
   }
   .nvtooltip {

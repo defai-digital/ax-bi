@@ -19,7 +19,7 @@ from typing import Any
 import pytest
 from pytest_mock import MockerFixture
 
-from superset.tags.models import ObjectType
+from axbi.tags.models import ObjectType
 
 
 @pytest.mark.parametrize(
@@ -41,7 +41,7 @@ def test_add_objects_rejects_malformed_tag_payloads(
     payload: Any,
 ) -> None:
     """Malformed legacy tag payloads fail before the command layer."""
-    command = mocker.patch("superset.tags.api.CreateCustomTagCommand")
+    command = mocker.patch("axbi.tags.api.CreateCustomTagCommand")
 
     response = client.post(
         f"/api/v1/tag/{ObjectType.dashboard.value}/1/",
@@ -59,7 +59,7 @@ def test_add_objects_accepts_valid_tag_payload(
     mocker: MockerFixture,
 ) -> None:
     """Valid legacy tag payloads still dispatch to the create command."""
-    command_class = mocker.patch("superset.tags.api.CreateCustomTagCommand")
+    command_class = mocker.patch("axbi.tags.api.CreateCustomTagCommand")
     command = command_class.return_value
 
     response = client.post(
@@ -80,7 +80,7 @@ def test_create_tag_rejects_malformed_json_body(
     mocker: MockerFixture,
 ) -> None:
     """Malformed JSON request bodies should fail before tag creation."""
-    command = mocker.patch("superset.tags.api.CreateCustomTagWithRelationshipsCommand")
+    command = mocker.patch("axbi.tags.api.CreateCustomTagWithRelationshipsCommand")
 
     response = client.post(
         "/api/v1/tag/",
@@ -99,7 +99,7 @@ def test_bulk_create_tag_rejects_malformed_json_body(
     mocker: MockerFixture,
 ) -> None:
     """Malformed JSON request bodies should fail before bulk tag creation."""
-    command = mocker.patch("superset.tags.api.CreateCustomTagWithRelationshipsCommand")
+    command = mocker.patch("axbi.tags.api.CreateCustomTagWithRelationshipsCommand")
 
     response = client.post(
         "/api/v1/tag/bulk_create",
@@ -118,7 +118,7 @@ def test_update_uses_schema_normalized_payload(
     mocker: MockerFixture,
 ) -> None:
     """Tag updates should pass schema-coerced values to the command layer."""
-    command_class = mocker.patch("superset.tags.api.UpdateTagCommand")
+    command_class = mocker.patch("axbi.tags.api.UpdateTagCommand")
     command = command_class.return_value
     command.run.return_value.id = 10
 
@@ -144,7 +144,7 @@ def test_update_tag_rejects_malformed_json_body(
     mocker: MockerFixture,
 ) -> None:
     """Malformed JSON request bodies should fail before tag updates."""
-    command = mocker.patch("superset.tags.api.UpdateTagCommand")
+    command = mocker.patch("axbi.tags.api.UpdateTagCommand")
 
     response = client.put(
         "/api/v1/tag/10",

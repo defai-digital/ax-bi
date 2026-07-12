@@ -17,11 +17,7 @@
  * under the License.
  */
 
-import {
-  SuperChart,
-  ChartDataProvider,
-  SupersetClient,
-} from '@superset-ui/core';
+import { SuperChart, ChartDataProvider, AxBIClient } from '@ax-bi/ui-core';
 import Expandable from './Expandable';
 import VerifyCORS, { renderError } from './VerifyCORS';
 
@@ -52,7 +48,7 @@ export default function createQueryStory({
         <VerifyCORS host={host}>
           {() => (
             <ChartDataProvider
-              client={SupersetClient}
+              client={AxBIClient}
               formData={JSON.parse(formData.replace(/&quot;/g, '"'))}
             >
               {({ loading, payload, error }) => {
@@ -99,7 +95,7 @@ export default function createQueryStory({
   story.argTypes = {
     host: {
       control: 'text',
-      description: 'Superset App host for CORS request',
+      description: 'AxBI App host for CORS request',
     },
     mode: { control: 'select', options: keys, description: 'Choose mode' },
     width: { control: 'text', description: 'Vis width' },

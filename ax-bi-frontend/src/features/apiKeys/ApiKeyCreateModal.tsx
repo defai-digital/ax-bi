@@ -17,17 +17,17 @@
  * under the License.
  */
 import { useEffect, useRef, useState } from 'react';
-import { SupersetClient } from '@superset-ui/core';
-import { t } from '@apache-superset/core/translation';
-import { css, useTheme } from '@apache-superset/core/theme';
-import { Alert } from '@apache-superset/core/components';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { t } from '@ax-bi/core/translation';
+import { css, useTheme } from '@ax-bi/core/theme';
+import { Alert } from '@ax-bi/core/components';
 import {
   FormModal,
   FormItem,
   Input,
   Button,
   Modal,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 
 interface ApiKeyCreateModalProps {
@@ -62,7 +62,7 @@ export function ApiKeyCreateModal({
 
   const handleFormSubmit = async (values: FormValues) => {
     try {
-      const response = await SupersetClient.post({
+      const response = await AxBIClient.post({
         endpoint: '/api/v1/security/api_keys/',
         jsonPayload: values,
       });

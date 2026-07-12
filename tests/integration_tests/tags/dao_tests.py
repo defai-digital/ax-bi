@@ -18,12 +18,12 @@ from operator import and_
 
 import pytest
 
-from superset import db
-from superset.daos.tag import TagDAO
-from superset.models.dashboard import Dashboard
-from superset.models.slice import Slice
-from superset.tags.models import ObjectType, Tag, TaggedObject
-from tests.integration_tests.base_tests import SupersetTestCase
+from axbi import db
+from axbi.daos.tag import TagDAO
+from axbi.models.dashboard import Dashboard
+from axbi.models.slice import Slice
+from axbi.tags.models import ObjectType, Tag, TaggedObject
+from tests.integration_tests.base_tests import AxBITestCase
 from tests.integration_tests.constants import ADMIN_USERNAME
 from tests.integration_tests.fixtures.tags import (
     with_tagging_system_feature,  # noqa: F401
@@ -35,7 +35,7 @@ from tests.integration_tests.fixtures.world_bank_dashboard import (
 from tests.integration_tests.tags.api_tests import TAGS_FIXTURE_COUNT
 
 
-class TestTagsDAO(SupersetTestCase):
+class TestTagsDAO(AxBITestCase):
     def insert_tag(
         self,
         name: str,

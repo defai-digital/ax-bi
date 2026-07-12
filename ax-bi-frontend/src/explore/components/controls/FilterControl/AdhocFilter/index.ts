@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import type { AdhocFilter as CoreAdhocFilter } from '@superset-ui/core';
+import type { AdhocFilter as CoreAdhocFilter } from '@ax-bi/ui-core';
 import {
   CUSTOM_OPERATORS,
   DISABLE_INPUT_OPERATORS,
@@ -190,7 +190,7 @@ export default class AdhocFilter {
 
 /**
  * Adapter function to create an AdhocFilter instance from a core AdhocFilter type.
- * This bridges the type gap between @superset-ui/core's AdhocFilter and the local class.
+ * This bridges the type gap between @ax-bi/ui-core's AdhocFilter and the local class.
  */
 export function fromCoreAdhocFilter(filter: CoreAdhocFilter): AdhocFilter {
   return new AdhocFilter(filter as AdhocFilterInput);

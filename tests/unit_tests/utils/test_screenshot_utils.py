@@ -21,7 +21,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from PIL import Image
 
-from superset.utils.screenshot_utils import (
+from axbi.utils.screenshot_utils import (
     combine_screenshot_tiles,
     SCROLL_SETTLE_TIMEOUT_MS,
     take_tiled_screenshot,
@@ -92,7 +92,7 @@ class TestCombineScreenshotTiles:
 
     def test_combine_tiles_logs_exception(self):
         """Test that exceptions are logged properly."""
-        with patch("superset.utils.screenshot_utils.logger") as mock_logger:
+        with patch("axbi.utils.screenshot_utils.logger") as mock_logger:
             # Create invalid image data that will cause PIL to raise an exception
             invalid_tile = b"definitely_not_an_image"
             valid_tile = self._create_test_image(100, 100)
@@ -130,7 +130,7 @@ class TestTakeTiledScreenshot:
     def test_successful_tiled_screenshot(self, mock_page):
         """Test successful tiled screenshot generation."""
         with patch(
-            "superset.utils.screenshot_utils.combine_screenshot_tiles"
+            "axbi.utils.screenshot_utils.combine_screenshot_tiles"
         ) as mock_combine:
             mock_combine.return_value = b"combined_screenshot"
 
@@ -166,7 +166,7 @@ class TestTakeTiledScreenshot:
         mock_page.evaluate.return_value = element_info
 
         with patch(
-            "superset.utils.screenshot_utils.combine_screenshot_tiles"
+            "axbi.utils.screenshot_utils.combine_screenshot_tiles"
         ) as mock_combine:
             mock_combine.return_value = b"combined"
 
@@ -177,8 +177,8 @@ class TestTakeTiledScreenshot:
 
     def test_logs_dashboard_info(self, mock_page):
         """Test that dashboard info is logged."""
-        with patch("superset.utils.screenshot_utils.logger") as mock_logger:
-            with patch("superset.utils.screenshot_utils.combine_screenshot_tiles"):
+        with patch("axbi.utils.screenshot_utils.logger") as mock_logger:
+            with patch("axbi.utils.screenshot_utils.combine_screenshot_tiles"):
                 take_tiled_screenshot(mock_page, "dashboard", tile_height=2000)
 
                 # Should log dashboard dimensions with lazy logging format
@@ -193,7 +193,7 @@ class TestTakeTiledScreenshot:
         mock_page = MagicMock()
         mock_page.locator.side_effect = Exception("Unexpected error")
 
-        with patch("superset.utils.screenshot_utils.logger") as mock_logger:
+        with patch("axbi.utils.screenshot_utils.logger") as mock_logger:
             result = take_tiled_screenshot(mock_page, "dashboard", tile_height=2000)
 
             assert result is None
@@ -204,7 +204,7 @@ class TestTakeTiledScreenshot:
 
     def test_screenshot_clip_parameters(self, mock_page):
         """Test that screenshot clipping parameters are correct."""
-        with patch("superset.utils.screenshot_utils.combine_screenshot_tiles"):
+        with patch("axbi.utils.screenshot_utils.combine_screenshot_tiles"):
             take_tiled_screenshot(mock_page, "dashboard", tile_height=2000)
 
             # Check screenshot calls have correct clip parameters
@@ -241,9 +241,9 @@ class TestTakeTiledScreenshot:
         element_info = {"height": 4000, "top": 100, "left": 50, "width": 800}
         mock_page.evaluate.return_value = element_info
 
-        with patch("superset.utils.screenshot_utils.logger") as mock_logger:
+        with patch("axbi.utils.screenshot_utils.logger") as mock_logger:
             with patch(
-                "superset.utils.screenshot_utils.combine_screenshot_tiles"
+                "axbi.utils.screenshot_utils.combine_screenshot_tiles"
             ) as mock_combine:
                 mock_combine.return_value = b"combined"
 
@@ -273,7 +273,7 @@ class TestTakeTiledScreenshot:
         mock_page.evaluate.return_value = element_info
 
         with patch(
-            "superset.utils.screenshot_utils.combine_screenshot_tiles"
+            "axbi.utils.screenshot_utils.combine_screenshot_tiles"
         ) as mock_combine:
             mock_combine.return_value = b"combined"
 
@@ -286,7 +286,7 @@ class TestTakeTiledScreenshot:
 
     def test_scroll_positions_calculated_correctly(self, mock_page):
         """Test that window scroll positions are calculated correctly."""
-        with patch("superset.utils.screenshot_utils.combine_screenshot_tiles"):
+        with patch("axbi.utils.screenshot_utils.combine_screenshot_tiles"):
             take_tiled_screenshot(mock_page, "dashboard", tile_height=2000)
 
             # Check page.evaluate calls for scrolling
@@ -311,7 +311,7 @@ class TestTakeTiledScreenshot:
 
     def test_reset_scroll_position(self, mock_page):
         """Test that scroll position waits are called after each scroll."""
-        with patch("superset.utils.screenshot_utils.combine_screenshot_tiles"):
+        with patch("axbi.utils.screenshot_utils.combine_screenshot_tiles"):
             take_tiled_screenshot(mock_page, "dashboard", tile_height=2000)
 
             # Should call wait_for_timeout 3 times (once per tile)
@@ -323,7 +323,7 @@ class TestTakeTiledScreenshot:
 
     def test_per_tile_spinner_wait_uses_viewport_check(self, mock_page):
         """wait_for_function polls viewport-visible spinners after each scroll."""
-        with patch("superset.utils.screenshot_utils.combine_screenshot_tiles"):
+        with patch("axbi.utils.screenshot_utils.combine_screenshot_tiles"):
             take_tiled_screenshot(
                 mock_page, "dashboard", tile_height=2000, load_wait=30
             )
@@ -340,13 +340,13 @@ class TestTakeTiledScreenshot:
 
     def test_per_tile_spinner_timeout_logs_warning_and_continues(self, mock_page):
         """A per-tile spinner timeout logs a warning but still takes the screenshot."""
-        from superset.utils.screenshot_utils import PlaywrightTimeout
+        from axbi.utils.screenshot_utils import PlaywrightTimeout
 
         timeout = PlaywrightTimeout("Timeout")
         mock_page.wait_for_function.side_effect = timeout
 
-        with patch("superset.utils.screenshot_utils.logger") as mock_logger:
-            with patch("superset.utils.screenshot_utils.combine_screenshot_tiles"):
+        with patch("axbi.utils.screenshot_utils.logger") as mock_logger:
+            with patch("axbi.utils.screenshot_utils.combine_screenshot_tiles"):
                 result = take_tiled_screenshot(
                     mock_page, "dashboard", tile_height=2000, load_wait=30
                 )
@@ -367,14 +367,14 @@ class TestTakeTiledScreenshot:
         """load_wait defaults to 60 to match SCREENSHOT_LOAD_WAIT config default."""
         import inspect
 
-        from superset.utils.screenshot_utils import take_tiled_screenshot
+        from axbi.utils.screenshot_utils import take_tiled_screenshot
 
         sig = inspect.signature(take_tiled_screenshot)
         assert sig.parameters["load_wait"].default == 60
 
     def test_per_tile_animation_wait_called_per_tile(self, mock_page):
         """animation_wait adds an extra wait per tile after the spinner check."""
-        with patch("superset.utils.screenshot_utils.combine_screenshot_tiles"):
+        with patch("axbi.utils.screenshot_utils.combine_screenshot_tiles"):
             take_tiled_screenshot(
                 mock_page, "dashboard", tile_height=2000, animation_wait=5
             )
@@ -393,7 +393,7 @@ class TestTakeTiledScreenshot:
         """animation_wait defaults to 0 so no extra per-tile wait by default."""
         import inspect
 
-        from superset.utils.screenshot_utils import take_tiled_screenshot
+        from axbi.utils.screenshot_utils import take_tiled_screenshot
 
         sig = inspect.signature(take_tiled_screenshot)
         assert sig.parameters["animation_wait"].default == 0

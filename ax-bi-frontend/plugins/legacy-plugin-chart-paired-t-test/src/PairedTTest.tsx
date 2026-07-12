@@ -18,7 +18,7 @@
  */
 /* eslint-disable react/no-array-index-key */
 import { PureComponent } from 'react';
-import { styled } from '@apache-superset/core/theme';
+import { styled } from '@ax-bi/core/theme';
 import TTestTable, { DataEntry } from './TTestTable';
 
 interface PairedTTestProps {
@@ -40,7 +40,7 @@ const defaultProps = {
 
 const StyledDiv = styled.div`
   ${({ theme }) => `
-    .superset-legacy-chart-paired_ttest .scrollbar-container {
+    .axbi-legacy-chart-paired_ttest .scrollbar-container {
       overflow: auto;
     }
 
@@ -123,7 +123,7 @@ class PairedTTest extends PureComponent<PairedTTestProps> {
 
     return (
       <StyledDiv>
-        <div className={`superset-legacy-chart-paired-t-test ${className}`}>
+        <div className={`axbi-legacy-chart-paired-t-test ${className}`}>
           <div className="paired-ttest-table">
             <div className="scrollbar-content">
               {metrics.map((metric, i) => (

@@ -23,17 +23,13 @@ import {
   QueryFormData,
   QueryFormMetric,
   RgbaColor,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import type { BarDataItemOption } from 'echarts/types/src/chart/bar/BarSeries';
 import type { CallbackDataParams } from 'echarts/types/src/util/types';
 import { BaseTransformedProps, LegendFormData } from '../types';
 
 export type WaterfallFormXTicksLayout =
-  | '45°'
-  | '90°'
-  | 'auto'
-  | 'flat'
-  | 'staggered';
+  '45°' | '90°' | 'auto' | 'flat' | 'staggered';
 
 export type ISeriesData = {
   originalValue?: number;

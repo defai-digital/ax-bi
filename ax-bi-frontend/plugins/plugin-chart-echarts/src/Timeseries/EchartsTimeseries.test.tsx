@@ -21,7 +21,7 @@ import {
   waitFor,
   cleanup,
 } from '../../../../spec/helpers/testing-library';
-import { AxisType } from '@superset-ui/core';
+import { AxisType } from '@ax-bi/ui-core';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { ECElementEvent } from 'echarts/types/src/util/types';
 import type { ReactNode } from 'react';

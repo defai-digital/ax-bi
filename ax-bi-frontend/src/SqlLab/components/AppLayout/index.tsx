@@ -19,9 +19,9 @@
 import { useSelector } from 'react-redux';
 import { noop } from 'lodash';
 import type { SqlLabRootState } from 'src/SqlLab/types';
-import { css, styled } from '@apache-superset/core/theme';
-import { useComponentDidUpdate } from '@superset-ui/core';
-import { Grid } from '@superset-ui/core/components';
+import { css, styled } from '@ax-bi/core/theme';
+import { useComponentDidUpdate } from '@ax-bi/ui-core';
+import { Grid } from '@ax-bi/ui-core/components';
 import { useViews } from 'src/core';
 import { Splitter } from 'src/components/Splitter';
 import useEffectEvent from 'src/hooks/useEffectEvent';

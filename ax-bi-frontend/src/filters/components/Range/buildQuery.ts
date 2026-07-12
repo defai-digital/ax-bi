@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { buildQueryContext, QueryFormData } from '@superset-ui/core';
-import { GenericDataType } from '@apache-superset/core/common';
+import { buildQueryContext, QueryFormData } from '@ax-bi/ui-core';
+import { GenericDataType } from '@ax-bi/core/common';
 
 /**
  * The buildQuery function is used to create an instance of QueryContext that's

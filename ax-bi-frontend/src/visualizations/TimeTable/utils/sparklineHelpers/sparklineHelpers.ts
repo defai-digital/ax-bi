@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { getTextDimension } from '@superset-ui/core';
+import { getTextDimension } from '@ax-bi/ui-core';
 import { LinearScaleConfig } from '@visx/scale';
 import { AxisScaleOutput } from '@visx/axis';
 

@@ -70,7 +70,7 @@ export class SqlLabPage {
   }
 
   async waitForPageLoad(options?: { timeout?: number }): Promise<void> {
-    // SQL Lab is the heaviest bundle in Superset — the editor tabs container
+    // SQL Lab is the heaviest bundle in AxBI — the editor tabs container
     // doesn't render until the lazy chunk and async tab state (tabstateview)
     // both resolve. On cold-cache CI workers under werkzeug load this can
     // exceed 15 s, so use SLOW_TEST (60 s) rather than QUERY_EXECUTION here.

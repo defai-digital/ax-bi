@@ -16,10 +16,10 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { QueryFormData, FilterState } from '@superset-ui/core';
+import { QueryFormData, FilterState } from '@ax-bi/ui-core';
 import { PluginFilterHooks, PluginFilterStylesProps } from '../types';
 import { RefObject } from 'react';
-import type { RefSelectProps } from '@superset-ui/core/components';
+import type { RefSelectProps } from '@ax-bi/ui-core/components';
 import { ColumnData, ColumnOption } from '../DynamicGroupBy/types';
 
 export interface DeckglLayerVisibilityFormData extends QueryFormData {

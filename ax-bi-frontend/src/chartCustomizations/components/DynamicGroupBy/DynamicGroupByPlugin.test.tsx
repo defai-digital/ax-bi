@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ChartProps } from '@superset-ui/core';
-import { supersetTheme } from '@apache-superset/core/theme';
+import { ChartProps } from '@ax-bi/ui-core';
+import { axbiTheme } from '@ax-bi/core/theme';
 import { render, screen, userEvent } from 'spec/helpers/testing-library';
 import PluginFilterDynamicGroupBy from './DynamicGroupByPlugin';
 import transformProps from './transformProps';
@@ -50,7 +50,7 @@ const renderPlugin = (sortAscending?: boolean) => {
   const chartProps = new ChartProps({
     ...baseProps,
     formData: { ...baseProps.formData, sortAscending },
-    theme: supersetTheme,
+    theme: axbiTheme,
   });
   return render(
     <PluginFilterDynamicGroupBy

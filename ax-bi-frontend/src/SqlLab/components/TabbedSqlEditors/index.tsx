@@ -17,18 +17,18 @@
  * under the License.
  */
 import { PureComponent } from 'react';
-import { EditableTabs } from '@superset-ui/core/components/Tabs';
+import { EditableTabs } from '@ax-bi/ui-core/components/Tabs';
 import { connect } from 'react-redux';
 import type { QueryEditor, SqlLabRootState } from 'src/SqlLab/types';
-import { t } from '@apache-superset/core/translation';
-import { FeatureFlag, isFeatureEnabled } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import { Logger } from 'src/logger/LogUtils';
-import { EmptyState, Tooltip } from '@superset-ui/core/components';
+import { EmptyState, Tooltip } from '@ax-bi/ui-core/components';
 import { ErrorBoundary } from 'src/components/ErrorBoundary';
 import { detectOS } from 'src/utils/common';
 import * as Actions from 'src/SqlLab/actions/sqlLab';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import SqlEditor from '../SqlEditor';
 import SqlEditorTabHeader from '../SqlEditorTabHeader';
 

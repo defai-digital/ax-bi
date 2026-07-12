@@ -17,15 +17,15 @@
  * under the License.
  */
 import { useEffect, useRef, useMemo } from 'react';
-import type { editors } from '@apache-superset/core';
-import { Select } from '@superset-ui/core/components';
-import { t } from '@apache-superset/core/translation';
-import { css, styled, useTheme } from '@apache-superset/core/theme';
+import type { editors } from '@ax-bi/core';
+import { Select } from '@ax-bi/ui-core/components';
+import { t } from '@ax-bi/core/translation';
+import { css, styled, useTheme } from '@ax-bi/core/theme';
 import sqlKeywords from 'src/SqlLab/utils/sqlKeywords';
 import { getColumnKeywords } from 'src/explore/controlUtils/getColumnKeywords';
 import AdhocFilter from 'src/explore/components/controls/FilterControl/AdhocFilter';
 import { OptionSortType } from 'src/explore/types';
-import { ColumnMeta } from '@superset-ui/chart-controls';
+import { ColumnMeta } from '@ax-bi/chart-controls';
 import SQLEditorWithValidation from 'src/components/SQLEditorWithValidation';
 import { SqlExpressionType } from 'src/types/SqlExpression';
 import { Clauses, ExpressionTypes } from '../types';

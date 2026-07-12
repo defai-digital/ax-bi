@@ -17,11 +17,11 @@
  * under the License.
  */
 import { ReactNode } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { tn } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
+import { tn } from '@ax-bi/core/translation';
 import levenshtein from 'js-levenshtein';
 
-import { List } from '@superset-ui/core/components';
+import { List } from '@ax-bi/ui-core/components';
 import { ErrorMessageComponentProps } from './types';
 import { IssueCode } from './IssueCode';
 import { ErrorAlert } from './ErrorAlert';

@@ -18,17 +18,17 @@
  */
 import { ComponentProps, RefObject } from 'react';
 import copyTextToClipboard from 'src/utils/copy';
-import { logging } from '@apache-superset/core/utils';
-import { t } from '@apache-superset/core/translation';
+import { logging } from '@ax-bi/core/utils';
+import { t } from '@ax-bi/core/translation';
 import {
   FeatureFlag,
   isFeatureEnabled,
   LatestQueryFormData,
-} from '@superset-ui/core';
-import { Menu, MenuItem } from '@superset-ui/core/components/Menu';
+} from '@ax-bi/ui-core';
+import { Menu, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { getDashboardPermalink } from 'src/utils/urlUtils';
 import EmbedCodeContent from 'src/explore/components/EmbedCodeContent';
-import { ModalTrigger } from '@superset-ui/core/components';
+import { ModalTrigger } from '@ax-bi/ui-core/components';
 import { MenuKeys, RootState } from 'src/dashboard/types';
 import { shallowEqual, useSelector } from 'react-redux';
 import { hasStatefulCharts } from 'src/dashboard/util/chartStateConverter';

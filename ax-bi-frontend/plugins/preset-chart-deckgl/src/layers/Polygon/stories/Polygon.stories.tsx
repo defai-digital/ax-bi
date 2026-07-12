@@ -19,8 +19,8 @@
 
 /* eslint-disable sort-keys */
 /* eslint-disable no-magic-numbers */
-import { SuperChart } from '@superset-ui/core';
-import { PolygonChartPlugin } from '@superset-ui/preset-chart-deckgl';
+import { SuperChart } from '@ax-bi/ui-core';
+import { PolygonChartPlugin } from '@ax-bi/preset-chart-deckgl';
 import { withResizableChartDemo, dummyDatasource } from '@storybook-shared';
 import payload from './payload';
 import geojsonPayload from './geojsonPayload';

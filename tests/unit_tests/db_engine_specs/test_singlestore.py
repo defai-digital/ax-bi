@@ -24,9 +24,9 @@ import pytest
 from sqlalchemy import types
 from sqlalchemy.engine import make_url
 
-from superset.db_engine_specs.singlestore import SingleStoreSpec
-from superset.models.sql_lab import Query
-from superset.utils.core import GenericDataType
+from axbi.db_engine_specs.singlestore import SingleStoreSpec
+from axbi.models.sql_lab import Query
+from axbi.utils.core import GenericDataType
 from tests.unit_tests.db_engine_specs.utils import (
     assert_column_spec,
     assert_convert_dttm,
@@ -108,7 +108,7 @@ def test_adjust_engine_params() -> None:
         make_url("singlestoredb://user:password@host:5432/pro%20d"),
         {
             "conn_attrs": {
-                "_connector_name": "SingleStore Superset Database Engine",
+                "_connector_name": "SingleStore AxBI Database Engine",
                 "_connector_version": expected_version,
                 "_product_version": expected_version,
             }

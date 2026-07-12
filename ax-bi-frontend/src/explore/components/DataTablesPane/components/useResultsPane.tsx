@@ -18,14 +18,14 @@
  */
 import { useState, useEffect, useMemo, ReactElement, useCallback } from 'react';
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   getChartMetadataRegistry,
   getClientErrorObject,
-} from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
-import { EmptyState, Loading } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
+import { EmptyState, Loading } from '@ax-bi/ui-core/components';
 import { getChartDataRequest } from 'src/components/Chart/chartAction';
 import { ResultsPaneProps, QueryResultInterface } from '../types';
 import { SingleQueryResultPane } from './SingleQueryResultPane';

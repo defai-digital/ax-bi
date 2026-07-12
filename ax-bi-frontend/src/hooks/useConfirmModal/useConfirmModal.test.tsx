@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen, userEvent, waitFor } from '@superset-ui/core/spec';
+import { render, screen, userEvent, waitFor } from '@ax-bi/ui-core/spec';
 import { renderHook, act } from '@testing-library/react';
-import { ThemeProvider, supersetTheme } from '@apache-superset/core/theme';
+import { ThemeProvider, axbiTheme } from '@ax-bi/core/theme';
 import { useConfirmModal } from '.';
 
 const renderWithTheme = (component: React.ReactElement) =>
-  render(<ThemeProvider theme={supersetTheme}>{component}</ThemeProvider>);
+  render(<ThemeProvider theme={axbiTheme}>{component}</ThemeProvider>);
 
 test('initially returns null ConfirmModal', () => {
   const { result } = renderHook(() => useConfirmModal());
@@ -161,7 +161,7 @@ test('supports danger button style', () => {
   renderWithTheme(<>{result.current.ConfirmModal}</>);
 
   const confirmButton = screen.getByRole('button', { name: 'Confirm' });
-  expect(confirmButton).toHaveClass('superset-button-danger');
+  expect(confirmButton).toHaveClass('axbi-button-danger');
 });
 
 test('handles errors in onConfirm gracefully', async () => {

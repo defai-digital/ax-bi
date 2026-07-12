@@ -21,10 +21,10 @@ from unittest.mock import MagicMock, patch
 from uuid import UUID
 
 import pytest
-from superset_core.tasks.types import TaskOptions, TaskScope
+from axbi_core.tasks.types import TaskOptions, TaskScope
 
-from superset.tasks.context import TaskContext
-from superset.tasks.decorators import TaskWrapper
+from axbi.tasks.context import TaskContext
+from axbi.tasks.decorators import TaskWrapper
 
 TEST_UUID = UUID("b8b61b7b-1cd3-4a31-a74a-0a95341afc06")
 
@@ -85,9 +85,9 @@ def task_context_for_timeout(mock_flask_app, mock_task_abortable):
     mock_task_abortable.payload_dict = {}
 
     with (
-        patch("superset.tasks.context.current_app") as mock_current_app,
-        patch("superset.daos.tasks.TaskDAO") as mock_dao,
-        patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+        patch("axbi.tasks.context.current_app") as mock_current_app,
+        patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+        patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
     ):
         # Disable Redis by making distributed_coordination return None
         mock_cache_manager.distributed_coordination = None
@@ -270,12 +270,10 @@ class TestTimeoutTrigger:
         abort_called = False
 
         with (
-            patch("superset.tasks.context.current_app") as mock_current_app,
-            patch("superset.daos.tasks.TaskDAO") as mock_dao,
-            patch(
-                "superset.commands.tasks.update.UpdateTaskCommand"
-            ) as mock_update_cmd,
-            patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+            patch("axbi.tasks.context.current_app") as mock_current_app,
+            patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+            patch("axbi.commands.tasks.update.UpdateTaskCommand") as mock_update_cmd,
+            patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
         ):
             # Disable Redis by making distributed_coordination return None
             mock_cache_manager.distributed_coordination = None
@@ -318,10 +316,10 @@ class TestTimeoutTrigger:
     ):
         """Test that timeout logs warning when task has no abort handler."""
         with (
-            patch("superset.tasks.context.current_app") as mock_current_app,
-            patch("superset.daos.tasks.TaskDAO") as mock_dao,
-            patch("superset.tasks.context.logger") as mock_logger,
-            patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+            patch("axbi.tasks.context.current_app") as mock_current_app,
+            patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+            patch("axbi.tasks.context.logger") as mock_logger,
+            patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
         ):
             # Disable Redis by making distributed_coordination return None
             mock_cache_manager.distributed_coordination = None
@@ -358,10 +356,10 @@ class TestTimeoutTrigger:
         abort_count = 0
 
         with (
-            patch("superset.tasks.context.current_app") as mock_current_app,
-            patch("superset.daos.tasks.TaskDAO") as mock_dao,
-            patch("superset.commands.tasks.update.UpdateTaskCommand"),
-            patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+            patch("axbi.tasks.context.current_app") as mock_current_app,
+            patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+            patch("axbi.commands.tasks.update.UpdateTaskCommand"),
+            patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
         ):
             # Disable Redis by making distributed_coordination return None
             mock_cache_manager.distributed_coordination = None
@@ -406,8 +404,8 @@ class TestTaskDecoratorTimeout:
 
     def test_task_decorator_accepts_timeout(self):
         """Test that @task decorator accepts timeout parameter."""
-        from superset.tasks.decorators import task
-        from superset.tasks.registry import TaskRegistry
+        from axbi.tasks.decorators import task
+        from axbi.tasks.registry import TaskRegistry
 
         @task(name="test_timeout_task_1", timeout=300)
         def timeout_test_task_1():
@@ -421,8 +419,8 @@ class TestTaskDecoratorTimeout:
 
     def test_task_decorator_without_timeout(self):
         """Test that @task decorator works without timeout."""
-        from superset.tasks.decorators import task
-        from superset.tasks.registry import TaskRegistry
+        from axbi.tasks.decorators import task
+        from axbi.tasks.registry import TaskRegistry
 
         @task(name="test_timeout_task_2")
         def timeout_test_task_2():
@@ -436,8 +434,8 @@ class TestTaskDecoratorTimeout:
 
     def test_task_decorator_with_all_params(self):
         """Test that @task decorator accepts all parameters together."""
-        from superset.tasks.decorators import task
-        from superset.tasks.registry import TaskRegistry
+        from axbi.tasks.decorators import task
+        from axbi.tasks.registry import TaskRegistry
 
         @task(name="test_timeout_task_3", scope=TaskScope.SHARED, timeout=600)
         def timeout_test_task_3():
@@ -464,10 +462,10 @@ class TestTimeoutTerminalState:
     ):
         """Test that timeout_triggered flag is set when timeout fires."""
         with (
-            patch("superset.tasks.context.current_app") as mock_current_app,
-            patch("superset.daos.tasks.TaskDAO") as mock_dao,
-            patch("superset.commands.tasks.update.UpdateTaskCommand"),
-            patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+            patch("axbi.tasks.context.current_app") as mock_current_app,
+            patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+            patch("axbi.commands.tasks.update.UpdateTaskCommand"),
+            patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
         ):
             # Disable Redis by making distributed_coordination return None
             mock_cache_manager.distributed_coordination = None
@@ -505,10 +503,10 @@ class TestTimeoutTerminalState:
     ):
         """Test that user abort doesn't set timeout_triggered flag."""
         with (
-            patch("superset.tasks.context.current_app") as mock_current_app,
-            patch("superset.daos.tasks.TaskDAO") as mock_dao,
-            patch("superset.commands.tasks.update.UpdateTaskCommand"),
-            patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+            patch("axbi.tasks.context.current_app") as mock_current_app,
+            patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+            patch("axbi.commands.tasks.update.UpdateTaskCommand"),
+            patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
         ):
             # Disable Redis by making distributed_coordination return None
             mock_cache_manager.distributed_coordination = None
@@ -542,10 +540,10 @@ class TestTimeoutTerminalState:
         """Test that abort_handlers_completed flag tracks successful
         handler execution."""
         with (
-            patch("superset.tasks.context.current_app") as mock_current_app,
-            patch("superset.daos.tasks.TaskDAO") as mock_dao,
-            patch("superset.commands.tasks.update.UpdateTaskCommand"),
-            patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+            patch("axbi.tasks.context.current_app") as mock_current_app,
+            patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+            patch("axbi.commands.tasks.update.UpdateTaskCommand"),
+            patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
         ):
             # Disable Redis by making distributed_coordination return None
             mock_cache_manager.distributed_coordination = None
@@ -579,10 +577,10 @@ class TestTimeoutTerminalState:
     ):
         """Test that abort_handlers_completed is False when handler throws."""
         with (
-            patch("superset.tasks.context.current_app") as mock_current_app,
-            patch("superset.daos.tasks.TaskDAO") as mock_dao,
-            patch("superset.commands.tasks.update.UpdateTaskCommand"),
-            patch("superset.tasks.manager.cache_manager") as mock_cache_manager,
+            patch("axbi.tasks.context.current_app") as mock_current_app,
+            patch("axbi.daos.tasks.TaskDAO") as mock_dao,
+            patch("axbi.commands.tasks.update.UpdateTaskCommand"),
+            patch("axbi.tasks.manager.cache_manager") as mock_cache_manager,
         ):
             # Disable Redis by making distributed_coordination return None
             mock_cache_manager.distributed_coordination = None

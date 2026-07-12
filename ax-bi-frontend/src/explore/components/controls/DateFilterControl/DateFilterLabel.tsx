@@ -23,30 +23,20 @@ import {
   useMemo,
   type ComponentProps,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   NO_TIME_RANGE,
   useCSSTextTruncation,
   fetchTimeRange,
-} from '@superset-ui/core';
-import {
-  css,
-  styled,
-  useTheme,
-  SupersetTheme,
-} from '@apache-superset/core/theme';
-import {
-  Button,
-  Constants,
-  Divider,
-  Tooltip,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core';
+import { css, styled, useTheme, AxBITheme } from '@ax-bi/core/theme';
+import { Button, Constants, Divider, Tooltip } from '@ax-bi/ui-core/components';
 // imported directly (not via the components barrel) so `styled(Select)` at
 // module scope doesn't read an uninitialized binding when this module is
 // reached through an import cycle
-import { Select } from '@superset-ui/core/components/Select';
+import { Select } from '@ax-bi/ui-core/components/Select';
 import ControlHeader from 'src/explore/components/ControlHeader';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { useDebouncedEffect } from 'src/explore/exploreUtils';
 import { noOp } from 'src/utils/common';
 import ControlPopover from '../ControlPopover/ControlPopover';
@@ -141,7 +131,7 @@ const getTooltipTitle = (
       {label && <strong>{t(label)}</strong>}
       {range && (
         <div
-          css={(theme: SupersetTheme) => css`
+          css={(theme: AxBITheme) => css`
             margin-top: ${theme.sizeUnit}px;
           `}
         >

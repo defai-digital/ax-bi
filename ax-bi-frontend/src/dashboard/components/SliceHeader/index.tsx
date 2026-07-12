@@ -25,17 +25,12 @@ import {
   useRef,
   useState,
 } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { getExtensionsRegistry, QueryData, VizType } from '@superset-ui/core';
-import {
-  css,
-  styled,
-  SupersetTheme,
-  useTheme,
-} from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { getExtensionsRegistry, QueryData, VizType } from '@ax-bi/ui-core';
+import { css, styled, AxBITheme, useTheme } from '@ax-bi/core/theme';
 import { useUiConfig } from 'src/components/UiConfigContext';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
-import { Tooltip, EditableTitle, Icons } from '@superset-ui/core/components';
+import { Tooltip, EditableTitle, Icons } from '@ax-bi/ui-core/components';
 import { useSelector } from 'react-redux';
 import SliceHeaderControls from 'src/dashboard/components/SliceHeaderControls';
 import { SliceHeaderControlsProps } from 'src/dashboard/components/SliceHeaderControls/types';
@@ -155,9 +150,9 @@ const SliceHeader = forwardRef<HTMLDivElement, SliceHeaderProps>(
       isCached = [],
       isExpanded = false,
       sliceName = '',
-      supersetCanExplore = false,
-      supersetCanShare = false,
-      supersetCanCSV = false,
+      axbiCanExplore = false,
+      axbiCanShare = false,
+      axbiCanCSV = false,
       exportPivotCSV,
       exportFullCSV,
       exportFullXLSX,
@@ -222,7 +217,7 @@ const SliceHeader = forwardRef<HTMLDivElement, SliceHeaderProps>(
               0,
           );
 
-    const canExplore = !editMode && supersetCanExplore;
+    const canExplore = !editMode && axbiCanExplore;
     const showRowLimitWarning =
       shouldShowRowLimitWarning && sqlRowCount >= rowLimit && rowLimit > 0;
 
@@ -246,7 +241,7 @@ const SliceHeader = forwardRef<HTMLDivElement, SliceHeaderProps>(
     const renderExploreLink = (title: string) => (
       <Link
         to={exploreUrl}
-        css={(theme: SupersetTheme) => css`
+        css={(theme: AxBITheme) => css`
           color: ${theme.colorText};
           text-decoration: none;
           :hover {
@@ -365,9 +360,9 @@ const SliceHeader = forwardRef<HTMLDivElement, SliceHeaderProps>(
                   exportFullCSV={exportFullCSV}
                   exportXLSX={exportXLSX}
                   exportFullXLSX={exportFullXLSX}
-                  supersetCanExplore={supersetCanExplore}
-                  supersetCanShare={supersetCanShare}
-                  supersetCanCSV={supersetCanCSV}
+                  axbiCanExplore={axbiCanExplore}
+                  axbiCanShare={axbiCanShare}
+                  axbiCanCSV={axbiCanCSV}
                   componentId={componentId}
                   dashboardId={dashboardId}
                   addSuccessToast={addSuccessToast}

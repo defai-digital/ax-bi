@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 
 interface Annotation {
   sourceType?: string;
@@ -67,7 +67,7 @@ export const DEFAULT_ANNOTATION_TYPE = ANNOTATION_TYPES.FORMULA;
 export const ANNOTATION_SOURCE_TYPES_METADATA = {
   NATIVE: {
     value: 'NATIVE',
-    label: 'Superset annotation',
+    label: 'AxBI annotation',
   },
 };
 

@@ -17,9 +17,9 @@
  * under the License.
  */
 
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient } from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient } from '@ax-bi/ui-core';
+import { css, styled } from '@ax-bi/core/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 import {
@@ -29,7 +29,7 @@ import {
   InfoTooltip,
   LabeledErrorBoundInput,
   Input,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import rison from 'rison';
 import { useSingleViewResource } from 'src/views/CRUD/hooks';
 import { FILTER_OPTIONS } from './constants';
@@ -286,7 +286,7 @@ function RowLevelSecurityModal(props: RowLevelSecurityModalProps) {
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/rowlevelsecurity/related/tables?q=${query}`,
         }).then(response => {
           const list = response.json.result.map(
@@ -309,7 +309,7 @@ function RowLevelSecurityModal(props: RowLevelSecurityModalProps) {
           page,
           page_size: pageSize,
         });
-        return SupersetClient.get({
+        return AxBIClient.get({
           endpoint: `/api/v1/rowlevelsecurity/related/roles?q=${query}`,
         }).then(response => {
           const list = response.json.result.map(

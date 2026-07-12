@@ -21,12 +21,12 @@ import {
   isFeatureEnabled,
   FeatureFlag,
   makeApi,
-  SupersetClient,
+  AxBIClient,
   getClientErrorObject,
   parseErrorJson,
-  SupersetError,
-} from '@superset-ui/core';
-import { logging } from '@apache-superset/core/utils';
+  AxBIError,
+} from '@ax-bi/ui-core';
+import { logging } from '@ax-bi/core/utils';
 import getBootstrapData from 'src/utils/getBootstrapData';
 
 type AsyncEvent = {
@@ -35,7 +35,7 @@ type AsyncEvent = {
   job_id: string;
   user_id?: string;
   status: string;
-  errors?: SupersetError[];
+  errors?: AxBIError[];
   result_url: string | null;
 };
 
@@ -82,7 +82,7 @@ const fetchCachedData = async (
   let status = 'success';
   let data;
   try {
-    const { json } = await SupersetClient.get({
+    const { json } = await AxBIClient.get({
       endpoint: String(asyncEvent.result_url),
     });
     data = 'result' in json ? json.result : json;

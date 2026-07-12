@@ -17,14 +17,14 @@
  * under the License.
  */
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { DataMask, ExtraFormData } from '@superset-ui/core';
+import { t } from '@ax-bi/core/translation';
+import { DataMask, ExtraFormData } from '@ax-bi/ui-core';
 import {
   Select,
   FormItem,
   Tooltip,
   type FormItemProps,
-} from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components';
 import { useSelector } from 'react-redux';
 import { createSelector } from '@reduxjs/toolkit';
 import { PluginDeckglLayerVisibilityProps } from './types';

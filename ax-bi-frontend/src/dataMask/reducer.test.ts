@@ -30,7 +30,7 @@ import {
   type NativeFilterTarget,
   NativeFilterType,
   ChartCustomizationType,
-} from '@superset-ui/core';
+} from '@ax-bi/ui-core';
 import { HYDRATE_DASHBOARD } from 'src/dashboard/actions/hydrate';
 
 // Helper to create minimal filter for testing

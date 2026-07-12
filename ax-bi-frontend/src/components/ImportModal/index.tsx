@@ -17,15 +17,15 @@
  * under the License.
  */
 import { FunctionComponent, useEffect, useState, ChangeEvent } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled, css } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled, css } from '@ax-bi/core/theme';
 import { useImportResource } from 'src/views/CRUD/hooks';
 import {
   Upload,
   type UploadChangeParam,
   type UploadFile,
-} from '@superset-ui/core/components/Upload';
-import { Button, Input, Modal } from '@superset-ui/core/components';
+} from '@ax-bi/ui-core/components/Upload';
+import { Button, Input, Modal } from '@ax-bi/ui-core/components';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 import { ImportErrorAlert } from './ImportErrorAlert';
 import type { ImportModelsModalProps } from './types';

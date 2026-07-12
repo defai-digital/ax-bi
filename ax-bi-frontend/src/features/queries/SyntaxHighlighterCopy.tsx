@@ -17,14 +17,14 @@
  * under the License.
  */
 import { useEffect } from 'react';
-import { t } from '@apache-superset/core/translation';
-import { styled } from '@apache-superset/core/theme';
+import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import CodeSyntaxHighlighter, {
   SupportedLanguage,
   CodeSyntaxHighlighterProps,
   preloadLanguages,
-} from '@superset-ui/core/components/CodeSyntaxHighlighter';
-import { Icons } from '@superset-ui/core/components/Icons';
+} from '@ax-bi/ui-core/components/CodeSyntaxHighlighter';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { ToastProps } from 'src/components/MessageToasts/withToasts';
 import copyTextToClipboard from 'src/utils/copy';
 

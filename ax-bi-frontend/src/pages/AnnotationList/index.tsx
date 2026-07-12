@@ -20,13 +20,13 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { t } from '@apache-superset/core/translation';
-import { SupersetClient, getClientErrorObject } from '@superset-ui/core';
-import { css, styled } from '@apache-superset/core/theme';
-import { extendedDayjs as dayjs } from '@superset-ui/core/utils/dates';
+import { t } from '@ax-bi/core/translation';
+import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
+import { css, styled } from '@ax-bi/core/theme';
+import { extendedDayjs as dayjs } from '@ax-bi/ui-core/utils/dates';
 import rison from 'rison';
 
-import { ConfirmStatusChange, DeleteModal } from '@superset-ui/core/components';
+import { ConfirmStatusChange, DeleteModal } from '@ax-bi/ui-core/components';
 import {
   ListView,
   ListViewActionsBar,
@@ -41,8 +41,8 @@ import { createErrorHandler } from 'src/views/CRUD/utils';
 
 import { AnnotationObject } from 'src/features/annotations/types';
 import AnnotationModal from 'src/features/annotations/AnnotationModal';
-import { Icons } from '@superset-ui/core/components/Icons';
-import { Typography } from '@superset-ui/core/components/Typography';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
+import { Typography } from '@ax-bi/ui-core/components/Typography';
 
 const PAGE_SIZE = DEFAULT_LIST_PAGE_SIZE;
 
@@ -102,7 +102,7 @@ function AnnotationList({
   const fetchAnnotationLayer = useCallback(
     async function fetchAnnotationLayer() {
       try {
-        const response = await SupersetClient.get({
+        const response = await AxBIClient.get({
           endpoint: `/api/v1/annotation_layer/${annotationLayerId}`,
         });
         setAnnotationLayerName(response.json.result.name);
@@ -116,7 +116,7 @@ function AnnotationList({
   );
 
   const handleAnnotationDelete = ({ id, short_descr }: AnnotationObject) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/annotation_layer/${annotationLayerId}/annotation/${id}`,
     }).then(
       () => {
@@ -135,7 +135,7 @@ function AnnotationList({
   const handleBulkAnnotationsDelete = (
     annotationsToDelete: AnnotationObject[],
   ) => {
-    SupersetClient.delete({
+    AxBIClient.delete({
       endpoint: `/api/v1/annotation_layer/${annotationLayerId}/annotation/?q=${rison.encode(
         annotationsToDelete.map(({ id }) => id),
       )}`,

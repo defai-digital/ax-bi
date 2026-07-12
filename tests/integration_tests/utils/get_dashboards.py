@@ -15,8 +15,8 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from superset import db
-from superset.models.dashboard import Dashboard
+from axbi import db
+from axbi.models.dashboard import Dashboard
 
 
 def get_dashboards_ids(dashboard_slugs: list[str]) -> list[int]:

@@ -16,17 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  styled,
-  css,
-  SupersetTheme,
-  useTheme,
-} from '@apache-superset/core/theme';
-import { t } from '@apache-superset/core/translation';
+import { styled, css, AxBITheme, useTheme } from '@ax-bi/core/theme';
+import { t } from '@ax-bi/core/translation';
 import cx from 'classnames';
 import { Interweave } from 'interweave';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Icons } from '@superset-ui/core/components/Icons';
+import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { ToastType, ToastMeta } from './types';
 
 const ToastContainer = styled.div`
@@ -63,7 +58,7 @@ const ToastContainer = styled.div`
   `}
 `;
 
-const notificationStyledIcon = (theme: SupersetTheme) => css`
+const notificationStyledIcon = (theme: AxBITheme) => css`
   min-width: ${theme.sizeUnit * 5}px;
   color: ${theme.colorTextLightSolid};
   margin-right: 0;

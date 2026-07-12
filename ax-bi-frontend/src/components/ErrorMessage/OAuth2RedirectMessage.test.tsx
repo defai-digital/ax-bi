@@ -20,7 +20,7 @@
 import { Provider, useDispatch } from 'react-redux';
 import { createStore } from 'redux';
 import { render, waitFor } from 'spec/helpers/testing-library';
-import { ErrorLevel, ErrorSource, ErrorTypeEnum } from '@superset-ui/core';
+import { ErrorLevel, ErrorSource, ErrorTypeEnum } from '@ax-bi/ui-core';
 import { reRunQuery } from 'src/SqlLab/actions/sqlLab';
 import { triggerQuery } from 'src/components/Chart/chartAction';
 import { onRefresh } from 'src/dashboard/actions/dashboardState';

@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { reactify } from '@superset-ui/core';
-import { styled } from '@apache-superset/core/theme';
+import { reactify } from '@ax-bi/ui-core';
+import { styled } from '@ax-bi/core/theme';
 import Component from './CountryMap';
 
 // Type-erase the render function to allow flexible prop spreading in the wrapper.
@@ -46,20 +46,20 @@ const CountryMap = ({
 
 export default styled(CountryMap)`
   ${({ theme }) => `
-    .superset-legacy-chart-country-map svg {
+    .axbi-legacy-chart-country-map svg {
       background-color: ${theme.colorBgContainer};
     }
 
-    .superset-legacy-chart-country-map {
+    .axbi-legacy-chart-country-map {
       position: relative;
     }
 
-    .superset-legacy-chart-country-map .background {
+    .axbi-legacy-chart-country-map .background {
       fill: ${theme.colorBgContainer};
       pointer-events: all;
     }
 
-    .superset-legacy-chart-country-map .hover-popup {
+    .axbi-legacy-chart-country-map .hover-popup {
       position: absolute;
       color: ${theme.colorTextSecondary};
       display: none;
@@ -72,7 +72,7 @@ export default styled(CountryMap)`
       z-index: 10001;
     }
 
-    .superset-legacy-chart-country-map .country-map-inline-legend {
+    .axbi-legacy-chart-country-map .country-map-inline-legend {
       position: absolute;
       left: ${theme.sizeUnit * 3}px;
       bottom: ${theme.sizeUnit * 3}px;
@@ -89,31 +89,31 @@ export default styled(CountryMap)`
       pointer-events: none;
     }
 
-    .superset-legacy-chart-country-map .country-map-inline-legend-title {
+    .axbi-legacy-chart-country-map .country-map-inline-legend-title {
       margin-bottom: ${theme.sizeUnit}px;
       color: ${theme.colorText};
       font-weight: ${theme.fontWeightStrong};
     }
 
-    .superset-legacy-chart-country-map .country-map-inline-legend-row {
+    .axbi-legacy-chart-country-map .country-map-inline-legend-row {
       display: flex;
       align-items: center;
       gap: ${theme.sizeUnit * 2}px;
       min-width: 0;
     }
 
-    .superset-legacy-chart-country-map .country-map-inline-legend-row + .country-map-inline-legend-row {
+    .axbi-legacy-chart-country-map .country-map-inline-legend-row + .country-map-inline-legend-row {
       margin-top: ${theme.sizeUnit}px;
     }
 
-    .superset-legacy-chart-country-map .country-map-inline-legend-gradient {
+    .axbi-legacy-chart-country-map .country-map-inline-legend-gradient {
       width: ${theme.sizeUnit * 12}px;
       height: ${theme.sizeUnit * 2}px;
       flex: 0 0 auto;
       border-radius: ${theme.borderRadiusSM}px;
     }
 
-    .superset-legacy-chart-country-map .country-map-inline-legend-empty {
+    .axbi-legacy-chart-country-map .country-map-inline-legend-empty {
       width: ${theme.sizeUnit * 3}px;
       height: ${theme.sizeUnit * 3}px;
       flex: 0 0 auto;
@@ -121,22 +121,22 @@ export default styled(CountryMap)`
       border-radius: ${theme.borderRadiusSM}px;
     }
 
-    .superset-legacy-chart-country-map .map-layer {
+    .axbi-legacy-chart-country-map .map-layer {
       fill: ${theme.colorBgContainer};
       stroke: ${theme.colorBorderSecondary};
       pointer-events: all;
     }
 
-    .superset-legacy-chart-country-map .effect-layer {
+    .axbi-legacy-chart-country-map .effect-layer {
       pointer-events: none;
     }
 
-    .superset-legacy-chart-country-map path.region {
+    .axbi-legacy-chart-country-map path.region {
       cursor: pointer;
       stroke: ${theme.colorSplit};
     }
 
-    .superset-legacy-chart-country-map .hover-popup.popup-at-bottom {
+    .axbi-legacy-chart-country-map .hover-popup.popup-at-bottom {
       transform: translateY(-150%);
     }
 

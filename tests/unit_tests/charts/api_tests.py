@@ -22,7 +22,7 @@ from unittest.mock import MagicMock
 import pytest
 from flask import Flask
 
-from superset.charts.api import ChartRestApi
+from axbi.charts.api import ChartRestApi
 
 
 @pytest.mark.parametrize(

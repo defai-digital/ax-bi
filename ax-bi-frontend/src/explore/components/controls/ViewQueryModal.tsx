@@ -18,16 +18,16 @@
  */
 import { FC, Fragment, useEffect, useState } from 'react';
 
-import { t } from '@apache-superset/core/translation';
+import { t } from '@ax-bi/core/translation';
 import {
   ensureIsArray,
   getClientErrorObject,
   QueryFormData,
-} from '@superset-ui/core';
-import { Alert } from '@apache-superset/core/components';
-import { styled } from '@apache-superset/core/theme';
-import { Loading } from '@superset-ui/core/components';
-import { SupportedLanguage } from '@superset-ui/core/components/CodeSyntaxHighlighter';
+} from '@ax-bi/ui-core';
+import { Alert } from '@ax-bi/core/components';
+import { styled } from '@ax-bi/core/theme';
+import { Loading } from '@ax-bi/ui-core/components';
+import { SupportedLanguage } from '@ax-bi/ui-core/components/CodeSyntaxHighlighter';
 import { getChartDataRequest } from 'src/components/Chart/chartAction';
 import ViewQuery from 'src/explore/components/controls/ViewQuery';
 

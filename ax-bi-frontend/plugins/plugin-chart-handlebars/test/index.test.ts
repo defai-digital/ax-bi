@@ -26,7 +26,7 @@ import { HandlebarsChartPlugin } from '../src';
  * treated correctly (e.g. formData from plugin controls
  * properly transform the data and/or any resulting props).
  */
-describe('@superset-ui/plugin-chart-handlebars', () => {
+describe('@ax-bi/plugin-chart-handlebars', () => {
   test('exists', () => {
     expect(HandlebarsChartPlugin).toBeDefined();
   });

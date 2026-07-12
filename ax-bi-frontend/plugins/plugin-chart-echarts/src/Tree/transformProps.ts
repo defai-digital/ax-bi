@@ -16,11 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  getMetricLabel,
-  DataRecordValue,
-  tooltipHtml,
-} from '@superset-ui/core';
+import { getMetricLabel, DataRecordValue, tooltipHtml } from '@ax-bi/ui-core';
 import type { EChartsCoreOption } from 'echarts/core';
 import type { TreeSeriesOption } from 'echarts/charts';
 import type {
