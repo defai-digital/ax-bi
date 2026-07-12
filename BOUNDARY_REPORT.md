@@ -24,6 +24,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
   enforcement.
 - Routing MCP saved-query creation through a command-owned validation and
   transaction boundary instead of querying and committing inside the tool.
+- Moving best-effort GenAI artifact and evaluation audit writes behind
+  transaction-owning commands and DAOs so persistence failures roll back before
+  the workflow degrades silently.
 
 ## Deferred Boundary Areas
 
