@@ -31,7 +31,7 @@ export interface DragDroppableProps {
   parentComponent?: LayoutItem;
   index: number;
   depth: number;
-  disableDragDrop: boolean;
+  disableDragDrop?: boolean;
   orientation?: 'row' | 'column';
   isDraggingOverShallow?: boolean;
   onDrop?: (dropResult: DropResult) => void;

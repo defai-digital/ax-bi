@@ -169,11 +169,16 @@ export function UnwrappedDragDroppable({
   const setContainerRef = useCallback(
     (ref: HTMLDivElement | null) => {
       if (useEmptyDragPreview) {
-        dragPreviewRef(getEmptyImage(), {
-          // IE fallback: specify that we'd rather screenshot the node
-          // when it already knows it's being dragged so we can hide it with CSS.
-          captureDraggingState: true,
-        });
+        // Only attach the empty preview while mounted; clear on unmount.
+        if (ref) {
+          dragPreviewRef(getEmptyImage(), {
+            // IE fallback: specify that we'd rather screenshot the node
+            // when it already knows it's being dragged so we can hide it with CSS.
+            captureDraggingState: true,
+          });
+        } else {
+          dragPreviewRef(null);
+        }
       } else {
         dragPreviewRef(ref);
       }
@@ -319,7 +324,8 @@ function DragDroppableWithMode({
     () => ({
       type: DRAG_DROPPABLE_TYPE,
       item: () => buildDragItem(propsRef.current),
-      canDrag: () => enableDrag && !propsRef.current.disableDragDrop,
+      canDrag: () =>
+        enableDrag && !(propsRef.current.disableDragDrop ?? false),
       collect: monitor => ({
         isDragging: enableDrag && monitor.isDragging(),
         dragComponentType: monitor.getItem()?.type as ComponentType | undefined,
@@ -332,7 +338,8 @@ function DragDroppableWithMode({
   const [{ isDraggingOver, isDraggingOverShallow }, drop] = useDrop(
     () => ({
       accept: DRAG_DROPPABLE_TYPE,
-      canDrop: () => enableDrop && !propsRef.current.disableDragDrop,
+      canDrop: () =>
+        enableDrop && !(propsRef.current.disableDragDrop ?? false),
       hover: (_item, monitor) => {
         if (!enableDrop || !componentFacadeRef.current) {
           return;
