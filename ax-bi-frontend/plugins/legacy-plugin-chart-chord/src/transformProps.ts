@@ -22,9 +22,21 @@ export default function transformProps(chartProps: ChartProps) {
   const { width, height, formData, queriesData } = chartProps;
   const { yAxisFormat, colorScheme, sliceId } = formData;
 
+  // Prefer a well-typed empty chord payload over [] so the render path does not
+  // destructure matrix/nodes from an array (which yields undefined and throws).
+  const raw = queriesData[0]?.data;
+  const data =
+    raw &&
+    typeof raw === 'object' &&
+    !Array.isArray(raw) &&
+    Array.isArray((raw as { nodes?: unknown }).nodes) &&
+    Array.isArray((raw as { matrix?: unknown }).matrix)
+      ? raw
+      : { nodes: [] as string[], matrix: [] as number[][] };
+
   return {
     colorScheme,
-    data: queriesData[0]?.data || [],
+    data,
     height,
     numberFormat: yAxisFormat,
     width,

@@ -52,6 +52,39 @@ test('d3-chord layout accepts d3-array descending comparators without throwing',
   });
 });
 
+test('Chord does not throw on empty or malformed data payloads', () => {
+  const el = document.createElement('div');
+  document.body.appendChild(el);
+
+  expect(() =>
+    Chord(el, {
+      width: 200,
+      height: 200,
+      colorScheme: 'bnbColors',
+      numberFormat: '.2f',
+      sliceId: 1,
+      // transformProps historically fell back to [] when queries return no rows
+      data: [] as unknown as { nodes: string[]; matrix: number[][] },
+    }),
+  ).not.toThrow();
+  expect(el.querySelector('svg[data-test="chord-empty"]')).not.toBeNull();
+
+  el.innerHTML = '';
+  expect(() =>
+    Chord(el, {
+      width: 200,
+      height: 200,
+      colorScheme: 'bnbColors',
+      numberFormat: '.2f',
+      sliceId: 1,
+      data: { nodes: [], matrix: [] },
+    }),
+  ).not.toThrow();
+  expect(el.querySelector('svg[data-test="chord-empty"]')).not.toBeNull();
+
+  el.remove();
+});
+
 test('Chord renders svg groups and paths with d3 v7 layout API', () => {
   const el = document.createElement('div');
   document.body.appendChild(el);

@@ -112,7 +112,9 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   } = props;
 
   const container = element;
-  const rawExtents = d3Extent(data, v => v.metric);
+  // Normalize metric rows so d3-array extent never runs over non-arrays.
+  const rows = Array.isArray(data) ? data : [];
+  const rawExtents = d3Extent(rows, v => v.metric);
   const extents: [number, number] =
     rawExtents[0] != null && rawExtents[1] != null
       ? [rawExtents[0], rawExtents[1]]
@@ -124,7 +126,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   const colorScale = CategoricalColorNamespace.getScale(colorScheme);
 
   const colorMap: Record<string, string> = {};
-  data.forEach(d => {
+  rows.forEach(d => {
     colorMap[d.country_id] = colorScheme
       ? colorScale(d.country_id, sliceId)
       : (linearColorScale(d.metric) ?? '');
@@ -276,7 +278,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
     select(this).style('fill', c);
 
     // Display information popup
-    const result = data.filter(r => r.country_id === d?.properties?.ISO);
+    const result = rows.filter(r => r.country_id === d?.properties?.ISO);
     const regionName = escapeHtml(getNameOfRegion(d));
     const metricValue =
       result.length > 0 ? escapeHtml(String(formatter(result[0].metric))) : '';

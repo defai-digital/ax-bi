@@ -74,3 +74,11 @@ test('defaults hooks to an empty object when none are provided', () => {
   expect(transformed.onContextMenu).toBeUndefined();
   expect(transformed.setDataMask).toBeUndefined();
 });
+
+test('handles missing query results without throwing', () => {
+  expect(() =>
+    transformProps(createProps({}, { queriesData: [] })),
+  ).not.toThrow();
+  const transformed = transformProps(createProps({}, { queriesData: [] }));
+  expect(transformed.data).toEqual([]);
+});
