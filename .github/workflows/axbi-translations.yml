@@ -120,7 +120,7 @@ jobs:
         run: |
           python scripts/translations/check_translation_regression.py \
             --count \
-            --translations-dir /tmp/base-worktree/ax-bi/translations \
+            --translations-dir /tmp/base-worktree/translations \
             > /tmp/before.json
 
       # Run babel_update against the PR source and PR translations. This keeps

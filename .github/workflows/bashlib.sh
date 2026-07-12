@@ -82,7 +82,7 @@ setup-postgres() {
   say "::group::Install dependency for unit tests"
   sudo apt-get update && sudo apt-get install --yes libecpg-dev
   say "::group::Initialize database"
-  psql "postgresql://ax-bi:axbi@127.0.0.1:15432/ax-bi" <<-EOF
+  psql "postgresql://axbi:axbi@127.0.0.1:15432/axbi" <<-EOF
     DROP SCHEMA IF EXISTS sqllab_test_db CASCADE;
     DROP SCHEMA IF EXISTS admin_database CASCADE;
     CREATE SCHEMA sqllab_test_db;

@@ -41,7 +41,7 @@ if [ "$CYPRESS_CONFIG" == "true" ]; then
     ADMIN_PASSWORD="general"
     export AX_BI_TESTENV=true
     export POSTGRES_DB=axbi_cypress
-    export AXBI__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://ax-bi:axbi@db:5432/axbi_cypress
+    export AXBI__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://axbi:axbi@db:5432/axbi_cypress
 fi
 # Initialize the database
 echo_step "1" "Starting" "Applying DB migrations"

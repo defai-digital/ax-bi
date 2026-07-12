@@ -38,7 +38,7 @@ PORT=${PORT:-8088}
 if [ "$CYPRESS_CONFIG" == "true" ]; then
     export AX_BI_TESTENV=true
     export POSTGRES_DB=axbi_cypress
-    export AXBI__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://ax-bi:axbi@db:5432/axbi_cypress
+    export AXBI__SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://axbi:axbi@db:5432/axbi_cypress
     PORT=8081
 fi
 # Skip postgres requirements installation for workers to avoid conflicts
