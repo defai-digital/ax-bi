@@ -104,7 +104,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^19.1.8",
     "@types/seedrandom": "^3.0.8",
-    "@typescript-eslint/eslint-plugin": "^8.59.3",
+    "@typescript-eslint/eslint-plugin": "^8.62.1",
     "@typescript-eslint/parser": "^8.62.1",
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
@@ -115,7 +115,7 @@
     "prettier": "^3.9.0",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.62.1",
-    "webpack": "^5.108.3"
+    "webpack": "^5.108.4"
   },
   "browserslist": {
     "production": [
