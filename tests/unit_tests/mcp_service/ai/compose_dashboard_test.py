@@ -22,8 +22,12 @@ import sys
 import types
 import uuid
 from collections.abc import Callable
+from contextlib import nullcontext
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from pytest_mock import MockerFixture
 
 # ---------------------------------------------------------------------------
 # Decorator passthrough
@@ -67,6 +71,7 @@ try:
         _build_native_filters,
         _chart_access_error,
         _CHART_HEIGHT,
+        _compose_dashboard as compose_dashboard,
         _create_smart_layout,
     )
     from axbi.mcp_service.dashboard.constants import (
@@ -76,6 +81,16 @@ try:
 finally:
     _restore_modules(_saved)
 
+from axbi.commands.dashboard.exceptions import (  # noqa: E402
+    DashboardChartsAccessDeniedError,
+    DashboardChartsNotFoundError,
+    DashboardCreateFailedError,
+)
+from axbi.mcp_service.ai.schemas import (  # noqa: E402
+    ComposeDashboardRequest,
+    DashboardPlanFull,
+)
+from axbi.utils import json  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -94,6 +109,116 @@ def _make_chart(
     chart.slice_name = slice_name or f"Chart {chart_id}"
     chart.uuid = chart_uuid or str(uuid.uuid4())
     return chart
+
+
+def _compose_request(chart_ids: list[int]) -> ComposeDashboardRequest:
+    """Build a minimal valid dashboard-composition request."""
+    return ComposeDashboardRequest(
+        plan=DashboardPlanFull(
+            plan_id="plan-123",
+            title="Revenue overview",
+            description="Revenue performance",
+            datasets=[{"id": 9}],
+            confidence=0.9,
+        ),
+        chart_ids=chart_ids,
+    )
+
+
+def _patch_compose_runtime(mocker: MockerFixture) -> None:
+    """Replace Flask-bound logging and URL helpers for direct tool tests."""
+    mocker.patch(
+        "axbi.mcp_service.ai.tool.compose_dashboard.mcp_event_log_context",
+        side_effect=lambda **_kwargs: nullcontext(),
+    )
+    mocker.patch(
+        "axbi.mcp_service.ai.tool.compose_dashboard.get_axbi_base_url",
+        return_value="http://localhost:8088",
+    )
+    mocker.patch(
+        "axbi.mcp_service.ai.tool.compose_dashboard._chart_access_error",
+        return_value=None,
+    )
+
+
+@pytest.mark.asyncio
+async def test_compose_dashboard_delegates_persistence_to_command(
+    mocker: MockerFixture,
+) -> None:
+    """The MCP adapter passes generated state through the dashboard command."""
+    chart = _make_chart(7, slice_name="Revenue")
+    find_charts = mocker.patch(
+        "axbi.mcp_service.ai.tool.compose_dashboard.ChartDAO.find_by_ids",
+        return_value=[chart],
+    )
+    command_factory = mocker.patch(
+        "axbi.mcp_service.ai.tool.compose_dashboard.CreateDashboardFromChartsCommand"
+    )
+    dashboard = MagicMock(
+        id=23,
+        dashboard_title="Revenue overview",
+        published=False,
+    )
+    command_factory.return_value.run.return_value = dashboard
+    command_factory.return_value.charts = [chart]
+    _patch_compose_runtime(mocker)
+    context = MagicMock()
+    context.info = AsyncMock()
+
+    response = await compose_dashboard(_compose_request([7]), context)
+
+    assert response["error"] is None
+    assert response["dashboard"]["id"] == 23
+    assert response["dashboard"]["chart_count"] == 1
+    find_charts.assert_called_once_with(
+        [7],
+        skip_base_filter=True,
+    )
+    properties, chart_ids = command_factory.call_args.args
+    assert chart_ids == [7]
+    assert properties["dashboard_title"] == "Revenue overview"
+    assert properties["published"] is False
+    metadata = json.loads(properties["json_metadata"])
+    assert metadata["ai_lineage"]["plan_id"] == "plan-123"
+    command_factory.return_value.run.assert_called_once_with()
+    context.info.assert_awaited()
+
+
+@pytest.mark.parametrize(
+    ("error", "expected_message"),
+    [
+        (DashboardChartsNotFoundError({7}), "Charts not found: [7]"),
+        (DashboardChartsAccessDeniedError({7}), "Access denied to charts: [7]"),
+        (
+            DashboardCreateFailedError(),
+            "Failed to create dashboard due to a database error.",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_compose_dashboard_maps_command_errors(
+    mocker: MockerFixture,
+    error: Exception,
+    expected_message: str,
+) -> None:
+    """Command failures remain domain-safe at the MCP response boundary."""
+    chart = _make_chart(7)
+    mocker.patch(
+        "axbi.mcp_service.ai.tool.compose_dashboard.ChartDAO.find_by_ids",
+        return_value=[chart],
+    )
+    command_factory = mocker.patch(
+        "axbi.mcp_service.ai.tool.compose_dashboard.CreateDashboardFromChartsCommand"
+    )
+    command_factory.return_value.run.side_effect = error
+    _patch_compose_runtime(mocker)
+    context = MagicMock()
+    context.info = AsyncMock()
+
+    response = await compose_dashboard(_compose_request([7]), context)
+
+    assert response["dashboard"] is None
+    assert response["error"] == expected_message
 
 
 # ---------------------------------------------------------------------------

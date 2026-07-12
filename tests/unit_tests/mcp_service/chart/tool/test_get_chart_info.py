@@ -21,7 +21,8 @@ privacy behavior.
 """
 
 import importlib
-from contextlib import nullcontext
+from collections.abc import Iterator
+from contextlib import contextmanager, nullcontext
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock, Mock, patch
@@ -53,6 +54,19 @@ from axbi.utils import json
 get_chart_info_module = importlib.import_module(
     "axbi.mcp_service.chart.tool.get_chart_info"
 )
+
+
+@contextmanager
+def _mock_dashboard_lookup(dashboard: Any) -> Iterator[Mock]:
+    """Mock the DAO and authorization collaborators for filter helpers."""
+    with (
+        patch(
+            "axbi.daos.dashboard.DashboardDAO.find_by_id",
+            return_value=dashboard,
+        ) as find_dashboard,
+        patch("axbi.security_manager"),
+    ):
+        yield find_dashboard
 
 
 def _wrapped(value: str) -> str:
@@ -167,20 +181,13 @@ class TestBuildAppliedDashboardFilters:
 
     def test_chart_not_on_dashboard_raises(self):
         dashboard = self._make_dashboard(slice_ids=[2, 3])
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard) as find_dashboard:
             with pytest.raises(ChartNotOnDashboardError, match="not on dashboard"):
                 build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
+        find_dashboard.assert_called_once_with(10, skip_base_filter=True)
 
     def test_dashboard_not_found_raises(self):
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = None  # noqa: E501
+        with _mock_dashboard_lookup(None):
             with pytest.raises(DashboardNotFoundError):
                 build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
@@ -211,11 +218,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert len(result) == 1
@@ -249,11 +252,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert result == []
@@ -275,11 +274,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert len(result) == 1
@@ -298,11 +293,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert result == []
@@ -313,11 +304,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert result == []
@@ -328,11 +315,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert result == []
@@ -343,11 +326,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert result == []
@@ -379,11 +358,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert len(result) == 1
@@ -407,11 +382,7 @@ class TestBuildAppliedDashboardFilters:
             slice_ids=[1],
         )
 
-        with (
-            patch("axbi.db") as mock_db,
-            patch("axbi.security_manager"),
-        ):
-            mock_db.session.query.return_value.filter_by.return_value.one_or_none.return_value = dashboard  # noqa: E501
+        with _mock_dashboard_lookup(dashboard):
             result = build_applied_dashboard_filters(dashboard_id=10, chart_id=1)
 
         assert len(result) == 1

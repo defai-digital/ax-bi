@@ -446,11 +446,15 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
             if auth_error is not None:
                 return auth_error
 
-            # Get chart object for SQLAlchemy relationships and validation
-            from axbi import db
-            from axbi.models.slice import Slice
+            # Get chart object for SQLAlchemy relationships and validation.
+            # The unfiltered lookup preserves the prior not-found/access-denied
+            # distinction; data access is checked immediately below.
+            from axbi.daos.chart import ChartDAO
 
-            new_chart = db.session.get(Slice, request.chart_id)
+            new_chart = ChartDAO.find_by_id(
+                request.chart_id,
+                skip_base_filter=True,
+            )
             if not new_chart:
                 return AddChartToDashboardResponse(
                     dashboard=None,
@@ -568,6 +572,8 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
                 or updated_dashboard
             )
         except SQLAlchemyError:
+            from axbi import db
+
             logger.warning(
                 "Re-fetch of dashboard %s failed; returning minimal response",
                 updated_dashboard.id,

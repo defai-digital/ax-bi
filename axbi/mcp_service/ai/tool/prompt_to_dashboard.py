@@ -38,6 +38,7 @@ try:
 except ModuleNotFoundError:
     Context = Any
 
+from axbi.commands.ai.audit import RecordAIGeneratedArtifactCommand
 from axbi.mcp_service.ai.schemas import (
     ComposeDashboardRequest,
     CreateChartFromIntentRequest,
@@ -73,31 +74,16 @@ def _record_artifact(
     flow never depends on the audit table existing.
     """
     try:
-        from flask import g
-
-        from axbi import db
-        from axbi.models.ai import AIGeneratedArtifact
-        from axbi.utils import json as axbi_json
-
-        record = AIGeneratedArtifact()
-        record.uuid = uuid.uuid4()
-        record.artifact_type = artifact_type
-        record.artifact_id = artifact_id
-        record.principal_user_id = getattr(g.user, "id", None)
-        record.source_prompt = prompt[:2000]
-        # Store plan_id and intent summary as JSON in normalized_intent
-        record.normalized_intent = axbi_json.dumps(
-            {"prompt_excerpt": prompt[:200], "plan_id": plan_id or ""}
-        )
-        record.llm_provider = ""
-        record.llm_model = ""
-        record.tool_chain = axbi_json.dumps(tool_chain)
-        record.source_asset_refs = axbi_json.dumps(source_dataset_ids)
-        record.validation_summary = validation_summary
-        record.confidence_score = confidence
-
-        db.session.add(record)
-        db.session.commit()  # pylint: disable=consider-using-transaction
+        RecordAIGeneratedArtifactCommand(
+            artifact_type=artifact_type,
+            artifact_id=artifact_id,
+            prompt=prompt,
+            plan_id=plan_id,
+            tool_chain=tool_chain,
+            source_dataset_ids=source_dataset_ids,
+            confidence=confidence,
+            validation_summary=validation_summary,
+        ).run()
     except Exception:
         logger.debug("AI artifact audit recording unavailable", exc_info=True)
 

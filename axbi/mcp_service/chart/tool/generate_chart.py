@@ -370,10 +370,10 @@ async def generate_chart(  # noqa: C901
 
                     # Reload server-generated timestamps (created_on,
                     # changed_on) so the serializer sees real values.
-                    from axbi import db
+                    from axbi.daos.chart import ChartDAO
 
                     try:
-                        db.session.refresh(chart)
+                        chart = ChartDAO.refresh(chart)
                     except SQLAlchemyError:
                         logger.warning(
                             "Chart %s created but refresh failed; "
@@ -419,9 +419,9 @@ async def generate_chart(  # noqa: C901
                     await ctx.warning(
                         f"Chart compile check failed: error={compile_result.error}"
                     )
-                    from axbi.daos.chart import ChartDAO
+                    from axbi.commands.chart.delete import DeleteChartCommand
 
-                    ChartDAO.delete([chart])
+                    DeleteChartCommand([chart.id]).run()
                     from axbi.mcp_service.common.error_schemas import (
                         ChartGenerationError,
                     )

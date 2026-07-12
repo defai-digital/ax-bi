@@ -27,6 +27,26 @@ from axbi.models.user_attributes import UserAttribute
 from tests.unit_tests.fixtures.common import admin_user, after_each  # noqa: F401
 
 
+def _add_user(
+    username: str,
+    *,
+    first_name: str = "Boundary",
+    last_name: str = "User",
+    email: str | None = None,
+) -> User:
+    """Persist a user for DAO search tests."""
+    user = User(
+        username=username,
+        first_name=first_name,
+        last_name=last_name,
+        email=email or f"{username}@example.org",
+        roles=[],
+    )
+    db.session.add(user)
+    db.session.flush()
+    return user
+
+
 def test_get_by_id_found(admin_user: User, after_each: None) -> None:  # noqa: F811
     user = UserDAO.get_by_id(admin_user.id)
     assert user.id == admin_user.id
@@ -35,6 +55,19 @@ def test_get_by_id_found(admin_user: User, after_each: None) -> None:  # noqa: F
 def test_get_by_id_not_found():
     with pytest.raises(NoResultFound):
         UserDAO.get_by_id(123456)
+
+
+def test_get_by_id_or_none_found(
+    admin_user: User,  # noqa: F811
+    after_each: None,  # noqa: F811
+) -> None:
+    """Optional user lookup returns the runtime-configured user model."""
+    assert UserDAO.get_by_id_or_none(admin_user.id) is admin_user
+
+
+def test_get_by_id_or_none_missing() -> None:
+    """Optional user lookup returns None instead of raising for a missing ID."""
+    assert UserDAO.get_by_id_or_none(123456) is None
 
 
 def test_set_avatar_url_with_existing_attributes(
@@ -76,3 +109,90 @@ def test_get_by_id_custom_user_class(
 
     user = UserDAO.get_by_id(admin_user.id)
     assert isinstance(user, CustomUserModel)
+
+
+@pytest.mark.parametrize(
+    "search_term",
+    ["mcpresolverusername", "mcpresolverfirst", "mcpresolverlast", "resolver-mail"],
+)
+def test_find_for_filter_resolution_matches_supported_identity_fields(
+    search_term: str,
+    admin_user: User,  # noqa: F811
+    after_each: None,  # noqa: F811
+) -> None:
+    """The resolver searches username, first name, last name, and email."""
+    user = _add_user(
+        "mcpresolverusername",
+        first_name="McpResolverFirst",
+        last_name="McpResolverLast",
+        email="resolver-mail@example.org",
+    )
+
+    result = UserDAO.find_for_filter_resolution(search_term, limit=10)
+
+    assert result == [user]
+
+
+def test_find_for_filter_resolution_treats_like_wildcards_literally(
+    admin_user: User,  # noqa: F811
+    after_each: None,  # noqa: F811
+) -> None:
+    """Percent and underscore characters cannot broaden directory searches."""
+    percent_user = _add_user(
+        "mcp_percent_literal",
+        first_name="Mcp%Resolver",
+        email="mcp-percent-literal@example.org",
+    )
+    _add_user(
+        "mcp_percent_decoy",
+        first_name="McpXResolver",
+        email="mcp-percent-decoy@example.org",
+    )
+    underscore_user = _add_user(
+        "mcp_underscore_literal",
+        first_name="Mcp_Resolver",
+        email="mcp-underscore-literal@example.org",
+    )
+    _add_user(
+        "mcp_underscore_decoy",
+        first_name="McpYResolver",
+        email="mcp-underscore-decoy@example.org",
+    )
+
+    percent_results = UserDAO.find_for_filter_resolution("Mcp%Resolver", limit=10)
+    underscore_results = UserDAO.find_for_filter_resolution(
+        "Mcp_Resolver",
+        limit=10,
+    )
+
+    assert percent_results == [percent_user]
+    assert underscore_results == [underscore_user]
+
+
+def test_find_for_filter_resolution_orders_before_applying_limit(
+    admin_user: User,  # noqa: F811
+    after_each: None,  # noqa: F811
+) -> None:
+    """Bounded resolver results remain deterministic by username."""
+    first = _add_user("aa_mcpbound")
+    second = _add_user("mm_mcpbound")
+    _add_user("zz_mcpbound")
+
+    result = UserDAO.find_for_filter_resolution("mcpbound", limit=2)
+
+    assert result == [first, second]
+
+
+@pytest.mark.parametrize("search_term", ["", " ", "\t", "\n"])
+def test_find_for_filter_resolution_rejects_blank_search(
+    search_term: str,
+) -> None:
+    """DAO callers cannot bypass the MCP schema's non-enumeration safeguard."""
+    with pytest.raises(ValueError, match="non-whitespace"):
+        UserDAO.find_for_filter_resolution(search_term, limit=10)
+
+
+def test_find_for_filter_resolution_rejects_nonpositive_limit() -> None:
+    """DAO callers must always supply a positive result bound."""
+    with pytest.raises(ValueError, match="positive"):
+        UserDAO.find_for_filter_resolution("mcpbound", limit=0)

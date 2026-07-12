@@ -29,7 +29,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from axbi.axbi_typing import Column, Metric
 from axbi.commands.exceptions import CommandException
 from axbi.exceptions import AxBIException, OAuth2Error, OAuth2RedirectError
-from axbi.extensions import db
 from axbi.mcp_service.chart.ascii_charts import (
     generate_ascii_chart,
     generate_ascii_table,
@@ -1173,7 +1172,9 @@ async def _get_chart_preview_internal(  # noqa: C901
                 # be raised.  Calling refresh() here ensures all column values
                 # are loaded into the object's __dict__ upfront.
                 if chart is not None:
-                    db.session.refresh(chart)
+                    from axbi.daos.chart import ChartDAO
+
+                    chart = ChartDAO.refresh(chart)
 
                 # If not found and looks like a form_data_key, try transient
                 if (

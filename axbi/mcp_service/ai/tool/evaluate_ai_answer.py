@@ -37,6 +37,7 @@ try:
 except ModuleNotFoundError:
     Context = Any
 
+from axbi.commands.ai.audit import RecordAIEvaluationRunCommand
 from axbi.mcp_service.ai.schemas import (
     PromptToDashboardRequest,
 )
@@ -279,23 +280,14 @@ def _record_eval_run(
     Silently degrades if the table doesn't exist yet.
     """
     try:
-        from axbi import db
-        from axbi.models.ai import AIEvaluationRun
-        from axbi.utils import json as axbi_json
-
-        record = AIEvaluationRun()
-        record.uuid = uuid.UUID(eval_id) if len(eval_id) == 36 else uuid.uuid4()
-        record.prompt = prompt[:4000]
-        record.expected_result = axbi_json.dumps(expected)
-        record.actual_result = axbi_json.dumps(actual)
-        record.scores = axbi_json.dumps(scores)
-        record.model = model
-        record.tool_versions = axbi_json.dumps(
-            {"prompt_to_dashboard": "1.0", "evaluate_ai_answer": "1.0"}
-        )
-
-        db.session.add(record)
-        db.session.commit()  # pylint: disable=consider-using-transaction
+        RecordAIEvaluationRunCommand(
+            eval_id=eval_id,
+            prompt=prompt,
+            expected=expected,
+            actual=actual,
+            scores=scores,
+            model=model,
+        ).run()
     except Exception:
         logger.debug("Evaluation run recording unavailable", exc_info=True)
 

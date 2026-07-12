@@ -26,6 +26,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from axbi.daos.chart import ChartDAO
 from axbi.mcp_service.chart.schemas import (
     AccessibilityMetadata,
     ASCIIPreview,
@@ -645,11 +646,7 @@ class TestGetChartPreview:
                 error=None,
             ),
         )
-        monkeypatch.setattr(
-            get_chart_preview_module.db.session,
-            "refresh",
-            lambda chart: None,
-        )
+        monkeypatch.setattr(ChartDAO, "refresh", lambda chart: chart)
         monkeypatch.setattr(
             get_chart_preview_module,
             "mcp_event_log_context",
@@ -761,11 +758,7 @@ class TestGetChartPreview:
                 error=None,
             ),
         )
-        monkeypatch.setattr(
-            get_chart_preview_module.db.session,
-            "refresh",
-            lambda chart: None,
-        )
+        monkeypatch.setattr(ChartDAO, "refresh", lambda chart: chart)
         monkeypatch.setattr(
             get_chart_preview_module,
             "mcp_event_log_context",
@@ -1215,7 +1208,7 @@ class TestDetachedInstanceError:
     When the SQLAlchemy session commits mid-request, ORM objects expire and
     become detached.  Accessing lazy attributes on a detached Slice raises
     DetachedInstanceError.  The tool must:
-    1. Call db.session.refresh() immediately after loading the chart so all
+    1. Call ChartDAO.refresh() immediately after loading the chart so all
        column values are loaded upfront before any downstream operation.
     2. Catch SQLAlchemyError (the base class) and return a ChartError
        instead of propagating the exception.
@@ -1223,7 +1216,7 @@ class TestDetachedInstanceError:
 
     @pytest.mark.asyncio
     async def test_session_refresh_called_after_chart_load(self):
-        """db.session.refresh() is invoked right after find_chart_by_identifier."""
+        """ChartDAO.refresh() is invoked right after chart lookup."""
         import importlib
         from contextlib import nullcontext
         from unittest.mock import MagicMock, patch
@@ -1245,8 +1238,9 @@ class TestDetachedInstanceError:
 
         refresh_calls: list[object] = []
 
-        def _fake_refresh(obj: object) -> None:
+        def _fake_refresh(obj: object) -> object:
             refresh_calls.append(obj)
+            return obj
 
         url_preview = URLPreview(
             preview_url="http://localhost/explore/?slice_id=42",
@@ -1260,10 +1254,9 @@ class TestDetachedInstanceError:
                 "find_chart_by_identifier",
                 return_value=mock_chart,
             ),
-            patch.object(
-                get_chart_preview_module.db,
-                "session",
-                **{"refresh.side_effect": _fake_refresh},
+            patch(
+                "axbi.daos.chart.ChartDAO.refresh",
+                side_effect=_fake_refresh,
             ),
             patch.object(
                 get_chart_preview_module,
@@ -1314,7 +1307,7 @@ class TestDetachedInstanceError:
         assert data.get("chart_id") == 42
 
         assert len(refresh_calls) == 1, (
-            "db.session.refresh() should be called once after loading the chart"
+            "ChartDAO.refresh() should be called once after loading the chart"
         )
         assert refresh_calls[0] is mock_chart
 
@@ -1345,11 +1338,7 @@ class TestDetachedInstanceError:
                 "find_chart_by_identifier",
                 return_value=mock_chart,
             ),
-            patch.object(
-                get_chart_preview_module.db,
-                "session",
-                **{"refresh.return_value": None},
-            ),
+            patch("axbi.daos.chart.ChartDAO.refresh", return_value=mock_chart),
             patch.object(
                 get_chart_preview_module,
                 "validate_chart_dataset",

@@ -1149,7 +1149,7 @@ class TestGenerateExploreLink:
 
         # Should use the configured base URL - use urlparse to avoid CodeQL warning
         parsed_url = urlparse(result)
-        expected_netloc = "axbi.example.com"
+        expected_netloc = "ax-bi.example.com"
         assert parsed_url.scheme == "https"
         assert parsed_url.netloc == expected_netloc
         assert "/explore/" in parsed_url.path

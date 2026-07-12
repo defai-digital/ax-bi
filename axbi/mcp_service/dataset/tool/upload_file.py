@@ -38,7 +38,7 @@ from fastmcp import Context
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from axbi import db, is_feature_enabled
+from axbi import is_feature_enabled
 from axbi.commands.database.uploaders.base import (
     BaseDataReader,
     build_type_preserving_upload_options,
@@ -60,7 +60,7 @@ from axbi.commands.database.uploaders.structured_reader import (
     StructuredReader,
     StructuredReaderOptions,
 )
-from axbi.connectors.sqla.models import SqlaTable
+from axbi.daos.dataset import DatasetDAO
 from axbi.mcp_service.dataset.schemas import (
     DatasetError,
     DatasetInfo,
@@ -344,10 +344,10 @@ def upload_single_file(  # noqa: C901
                 reader,
             ).run()
 
-        sqla_table: SqlaTable | None = (
-            db.session.query(SqlaTable)
-            .filter_by(table_name=derived_name, database_id=local_db.id)
-            .one_or_none()
+        sqla_table = DatasetDAO.find_one_or_none(
+            skip_base_filter=True,
+            table_name=derived_name,
+            database_id=local_db.id,
         )
 
         if sqla_table is None:

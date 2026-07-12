@@ -19,8 +19,9 @@ from __future__ import annotations
 import logging
 
 from flask_appbuilder.security.sqla.models import User
+from sqlalchemy import or_
 
-from axbi.daos.base import BaseDAO
+from axbi.daos.base import _escape_like, BaseDAO
 from axbi.extensions import db, security_manager
 from axbi.models.user_attributes import UserAttribute
 
@@ -28,6 +29,46 @@ logger = logging.getLogger(__name__)
 
 
 class UserDAO(BaseDAO[User]):
+    @staticmethod
+    def get_by_id_or_none(user_id: int) -> User | None:
+        """Return a runtime-configured user model from the active session."""
+        return (
+            db.session.query(security_manager.user_model)
+            .filter_by(id=user_id)
+            .one_or_none()
+        )
+
+    @staticmethod
+    def find_for_filter_resolution(search_term: str, limit: int) -> list[User]:
+        """Find a bounded user set for resolving MCP ownership filters.
+
+        The defensive validation prevents this privacy-scoped lookup from
+        becoming an unbounded user-directory enumeration path when called
+        outside the MCP request schema.
+        """
+        normalized_term = search_term.strip()
+        if not normalized_term:
+            raise ValueError("search_term must contain a non-whitespace character")
+        if limit < 1:
+            raise ValueError("limit must be positive")
+
+        user_model = security_manager.user_model
+        needle = f"%{_escape_like(normalized_term)}%"
+        return (
+            db.session.query(user_model)
+            .filter(
+                or_(
+                    user_model.username.ilike(needle, escape="\\"),
+                    user_model.first_name.ilike(needle, escape="\\"),
+                    user_model.last_name.ilike(needle, escape="\\"),
+                    user_model.email.ilike(needle, escape="\\"),
+                )
+            )
+            .order_by(user_model.username.asc())
+            .limit(limit)
+            .all()
+        )
+
     @staticmethod
     def get_by_id(user_id: int) -> User:
         return db.session.query(security_manager.user_model).filter_by(id=user_id).one()

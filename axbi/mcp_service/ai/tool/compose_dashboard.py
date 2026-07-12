@@ -23,21 +23,26 @@ layout, draft mode, and lineage metadata.
 
 from __future__ import annotations
 
-import contextlib
 import logging
 import uuid
 from typing import Any
 
 from axbi_core.mcp.decorators import tool, ToolAnnotations
-from sqlalchemy.exc import SQLAlchemyError
 
 try:
     from fastmcp import Context
 except ModuleNotFoundError:
     Context = Any
 
-from flask import g
-
+from axbi.commands.dashboard.create_from_charts import (
+    CreateDashboardFromChartsCommand,
+)
+from axbi.commands.dashboard.exceptions import (
+    DashboardChartsAccessDeniedError,
+    DashboardChartsNotFoundError,
+    DashboardCreateFailedError,
+)
+from axbi.daos.chart import ChartDAO
 from axbi.mcp_service.ai.schemas import (
     ComposeDashboardRequest,
     ComposeDashboardResponse,
@@ -318,17 +323,7 @@ def _add_markdown_row(
     return row_id
 
 
-@tool(
-    tags=["mutate", "ai"],
-    class_permission_name="Dashboard",
-    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS", "GENAI_PROMPT_TO_DASHBOARD"],
-    annotations=ToolAnnotations(
-        title="Compose dashboard",
-        readOnlyHint=False,
-        destructiveHint=False,
-    ),
-)
-async def compose_dashboard(  # noqa: C901
+async def _compose_dashboard(  # noqa: C901
     request: ComposeDashboardRequest, ctx: Context
 ) -> dict[str, Any]:
     """Create a dashboard from a plan and pre-created charts.
@@ -354,16 +349,14 @@ async def compose_dashboard(  # noqa: C901
     )
 
     try:
-        from axbi import db
-        from axbi.models.slice import Slice
-
         # Validate charts exist and are accessible
         with mcp_event_log_context(action="mcp.compose_dashboard.validate_charts"):
-            chart_objects = (
-                db.session.query(Slice)
-                .filter(Slice.id.in_(request.chart_ids))
-                .order_by(Slice.id)
-                .all()
+            chart_objects = sorted(
+                ChartDAO.find_by_ids(
+                    request.chart_ids,
+                    skip_base_filter=True,
+                ),
+                key=lambda chart: chart.id,
             )
             found_ids = {c.id for c in chart_objects}
             missing = set(request.chart_ids) - found_ids
@@ -422,9 +415,6 @@ async def compose_dashboard(  # noqa: C901
             "created_by": "mcp_genai",
         }
 
-        # Create dashboard
-        from axbi.models.dashboard import Dashboard
-
         with mcp_event_log_context(action="mcp.compose_dashboard.db_write"):
             json_metadata = json.dumps(
                 {
@@ -445,44 +435,18 @@ async def compose_dashboard(  # noqa: C901
                     "ai_lineage": ai_lineage,
                 }
             )
-
-            dashboard = Dashboard()
-            dashboard.dashboard_title = request.plan.title or "Dashboard"
-            dashboard.description = request.plan.description or ""
-            dashboard.json_metadata = json_metadata
-            dashboard.position_json = json.dumps(layout)
-            dashboard.published = not request.draft
-
-            # Set owners
-            from axbi.extensions import security_manager
-
-            current_user = (
-                db.session.query(security_manager.user_model)
-                .filter_by(id=g.user.id)
-                .first()
+            command = CreateDashboardFromChartsCommand(
+                {
+                    "dashboard_title": request.plan.title or "Dashboard",
+                    "description": request.plan.description or "",
+                    "json_metadata": json_metadata,
+                    "position_json": json.dumps(layout),
+                    "published": not request.draft,
+                },
+                request.chart_ids,
             )
-            if current_user:
-                dashboard.owners = [current_user]
-
-            # Attach charts
-            fresh_charts = (
-                db.session.query(Slice)
-                .filter(Slice.id.in_(request.chart_ids))
-                .order_by(Slice.id)
-                .all()
-            )
-            dashboard.slices = fresh_charts
-
-            db.session.add(dashboard)
-            db.session.commit()  # pylint: disable=consider-using-transaction
-            try:
-                db.session.refresh(dashboard)
-            except SQLAlchemyError:
-                logger.warning(
-                    "Dashboard %s created but refresh failed",
-                    dashboard.id,
-                    exc_info=True,
-                )
+            dashboard = command.run()
+            fresh_charts = command.charts
 
         dashboard_url = f"{get_axbi_base_url()}/ax-bi/dashboard/{dashboard.id}/"
 
@@ -514,17 +478,37 @@ async def compose_dashboard(  # noqa: C901
             warnings=[],
         ).model_dump()
 
-    except SQLAlchemyError as e:
-        from axbi import db
-
-        with contextlib.suppress(SQLAlchemyError):
-            db.session.rollback()  # pylint: disable=consider-using-transaction
+    except (DashboardChartsNotFoundError, DashboardChartsAccessDeniedError) as e:
+        logger.warning("Dashboard composition chart lookup changed: %s", e)
+        return ComposeDashboardResponse(error=str(e)).model_dump()
+    except DashboardCreateFailedError as e:
         logger.error("Dashboard composition failed: %s", e, exc_info=True)
         return ComposeDashboardResponse(
-            error=f"Failed to create dashboard: {e}",
+            error="Failed to create dashboard due to a database error.",
         ).model_dump()
     except Exception as e:
         logger.error("Dashboard composition failed: %s", e, exc_info=True)
         return ComposeDashboardResponse(
             error=f"Failed to create dashboard: {e}",
         ).model_dump()
+
+
+@tool(
+    tags=["mutate", "ai"],
+    class_permission_name="Dashboard",
+    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS", "GENAI_PROMPT_TO_DASHBOARD"],
+    annotations=ToolAnnotations(
+        title="Compose dashboard",
+        readOnlyHint=False,
+        destructiveHint=False,
+    ),
+)
+async def compose_dashboard(
+    request: ComposeDashboardRequest, ctx: Context
+) -> dict[str, Any]:
+    """Create a dashboard from a plan and pre-created charts.
+
+    Create charts first with ``create_chart_from_intent``, then pass their IDs
+    and the validated plan here. Dashboards are drafts unless ``draft=False``.
+    """
+    return await _compose_dashboard(request, ctx)

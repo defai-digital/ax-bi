@@ -22,7 +22,7 @@ import sys
 import types
 from collections.abc import Callable
 from typing import Any
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from axbi.mcp_service.ai.schemas import (
     ColumnDescription,
@@ -242,12 +242,27 @@ def test_describe_dataset_privacy_metadata() -> None:
     assert result.privacy["metadata_scope"] == "role_allowed"
 
 
+def test_get_aliases_are_scoped_to_named_dataset_object() -> None:
+    """Alias lookup delegates the complete object scope to the DAO."""
+    with patch(
+        "axbi.daos.ai.AISemanticAliasDAO.find_aliases_for_object",
+        return_value=["gross sales"],
+    ) as find_aliases:
+        aliases = _get_aliases_for_object("column", "revenue", dataset_id=1)
+
+    assert aliases == ["gross sales"]
+    find_aliases.assert_called_once_with("column", "revenue", 1)
+
+
 def test_get_aliases_returns_empty_on_error() -> None:
     """Test that alias lookup returns empty list on error."""
-    # When the alias table doesn't exist, should return empty
-    aliases = _get_aliases_for_object("column", "test_col", dataset_id=1)
-    # This will either return [] or raise (caught internally)
-    assert isinstance(aliases, list)
+    with patch(
+        "axbi.daos.ai.AISemanticAliasDAO.find_aliases_for_object",
+        side_effect=RuntimeError("alias table unavailable"),
+    ):
+        aliases = _get_aliases_for_object("column", "test_col", dataset_id=1)
+
+    assert aliases == []
 
 
 def test_describe_dataset_column_is_dimension() -> None:

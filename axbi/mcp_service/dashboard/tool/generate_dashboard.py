@@ -26,8 +26,17 @@ from typing import Any
 
 from axbi_core.mcp.decorators import tool, ToolAnnotations
 from fastmcp import Context
-from flask import g
 
+from axbi.commands.dashboard.create_from_charts import (
+    CreateDashboardFromChartsCommand,
+)
+from axbi.commands.dashboard.exceptions import (
+    DashboardChartsAccessDeniedError,
+    DashboardChartsNotFoundError,
+    DashboardCreateFailedError,
+)
+from axbi.daos.chart import ChartDAO
+from axbi.daos.exceptions import DAOFindFailedError
 from axbi.mcp_service.dashboard.constants import (
     generate_id,
     GRID_COLUMN_COUNT,
@@ -211,16 +220,13 @@ def generate_dashboard(  # noqa: C901
     sanitization_warnings = list(getattr(request, "sanitization_warnings", []) or [])
 
     try:
-        # Get chart objects from IDs (required for SQLAlchemy relationships)
-        from axbi import db
-        from axbi.models.slice import Slice
-
         with mcp_event_log_context(action="mcp.generate_dashboard.chart_validation"):
-            chart_objects = (
-                db.session.query(Slice)
-                .filter(Slice.id.in_(request.chart_ids))
-                .order_by(Slice.id)
-                .all()
+            chart_objects = sorted(
+                ChartDAO.find_by_ids(
+                    request.chart_ids,
+                    skip_base_filter=True,
+                ),
+                key=lambda chart: chart.id,
             )
             found_chart_ids = [chart.id for chart in chart_objects]
 
@@ -264,16 +270,10 @@ def generate_dashboard(  # noqa: C901
             else _generate_title_from_charts(chart_objects)
         )
 
-        # Create the dashboard directly with db.session instead of using
-        # CreateDashboardCommand.  The command's @transaction decorator
-        # may operate in a different SQLAlchemy scoped-session than the
-        # one g.user and chart ORM objects are bound to in the MCP
-        # context, causing "Object is already attached to session X
-        # (this is Y)" errors.  By re-querying all ORM objects in the
-        # tool's own db.session we keep everything in a single session.
         from sqlalchemy.orm import subqueryload
 
         from axbi.models.dashboard import Dashboard
+        from axbi.models.slice import Slice
 
         with mcp_event_log_context(action="mcp.generate_dashboard.db_write"):
             json_metadata = json.dumps(
@@ -299,59 +299,29 @@ def generate_dashboard(  # noqa: C901
             )
 
             try:
-                dashboard = Dashboard()
-                dashboard.dashboard_title = dashboard_title
-                dashboard.json_metadata = json_metadata
-                dashboard.position_json = json.dumps(layout)
-                dashboard.published = request.published
-
+                dashboard_properties: dict[str, Any] = {
+                    "dashboard_title": dashboard_title,
+                    "json_metadata": json_metadata,
+                    "position_json": json.dumps(layout),
+                    "published": request.published,
+                }
                 if request.description:
-                    dashboard.description = request.description
+                    dashboard_properties["description"] = request.description
 
-                # Re-query the current user and charts directly in the
-                # current db.session.  g.user was loaded in a Flask
-                # app_context that has since been torn down (the
-                # middleware's ``with flask_app.app_context()`` exits
-                # before the tool function runs), so the User object
-                # is bound to a dead/different scoped session.
-                # Querying fresh avoids all cross-session errors.
-                from axbi.extensions import security_manager
-
-                current_user = (
-                    db.session.query(security_manager.user_model)
-                    .filter_by(id=g.user.id)
-                    .first()
+                dashboard = CreateDashboardFromChartsCommand(
+                    dashboard_properties,
+                    request.chart_ids,
+                ).run()
+            except (
+                DashboardChartsNotFoundError,
+                DashboardChartsAccessDeniedError,
+            ) as error:
+                return GenerateDashboardResponse(
+                    dashboard=None,
+                    dashboard_url=None,
+                    error=str(error),
                 )
-                if current_user:
-                    dashboard.owners = [current_user]
-
-                fresh_charts = (
-                    db.session.query(Slice)
-                    .filter(Slice.id.in_(request.chart_ids))
-                    .order_by(Slice.id)
-                    .all()
-                )
-                dashboard.slices = fresh_charts
-
-                db.session.add(dashboard)
-                db.session.commit()  # pylint: disable=consider-using-transaction
-                try:
-                    db.session.refresh(dashboard)
-                except SQLAlchemyError:
-                    logger.warning(
-                        "Dashboard %s created but refresh failed; "
-                        "continuing with current values",
-                        dashboard.id,
-                        exc_info=True,
-                    )
-            except SQLAlchemyError as db_err:
-                try:
-                    db.session.rollback()  # pylint: disable=consider-using-transaction
-                except SQLAlchemyError:
-                    logger.warning(
-                        "Database rollback failed during error handling",
-                        exc_info=True,
-                    )
+            except DashboardCreateFailedError as db_err:
                 logger.error(
                     "Dashboard creation failed: %s",
                     db_err,
@@ -394,6 +364,8 @@ def generate_dashboard(  # noqa: C901
                 or dashboard
             )
         except SQLAlchemyError:
+            from axbi import db
+
             logger.warning(
                 "Re-fetch of dashboard %s failed; returning minimal response",
                 dashboard.id,
@@ -474,7 +446,13 @@ def generate_dashboard(  # noqa: C901
             warnings=sanitization_warnings,
         )
 
-    except (SQLAlchemyError, ValueError, AttributeError, ValidationError) as e:
+    except (
+        DAOFindFailedError,
+        SQLAlchemyError,
+        ValueError,
+        AttributeError,
+        ValidationError,
+    ) as e:
         from axbi import db
 
         try:

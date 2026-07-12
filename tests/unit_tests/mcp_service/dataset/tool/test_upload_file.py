@@ -86,10 +86,8 @@ def _make_mock_local_db(db_id: int = 1, name: str = "Local Files") -> MagicMock:
     return local_db
 
 
-def _set_query_result(mock_session: MagicMock, result: MagicMock | None) -> None:
-    mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = (
-        result
-    )
+def _set_query_result(mock_find_dataset: MagicMock, result: MagicMock | None) -> None:
+    mock_find_dataset.return_value = result
 
 
 def _csv_base64() -> str:
@@ -172,7 +170,7 @@ class TestUploadFile:
         assert result is not None
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -180,7 +178,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -192,7 +190,7 @@ class TestUploadFile:
         mock_upload_cmd.return_value = mock_cmd_instance
 
         mock_dataset = _make_mock_dataset()
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_sales_abc123"}
 
         async with Client(mcp_server) as client:
@@ -214,12 +212,16 @@ class TestUploadFile:
 
         # Verify run() was called
         mock_cmd_instance.run.assert_called_once()
+        lookup_kwargs = mock_find_dataset.call_args.kwargs
+        assert lookup_kwargs["skip_base_filter"] is True
+        assert lookup_kwargs["database_id"] == local_db.id
+        assert lookup_kwargs["table_name"].startswith("upload_sales_")
 
         # Verify result
         assert result is not None
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -227,7 +229,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -237,7 +239,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="upload_report_xyz")
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_report_xyz"}
 
         workbook = Workbook()
@@ -263,7 +265,7 @@ class TestUploadFile:
         assert result is not None
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -271,7 +273,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -281,7 +283,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset()
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_data"}
 
         fake_parquet = base64.b64encode(b"fake-parquet-content").decode()
@@ -402,7 +404,7 @@ class TestUploadFile:
         assert result is not None
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -410,7 +412,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -420,7 +422,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="my_custom_table")
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "my_custom_table"}
 
         async with Client(mcp_server) as client:
@@ -440,7 +442,7 @@ class TestUploadFile:
         assert call_args[0][1] == "my_custom_table"
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -448,7 +450,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -458,7 +460,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="upload_sales_abc123")
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_sales_abc123"}
 
         async with Client(mcp_server) as client:
@@ -476,7 +478,7 @@ class TestUploadFile:
         assert file_storage.filename == "sales.csv"
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -484,7 +486,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -494,7 +496,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="upload_sales_abc123")
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_sales_abc123"}
 
         async with Client(mcp_server) as client:
@@ -514,7 +516,7 @@ class TestUploadFile:
         assert call_args[0][1] != "upload"
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -522,7 +524,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -532,7 +534,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="upload_long")
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_long"}
 
         async with Client(mcp_server) as client:
@@ -551,7 +553,7 @@ class TestUploadFile:
         assert call_args[0][1].startswith("upload_")
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -559,7 +561,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -569,7 +571,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="upload_long")
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "upload_long"}
 
         async with Client(mcp_server) as client:
@@ -592,7 +594,7 @@ class TestUploadFile:
         assert re.match(r"^upload_[a-z0-9_]+_[0-9a-f]{6}$", table_name)
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -600,7 +602,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -610,7 +612,7 @@ class TestUploadFile:
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
         mock_dataset = _make_mock_dataset(table_name="custom_long")
-        _set_query_result(mock_session, mock_dataset)
+        _set_query_result(mock_find_dataset, mock_dataset)
         mock_serialize.return_value = {"id": 99, "table_name": "custom_long"}
 
         async with Client(mcp_server) as client:
@@ -633,7 +635,7 @@ class TestUploadFile:
         assert table_name.startswith("coded_service_revenue_by_client")
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
@@ -641,7 +643,7 @@ class TestUploadFile:
         self,
         mock_get_local_db,
         mock_upload_cmd,
-        mock_session,
+        mock_find_dataset,
         mock_serialize,
         mcp_server,
     ) -> None:
@@ -650,7 +652,7 @@ class TestUploadFile:
         mock_get_local_db.return_value = local_db
         mock_cmd_instance = MagicMock()
         mock_upload_cmd.return_value = mock_cmd_instance
-        _set_query_result(mock_session, None)
+        _set_query_result(mock_find_dataset, None)
 
         async with Client(mcp_server) as client:
             result = await client.call_tool(

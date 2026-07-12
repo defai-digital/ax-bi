@@ -78,10 +78,9 @@ def generate_preview_from_form_data(
     try:
         # Execute query to get data
         from axbi.commands.chart.data.get_data_command import ChartDataCommand
-        from axbi.connectors.sqla.models import SqlaTable
-        from axbi.extensions import db
+        from axbi.daos.dataset import DatasetDAO
 
-        dataset = db.session.get(SqlaTable, dataset_id)
+        dataset = DatasetDAO.find_by_id(dataset_id)
         if not dataset:
             return ChartError(
                 error=f"Dataset {dataset_id} not found", error_type="DatasetNotFound"

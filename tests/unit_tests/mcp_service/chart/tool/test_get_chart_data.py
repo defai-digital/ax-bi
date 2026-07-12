@@ -1176,10 +1176,10 @@ class TestChartDataCommandValidation:
         mock_dataset = MagicMock()
         mock_dataset.id = 10
 
-        # ChartDataCommand, db, and QueryContextFactory are local imports inside
+        # ChartDataCommand, DAO, and QueryContextFactory are local imports inside
         # the function so preview_utils stays safe to import before app setup.
         with (
-            patch("axbi.extensions.db") as mock_db,
+            patch("axbi.daos.dataset.DatasetDAO.find_by_id") as find_dataset,
             patch(
                 "axbi.commands.chart.data.get_data_command.ChartDataCommand",
                 return_value=mock_command,
@@ -1188,7 +1188,7 @@ class TestChartDataCommandValidation:
                 "axbi.common.query_context_factory.QueryContextFactory"
             ) as mock_factory,
         ):
-            mock_db.session.query.return_value.get.return_value = mock_dataset
+            find_dataset.return_value = mock_dataset
             mock_factory.return_value.create.return_value = MagicMock()
 
             from axbi.mcp_service.chart.preview_utils import (
@@ -1204,6 +1204,7 @@ class TestChartDataCommandValidation:
             mock_command.validate.assert_called_once()
             mock_command.run.assert_called_once()
             assert call_order == ["validate", "run"]
+            find_dataset.assert_called_once_with(10)
 
     def test_preview_utils_security_exception_from_validate(self):
         """Test that AxBISecurityException from validate() is propagated."""
@@ -1228,7 +1229,7 @@ class TestChartDataCommandValidation:
         mock_dataset.id = 10
 
         with (
-            patch("axbi.extensions.db") as mock_db,
+            patch("axbi.daos.dataset.DatasetDAO.find_by_id") as find_dataset,
             patch(
                 "axbi.commands.chart.data.get_data_command.ChartDataCommand",
                 return_value=mock_command,
@@ -1237,7 +1238,7 @@ class TestChartDataCommandValidation:
                 "axbi.common.query_context_factory.QueryContextFactory"
             ) as mock_factory,
         ):
-            mock_db.session.query.return_value.get.return_value = mock_dataset
+            find_dataset.return_value = mock_dataset
             mock_factory.return_value.create.return_value = MagicMock()
 
             from axbi.mcp_service.chart.preview_utils import (
