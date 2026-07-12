@@ -164,8 +164,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
   const mapLayer = g.append('g').classed('map-layer', true);
   // Add hover popup for tooltip
   const hoverPopup = div.append('div').attr('class', 'hover-popup');
-  const minMetric = extents[0];
-  const maxMetric = extents[1];
+  const [minMetric, maxMetric] = extents;
   const lowColor = linearColorScale(minMetric) ?? '#99f6e4';
   const highColor = linearColorScale(maxMetric) ?? '#0f766e';
   const noDataColor = '#d9d9d9';
@@ -306,8 +305,7 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
       })
       .on('zoom', event => {
         const { transform } = event;
-        let { x: tx, y: ty, k: scale } = transform;
-
+        const scale = transform.k;
         const scaledW = width * scale;
         const scaledH = height * scale;
         const minX = Math.min(0, width - scaledW);
@@ -315,10 +313,21 @@ function CountryMap(element: HTMLElement, props: CountryMapProps) {
         const minY = Math.min(0, height - scaledH);
         const maxY = 0;
 
-        tx = Math.max(Math.min(tx, maxX), minX);
-        ty = Math.max(Math.min(ty, maxY), minY);
+        // Clamp pan so the map cannot be dragged off-canvas. Re-sync d3-zoom
+        // when clamping so the next wheel/drag event does not jump.
+        const tx = Math.max(Math.min(transform.x, maxX), minX);
+        const ty = Math.max(Math.min(transform.y, maxY), minY);
+        if (tx !== transform.x || ty !== transform.y) {
+          // Re-entrancy: next zoom event has the clamped transform and falls
+          // through to the visual update below.
+          svg.call(
+            zoomBehavior.transform,
+            zoomIdentity.translate(tx, ty).scale(scale),
+          );
+          return;
+        }
 
-        g.attr('transform', `translate(${tx}, ${ty}) scale(${scale})`);
+        g.attr('transform', transform.toString());
         const prev = zoomStates.get(element);
         const changed =
           !prev ||

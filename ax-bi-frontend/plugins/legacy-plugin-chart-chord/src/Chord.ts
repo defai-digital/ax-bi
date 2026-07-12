@@ -115,9 +115,7 @@ function Chord(element: HTMLElement, props: ChordProps) {
       if (typeof pathNode?.getTotalLength !== 'function') {
         return false;
       }
-      return (
-        pathNode.getTotalLength() / 2 - 16 < this.getComputedTextLength()
-      );
+      return pathNode.getTotalLength() / 2 - 16 < this.getComputedTextLength();
     })
     .remove();
 

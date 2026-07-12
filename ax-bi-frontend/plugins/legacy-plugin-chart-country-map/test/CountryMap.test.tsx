@@ -58,14 +58,17 @@ jest.mock('d3-geo', () => {
   proj.center = () => proj;
   proj.translate = () => proj;
 
-  const pathFn = Object.assign(jest.fn(() => 'M10 10 L20 20'), {
-    projection: jest.fn(),
-    bounds: jest.fn(() => [
-      [0, 0],
-      [100, 100],
-    ]),
-    centroid: jest.fn(() => [50, 50]),
-  });
+  const pathFn = Object.assign(
+    jest.fn(() => 'M10 10 L20 20'),
+    {
+      projection: jest.fn(),
+      bounds: jest.fn(() => [
+        [0, 0],
+        [100, 100],
+      ]),
+      centroid: jest.fn(() => [50, 50]),
+    },
+  );
 
   return {
     geoPath: jest.fn(() => pathFn),
