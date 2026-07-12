@@ -17,7 +17,12 @@
  * under the License.
  */
 import fetchMock from 'fetch-mock';
-import { Link } from 'react-router-dom';
+import type { ComponentProps } from 'react';
+import {
+  Link,
+  unstable_HistoryRouter as HistoryRouter,
+} from 'react-router-dom';
+import { createMemoryHistory, parsePath, type To } from 'history';
 import {
   render,
   waitFor,
@@ -34,6 +39,19 @@ import { useUnsavedChangesPrompt } from 'src/hooks/useUnsavedChangesPrompt';
 import { getParsedExploreURLParams } from 'src/explore/exploreUtils/getParsedExploreURLParams';
 import * as messageToastActions from 'src/components/MessageToasts/actions';
 import ChartPage from '.';
+
+type RouterHistory = ComponentProps<typeof HistoryRouter>['history'];
+
+const createRouterHistory = (initialEntries: string[]) => {
+  const memoryHistory = createMemoryHistory({ initialEntries });
+  const routerHistory = Object.assign(memoryHistory, {
+    createURL: (to: To) =>
+      new URL(memoryHistory.createHref(to), window.location.origin),
+    encodeLocation: (to: To) => (typeof to === 'string' ? parsePath(to) : to),
+  }) as unknown as RouterHistory;
+
+  return { memoryHistory, routerHistory };
+};
 
 jest.mock('src/hooks/useUnsavedChangesPrompt', () => ({
   useUnsavedChangesPrompt: jest.fn(),
@@ -215,16 +233,18 @@ describe('ChartPage', () => {
       fetchMock.get(exploreApiRoute, {
         result: { dataset: { id: 1 }, form_data: exploreFormData },
       });
-      window.history.pushState(
-        {},
-        '',
+      const { routerHistory } = createRouterHistory([
         `/?${URL_PARAMS.dashboardPageId.name}=${dashboardPageId}`,
+      ]);
+      const { getByTestId } = render(
+        <HistoryRouter history={routerHistory}>
+          <ChartPage />
+        </HistoryRouter>,
+        {
+          useRedux: true,
+          useDnd: true,
+        },
       );
-      const { getByTestId } = render(<ChartPage />, {
-        useRouter: true,
-        useRedux: true,
-        useDnd: true,
-      });
       await waitFor(() =>
         expect(fetchMock.callHistory.calls(exploreApiRoute).length).toBe(1),
       );
@@ -253,26 +273,23 @@ describe('ChartPage', () => {
       fetchMock.get(exploreApiRoute, {
         result: { dataset: { id: 1 }, form_data: exploreFormData },
       });
-      window.history.pushState(
-        {},
-        '',
+      const { routerHistory } = createRouterHistory([
         `/?${URL_PARAMS.dashboardPageId.name}=${dashboardPageId}`,
-      );
+      ]);
       const { getByTestId } = render(
-        <>
+        <HistoryRouter history={routerHistory}>
           <Link
             to={{
               pathname: '/',
               search: `?${URL_PARAMS.dashboardPageId.name}=${dashboardPageId}`,
-              state: { saveAction: 'overwrite' },
             }}
+            state={{ saveAction: 'overwrite' }}
           >
             Change route
           </Link>
           <ChartPage />
-        </>,
+        </HistoryRouter>,
         {
-          useRouter: true,
           useRedux: true,
           useDnd: true,
         },
@@ -317,13 +334,15 @@ describe('ChartPage', () => {
       fetchMock.get(exploreApiRoute, {
         result: { dataset: { id: 1 }, form_data: initialFormData },
       });
+      const { memoryHistory, routerHistory } = createRouterHistory([
+        `/?${URL_PARAMS.dashboardPageId.name}=${dashboardPageId}`,
+      ]);
       render(
-        <>
+        <HistoryRouter history={routerHistory}>
           <Link to="/?slice_id=99">Navigate away</Link>
           <ChartPage />
-        </>,
+        </HistoryRouter>,
         {
-          useRouter: true,
           useRedux: true,
           useDnd: true,
         },
@@ -350,7 +369,7 @@ describe('ChartPage', () => {
         result: { dataset: { id: 1 }, form_data: initialFormData },
       });
       // Simulate back button
-      window.history.back();
+      memoryHistory.back();
       await waitFor(() =>
         expect(fetchMock.callHistory.calls(exploreApiRoute).length).toBe(1),
       );

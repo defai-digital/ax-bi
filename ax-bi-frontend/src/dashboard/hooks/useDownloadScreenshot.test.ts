@@ -39,6 +39,7 @@ jest.mock('@ax-bi/ui-core', () => ({
 }));
 
 jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
   useSelector: jest.fn(() => undefined),
 }));
 

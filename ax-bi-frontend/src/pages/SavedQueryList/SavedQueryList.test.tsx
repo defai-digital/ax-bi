@@ -16,8 +16,6 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { thunk } from 'redux-thunk';
-import configureStore from 'redux-mock-store';
 import fetchMock from 'fetch-mock';
 import {
   render,
@@ -112,13 +110,13 @@ const renderList = (props = {}, storeOverrides = {}) =>
     </MemoryRouter>,
     {
       useRedux: true,
-      store: configureStore([thunk])({
+      initialState: {
         user: {
           ...mockUser,
           roles: { Admin: [['can_write', 'SavedQuery']] },
         },
         ...storeOverrides,
-      }),
+      },
     },
   );
 

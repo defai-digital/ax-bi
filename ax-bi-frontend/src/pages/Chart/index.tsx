@@ -19,7 +19,6 @@
 import { useHistory } from 'src/hooks/useAppHistory';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
-import type { Location, Action } from 'history';
 import { t } from '@ax-bi/core/translation';
 import {
   getLabelsColorMap,
@@ -301,7 +300,7 @@ export default function ExplorePage() {
   // REPLACE with saveAction state: re-fetch without unmount (keeps chart visible).
   // Other REPLACE: ignored (URL sync from updateHistory).
   useEffect(() => {
-    const unlisten = history.listen((loc: Location, action: Action) => {
+    const unlisten = history.listen(({ location: loc, action }) => {
       const saveAction = (loc.state as Record<string, unknown>)?.saveAction as
         SaveActionType | undefined;
       if (action === 'PUSH' || action === 'POP') {

@@ -18,6 +18,7 @@
  */
 
 // Mock isMatrixifyEnabled before loading any modules
+import type { ComponentProps } from 'react';
 import fetchMock from 'fetch-mock';
 import {
   getChartControlPanelRegistry,
@@ -29,8 +30,9 @@ import { QUERY_MODE_REQUISITES } from 'src/explore/constants';
 import {
   unstable_HistoryRouter as HistoryRouter,
   Route,
+  Routes,
 } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
+import { createMemoryHistory, parsePath, type To } from 'history';
 import {
   render,
   screen,
@@ -124,6 +126,15 @@ fetchMock.get('glob:*/api/v1/chart/*', {
 
 const defaultPath = '/explore/';
 
+type RouterHistory = ComponentProps<typeof HistoryRouter>['history'];
+
+const toRouterHistory = (history: ReturnType<typeof createMemoryHistory>) =>
+  Object.assign(history, {
+    createURL: (to: To) =>
+      new URL(history.createHref(to), window.location.origin),
+    encodeLocation: (to: To) => (typeof to === 'string' ? parsePath(to) : to),
+  }) as unknown as RouterHistory;
+
 afterEach(() => {
   jest.restoreAllMocks();
 });
@@ -150,10 +161,10 @@ const renderWithRouter = ({
     existingHistory ??
     createMemoryHistory({ initialEntries: [`${path}${search}`] });
   const result = render(
-    <HistoryRouter history={history}>
-      <Route path={path}>
-        <ExploreViewContainer />
-      </Route>
+    <HistoryRouter history={toRouterHistory(history)}>
+      <Routes>
+        <Route path={path} element={<ExploreViewContainer />} />
+      </Routes>
     </HistoryRouter>,
     { useRedux: true, useDnd: true, initialState, store },
   );

@@ -19,14 +19,12 @@
 
 import { seed, seedRandom } from '@ax-bi/ui-core';
 
-describe('random', () => {
-  test('seeded random should return the same value', () => {
-    expect(seedRandom()).toEqual(0.7237953289342797);
-  });
+test('seeded random should return the AX-BI seed value', () => {
+  expect(seedRandom()).toEqual(seed('axbi-ui')());
+});
 
-  test('should allow update seed', () => {
-    const a = seed('abc');
-    const b = seed('abc');
-    expect(a()).toEqual(b());
-  });
+test('should allow update seed', () => {
+  const a = seed('abc');
+  const b = seed('abc');
+  expect(a()).toEqual(b());
 });

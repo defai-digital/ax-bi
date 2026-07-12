@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useAppDispatch } from 'src/SqlLab/hooks/useAppDispatch';
 import URI from 'urijs';
@@ -49,12 +49,12 @@ const PopEditorTab: React.FC<{ children?: React.ReactNode }> = ({
   const activeQueryEditorId = useSelector<SqlLabRootState, string>(
     ({ sqlLab: { tabHistory } }) => tabHistory.slice(-1)[0],
   );
-  const [updatedUrl, setUpdatedUrl] = useState<string>(SQL_LAB_URL);
+  const updatedUrl = useRef(SQL_LAB_URL);
   const dispatch = useAppDispatch();
   useComponentDidUpdate(() => {
     setQueryEditorId(assigned => assigned ?? activeQueryEditorId);
     if (activeQueryEditorId) {
-      navigateWithState(updatedUrl, {}, { replace: true });
+      navigateWithState(updatedUrl.current, {}, { replace: true });
     }
   }, [activeQueryEditorId]);
 
@@ -83,7 +83,7 @@ const PopEditorTab: React.FC<{ children?: React.ReactNode }> = ({
     if (permalink || id || sql || savedQueryId || datasourceKey || queryId) {
       setIsLoading(true);
       const targetUrl = `${URI(SQL_LAB_URL).query(pick(requestedQuery, Object.keys(restUrlParams)))}`;
-      setUpdatedUrl(targetUrl);
+      updatedUrl.current = targetUrl;
       if (permalink) {
         dispatch(popPermalink(permalink));
       } else if (id) {
