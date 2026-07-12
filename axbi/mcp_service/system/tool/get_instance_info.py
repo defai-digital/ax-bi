@@ -26,7 +26,6 @@ from axbi_core.mcp.decorators import tool, ToolAnnotations
 from fastmcp import Context
 from sqlalchemy.exc import OperationalError
 
-from axbi.extensions import db
 from axbi.mcp_service.mcp_core import InstanceInfoCore
 from axbi.mcp_service.privacy import user_can_view_data_model_metadata
 from axbi.mcp_service.system.schemas import (
@@ -43,6 +42,7 @@ from axbi.mcp_service.system.system_utils import (
     calculate_recent_activity,
 )
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.session_utils import reset_session_safely
 
 logger = logging.getLogger(__name__)
 
@@ -106,6 +106,11 @@ def get_instance_info(
 
     Returns counts, activity metrics, and database types.
     """
+    return _run_instance_info_with_retry()
+
+
+def _run_instance_info_with_retry() -> InstanceInfo:
+    """Run instance metrics, resetting the scoped session before one retry."""
     try:
         return _run_instance_info()
 
@@ -115,24 +120,7 @@ def get_instance_info(
             "resetting session and retrying: %s",
             e,
         )
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except Exception:  # noqa: BLE001
-            # Broad catch: the DB connection itself may be broken (e.g.,
-            # SSL drop), so even rollback can fail with non-SQLAlchemy
-            # errors. This is a cleanup path — swallow and log.
-            logger.warning(
-                "Rollback failed during get_instance_info connection reset",
-                exc_info=True,
-            )
-        try:
-            db.session.remove()  # pylint: disable=consider-using-transaction
-        except Exception:  # noqa: BLE001
-            # Same as above — cleanup must not prevent the retry.
-            logger.warning(
-                "Session remove failed during get_instance_info connection reset",
-                exc_info=True,
-            )
+        reset_session_safely(context="get_instance_info connection reset")
 
         try:
             result = _run_instance_info()

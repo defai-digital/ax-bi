@@ -358,48 +358,34 @@ SQLALCHEMY_MAX_OVERFLOW = 5
 @mcp.tool
 @mcp_auth_hook
 def my_tool(param: str) -> Result:
-    # Auth hook sets g.user and manages session
-    try:
-        # Tool executes within implicit transaction
-        result = DashboardDAO.find_by_id(123)
-        return Result(data=result)
-    except Exception:
-        # On error: rollback happens in auth hook's except block
-        raise
-    finally:
-        # On success: rollback happens in auth hook's finally block
-        # (read-only operations don't commit)
-        pass
+    # The auth hook sets g.user. Read paths query through DAOs.
+    result = DashboardDAO.find_by_id(123)
+    return Result(data=result)
 ```
 
-**Session Cleanup in Auth Hook**:
+Mutating tools delegate transaction ownership to commands. Read-only DAO calls
+do not commit, and Flask-SQLAlchemy removes their scoped session during normal
+app/request-context teardown.
 
-The `@mcp_auth_hook` decorator manages session lifecycle:
+**Session Recovery Boundary**:
+
+Session recovery is centralized in `utils/session_utils.py`:
 
 ```python
-# On error path
-except Exception:
-    try:
-        db.session.rollback()
-        db.session.remove()
-    except Exception as e:
-        logger.warning("Error cleaning up session: %s", e)
-    raise
+# Before synchronous user resolution; failure is strict/fail-closed.
+remove_session_with_connection_recovery()
 
-# On success path (finally block)
-finally:
-    try:
-        if db.session.is_active:
-            db.session.rollback()  # Cleanup, don't commit
-    except Exception as e:
-        logger.warning("Error in finally block: %s", e)
+# On an uncaught authentication or tool error; cleanup never masks the error.
+except Exception:
+    reset_session_safely(context="MCP auth error cleanup")
+    raise
 ```
 
-**Why Rollback on Success?**
-- MCP tools are primarily **read-only operations**
-- No explicit commits needed for queries
-- Rollback ensures clean slate for next request
-- Write operations (create chart, etc.) use AxBI's command pattern which handles commits internally
+The strict removal helper invalidates and retries when `remove()` encounters a
+DBAPI connection failure. Error paths attempt rollback and removal independently
+so a failed rollback cannot leave the broken scoped session registered. Tools
+that convert a database exception into an error response use
+`rollback_session_safely()` because the exception does not reach the auth hook.
 
 ## Deployment Considerations
 

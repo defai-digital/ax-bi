@@ -74,6 +74,10 @@ from axbi.mcp_service.utils.error_sanitization import (
     sanitize_for_log as _sanitize_for_log,
 )
 from axbi.mcp_service.utils.permissions_utils import current_user_can_access
+from axbi.mcp_service.utils.session_utils import (
+    remove_session_with_connection_recovery,
+    reset_session_safely,
+)
 
 if TYPE_CHECKING:
     from axbi.connectors.sqla.models import SqlaTable
@@ -878,65 +882,7 @@ def _cleanup_session_on_error() -> None:
     removal must still run so an immediate authentication retry cannot reuse
     the same broken thread-local session.
     """
-    from axbi.extensions import db
-
-    # pylint: disable=consider-using-transaction
-    try:
-        db.session.rollback()
-    except Exception:
-        logger.warning(
-            "Session rollback failed during MCP auth error cleanup",
-            exc_info=True,
-        )
-
-    try:
-        _remove_session_safe()
-    except Exception:
-        logger.warning(
-            "Session removal failed during MCP auth error cleanup",
-            exc_info=True,
-        )
-
-
-def _remove_session_safe() -> None:
-    """Remove the scoped SQLAlchemy session, tolerating SSL/connection errors.
-
-    Thread-pool workers reuse threads across requests.  Before each tool call
-    the session is removed to prevent a prior request's thread-local session
-    from leaking into the next one.  If the underlying DBAPI connection died
-    between requests (e.g. RDS SSL idle-timeout or max-connection-age), the
-    rollback implicit in ``session.close()`` raises a ``DBAPIError`` subclass
-    (``OperationalError`` for psycopg2, ``InterfaceError`` for some other
-    drivers).
-
-    When that happens:
-    1. Invalidate the dead connection so the pool discards it (rather than
-       returning a broken connection to the next caller).
-    2. Retry ``remove()`` to deregister the session from the scoped registry.
-
-    The tool call still proceeds because a fresh connection will be obtained
-    on the next DB access.
-    """
-    from sqlalchemy.exc import DBAPIError
-
-    from axbi.extensions import db
-
-    try:
-        db.session.remove()
-    except DBAPIError as exc:
-        logger.warning(
-            "Connection error during pre-call session cleanup "
-            "(likely SSL/idle timeout); invalidating connection and retrying: %s",
-            exc,
-        )
-        try:
-            db.session.invalidate()
-        except Exception as invalidate_exc:
-            logger.debug(
-                "Could not invalidate session after connection error: %s",
-                invalidate_exc,
-            )
-        db.session.remove()  # retry: session deregisters cleanly after invalidation
+    reset_session_safely(context="MCP auth error cleanup")
 
 
 def _get_app_context_manager() -> AbstractContextManager[None]:
@@ -1077,7 +1023,7 @@ def mcp_auth_hook(tool_func: F) -> F:  # noqa: C901
                 # still be bound to a different tenant's DB engine. Removing it here
                 # ensures the next DB access creates a fresh session bound to the
                 # correct engine for the current request.
-                _remove_session_safe()
+                remove_session_with_connection_recovery()
                 user = _setup_user_context()
 
                 # No Flask context - this is a FastMCP internal operation

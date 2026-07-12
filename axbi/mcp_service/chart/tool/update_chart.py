@@ -53,6 +53,7 @@ from axbi.mcp_service.utils.oauth2_utils import (
     build_oauth2_redirect_message,
     OAUTH2_CONFIG_ERROR_MESSAGE,
 )
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 from axbi.utils import json
 
@@ -705,14 +706,7 @@ async def update_chart(  # noqa: C901
         KeyError,
         AttributeError,
     ) as e:
-        from axbi import db
-
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="chart update error handling")
         execution_time = int((time.time() - start_time) * 1000)
         return GenerateChartResponse.model_validate(
             {

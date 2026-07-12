@@ -32,6 +32,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.exc import SQLAlchemyError
 
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 from axbi.utils import json
 
@@ -266,14 +267,7 @@ def add_dashboard_filter(
         )
 
     except (SQLAlchemyError, ValueError) as e:
-        from axbi import db
-
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="dashboard filter error handling")
         logger.error("Error adding dashboard filter: %s", e)
         return AddDashboardFilterResponse(
             error=f"Failed to add dashboard filter: {str(e)}"

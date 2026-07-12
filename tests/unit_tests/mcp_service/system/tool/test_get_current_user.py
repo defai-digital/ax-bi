@@ -25,6 +25,7 @@ from fastmcp import Client
 from fastmcp.client.client import CallToolResult
 from mcp.types import TextContent
 from pydantic import ValidationError
+from sqlalchemy.exc import OperationalError
 
 from axbi.mcp_service.app import mcp
 from axbi.mcp_service.chart.schemas import ChartFilter
@@ -353,6 +354,31 @@ def test_instance_info_none_current_user_in_serialized_output():
     data = json.loads(info.model_dump_json())
     assert "current_user" in data
     assert data["current_user"] is None
+
+
+def test_get_instance_info_retries_after_best_effort_session_reset() -> None:
+    """A transient connection failure resets the session before one retry."""
+    module = importlib.import_module("axbi.mcp_service.system.tool.get_instance_info")
+    expected = _make_instance_info()
+    connection_error = OperationalError("connection closed", None, None)
+
+    with (
+        patch.object(
+            module,
+            "_run_instance_info",
+            side_effect=[connection_error, expected],
+        ) as run_instance_info,
+        patch.object(
+            module,
+            "reset_session_safely",
+            return_value=False,
+        ) as reset_session,
+    ):
+        result = module._run_instance_info_with_retry()
+
+    assert result is expected
+    assert run_instance_info.call_count == 2
+    reset_session.assert_called_once_with(context="get_instance_info connection reset")
 
 
 # ---------------------------------------------------------------------------

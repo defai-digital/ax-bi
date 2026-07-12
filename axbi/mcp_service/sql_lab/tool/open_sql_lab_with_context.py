@@ -27,13 +27,13 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from axbi_core.mcp.decorators import tool, ToolAnnotations
 from fastmcp import Context
 
-from axbi.extensions import db
 from axbi.mcp_service.sql_lab.schemas import (
     OpenSqlLabRequest,
     SqlLabResponse,
 )
 from axbi.mcp_service.utils import sanitize_for_llm_context
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 
 logger = logging.getLogger(__name__)
@@ -168,15 +168,7 @@ def open_sql_lab_with_context(
         )
 
     except Exception as e:
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except Exception:  # noqa: BLE001
-            # Broad catch: the DB connection itself may be broken (e.g.,
-            # SSL drop), so even rollback can fail with non-SQLAlchemy
-            # errors. This is a cleanup path — swallow and log.
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="SQL Lab URL error handling")
         logger.error("Error generating SQL Lab URL: %s", e)
         return _sanitize_sql_lab_response_for_llm_context(
             SqlLabResponse(

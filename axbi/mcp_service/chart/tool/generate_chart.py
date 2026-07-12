@@ -59,6 +59,7 @@ from axbi.mcp_service.utils.oauth2_utils import (
     build_oauth2_redirect_message,
     OAUTH2_CONFIG_ERROR_MESSAGE,
 )
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 from axbi.utils import json
 
@@ -699,7 +700,6 @@ async def generate_chart(  # noqa: C901
         if request.save_chart and chart:
             from sqlalchemy.orm import joinedload
 
-            from axbi import db
             from axbi.daos.chart import ChartDAO
             from axbi.mcp_service.chart.schemas import serialize_chart_object
             from axbi.models.slice import Slice
@@ -727,13 +727,7 @@ async def generate_chart(  # noqa: C901
                     chart.id,
                     exc_info=True,
                 )
-                try:
-                    db.session.rollback()  # pylint: disable=consider-using-transaction
-                except SQLAlchemyError:
-                    logger.warning(
-                        "Database rollback failed during chart re-fetch error handling",
-                        exc_info=True,
-                    )
+                rollback_session_safely(context="chart re-fetch error handling")
                 chart_data = {
                     "id": chart.id,
                     "slice_name": chart.slice_name,
@@ -839,14 +833,7 @@ async def generate_chart(  # noqa: C901
             }
         )
     except (CommandException, SQLAlchemyError, KeyError, ValueError) as e:
-        from axbi import db
-
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="chart generation error handling")
         await ctx.error(
             f"Chart generation failed: error={str(e)}, "
             f"execution_time_ms={int((time.time() - start_time) * 1000)}"

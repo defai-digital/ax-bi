@@ -42,6 +42,7 @@ from axbi.mcp_service.dashboard.schemas import (
 )
 from axbi.mcp_service.privacy import user_can_view_data_model_metadata
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 from axbi.utils import json
 
@@ -572,20 +573,12 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
                 or updated_dashboard
             )
         except SQLAlchemyError:
-            from axbi import db
-
             logger.warning(
                 "Re-fetch of dashboard %s failed; returning minimal response",
                 updated_dashboard.id,
                 exc_info=True,
             )
-            try:
-                db.session.rollback()  # pylint: disable=consider-using-transaction
-            except SQLAlchemyError:
-                logger.warning(
-                    "Database rollback failed during dashboard re-fetch error handling",
-                    exc_info=True,
-                )
+            rollback_session_safely(context="dashboard re-fetch error handling")
             dashboard_url = (
                 f"{get_axbi_base_url()}/ax-bi/dashboard/{updated_dashboard.id}/"
             )
@@ -659,14 +652,7 @@ def add_chart_to_existing_dashboard(  # noqa: C901 — complexity is structural 
         )
 
     except (CommandException, SQLAlchemyError, KeyError, ValueError) as e:
-        from axbi import db
-
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="add-chart-to-dashboard error handling")
         logger.error("Error adding chart to dashboard: %s", e)
         return AddChartToDashboardResponse(
             dashboard=None,

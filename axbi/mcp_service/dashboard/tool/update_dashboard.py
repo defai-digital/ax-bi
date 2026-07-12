@@ -31,6 +31,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.exc import SQLAlchemyError
 
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 
 logger = logging.getLogger(__name__)
@@ -202,13 +203,6 @@ def update_dashboard(  # noqa: C901
         )
 
     except (SQLAlchemyError, ValueError) as e:
-        from axbi import db
-
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="dashboard update error handling")
         logger.error("Error updating dashboard: %s", e)
         return UpdateDashboardResponse(error=f"Failed to update dashboard: {str(e)}")

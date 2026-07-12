@@ -49,6 +49,7 @@ from axbi.mcp_service.dashboard.schemas import (
 )
 from axbi.mcp_service.privacy import user_can_view_data_model_metadata
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 from axbi.utils import json
 
@@ -364,20 +365,12 @@ def generate_dashboard(  # noqa: C901
                 or dashboard
             )
         except SQLAlchemyError:
-            from axbi import db
-
             logger.warning(
                 "Re-fetch of dashboard %s failed; returning minimal response",
                 dashboard.id,
                 exc_info=True,
             )
-            try:
-                db.session.rollback()  # pylint: disable=consider-using-transaction
-            except SQLAlchemyError:
-                logger.warning(
-                    "Database rollback failed during dashboard re-fetch error handling",
-                    exc_info=True,
-                )
+            rollback_session_safely(context="dashboard re-fetch error handling")
             dashboard_url = f"{get_axbi_base_url()}/ax-bi/dashboard/{dashboard.id}/"
             return GenerateDashboardResponse(
                 dashboard=DashboardInfo(
@@ -453,14 +446,7 @@ def generate_dashboard(  # noqa: C901
         AttributeError,
         ValidationError,
     ) as e:
-        from axbi import db
-
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="dashboard generation error handling")
         logger.error("Error creating dashboard: %s", e, exc_info=True)
         return GenerateDashboardResponse(
             dashboard=None,

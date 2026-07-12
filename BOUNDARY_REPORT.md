@@ -42,17 +42,18 @@ The low-risk boundary cleanup pass is complete. Completed work included:
   command so compile-check failures cannot leave a chart visible after the tool
   reports that it was discarded.
 - Moving chart state refreshes behind `ChartDAO`, keeping ORM session access out
-  of MCP tool happy paths while retaining tool-level rollback for failed request
-  recovery.
+  of MCP tool happy paths while routing failed-request rollback through a shared
+  MCP session boundary.
 - Routing chart and database entity lookups in mutating/SQL-execution tools
   through their resource DAOs while preserving explicit object authorization
   and not-found behavior.
 - Moving dashboard-filter, preview-dataset, post-upload dataset, and semantic
   alias reads behind resource DAOs; semantic aliases are scoped by both object
   name and dataset so unrelated columns cannot inherit each other's aliases.
-- Hardening MCP authentication retry cleanup so scoped-session removal still
-  runs when rollback fails, using the connection-invalidation-aware removal
-  path before retrying user resolution.
+- Centralizing MCP scoped-session recovery in `session_utils.py`: authentication
+  uses strict, connection-aware removal before user resolution, while error
+  paths attempt rollback and removal independently without masking the primary
+  failure. MCP tool modules no longer mutate scoped sessions directly.
 
 ## Deferred Boundary Areas
 

@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.exc import SQLAlchemyError
 
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
+from axbi.mcp_service.utils.session_utils import rollback_session_safely
 
 logger = logging.getLogger(__name__)
 
@@ -272,14 +273,7 @@ def create_report(  # noqa: C901
         )
 
     except SQLAlchemyError as e:
-        from axbi import db
-
-        try:
-            db.session.rollback()  # pylint: disable=consider-using-transaction
-        except SQLAlchemyError:
-            logger.warning(
-                "Database rollback failed during error handling", exc_info=True
-            )
+        rollback_session_safely(context="report creation error handling")
         logger.error("Error creating report: %s", e)
         return CreateReportResponse(error=f"Failed to create report: {str(e)}")
     except Exception as e:  # noqa: BLE001

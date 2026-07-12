@@ -443,7 +443,7 @@ def test_sync_wrapper_handles_ssl_error_on_pre_call_remove(app) -> None:
 
     If the underlying DBAPI connection died between requests (e.g. RDS SSL
     idle-timeout), the rollback implicit in session.close() raises
-    OperationalError.  _remove_session_safe() should:
+    OperationalError. The shared connection-recovery helper should:
     - Log a warning
     - Call session.invalidate() to mark the dead connection for pool discard
     - Retry session.remove() so the registry is clean
