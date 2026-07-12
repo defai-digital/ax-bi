@@ -44,6 +44,12 @@ CHART_CUSTOM_FIELDS = {
 class ChartDAO(BaseDAO[Slice]):
     base_filter = ChartFilter
 
+    @staticmethod
+    def refresh(chart: Slice) -> Slice:
+        """Reload database-backed chart state in the active scoped session."""
+        db.session.refresh(chart)
+        return chart
+
     @classmethod
     def apply_column_operators(
         cls,

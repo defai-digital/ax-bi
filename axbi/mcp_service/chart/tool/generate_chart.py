@@ -370,10 +370,10 @@ async def generate_chart(  # noqa: C901
 
                     # Reload server-generated timestamps (created_on,
                     # changed_on) so the serializer sees real values.
-                    from axbi import db
+                    from axbi.daos.chart import ChartDAO
 
                     try:
-                        db.session.refresh(chart)
+                        chart = ChartDAO.refresh(chart)
                     except SQLAlchemyError:
                         logger.warning(
                             "Chart %s created but refresh failed; "

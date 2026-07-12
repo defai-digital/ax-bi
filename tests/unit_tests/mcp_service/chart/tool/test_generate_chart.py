@@ -329,7 +329,7 @@ class TestGenerateChart:
                 return_value=True,
             ),
             patch("axbi.commands.chart.create.CreateChartCommand") as create_command,
-            patch("axbi.db.session.refresh"),
+            patch("axbi.daos.chart.ChartDAO.refresh", return_value=chart),
             patch(
                 "axbi.mcp_service.chart.tool.generate_chart.validate_chart_dataset",
                 return_value=Mock(is_valid=True, warnings=[], error=None),

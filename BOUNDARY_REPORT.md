@@ -33,6 +33,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Routing failed generated-chart cleanup through the transactional delete
   command so compile-check failures cannot leave a chart visible after the tool
   reports that it was discarded.
+- Moving chart state refreshes behind `ChartDAO`, keeping ORM session access out
+  of MCP tool happy paths while retaining tool-level rollback for failed request
+  recovery.
 
 ## Deferred Boundary Areas
 
