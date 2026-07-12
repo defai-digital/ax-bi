@@ -21,7 +21,7 @@ import { t } from '@ax-bi/core/translation';
 import { getClientErrorObject } from '@ax-bi/ui-core';
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useBeforeUnload } from 'src/hooks/useBeforeUnload';
-import type { Location, Action } from 'history';
+import type { Action, Transition } from 'history';
 
 type UseUnsavedChangesPromptProps = {
   hasUnsavedChanges: boolean;
@@ -29,6 +29,16 @@ type UseUnsavedChangesPromptProps = {
   isSaveModalVisible?: boolean;
   manualSaveOnUnsavedChanges?: boolean;
 };
+
+/**
+ * history v5 always blocks when a blocker is registered and invokes the
+ * blocker with a single Transition (`{ action, location, retry }`). Returning
+ * true/false from the blocker is ignored — allowed transitions must
+ * `unblock()` then `retry()`, then re-install the blocker when still dirty.
+ */
+function isReplaceAction(action: Action): boolean {
+  return action === 'REPLACE';
+}
 
 export const useUnsavedChangesPrompt = ({
   hasUnsavedChanges,
@@ -42,6 +52,11 @@ export const useUnsavedChangesPrompt = ({
   const confirmNavigationRef = useRef<(() => void) | null>(null);
   const unblockRef = useRef<() => void>(() => {});
   const manualSaveRef = useRef(false); // Track if save was user-initiated (not via navigation)
+  const hasUnsavedChangesRef = useRef(hasUnsavedChanges);
+  hasUnsavedChangesRef.current = hasUnsavedChanges;
+
+  // Stable installer so the Transition callback can re-block after allow+retry.
+  const installBlockerRef = useRef<() => void>(() => {});
 
   const handleConfirmNavigation = useCallback(() => {
     setShowModal(false);
@@ -70,52 +85,54 @@ export const useUnsavedChangesPrompt = ({
     onSave();
   }, [onSave]);
 
-  const blockCallback = useCallback(
-    (
-      {
-        pathname,
-        search,
-        state,
-      }: {
-        pathname: Location['pathname'];
-        search: Location['search'];
-        state: Location['state'];
-      },
-      action: Action,
-    ) => {
-      // REPLACE actions are URL sync (e.g. updating form_data_key), not navigation
-      if (action === 'REPLACE') {
-        return undefined;
+  const onBlockTransition = useCallback((tx: Transition) => {
+    const { action, retry } = tx;
+
+    const allowAndRetry = () => {
+      unblockRef.current?.();
+      retry();
+      if (hasUnsavedChangesRef.current) {
+        installBlockerRef.current();
       }
+    };
 
-      if (manualSaveRef.current) {
-        manualSaveRef.current = false;
-        return undefined;
+    // REPLACE actions are URL sync (e.g. updating form_data_key), not leave.
+    if (isReplaceAction(action)) {
+      allowAndRetry();
+      return;
+    }
+
+    if (manualSaveRef.current) {
+      manualSaveRef.current = false;
+      allowAndRetry();
+      return;
+    }
+
+    // Hold navigation until the user confirms discard (or save elsewhere).
+    confirmNavigationRef.current = () => {
+      unblockRef.current?.();
+      retry();
+      // Leaving the page typically clears dirty state; if still dirty, re-block.
+      if (hasUnsavedChangesRef.current) {
+        installBlockerRef.current();
       }
+    };
 
-      confirmNavigationRef.current = () => {
-        unblockRef.current?.();
-        if (action === 'POP') {
-          history.go(-1);
-        } else {
-          history.push({ pathname, search }, state);
-        }
-      };
+    setShowModal(true);
+  }, []);
 
-      setShowModal(true);
-      return false;
-    },
-    [history],
-  );
+  installBlockerRef.current = () => {
+    unblockRef.current = history.block(onBlockTransition);
+  };
 
   useEffect(() => {
     if (!hasUnsavedChanges) return undefined;
 
-    const unblock = history.block(blockCallback);
-    unblockRef.current = unblock;
-
-    return () => unblock();
-  }, [blockCallback, hasUnsavedChanges, history]);
+    installBlockerRef.current();
+    return () => {
+      unblockRef.current?.();
+    };
+  }, [hasUnsavedChanges, history, onBlockTransition]);
 
   useEffect(() => {
     if (!isSaveModalVisible && manualSaveRef.current) {

@@ -25,7 +25,16 @@ type Path = string | LocationDescriptor<LocationState>;
 
 type HistoryLike = Pick<
   History,
-  'push' | 'replace' | 'go' | 'back' | 'forward' | 'block' | 'listen' | 'createHref' | 'action' | 'location'
+  | 'push'
+  | 'replace'
+  | 'go'
+  | 'back'
+  | 'forward'
+  | 'block'
+  | 'listen'
+  | 'createHref'
+  | 'action'
+  | 'location'
 >;
 
 function asHistoryLike(navigator: unknown): HistoryLike | null {
@@ -63,12 +72,17 @@ export function useAppHistory() {
   }, [activeHistory]);
 
   return useMemo(() => {
+    // history v5's push/replace always take state as the *second* argument.
+    // When the second arg is omitted, getNextLocation sets state to null and
+    // overwrites any state embedded on a location object — so call sites like
+    // history.push({ pathname, state: { requestedQuery } }) would lose payload.
     const push = (path: Path, state?: LocationState) => {
       if (typeof path === 'string') {
         activeHistory.push(path, state);
         return;
       }
-      activeHistory.push({ ...path, state: state ?? path.state });
+      const { state: pathState, ...to } = path;
+      activeHistory.push(to, state !== undefined ? state : pathState);
     };
 
     const replace = (path: Path, state?: LocationState) => {
@@ -76,7 +90,8 @@ export function useAppHistory() {
         activeHistory.replace(path, state);
         return;
       }
-      activeHistory.replace({ ...path, state: state ?? path.state });
+      const { state: pathState, ...to } = path;
+      activeHistory.replace(to, state !== undefined ? state : pathState);
     };
 
     return {

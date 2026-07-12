@@ -128,7 +128,7 @@ test('should close modal when handleConfirmNavigation is called', () => {
 
 test('should preserve pathname, search, and state when confirming navigation', () => {
   const onSave = jest.fn();
-  const history = createMemoryHistory();
+  const history = createMemoryHistory({ initialEntries: ['/dashboard'] });
   const wrapper = ({ children }: any) => (
     <HistoryRouter history={history}>{children}</HistoryRouter>
   );
@@ -142,26 +142,51 @@ test('should preserve pathname, search, and state when confirming navigation', (
     { wrapper },
   );
 
-  const pushSpy = jest.spyOn(history, 'push');
-
   // Simulate a blocked navigation (the hook sets up history.block internally)
   act(() => {
     history.push({ pathname, search }, locationState);
   });
 
-  // Modal should now be visible
+  // Modal should now be visible; location must still be the origin page
   expect(result.current.showModal).toBe(true);
+  expect(history.location.pathname).toBe('/dashboard');
 
-  // Confirm navigation
+  // Confirm navigation — history v5 retry() completes the original transition
   act(() => {
     result.current.handleConfirmNavigation();
   });
 
-  // Modal should close
+  // Modal should close and the blocked destination is applied with full state
   expect(result.current.showModal).toBe(false);
+  expect(history.location.pathname).toBe(pathname);
+  expect(history.location.search).toBe(search);
+  expect(history.location.state).toEqual(locationState);
+});
 
-  // Verify correct call with pathname, search, and state preserved
-  expect(pushSpy).toHaveBeenCalledWith({ pathname, search }, locationState);
+test('should allow REPLACE URL sync without showing the modal', () => {
+  const onSave = jest.fn();
+  const history = createMemoryHistory({ initialEntries: ['/explore'] });
+  const wrapper = ({ children }: any) => (
+    <HistoryRouter history={history}>{children}</HistoryRouter>
+  );
 
-  pushSpy.mockRestore();
+  const { result } = renderHook(
+    () => useUnsavedChangesPrompt({ hasUnsavedChanges: true, onSave }),
+    { wrapper },
+  );
+
+  act(() => {
+    history.replace('/explore?form_data_key=abc');
+  });
+
+  expect(result.current.showModal).toBe(false);
+  expect(history.location.pathname).toBe('/explore');
+  expect(history.location.search).toBe('?form_data_key=abc');
+
+  // Subsequent PUSH navigations are still blocked
+  act(() => {
+    history.push('/another-page');
+  });
+  expect(result.current.showModal).toBe(true);
+  expect(history.location.pathname).toBe('/explore');
 });

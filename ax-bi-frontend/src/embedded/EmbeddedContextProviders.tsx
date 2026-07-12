@@ -70,7 +70,6 @@ export const EmbeddedContextProviders: React.FC<{
   return (
     <AxBIThemeProvider themeController={themeController}>
       <ReduxProvider store={store}>
-        {/* @ts-expect-error react-dnd types not updated for React 18 */}
         <DndProvider backend={HTML5Backend}>
           <EmbeddedUiConfigProvider>
             <DynamicPluginProvider>
