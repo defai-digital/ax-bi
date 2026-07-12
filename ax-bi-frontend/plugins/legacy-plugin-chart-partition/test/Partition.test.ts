@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { pointer } from 'd3-selection';
+import { pointer } from 'd3';
 import Partition from '../src/Partition';
 
 const sampleTree = [
@@ -184,7 +184,7 @@ test('Partition pointer-based tooltip path does not throw on mouseover', () => {
   });
   expect(() => node!.dispatchEvent(event)).not.toThrow();
 
-  // Sanity: d3-selection pointer is the module Partition uses for tip position.
+  // Sanity: the shared D3 instance provides the pointer used for tip position.
   const [px, py] = pointer(event, el);
   expect(Number.isFinite(px)).toBe(true);
   expect(Number.isFinite(py)).toBe(true);

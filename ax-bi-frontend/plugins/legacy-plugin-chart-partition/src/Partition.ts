@@ -21,8 +21,7 @@
 // Uses the same approach as NVD3Vis.ts and other heavily D3-dependent files.
 /* eslint no-param-reassign: [2, {"props": false}] */
 import PropTypes from 'prop-types';
-import { select, pointer } from 'd3-selection';
-import 'd3-transition';
+import { select, pointer } from 'd3';
 import { scaleLinear } from 'd3-scale';
 import { hierarchy, HierarchyNode } from 'd3-hierarchy';
 import {

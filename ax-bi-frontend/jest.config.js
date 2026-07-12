@@ -69,9 +69,9 @@ module.exports = {
     'dist/',
   ],
   coverageReporters: ['lcov', 'json-summary', 'html', 'text'],
-  // react-dnd@16+ and dnd-core/@react-dnd/* are ESM-only and must be transformed
+  // react-dnd@16+, dnd-core/@react-dnd/*, and D3 v7 are ESM-only and must be transformed
   transformIgnorePatterns: [
-    'node_modules/(?!@formatjs/.*|d3-.*|delaunator|robust-predicates|internmap|@mapbox/tiny-sdf|remark-gfm|(?!@ngrx|(?!deck.gl)|d3-scale)|markdown-table|micromark-*.|decode-named-character-reference|character-entities|mdast-util-*.|unist-util-*.|ccount|escape-string-regexp|nanoid|uuid|@rjsf/*.|antd|@ant-design/.*|echarts|zrender|fetch-mock|pretty-ms|parse-ms|ol|@babel/runtime|@emotion|cheerio|cheerio/lib|parse5|dom-serializer|entities|htmlparser2|rehype-sanitize|hast-util-sanitize|unified|unist-.*|hast-.*|rehype-.*|remark-.*|mdast-.*|micromark-.*|parse-entities|property-information|space-separated-tokens|comma-separated-tokens|bail|devlop|zwitch|longest-streak|geostyler|geostyler-.*|(?!geostyler)lodash|react-error-boundary|react-json-tree|react-base16-styling|lodash-es|rbush|quickselect|react-diff-viewer-continued|react-resize-detector|storybook/*.|@storybook/.*|json-stringify-pretty-compact|react-dnd|react-dnd-html5-backend|react-dnd-test-backend|dnd-core|@react-dnd/.*)',
+    'node_modules/(?!@formatjs/.*|d3|d3-.*|delaunator|robust-predicates|internmap|@mapbox/tiny-sdf|remark-gfm|(?!@ngrx|(?!deck.gl)|d3-scale)|markdown-table|micromark-*.|decode-named-character-reference|character-entities|mdast-util-*.|unist-util-*.|ccount|escape-string-regexp|nanoid|uuid|@rjsf/*.|antd|@ant-design/.*|echarts|zrender|fetch-mock|pretty-ms|parse-ms|ol|@babel/runtime|@emotion|cheerio|cheerio/lib|parse5|dom-serializer|entities|htmlparser2|rehype-sanitize|hast-util-sanitize|unified|unist-.*|hast-.*|rehype-.*|remark-.*|mdast-.*|micromark-.*|parse-entities|property-information|space-separated-tokens|comma-separated-tokens|bail|devlop|zwitch|longest-streak|geostyler|geostyler-.*|(?!geostyler)lodash|react-error-boundary|react-json-tree|react-base16-styling|lodash-es|rbush|quickselect|react-diff-viewer-continued|react-resize-detector|storybook/*.|@storybook/.*|json-stringify-pretty-compact|react-dnd|react-dnd-html5-backend|react-dnd-test-backend|dnd-core|@react-dnd/.*)',
   ],
   preset: 'ts-jest',
   transform: {
