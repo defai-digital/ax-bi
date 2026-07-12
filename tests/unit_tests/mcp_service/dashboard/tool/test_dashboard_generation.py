@@ -639,10 +639,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_to_dashboard_basic(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """Test adding a chart to an existing dashboard."""
         mock_dashboard = _mock_dashboard(id=1, title="Existing Dashboard")
@@ -691,7 +691,7 @@ class TestAddChartToExistingDashboard:
         mock_find_dashboard.side_effect = [mock_dashboard, updated_dashboard]
 
         mock_chart = _mock_chart(id=30, slice_name="New Chart")
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         mock_update_command.return_value.run.return_value = updated_dashboard
 
@@ -725,10 +725,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_restricted_user_redacts_chart_datasource_name(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         mock_dashboard = _mock_dashboard(id=1, title="Existing Dashboard")
         mock_dashboard.slices = []
@@ -736,7 +736,7 @@ class TestAddChartToExistingDashboard:
 
         chart = _mock_chart(id=30, slice_name="New Chart")
         chart.datasource_name = "Vehicle Sales"
-        mock_db_session.get.return_value = chart
+        mock_find_chart.return_value = chart
 
         updated_dashboard = _mock_dashboard(id=1, title="Existing Dashboard")
         updated_dashboard.slices = [chart]
@@ -778,14 +778,14 @@ class TestAddChartToExistingDashboard:
             )
 
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_chart_not_found(
-        self, mock_db_session, mock_find_dashboard, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mcp_server
     ):
         """Test error when chart doesn't exist."""
         mock_find_dashboard.return_value = _mock_dashboard()
-        mock_db_session.get.return_value = None
+        mock_find_chart.return_value = None
         request = {"dashboard_id": 1, "chart_id": 999}
 
         async with Client(mcp_server) as client:
@@ -796,15 +796,15 @@ class TestAddChartToExistingDashboard:
             assert "Chart with ID 999 not found" in result.structured_content["error"]
 
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_dataset_not_accessible(
-        self, mock_db_session, mock_find_dashboard, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mcp_server
     ):
         """Test error when chart's dataset is not accessible."""
         mock_find_dashboard.return_value = _mock_dashboard()
         mock_chart = _mock_chart(id=7)
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         # Override autouse fixture: chart 7 has inaccessible dataset
         with patch(
@@ -833,16 +833,16 @@ class TestAddChartToExistingDashboard:
                 assert result.structured_content["dashboard"] is None
 
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_already_in_dashboard(
-        self, mock_db_session, mock_find_dashboard, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mcp_server
     ):
         """Test error when chart is already in dashboard."""
         mock_dashboard = _mock_dashboard()
         mock_dashboard.slices = [_mock_chart(id=5)]
         mock_find_dashboard.return_value = mock_dashboard
-        mock_db_session.get.return_value = _mock_chart(id=5)
+        mock_find_chart.return_value = _mock_chart(id=5)
         request = {"dashboard_id": 1, "chart_id": 5}
 
         async with Client(mcp_server) as client:
@@ -857,10 +857,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_empty_dashboard(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """Test adding chart to dashboard with no existing layout."""
         mock_dashboard = _mock_dashboard(id=2)
@@ -869,7 +869,7 @@ class TestAddChartToExistingDashboard:
         mock_find_dashboard.return_value = mock_dashboard
 
         mock_chart = _mock_chart(id=15)
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         updated_dashboard = _mock_dashboard(id=2)
         updated_dashboard.slices = [_mock_chart(id=15)]
@@ -913,10 +913,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_to_tabbed_dashboard(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """Test adding chart to a dashboard that uses tabs."""
         mock_dashboard = _mock_dashboard(id=3, title="Tabbed Dashboard")
@@ -976,7 +976,7 @@ class TestAddChartToExistingDashboard:
             }
         )
         mock_chart = _mock_chart(id=25, slice_name="Tab Chart")
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         updated_dashboard = _mock_dashboard(id=3, title="Tabbed Dashboard")
         updated_dashboard.slices = [_mock_chart(id=10), _mock_chart(id=25)]
@@ -1015,10 +1015,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_to_specific_tab_by_name(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """Test adding chart to a specific tab using target_tab name."""
         mock_dashboard = _mock_dashboard(id=3, title="Tabbed Dashboard")
@@ -1078,7 +1078,7 @@ class TestAddChartToExistingDashboard:
             }
         )
         mock_chart = _mock_chart(id=30, slice_name="Customer Chart")
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         updated_dashboard = _mock_dashboard(id=3, title="Tabbed Dashboard")
         updated_dashboard.slices = [_mock_chart(id=10), _mock_chart(id=30)]
@@ -1118,10 +1118,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_target_tab_not_found(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ) -> None:
         """target_tab specified but no matching tab → descriptive error listing
         available tabs, not a silent fallback to the first tab."""
@@ -1160,7 +1160,7 @@ class TestAddChartToExistingDashboard:
             }
         )
         mock_chart = _mock_chart(id=30)
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
         mock_find_dashboard.return_value = mock_dashboard
 
         request = {"dashboard_id": 3, "chart_id": 30, "target_tab": "Nonexistent Tab"}
@@ -1184,10 +1184,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_target_tab_on_non_tabbed_dashboard(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ) -> None:
         """target_tab on a dashboard with no tabs → descriptive error."""
         mock_dashboard = _mock_dashboard(id=5, title="Flat Dashboard")
@@ -1205,7 +1205,7 @@ class TestAddChartToExistingDashboard:
             }
         )
         mock_chart = _mock_chart(id=99)
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
         mock_find_dashboard.return_value = mock_dashboard
 
         request = {"dashboard_id": 5, "chart_id": 99, "target_tab": "Sales"}
@@ -1224,10 +1224,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_to_tabbed_dashboard_tabs_under_root(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """Test adding chart when TABS are under ROOT_ID (real-world layout).
 
@@ -1297,7 +1297,7 @@ class TestAddChartToExistingDashboard:
             }
         )
         mock_chart = _mock_chart(id=91, slice_name="Vaccines by Stage")
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         updated_dashboard = _mock_dashboard(id=7, title="COVID Vaccine Dashboard")
         updated_dashboard.slices = [_mock_chart(id=10), _mock_chart(id=91)]
@@ -1336,10 +1336,10 @@ class TestAddChartToExistingDashboard:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_dashboard_with_nanoid_rows(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """Test adding chart to dashboard that has nanoid-style ROW IDs."""
         mock_dashboard = _mock_dashboard(id=4, title="Nanoid Dashboard")
@@ -1375,7 +1375,7 @@ class TestAddChartToExistingDashboard:
         mock_find_dashboard.return_value = mock_dashboard
 
         mock_chart = _mock_chart(id=50, slice_name="New Nanoid Chart")
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         updated_dashboard = _mock_dashboard(id=4, title="Nanoid Dashboard")
         updated_dashboard.slices = [_mock_chart(id=10), _mock_chart(id=50)]
@@ -1761,10 +1761,10 @@ class TestDashboardSerializationEagerLoading:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_refetches_dashboard_via_dao(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """add_chart_to_existing_dashboard re-fetches dashboard via
         DashboardDAO.find_by_id with eager-loaded slice relationships."""
@@ -1773,7 +1773,7 @@ class TestDashboardSerializationEagerLoading:
         mock_dashboard.position_json = "{}"
 
         mock_chart = _mock_chart(id=5, slice_name="New Chart")
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         updated_dashboard = _mock_dashboard(id=1)
         updated_dashboard.slices = [mock_chart]
@@ -1796,10 +1796,10 @@ class TestDashboardSerializationEagerLoading:
 
     @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
-    @patch("axbi.db.session")
+    @patch("axbi.daos.chart.ChartDAO.find_by_id")
     @pytest.mark.asyncio
     async def test_add_chart_falls_back_on_refetch_failure(
-        self, mock_db_session, mock_find_dashboard, mock_update_command, mcp_server
+        self, mock_find_chart, mock_find_dashboard, mock_update_command, mcp_server
     ):
         """add_chart_to_existing_dashboard falls back to original dashboard
         if DashboardDAO.find_by_id returns None on re-fetch."""
@@ -1808,7 +1808,7 @@ class TestDashboardSerializationEagerLoading:
         mock_dashboard.position_json = "{}"
 
         mock_chart = _mock_chart(id=5, slice_name="New Chart")
-        mock_db_session.get.return_value = mock_chart
+        mock_find_chart.return_value = mock_chart
 
         updated_dashboard = _mock_dashboard(id=1)
         updated_dashboard.slices = [mock_chart]

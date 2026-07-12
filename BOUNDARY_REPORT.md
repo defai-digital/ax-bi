@@ -36,6 +36,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Moving chart state refreshes behind `ChartDAO`, keeping ORM session access out
   of MCP tool happy paths while retaining tool-level rollback for failed request
   recovery.
+- Routing chart and database entity lookups in mutating/SQL-execution tools
+  through their resource DAOs while preserving explicit object authorization
+  and not-found behavior.
 
 ## Deferred Boundary Areas
 

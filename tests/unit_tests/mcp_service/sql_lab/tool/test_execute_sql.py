@@ -23,6 +23,7 @@ and response conversion logic.
 """
 
 import logging
+from collections.abc import Iterator
 from decimal import Decimal
 from typing import Any
 from unittest.mock import call, MagicMock, Mock, patch
@@ -61,6 +62,30 @@ def mock_auth():
         mock_user.username = "admin"
         mock_get_user.return_value = mock_user
         yield mock_get_user
+
+
+@pytest.fixture(autouse=True)
+def mock_database_lookup() -> Iterator[MagicMock]:
+    """Bridge existing session-shaped fixtures to the production DAO boundary."""
+
+    def _find_by_id(
+        _database_id: int,
+        skip_base_filter: bool = False,
+    ) -> Any:
+        assert skip_base_filter is True
+        from axbi import db
+
+        if isinstance(db, Mock):
+            return (
+                db.session.query.return_value.filter_by.return_value.first.return_value
+            )
+        return None
+
+    with patch(
+        "axbi.daos.database.DatabaseDAO.find_by_id",
+        side_effect=_find_by_id,
+    ) as mock_find:
+        yield mock_find
 
 
 def _create_select_result(
@@ -148,7 +173,11 @@ class TestExecuteSql:
     @patch("axbi.db")
     @pytest.mark.asyncio
     async def test_execute_sql_basic_select(
-        self, mock_db, mock_security_manager, mcp_server
+        self,
+        mock_db,
+        mock_security_manager,
+        mcp_server,
+        mock_database_lookup,
     ):
         """Test basic SELECT query execution."""
         mock_database = _mock_database()
@@ -190,6 +219,7 @@ class TestExecuteSql:
             assert options.limit == 10
             # Caching is enabled by default (force_refresh=False means cache=None)
             assert options.cache is None
+            mock_database_lookup.assert_called_once_with(1, skip_base_filter=True)
 
     @patch("axbi.security_manager")
     @patch("axbi.db")

@@ -200,21 +200,21 @@ async def test_permission_denied(
     assert "new dashboard" in content["error"].lower()
 
 
-@patch("axbi.db.session.get")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 @patch("axbi.security_manager.raise_for_ownership")
 @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_chart_not_found(
     mock_find_by_id: Mock,
     mock_raise_for_ownership: Mock,
-    mock_session_get: Mock,
+    mock_find_chart: Mock,
     mcp_server: object,
 ) -> None:
     """Returns an error when the requested chart does not exist."""
     dashboard = _mock_dashboard()
     mock_find_by_id.return_value = dashboard
     mock_raise_for_ownership.return_value = None
-    mock_session_get.return_value = None  # chart not found
+    mock_find_chart.return_value = None  # chart not found
 
     async with Client(mcp_server) as client:
         result = await client.call_tool(
@@ -228,14 +228,14 @@ async def test_chart_not_found(
     assert "99" in (content["error"] or "")
 
 
-@patch("axbi.db.session.get")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 @patch("axbi.security_manager.raise_for_ownership")
 @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_chart_already_in_dashboard(
     mock_find_by_id: Mock,
     mock_raise_for_ownership: Mock,
-    mock_session_get: Mock,
+    mock_find_chart: Mock,
     mcp_server: object,
 ) -> None:
     """Returns an error when the chart is already present on the dashboard."""
@@ -243,7 +243,7 @@ async def test_chart_already_in_dashboard(
     dashboard = _mock_dashboard(slices=[chart])
     mock_find_by_id.return_value = dashboard
     mock_raise_for_ownership.return_value = None
-    mock_session_get.return_value = chart
+    mock_find_chart.return_value = chart
 
     async with Client(mcp_server) as client:
         result = await client.call_tool(
@@ -258,14 +258,14 @@ async def test_chart_already_in_dashboard(
 
 
 @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
-@patch("axbi.db.session.get")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 @patch("axbi.security_manager.raise_for_ownership")
 @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_successful_add(
     mock_find_by_id: Mock,
     mock_raise_for_ownership: Mock,
-    mock_session_get: Mock,
+    mock_find_chart: Mock,
     mock_update_cmd_cls: Mock,
     mcp_server: object,
 ) -> None:
@@ -276,7 +276,7 @@ async def test_successful_add(
 
     mock_find_by_id.side_effect = [dashboard, updated_dashboard]
     mock_raise_for_ownership.return_value = None
-    mock_session_get.return_value = chart
+    mock_find_chart.return_value = chart
 
     mock_update_cmd = Mock()
     mock_update_cmd.run.return_value = updated_dashboard
@@ -295,17 +295,18 @@ async def test_successful_add(
     assert "/ax-bi/dashboard/1/" in content["dashboard_url"]
     assert content["position"] is not None
     assert "chart_key" in content["position"]
+    mock_find_chart.assert_called_once_with(10, skip_base_filter=True)
 
 
 @patch("axbi.commands.dashboard.update.UpdateDashboardCommand")
-@patch("axbi.db.session.get")
+@patch("axbi.daos.chart.ChartDAO.find_by_id")
 @patch("axbi.security_manager.raise_for_ownership")
 @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")
 @pytest.mark.asyncio
 async def test_non_object_position_json_falls_back_to_empty_layout(
     mock_find_by_id: Mock,
     mock_raise_for_ownership: Mock,
-    mock_session_get: Mock,
+    mock_find_chart: Mock,
     mock_update_cmd_cls: Mock,
     mcp_server: object,
 ) -> None:
@@ -317,7 +318,7 @@ async def test_non_object_position_json_falls_back_to_empty_layout(
 
     mock_find_by_id.side_effect = [dashboard, updated_dashboard]
     mock_raise_for_ownership.return_value = None
-    mock_session_get.return_value = chart
+    mock_find_chart.return_value = chart
 
     mock_update_cmd = Mock()
     mock_update_cmd.run.return_value = updated_dashboard

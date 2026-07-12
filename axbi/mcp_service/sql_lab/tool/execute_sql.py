@@ -65,12 +65,13 @@ logger = logging.getLogger(__name__)
 async def _get_database_or_error(
     request: ExecuteSqlRequest,
     ctx: Context,
-    db: Any,
-    database_model: Any,
 ) -> tuple[Any | None, ExecuteSqlResponse | None]:
     with mcp_event_log_context(action="mcp.execute_sql.db_validation"):
-        database = (
-            db.session.query(database_model).filter_by(id=request.database_id).first()
+        from axbi.daos.database import DatabaseDAO
+
+        database = DatabaseDAO.find_by_id(
+            request.database_id,
+            skip_base_filter=True,
         )
         if not database:
             await ctx.warning(f"Database not found: database_id={request.database_id}")
@@ -173,13 +174,10 @@ async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlRes
 
     try:
         # Import inside function to avoid initialization issues
-        from axbi import db, is_feature_enabled
-        from axbi.models.core import Database
+        from axbi import is_feature_enabled
 
         # 1. Get database and check access
-        database, error_response = await _get_database_or_error(
-            request, ctx, db, Database
-        )
+        database, error_response = await _get_database_or_error(request, ctx)
         if error_response is not None:
             return error_response
         assert database is not None
