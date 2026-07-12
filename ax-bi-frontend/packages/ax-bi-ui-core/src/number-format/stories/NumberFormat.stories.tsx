@@ -140,7 +140,7 @@ class NumberFormatValidator extends PureComponent<
 }
 
 export default {
-  title: 'Core Packages/@axbi-ui-number-format',
+  title: 'Core Packages/@ax-bi/ui-core/number-format',
 };
 
 export const validator = () => <NumberFormatValidator />;

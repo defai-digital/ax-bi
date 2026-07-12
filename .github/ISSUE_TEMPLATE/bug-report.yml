@@ -40,7 +40,7 @@ body:
     attributes:
       label: AxBI version
       options:
-        - master / latest-dev
+        - main / latest-dev
         - "6.1.0"
         - "6.0.0"
     validations:

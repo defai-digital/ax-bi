@@ -117,7 +117,7 @@ Extension developers should depend on and use core libraries directly:
 
 **Frontend (examples):**
 - [React](https://react.dev/) - UI framework
-- [Ant Design](https://ant.design/) - UI component library (prefer Superset components from `@apache-superset/core/components` when available to preserve visual consistency)
+- [Ant Design](https://ant.design/) - UI component library (prefer AX BI components from `@ax-bi/core/components` when available to preserve visual consistency)
 - [Emotion](https://emotion.sh/) - CSS-in-JS styling
 - ...
 

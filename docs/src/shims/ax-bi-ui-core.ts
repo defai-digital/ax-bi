@@ -18,16 +18,16 @@
  */
 
 /**
- * Lightweight shim for @superset-ui/core.
+ * Lightweight shim for @ax-bi/ui-core.
  *
- * Components in superset-ui-core/src/components/ self-reference the parent
+ * Components in ax-bi-ui-core/src/components/ self-reference the parent
  * package for utility imports. This shim re-exports only the specific
  * utilities they need, avoiding the full barrel file which pulls in heavy
  * dependencies (d3, query engine, color scales) that cause OOM during the
  * docs build.
  *
  * When adding exports here, verify the source file's imports don't cascade
- * into heavy modules (connection/SupersetClientClass, query/types, etc.).
+ * into heavy modules (connection/AxBIClientClass, query/types, etc.).
  * Only add leaf-level utilities with minimal transitive dependencies.
  *
  * Keep runtime shims intentionally small. If a docs-rendered component needs
@@ -35,26 +35,26 @@
  * here instead of importing the full package barrel.
  */
 
-// Paths relative to docs/src/shims/ → ax-bi-frontend/packages/superset-ui-core/src/
+// Paths relative to docs/src/shims/ → ax-bi-frontend/packages/ax-bi-ui-core/src/
 
 // utils — leaf modules with no heavy transitive deps
-export { default as ensureIsArray } from '../../../ax-bi-frontend/packages/superset-ui-core/src/utils/ensureIsArray';
+export { default as ensureIsArray } from '../../../ax-bi-frontend/packages/ax-bi-ui-core/src/utils/ensureIsArray';
 export {
   safeHtmlSpan,
   isProbablyHTML,
   isJsonString,
-} from '../../../ax-bi-frontend/packages/superset-ui-core/src/utils/html';
+} from '../../../ax-bi-frontend/packages/ax-bi-ui-core/src/utils/html';
 
 // hooks
-export { usePrevious } from '../../../ax-bi-frontend/packages/superset-ui-core/src/hooks/usePrevious/usePrevious';
-export { useTruncation } from '../../../ax-bi-frontend/packages/superset-ui-core/src/hooks/useTruncation';
+export { usePrevious } from '../../../ax-bi-frontend/packages/ax-bi-ui-core/src/hooks/usePrevious/usePrevious';
+export { useTruncation } from '../../../ax-bi-frontend/packages/ax-bi-ui-core/src/hooks/useTruncation';
 
 // time-format
-export { getTimeFormatter } from '../../../ax-bi-frontend/packages/superset-ui-core/src/time-format/TimeFormatterRegistrySingleton';
-export { default as TimeFormats } from '../../../ax-bi-frontend/packages/superset-ui-core/src/time-format/TimeFormats';
+export { getTimeFormatter } from '../../../ax-bi-frontend/packages/ax-bi-ui-core/src/time-format/TimeFormatterRegistrySingleton';
+export { default as TimeFormats } from '../../../ax-bi-frontend/packages/ax-bi-ui-core/src/time-format/TimeFormats';
 
 // color
-export { hexToRgb } from '../../../ax-bi-frontend/packages/superset-ui-core/src/color/utils';
+export { hexToRgb } from '../../../ax-bi-frontend/packages/ax-bi-ui-core/src/color/utils';
 
 export function formatNumber(
   _format: string | undefined,

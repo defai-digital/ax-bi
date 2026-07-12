@@ -43,11 +43,11 @@
 
 /**
  * This script scans for ALL Storybook stories and generates MDX documentation
- * pages for the "Superset Components" section of the developer portal.
+ * pages for the "AX BI Components" section of the developer portal.
  *
  * Supports multiple source directories with different import paths and categories.
  *
- * Usage: node scripts/generate-superset-components.mjs
+ * Usage: node scripts/generate-axbi-components.mjs
  */
 
 import fs from 'fs';
@@ -60,14 +60,14 @@ const ROOT_DIR = path.resolve(__dirname, '../..');
 const DOCS_DIR = path.resolve(__dirname, '..');
 const OUTPUT_DIR = path.join(DOCS_DIR, 'developer_docs/components');
 const JSON_OUTPUT_PATH = path.join(DOCS_DIR, 'static/data/components.json');
-const TYPES_OUTPUT_DIR = path.join(DOCS_DIR, 'src/types/apache-superset-core');
+const TYPES_OUTPUT_DIR = path.join(DOCS_DIR, 'src/types/ax-bi-core');
 const TYPES_OUTPUT_PATH = path.join(TYPES_OUTPUT_DIR, 'index.d.ts');
 const FRONTEND_DIR = path.join(ROOT_DIR, 'ax-bi-frontend');
 
 if (process.argv.includes('--help') || process.argv.includes('-h')) {
-  console.log(`Usage: node scripts/generate-superset-components.mjs
+  console.log(`Usage: node scripts/generate-axbi-components.mjs
 
-Generate Superset component documentation from Storybook stories.
+Generate AX BI component documentation from Storybook stories.
 
 Options:
   --help, -h  Show this help message`);
@@ -78,9 +78,9 @@ Options:
 const SOURCES = [
   {
     name: 'UI Core Components',
-    path: 'packages/superset-ui-core/src/components',
-    importPrefix: '@superset/components',
-    docImportPrefix: '@superset-ui/core/components',
+    path: 'packages/ax-bi-ui-core/src/components',
+    importPrefix: '@ax-bi/ui-core/components',
+    docImportPrefix: '@ax-bi/ui-core/components',
     category: 'ui',
     enabled: true,
     // Components that require complex function props or aren't exported properly
@@ -88,7 +88,7 @@ const SOURCES = [
       // Complex function props (require callbacks, async data, or render props)
       'AsyncSelect', 'ConfirmStatusChange', 'CronPicker', 'LabeledErrorBoundInput',
       'AsyncAceEditor', 'AsyncEsmComponent', 'TimezoneSelector',
-      // Not exported from @superset/components index or have export mismatches
+      // Not exported from @ax-bi/ui-core/components index or have export mismatches
       'ActionCell', 'BooleanCell', 'ButtonCell', 'NullCell', 'NumericCell', 'TimeCell',
       'CertifiedBadgeWithTooltip', 'CodeSyntaxHighlighter', 'DynamicTooltip',
       'PopoverDropdown', 'PopoverSection', 'WarningIconWithTooltip', 'RefreshLabel',
@@ -143,27 +143,27 @@ const SOURCES = [
   },
   {
     name: 'Chart Plugins',
-    path: 'packages/superset-ui-demo/storybook/stories/plugins',
-    importPrefix: '@superset-ui/demo',
-    docImportPrefix: '@superset-ui/demo',
+    path: 'packages/ax-bi-ui-demo/storybook/stories/plugins',
+    importPrefix: '@ax-bi/ui-demo',
+    docImportPrefix: '@ax-bi/ui-demo',
     category: 'chart-plugins',
     enabled: false, // Requires chart infrastructure
     skipComponents: new Set([]),
   },
   {
     name: 'Core Packages',
-    path: 'packages/superset-ui-demo/storybook/stories/superset-ui-chart',
-    importPrefix: '@superset-ui/core',
-    docImportPrefix: '@superset-ui/core',
+    path: 'packages/ax-bi-ui-demo/storybook/stories/ax-bi-ui-chart',
+    importPrefix: '@ax-bi/ui-core',
+    docImportPrefix: '@ax-bi/ui-core',
     category: 'core-packages',
     enabled: false, // Requires specific setup
     skipComponents: new Set([]),
   },
   {
     name: 'Extension Components',
-    path: 'packages/superset-core/src',
-    importPrefix: '@apache-superset/core/components',
-    docImportPrefix: '@apache-superset/core/components',
+    path: 'packages/ax-bi-core/src',
+    importPrefix: '@ax-bi/core/components',
+    docImportPrefix: '@ax-bi/core/components',
     category: 'extension',
     enabled: true,
     extensionCompatible: true,
@@ -399,7 +399,7 @@ function parseStoryFile(filePath, sourceConfig) {
   // Calculate full import path if we found a relative import
   // For UI core components with aliases, keep using the alias
   let resolvedImportPath = sourceConfig.importPrefix;
-  const useAlias = sourceConfig.importPrefix.startsWith('@superset/');
+  const useAlias = sourceConfig.importPrefix === '@ax-bi/ui-core/components';
 
   if (componentImportPath && componentImportPath.startsWith('.') && !useAlias) {
     const storyDir = path.dirname(filePath);
@@ -1130,7 +1130,7 @@ function generateMDX(component, storyContent) {
 
   // The displayed import in user docs should reflect the public package path,
   // not the internal storybook alias.
-  const docImportPath = sourceConfig.importPrefix.startsWith('@superset/')
+  const docImportPath = sourceConfig.importPrefix === '@ax-bi/ui-core/components'
     ? sourceConfig.docImportPrefix
     : componentImportPath;
 
@@ -1138,13 +1138,13 @@ function generateMDX(component, storyContent) {
   // re-exports components as named exports (e.g. `export { default as Foo }`),
   // so users must use named imports even when the story uses a default import.
   const useDefaultImport =
-    isDefaultExport && !sourceConfig.importPrefix.startsWith('@superset/');
+    isDefaultExport && sourceConfig.importPrefix !== '@ax-bi/ui-core/components';
 
   // Only render the import snippet if the component is actually re-exported
   // from the public package barrel; otherwise the snippet would mislead users
   // copy-pasting it (e.g. TableCollection, which has a story but is not
-  // re-exported from `@superset-ui/core/components`).
-  const publicExports = sourceConfig.importPrefix.startsWith('@superset/')
+  // re-exported from `@ax-bi/ui-core/components`).
+  const publicExports = sourceConfig.importPrefix === '@ax-bi/ui-core/components'
     ? getPublicExports(sourceConfig)
     : null;
   const isPubliclyExported =
@@ -1152,8 +1152,8 @@ function generateMDX(component, storyContent) {
 
   // Determine component description based on source
   const defaultDesc = sourceConfig.category === 'ui'
-    ? `The ${componentName} component from Superset's UI library.`
-    : `The ${componentName} component from Superset.`;
+    ? `The ${componentName} component from AX BI's UI library.`
+    : `The ${componentName} component from AX BI.`;
 
   return `---
 title: ${componentName}
@@ -1257,7 +1257,7 @@ Help improve it by [editing the story file](https://github.com/defai-digital/ax-
 const CATEGORY_LABELS = {
   ui: { title: 'Core Components', sidebarLabel: 'Core Components', description: 'Buttons, inputs, modals, selects, and other fundamental UI elements.' },
   'design-system': { title: 'Layout Components', sidebarLabel: 'Layout Components', description: 'Grid, Layout, Table, Flex, Space, and container components for page structure.' },
-  extension: { title: 'Extension Components', sidebarLabel: 'Extension Components', description: 'Components available to extension developers via @apache-superset/core/components.' },
+  extension: { title: 'Extension Components', sidebarLabel: 'Extension Components', description: 'Components available to extension developers via @ax-bi/core/components.' },
 };
 
 /**
@@ -1358,20 +1358,20 @@ import componentData from '@site/static/data/components.json';
 
 A design system is a complete set of standards intended to manage design at scale using reusable components and patterns.
 
-The Superset Design System uses [Atomic Design](https://bradfrost.com/blog/post/atomic-web-design/) principles with adapted terminology:
+The AX BI Design System uses [Atomic Design](https://bradfrost.com/blog/post/atomic-web-design/) principles with adapted terminology:
 
 | Atomic Design | Atoms | Molecules | Organisms | Templates | Pages / Screens |
 |---|:---:|:---:|:---:|:---:|:---:|
-| **Superset Design** | Foundations | Components | Patterns | Templates | Features |
+| **AX BI Design** | Foundations | Components | Patterns | Templates | Features |
 
 <img src="/img/atomic-design.png" alt="Atoms = Foundations, Molecules = Components, Organisms = Patterns, Templates = Templates, Pages / Screens = Features" style={{maxWidth: '100%'}} />
 
 ## Usage
 
-All components are exported from \`@superset-ui/core/components\`:
+All components are exported from \`@ax-bi/ui-core/components\`:
 
 \`\`\`tsx
-import { Button, Modal, Select } from '@superset-ui/core/components';
+import { Button, Modal, Select } from '@ax-bi/ui-core/components';
 \`\`\`
 
 ## Contributing
@@ -1381,7 +1381,7 @@ This documentation is auto-generated from Storybook stories. To add or update co
 1. Create or update the component's \`.stories.tsx\` file
 2. Add a descriptive \`title\` and \`description\` in the story meta
 3. Export an interactive story with \`args\` for configurable props
-4. Run \`yarn generate:superset-components\` in the \`docs/\` directory
+4. Run \`yarn generate:axbi-components\` in the \`docs/\` directory
 
 :::info Work in Progress
 This component library is actively being documented. See the [Components TODO](./TODO.md) page for a list of components awaiting documentation.
@@ -1389,7 +1389,7 @@ This component library is actively being documented. See the [Components TODO](.
 
 ---
 
-*Auto-generated from Storybook stories in the [Design System/Introduction](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/packages/superset-ui-core/src/components/DesignSystem.stories.tsx) story.*
+*Auto-generated from Storybook stories in the [Design System/Introduction](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/packages/ax-bi-ui-core/src/components/DesignSystem.stories.tsx) story.*
 `;
 }
 
@@ -1435,13 +1435,13 @@ ${sections}
 ## How to Add Support
 
 1. Determine the correct import path for the source
-2. Update \`generate-superset-components.mjs\` to handle the source
+2. Update \`generate-axbi-components.mjs\` to handle the source
 3. Add source to \`SUPPORTED_SOURCES\` array
 4. Re-run the generator
 
 ---
 
-*Auto-generated by generate-superset-components.mjs*
+*Auto-generated by generate-axbi-components.mjs*
 `;
 }
 
@@ -1573,10 +1573,10 @@ function generateExtensionTypeDeclarations(extensionComponents) {
  */
 
 /**
- * Type declarations for @apache-superset/core/components
+ * Type declarations for @ax-bi/core/components
  *
- * AUTO-GENERATED by scripts/generate-superset-components.mjs
- * Do not edit manually - regenerate by running: yarn generate:superset-components
+ * AUTO-GENERATED by scripts/generate-axbi-components.mjs
+ * Do not edit manually - regenerate by running: yarn generate:axbi-components
  */
 ${Array.from(imports).join('\n')}
 
@@ -1590,7 +1590,7 @@ ${componentDeclarations.join('\n')}
  * Main function
  */
 async function main() {
-  console.log('Generating Superset Components documentation...\n');
+  console.log('Generating AX BI Components documentation...\n');
 
   // Find enabled story files
   const enabledFiles = findEnabledStoryFiles();

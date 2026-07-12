@@ -22,7 +22,7 @@ import BrowserOnly from '@docusaurus/BrowserOnly';
 
 // Lazy-loaded component registry - populated on first use in browser
 let componentRegistry = null;
-let SupersetProviders = null;
+let AxBIProviders = null;
 
 function getComponentRegistry() {
   if (typeof window === 'undefined') {
@@ -37,14 +37,14 @@ function getComponentRegistry() {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const antd = require('antd');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const SupersetComponents = require('@superset/components');
+    const AxBIComponents = require('@ax-bi/ui-core/components');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const CoreUI = require('@apache-superset/core/components');
+    const CoreUI = require('@ax-bi/core/components');
 
     // Build component registry with antd as base fallback layer.
-    // Some Superset components (e.g., Typography) use styled-components that may
+    // Some AX BI components (e.g., Typography) use styled-components that may
     // fail to initialize in the docs build. Antd originals serve as fallbacks.
-    componentRegistry = { ...antd, ...SupersetComponents, ...CoreUI };
+    componentRegistry = { ...antd, ...AxBIComponents, ...CoreUI };
 
     return componentRegistry;
   } catch (error) {
@@ -59,13 +59,13 @@ function getProviders() {
     return ({ children }) => children; // SSR
   }
 
-  if (SupersetProviders !== null) {
-    return SupersetProviders;
+  if (AxBIProviders !== null) {
+    return AxBIProviders;
   }
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { themeObject } = require('@apache-superset/core/theme');
+    const { themeObject } = require('@ax-bi/core/theme');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { App, ConfigProvider } = require('antd');
 
@@ -78,17 +78,17 @@ function getProviders() {
       return container || document.body;
     };
 
-    SupersetProviders = ({ children }) => (
-      <themeObject.SupersetThemeProvider>
+    AxBIProviders = ({ children }) => (
+      <themeObject.AxBIThemeProvider>
         <ConfigProvider
           getPopupContainer={getPopupContainer}
           getTargetContainer={() => document.body}
         >
           <App>{children}</App>
         </ConfigProvider>
-      </themeObject.SupersetThemeProvider>
+      </themeObject.AxBIThemeProvider>
     );
-    return SupersetProviders;
+    return AxBIProviders;
   } catch (error) {
     console.error('[StorybookWrapper] Failed to load providers:', error);
     return ({ children }) => children;

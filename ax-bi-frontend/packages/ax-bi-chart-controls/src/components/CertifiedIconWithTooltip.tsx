@@ -49,7 +49,7 @@ function CertifiedIconWithTooltip({
         </div>
       }
     >
-      {/* TODO: move Icons to axbi-ui to remove duplicated icon code here */}
+      {/* TODO: move Icons to @ax-bi/ui-core to remove duplicated icon code here */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
         enableBackground="new 0 0 24 24"

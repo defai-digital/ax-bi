@@ -66,26 +66,26 @@ process.env.PATH = `${localBin}${path.delimiter}${process.env.PATH}`;
 
 const GENERATORS = [
   {
-    name: 'superset-components',
-    command: 'node scripts/generate-superset-components.mjs',
+    name: 'axbi-components',
+    command: 'node scripts/generate-axbi-components.mjs',
     inputs: [
       {
         type: 'glob',
-        base: path.join(ROOT_DIR, 'ax-bi-frontend/packages/superset-ui-core/src/components'),
+        base: path.join(ROOT_DIR, 'ax-bi-frontend/packages/ax-bi-ui-core/src/components'),
         pattern: '**/*.stories.tsx',
       },
       {
         type: 'glob',
-        base: path.join(ROOT_DIR, 'ax-bi-frontend/packages/superset-core/src'),
+        base: path.join(ROOT_DIR, 'ax-bi-frontend/packages/ax-bi-core/src'),
         pattern: '**/*.stories.tsx',
       },
-      { type: 'file', path: path.join(DOCS_DIR, 'scripts/generate-superset-components.mjs') },
+      { type: 'file', path: path.join(DOCS_DIR, 'scripts/generate-axbi-components.mjs') },
       { type: 'file', path: path.join(DOCS_DIR, 'src/components/StorybookWrapper.jsx') },
     ],
     outputs: [
       path.join(DOCS_DIR, 'developer_docs/components/index.mdx'),
       path.join(DOCS_DIR, 'static/data/components.json'),
-      path.join(DOCS_DIR, 'src/types/apache-superset-core/index.d.ts'),
+      path.join(DOCS_DIR, 'src/types/ax-bi-core/index.d.ts'),
     ],
   },
   {
@@ -94,7 +94,7 @@ const GENERATORS = [
     inputs: [
       {
         type: 'glob',
-        base: path.join(ROOT_DIR, 'superset/db_engine_specs'),
+        base: path.join(ROOT_DIR, 'axbi/db_engine_specs'),
         pattern: '**/*.py',
       },
       { type: 'file', path: path.join(DOCS_DIR, 'scripts/generate-database-docs.mjs') },
@@ -107,7 +107,7 @@ const GENERATORS = [
   {
     name: 'api-docs',
     command:
-      'python3 scripts/fix-openapi-spec.py && docusaurus gen-api-docs superset && node scripts/convert-api-sidebar.mjs && node scripts/generate-api-index.mjs && node scripts/generate-api-tag-pages.mjs',
+      'python3 scripts/fix-openapi-spec.py && docusaurus gen-api-docs axbi && node scripts/convert-api-sidebar.mjs && node scripts/generate-api-index.mjs && node scripts/generate-api-tag-pages.mjs',
     inputs: [
       { type: 'file', path: path.join(DOCS_DIR, 'static/resources/openapi.json') },
       { type: 'file', path: path.join(DOCS_DIR, 'scripts/fix-openapi-spec.py') },
@@ -221,7 +221,7 @@ async function main() {
   let ran = 0;
 
   // First pass: determine which generators need to run
-  // Run independent generators (superset-components, database-docs) in
+  // Run independent generators (axbi-components, database-docs) in
   // parallel, then api-docs sequentially (it depends on docusaurus CLI
   // being available, not on other generators).
 

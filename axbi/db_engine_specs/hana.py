@@ -40,7 +40,7 @@ class HanaEngineSpec(PostgresBaseEngineSpec):
             DatabaseCategory.PROPRIETARY,
         ],
         "pypi_packages": ["hdbcli", "sqlalchemy-hana"],
-        "install_instructions": "pip install axbi[hana]",
+        "install_instructions": "pip install ax-bi[hana]",
         "connection_string": "hana://{username}:{password}@{host}:{port}",
         "default_port": 30015,
         "docs_url": "https://github.com/SAP/sqlalchemy-hana",

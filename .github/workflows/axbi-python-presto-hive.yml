@@ -4,7 +4,7 @@ name: Python Presto/Hive
 on:
   push:
     branches:
-      - "master"
+      - "main"
       - "[0-9].[0-9]*"
   pull_request:
     types: [synchronize, opened, reopened, ready_for_review]
@@ -96,7 +96,7 @@ jobs:
           flags: python,presto
           verbose: true
           use_oidc: true
-          slug: ghcr.io/defai-digital/ax-bi
+          slug: defai-digital/ax-bi
 
   test-postgres-hive:
     needs: changes
@@ -159,4 +159,4 @@ jobs:
           flags: python,hive
           verbose: true
           use_oidc: true
-          slug: ghcr.io/defai-digital/ax-bi
+          slug: defai-digital/ax-bi

@@ -9,7 +9,7 @@ permissions:
 on:
   push:
     branches:
-      - "master"
+      - "main"
       - "[0-9].[0-9]*"
   pull_request:
     types: [synchronize, opened, reopened, ready_for_review]
@@ -133,7 +133,7 @@ jobs:
           flags: python,unit
           verbose: true
           use_oidc: true
-          slug: ghcr.io/defai-digital/ax-bi
+          slug: defai-digital/ax-bi
 
   # Stable required-status-check anchor. `unit-tests` is a matrix job gated on
   # change detection, so on non-Python PRs it is skipped and never produces its

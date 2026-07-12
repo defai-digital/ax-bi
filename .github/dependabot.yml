@@ -72,7 +72,7 @@ updates:
         update-types: ["minor", "patch"]
 
   - package-ecosystem: "npm"
-    directory: ".github/actions"
+    directory: "/.github/actions/axbi-cached-dependencies/"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5

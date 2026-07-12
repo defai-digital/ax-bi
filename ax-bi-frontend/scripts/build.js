@@ -60,15 +60,11 @@ function run(cmd, options) {
 
 function getPackages(packagePattern, tsOnly = false) {
   let pattern = packagePattern;
-  if (pattern === '*' && !tsOnly) {
-    return `{@ax-bi/!(${[...META_PACKAGES].join('|')}),@ax-bi/*}`;
-  }
   if (!pattern.includes('*')) {
     pattern = `*${pattern}`;
   }
 
-  // Find packages in both @axbi-ui and @ax-bi scopes
-  const axbiUiPackages = [
+  const packages = [
     ...new Set(
       fastGlob
         .sync([
@@ -81,50 +77,19 @@ function getPackages(packagePattern, tsOnly = false) {
     ),
   ];
 
-  const apachePackages = [
-    ...new Set(
-      fastGlob
-        .sync([
-          `./node_modules/@ax-bi/${pattern}/src/**/*.${
-            tsOnly ? '{ts,tsx}' : '{ts,tsx,js,jsx}'
-          }`,
-        ])
-        .map(x => x.split('/')[3]),
-    ),
-  ];
-
-  const allScopes = [];
-  if (axbiUiPackages.length > 0) {
-    allScopes.push(
-      `@ax-bi/${
-        axbiUiPackages.length > 1
-          ? `{${axbiUiPackages.join(',')}}`
-          : axbiUiPackages[0]
-      }`,
-    );
-  }
-  if (apachePackages.length > 0) {
-    allScopes.push(
-      `@ax-bi/${
-        apachePackages.length > 1
-          ? `{${apachePackages.join(',')}}`
-          : apachePackages[0]
-      }`,
-    );
-  }
-
-  if (allScopes.length === 0) {
+  if (packages.length === 0) {
     throw new Error('No matching packages');
   }
 
-  return allScopes.length > 1 ? `{${allScopes.join(',')}}` : allScopes[0];
+  return `@ax-bi/${
+    packages.length > 1 ? `{${packages.join(',')}}` : packages[0]
+  }`;
 }
 
 let scope = getPackages(glob);
 
 console.log('--- Run babel --------');
-const babelCommand = `lerna exec --stream --concurrency 10 --scope ${scope}
-        -- babel ${BABEL_CONFIG} src --extensions ".ts,.tsx,.js,.jsx" --copy-files`;
+const babelCommand = `lerna exec --stream --concurrency 10 --scope ${scope} -- babel ${BABEL_CONFIG} src --extensions ".ts,.tsx,.js,.jsx" --copy-files`;
 run(`${babelCommand} --out-dir lib`);
 
 console.log('--- Run babel esm ---');
@@ -141,7 +106,6 @@ scope = getPackages(glob, true);
 // checkout. Keep it running for visibility, but only fail the build when
 // PLUGINS_BUILD_STRICT_TYPES=true (set it once the type debt is repaid).
 run(
-  `lerna exec --stream --concurrency 3 --scope ${scope} \
-      -- ../../scripts/tsc.sh --build`,
+  `lerna exec --stream --concurrency 3 --scope ${scope} -- ../../scripts/tsc.sh --build`,
   { tolerateFailure: process.env.PLUGINS_BUILD_STRICT_TYPES !== 'true' },
 );

@@ -11,7 +11,7 @@ permissions:
 jobs:
   sync-python-dep-requirements:
     # This action is limited for (1) PRs authored by Dependabot and (2) upstream repo due to write back to remote
-    if: github.repository == 'ghcr.io/defai-digital/ax-bi' && github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.fork == false
+    if: github.repository == 'defai-digital/ax-bi' && github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.fork == false
     runs-on: ubuntu-26.04
     steps:
       - name: Fetch Dependabot metadata

@@ -1452,7 +1452,7 @@ STORE_CACHE_KEYS_IN_METADATA_DB = False
 
 # CORS Options
 # NOTE: enabling this requires installing the cors-related python dependencies
-# `pip install .[cors]` or `pip install axbi[cors]`, depending
+# `pip install .[cors]` or `pip install ax-bi[cors]`, depending
 ENABLE_CORS = True
 CORS_OPTIONS: dict[Any, Any] = {
     "origins": [

@@ -1,14 +1,12 @@
-name: Build & publish docker images
+name: Docker image validation
 
 on:
   push:
     branches:
-      - "master"
       - "main"
       - "[0-9].[0-9]*"
   pull_request:
     branches:
-      - "master"
       - "main"
 
 permissions:
@@ -50,7 +48,7 @@ jobs:
     steps:
       - id: set_matrix
         run: |
-          MATRIX_CONFIG=$(if [ "${{ github.event_name }}" == "pull_request" ]; then echo '["dev", "lean"]'; else echo '["dev", "lean", "websocket", "dockerize", "py312"]'; fi)
+          MATRIX_CONFIG='["dev", "lean"]'
           echo "matrix_config=${MATRIX_CONFIG}" >> $GITHUB_OUTPUT
           echo $GITHUB_OUTPUT
 
@@ -68,10 +66,7 @@ jobs:
         build_preset: ${{fromJson(needs.setup_matrix.outputs.matrix_config)}}
       fail-fast: false
     env:
-      DOCKERHUB_USER: ${{ secrets.DOCKERHUB_USER }}
-      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-      IMAGE_TAG: ghcr.io/defai-digital/ax-bi:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
-      PUBLISH_DOCKER_IMAGES: ${{ github.repository == 'ghcr.io/defai-digital/ax-bi' && github.event_name == 'push' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
+      IMAGE_TAG: axbi-ci/ax-bi:GHA-${{ matrix.build_preset }}-${{ github.run_id }}
 
     steps:
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
@@ -85,13 +80,8 @@ jobs:
       - name: Setup Docker Environment
         uses: ./.github/actions/setup-docker
         with:
-          dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
-          dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
           build: "true"
-          login-to-dockerhub: ${{ github.repository == 'ghcr.io/defai-digital/ax-bi' && secrets.DOCKERHUB_USER != '' && secrets.DOCKERHUB_TOKEN != '' && 'true' || 'false' }}
-
-      - name: Setup axbibot
-        uses: ./.github/actions/setup-axbibot/
+          login-to-dockerhub: "false"
 
       - name: Build Docker Image
         shell: bash
@@ -99,48 +89,29 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_PRESET: ${{ matrix.build_preset }}
         run: |
-          # Only the upstream Apache repository publishes ghcr.io/defai-digital/ax-bi images.
-          # Forks still validate the Docker build locally without Docker Hub push credentials.
-          if [ "$PUBLISH_DOCKER_IMAGES" = "true" ]; then
-            PLATFORM_ARG="--platform linux/arm64 --platform linux/amd64"
-            PUSH_OR_LOAD="--push"
-          else
-            echo "::notice::Validating Docker build locally without publishing to Docker Hub."
-            # buildx can only load single-platform images into the local Docker daemon.
-            PLATFORM_ARG="--platform linux/amd64"
-            PUSH_OR_LOAD="--load"
-          fi
-
           # Retry to absorb transient Docker Hub registry errors (base-image
-          # pull timeouts, 504/401 on push, ECONNRESET) and local builder
+          # pull timeouts and ECONNRESET responses) and local builder
           # flakiness that otherwise fail the whole job. buildx reuses the
           # buildkit layer cache from the failed attempt, so a retry mostly
           # re-does just the failed operation.
           for attempt in 1 2 3; do
-            if axbibot docker \
-              $PUSH_OR_LOAD \
-              --preset "$BUILD_PRESET" \
-              --context "$EVENT" \
-              --context-ref "$RELEASE" $FORCE_LATEST \
-              --extra-flags "--build-arg INCLUDE_CHROMIUM=false --build-arg PY_VER=3.12.12-slim-trixie --tag $IMAGE_TAG" \
-              $PLATFORM_ARG; then
+            if docker buildx build \
+              --load \
+              --platform linux/amd64 \
+              --file Dockerfile \
+              --target "$BUILD_PRESET" \
+              --build-arg INCLUDE_CHROMIUM=false \
+              --build-arg PY_VER=3.12.12-slim-trixie \
+              --tag "$IMAGE_TAG" \
+              .; then
               break
             fi
             if [ "$attempt" -eq 3 ]; then
-              echo "::error::axbibot docker build failed after 3 attempts"
+              echo "::error::Docker build failed after 3 attempts"
               exit 1
             fi
             echo "::warning::Build attempt ${attempt} failed; retrying in 30s..."
             sleep 30
-          done
-
-      # in the context of push (using multi-platform build), we need to pull the image locally
-      - name: Docker pull
-        if: env.PUBLISH_DOCKER_IMAGES == 'true'
-        run: |
-          for i in 1 2 3; do
-            docker pull $IMAGE_TAG && break
-            [ $i -lt 3 ] && sleep 30
           done
 
       - name: Print docker stats
@@ -188,29 +159,3 @@ jobs:
           } > /tmp/axbi.env
           docker compose --env-file /tmp/axbi.env -f docker-compose-axbi.yml config
           docker compose --env-file /tmp/axbi.env -f docker-compose-axbi.yml -f docker-compose-axbi-build.yml config
-
-  docker-compose-image-tag:
-    # Run this job only for upstream Apache pushes. The AX-BI fork publishes
-    # fork-owned images via .github/workflows/axbi-docker.yml instead.
-    needs: changes
-    if: github.repository == 'ghcr.io/defai-digital/ax-bi' && github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main') && needs.changes.outputs.docker == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          persist-credentials: false
-      - name: Free up disk space
-        uses: ./.github/actions/free-disk-space
-      - name: Setup Docker Environment
-        uses: ./.github/actions/setup-docker
-        with:
-          dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
-          dockerhub-token: ${{ secrets.DOCKERHUB_TOKEN }}
-          build: "false"
-          install-docker-compose: "true"
-      - name: docker-compose sanity check
-        shell: bash
-        run: |
-          docker compose -f docker-compose-image-tag.yml up ax-bi-init --exit-code-from ax-bi-init

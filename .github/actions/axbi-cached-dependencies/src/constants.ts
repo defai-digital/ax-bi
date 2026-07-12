@@ -12,21 +12,7 @@ export enum InputName {
   Parallel = 'parallel',
 }
 
-// Possible GitHub event names
-export enum GitHubEvent {
-  Push = 'push',
-  PullRequest = 'pull_request',
-}
-
-// Directly available environment variables
-export enum EnvVariable {
-  GitHubEventName = 'GITHUB_EVENT_NAME',
-}
-
-export const EnvVariableNames = new Set(Object.values(EnvVariable) as string[]);
-
 export interface Inputs {
-  [EnvVariable.GitHubEventName]?: string;
   [InputName.Key]?: string;
   [InputName.RestoreKeys]?: string;
   [InputName.Path]?: string;

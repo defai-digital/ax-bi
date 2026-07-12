@@ -169,7 +169,7 @@ This is a clean break: the former commands, imports, routes, environment
 variables, packages, and extension scopes are not compatibility aliases. The
 former upstream name remains only in legal attribution and documentation that
 explicitly discusses project history. See the
-[AX BI rename policy](docs/developer_docs/ax-bi-rename-policy.md).
+[AX BI rename policy](https://github.com/defai-digital/ax-bi/blob/main/docs/developer_docs/ax-bi-rename-policy.md).
 
 ## Workspace Architecture
 

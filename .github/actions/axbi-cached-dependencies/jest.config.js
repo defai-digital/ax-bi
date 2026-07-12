@@ -15,7 +15,8 @@ module.exports = {
 // suppress debug messages
 const processStdoutWrite = process.stdout.write.bind(process.stdout);
 process.stdout.write = (str, encoding, cb) => {
-  processStdoutWrite(str.split('\n').filter(x => {
+  const output = Buffer.isBuffer(str) ? str.toString() : String(str);
+  processStdoutWrite(output.split('\n').filter(x => {
     return !/^::debug::/.test(x);
   }).join('\n'), encoding, cb);
 };

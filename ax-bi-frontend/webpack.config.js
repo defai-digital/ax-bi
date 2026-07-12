@@ -656,10 +656,7 @@ Object.entries(packageConfig.dependencies).forEach(([pkg, relativeDir]) => {
   const srcPath = path.join(APP_DIR, `./node_modules/${pkg}/src`);
   const dir = relativeDir.replace('file:', '');
 
-  if (
-    (pkg.startsWith('@axbi-ui') || pkg.startsWith('@ax-bi')) &&
-    fs.existsSync(srcPath)
-  ) {
+  if (pkg.startsWith('@ax-bi') && fs.existsSync(srcPath)) {
     console.log(`[AxBI Plugin] Use symlink source for ${pkg} @ ${dir}`);
     config.resolve.alias[pkg] = path.resolve(APP_DIR, `${dir}/src`);
   }

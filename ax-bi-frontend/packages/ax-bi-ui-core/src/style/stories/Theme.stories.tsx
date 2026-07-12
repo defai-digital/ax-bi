@@ -99,7 +99,7 @@ export const ThemeColors = () => (
 /*
  * */
 export default {
-  title: 'Core Packages/@axbi-ui-theme',
+  title: 'Core Packages/@ax-bi/ui-core/theme',
 };
 
 export const Default = () => <ThemeColors />;

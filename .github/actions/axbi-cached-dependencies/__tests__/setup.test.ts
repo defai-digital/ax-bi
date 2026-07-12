@@ -12,6 +12,10 @@ describe('setup runner', () => {
   // don't actually run the bash script
   const runCommandMock = jest.spyOn(setup, 'runCommand');
 
+  afterEach(() => {
+    process.exitCode = 0;
+  });
+
   it('should allow custom bashlib', async () => {
     setInputs({
       [InputName.Bashlib]: extraBashlib,
@@ -46,6 +50,7 @@ describe('setup runner', () => {
     expect(runCommandMock).toHaveBeenCalledTimes(1);
     expect(processExitMock).toHaveBeenCalledTimes(1);
     expect(processExitMock).toHaveBeenCalledWith(1);
+    processExitMock.mockRestore();
   });
 
   it('should use run commands', async () => {

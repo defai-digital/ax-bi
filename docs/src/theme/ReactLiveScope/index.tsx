@@ -42,24 +42,24 @@ const ReactLiveScope: Record<string, unknown> = {
   ...React,
 };
 
-// Only load Superset components in browser context
+// Only load AX BI components in browser context
 // This prevents SSG errors from Emotion CSS-in-JS
 if (isBrowser) {
   try {
     // Dynamic require for browser-only execution
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const SupersetComponents = require('@superset/components');
+    const AxBIComponents = require('@ax-bi/ui-core/components');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Alert } = require('@apache-superset/core/components');
+    const { Alert } = require('@ax-bi/core/components');
 
-    console.log('[ReactLiveScope] SupersetComponents keys:', Object.keys(SupersetComponents || {}).slice(0, 10));
-    console.log('[ReactLiveScope] Has Button?', 'Button' in (SupersetComponents || {}));
+    console.log('[ReactLiveScope] AxBIComponents keys:', Object.keys(AxBIComponents || {}).slice(0, 10));
+    console.log('[ReactLiveScope] Has Button?', 'Button' in (AxBIComponents || {}));
 
-    Object.assign(ReactLiveScope, SupersetComponents, { Alert });
+    Object.assign(ReactLiveScope, AxBIComponents, { Alert });
 
     console.log('[ReactLiveScope] Final scope keys:', Object.keys(ReactLiveScope).slice(0, 20));
   } catch (e) {
-    console.error('[ReactLiveScope] Failed to load Superset components:', e);
+    console.error('[ReactLiveScope] Failed to load AX BI components:', e);
   }
 }
 

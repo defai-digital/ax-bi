@@ -273,10 +273,10 @@ def main() -> None:
     )
     parser.parse_args()
 
-    # Find the superset root directory
+    # Find the AX BI root directory
     script_dir = Path(__file__).parent
     root_dir = script_dir.parent.parent
-    specs_dir = root_dir / "superset" / "db_engine_specs"
+    specs_dir = root_dir / "axbi" / "db_engine_specs"
 
     if not specs_dir.exists():
         print(f"Error: Engine specs directory not found: {specs_dir}", file=sys.stderr)

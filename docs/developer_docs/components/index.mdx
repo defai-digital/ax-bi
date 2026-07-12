@@ -36,20 +36,20 @@ import componentData from '@site/static/data/components.json';
 
 A design system is a complete set of standards intended to manage design at scale using reusable components and patterns.
 
-The Superset Design System uses [Atomic Design](https://bradfrost.com/blog/post/atomic-web-design/) principles with adapted terminology:
+The AX BI Design System uses [Atomic Design](https://bradfrost.com/blog/post/atomic-web-design/) principles with adapted terminology:
 
 | Atomic Design | Atoms | Molecules | Organisms | Templates | Pages / Screens |
 |---|:---:|:---:|:---:|:---:|:---:|
-| **Superset Design** | Foundations | Components | Patterns | Templates | Features |
+| **AX BI Design** | Foundations | Components | Patterns | Templates | Features |
 
 <img src="/img/atomic-design.png" alt="Atoms = Foundations, Molecules = Components, Organisms = Patterns, Templates = Templates, Pages / Screens = Features" style={{maxWidth: '100%'}} />
 
 ## Usage
 
-All components are exported from `@superset-ui/core/components`:
+All components are exported from `@ax-bi/ui-core/components`:
 
 ```tsx
-import { Button, Modal, Select } from '@superset-ui/core/components';
+import { Button, Modal, Select } from '@ax-bi/ui-core/components';
 ```
 
 ## Contributing
@@ -59,7 +59,7 @@ This documentation is auto-generated from Storybook stories. To add or update co
 1. Create or update the component's `.stories.tsx` file
 2. Add a descriptive `title` and `description` in the story meta
 3. Export an interactive story with `args` for configurable props
-4. Run `yarn generate:superset-components` in the `docs/` directory
+4. Run `yarn generate:axbi-components` in the `docs/` directory
 
 :::info Work in Progress
 This component library is actively being documented. See the [Components TODO](./TODO.md) page for a list of components awaiting documentation.
@@ -67,4 +67,4 @@ This component library is actively being documented. See the [Components TODO](.
 
 ---
 
-*Auto-generated from Storybook stories in the [Design System/Introduction](https://github.com/apache/superset/blob/master/superset-frontend/packages/superset-ui-core/src/components/DesignSystem.stories.tsx) story.*
+*Auto-generated from Storybook stories in the [Design System/Introduction](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-frontend/packages/ax-bi-ui-core/src/components/DesignSystem.stories.tsx) story.*

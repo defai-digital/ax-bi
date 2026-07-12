@@ -129,7 +129,7 @@ class TimeFormatValidator extends PureComponent<
 }
 
 export default {
-  title: 'Core Packages/@axbi-ui-time-format',
+  title: 'Core Packages/@ax-bi/ui-core/time-format',
 };
 
 export const validator = () => <TimeFormatValidator />;

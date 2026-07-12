@@ -85,8 +85,8 @@ function tryRunFullScript() {
 import sys
 import json
 sys.path.insert(0, '.')
-from superset.app import create_app
-from superset.db_engine_specs.lib import generate_yaml_docs
+from axbi.app import create_app
+from axbi.db_engine_specs.lib import generate_yaml_docs
 app = create_app()
 with app.app_context():
     docs = generate_yaml_docs()
@@ -134,7 +134,7 @@ import importlib.util
 sys.path.insert(0, '.')
 
 cloud_capabilities_path = os.path.join(
-    'superset', 'db_engine_specs', 'cloud_capabilities.py'
+    'axbi', 'db_engine_specs', 'cloud_capabilities.py'
 )
 cloud_capabilities_spec = importlib.util.spec_from_file_location(
     'axbi_cloud_capabilities',
@@ -260,7 +260,7 @@ def deep_merge(base, override):
     return result
 
 databases = {}
-specs_dir = 'superset/db_engine_specs'
+specs_dir = 'axbi/db_engine_specs'
 errors = []
 debug_info = {
     "cwd": os.getcwd(),
@@ -302,7 +302,7 @@ CAP_ATTR_TO_OUTPUT_FIELD = {
 }
 
 # Methods that indicate a capability when overridden by a non-BaseEngineSpec class.
-# Mirrors the has_custom_method checks in superset/db_engine_specs/lib.py.
+# Mirrors the has_custom_method checks in axbi/db_engine_specs/lib.py.
 # cancel_query / has_implicit_cancel -> query_cancelation
 #   (diagnose() checks cancel_query override OR has_implicit_cancel() == True;
 #    base has_implicit_cancel returns False, so overriding it is the static
@@ -869,10 +869,10 @@ See individual database pages for the specific driver packages needed.
 ## Contributing
 
 To add or update database documentation, add a \`metadata\` attribute to your engine spec class in
-\`superset/db_engine_specs/\`. Documentation is auto-generated from these metadata attributes.
+\`axbi/db_engine_specs/\`. Documentation is auto-generated from these metadata attributes.
 
-See [METADATA_STATUS.md](https://github.com/defai-digital/ax-bi/blob/main/superset/db_engine_specs/METADATA_STATUS.md)
-for the current status of database documentation and the [README](https://github.com/defai-digital/ax-bi/blob/main/superset/db_engine_specs/README.md) for the metadata schema.
+See [METADATA_STATUS.md](https://github.com/defai-digital/ax-bi/blob/main/axbi/db_engine_specs/METADATA_STATUS.md)
+for the current status of database documentation and the [README](https://github.com/defai-digital/ax-bi/blob/main/axbi/db_engine_specs/README.md) for the metadata schema.
 ${fallbackNotice}`;
 }
 
@@ -1073,7 +1073,7 @@ function mergeCustomErrors(databases, customErrors) {
 
   for (const [, db] of Object.entries(databases)) {
     if (!db.module) continue;
-    // Normalize module name: Flask mode uses full path (superset.db_engine_specs.postgres),
+    // Normalize module name: Flask mode uses full path (axbi.db_engine_specs.postgres),
     // but customErrors is keyed by file stem (postgres)
     const moduleName = db.module.split('.').pop();
     if (!customErrors[moduleName]) continue;

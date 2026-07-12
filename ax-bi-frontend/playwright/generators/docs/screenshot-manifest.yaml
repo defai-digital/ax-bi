@@ -514,14 +514,14 @@ images:
     selector: null
   - type: external
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://github.com/defai-digital/ax-bi/actions/workflows/ax-bi-python-unittest.yml/badge.svg"
+    image_url: "https://github.com/defai-digital/ax-bi/actions/workflows/axbi-python-unittest.yml/badge.svg"
     alt: Build Status
     source_file: docs/index.mdx
     selector: null
   - type: external
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
     image_url: "https://next.ossinsight.io/widgets/official/compose-last-28-days-stats/thumbnail.png?repo_id=39464018&image_size=auto&color_scheme=light"
-    alt: Performance Stats of ghcr.io/defai-digital/ax-bi - Last 28 days
+    alt: Performance Stats of defai-digital/ax-bi - Last 28 days
     source_file: docs/index.mdx
     selector: null
   # --- database-logo (122) ---
@@ -1345,43 +1345,43 @@ images:
     selector: null
   - type: badge
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://img.shields.io/github/contributors/ghcr.io/defai-digital/ax-bi"
+    image_url: "https://img.shields.io/github/contributors/defai-digital/ax-bi"
     alt: Contributors
     source_file: docs/index.mdx
     selector: null
   - type: badge
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://img.shields.io/github/issues-pr/ghcr.io/defai-digital/ax-bi"
+    image_url: "https://img.shields.io/github/issues-pr/defai-digital/ax-bi"
     alt: Open PRs
     source_file: docs/index.mdx
     selector: null
   - type: badge
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://img.shields.io/github/issues/ghcr.io/defai-digital/ax-bi"
+    image_url: "https://img.shields.io/github/issues/defai-digital/ax-bi"
     alt: Open Issues
     source_file: docs/index.mdx
     selector: null
   - type: badge
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://img.shields.io/github/last-commit/ghcr.io/defai-digital/ax-bi"
+    image_url: "https://img.shields.io/github/last-commit/defai-digital/ax-bi"
     alt: Last Commit
     source_file: docs/index.mdx
     selector: null
   - type: badge
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://img.shields.io/github/stars/ghcr.io/defai-digital/ax-bi?style=social"
+    image_url: "https://img.shields.io/github/stars/defai-digital/ax-bi?style=social"
     alt: GitHub Stars
     source_file: docs/index.mdx
     selector: null
   - type: badge
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://img.shields.io/github/v/release/ghcr.io/defai-digital/ax-bi?sort=semver"
+    image_url: "https://img.shields.io/github/v/release/defai-digital/ax-bi?sort=semver"
     alt: Latest Release on Github
     source_file: docs/index.mdx
     selector: null
   - type: badge
     page_url: "https://github.com/defai-digital/ax-bi/user-docs"
-    image_url: "https://img.shields.io/pypi/pyversions/axbi.svg?maxAge=2592000"
+    image_url: "https://img.shields.io/pypi/pyversions/ax-bi.svg?maxAge=2592000"
     alt: PyPI
     source_file: docs/index.mdx
     selector: null

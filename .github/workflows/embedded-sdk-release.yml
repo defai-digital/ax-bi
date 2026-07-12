@@ -3,7 +3,7 @@ name: Embedded SDK Release
 on:
   push:
     branches:
-      - "master"
+      - "main"
       - "[0-9].[0-9]*"
 
 permissions:
@@ -14,7 +14,7 @@ jobs:
     # Publishing uses npm trusted publishing (OIDC), so there is no NPM_TOKEN to
     # gate on. Restrict to the canonical repo: forks cannot mint a valid OIDC
     # token for this package and must not publish.
-    if: github.repository == 'ghcr.io/defai-digital/ax-bi'
+    if: github.repository == 'defai-digital/ax-bi'
     runs-on: ubuntu-24.04
     permissions:
       contents: read

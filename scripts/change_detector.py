@@ -26,10 +26,14 @@ from urllib.request import Request, urlopen
 PATTERNS = {
     "python": [
         r"^\.github/workflows/.*python",
+        r"^\.github/workflows/axbi-app-cli\.yml$",
+        r"^\.github/actions/setup-backend/",
         r"^tests/",
         r"^axbi/",
+        r"^ax-bi-core/",
         r"^scripts/",
         r"^setup\.py",
+        r"^MANIFEST\.in$",
         r"^pyproject\.toml$",
         r"^requirements/.+\.txt",
         r"^pyproject\.toml",
@@ -55,7 +59,7 @@ PATTERNS = {
         r"^scripts/change_detector\.py",
     ],
     "ax-bi-rust": [
-        r"^\.github/workflows/ax-bi-rust\.yml",
+        r"^\.github/workflows/axbi-rust\.yml",
         r"^\.github/actions/change-detector/",
         r"^ax-bi-rust/",
         r"^scripts/change_detector\.py",
@@ -77,7 +81,7 @@ PATTERNS = {
         r"^docs/",
     ],
     "ax-bi-extensions-cli": [
-        r"^\.github/workflows/ax-bi-extensions-cli\.yml",
+        r"^\.github/workflows/axbi-extensions-cli\.yml",
         r"^ax-bi-extensions-cli/",
         r"^ax-bi-core/",
     ],
@@ -210,7 +214,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--repo",
-        default=os.getenv("GITHUB_REPOSITORY") or "ghcr.io/defai-digital/ax-bi",
+        default=os.getenv("GITHUB_REPOSITORY") or "defai-digital/ax-bi",
         help="GitHub repository in the format owner/repo",
     )
     args = parser.parse_args()

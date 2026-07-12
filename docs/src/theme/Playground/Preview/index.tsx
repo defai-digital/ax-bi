@@ -27,7 +27,7 @@ import PlaygroundHeader from '@theme/Playground/Header';
 
 import styles from './styles.module.css';
 
-// Get the theme wrapper for Superset components
+// Get the theme wrapper for AX BI components
 function getThemeWrapper() {
   if (typeof window === 'undefined') {
     return ({ children }: { children: React.ReactNode }) => <>{children}</>;
@@ -35,18 +35,18 @@ function getThemeWrapper() {
 
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { themeObject } = require('@apache-superset/core/theme');
+    const { themeObject } = require('@ax-bi/core/theme');
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { App } = require('antd');
 
-    if (!themeObject?.SupersetThemeProvider) {
+    if (!themeObject?.AxBIThemeProvider) {
       return ({ children }: { children: React.ReactNode }) => <>{children}</>;
     }
 
     return ({ children }: { children: React.ReactNode }) => (
-      <themeObject.SupersetThemeProvider>
+      <themeObject.AxBIThemeProvider>
         <App>{children}</App>
-      </themeObject.SupersetThemeProvider>
+      </themeObject.AxBIThemeProvider>
     );
   } catch (e) {
     console.error('[PlaygroundPreview] Failed to load theme provider:', e);

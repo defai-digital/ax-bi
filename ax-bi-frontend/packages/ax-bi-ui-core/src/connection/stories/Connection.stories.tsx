@@ -31,7 +31,7 @@ const ENDPOINTS = {
 };
 
 export default {
-  title: 'Core Packages/@axbi-ui-connection',
+  title: 'Core Packages/@ax-bi/ui-core/connection',
   decorators: [
     // withKnobs({
     //   escapeHTML: false,

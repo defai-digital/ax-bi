@@ -813,7 +813,7 @@
       "categoryLabel": "Extension Components",
       "description": "Alert component for displaying important messages to users. Wraps Ant Design Alert with sensible defaults and improved accessibility.",
       "importPath": "packages/superset-core/src/components/Alert",
-      "package": "@apache-superset/core/components",
+      "package": "@ax-bi/core/components",
       "extensionCompatible": true,
       "propsCount": 5,
       "controlsCount": 5,

@@ -9,7 +9,7 @@ permissions:
 on:
   push:
     branches:
-      - "master"
+      - "main"
       - "[0-9].[0-9]*"
   pull_request:
     types: [synchronize, opened, reopened, ready_for_review]
@@ -96,7 +96,7 @@ jobs:
           flags: python,mysql
           verbose: true
           use_oidc: true
-          slug: ghcr.io/defai-digital/ax-bi
+          slug: defai-digital/ax-bi
       - name: Generate database diagnostics for docs
         env:
           AXBI_CONFIG: tests.integration_tests.axbi_test_config
@@ -183,7 +183,7 @@ jobs:
           flags: python,postgres
           verbose: true
           use_oidc: true
-          slug: ghcr.io/defai-digital/ax-bi
+          slug: defai-digital/ax-bi
 
   test-sqlite:
     needs: changes
@@ -233,7 +233,7 @@ jobs:
           flags: python,sqlite
           verbose: true
           use_oidc: true
-          slug: ghcr.io/defai-digital/ax-bi
+          slug: defai-digital/ax-bi
 
   # Stable required-status-check anchor for the matrix-based test-postgres job.
   # It is gated on change detection, so on non-Python PRs it is skipped and

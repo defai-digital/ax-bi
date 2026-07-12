@@ -8,7 +8,7 @@ name: "Dependency Review"
 on:
   push:
     branches:
-      - "master"
+      - "main"
       - "[0-9].[0-9]*"
   pull_request:
     types: [synchronize, opened, reopened, ready_for_review]
@@ -35,7 +35,7 @@ jobs:
         # Dependency Review requires dependency graph/GitHub Advanced Security support.
         # Keep it enforcing for upstream AxBI and for repositories that opt in via
         # DEPENDENCY_REVIEW_ENFORCED=true, while allowing forks without GHAS to run CI.
-        continue-on-error: ${{ github.repository != 'ghcr.io/defai-digital/ax-bi' && vars.DEPENDENCY_REVIEW_ENFORCED != 'true' }}
+        continue-on-error: ${{ github.repository != 'defai-digital/ax-bi' && vars.DEPENDENCY_REVIEW_ENFORCED != 'true' }}
         with:
           fail-on-severity: critical
           # compatible/incompatible licenses addressed here: https://www.apache.org/legal/resolved.html

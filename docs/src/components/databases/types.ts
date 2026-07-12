@@ -19,7 +19,7 @@
 
 /**
  * TypeScript types for database documentation data
- * Generated from superset/db_engine_specs/lib.py
+ * Generated from axbi/db_engine_specs/lib.py
  */
 
 export interface Driver {

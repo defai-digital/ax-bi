@@ -105,7 +105,7 @@ const DatabasePage: React.FC<DatabasePageProps> = ({ database, name }) => {
   );
 
   // Ensure db filename can be obtained regardless of how db doc gets generated
-  // by either Flask app (superset.db_engine_specs.postgres) or fallback mode (postgres)
+  // by either Flask app (axbi.db_engine_specs.postgres) or fallback mode (postgres)
   const databaseModuleFilename = `${database.module?.split('.').pop()}.py`;
 
   // Render driver information
@@ -774,7 +774,7 @@ const DatabasePage: React.FC<DatabasePageProps> = ({ database, name }) => {
               Help improve this documentation by editing the engine spec:
             </Text>
             <a
-              href={`https://github.com/defai-digital/ax-bi/edit/main/superset/db_engine_specs/${databaseModuleFilename}`}
+              href={`https://github.com/defai-digital/ax-bi/edit/main/axbi/db_engine_specs/${databaseModuleFilename}`}
               target="_blank"
               rel="noreferrer"
             >

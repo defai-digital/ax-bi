@@ -31,7 +31,7 @@ import {
 import RenderPalettes from './RenderPalettes';
 
 export default {
-  title: 'Core Packages/@axbi-ui-color',
+  title: 'Core Packages/@ax-bi/ui-core/color',
 };
 
 export const categoricalPalettes = () =>

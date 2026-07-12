@@ -76,6 +76,28 @@ def test_axbi_rust_changes_include_shared_change_detector() -> None:
     assert _detects("ax-bi-rust", ".github/actions/change-detector/action.yml")
 
 
+def test_axbi_rust_changes_include_renamed_workflow() -> None:
+    """Changing the AX BI Rust workflow re-runs Rust checks."""
+
+    assert _detects("ax-bi-rust", ".github/workflows/axbi-rust.yml")
+
+
+def test_extensions_cli_changes_include_renamed_workflow() -> None:
+    """Changing the AX BI extensions workflow re-runs package checks."""
+
+    assert _detects(
+        "ax-bi-extensions-cli",
+        ".github/workflows/axbi-extensions-cli.yml",
+    )
+
+
+def test_python_changes_include_axbi_core_and_backend_setup() -> None:
+    """Shared Python packages and setup actions re-run backend checks."""
+
+    assert _detects("python", "ax-bi-core/src/axbi_core/common/daos.py")
+    assert _detects("python", ".github/actions/setup-backend/action.yml")
+
+
 def test_frontend_build_excludes_browser_test_harness() -> None:
     """Browser test harness changes should not run full frontend package builds."""
 

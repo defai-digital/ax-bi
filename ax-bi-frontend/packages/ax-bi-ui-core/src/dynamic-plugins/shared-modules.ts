@@ -42,7 +42,7 @@ const withNamespace = (name: string) => `__axbi__/${name}`;
  * This defines a dynamically imported js module that can be used to import from
  * multiple different plugins.
  *
- * When importing a common module (such as react or lodash or axbi-ui)
+ * When importing a common module (such as react, lodash, or @ax-bi/ui-core)
  * from a plugin, the plugin's build config will be able to
  * reference these globals instead of rebuilding them.
  *

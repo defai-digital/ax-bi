@@ -14,11 +14,11 @@
   ],
   "command": {
     "publish": {
-      "message": "chore(axbi-ui): publish %s",
+      "message": "chore(ax-bi-ui): publish %s",
       "graphType": "all"
     },
     "version": {
-      "message": "chore(axbi-ui): publish %s",
+      "message": "chore(ax-bi-ui): publish %s",
       "exact": true
     }
   },

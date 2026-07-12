@@ -69,13 +69,13 @@ export default function webpackExtendPlugin(): Plugin<void> {
 
       // Add swc-loader rule for ax-bi-frontend files
       // SWC is a Rust-based transpiler that's significantly faster than babel
-      const supersetFrontendPath = path.resolve(
+      const axbiFrontendPath = path.resolve(
         __dirname,
         '../../ax-bi-frontend',
       );
       config.module?.rules?.push({
         test: /\.(tsx?|jsx?)$/,
-        include: supersetFrontendPath,
+        include: axbiFrontendPath,
         exclude: /node_modules/,
         use: {
           loader: 'swc-loader',
@@ -129,44 +129,39 @@ export default function webpackExtendPlugin(): Plugin<void> {
             'react-dom': path.resolve(__dirname, '../node_modules/react-dom'),
             // Allow importing from ax-bi-frontend
             src: path.resolve(__dirname, '../../ax-bi-frontend/src'),
-            // Lightweight shim for @superset-ui/core that re-exports only the
+            // Lightweight shim for @ax-bi/ui-core that re-exports only the
             // utilities needed by components (ensureIsArray, usePrevious, etc.).
             // Avoids pulling in the full barrel which includes d3, color, query
             // modules and causes OOM. Required for Rspack which is stricter about
             // module resolution than webpack.
-            '@superset-ui/core$': path.resolve(
+            '@ax-bi/ui-core$': path.resolve(
               __dirname,
-              './shims/superset-ui-core.ts',
+              './shims/ax-bi-ui-core.ts',
             ),
             // Add aliases for our components to make imports easier
             '@docs/components': path.resolve(__dirname, '../src/components'),
-            '@superset/components': path.resolve(
+            '@ax-bi/ui-core/components': path.resolve(
               __dirname,
-              '../../ax-bi-frontend/packages/superset-ui-core/src/components',
-            ),
-            // Also alias the full package path for internal imports within components
-            '@superset-ui/core/components': path.resolve(
-              __dirname,
-              '../../ax-bi-frontend/packages/superset-ui-core/src/components',
+              '../../ax-bi-frontend/packages/ax-bi-ui-core/src/components',
             ),
             // Use a shim for react-table to handle CommonJS to ES module interop
-            // react-table v7 is CommonJS, but Superset components import it with ES module syntax
+            // react-table v7 is CommonJS, but AX BI components import it with ES module syntax
             'react-table': path.resolve(__dirname, './shims/react-table.js'),
-            // Extension API package - resolve @apache-superset/core and its sub-paths
+            // Extension API package - resolve @ax-bi/core and its sub-paths
             // to source so the docs build doesn't depend on pre-built lib/ artifacts.
             // More specific sub-path aliases must come first; webpack matches the
             // longest prefix.
-            '@apache-superset/core/components': path.resolve(
+            '@ax-bi/core/components': path.resolve(
               __dirname,
-              '../../ax-bi-frontend/packages/superset-core/src/components',
+              '../../ax-bi-frontend/packages/ax-bi-core/src/components',
             ),
-            '@apache-superset/core/api/core': path.resolve(
+            '@ax-bi/core/api/core': path.resolve(
               __dirname,
-              '../../ax-bi-frontend/packages/superset-core/src/api/core',
+              '../../ax-bi-frontend/packages/ax-bi-core/src/api/core',
             ),
-            '@apache-superset/core': path.resolve(
+            '@ax-bi/core': path.resolve(
               __dirname,
-              '../../ax-bi-frontend/packages/superset-core/src',
+              '../../ax-bi-frontend/packages/ax-bi-core/src',
             ),
             // Add proper Storybook aliases
             '@storybook/blocks': path.resolve(

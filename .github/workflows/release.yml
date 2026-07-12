@@ -3,7 +3,7 @@ name: release-workflow
 on:
   push:
     branches:
-      - "master"
+      - "main"
       - "[0-9].[0-9]*"
 
 permissions:
@@ -94,7 +94,7 @@ jobs:
       - name: Configure npm and git
         if: env.HAS_TAGS
         run: |
-          echo "@axbi-ui:registry=https://registry.npmjs.org/" > .npmrc
+          echo "@ax-bi:registry=https://registry.npmjs.org/" > .npmrc
           echo "registry=https://registry.npmjs.org/" >> .npmrc
           echo "//registry.npmjs.org/:_authToken=\${NPM_TOKEN}" >> $HOME/.npmrc 2> /dev/null
           npm whoami

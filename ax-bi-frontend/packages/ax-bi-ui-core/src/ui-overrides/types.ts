@@ -119,7 +119,7 @@ export interface DatabaseConnectionExtension {
   /**
    * Callbacks
    */
-  // TODO: we need to move the db types to axbi-ui/core in order to import them correctly
+  // TODO: move the database types to @ax-bi/ui-core so they can be imported correctly
   onSave: (componentState: any, db: any) => any;
   onEdit?: (componentState: any) => void;
   onDelete?: (db: any) => void;

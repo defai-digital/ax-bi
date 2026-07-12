@@ -3,7 +3,7 @@ name: Playwright Experimental Tests
 on:
   push:
     branches:
-      - "master"
+      - "main"
       - "[0-9].[0-9]*"
   pull_request:
     types: [synchronize, opened, reopened, ready_for_review]
@@ -150,7 +150,7 @@ jobs:
           # the preceding "Required Tests" and "Experimental Tests" steps too,
           # which loads extra handlers and destabilizes the werkzeug dev
           # server under the 2-worker Playwright load. Required Tests should
-          # match master's Flask configuration.
+          # match main's Flask configuration.
           AXBI_FEATURE_EMBEDDED_AXBI: "true"
           INCLUDE_EMBEDDED: "true"
         with:

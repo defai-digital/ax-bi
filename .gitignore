@@ -74,8 +74,8 @@ ax-bi-websocket/config.json
 node_modules
 npm-debug.log*
 axbi/static/*
-axbi/static/assets/*
-!axbi/static/assets/.gitkeep
+!axbi/static/.gitkeep
+!axbi/static/uploads/
 axbi/static/uploads/*
 !axbi/static/uploads/.gitkeep
 yarn-error.log
@@ -125,7 +125,7 @@ axbi/translations/translation_index.json
 
 docker/requirements-local.txt
 
-cache/
+/cache/
 docker/*local*
 docker/ax-bi-websocket/config.json
 docker-compose.override.yml
@@ -138,6 +138,8 @@ axbi/static/stats/statistics.html
 
 # Playwright browser auth state
 ax-office-frontend/playwright/.auth/
+# Local AX Office test workspaces mirror frontend packages and are generated.
+ax-office-frontend/packages/
 
 # LLM-related
 CLAUDE.local.md
@@ -146,7 +148,7 @@ PROJECT.md
 .claude_rc*
 .claude/
 .claude/settings.local.json
-models/
+/models/
 
 # Local/internal planning artifacts.
 .internal/

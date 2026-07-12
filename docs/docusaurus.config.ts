@@ -417,7 +417,7 @@ const config: Config = {
         id: 'api',
         docsPluginId: 'developer_docs',
         config: {
-          superset: {
+          axbi: {
             specPath: 'static/resources/openapi.json',
             outputDir: 'developer_docs/api',
             sidebarOptions: {

@@ -3,7 +3,7 @@ name: Upload Technical Debt Metrics to Google Sheets
 on:
   push:
     branches:
-      - master
+      - main
       - "[0-9].[0-9]*"
 
 permissions:

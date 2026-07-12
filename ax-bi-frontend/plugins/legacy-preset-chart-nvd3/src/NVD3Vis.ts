@@ -41,7 +41,7 @@ import 'nvd3-fork/build/nv.d3.css';
 /* eslint-disable-next-line */
 import ANNOTATION_TYPES, {
   applyNativeColumns,
-} from './vendor/ax-bi/AnnotationTypes';
+} from './vendor/axbi/AnnotationTypes';
 import isTruthy from './utils/isTruthy';
 import {
   cleanColorInput,
