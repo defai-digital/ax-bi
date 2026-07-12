@@ -25,7 +25,7 @@ import {
   fireEvent,
   waitFor,
 } from 'spec/helpers/testing-library';
-import { MemoryRouter, useLocation } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { QueryParamProvider } from 'use-query-params';
 import { ReactRouter6Adapter } from 'use-query-params/adapters/react-router-6';
 import * as getBootstrapData from 'src/utils/getBootstrapData';
@@ -96,8 +96,18 @@ const renderList = (props = {}, storeOverrides = {}) =>
   render(
     <MemoryRouter>
       <QueryParamProvider adapter={ReactRouter6Adapter}>
-        <SavedQueryList user={mockUser} {...props} />
-        <LocationDisplay />
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                <SavedQueryList user={mockUser} {...props} />
+                <LocationDisplay />
+              </>
+            }
+          />
+          <Route path="/sqllab" element={<LocationDisplay />} />
+        </Routes>
       </QueryParamProvider>
     </MemoryRouter>,
     {
