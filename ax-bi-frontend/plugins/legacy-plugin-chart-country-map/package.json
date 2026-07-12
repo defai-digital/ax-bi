@@ -26,13 +26,13 @@
     "access": "public"
   },
   "dependencies": {
-    "d3": "^3.5.17",
+    "d3": "^7.9.0",
     "d3-array": "^3.2.4",
     "prop-types": "^15.8.1"
   },
   "peerDependencies": {
-    "@ax-bi/core": "*",
     "@ax-bi/chart-controls": "*",
+    "@ax-bi/core": "*",
     "@ax-bi/ui-core": "*",
     "react": "^18.3.0 || ^19.0.0"
   }
