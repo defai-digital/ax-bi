@@ -42,7 +42,7 @@ export const TIMEOUT = {
   /**
    * Form and UI element load timeouts
    */
-  FORM_LOAD: 5000, // 5s for forms to become visible (login form, modals)
+  FORM_LOAD: 15000, // 15s for forms to hydrate from instrumented CI bundles
 
   /**
    * API response timeout for operations like export/download
