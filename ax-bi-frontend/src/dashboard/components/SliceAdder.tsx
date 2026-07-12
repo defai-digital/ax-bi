@@ -412,6 +412,7 @@ function SliceAdder({
         />
       </Controls>
       <div
+        data-test="dashboard-charts-show-only-mine"
         css={themeObj => css`
           display: flex;
           flex-direction: row;

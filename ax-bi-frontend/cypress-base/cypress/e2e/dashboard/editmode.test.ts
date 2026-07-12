@@ -76,6 +76,10 @@ describe('Dashboard edit', () => {
           cy.wait(500);
         }
       });
+      cy.getBySel('dashboard-charts-show-only-mine')
+        .find('input[type="checkbox"]')
+        .uncheck({ force: true });
+      cy.wait('@filtering');
       dragComponent();
       cy.getBySel('dashboard-component-chart-holder').should('have.length', 1);
     });
