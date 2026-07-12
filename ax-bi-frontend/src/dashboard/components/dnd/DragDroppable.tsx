@@ -316,30 +316,27 @@ function DragDroppableWithMode({
     };
   }
 
-  const [
-    { isDragging, dragComponentType, dragComponentId },
-    drag,
-    preview,
-  ] = useDrag(
-    () => ({
-      type: DRAG_DROPPABLE_TYPE,
-      item: () => buildDragItem(propsRef.current),
-      canDrag: () =>
-        enableDrag && !(propsRef.current.disableDragDrop ?? false),
-      collect: monitor => ({
-        isDragging: enableDrag && monitor.isDragging(),
-        dragComponentType: monitor.getItem()?.type as ComponentType | undefined,
-        dragComponentId: monitor.getItem()?.id as string | undefined,
+  const [{ isDragging, dragComponentType, dragComponentId }, drag, preview] =
+    useDrag(
+      () => ({
+        type: DRAG_DROPPABLE_TYPE,
+        item: () => buildDragItem(propsRef.current),
+        canDrag: () =>
+          enableDrag && !(propsRef.current.disableDragDrop ?? false),
+        collect: monitor => ({
+          isDragging: enableDrag && monitor.isDragging(),
+          dragComponentType: monitor.getItem()?.type as
+            ComponentType | undefined,
+          dragComponentId: monitor.getItem()?.id as string | undefined,
+        }),
       }),
-    }),
-    [enableDrag],
-  );
+      [enableDrag],
+    );
 
   const [{ isDraggingOver, isDraggingOverShallow }, drop] = useDrop(
     () => ({
       accept: DRAG_DROPPABLE_TYPE,
-      canDrop: () =>
-        enableDrop && !(propsRef.current.disableDragDrop ?? false),
+      canDrop: () => enableDrop && !(propsRef.current.disableDragDrop ?? false),
       hover: (_item, monitor) => {
         if (!enableDrop || !componentFacadeRef.current) {
           return;
@@ -397,7 +394,9 @@ function DragDroppableWithMode({
     [enableDrag, preview],
   ) as ConnectDragPreview;
 
-  const dragSourceRef = (enableDrag ? drag : noopConnector) as ConnectDragSource;
+  const dragSourceRef = (
+    enableDrag ? drag : noopConnector
+  ) as ConnectDragSource;
 
   // Clear drop indicator when drag leaves this target.
   useEffect(() => {

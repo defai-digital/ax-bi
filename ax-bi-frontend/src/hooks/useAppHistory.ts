@@ -25,7 +25,16 @@ type Path = string | LocationDescriptor<LocationState>;
 
 type HistoryLike = Pick<
   History,
-  'push' | 'replace' | 'go' | 'back' | 'forward' | 'block' | 'listen' | 'createHref' | 'action' | 'location'
+  | 'push'
+  | 'replace'
+  | 'go'
+  | 'back'
+  | 'forward'
+  | 'block'
+  | 'listen'
+  | 'createHref'
+  | 'action'
+  | 'location'
 >;
 
 function asHistoryLike(navigator: unknown): HistoryLike | null {
