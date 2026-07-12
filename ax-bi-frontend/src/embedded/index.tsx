@@ -32,7 +32,7 @@ import { logging } from '@ax-bi/core/utils';
 import { type AxBIThemeConfig, ThemeMode, css } from '@ax-bi/core/theme';
 import Switchboard from '@ax-bi/switchboard';
 import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
-import { history } from 'src/utils/history';
+import { routerHistory } from 'src/utils/history';
 import setupClient from 'src/setup/setupClient';
 import setupPlugins from 'src/setup/setupPlugins';
 import { useUiConfig } from 'src/components/UiConfigContext';
@@ -118,7 +118,7 @@ const EmbeddedRoute = () => (
 );
 
 const EmbeddedApp = () => (
-  <HistoryRouter history={history}>
+  <HistoryRouter basename={applicationRoot()} history={routerHistory}>
     <Routes>
       {/* todo (embedded) remove this line after uuids are deployed */}
       <Route

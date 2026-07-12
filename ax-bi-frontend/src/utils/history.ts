@@ -16,14 +16,36 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { createBrowserHistory } from 'history';
-import { applicationRoot } from 'src/utils/getBootstrapData';
+import { createBrowserHistory, parsePath, type To } from 'history';
+import type { HistoryRouterProps } from 'react-router-dom';
+
+type RouterHistory = HistoryRouterProps['history'];
+type RouterListener = Parameters<RouterHistory['listen']>[0];
+type RouterUpdate = Parameters<RouterListener>[0];
 
 /**
- * Shared browser history used with react-router's HistoryRouter.
- * Keeps history.block / history.listen working for SQL Lab + Explore
- * unsaved-change flows after the react-router v5 → v6 migration.
+ * Shared browser history used with react-router's HistoryRouter. The adapter
+ * methods satisfy React Router's history contract while preserving history v5
+ * blocking and listening for SQL Lab and Explore unsaved-change flows.
  */
-export const history = createBrowserHistory({
-  basename: applicationRoot(),
+const browserHistory = createBrowserHistory();
+const browserListen = browserHistory.listen.bind(browserHistory);
+
+export const history = Object.assign(browserHistory, {
+  createURL: (to: To) =>
+    new URL(browserHistory.createHref(to), window.location.origin),
+  encodeLocation: (to: To) => {
+    const path = typeof to === 'string' ? parsePath(to) : to;
+    return {
+      pathname: path.pathname ?? '',
+      search: path.search ?? '',
+      hash: path.hash ?? '',
+    };
+  },
+  listen: (listener: RouterListener) =>
+    browserListen(update =>
+      listener({ ...update, delta: null } as RouterUpdate),
+    ),
 });
+
+export const routerHistory = history as unknown as RouterHistory;

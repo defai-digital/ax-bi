@@ -31,8 +31,8 @@ import { setupAGGridModules } from '@ax-bi/ui-core/components/ThemedAgGridReact'
 import { ErrorBoundary } from 'src/components';
 import { DesktopIntegration } from 'src/components/DesktopIntegration';
 import Menu from 'src/features/home/Menu';
-import getBootstrapData from 'src/utils/getBootstrapData';
-import { history } from 'src/utils/history';
+import getBootstrapData, { applicationRoot } from 'src/utils/getBootstrapData';
+import { routerHistory } from 'src/utils/history';
 import ToastContainer from 'src/components/MessageToasts/ToastContainer';
 import setupApp from 'src/setup/setupApp';
 import setupPlugins from 'src/setup/setupPlugins';
@@ -82,7 +82,7 @@ const LocationPathnameLogger = () => {
 };
 
 const App = () => (
-  <HistoryRouter history={history}>
+  <HistoryRouter basename={applicationRoot()} history={routerHistory}>
     <ScrollToTop />
     <LocationPathnameLogger />
     <RootContextProviders>
