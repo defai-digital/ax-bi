@@ -73,3 +73,12 @@ def test_ax_office_generated_artifacts_are_ignored() -> None:
         "ax-office-frontend/playwright-report/",
         "ax-office-frontend/test-results/",
     } <= ignored_paths
+
+
+def test_translation_baseline_targets_packaged_catalogs() -> None:
+    """The comparison worktree reads catalogs from the Python package boundary."""
+    catalog_path = REPOSITORY_ROOT / "axbi" / "translations"
+    workflow = (WORKFLOW_ROOT / "axbi-translations.yml").read_text(encoding="utf-8")
+
+    assert catalog_path.is_dir()
+    assert "--translations-dir /tmp/base-worktree/axbi/translations" in workflow

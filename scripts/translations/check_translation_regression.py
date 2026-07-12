@@ -55,7 +55,7 @@ Use a translations directory other than the repo default (used by CI to count
 against a separate base-branch worktree):
 
     python check_translation_regression.py --count \\
-        --translations-dir /tmp/base-worktree/translations
+        --translations-dir /tmp/base-worktree/axbi/translations
 
 Typical CI workflow
 -------------------

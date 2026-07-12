@@ -19,6 +19,11 @@ The low-risk boundary cleanup pass is complete. Completed work included:
   mechanics.
 - Replacing repeated frontend CRUD list page-size constants with a shared
   constant.
+- Aligning CI database identities and translation baselines with the canonical
+  runtime/package boundaries, backed by repository-level contract tests.
+- Replacing the legacy Python license scanner's removed `pkg_resources`
+  dependency and excluding generated AX Office compatibility artifacts from
+  source control.
 
 ## Deferred Boundary Areas
 
