@@ -23,7 +23,7 @@ import importlib
 import sys
 import types
 from contextlib import nullcontext
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from pydantic import ValidationError
@@ -250,27 +250,14 @@ def _make_mock_ctx():
 
 
 class TestSaveSqlQueryToolLogic:
-    """Test save_sql_query tool internal logic.
-
-    The tool function uses lazy imports inside its body (from flask import g,
-    from axbi import db, etc.). We patch at the import source so that
-    when the function runs, it picks up our mocks.
-
-    With passthrough decorators, we call the tool function directly
-    and pass a mock Context as the second argument.
-    """
+    """Test the MCP adapter around the saved-query create command."""
 
     @pytest.mark.anyio
     async def test_save_query_creates_saved_query(self) -> None:
-        """Verify the tool calls SavedQueryDAO.create with correct attrs."""
+        """The tool delegates persistence and returns the command result."""
         mod, saved = _get_tool_module()
         try:
             mock_ctx = _make_mock_ctx()
-
-            mock_db_obj = MagicMock()
-            mock_db_obj.id = 1
-            mock_db_obj.database_name = "test_db"
-
             mock_sq = MagicMock()
             mock_sq.id = 42
             mock_sq.label = "Revenue Query"
@@ -285,132 +272,143 @@ class TestSaveSqlQueryToolLogic:
                 label="Revenue Query",
                 sql="SELECT SUM(revenue) FROM sales",
             )
-
-            mock_db_session = MagicMock()
-            (
-                mock_db_session.session.query.return_value.filter_by.return_value.first.return_value
-            ) = mock_db_obj
-
-            mock_sm = MagicMock()
-            mock_sm.can_access_database.return_value = True
-
-            mock_dao = MagicMock()
-            mock_dao.create.return_value = mock_sq
-
-            mock_g = MagicMock()
-            mock_g.user = Mock(id=1)
+            command = MagicMock()
+            command.run.return_value = mock_sq
 
             with (
-                patch("axbi.db", mock_db_session),
-                patch("axbi.security_manager", mock_sm),
-                patch("axbi.daos.query.SavedQueryDAO", mock_dao),
-                patch(
-                    "axbi.mcp_service.utils.url_utils.get_axbi_base_url",
+                patch.object(
+                    mod,
+                    "CreateSavedQueryCommand",
+                    return_value=command,
+                ) as command_class,
+                patch.object(
+                    mod,
+                    "get_axbi_base_url",
                     return_value="http://localhost:8088",
                 ),
-                patch("flask.g", mock_g),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 result = await mod.save_sql_query(request, mock_ctx)
 
-                assert result.id == 42
-                assert result.label == sanitize_for_llm_context(
-                    "Revenue Query",
-                    field_path=("label",),
-                )
-                assert "savedQueryId=42" in result.url
-                mock_dao.create.assert_called_once()
-                call_attrs = mock_dao.create.call_args[1]["attributes"]
-                assert call_attrs["db_id"] == 1
-                assert call_attrs["label"] == "Revenue Query"
-                assert call_attrs["sql"] == "SELECT SUM(revenue) FROM sales"
-                assert call_attrs["user_id"] == 1
-                mock_db_session.session.commit.assert_called_once()
+            command_class.assert_called_once_with(
+                {
+                    "db_id": 1,
+                    "label": "Revenue Query",
+                    "sql": "SELECT SUM(revenue) FROM sales",
+                    "schema": "",
+                    "catalog": None,
+                    "description": "",
+                }
+            )
+            command.run.assert_called_once_with()
+            assert result.id == 42
+            assert result.label == sanitize_for_llm_context(
+                "Revenue Query",
+                field_path=("label",),
+            )
+            assert result.url == "http://localhost:8088/sqllab?savedQueryId=42"
         finally:
             _restore_modules(saved)
 
     @pytest.mark.anyio
     async def test_save_query_database_not_found(self) -> None:
+        """The adapter retains the typed database-not-found error contract."""
         mod, saved = _get_tool_module()
         try:
             mock_ctx = _make_mock_ctx()
-
             request = SaveSqlQueryRequest(
                 database_id=999,
                 label="Test",
                 sql="SELECT 1",
             )
-
-            mock_db_session = MagicMock()
-            (
-                mock_db_session.session.query.return_value.filter_by.return_value.first.return_value
-            ) = None
-
-            mock_g = MagicMock()
-            mock_g.user = Mock(id=1)
+            command = MagicMock()
+            command.run.side_effect = mod.SavedQueryDatabaseNotFoundError(999)
 
             with (
-                patch("axbi.db", mock_db_session),
-                patch("flask.g", mock_g),
+                patch.object(
+                    mod,
+                    "CreateSavedQueryCommand",
+                    return_value=command,
+                ),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
-                from axbi.exceptions import AxBIErrorException
-
-                with pytest.raises(AxBIErrorException, match="not found"):
+                with pytest.raises(mod.AxBIErrorException, match="not found") as exc:
                     await mod.save_sql_query(request, mock_ctx)
+
+            assert (
+                exc.value.error.error_type == mod.AxBIErrorType.DATABASE_NOT_FOUND_ERROR
+            )
         finally:
             _restore_modules(saved)
 
     @pytest.mark.anyio
     async def test_save_query_access_denied(self) -> None:
+        """The adapter retains the typed database-access error contract."""
         mod, saved = _get_tool_module()
         try:
             mock_ctx = _make_mock_ctx()
-
-            mock_db_obj = MagicMock()
-            mock_db_obj.id = 1
-            mock_db_obj.database_name = "test_db"
-
             request = SaveSqlQueryRequest(
                 database_id=1,
                 label="Test",
                 sql="SELECT 1",
             )
-
-            mock_db_session = MagicMock()
-            (
-                mock_db_session.session.query.return_value.filter_by.return_value.first.return_value
-            ) = mock_db_obj
-
-            mock_sm = MagicMock()
-            mock_sm.can_access_database.return_value = False
-
-            mock_g = MagicMock()
-            mock_g.user = Mock(id=1)
+            command = MagicMock()
+            command.run.side_effect = mod.SavedQueryDatabaseAccessDeniedError("test_db")
 
             with (
-                patch("axbi.db", mock_db_session),
-                patch("axbi.security_manager", mock_sm),
-                patch("flask.g", mock_g),
+                patch.object(
+                    mod,
+                    "CreateSavedQueryCommand",
+                    return_value=command,
+                ),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
-                from axbi.exceptions import AxBISecurityException
+                with pytest.raises(
+                    mod.AxBISecurityException,
+                    match="Access denied",
+                ) as exc:
+                    await mod.save_sql_query(request, mock_ctx)
 
-                with pytest.raises(AxBISecurityException, match="Access denied"):
+            assert (
+                exc.value.error.error_type
+                == mod.AxBIErrorType.DATABASE_SECURITY_ACCESS_ERROR
+            )
+        finally:
+            _restore_modules(saved)
+
+    @pytest.mark.anyio
+    async def test_save_query_create_failure_preserves_domain_error(self) -> None:
+        """Persistence failures remain recognizable after adapter logging."""
+        mod, saved = _get_tool_module()
+        try:
+            mock_ctx = _make_mock_ctx()
+            request = SaveSqlQueryRequest(
+                database_id=1,
+                label="Test",
+                sql="SELECT 1",
+            )
+            command = MagicMock()
+            command.run.side_effect = mod.SavedQueryCreateFailedError()
+
+            with (
+                patch.object(
+                    mod,
+                    "CreateSavedQueryCommand",
+                    return_value=command,
+                ),
+                patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
+            ):
+                with pytest.raises(mod.SavedQueryCreateFailedError):
                     await mod.save_sql_query(request, mock_ctx)
         finally:
             _restore_modules(saved)
 
     @pytest.mark.anyio
     async def test_save_query_with_schema_and_description(self) -> None:
+        """Optional fields are forwarded to the command without identity data."""
         mod, saved = _get_tool_module()
         try:
             mock_ctx = _make_mock_ctx()
-
-            mock_db_obj = MagicMock()
-            mock_db_obj.id = 1
-            mock_db_obj.database_name = "test_db"
-
             mock_sq = MagicMock()
             mock_sq.id = 10
             mock_sq.label = "Test"
@@ -427,37 +425,34 @@ class TestSaveSqlQueryToolLogic:
                 schema="public",
                 description="A test query",
             )
-
-            mock_db_session = MagicMock()
-            (
-                mock_db_session.session.query.return_value.filter_by.return_value.first.return_value
-            ) = mock_db_obj
-
-            mock_sm = MagicMock()
-            mock_sm.can_access_database.return_value = True
-
-            mock_dao = MagicMock()
-            mock_dao.create.return_value = mock_sq
-
-            mock_g = MagicMock()
-            mock_g.user = Mock(id=1)
+            command = MagicMock()
+            command.run.return_value = mock_sq
 
             with (
-                patch("axbi.db", mock_db_session),
-                patch("axbi.security_manager", mock_sm),
-                patch("axbi.daos.query.SavedQueryDAO", mock_dao),
-                patch(
-                    "axbi.mcp_service.utils.url_utils.get_axbi_base_url",
+                patch.object(
+                    mod,
+                    "CreateSavedQueryCommand",
+                    return_value=command,
+                ) as command_class,
+                patch.object(
+                    mod,
+                    "get_axbi_base_url",
                     return_value="http://localhost:8088",
                 ),
-                patch("flask.g", mock_g),
                 patch.object(mod, "mcp_event_log_context", return_value=nullcontext()),
             ):
                 result = await mod.save_sql_query(request, mock_ctx)
 
-                assert result.id == 10
-                call_attrs = mock_dao.create.call_args[1]["attributes"]
-                assert call_attrs["schema"] == "public"
-                assert call_attrs["description"] == "A test query"
+            command_class.assert_called_once_with(
+                {
+                    "db_id": 1,
+                    "label": "Test",
+                    "sql": "SELECT 1",
+                    "schema": "public",
+                    "catalog": None,
+                    "description": "A test query",
+                }
+            )
+            assert result.id == 10
         finally:
             _restore_modules(saved)

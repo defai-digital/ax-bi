@@ -22,6 +22,8 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Moving the privacy-scoped MCP user-filter resolver query into `UserDAO`, with
   bounded results, literal wildcard matching, and DAO-level nonblank
   enforcement.
+- Routing MCP saved-query creation through a command-owned validation and
+  transaction boundary instead of querying and committing inside the tool.
 
 ## Deferred Boundary Areas
 

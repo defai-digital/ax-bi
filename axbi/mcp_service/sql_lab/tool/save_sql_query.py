@@ -27,8 +27,13 @@ import logging
 
 from axbi_core.mcp.decorators import tool, ToolAnnotations
 from fastmcp import Context
-from sqlalchemy.exc import SQLAlchemyError
 
+from axbi.commands.query.create import CreateSavedQueryCommand
+from axbi.commands.query.exceptions import (
+    SavedQueryCreateFailedError,
+    SavedQueryDatabaseAccessDeniedError,
+    SavedQueryDatabaseNotFoundError,
+)
 from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
 from axbi.exceptions import AxBIErrorException, AxBISecurityException
 from axbi.mcp_service.sql_lab.schemas import (
@@ -36,9 +41,7 @@ from axbi.mcp_service.sql_lab.schemas import (
     SaveSqlQueryResponse,
 )
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
-from axbi.mcp_service.utils.permissions_utils import (
-    current_user_can_access_database,
-)
+from axbi.mcp_service.utils.url_utils import get_axbi_base_url
 
 logger = logging.getLogger(__name__)
 
@@ -67,41 +70,9 @@ async def save_sql_query(
     )
 
     try:
-        from flask import g
-
-        from axbi import db
-        from axbi.daos.query import SavedQueryDAO
-        from axbi.mcp_service.utils.url_utils import get_axbi_base_url
-        from axbi.models.core import Database
-
-        # 1. Validate database exists and user has access
-        with mcp_event_log_context(action="mcp.save_sql_query.db_validation"):
-            database = (
-                db.session.query(Database).filter_by(id=request.database_id).first()
-            )
-            if not database:
-                raise AxBIErrorException(
-                    AxBIError(
-                        message=(f"Database with ID {request.database_id} not found"),
-                        error_type=AxBIErrorType.DATABASE_NOT_FOUND_ERROR,
-                        level=ErrorLevel.ERROR,
-                    )
-                )
-
-            if not current_user_can_access_database(database):
-                raise AxBISecurityException(
-                    AxBIError(
-                        message=(f"Access denied to database {database.database_name}"),
-                        error_type=(AxBIErrorType.DATABASE_SECURITY_ACCESS_ERROR),
-                        level=ErrorLevel.ERROR,
-                    )
-                )
-
-        # 2. Create the saved query
         with mcp_event_log_context(action="mcp.save_sql_query.create"):
-            saved_query = SavedQueryDAO.create(
-                attributes={
-                    "user_id": g.user.id,
+            saved_query = CreateSavedQueryCommand(
+                {
                     "db_id": request.database_id,
                     "label": request.label,
                     "sql": request.sql,
@@ -109,10 +80,8 @@ async def save_sql_query(
                     "catalog": request.catalog,
                     "description": request.description or "",
                 }
-            )
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            ).run()
 
-        # 3. Build response
         base_url = get_axbi_base_url()
         saved_query_url = f"{base_url}/sqllab?savedQueryId={saved_query.id}"
 
@@ -131,14 +100,25 @@ async def save_sql_query(
             url=saved_query_url,
         )
 
-    except (AxBIErrorException, AxBISecurityException):
-        raise
-    except SQLAlchemyError as e:
-        from axbi import db
-
-        db.session.rollback()  # pylint: disable=consider-using-transaction
+    except SavedQueryDatabaseNotFoundError as exc:
+        raise AxBIErrorException(
+            AxBIError(
+                message=str(exc),
+                error_type=AxBIErrorType.DATABASE_NOT_FOUND_ERROR,
+                level=ErrorLevel.ERROR,
+            )
+        ) from exc
+    except SavedQueryDatabaseAccessDeniedError as exc:
+        raise AxBISecurityException(
+            AxBIError(
+                message=str(exc),
+                error_type=AxBIErrorType.DATABASE_SECURITY_ACCESS_ERROR,
+                level=ErrorLevel.ERROR,
+            )
+        ) from exc
+    except SavedQueryCreateFailedError as exc:
         await ctx.error(
-            f"Failed to save SQL query: error={str(e)}, "
-            f"database_id={request.database_id}"
+            "Failed to save SQL query: "
+            f"database_id={request.database_id}, error_type={type(exc).__name__}"
         )
         raise
