@@ -56,23 +56,13 @@ def _get_aliases_for_object(
 ) -> list[str]:
     """Look up semantic aliases for a dataset object."""
     try:
-        from axbi.models.ai import AISemanticAlias
+        from axbi.daos.ai import AISemanticAliasDAO
 
-        query_filters = [
-            AISemanticAlias.object_type == object_type,
-            AISemanticAlias.alias.isnot(None),
-        ]
-
-        if dataset_id is not None:
-            query_filters.append(AISemanticAlias.dataset_id == dataset_id)
-        else:
-            # Cross-dataset lookup
-            query_filters.append(AISemanticAlias.object_name == object_name)
-
-        from axbi.extensions import db
-
-        results = db.session.query(AISemanticAlias).filter(*query_filters).all()
-        return [r.alias for r in results if r.alias]
+        return AISemanticAliasDAO.find_aliases_for_object(
+            object_type,
+            object_name,
+            dataset_id,
+        )
     except Exception:
         # Alias table may not exist yet (pre-migration)
         return []

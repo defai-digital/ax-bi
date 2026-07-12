@@ -17,7 +17,8 @@
 """Data access boundaries for governed GenAI BI metadata."""
 
 from axbi.daos.base import BaseDAO
-from axbi.models.ai import AIEvaluationRun, AIGeneratedArtifact
+from axbi.extensions import db
+from axbi.models.ai import AIEvaluationRun, AIGeneratedArtifact, AISemanticAlias
 
 
 class AIGeneratedArtifactDAO(BaseDAO[AIGeneratedArtifact]):
@@ -26,3 +27,23 @@ class AIGeneratedArtifactDAO(BaseDAO[AIGeneratedArtifact]):
 
 class AIEvaluationRunDAO(BaseDAO[AIEvaluationRun]):
     """Data access boundary for AI evaluation results."""
+
+
+class AISemanticAliasDAO(BaseDAO[AISemanticAlias]):
+    """Data access boundary for governed semantic aliases."""
+
+    @staticmethod
+    def find_aliases_for_object(
+        object_type: str,
+        object_name: str,
+        dataset_id: int | None = None,
+    ) -> list[str]:
+        """Return aliases scoped to one named semantic object."""
+        query = db.session.query(AISemanticAlias).filter(
+            AISemanticAlias.object_type == object_type,
+            AISemanticAlias.object_name == object_name,
+            AISemanticAlias.alias.isnot(None),
+        )
+        if dataset_id is not None:
+            query = query.filter(AISemanticAlias.dataset_id == dataset_id)
+        return [row.alias for row in query.all() if row.alias]

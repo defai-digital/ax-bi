@@ -796,17 +796,20 @@ def build_applied_dashboard_filters(
     AxBISecurityException if the caller cannot access the dashboard.
     """
     # Local imports avoid circular deps at module load
-    from axbi import db, security_manager
+    from axbi import security_manager
     from axbi.charts.data.dashboard_filter_context import (
         _extract_filter_extra_form_data,
         _get_filter_target_column,
         _is_filter_in_scope_for_chart,
     )
     from axbi.commands.dashboard.exceptions import DashboardNotFoundError
+    from axbi.daos.dashboard import DashboardDAO
     from axbi.mcp_service.chart.schemas import AppliedDashboardFilter
-    from axbi.models.dashboard import Dashboard
 
-    dashboard = db.session.query(Dashboard).filter_by(id=dashboard_id).one_or_none()
+    dashboard = DashboardDAO.find_by_id(
+        dashboard_id,
+        skip_base_filter=True,
+    )
     if not dashboard:
         raise DashboardNotFoundError(dashboard_id=str(dashboard_id))
 

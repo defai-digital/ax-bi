@@ -177,12 +177,12 @@ class TestMultiSheetUpload:
     """Test upload behavior with multi-sheet Excel files."""
 
     @patch.object(upload_file_module, "serialize_dataset_object")
-    @patch.object(upload_file_module.db, "session")
+    @patch("axbi.daos.dataset.DatasetDAO.find_one_or_none")
     @patch.object(upload_file_module, "UploadCommand")
     @patch.object(upload_file_module, "get_or_create_local_db")
     @pytest.mark.asyncio
     async def test_upload_uses_first_sheet_by_default(
-        self, mock_local_db_fn, mock_upload_cmd, mock_session, mock_serialize
+        self, mock_local_db_fn, mock_upload_cmd, mock_find_dataset, mock_serialize
     ) -> None:
         """Verify that upload defaults to first sheet (index 0)."""
         local_db = _make_mock_local_db()
@@ -190,7 +190,7 @@ class TestMultiSheetUpload:
         mock_cmd = MagicMock()
         mock_upload_cmd.return_value = mock_cmd
         mock_ds = _make_mock_dataset()
-        mock_session.query.return_value.filter_by.return_value.one_or_none.return_value = mock_ds  # noqa: E501
+        mock_find_dataset.return_value = mock_ds
         mock_serialize.return_value = {"id": 99, "table_name": "upload_revenue_abc"}
 
         excel_b64 = _make_minimal_xlsx()

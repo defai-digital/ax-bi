@@ -39,6 +39,9 @@ The low-risk boundary cleanup pass is complete. Completed work included:
 - Routing chart and database entity lookups in mutating/SQL-execution tools
   through their resource DAOs while preserving explicit object authorization
   and not-found behavior.
+- Moving dashboard-filter, preview-dataset, post-upload dataset, and semantic
+  alias reads behind resource DAOs; semantic aliases are scoped by both object
+  name and dataset so unrelated columns cannot inherit each other's aliases.
 
 ## Deferred Boundary Areas
 
