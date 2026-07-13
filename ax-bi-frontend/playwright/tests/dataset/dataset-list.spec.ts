@@ -467,9 +467,9 @@ test('should bulk delete multiple datasets', async ({
 // (Deviation from "avoid describe" guideline is necessary for functional reasons)
 test.describe('import dataset', () => {
   // `timeout` on describe.configure also bounds fixture setup, so the
-  // `datasetListPage` navigation gets the SLOW_TEST budget too —
+  // `datasetListPage` navigation gets the file-import test budget too —
   // inline `test.setTimeout()` only applies once the test body runs.
-  test.describe.configure({ mode: 'serial', timeout: TIMEOUT.SLOW_TEST });
+  test.describe.configure({ mode: 'serial', timeout: TIMEOUT.FILE_IMPORT_TEST });
   test('should import a dataset from a zip file', async ({
     page,
     datasetListPage,
@@ -494,6 +494,7 @@ test.describe('import dataset', () => {
     // Verify it's gone
     await expectDeleted(page, ENDPOINTS.DATASET, datasetId, {
       label: `Dataset ${datasetId}`,
+      timeout: TIMEOUT.SLOW_TEST,
     });
 
     // Refresh to confirm dataset is no longer in the list (deleted rows are removed from the DOM, so assert count rather than visibility)

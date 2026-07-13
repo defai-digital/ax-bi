@@ -60,6 +60,13 @@ export const TIMEOUT = {
   FILE_IMPORT: 30000, // 30s for file import operations
 
   /**
+   * End-to-end file import tests that include setup, export, deletion, and
+   * re-import. Prefixed CI runs can serialize API requests under load, so the
+   * complete workflow needs a larger budget than the import request alone.
+   */
+  FILE_IMPORT_TEST: 120000, // 2m for complete export-and-reimport workflows
+
+  /**
    * UI transition timeout (tab close, popover dismiss, dropdown close)
    */
   UI_TRANSITION: 5000, // 5s ceiling for Ant Design animations (~300-500ms actual)
