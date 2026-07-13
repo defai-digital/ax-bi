@@ -178,12 +178,19 @@ The tap repo is live: [defai-digital/homebrew-ax-bi](https://github.com/defai-di
 | Secret | Status |
 | --- | --- |
 | `APPLE_TEAM_ID` | Set (`N5ZUZDUJS6`) |
-| `APPLE_API_ISSUER` / `NOTARY_ISSUER` | Set |
+| `APPLE_API_ISSUER` / `NOTARY_ISSUER` | Set (`3cdb065e-9d78-451f-8424-e1e6b1547d64`) |
 | `AX_BI_MINISIGN_*` (secret, public, password) | Set; public key in `docs/ax-bi.minisign.pub` |
+| `HOMEBREW_TAP_TOKEN` | Set (write access to `defai-digital/homebrew-ax-bi`) |
 
 ### Secrets still required before the first release tag
 
-Copy from **ax-studio** (same DEFAI Developer ID / notary key / tap PAT) or export fresh:
+Copy from **ax-studio** (same DEFAI Developer ID / notary key) or export fresh.
+Local signing identity when present:
+
+```text
+Developer ID Application: DEFAI PRIVATE LIMITED (N5ZUZDUJS6)
+SHA-1: CCA480038EE61E7CB9DF9FAACD842EC06949CD79
+```
 
 | Secret | Source |
 | --- | --- |
@@ -191,7 +198,6 @@ Copy from **ax-studio** (same DEFAI Developer ID / notary key / tap PAT) or expo
 | `APPLE_CERTIFICATE_PASSWORD` or `CODE_SIGN_P12_PASSWORD` | Matching p12 password |
 | `APPLE_API_KEY_B64` or `NOTARIZE_P8_BASE64` | Studio notary `.p8` |
 | `APPLE_API_KEY_ID` or `NOTARY_KEY_ID` | Studio Key ID |
-| `HOMEBREW_TAP_TOKEN` | Studio tap PAT (write to homebrew-ax-bi) |
 
 ```bash
 # Example after you have the files/values locally:
