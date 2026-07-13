@@ -18,19 +18,30 @@ under the License.
 
 # AX BI
 
+**Open, governed, MCP-native GenAI BI for prompt-to-dashboard and trusted analytics agents.**
+
+**AX BI** is a GenAI-native business intelligence platform by **DEFAI Private Limited**. It is not a chatbot bolted onto BI — it is a trusted AI analyst that discovers governed data assets, reasons over a semantic layer, generates validated charts, composes dashboards, explains results, and leaves an auditable trail. AX BI builds on the proven [Apache Superset](https://superset.apache.org) foundation and extends it with a first-class [Model Context Protocol (MCP)](https://modelcontextprotocol.io) service so AI agents can operate on your data within your existing roles and row-level security.
+
+- Run **AX BI Desktop** on **macOS** (Homebrew) or **Windows** (installer)
+- Start a **local instance** or connect to a **hosted** AX BI server
+- Build charts and dashboards with a governed semantic layer and RBAC/RLS
+- Expose datasets, charts, and dashboards to AI agents through the built-in **MCP** service
+
+Built by [DEFAI Digital](https://github.com/defai-digital).
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/license/apache-2-0)
+[![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-000000?logo=apple&logoColor=white)](https://github.com/defai-digital/homebrew-ax-bi)
+[![Windows x64](https://img.shields.io/badge/Windows-x64-0078D4?logo=windows&logoColor=white)](https://github.com/defai-digital/ax-bi/releases)
+[![Windows ARM64](https://img.shields.io/badge/Windows-ARM64-0078D4?logo=windows&logoColor=white)](https://github.com/defai-digital/ax-bi/releases)
+[![Homebrew](https://img.shields.io/badge/Homebrew-cask-FBB040?logo=homebrew&logoColor=white)](https://github.com/defai-digital/homebrew-ax-bi)
 [![Built on Apache Superset](https://img.shields.io/badge/built%20on-Apache%20Superset-20A6C9.svg)](https://superset.apache.org)
 [![MCP-native](https://img.shields.io/badge/MCP-native-6E56CF.svg)](#mcp-native-genai-bi)
 [![Maintained by DEFAI](https://img.shields.io/badge/maintained%20by-DEFAI%20Private%20Limited-0A0A0A.svg)](#about-defai)
 
-<!-- TODO: replace with the AX BI logo once brand assets are finalized. -->
-<h3>Open, governed, MCP-native GenAI BI for prompt-to-dashboard and trusted analytics agents.</h3>
-
-**AX BI** is a GenAI-native business intelligence platform by **DEFAI Private Limited**. It is not a chatbot bolted onto BI — it is a trusted AI analyst that discovers governed data assets, reasons over a semantic layer, generates validated charts, composes dashboards, explains results, and leaves an auditable trail. AX BI builds on the proven [Apache Superset](https://superset.apache.org) foundation and extends it with a first-class [Model Context Protocol (MCP)](https://modelcontextprotocol.io) service so AI agents can operate on your data within your existing roles and row-level security.
-
+[**Get Started**](#get-started) |
 [**Why BI Agents Break Down**](#why-bi-agents-break-down) |
 [**MCP-Native GenAI BI**](#mcp-native-genai-bi) |
-[**Get Started**](#quick-start-with-docker) |
+[**Docker Compose**](#docker-compose-server--team) |
 [**Supported File Types**](#supported-file-types) |
 [**Supported Databases**](#supported-databases) |
 [**Architecture**](#workspace-architecture) |
@@ -38,6 +49,149 @@ under the License.
 [**Contributing**](#contributing) |
 [**Built on Apache Superset**](#built-on-apache-superset) |
 [**About DEFAI**](#about-defai)
+
+---
+
+## Get Started
+
+AX BI Desktop is the primary client for **macOS** and **Windows**. Install the
+desktop app for your OS, then either connect to a hosted AX BI server or run a
+local stack. You do not need to clone this repository for day-to-day use.
+
+### Supported desktop targets
+
+| Platform | Status | Install path |
+| --- | --- | --- |
+| macOS Apple Silicon | Active support | Homebrew cask or GitHub release DMG |
+| Windows x64 | Active support | GitHub release installer (NSIS / MSI) |
+| Windows ARM64 | Active support | GitHub release installer when published; otherwise use the x64 installer |
+| Linux servers | Active support | Docker Compose or Helm (self-hosted stack, not a desktop shell) |
+
+### Install AX BI Desktop
+
+#### macOS
+
+1. Install Homebrew if you do not already have it:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
+
+2. Install AX BI:
+
+```bash
+brew tap defai-digital/ax-bi
+brew trust defai-digital/ax-bi
+brew install --cask defai-digital/ax-bi/ax-bi
+```
+
+Already have Homebrew? Start from step 2. The `brew trust` command supports
+Homebrew setups that require explicit trust for third-party taps.
+
+Shorthand:
+
+```bash
+brew install --cask defai-digital/ax-bi/ax-bi
+```
+
+3. Open the app:
+
+```bash
+open -a "AX BI"
+```
+
+Or launch **AX BI** from Applications / Spotlight.
+
+The cask installs **AX BI.app** and pulls Colima, Docker CLI, and Docker Compose
+for the app-managed local runtime.
+
+Prefer not to use Homebrew? Download the notarized macOS DMG from
+[GitHub Releases](https://github.com/defai-digital/ax-bi/releases)
+(`AX.BI_*_aarch64.dmg`) and open it.
+
+#### Windows
+
+1. Open the [latest AX BI release](https://github.com/defai-digital/ax-bi/releases/latest)
+   (desktop tags look like `ax-bi-desktop-v*`).
+2. Download the installer for your machine:
+   - **Windows x64 (Intel/AMD):** `AX.BI_<version>_x64-setup.exe` (or the matching `.msi`)
+   - **Windows ARM64:** `AX.BI_<version>_arm64-setup.exe` when present; otherwise use the x64 installer
+3. Run the installer and finish the setup wizard.
+4. Open **AX BI** from the Start menu.
+
+Product name on Windows is **AX BI** (same as macOS).
+
+Optional integrity check — every stable desktop asset can include a detached
+minisign signature (`.minisig`). Verify with
+[`ax-bi-desktop/docs/ax-bi.minisign.pub`](ax-bi-desktop/docs/ax-bi.minisign.pub):
+
+```powershell
+# After installing minisign (e.g. scoop install minisign / choco install minisign)
+minisign -Vm .\AX.BI_0.1.0_x64-setup.exe -p .\ax-bi.minisign.pub
+```
+
+### First launch (macOS and Windows)
+
+1. Open **AX BI**.
+2. Choose one of:
+   - **Connect to server** — paste a hosted or team-managed AX BI URL (works on
+     both macOS and Windows).
+   - **Run locally** — start an on-machine stack for evaluation.
+     - **macOS:** app-managed Colima + Docker Compose (bundled Homebrew deps).
+     - **Windows:** connect to a local Docker Compose stack you run separately
+       (see [Docker Compose](#docker-compose-server--team)), or to any reachable
+       AX BI URL. App-managed Colima is a macOS path.
+3. When connected, the web app fills the desktop window.
+4. Default local stack login (unless you changed it): `admin` / `admin`.
+
+Deep links such as `axbi://dashboard/{id}` open in the desktop shell on both
+platforms. More detail:
+[`ax-bi-desktop/LOCAL_RUNTIME.md`](ax-bi-desktop/LOCAL_RUNTIME.md) and
+[`ax-bi-desktop/RELEASE.md`](ax-bi-desktop/RELEASE.md).
+
+### Update
+
+**macOS (Homebrew)**
+
+```bash
+brew upgrade --cask defai-digital/ax-bi/ax-bi
+```
+
+**Windows**
+
+Download and run the latest installer from
+[GitHub Releases](https://github.com/defai-digital/ax-bi/releases/latest).
+The installer upgrades the existing **AX BI** install.
+
+### Uninstall
+
+**macOS (Homebrew)**
+
+```bash
+brew uninstall --cask ax-bi
+brew untap defai-digital/ax-bi
+```
+
+**Windows**
+
+Use **Settings → Apps → Installed apps → AX BI → Uninstall**, or the uninstaller
+shipped with the NSIS/MSI package.
+
+### Docker / Kubernetes (servers and shared teams)
+
+For multi-user production, CI, or always-on servers — including a local Windows
+Docker stack you point the desktop app at — use Docker Compose or Helm. Jump to
+[Docker Compose (server / team)](#docker-compose-server--team) below.
+
+### From source (contributors)
+
+```bash
+git clone https://github.com/defai-digital/ax-bi.git
+cd ax-bi
+# See Development and ax-bi-desktop/README.md
+```
+
+---
 
 ## Why BI Agents Break Down
 
@@ -200,10 +354,14 @@ AX BI
     └── Docker and Helm deployment paths
 ```
 
-## Quick Start with Docker
+## Docker Compose (server / team)
 
-The fastest way to try AX BI is Docker Compose. This pulls the public
-multi-architecture images from GitHub Container Registry:
+Prefer [AX BI Desktop](#get-started) on **macOS** or **Windows** for interactive
+use. Use Docker Compose when you want a shared, always-on, or CI stack — or a
+local Windows Docker environment that the desktop app can connect to.
+
+This path pulls the public multi-architecture images from GitHub Container
+Registry:
 
 - `ghcr.io/defai-digital/ax-bi`
 - `ghcr.io/defai-digital/ax-bi-services`
@@ -368,21 +526,42 @@ Want to add support for your datastore or data engine? Read about the [technical
 
 ## Installation and Configuration
 
-AX BI supports Docker Compose, Kubernetes/Helm, and local source deployments.
+| Audience | Recommended path |
+| --- | --- |
+| macOS desktop | **Homebrew** or DMG — see [Get Started → macOS](#macos) |
+| Windows desktop | **NSIS/MSI installer** — see [Get Started → Windows](#windows) |
+| Shared / always-on server | Docker Compose or Helm |
+| Production | Managed Postgres/Redis, pinned image tags, Helm |
 
-- **Docker deployment** — the recommended path for local AX BI trials:
+- **macOS** — [defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi):
+
+  ```bash
+  brew install --cask defai-digital/ax-bi/ax-bi
+  open -a "AX BI"
+  ```
+
+- **Windows** — download `AX.BI_*_x64-setup.exe` (or ARM64 when published) from
+  [GitHub Releases](https://github.com/defai-digital/ax-bi/releases/latest) and
+  run the installer.
+
+- **Docker Compose** — for servers and teams (see [Docker Compose](#docker-compose-server--team)):
+
   ```bash
   cp docker/.env-axbi.example docker/.env-axbi
   # Fill AX_BI_SECRET_KEY, DATABASE_PASSWORD, and ADMIN_PASSWORD.
   # Generate secrets with: openssl rand -base64 42
   docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
   ```
+
   To build images from this checkout instead of pulling published images, add
   `-f docker-compose-axbi-build.yml --build`.
+
 - **Production deployments** — use managed Postgres/Redis, pinned image tags,
   JWT-backed MCP authentication, and only the externally exposed services your
   deployment needs. For Kubernetes, use the [AX BI Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/ax-bi) with `helm/ax-bi/values-axbi.yaml` and replace all placeholder secrets.
 - **MCP service in production** — see [`axbi/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/axbi/mcp_service/PRODUCTION.md).
+- **Desktop release pipeline** — macOS signing/notarization, Windows installers,
+  minisign, and Homebrew cask updates: [`ax-bi-desktop/RELEASE.md`](ax-bi-desktop/RELEASE.md).
 
 ## Development
 
