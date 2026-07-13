@@ -76,7 +76,8 @@ const cask = `cask "ax-bi" do
   preflight do
     # Clears any pre-existing bundle so upgrades from untracked installs do not
     # hit Homebrew's "already an App" guard.
-    FileUtils.rm_r("#{appdir}/AX BI.app")
+    app_path = "#{appdir}/AX BI.app"
+    FileUtils.rm_r(app_path) if File.exist?(app_path)
   end
 
   postflight do

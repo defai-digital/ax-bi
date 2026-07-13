@@ -30,7 +30,8 @@ cask "ax-bi" do
   app "AX BI.app"
 
   preflight do
-    FileUtils.rm_r("#{appdir}/AX BI.app")
+    app_path = "#{appdir}/AX BI.app"
+    FileUtils.rm_r(app_path) if File.exist?(app_path)
   end
 
   postflight do
