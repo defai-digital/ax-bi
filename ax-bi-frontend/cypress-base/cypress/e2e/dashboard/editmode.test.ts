@@ -21,14 +21,12 @@ import { drag } from 'cypress/utils';
 import { interceptGet } from './utils';
 import { interceptFiltering as interceptCharts } from '../explore/utils';
 
-const SAMPLE_CHART = '1 - Sample chart';
-
 function editDashboard() {
   cy.getBySel('edit-dashboard-button').click();
 }
 
 function dragComponent(
-  component = SAMPLE_CHART,
+  component: string,
   target = 'card-title',
   withFiltering = true,
 ) {
@@ -63,7 +61,6 @@ function visitEdit(sampleDashboard = SAMPLE_DASHBOARD_1) {
 describe('Dashboard edit', () => {
   describe('Components', () => {
     beforeEach(() => {
-      cy.createSampleCharts([0]);
       visitEdit();
     });
 
@@ -79,9 +76,15 @@ describe('Dashboard edit', () => {
       cy.getBySel('dashboard-charts-show-only-mine')
         .find('input[type="checkbox"]')
         .uncheck({ force: true });
-      cy.wait('@filtering');
-      dragComponent();
-      cy.getBySel('dashboard-component-chart-holder').should('have.length', 1);
+      cy.wait('@filtering').then(({ response }) => {
+        const [chart] = response?.body.result ?? [];
+        expect(chart?.slice_name).to.be.a('string');
+        dragComponent(chart.slice_name, 'card-title', false);
+        cy.getBySel('dashboard-component-chart-holder').should(
+          'have.length',
+          1,
+        );
+      });
     });
   });
 });
