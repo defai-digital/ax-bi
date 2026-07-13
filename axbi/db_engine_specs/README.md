@@ -19,7 +19,7 @@ under the License.
 
 # Database engine specifications
 
-Superset uses [SQLAlchemy](https://www.sqlalchemy.org/) as an abstraction layer for running queries and fetching metadata from tables (like column names and types). Unfortunately, while SQLAlchemy offers enough functionality to allow connecting Superset to dozens of databases, there are still implementation details that differ across them. Because of this, Superset has an additional abstraction on top of SQLAlchemy, called a "database engine specification" or, simply, "DB engine spec".
+AX BI uses [SQLAlchemy](https://www.sqlalchemy.org/) as an abstraction layer for running queries and fetching metadata from tables (like column names and types). Unfortunately, while SQLAlchemy offers enough functionality to allow connecting AX BI to dozens of databases, there are still implementation details that differ across them. Because of this, AX BI has an additional abstraction on top of SQLAlchemy, called a "database engine specification" or, simply, "DB engine spec".
 
 DB engine specs were created initially because there's no SQL standard for computing aggregations at different time grains. For example, to compute a daily metric in Trino or Postgres we could run a query like this:
 
@@ -47,11 +47,11 @@ GROUP BY
 
 Over time, more and more functionality was added to DB engine specs, including validating SQL, estimating the cost of queries before they are run, and understanding the semantics of error messages. These are all described in detail in this document, and in the table below you can see a summary of what features are supported by each database.
 
-Note that DB engine specs are completely optional. Superset can connect to any database supported by SQLAlchemy (or 3rd party dialects) even if there's no DB engine spec associated with it. But DB engine specs greatly improve the experience of working with a database in Superset.
+Note that DB engine specs are completely optional. AX BI can connect to any database supported by SQLAlchemy (or 3rd party dialects) even if there's no DB engine spec associated with it. But DB engine specs greatly improve the experience of working with a database in AX BI.
 
 ## Features
 
-The tables below (generated via `python superset/db_engine_specs/lib.py`) summarize the status of all DB engine specs in Superset, organized by feature category for easier navigation (note that this excludes 3rd party DB engine specs).
+The tables below (generated via `python axbi/db_engine_specs/lib.py`) summarize the status of all DB engine specs in AX BI, organized by feature category for easier navigation (note that this excludes 3rd party DB engine specs).
 
 ### Quick Navigation
 
@@ -83,7 +83,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | Databricks (legacy) | 70 | Supported | Partial | Supported | Partial | Partial | Not supported |
 | StarRocks | 69 | Supported | Partial | Supported | Partial | Partial | Partial |
 | SingleStore | 68 | Supported | Partial | Supported | Not supported | Partial | Not supported |
-| ClickHouse Connect (Superset) | 61 | Supported | Partial | Partial | Partial | Partial | Not supported |
+| ClickHouse Connect (AX BI) | 61 | Supported | Partial | Partial | Partial | Partial | Not supported |
 | Google Sheets | 61 | Supported | Partial | Supported | Supported | Partial | Partial |
 | Aurora MySQL (Data API) | 59 | Supported | Partial | Supported | Partial | Partial | Not supported |
 | MariaDB | 59 | Supported | Partial | Supported | Partial | Partial | Not supported |
@@ -112,7 +112,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | Vertica | 34 | Supported | Partial | Supported | Partial | Partial | Not supported |
 | Amazon DynamoDB | 32 | Supported | Partial | Supported | Partial | Partial | Not supported |
 | Apache Pinot | 32 | Partial | Partial | Supported | Partial | Partial | Not supported |
-| Superset meta database | 31 | Supported | Partial | Supported | Supported | Not supported | Not supported |
+| AX BI meta database | 31 | Supported | Partial | Supported | Supported | Not supported | Not supported |
 | Databricks SQL Endpoint | 30 | Supported | Partial | Supported | Partial | Partial | Not supported |
 | Apache Kylin | 28 | Supported | Partial | Supported | Not supported | Partial | Not supported |
 | CrateDB | 28 | Supported | Partial | Supported | Not supported | Partial | Not supported |
@@ -137,71 +137,71 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 
 | Database | Module | Limit Method | Limit Clause | Max Column Name |
 | --- | --- | --- | --- | --- |
-| Amazon Athena | superset.db_engine_specs.athena | FORCE_LIMIT | True | None |
-| Amazon DynamoDB | superset.db_engine_specs.dynamodb | FORCE_LIMIT | True | None |
-| Amazon Redshift | superset.db_engine_specs.redshift | FORCE_LIMIT | True | 127 |
-| Apache Doris | superset.db_engine_specs.doris | FORCE_LIMIT | True | 64 |
-| Apache Drill | superset.db_engine_specs.drill | FORCE_LIMIT | True | None |
-| Apache Druid | superset.db_engine_specs.druid | FORCE_LIMIT | True | None |
-| Apache Hive | superset.db_engine_specs.hive | FORCE_LIMIT | True | 767 |
-| Apache Impala | superset.db_engine_specs.impala | FORCE_LIMIT | True | None |
-| Apache Kylin | superset.db_engine_specs.kylin | FORCE_LIMIT | True | None |
-| Apache Pinot | superset.db_engine_specs.pinot | FORCE_LIMIT | True | None |
-| Apache Solr | superset.db_engine_specs.solr | FORCE_LIMIT | True | None |
-| Apache Spark SQL | superset.db_engine_specs.spark | FORCE_LIMIT | True | 767 |
-| Ascend | superset.db_engine_specs.ascend | FORCE_LIMIT | True | None |
-| Aurora MySQL (Data API) | superset.db_engine_specs.aurora | FORCE_LIMIT | True | 64 |
-| Aurora PostgreSQL (Data API) | superset.db_engine_specs.aurora | FORCE_LIMIT | True | 63 |
-| Azure Synapse | superset.db_engine_specs.mssql | FORCE_LIMIT | True | 128 |
-| ClickHouse | superset.db_engine_specs.clickhouse | FORCE_LIMIT | True | None |
-| ClickHouse Connect (Superset) | superset.db_engine_specs.clickhouse | FORCE_LIMIT | True | None |
-| CockroachDB | superset.db_engine_specs.cockroachdb | FORCE_LIMIT | True | 63 |
-| Couchbase | superset.db_engine_specs.couchbase | FORCE_LIMIT | True | None |
-| CrateDB | superset.db_engine_specs.crate | FORCE_LIMIT | True | None |
-| Databend | superset.db_engine_specs.databend | FORCE_LIMIT | True | None |
-| Databricks | superset.db_engine_specs.databricks | FORCE_LIMIT | True | None |
-| Databricks (legacy) | superset.db_engine_specs.databricks | FORCE_LIMIT | True | None |
-| Databricks Interactive Cluster | superset.db_engine_specs.databricks | FORCE_LIMIT | True | 767 |
-| Databricks SQL Endpoint | superset.db_engine_specs.databricks | FORCE_LIMIT | True | None |
-| Denodo | superset.db_engine_specs.denodo | FORCE_LIMIT | True | None |
-| Dremio | superset.db_engine_specs.dremio | FORCE_LIMIT | True | None |
-| DuckDB | superset.db_engine_specs.duckdb | FORCE_LIMIT | True | None |
-| ElasticSearch (OpenDistro SQL) | superset.db_engine_specs.elasticsearch | FORCE_LIMIT | True | None |
-| ElasticSearch (SQL API) | superset.db_engine_specs.elasticsearch | FORCE_LIMIT | True | None |
-| Exasol | superset.db_engine_specs.exasol | FORCE_LIMIT | True | 128 |
-| Firebird | superset.db_engine_specs.firebird | FETCH_MANY | True | None |
-| Firebolt | superset.db_engine_specs.firebolt | FORCE_LIMIT | True | None |
-| Google BigQuery | superset.db_engine_specs.bigquery | FORCE_LIMIT | True | 128 |
-| Google Sheets | superset.db_engine_specs.gsheets | FORCE_LIMIT | True | None |
-| IBM Db2 | superset.db_engine_specs.db2 | WRAP_SQL | True | 30 |
-| IBM Db2 for i | superset.db_engine_specs.ibmi | WRAP_SQL | True | 128 |
-| IBM Netezza Performance Server | superset.db_engine_specs.netezza | FORCE_LIMIT | True | None |
-| KustoKQL | superset.db_engine_specs.kusto | FORCE_LIMIT | True | None |
-| KustoSQL | superset.db_engine_specs.kusto | WRAP_SQL | True | None |
-| MariaDB | superset.db_engine_specs.mariadb | FORCE_LIMIT | True | 64 |
-| Microsoft SQL Server | superset.db_engine_specs.mssql | FORCE_LIMIT | True | 128 |
-| MotherDuck | superset.db_engine_specs.duckdb | FORCE_LIMIT | True | None |
-| MySQL | superset.db_engine_specs.mysql | FORCE_LIMIT | True | 64 |
-| OceanBase | superset.db_engine_specs.oceanbase | FORCE_LIMIT | True | 128 |
-| Ocient | superset.db_engine_specs.ocient | FORCE_LIMIT | True | 30 |
-| Oracle | superset.db_engine_specs.oracle | FORCE_LIMIT | True | 128 |
-| Parseable | superset.db_engine_specs.parseable | FORCE_LIMIT | True | None |
-| PostgreSQL | superset.db_engine_specs.postgres | FORCE_LIMIT | True | None |
-| Presto | superset.db_engine_specs.presto | FORCE_LIMIT | True | None |
-| RisingWave | superset.db_engine_specs.risingwave | FORCE_LIMIT | True | 63 |
-| SAP HANA | superset.db_engine_specs.hana | WRAP_SQL | True | 30 |
-| SQLite | superset.db_engine_specs.sqlite | FORCE_LIMIT | True | None |
-| Shillelagh | superset.db_engine_specs.shillelagh | FORCE_LIMIT | True | None |
-| SingleStore | superset.db_engine_specs.singlestore | FORCE_LIMIT | True | 256 |
-| Snowflake | superset.db_engine_specs.snowflake | FORCE_LIMIT | True | 256 |
-| StarRocks | superset.db_engine_specs.starrocks | FORCE_LIMIT | True | 64 |
-| Superset meta database | superset.db_engine_specs.superset | FORCE_LIMIT | True | None |
-| TDengine | superset.db_engine_specs.tdengine | FORCE_LIMIT | True | 64 |
-| Teradata | superset.db_engine_specs.teradata | FORCE_LIMIT | True | 30 |
-| Trino | superset.db_engine_specs.trino | FORCE_LIMIT | True | None |
-| Vertica | superset.db_engine_specs.vertica | FORCE_LIMIT | True | None |
-| YDB | superset.db_engine_specs.ydb | FORCE_LIMIT | True | None |
-| base | superset.db_engine_specs.presto | FORCE_LIMIT | True | None |
+| Amazon Athena | axbi.db_engine_specs.athena | FORCE_LIMIT | True | None |
+| Amazon DynamoDB | axbi.db_engine_specs.dynamodb | FORCE_LIMIT | True | None |
+| Amazon Redshift | axbi.db_engine_specs.redshift | FORCE_LIMIT | True | 127 |
+| Apache Doris | axbi.db_engine_specs.doris | FORCE_LIMIT | True | 64 |
+| Apache Drill | axbi.db_engine_specs.drill | FORCE_LIMIT | True | None |
+| Apache Druid | axbi.db_engine_specs.druid | FORCE_LIMIT | True | None |
+| Apache Hive | axbi.db_engine_specs.hive | FORCE_LIMIT | True | 767 |
+| Apache Impala | axbi.db_engine_specs.impala | FORCE_LIMIT | True | None |
+| Apache Kylin | axbi.db_engine_specs.kylin | FORCE_LIMIT | True | None |
+| Apache Pinot | axbi.db_engine_specs.pinot | FORCE_LIMIT | True | None |
+| Apache Solr | axbi.db_engine_specs.solr | FORCE_LIMIT | True | None |
+| Apache Spark SQL | axbi.db_engine_specs.spark | FORCE_LIMIT | True | 767 |
+| Ascend | axbi.db_engine_specs.ascend | FORCE_LIMIT | True | None |
+| Aurora MySQL (Data API) | axbi.db_engine_specs.aurora | FORCE_LIMIT | True | 64 |
+| Aurora PostgreSQL (Data API) | axbi.db_engine_specs.aurora | FORCE_LIMIT | True | 63 |
+| Azure Synapse | axbi.db_engine_specs.mssql | FORCE_LIMIT | True | 128 |
+| ClickHouse | axbi.db_engine_specs.clickhouse | FORCE_LIMIT | True | None |
+| ClickHouse Connect (AX BI) | axbi.db_engine_specs.clickhouse | FORCE_LIMIT | True | None |
+| CockroachDB | axbi.db_engine_specs.cockroachdb | FORCE_LIMIT | True | 63 |
+| Couchbase | axbi.db_engine_specs.couchbase | FORCE_LIMIT | True | None |
+| CrateDB | axbi.db_engine_specs.crate | FORCE_LIMIT | True | None |
+| Databend | axbi.db_engine_specs.databend | FORCE_LIMIT | True | None |
+| Databricks | axbi.db_engine_specs.databricks | FORCE_LIMIT | True | None |
+| Databricks (legacy) | axbi.db_engine_specs.databricks | FORCE_LIMIT | True | None |
+| Databricks Interactive Cluster | axbi.db_engine_specs.databricks | FORCE_LIMIT | True | 767 |
+| Databricks SQL Endpoint | axbi.db_engine_specs.databricks | FORCE_LIMIT | True | None |
+| Denodo | axbi.db_engine_specs.denodo | FORCE_LIMIT | True | None |
+| Dremio | axbi.db_engine_specs.dremio | FORCE_LIMIT | True | None |
+| DuckDB | axbi.db_engine_specs.duckdb | FORCE_LIMIT | True | None |
+| ElasticSearch (OpenDistro SQL) | axbi.db_engine_specs.elasticsearch | FORCE_LIMIT | True | None |
+| ElasticSearch (SQL API) | axbi.db_engine_specs.elasticsearch | FORCE_LIMIT | True | None |
+| Exasol | axbi.db_engine_specs.exasol | FORCE_LIMIT | True | 128 |
+| Firebird | axbi.db_engine_specs.firebird | FETCH_MANY | True | None |
+| Firebolt | axbi.db_engine_specs.firebolt | FORCE_LIMIT | True | None |
+| Google BigQuery | axbi.db_engine_specs.bigquery | FORCE_LIMIT | True | 128 |
+| Google Sheets | axbi.db_engine_specs.gsheets | FORCE_LIMIT | True | None |
+| IBM Db2 | axbi.db_engine_specs.db2 | WRAP_SQL | True | 30 |
+| IBM Db2 for i | axbi.db_engine_specs.ibmi | WRAP_SQL | True | 128 |
+| IBM Netezza Performance Server | axbi.db_engine_specs.netezza | FORCE_LIMIT | True | None |
+| KustoKQL | axbi.db_engine_specs.kusto | FORCE_LIMIT | True | None |
+| KustoSQL | axbi.db_engine_specs.kusto | WRAP_SQL | True | None |
+| MariaDB | axbi.db_engine_specs.mariadb | FORCE_LIMIT | True | 64 |
+| Microsoft SQL Server | axbi.db_engine_specs.mssql | FORCE_LIMIT | True | 128 |
+| MotherDuck | axbi.db_engine_specs.duckdb | FORCE_LIMIT | True | None |
+| MySQL | axbi.db_engine_specs.mysql | FORCE_LIMIT | True | 64 |
+| OceanBase | axbi.db_engine_specs.oceanbase | FORCE_LIMIT | True | 128 |
+| Ocient | axbi.db_engine_specs.ocient | FORCE_LIMIT | True | 30 |
+| Oracle | axbi.db_engine_specs.oracle | FORCE_LIMIT | True | 128 |
+| Parseable | axbi.db_engine_specs.parseable | FORCE_LIMIT | True | None |
+| PostgreSQL | axbi.db_engine_specs.postgres | FORCE_LIMIT | True | None |
+| Presto | axbi.db_engine_specs.presto | FORCE_LIMIT | True | None |
+| RisingWave | axbi.db_engine_specs.risingwave | FORCE_LIMIT | True | 63 |
+| SAP HANA | axbi.db_engine_specs.hana | WRAP_SQL | True | 30 |
+| SQLite | axbi.db_engine_specs.sqlite | FORCE_LIMIT | True | None |
+| Shillelagh | axbi.db_engine_specs.shillelagh | FORCE_LIMIT | True | None |
+| SingleStore | axbi.db_engine_specs.singlestore | FORCE_LIMIT | True | 256 |
+| Snowflake | axbi.db_engine_specs.snowflake | FORCE_LIMIT | True | 256 |
+| StarRocks | axbi.db_engine_specs.starrocks | FORCE_LIMIT | True | 64 |
+| AX BI meta database | axbi.db_engine_specs.axbi | FORCE_LIMIT | True | None |
+| TDengine | axbi.db_engine_specs.tdengine | FORCE_LIMIT | True | 64 |
+| Teradata | axbi.db_engine_specs.teradata | FORCE_LIMIT | True | 30 |
+| Trino | axbi.db_engine_specs.trino | FORCE_LIMIT | True | None |
+| Vertica | axbi.db_engine_specs.vertica | FORCE_LIMIT | True | None |
+| YDB | axbi.db_engine_specs.ydb | FORCE_LIMIT | True | None |
+| base | axbi.db_engine_specs.presto | FORCE_LIMIT | True | None |
 
 ### SQL Capabilities
 
@@ -224,7 +224,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | Aurora PostgreSQL (Data API) | True | True | True | True | True | True | True | False | False | True | False |
 | Azure Synapse | True | True | True | True | False | True | True | False | False | True | False |
 | ClickHouse | True | True | True | True | True | True | True | True | False | True | False |
-| ClickHouse Connect (Superset) | True | True | True | True | True | True | True | True | False | True | False |
+| ClickHouse Connect (AX BI) | True | True | True | True | True | True | True | True | False | True | False |
 | CockroachDB | True | True | True | True | True | True | True | False | False | True | False |
 | Couchbase | False | False | True | True | True | True | True | False | False | True | False |
 | CrateDB | True | True | True | True | True | True | True | False | False | True | False |
@@ -265,7 +265,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | SingleStore | True | True | True | True | True | True | True | False | False | True | False |
 | Snowflake | True | True | True | True | True | True | True | False | False | True | False |
 | StarRocks | True | True | True | True | True | True | True | False | False | True | False |
-| Superset meta database | True | True | True | True | True | True | True | False | False | True | False |
+| AX BI meta database | True | True | True | True | True | True | True | False | False | True | False |
 | TDengine | True | True | True | True | True | True | True | False | False | True | False |
 | Teradata | True | True | True | True | True | True | True | False | False | True | False |
 | Trino | True | True | True | True | True | True | True | False | True | True | False |
@@ -294,7 +294,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | Aurora PostgreSQL (Data API) | True | True | True | True | True | True | True | True |
 | Azure Synapse | True | True | True | True | True | True | True | True |
 | ClickHouse | False | True | True | True | True | True | True | True |
-| ClickHouse Connect (Superset) | False | True | True | True | True | True | True | True |
+| ClickHouse Connect (AX BI) | False | True | True | True | True | True | True | True |
 | CockroachDB | True | True | True | True | True | True | True | True |
 | Couchbase | True | True | True | True | False | True | True | True |
 | CrateDB | True | True | True | True | True | True | True | True |
@@ -335,7 +335,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | SingleStore | True | True | True | True | True | True | True | True |
 | Snowflake | True | True | True | True | True | True | True | True |
 | StarRocks | True | True | True | True | True | True | True | True |
-| Superset meta database | True | True | True | True | True | True | True | True |
+| AX BI meta database | True | True | True | True | True | True | True | True |
 | TDengine | True | True | True | True | True | False | False | False |
 | Teradata | False | True | True | True | True | True | True | True |
 | Trino | True | True | True | True | True | True | True | True |
@@ -364,7 +364,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | Aurora PostgreSQL (Data API) | True | True | True | True | True | True | False | False | False | False | False | False | False |
 | Azure Synapse | False | False | True | True | True | True | False | False | True | True | False | False | False |
 | ClickHouse | False | False | True | True | True | True | False | False | False | False | False | False | False |
-| ClickHouse Connect (Superset) | False | False | True | True | True | True | False | False | False | False | False | False | False |
+| ClickHouse Connect (AX BI) | False | False | True | True | True | True | False | False | False | False | False | False | False |
 | CockroachDB | True | True | True | True | True | True | False | False | False | False | False | False | False |
 | Couchbase | False | False | False | False | False | False | False | False | False | False | False | False | False |
 | CrateDB | False | False | False | False | False | False | False | False | False | False | False | False | False |
@@ -405,7 +405,7 @@ The tables below (generated via `python superset/db_engine_specs/lib.py`) summar
 | SingleStore | False | False | False | False | False | False | False | False | False | False | False | False | False |
 | Snowflake | False | False | True | True | True | True | False | False | False | False | False | False | False |
 | StarRocks | False | False | False | False | False | False | False | False | False | True | False | False | False |
-| Superset meta database | True | True | True | True | True | True | True | True | True | True | True | True | True |
+| AX BI meta database | True | True | True | True | True | True | True | True | True | True | True | True | True |
 | TDengine | False | False | False | False | False | False | False | False | False | False | False | False | False |
 | Teradata | False | False | False | False | False | False | False | False | False | False | False | False | False |
 | Trino | True | True | True | True | True | False | True | True | True | True | True | True | False |
@@ -437,7 +437,7 @@ Integration with platform features and metadata handling.
 | Aurora PostgreSQL (Data API) | False | True | False | True | True | True | True | True | False | True | False | False | False | False |
 | Azure Synapse | False | True | False | True | False | False | False | True | False | False | False | False | False | False |
 | ClickHouse | False | True | True | False | False | False | False | True | False | False | False | False | True | False |
-| ClickHouse Connect (Superset) | False | True | True | False | True | False | False | True | False | False | False | False | True | False |
+| ClickHouse Connect (AX BI) | False | True | True | False | True | False | False | True | False | False | False | False | True | False |
 | CockroachDB | False | True | False | True | True | True | True | True | False | True | False | False | False | False |
 | Couchbase | False | False | False | True | False | False | False | True | False | False | False | False | False | False |
 | CrateDB | False | False | False | True | False | False | False | True | False | False | False | False | False | False |
@@ -478,7 +478,7 @@ Integration with platform features and metadata handling.
 | SingleStore | False | True | True | True | True | False | False | True | False | True | False | False | False | False |
 | Snowflake | False | False | False | True | True | True | True | True | False | True | False | False | False | False |
 | StarRocks | False | True | False | True | True | False | False | True | False | True | False | False | False | False |
-| Superset meta database | False | False | True | False | False | False | False | False | False | False | False | False | False | False |
+| AX BI meta database | False | False | True | False | False | False | False | False | False | False | False | False | False | False |
 | TDengine | False | False | False | True | False | False | False | True | False | False | False | False | False | False |
 | Teradata | False | False | False | True | False | False | False | True | False | False | False | False | False | False |
 | Trino | False | True | True | True | True | True | True | True | True | True | False | True | True | False |
@@ -507,7 +507,7 @@ Integration with platform features and metadata handling.
 | Aurora PostgreSQL (Data API) | False | False | True | True |
 | Azure Synapse | False | False | False | False |
 | ClickHouse | False | False | False | False |
-| ClickHouse Connect (Superset) | False | False | False | False |
+| ClickHouse Connect (AX BI) | False | False | False | False |
 | CockroachDB | False | False | True | False |
 | Couchbase | False | False | False | False |
 | CrateDB | False | False | False | False |
@@ -548,7 +548,7 @@ Integration with platform features and metadata handling.
 | SingleStore | False | False | False | False |
 | Snowflake | False | False | False | False |
 | StarRocks | True | False | False | False |
-| Superset meta database | False | False | False | False |
+| AX BI meta database | False | False | False | False |
 | TDengine | False | False | False | False |
 | Teradata | False | False | False | False |
 | Trino | True | False | True | False |
@@ -558,19 +558,19 @@ Integration with platform features and metadata handling.
 
 ## How to Add a New Database
 
-Adding a new database to Superset involves creating a DB engine spec file with a `metadata` attribute. This metadata is used to generate documentation and provide connection information to users.
+Adding a new database to AX BI involves creating a DB engine spec file with a `metadata` attribute. This metadata is used to generate documentation and provide connection information to users.
 
 ### Quick Start
 
-1. **Create a new file** in `superset/db_engine_specs/` (e.g., `mydatabase.py`)
+1. **Create a new file** in `axbi/db_engine_specs/` (e.g., `mydatabase.py`)
 2. **Add metadata** with required fields (description, category, pypi_packages, connection_string)
-3. **Run the linter** to verify completeness: `python superset/db_engine_specs/lint_metadata.py`
+3. **Run the linter** to verify completeness: `python axbi/db_engine_specs/lint_metadata.py`
 4. **Add a logo** (optional) in `docs/static/img/databases/`
 
 ### Minimal Example
 
 ```python
-from superset.db_engine_specs.base import BaseEngineSpec, DatabaseCategory
+from axbi.db_engine_specs.base import BaseEngineSpec, DatabaseCategory
 
 class MyDatabaseEngineSpec(BaseEngineSpec):
     engine = "mydatabase"
@@ -593,7 +593,7 @@ class MyDatabaseEngineSpec(BaseEngineSpec):
 ### Full Example with All Fields
 
 ```python
-from superset.db_engine_specs.base import BaseEngineSpec, DatabaseCategory
+from axbi.db_engine_specs.base import BaseEngineSpec, DatabaseCategory
 
 class MyDatabaseEngineSpec(BaseEngineSpec):
     engine = "mydatabase"
@@ -675,13 +675,13 @@ A linter is available to check metadata completeness across all engine specs:
 
 ```bash
 # Run the linter to see current status
-python superset/db_engine_specs/lint_metadata.py
+python axbi/db_engine_specs/lint_metadata.py
 
 # Generate a markdown report
-python superset/db_engine_specs/lint_metadata.py --markdown
+python axbi/db_engine_specs/lint_metadata.py --markdown
 
 # Output to a file
-python superset/db_engine_specs/lint_metadata.py --markdown -o METADATA_STATUS.md
+python axbi/db_engine_specs/lint_metadata.py --markdown -o METADATA_STATUS.md
 ```
 
 The linter checks for:
@@ -695,7 +695,7 @@ See [METADATA_STATUS.md](METADATA_STATUS.md) for the current completeness report
 If your database is PostgreSQL-compatible, inherit from `PostgresBaseEngineSpec`:
 
 ```python
-from superset.db_engine_specs.postgres import PostgresBaseEngineSpec
+from axbi.db_engine_specs.postgres import PostgresBaseEngineSpec
 
 class MyPostgresCompatibleEngineSpec(PostgresBaseEngineSpec):
     engine = "mydb"
@@ -706,35 +706,35 @@ class MyPostgresCompatibleEngineSpec(PostgresBaseEngineSpec):
         "category": DatabaseCategory.TRADITIONAL_RDBMS,
         "pypi_packages": ["psycopg2"],  # Uses the PostgreSQL driver
         "connection_string": "postgresql://{username}:{password}@{host}:{port}/{database}",
-        "notes": "Uses the PostgreSQL driver. psycopg2 comes bundled with Superset.",
+        "notes": "Uses the PostgreSQL driver. psycopg2 comes bundled with AX BI.",
     }
 ```
 
 ## Database information
 
-A DB engine spec has attributes that describe the underlying database engine, so that Superset can know how to build and run queries. For example, some databases don't support subqueries, which are needed for some of the queries produced by Superset for certain charts. When a database doesn't support subqueries the query is run in two-steps, using the results from the first query to build the second query.
+A DB engine spec has attributes that describe the underlying database engine, so that AX BI can know how to build and run queries. For example, some databases don't support subqueries, which are needed for some of the queries produced by AX BI for certain charts. When a database doesn't support subqueries the query is run in two-steps, using the results from the first query to build the second query.
 
 These attributes and their default values (set in the base class, `BaseEngineSpec`) are described below:
 
 ### `limit_method = LimitMethod.FORCE_LIMIT`
 
-When running user queries in SQL Lab, Superset needs to limit the number of rows returned. The reason for that is cost and performance: there's no point in running a query that produces millions of rows when they can't be loaded into the browser.
+When running user queries in SQL Lab, AX BI needs to limit the number of rows returned. The reason for that is cost and performance: there's no point in running a query that produces millions of rows when they can't be loaded into the browser.
 
-For most databases this is done by parsing the user submitted query and applying a limit, if one is not present, or replacing the existing limit if it's larger. This is called the `FORCE_LIMIT` method, and is the most efficient, since the database will produce at most the number of rows that Superset will display.
+For most databases this is done by parsing the user submitted query and applying a limit, if one is not present, or replacing the existing limit if it's larger. This is called the `FORCE_LIMIT` method, and is the most efficient, since the database will produce at most the number of rows that AX BI will display.
 
 For some databases this method might not work, and they can use the `WRAP_SQL` method, which wraps the original query in a `SELECT *` and applies a limit via the SQLAlchemy dialect, which should get translated to the correct syntax. This method might be inefficient, since the database optimizer might not be able to push the limit to the inner query.
 
-Finally, as a last resource there is the `FETCH_MANY` method. When a DB engine spec uses this method the query runs unmodified, but Superset fetches only a certain number of rows from the cursor. It's possible that a database using this method can optimize the query execution and compute rows as they are being read by the cursor, but it's unlikely. This makes this method the least efficient of the three.
+Finally, as a last resource there is the `FETCH_MANY` method. When a DB engine spec uses this method the query runs unmodified, but AX BI fetches only a certain number of rows from the cursor. It's possible that a database using this method can optimize the query execution and compute rows as they are being read by the cursor, but it's unlikely. This makes this method the least efficient of the three.
 
-Note that when Superset runs a query with a given limit, say 100, it always modifies the query to request one additional row (`LIMIT 101`, in this case). This extra row is dropped before the results are returned to the user, but it allows Superset to inform the users that the query was indeed limited. Otherwise a query with `LIMIT 100` that returns exactly 100 rows would seem like it was limited, when in fact it was not.
+Note that when AX BI runs a query with a given limit, say 100, it always modifies the query to request one additional row (`LIMIT 101`, in this case). This extra row is dropped before the results are returned to the user, but it allows AX BI to inform the users that the query was indeed limited. Otherwise a query with `LIMIT 100` that returns exactly 100 rows would seem like it was limited, when in fact it was not.
 
 ### `allows_joins = True`
 
-Not all databases support `JOIN`s. When building complex charts, Superset will try to join the table to itself in order to compute `top_n` groups, for example. If the database doesn't support joins Superset will instead run a prequery, and use the results to build the final query.
+Not all databases support `JOIN`s. When building complex charts, AX BI will try to join the table to itself in order to compute `top_n` groups, for example. If the database doesn't support joins AX BI will instead run a prequery, and use the results to build the final query.
 
 ### `allows_subqueries = True`
 
-Similarly, not all databases support subqueries. For more complex charts Superset will build subqueries if possible, or run the query in two-steps otherwise.
+Similarly, not all databases support subqueries. For more complex charts AX BI will build subqueries if possible, or run the query in two-steps otherwise.
 
 ### `allows_alias_in_select = True`
 
@@ -744,7 +744,7 @@ Does the DB support aliases in the projection of a query, eg:
 SELECT COUNT(*) AS cnt
 ```
 
-Superset will try to use aliases whenever possible, in order to give friendly names to expressions.
+AX BI will try to use aliases whenever possible, in order to give friendly names to expressions.
 
 ### `allows_alias_in_orderby = True`
 
@@ -875,7 +875,7 @@ ORDER BY
 
 When a virtual dataset is used in a chart the original query is converted into a subquery, and is wrapped in an outer query that is generated based on the chart controls. The virtual dataset query might have a CTE, and some databases don't like subqueries with CTEs in them.
 
-When this attribute is false Superset will extract the CTE and move it outside of the subquery when generating SQL for charts. The name of the new CTE will be `cte_alias`, also defined in the DB engine spec.
+When this attribute is false AX BI will extract the CTE and move it outside of the subquery when generating SQL for charts. The name of the new CTE will be `cte_alias`, also defined in the DB engine spec.
 
 ### `allow_limit_clause = True`
 
@@ -897,7 +897,7 @@ FROM some_table
 
 ### `allows_escaped_colons = True`
 
-SQLAlchemy recommends escaping colons to prevent them from being interpreted as bindings to parameters. Because of this, when building queries from virtual datasets Superset will escape all colons with `\:`.
+SQLAlchemy recommends escaping colons to prevent them from being interpreted as bindings to parameters. Because of this, when building queries from virtual datasets AX BI will escape all colons with `\:`.
 
 This works for most databases except Athena. The `allows_escaped_colons` attribute specifies if the database supports the escape colon.
 
@@ -907,7 +907,7 @@ These are features that all DB engine specs should support, as the name suggests
 
 ### Time grains
 
-The most basic feature that DB engine specs need to support is defining time grain expressions. These are dialect-specific SQL expressions that are used to compute metrics on a given time grain when building charts. For example, when computing the metric `COUNT(*)` on a daily basis, Superset will generate the following query:
+The most basic feature that DB engine specs need to support is defining time grain expressions. These are dialect-specific SQL expressions that are used to compute metrics on a given time grain when building charts. For example, when computing the metric `COUNT(*)` on a daily basis, AX BI will generate the following query:
 
 ```sql
 SELECT
@@ -943,12 +943,12 @@ DATETIME(
 
 The SQLite version has to truncate the column down to the minute, and then subtract a number of minutes equals to the modulo 15.
 
-Time grain expressions are defined in the `_time_grain_expressions` class attribute, which maps from a `superset.constants.TimeGrain` to the SQL expression. The dictionary has a special key `None`, that should map to the column directly, for when no time grain is specified.
+Time grain expressions are defined in the `_time_grain_expressions` class attribute, which maps from a `axbi.constants.TimeGrain` to the SQL expression. The dictionary has a special key `None`, that should map to the column directly, for when no time grain is specified.
 
 Note that it's possible to add new time grains via configuration. For example, if you want to add a "2 seconds" time grain to your installation you can add it to `TIME_GRAIN_ADDONS`, and implement it in `TIME_GRAIN_ADDON_EXPRESSIONS`:
 
 ```python
-# superset_config.py
+# axbi_config.py
 TIME_GRAIN_ADDONS = {"PT2S": "2 second"}
 
 TIME_GRAIN_ADDON_EXPRESSIONS = {
@@ -960,7 +960,7 @@ TIME_GRAIN_ADDON_EXPRESSIONS = {
 
 ### Column type mapping
 
-Column type mapping, defined in the `column_type_mappings` class attribute, is just a way of mapping type names from the database to types Superset understand. The default values in `BaseEngineSpec` are sane:
+Column type mapping, defined in the `column_type_mappings` class attribute, is just a way of mapping type names from the database to types AX BI understands. The default values in `BaseEngineSpec` are sane:
 
 ```python
 _default_column_type_mappings: tuple[ColumnTypeMapping, ...] = (
@@ -1010,13 +1010,13 @@ DB engine specs should implement a class method called `get_function_names` that
 
 ### Masked encrypted extra
 
-Superset does a good job in keeping credentials secure. When you add a database with a password, for example:
+AX BI does a good job in keeping credentials secure. When you add a database with a password, for example:
 
 ```text
 postgresql://admin:password123@db.example.org:5432/db
 ```
 
-The password is sent over the network only when the database is created. When you edit the database later, Superset will return this as the SQLAlchemy URI:
+The password is sent over the network only when the database is created. When you edit the database later, AX BI will return this as the SQLAlchemy URI:
 
 ```text
 postgresql://admin:XXXXXXXXXX@db.example.org:5432/db
@@ -1024,7 +1024,7 @@ postgresql://admin:XXXXXXXXXX@db.example.org:5432/db
 
 The password will be masked in the API response; it's not just masked in the browser UI. This is done in order to avoid sending the password unnecessarily over the network. Also, if a non-admin user has access to the API response, they won't be able to know the database password.
 
-When the database is edited, the Superset backend is smart enough to replace the masked password with the actual password, unless the password has changed. That is, if you change the database in the URI from `db` to `db2` the SQLAlchemy URI will be stored in the backend as:
+When the database is edited, the AX BI backend is smart enough to replace the masked password with the actual password, unless the password has changed. That is, if you change the database in the URI from `db` to `db2` the SQLAlchemy URI will be stored in the backend as:
 
 ```text
 postgresql://admin:password123@db.example.org:5432/db2
@@ -1047,12 +1047,12 @@ The password is not the only piece of information where security is critical. Fo
 }
 ```
 
-Similarly to password, we don't want to send `private_key` to the client when a database is edited; the Superset API should never return its actual contents. Instead, Superset should return a masked value, and users should be able to edit the JSON without having to type in the `private_key` on every edit.
+Similarly to password, we don't want to send `private_key` to the client when a database is edited; the AX BI API should never return its actual contents. Instead, AX BI should return a masked value, and users should be able to edit the JSON without having to type in the `private_key` on every edit.
 
 To do this, DB engine specs and implement 2 methods, `mask_encrypted_extra` and `unmask_encrypted_extra`. They have these names because the credentials are stored in an encrypted column called `encrypted_extra`. Here's how these methods look like for BigQuery:
 
 ```python
-from superset.constants import PASSWORD_MASK
+from axbi.constants import PASSWORD_MASK
 
 
 class BigQueryEngineSpec(BaseEngineSpec):
@@ -1113,7 +1113,7 @@ The next set of features are nice to have. They don't apply to all databases, an
 
 ### User impersonation
 
-In general there's no user-level granularity when accessing a database in Superset. A single database connection is shared by all users who have access to that database. There are many use cases when this is not desirable, and some databases implement mechanisms in which they can **impersonate users**, potentially reducing the scope of permissions available to run the query.
+In general there's no user-level granularity when accessing a database in AX BI. A single database connection is shared by all users who have access to that database. There are many use cases when this is not desirable, and some databases implement mechanisms in which they can **impersonate users**, potentially reducing the scope of permissions available to run the query.
 
 For example, the Google Sheets DB engine spec implements this via the `get_url_for_impersonation` class method:
 
@@ -1136,7 +1136,7 @@ class GSheetsEngineSpec(ShillelaghEngineSpec):
         return url
 ```
 
-The method `get_url_for_impersonation` updates the SQLAlchemy URI before every query. In this particular case, it will fetch the user's email and add it to the `subject` query argument. The driver will then lower the permissions to match that given user. This allows the connection to be configured with a service account that has access to all the spreadsheets, while giving users access to only the spreadsheets they own are have been shared with them (or with their organization — Google will handle the authorization in this case, not Superset).
+The method `get_url_for_impersonation` updates the SQLAlchemy URI before every query. In this particular case, it will fetch the user's email and add it to the `subject` query argument. The driver will then lower the permissions to match that given user. This allows the connection to be configured with a service account that has access to all the spreadsheets, while giving users access to only the spreadsheets they own are have been shared with them (or with their organization — Google will handle the authorization in this case, not AX BI).
 
 Alternatively, it's also possible to impersonate users by implementing the `update_impersonation_config`. This is a class method which modifies `connect_args` in place. You can use either method, and ideally they [should be consolidated in a single one](https://github.com/apache/superset/issues/24910).
 
@@ -1164,10 +1164,10 @@ The `oauth2_exception` is an exception that is raised by `cursor.execute` when O
 
 The DB engine should implement logic in either `get_url_for_impersonation` or `update_impersonation_config` to update the connection with the personal access token. See the Google Sheets DB engine spec for a reference implementation.
 
-Currently OAuth2 needs to be configured at the DB engine spec level, ie, with one client for each DB engien spec. The configuration lives in `superset_config.py`:
+Currently OAuth2 needs to be configured at the DB engine spec level, ie, with one client for each DB engien spec. The configuration lives in `axbi_config.py`:
 
 ```python
-# superset_config.py
+# axbi_config.py
 DATABASE_OAUTH2_CLIENTS = {
     "Google Sheets": {
         "id": "XXX.apps.googleusercontent.com",
@@ -1188,9 +1188,9 @@ DATABASE_OAUTH2_REDIRECT_URI = "http://localhost:8088/api/v1/database/oauth2/"
 DATABASE_OAUTH2_TIMEOUT = timedelta(seconds=30)
 ```
 
-When configuring a client only the ID and secret are required; the DB engine spec should have default values for the scope and endpoints. The `DATABASE_OAUTH2_REDIRECT_URI` attribute is optional, and defaults to `/api/v1/databases/oauth2/` in Superset.
+When configuring a client only the ID and secret are required; the DB engine spec should have default values for the scope and endpoints. The `DATABASE_OAUTH2_REDIRECT_URI` attribute is optional, and defaults to `/api/v1/databases/oauth2/` in AX BI.
 
-In the future we plan to support adding custom clients via the Superset UI, and being able to manually assign clients to specific databases.
+In the future we plan to support adding custom clients via the AX BI UI, and being able to manually assign clients to specific databases.
 
 ### File upload
 
@@ -1204,24 +1204,24 @@ DB engine specs can return additional metadata associated with a table. This is 
 
 ### DB API exception mapping
 
-Different DB API 2.0 drivers implement different exceptions, even if they have the same name. The `get_dbapi_exception_mapping` class method returns a dictionary mapping these custom exceptions to Superset exceptions, so that Superset can return more specific errors when an exception is raised by the underlying driver.
+Different DB API 2.0 drivers implement different exceptions, even if they have the same name. The `get_dbapi_exception_mapping` class method returns a dictionary mapping these custom exceptions to AX BI exceptions, so that AX BI can return more specific errors when an exception is raised by the underlying driver.
 
 For example, for ClickHouse we have:
 
 ```python
 from urllib3.exceptions import NewConnectionError
 
-from superset.db_engine_specs.exceptions import SupersetDBAPIDatabaseError
+from axbi.db_engine_specs.exceptions import AxBIDBAPIDatabaseError
 
 
 class ClickHouseEngineSpec(ClickHouseBaseEngineSpec):
 
     @classmethod
     def get_dbapi_exception_mapping(cls) -> dict[type[Exception], type[Exception]]:
-        return {NewConnectionError: SupersetDBAPIDatabaseError}
+        return {NewConnectionError: AxBIDBAPIDatabaseError}
 ```
 
-This way, if the ClickHouse driver raises a `NewConnectionError` it would get wrapped in a `SupersetDBAPIDatabaseError`.
+This way, if the ClickHouse driver raises a `NewConnectionError` it would get wrapped in an `AxBIDBAPIDatabaseError`.
 
 ### Custom errors
 
@@ -1234,7 +1234,7 @@ Error: no such column: c
 sqlite>
 ```
 
-When a query fails, Superset will return the message, "Error: no such column: c", to the user as a generic error.
+When a query fails, AX BI will return the message, "Error: no such column: c", to the user as a generic error.
 
 Since ideally we want to return specific and actionable error messages, DB engine specs can implement methods that map error messages to more specific errors. For example, the SQLite DB engine specs defines:
 
@@ -1244,16 +1244,16 @@ COLUMN_DOES_NOT_EXIST_REGEX = re.compile("no such column: (?P<column_name>.+)")
 
 class SqliteEngineSpec(BaseEngineSpec):
 
-    custom_errors: dict[Pattern[str], tuple[str, SupersetErrorType, dict[str, Any]]] =
+    custom_errors: dict[Pattern[str], tuple[str, AxBIErrorType, dict[str, Any]]] =
         COLUMN_DOES_NOT_EXIST_REGEX: (
             __('We can\'t seem to resolve the column "%(column_name)s"'),
-            SupersetErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
+            AxBIErrorType.COLUMN_DOES_NOT_EXIST_ERROR,
             {},
         ),
     }
 ```
 
-This way, when a user selects a column that doesn't exist Superset can return a more informative error.
+This way, when a user selects a column that doesn't exist AX BI can return a more informative error.
 
 ### Dynamic schema
 
@@ -1265,7 +1265,7 @@ SELECT * FROM my_table
 
 The table `my_table` should live in the `dev` schema. In order to do that, it's necessary to modify the SQLAlchemy URI before running the query. Since different databases have different ways of doing that, this functionality is implemented via the `adjust_engine_params` class method. The method receives the SQLAlchemy URI and `connect_args`, as well as the schema in which the query should run. It then returns a potentially modified URI and `connect_args` to ensure that the query runs in the specified schema.
 
-When a DB engine specs implements `adjust_engine_params` it should have the class attribute `supports_dynamic_schema` set to true. This is critical for security, since **it allows Superset to know to which schema any unqualified table names belong to**. For example, in the query above, if the database supports dynamic schema, Superset would check to see if the user running the query has access to `dev.my_table`. On the other hand, if the database doesn't support dynamic schema, Superset would use the default database schema instead of `dev`.
+When a DB engine specs implements `adjust_engine_params` it should have the class attribute `supports_dynamic_schema` set to true. This is critical for security, since **it allows AX BI to know to which schema any unqualified table names belong to**. For example, in the query above, if the database supports dynamic schema, AX BI would check to see if the user running the query has access to `dev.my_table`. On the other hand, if the database doesn't support dynamic schema, AX BI would use the default database schema instead of `dev`.
 
 Implementing this method is also important for usability. When the method is not implemented selecting the schema in SQL Lab has no effect on the schema in which the query runs, resulting in a confusing results when using unqualified table names.
 
@@ -1307,15 +1307,15 @@ If the database supports catalogs, then the DB engine spec should have the `supp
 
 ### Dynamic catalog
 
-Superset support for multiple catalogs. Since, in general, a given SQLAlchemy URI connects only to a single catalog, it requires DB engine specs to implement the `adjust_engine_params` method to rewrite the URL to connect to a different catalog, similar to how dynamic schemas work. Additionally, DB engine specs should also implement the `get_catalog_names` method, so that users can browse the available catalogs.
+AX BI supports multiple catalogs. Since, in general, a given SQLAlchemy URI connects only to a single catalog, it requires DB engine specs to implement the `adjust_engine_params` method to rewrite the URL to connect to a different catalog, similar to how dynamic schemas work. Additionally, DB engine specs should also implement the `get_catalog_names` method, so that users can browse the available catalogs.
 
 ### SSH tunneling
 
-Superset can connect to databases via an SSH tunnel. For databases where this doesn't make sense (eg, SQLite or BigQuery) the DB engine spec should have `disable_ssh_tunneling` set to true.
+AX BI can connect to databases via an SSH tunnel. For databases where this doesn't make sense (eg, SQLite or BigQuery) the DB engine spec should have `disable_ssh_tunneling` set to true.
 
 ### Query cancelation
 
-Superset will try to cancel running queries if the users wants so, but it's up to the DB engine spec to handle this.
+AX BI will try to cancel running queries if the users wants so, but it's up to the DB engine spec to handle this.
 
 Some databases have an implicit query cancelation. When a cursor stops being polled it will cancel the query. For databases that behave like this, the class method `has_implicit_cancel` (which should really be a class attribute) should return true.
 
@@ -1323,7 +1323,7 @@ For other databases, DB engine specs can implement query cancelation via the `pr
 
 ### Get metrics on dataset creation
 
-When a physical dataset is first created, the `get_metrics` class method is called on the table. The base implementation returns the `COUNT(*)` metric, but DB engine specs can override `get_metrics` to return other metrics. This method is useful for semantic layers that contain their own metrics definitions; when Superset connect to them it can automatically create those metrics when a dataset is added.
+When a physical dataset is first created, the `get_metrics` class method is called on the table. The base implementation returns the `COUNT(*)` metric, but DB engine specs can override `get_metrics` to return other metrics. This method is useful for semantic layers that contain their own metrics definitions; when AX BI connects to them it can automatically create those metrics when a dataset is added.
 
 This feature is still experimental, and ideally there would be a mechanism for calling it periodically or when a dataset is explored, in order to sync new metric definitions to the dataset.
 
@@ -1349,7 +1349,7 @@ Is shown as:
 | 2     |                  |          |          |
 | 3     |                  |          |          |
 
-A similar behavior has been implemented in Superset for Presto, and can be enabled via the `PRESTO_EXPAND_DATA` feature flag. To implement this feature a DB engine spec should implement the `expand_data` method, which takes the columns and rows and returns modified columns and rows.
+A similar behavior has been implemented in AX BI for Presto, and can be enabled via the `PRESTO_EXPAND_DATA` feature flag. To implement this feature a DB engine spec should implement the `expand_data` method, which takes the columns and rows and returns modified columns and rows.
 
 Note that despite being implemented only for Presto, this behavior has nothing that is Presto specific, and in theory could be implemented in a generic way for all database without requiring custom DB engine spec implementations (that is, the Presto `expand_data` method could be moved to the base class, after being cleaned up, and we could then enable the feature per DB in the configuration).
 
@@ -1357,17 +1357,17 @@ Note that despite being implemented only for Presto, this behavior has nothing t
 
 Some databases allow uses to estimate the cost of running a query before running it. This is done via the `estimate_query_cost` method in DB engine specs, which receives the SQL and returns a list of "costs". The definition of what "cost" is varies from database to database (in the few that support this functionality), and it can be formatted via the `query_cost_formatter`.
 
-The `query_cost_formatter` can be overridden with an arbitrary function via the config `QUERY_COST_FORMATTERS_BY_ENGINE`. This allows custom deployments of Superset to format the results in different ways. For example, at some point in Lyft the cost for running Presto queries would also show the carbon footprint (in trees).
+The `query_cost_formatter` can be overridden with an arbitrary function via the config `QUERY_COST_FORMATTERS_BY_ENGINE`. This allows custom deployments of AX BI to format the results in different ways. For example, at some point in Lyft the cost for running Presto queries would also show the carbon footprint (in trees).
 
 ### SQL validation
 
 A few databases support validating the syntax of the SQL as the user is typing it, indicating in SQL Lab any errors. This is usually done using an `EXPLAIN` query and, because it gets called every few seconds as the user types, it's important that the database returns the result quickly.
 
-This is currently implement for Presto and Postgres, via custom classes in `superset/sql_validators` that should be enabled in the configuration. Implementing this as custom classes, instead of a `validate_sql` method in the DB engine spec offers no advantages, and ideally in the future we should move the logic to DB engine specs.
+This is currently implemented for Presto and Postgres via custom classes in `axbi/sql_validators` that should be enabled in the configuration. Implementing this as custom classes, instead of a `validate_sql` method in the DB engine spec, offers no advantages, and ideally in the future we should move the logic to DB engine specs.
 
 ## Testing DB engine specs
 
-Superset has a command to test the connection to a given database, as well as checking if the SQLAlchemy dialect implements all necessary methods used by Superset, and checking which features are supported by the DB engine spec (if one exists). To run the tool just call the `test-db` command with the SQLAlchemy URI to be tested:
+AX BI has a command to test the connection to a given database, as well as checking if the SQLAlchemy dialect implements all necessary methods used by AX BI, and checking which features are supported by the DB engine spec (if one exists). To run the tool just call the `test-db` command with the SQLAlchemy URI to be tested:
 
 ```bash
 ax-bi test-db sqlite://

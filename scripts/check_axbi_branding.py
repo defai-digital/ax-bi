@@ -26,6 +26,11 @@ from subprocess import CalledProcessError, run
 
 REPOSITORY_ROOT = Path(__file__).resolve().parent.parent
 FORMER_BRAND = "super" + "set"
+FORBIDDEN_LEGACY_ROOTS = (
+    FORMER_BRAND,
+    f"{FORMER_BRAND}-rust",
+    f"apache_{FORMER_BRAND}.egg-info",
+)
 EXCLUDED_DIRECTORIES = {
     ".git",
     ".mypy_cache",
@@ -87,7 +92,11 @@ def iter_repository_files() -> list[Path]:
 
 def find_violations() -> list[str]:
     """Find former-brand tokens in eligible paths and UTF-8 text content."""
-    violations: list[str] = []
+    violations = [
+        f"{name}: former-brand top-level path must not exist"
+        for name in FORBIDDEN_LEGACY_ROOTS
+        if (REPOSITORY_ROOT / name).exists()
+    ]
     needle = FORMER_BRAND.casefold()
 
     for path in iter_repository_files():
