@@ -60,6 +60,12 @@ brew install --cask ax-bi
 After installation, AX BI should guide the user to either connect to an existing
 server or start a local runtime. The local runtime manager uses Colima and Docker
 Compose so users do not need to clone this repository or run Docker by hand.
+The cask installs Colima, Docker CLI, and Docker Compose automatically; users
+only need to install them manually when using the standalone DMG:
+
+```bash
+brew install colima docker docker-compose
+```
 
 See [LOCAL_RUNTIME.md](LOCAL_RUNTIME.md) for runtime architecture and
 [RELEASE.md](RELEASE.md) for CI/CD, Apple signing, minisign, and Homebrew

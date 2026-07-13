@@ -1,0 +1,2 @@
+# Locally built and signed release assets are uploaded to GitHub Releases.
+dist-release/

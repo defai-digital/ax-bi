@@ -711,7 +711,8 @@ fn run_command_owned(
     cwd: Option<&Path>,
     envs: &[(&str, &str)],
 ) -> Result<CommandOutput, String> {
-    let mut command = Command::new(program);
+    let program_path = resolve_program(program);
+    let mut command = Command::new(&program_path);
     command.args(args.iter().map(OsStr::new));
     if let Some(cwd) = cwd {
         command.current_dir(cwd);
@@ -736,6 +737,23 @@ fn run_command_owned(
     }
 
     Ok(CommandOutput { stdout, stderr })
+}
+
+/// Resolve Homebrew-installed executables for GUI-launched macOS applications.
+///
+/// Finder and Dock applications do not inherit the user's shell PATH, so the
+/// usual Homebrew prefixes must be checked explicitly before falling back to
+/// normal command resolution on every supported platform.
+fn resolve_program(program: &str) -> PathBuf {
+    #[cfg(target_os = "macos")]
+    for homebrew_bin in ["/opt/homebrew/bin", "/usr/local/bin"] {
+        let candidate = Path::new(homebrew_bin).join(program);
+        if candidate.is_file() {
+            return candidate;
+        }
+    }
+
+    PathBuf::from(program)
 }
 
 fn format_output(label: &str, value: &str) -> String {
@@ -824,10 +842,11 @@ fn path_to_string(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_env_file, ensure_runtime_secret_content, read_env_value_from_str, tail_lines,
-        validate_log_service, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME, LOCAL_COMPOSE_YAML,
-        MAX_LOG_TAIL_LINES,
+        build_env_file, ensure_runtime_secret_content, read_env_value_from_str, resolve_program,
+        tail_lines, validate_log_service, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME,
+        LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
     };
+    use std::path::Path;
 
     #[test]
     fn generated_compose_binds_public_services_to_loopback() {
@@ -881,5 +900,13 @@ mod tests {
         assert_eq!(tail_lines(None), 200);
         assert_eq!(tail_lines(Some(0)), 1);
         assert_eq!(tail_lines(Some(1_000)), MAX_LOG_TAIL_LINES);
+    }
+
+    #[test]
+    fn leaves_relative_program_names_available_for_path_resolution() {
+        assert_eq!(
+            resolve_program("command-not-on-path"),
+            Path::new("command-not-on-path")
+        );
     }
 }

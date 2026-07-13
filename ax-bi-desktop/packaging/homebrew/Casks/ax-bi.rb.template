@@ -27,11 +27,11 @@ cask "ax-bi" do
   depends_on formula: "docker"
   depends_on formula: "docker-compose"
 
-  preflight do
-    FileUtils.rm_rf("#{appdir}/AX BI.app")
-  end
-
   app "AX BI.app"
+
+  preflight do
+    FileUtils.rm_r("#{appdir}/AX BI.app")
+  end
 
   postflight do
     system_command "/usr/bin/xattr",

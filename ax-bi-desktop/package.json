@@ -1,6 +1,6 @@
 {
   "name": "ax-bi-desktop",
-  "version": "0.1.0",
+  "version": "2.0.3",
   "description": "AX BI Desktop Client - A thin shell for the AX BI analytics platform",
   "private": true,
   "scripts": {

@@ -71,13 +71,13 @@ const cask = `cask "ax-bi" do
   depends_on formula: "docker"
   depends_on formula: "docker-compose"
 
+  app "AX BI.app"
+
   preflight do
     # Clears any pre-existing bundle so upgrades from untracked installs do not
     # hit Homebrew's "already an App" guard.
-    FileUtils.rm_rf("#{appdir}/AX BI.app")
+    FileUtils.rm_r("#{appdir}/AX BI.app")
   end
-
-  app "AX BI.app"
 
   postflight do
     system_command "/usr/bin/xattr",

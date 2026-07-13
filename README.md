@@ -103,7 +103,16 @@ open -a "AX BI"
 Or launch **AX BI** from Applications / Spotlight.
 
 The cask installs **AX BI.app** and pulls Colima, Docker CLI, and Docker Compose
-for the app-managed local runtime.
+for the app-managed local runtime. You do not need to install or configure those
+dependencies separately. AX BI starts its isolated `ax-bi` Colima profile when
+you choose **Run locally**.
+
+If you installed the DMG instead of the cask, or are repairing an older
+installation, install the runtime dependencies with:
+
+```bash
+brew install colima docker docker-compose
+```
 
 Prefer not to use Homebrew? Download the notarized macOS DMG from
 [GitHub Releases](https://github.com/defai-digital/ax-bi/releases)
