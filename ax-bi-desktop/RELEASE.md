@@ -171,6 +171,37 @@ minisign -Vm AX.BI_0.1.0_aarch64.dmg \
 Do not use the default monorepo `GITHUB_TOKEN` for the tap; the workflow clones
 and pushes with this dedicated token (same as Studio/Code).
 
+The tap repo is live: [defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi).
+
+### Secrets already configured on `defai-digital/ax-bi`
+
+| Secret | Status |
+| --- | --- |
+| `APPLE_TEAM_ID` | Set (`N5ZUZDUJS6`) |
+| `APPLE_API_ISSUER` / `NOTARY_ISSUER` | Set |
+| `AX_BI_MINISIGN_*` (secret, public, password) | Set; public key in `docs/ax-bi.minisign.pub` |
+
+### Secrets still required before the first release tag
+
+Copy from **ax-studio** (same DEFAI Developer ID / notary key / tap PAT) or export fresh:
+
+| Secret | Source |
+| --- | --- |
+| `APPLE_CERTIFICATE` or `CODE_SIGN_P12_BASE64` | Studio secret or Keychain `.p12` export |
+| `APPLE_CERTIFICATE_PASSWORD` or `CODE_SIGN_P12_PASSWORD` | Matching p12 password |
+| `APPLE_API_KEY_B64` or `NOTARIZE_P8_BASE64` | Studio notary `.p8` |
+| `APPLE_API_KEY_ID` or `NOTARY_KEY_ID` | Studio Key ID |
+| `HOMEBREW_TAP_TOKEN` | Studio tap PAT (write to homebrew-ax-bi) |
+
+```bash
+# Example after you have the files/values locally:
+gh secret set APPLE_CERTIFICATE -R defai-digital/ax-bi < cert.p12.b64
+gh secret set APPLE_CERTIFICATE_PASSWORD -R defai-digital/ax-bi
+gh secret set APPLE_API_KEY_B64 -R defai-digital/ax-bi < AuthKey.p8.b64
+gh secret set APPLE_API_KEY_ID -R defai-digital/ax-bi
+gh secret set HOMEBREW_TAP_TOKEN -R defai-digital/ax-bi
+```
+
 ## Release steps (maintainers)
 
 1. Ensure `main` is green for `ax-bi-desktop` checks.

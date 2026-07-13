@@ -66,7 +66,7 @@ const cask = `cask "ax-bi" do
   homepage "https://github.com/defai-digital/ax-bi"
 
   depends_on arch: :arm64
-  depends_on macos: ">= :monterey"
+  depends_on macos: :monterey
   depends_on formula: "colima"
   depends_on formula: "docker"
   depends_on formula: "docker-compose"
