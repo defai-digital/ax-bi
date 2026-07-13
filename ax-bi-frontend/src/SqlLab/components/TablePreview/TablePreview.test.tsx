@@ -41,10 +41,10 @@ jest.mock('src/components/FilterableTable', () => ({
 }));
 jest.mock('react-virtualized-auto-sizer', () => {
   const MockAutoSizer = ({
-    children,
+    renderProp,
   }: {
-    children: (params: { height: number }) => ReactChild;
-  }) => children({ height: 500 });
+    renderProp: (params: { height: number; width: number }) => ReactChild;
+  }) => renderProp({ height: 500, width: 500 });
 
   return {
     __esModule: true,

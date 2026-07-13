@@ -767,11 +767,13 @@ const ResultSet = ({
                   padding-bottom: ${theme.sizeUnit * 3}px;
                 `}
               >
-                <AutoSizer disableWidth>
-                  {({ height: autoHeight }) => (
-                    <ResultTable {...tableProps} height={autoHeight} />
-                  )}
-                </AutoSizer>
+                <AutoSizer
+                  renderProp={({ height: autoHeight }) =>
+                    autoHeight === undefined ? null : (
+                      <ResultTable {...tableProps} height={autoHeight} />
+                    )
+                  }
+                />
               </div>
             )}
           </ResultContainer>

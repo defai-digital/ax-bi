@@ -979,9 +979,9 @@ const SqlEditor: FC<Props> = ({
           )}
           {queryEditor.isDataset && renderDatasetWarning()}
           <div className="sql-container">
-            <AutoSizer disableWidth>
-              {({ height }) =>
-                isActive && (
+            <AutoSizer
+              renderProp={({ height }) =>
+                isActive && height !== undefined ? (
                   <EditorWrapper
                     autocomplete={autocompleteEnabled}
                     onBlur={onSqlChanged}
@@ -991,9 +991,9 @@ const SqlEditor: FC<Props> = ({
                     height={`${height}px`}
                     hotkeys={hotkeys}
                   />
-                )
+                ) : null
               }
-            </AutoSizer>
+            />
           </div>
           {SqlFormExtension && (
             <SqlFormExtension

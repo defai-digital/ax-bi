@@ -636,35 +636,37 @@ export default function FoldersEditor({
             items={sortableItemIds}
             strategy={verticalListSortingStrategy}
           >
-            <AutoSizer>
-              {({ height, width }) => (
-                <VirtualizedTreeList
-                  width={width}
-                  height={height}
-                  flattenedItems={flattenedItems}
-                  itemHeights={itemHeights}
-                  heightCache={heightCache}
-                  collapsedIds={collapsedIds}
-                  selectedItemIds={selectedItemIds}
-                  editingFolderId={editingFolderId}
-                  folderChildCounts={folderChildCounts}
-                  itemSeparatorInfo={itemSeparatorInfo}
-                  visibleItemIds={visibleItemIds}
-                  searchTerm={searchTerm}
-                  metricsMap={metricsMap}
-                  columnsMap={columnsMap}
-                  isDragging={isDragging}
-                  activeId={activeId}
-                  draggedFolderChildIds={draggedFolderChildIds}
-                  forbiddenDropFolderIds={forbiddenDropFolderIds}
-                  currentDropTargetId={currentDropTargetId}
-                  onToggleCollapse={handleToggleCollapse}
-                  onSelect={handleSelect}
-                  onStartEdit={handleStartEdit}
-                  onFinishEdit={handleFinishEdit}
-                />
-              )}
-            </AutoSizer>
+            <AutoSizer
+              renderProp={({ height, width }) =>
+                height === undefined || width === undefined ? null : (
+                  <VirtualizedTreeList
+                    width={width}
+                    height={height}
+                    flattenedItems={flattenedItems}
+                    itemHeights={itemHeights}
+                    heightCache={heightCache}
+                    collapsedIds={collapsedIds}
+                    selectedItemIds={selectedItemIds}
+                    editingFolderId={editingFolderId}
+                    folderChildCounts={folderChildCounts}
+                    itemSeparatorInfo={itemSeparatorInfo}
+                    visibleItemIds={visibleItemIds}
+                    searchTerm={searchTerm}
+                    metricsMap={metricsMap}
+                    columnsMap={columnsMap}
+                    isDragging={isDragging}
+                    activeId={activeId}
+                    draggedFolderChildIds={draggedFolderChildIds}
+                    forbiddenDropFolderIds={forbiddenDropFolderIds}
+                    currentDropTargetId={currentDropTargetId}
+                    onToggleCollapse={handleToggleCollapse}
+                    onSelect={handleSelect}
+                    onStartEdit={handleStartEdit}
+                    onFinishEdit={handleFinishEdit}
+                  />
+                )
+              }
+            />
           </SortableContext>
 
           <DragOverlay modifiers={dragOverlayModifiers}>

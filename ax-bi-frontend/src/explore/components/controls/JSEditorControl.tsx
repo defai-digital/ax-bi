@@ -75,20 +75,22 @@ export default function JSEditorControl({
     <>
       <ControlHeader {...headerProps} />
       <Container>
-        <AutoSizer disableHeight>
-          {({ width }) => (
-            <EditorHost
-              id="echart-js-editor"
-              value={value ?? ''}
-              onChange={val => onChange?.(val)}
-              language="javascript"
-              tabSize={2}
-              lineNumbers
-              width={`${width}px`}
-              height="250px"
-            />
-          )}
-        </AutoSizer>
+        <AutoSizer
+          renderProp={({ width }) =>
+            width === undefined ? null : (
+              <EditorHost
+                id="echart-js-editor"
+                value={value ?? ''}
+                onChange={val => onChange?.(val)}
+                language="javascript"
+                tabSize={2}
+                lineNumbers
+                width={`${width}px`}
+                height="250px"
+              />
+            )
+          }
+        />
       </Container>
       {error && (
         <ErrorMessage>

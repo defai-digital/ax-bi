@@ -28,6 +28,19 @@ import { sliceEntitiesForDashboard as mockSliceEntities } from 'spec/fixtures/mo
 import { configureStore } from '@reduxjs/toolkit';
 import SliceAdder, { SliceAdderProps, sortByComparator } from './SliceAdder';
 
+jest.mock('react-virtualized-auto-sizer', () => {
+  const MockAutoSizer = ({
+    renderProp,
+  }: {
+    renderProp: (params: { height: number; width: number }) => React.ReactNode;
+  }) => renderProp({ height: 500, width: 400 });
+
+  return {
+    __esModule: true,
+    AutoSizer: MockAutoSizer,
+  };
+});
+
 // Mock the Select component to avoid debounce issues
 jest.mock('@ax-bi/ui-core', () => ({
   ...jest.requireActual('@ax-bi/ui-core'),
@@ -87,6 +100,23 @@ describe('SliceAdder', () => {
   test('renders the create new chart button', () => {
     renderSliceAdder();
     expect(screen.getByText('Create new chart')).toBeInTheDocument();
+  });
+
+  test('renders available chart cards', () => {
+    const regionFilter = mockSliceEntities.slices[127];
+    renderSliceAdder({
+      ...defaultProps,
+      selectedSliceIds: [],
+      slices: {
+        127: {
+          ...regionFilter,
+          owners: [{ id: defaultProps.userId }],
+          created_by: { id: defaultProps.userId },
+        },
+      },
+    });
+
+    expect(screen.getByText('Region Filter')).toBeInTheDocument();
   });
 
   test('renders loading state', () => {

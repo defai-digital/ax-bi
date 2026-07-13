@@ -439,19 +439,21 @@ function SliceAdder({
       {isLoading && <Loading />}
       {!isLoading && filteredSlices.length > 0 && (
         <ChartList>
-          <AutoSizer>
-            {({ height, width }: { height: number; width: number }) => (
-              <List
-                width={width}
-                height={height}
-                itemCount={filteredSlices.length}
-                itemSize={DEFAULT_CELL_HEIGHT}
-                itemKey={index => filteredSlices[index].slice_id}
-              >
-                {rowRenderer}
-              </List>
-            )}
-          </AutoSizer>
+          <AutoSizer
+            renderProp={({ height, width }) =>
+              height === undefined || width === undefined ? null : (
+                <List
+                  width={width}
+                  height={height}
+                  itemCount={filteredSlices.length}
+                  itemSize={DEFAULT_CELL_HEIGHT}
+                  itemKey={index => filteredSlices[index].slice_id}
+                >
+                  {rowRenderer}
+                </List>
+              )
+            }
+          />
         </ChartList>
       )}
       {errorMessage && (

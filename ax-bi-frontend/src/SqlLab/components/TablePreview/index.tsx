@@ -329,8 +329,12 @@ const TablePreview: FC<Props> = ({ dbId, catalog, schema, tableName }) => {
               flex: 1 1 auto;
             `}
           >
-            <AutoSizer disableWidth>
-              {({ height }) => {
+            <AutoSizer
+              renderProp={({ height }) => {
+                if (height === undefined) {
+                  return null;
+                }
+
                 const tabItems = [];
 
                 tabItems.push({
@@ -420,7 +424,7 @@ const TablePreview: FC<Props> = ({ dbId, catalog, schema, tableName }) => {
                   />
                 );
               }}
-            </AutoSizer>
+            />
           </div>
         </>
       )}
