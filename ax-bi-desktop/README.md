@@ -39,20 +39,31 @@ Colima/Docker status, logs, and prepare/stop/update controls live under
 
 ## Recommended User Install
 
-The intended macOS user path is a Homebrew cask that installs AX BI Desktop and
-the local runtime prerequisites:
+macOS app name (Dock / Applications / menu bar): **AX BI** (`AX BI.app`).
+Windows product name: **AX BI** (same Tauri `productName`).
+
+The intended macOS user path is the Homebrew tap at
+[defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi):
 
 ```bash
 brew install --cask defai-digital/ax-bi/ax-bi
 ```
 
-After installation, AX BI Desktop should guide the user to either connect to an
-existing AX BI server or start a local AX BI runtime. The local runtime manager
-uses Colima and Docker Compose behind the Tauri app so users do not need to
-clone this repository, edit `.env` files, or run Docker commands manually.
+That one-liner taps `https://github.com/defai-digital/homebrew-ax-bi` and installs
+the `ax-bi` cask. Equivalent explicit form:
 
-See [LOCAL_RUNTIME.md](LOCAL_RUNTIME.md) for the runtime architecture, command
-contract, Homebrew cask shape, and security boundary.
+```bash
+brew tap defai-digital/ax-bi https://github.com/defai-digital/homebrew-ax-bi
+brew install --cask ax-bi
+```
+
+After installation, AX BI should guide the user to either connect to an existing
+server or start a local runtime. The local runtime manager uses Colima and Docker
+Compose so users do not need to clone this repository or run Docker by hand.
+
+See [LOCAL_RUNTIME.md](LOCAL_RUNTIME.md) for runtime architecture and
+[RELEASE.md](RELEASE.md) for CI/CD, Apple signing, minisign, and Homebrew
+automation (aligned with AX Studio / AX Code Desktop).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

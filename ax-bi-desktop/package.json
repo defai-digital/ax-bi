@@ -9,7 +9,10 @@
     "test:rust": "cargo test --manifest-path src-tauri/Cargo.toml",
     "dev": "npx tauri dev",
     "build": "npx tauri build",
-    "build:debug": "npx tauri build --debug"
+    "build:debug": "npx tauri build --debug",
+    "release:set-version": "node scripts/release/set-version.mjs",
+    "release:write-cask": "node scripts/release/write-homebrew-cask.mjs",
+    "release:minisign": "node scripts/release/minisign-artifacts.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.0.0",

@@ -1,29 +1,48 @@
-# Template for defai-digital/homebrew-ax-bi/Casks/ax-bi.rb.
-# Replace VERSION, architecture artifact names, and SHA256 values during release.
+# Template for the official Homebrew tap:
+#   https://github.com/defai-digital/homebrew-ax-bi
+# Target path in the tap: Casks/ax-bi.rb
+#
+# Generated at release time by:
+#   node ax-bi-desktop/scripts/release/write-homebrew-cask.mjs \
+#     --version VERSION --sha256 SHA256 --out Casks/ax-bi.rb
+#
+# Users install with:
+#   brew install --cask defai-digital/ax-bi/ax-bi
+# which resolves to:
+#   brew tap defai-digital/ax-bi https://github.com/defai-digital/homebrew-ax-bi
 
 cask "ax-bi" do
-  arch arm: "aarch64", intel: "x64"
-
   version "VERSION"
-  sha256 arm: "ARM64_SHA256",
-         intel: "X64_SHA256"
+  sha256 "ARM64_SHA256"
 
-  url "https://github.com/defai-digital/ax-bi/releases/download/ax-bi-desktop-v#{version}/AX%20BI_#{version}_#{arch}.zip",
+  url "https://github.com/defai-digital/ax-bi/releases/download/ax-bi-desktop-v#{version}/AX.BI_#{version}_aarch64.dmg",
       verified: "github.com/defai-digital/ax-bi/"
   name "AX BI"
   desc "Desktop client and local runtime launcher for AX BI"
   homepage "https://github.com/defai-digital/ax-bi"
 
+  depends_on arch: :arm64
+  depends_on macos: ">= :monterey"
   depends_on formula: "colima"
   depends_on formula: "docker"
   depends_on formula: "docker-compose"
 
+  preflight do
+    FileUtils.rm_rf("#{appdir}/AX BI.app")
+  end
+
   app "AX BI.app"
+
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-cr", "#{appdir}/AX BI.app"]
+  end
 
   zap trash: [
     "~/Library/Application Support/com.axbi.desktop",
     "~/Library/Caches/com.axbi.desktop",
     "~/Library/Logs/com.axbi.desktop",
     "~/Library/Preferences/com.axbi.desktop.plist",
+    "~/Library/Saved Application State/com.axbi.desktop.savedState",
   ]
 end

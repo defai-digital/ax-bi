@@ -1,0 +1,503 @@
+# AX BI Desktop release: signed macOS DMG, Windows installers, minisign,
+# GitHub Release, and Homebrew tap update for defai-digital/homebrew-ax-bi.
+#
+# Trigger:
+#   git tag ax-bi-desktop-v0.1.0 && git push origin ax-bi-desktop-v0.1.0
+#   or workflow_dispatch with version=0.1.0
+#
+# Modeled on defai-digital/ax-studio and ax-code desktop release pipelines.
+
+name: AX BI Desktop Release
+
+on:
+  push:
+    tags:
+      - "ax-bi-desktop-v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version (e.g. 0.1.0)"
+        required: true
+        type: string
+      skip_homebrew:
+        description: "Skip Homebrew tap update"
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: ax-bi-desktop-release-${{ github.event.inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "24"
+  DESKTOP_DIR: ax-bi-desktop
+
+jobs:
+  resolve-version:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - name: Resolve version and tag
+        id: version
+        env:
+          INPUT_VERSION: ${{ github.event.inputs.version || '' }}
+          REF_NAME: ${{ github.ref_name }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          if [ -n "$INPUT_VERSION" ]; then
+            version="${INPUT_VERSION#v}"
+            version="${version#ax-bi-desktop-v}"
+          elif [ "$EVENT_NAME" = "push" ] && [[ "$REF_NAME" == ax-bi-desktop-v* ]]; then
+            version="${REF_NAME#ax-bi-desktop-v}"
+          else
+            echo "::error::Version is required (tag ax-bi-desktop-vX.Y.Z or workflow_dispatch input)."
+            exit 1
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Version must look like 0.1.0, got: $version"
+            exit 1
+          fi
+          tag="ax-bi-desktop-v${version}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "Resolved version=$version tag=$tag"
+
+  create-draft-release:
+    needs: resolve-version
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Create or reuse draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.resolve-version.outputs.tag }}
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if is_draft=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [ "$is_draft" = "true" ]; then
+              gh release edit "$TAG" --draft=true --prerelease=false --repo "$GITHUB_REPOSITORY"
+            else
+              echo "::notice::Release $TAG is already published; later uploads use --clobber."
+            fi
+          else
+            gh release create "$TAG" \
+              --title "AX BI Desktop ${VERSION}" \
+              --draft \
+              --generate-notes \
+              --repo "$GITHUB_REPOSITORY"
+          fi
+
+  build-macos:
+    needs: [resolve-version, create-draft-release]
+    runs-on: macos-15
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.resolve-version.outputs.version }}
+      TAG: ${{ needs.resolve-version.outputs.tag }}
+      HAS_APPLE_CERT: ${{ (secrets.APPLE_CERTIFICATE != '' || secrets.CODE_SIGN_P12_BASE64 != '') && (secrets.APPLE_CERTIFICATE_PASSWORD != '' || secrets.CODE_SIGN_P12_PASSWORD != '') }}
+      HAS_NOTARY: ${{ (secrets.APPLE_API_KEY_B64 != '' || secrets.NOTARIZE_P8_BASE64 != '') && (secrets.APPLE_API_KEY_ID != '' || secrets.NOTARY_KEY_ID != '') && (secrets.APPLE_API_ISSUER != '' || secrets.NOTARY_ISSUER != '') }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ax-bi-desktop/package-lock.json
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ax-bi-desktop/src-tauri
+
+      - name: Set desktop version
+        working-directory: ax-bi-desktop
+        run: node scripts/release/set-version.mjs --version "$VERSION"
+
+      - name: Install frontend dependencies
+        working-directory: ax-bi-desktop
+        run: npm ci
+
+      - name: Validate signing secrets (stable release)
+        if: ${{ env.HAS_APPLE_CERT != 'true' || env.HAS_NOTARY != 'true' }}
+        run: |
+          echo "::error::Stable macOS releases require Apple Developer ID + notary secrets."
+          echo "Set APPLE_CERTIFICATE (or CODE_SIGN_P12_BASE64) + password and"
+          echo "APPLE_API_KEY_B64 (or NOTARIZE_P8_BASE64) + APPLE_API_KEY_ID + APPLE_API_ISSUER."
+          exit 1
+
+      - name: Import Apple certificate
+        uses: apple-actions/import-codesign-certs@v2
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE || secrets.CODE_SIGN_P12_BASE64 }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || secrets.CODE_SIGN_P12_PASSWORD }}
+
+      - name: Resolve Apple signing identity
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          IDENTITY="$(security find-identity -v -p codesigning | awk -F '"' '/Developer ID Application/ { print $2; exit }')"
+          if [ -z "$IDENTITY" ]; then
+            echo "::error::No Developer ID Application identity found."
+            security find-identity -v -p codesigning || true
+            exit 1
+          fi
+          if [ -n "${APPLE_TEAM_ID:-}" ] && [[ "$IDENTITY" != *"($APPLE_TEAM_ID)"* ]]; then
+            echo "::error::Developer ID identity does not match APPLE_TEAM_ID."
+            echo "identity: $IDENTITY"
+            exit 1
+          fi
+          echo "APPLE_SIGNING_IDENTITY=$IDENTITY" >> "$GITHUB_ENV"
+          echo "Using identity: $IDENTITY"
+
+      - name: Decode App Store Connect API key
+        env:
+          APPLE_API_KEY_B64: ${{ secrets.APPLE_API_KEY_B64 || secrets.NOTARIZE_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$APPLE_API_KEY_B64" | base64 --decode > /tmp/AuthKey.p8
+          chmod 600 /tmp/AuthKey.p8
+          echo "APPLE_API_KEY_PATH=/tmp/AuthKey.p8" >> "$GITHUB_ENV"
+
+      - name: Build signed macOS app + DMG
+        working-directory: ax-bi-desktop
+        env:
+          APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE || secrets.CODE_SIGN_P12_BASE64 }}
+          APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || secrets.CODE_SIGN_P12_PASSWORD }}
+          APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER || secrets.NOTARY_ISSUER }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY_ID || secrets.NOTARY_KEY_ID }}
+          APPLE_API_KEY_PATH: ${{ env.APPLE_API_KEY_PATH }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          CI: true
+        run: |
+          set -euo pipefail
+          npm run build -- --target aarch64-apple-darwin
+          ls -la src-tauri/target/aarch64-apple-darwin/release/bundle/dmg || true
+          ls -la src-tauri/target/aarch64-apple-darwin/release/bundle/macos || true
+
+      - name: Notarize and staple DMG
+        env:
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID || secrets.NOTARY_KEY_ID }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER || secrets.NOTARY_ISSUER }}
+        run: |
+          set -euo pipefail
+          DMG_PATH="$(find ax-bi-desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg -maxdepth 1 -name '*.dmg' -print -quit)"
+          if [ -z "$DMG_PATH" ]; then
+            # Fallback: host-triple-less path used by some Tauri layouts
+            DMG_PATH="$(find ax-bi-desktop/src-tauri/target/release/bundle/dmg -maxdepth 1 -name '*.dmg' -print -quit 2>/dev/null || true)"
+          fi
+          if [ -z "$DMG_PATH" ]; then
+            echo "::error::No DMG found to notarize."
+            find ax-bi-desktop/src-tauri/target -name '*.dmg' 2>/dev/null || true
+            exit 1
+          fi
+          echo "Notarizing $DMG_PATH"
+          xcrun notarytool submit "$DMG_PATH" \
+            --key /tmp/AuthKey.p8 \
+            --key-id "$APPLE_API_KEY_ID" \
+            --issuer "$APPLE_API_ISSUER" \
+            --wait
+          xcrun stapler staple "$DMG_PATH"
+          xcrun stapler validate "$DMG_PATH"
+          spctl -a -vv -t install "$DMG_PATH" || true
+          echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
+
+      - name: Prepare release assets
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/release-macos"
+          mkdir -p "$OUT"
+          BUNDLE_DIR="ax-bi-desktop/src-tauri/target/aarch64-apple-darwin/release/bundle"
+          if [ ! -d "$BUNDLE_DIR" ]; then
+            BUNDLE_DIR="ax-bi-desktop/src-tauri/target/release/bundle"
+          fi
+          node ax-bi-desktop/scripts/release/rename-release-assets.mjs \
+            --version "$VERSION" \
+            --bundle-dir "$BUNDLE_DIR" \
+            --out-dir "$OUT"
+          # Ensure DMG has expected Homebrew name even if Tauri naming differs
+          if [ ! -f "$OUT/AX.BI_${VERSION}_aarch64.dmg" ]; then
+            found="$(find "$OUT" -maxdepth 1 -name '*.dmg' -print -quit)"
+            if [ -n "$found" ]; then
+              mv "$found" "$OUT/AX.BI_${VERSION}_aarch64.dmg"
+            fi
+          fi
+          test -f "$OUT/AX.BI_${VERSION}_aarch64.dmg"
+          # Zip .app for optional direct download
+          APP_PATH="$BUNDLE_DIR/macos/AX BI.app"
+          if [ -d "$APP_PATH" ]; then
+            ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "$OUT/AX.BI_${VERSION}_aarch64.app.zip"
+          fi
+          ls -la "$OUT"
+          echo "MACOS_OUT=$OUT" >> "$GITHUB_ENV"
+
+      - name: Upload macOS assets to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          assets=("$MACOS_OUT/AX.BI_${VERSION}_aarch64.dmg")
+          if [ -f "$MACOS_OUT/AX.BI_${VERSION}_aarch64.app.zip" ]; then
+            assets+=("$MACOS_OUT/AX.BI_${VERSION}_aarch64.app.zip")
+          fi
+          gh release upload "$TAG" "${assets[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Upload macOS workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ax-bi-desktop-macos-${{ needs.resolve-version.outputs.version }}
+          path: ${{ env.MACOS_OUT }}/*
+          retention-days: 14
+
+  build-windows:
+    needs: [resolve-version, create-draft-release]
+    runs-on: windows-latest
+    timeout-minutes: 90
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.resolve-version.outputs.version }}
+      TAG: ${{ needs.resolve-version.outputs.tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: ax-bi-desktop/package-lock.json
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ax-bi-desktop/src-tauri
+
+      - name: Set desktop version
+        working-directory: ax-bi-desktop
+        run: node scripts/release/set-version.mjs --version ${{ env.VERSION }}
+
+      - name: Install frontend dependencies
+        working-directory: ax-bi-desktop
+        run: npm ci
+
+      - name: Build Windows installers
+        working-directory: ax-bi-desktop
+        env:
+          CI: true
+        run: npm run build
+
+      - name: Prepare Windows assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="$RUNNER_TEMP/release-windows"
+          mkdir -p "$OUT"
+          BUNDLE_DIR="ax-bi-desktop/src-tauri/target/release/bundle"
+          node ax-bi-desktop/scripts/release/rename-release-assets.mjs \
+            --version "$VERSION" \
+            --bundle-dir "$BUNDLE_DIR" \
+            --out-dir "$OUT"
+          ls -la "$OUT"
+          echo "WINDOWS_OUT=$OUT" >> "$GITHUB_ENV"
+
+      - name: Upload Windows assets to GitHub release
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          files=("$WINDOWS_OUT"/*)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "::error::No Windows artifacts to upload"
+            exit 1
+          fi
+          gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Upload Windows workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ax-bi-desktop-windows-${{ needs.resolve-version.outputs.version }}
+          path: ${{ env.WINDOWS_OUT }}/*
+          retention-days: 14
+
+  sign-minisign:
+    needs: [resolve-version, build-macos, build-windows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.resolve-version.outputs.version }}
+      TAG: ${{ needs.resolve-version.outputs.tag }}
+      HAS_MINISIGN: ${{ secrets.AX_BI_MINISIGN_SECRET_KEY_B64 != '' && secrets.AX_BI_MINISIGN_PUBLIC_KEY != '' && secrets.AX_BI_MINISIGN_PASSWORD != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Require minisign secrets
+        if: ${{ env.HAS_MINISIGN != 'true' }}
+        run: |
+          echo "::error::Stable releases require AX_BI_MINISIGN_SECRET_KEY_B64, AX_BI_MINISIGN_PUBLIC_KEY, and AX_BI_MINISIGN_PASSWORD."
+          exit 1
+
+      - name: Install minisign
+        run: sudo apt-get update && sudo apt-get install -y minisign
+
+      - name: Download release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts signkey
+          gh release download "$TAG" --dir artifacts --repo "$GITHUB_REPOSITORY"
+          ls -la artifacts
+
+      - name: Sign assets with minisign
+        env:
+          AX_BI_MINISIGN_SECRET_KEY_B64: ${{ secrets.AX_BI_MINISIGN_SECRET_KEY_B64 }}
+          AX_BI_MINISIGN_PUBLIC_KEY: ${{ secrets.AX_BI_MINISIGN_PUBLIC_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.AX_BI_MINISIGN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          printf '%s' "$AX_BI_MINISIGN_SECRET_KEY_B64" | base64 --decode > signkey/ax-bi.minisign.key
+          chmod 600 signkey/ax-bi.minisign.key
+          # Public key file: minisign expects full .pub content or we write key line
+          if [[ "$AX_BI_MINISIGN_PUBLIC_KEY" == untrusted* ]]; then
+            printf '%s\n' "$AX_BI_MINISIGN_PUBLIC_KEY" > signkey/ax-bi.minisign.pub
+          else
+            {
+              echo "untrusted comment: AX BI minisign public key"
+              echo "$AX_BI_MINISIGN_PUBLIC_KEY"
+            } > signkey/ax-bi.minisign.pub
+          fi
+          files=()
+          for f in artifacts/*; do
+            case "$f" in
+              *.minisig) ;;
+              *) files+=("$f") ;;
+            esac
+          done
+          node ax-bi-desktop/scripts/release/minisign-artifacts.mjs \
+            --key-dir signkey \
+            --force \
+            "${files[@]}"
+
+      - name: Upload minisign signatures
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" artifacts/*.minisig --clobber --repo "$GITHUB_REPOSITORY"
+
+  publish-release:
+    needs: [resolve-version, sign-minisign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Publish release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.resolve-version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"
+          echo "Published $TAG"
+
+  update-homebrew-tap:
+    needs: [resolve-version, publish-release]
+    if: ${{ github.event.inputs.skip_homebrew != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    env:
+      VERSION: ${{ needs.resolve-version.outputs.version }}
+      TAG: ${{ needs.resolve-version.outputs.tag }}
+      HAS_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' || secrets.TAP_TOKEN != '' }}
+    steps:
+      - name: Skip if no tap token
+        if: ${{ env.HAS_TAP_TOKEN != 'true' }}
+        run: |
+          echo "::notice::HOMEBREW_TAP_TOKEN (or TAP_TOKEN) not configured — skipping Homebrew tap update."
+          echo "Configure a PAT with write access to defai-digital/homebrew-ax-bi."
+
+      - name: Checkout monorepo scripts
+        if: ${{ env.HAS_TAP_TOKEN == 'true' }}
+        uses: actions/checkout@v4
+
+      - name: Download published DMG and compute SHA256
+        if: ${{ env.HAS_TAP_TOKEN == 'true' }}
+        run: |
+          set -euo pipefail
+          curl -fSL --retry 6 --retry-all-errors --retry-delay 10 -o release.dmg \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/AX.BI_${VERSION}_aarch64.dmg"
+          DMG_SHA256="$(sha256sum release.dmg | awk '{print $1}')"
+          echo "DMG_SHA256=$DMG_SHA256" >> "$GITHUB_ENV"
+          echo "sha256=$DMG_SHA256"
+
+      - name: Push cask to homebrew-ax-bi
+        if: ${{ env.HAS_TAP_TOKEN == 'true' }}
+        env:
+          HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN || secrets.TAP_TOKEN }}
+        run: |
+          set -euo pipefail
+          git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/defai-digital/homebrew-ax-bi.git" homebrew-tap
+          node ax-bi-desktop/scripts/release/write-homebrew-cask.mjs \
+            --version "$VERSION" \
+            --sha256 "$DMG_SHA256" \
+            --tag "$TAG" \
+            --out homebrew-tap/Casks/ax-bi.rb
+          # ruby -c may not be available; basic syntax check via grep for cask name
+          grep -q 'cask "ax-bi"' homebrew-tap/Casks/ax-bi.rb
+          if command -v ruby >/dev/null 2>&1; then
+            ruby -c homebrew-tap/Casks/ax-bi.rb
+          fi
+          cd homebrew-tap
+          # Seed a short README if the tap was empty
+          if [ ! -f README.md ]; then
+            cat > README.md <<'EOF'
+          # homebrew-ax-bi
+
+          Homebrew tap for [AX BI](https://github.com/defai-digital/ax-bi) Desktop.
+
+          ```bash
+          brew install --cask defai-digital/ax-bi/ax-bi
+          ```
+          EOF
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/ax-bi.rb README.md
+          git diff --cached --quiet && echo "No cask changes to commit." && exit 0
+          git commit -m "Update ax-bi cask to ${VERSION}"
+          git push

@@ -3,10 +3,18 @@
 AX BI Desktop should make local evaluation feel like a normal desktop
 application while keeping AX BI's server-backed architecture intact.
 
-The target user path is:
+The target user path is the Homebrew tap
+[defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi):
 
 ```shell
 brew install --cask defai-digital/ax-bi/ax-bi
+```
+
+Or explicitly:
+
+```shell
+brew tap defai-digital/ax-bi https://github.com/defai-digital/homebrew-ax-bi
+brew install --cask ax-bi
 ```
 
 After installation, the user opens AX BI Desktop. The bundled launcher offers
@@ -124,18 +132,23 @@ container-control capabilities.
 
 ## Release Plan
 
-1. Build signed macOS `.app` artifacts from `ax-bi-desktop/`.
-2. Zip the `.app` bundle and publish it on a GitHub release.
-3. Update the Homebrew cask in `defai-digital/homebrew-ax-bi`.
-4. Users install or upgrade with:
+Automated by [`.github/workflows/ax-bi-desktop-release.yml`](../.github/workflows/ax-bi-desktop-release.yml).
+See [RELEASE.md](RELEASE.md) for secrets, minisign, and maintainer steps.
 
-   ```shell
-   brew install --cask defai-digital/ax-bi/ax-bi
-   brew upgrade --cask defai-digital/ax-bi/ax-bi
-   ```
+1. Tag `ax-bi-desktop-vX.Y.Z` (or run the workflow with a version input).
+2. Build **signed + notarized** macOS arm64 DMG (`AX BI.app` product name).
+3. Build Windows installers (product name **AX BI**).
+4. minisign all GitHub Release assets.
+5. Publish the release, then push `Casks/ax-bi.rb` to
+   [defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi)
+   (DMG URL + SHA256; Colima/Docker formulas as `depends_on`).
 
-The cask template in `packaging/homebrew/Casks/ax-bi.rb.template` documents the
-expected dependency and artifact shape.
+Users install or upgrade with:
 
-Signed and notarized `.dmg` artifacts are still useful for direct downloads, but
-the Homebrew path can install from a zipped `.app` bundle.
+```shell
+brew install --cask defai-digital/ax-bi/ax-bi
+brew upgrade --cask defai-digital/ax-bi/ax-bi
+```
+
+The cask installs **AX BI.app**. Local runtime (Colima + Compose) is managed by
+the app after install.

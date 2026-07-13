@@ -29,12 +29,30 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["app"]
+    "targets": [
+      "app",
+      "dmg",
+      "nsis",
+      "msi"
+    ],
+    "publisher": "DEFAI Private Limited",
+    "shortDescription": "AX BI desktop client",
+    "longDescription": "Desktop client and local runtime launcher for the AX BI analytics platform.",
+    "macOS": {
+      "minimumSystemVersion": "12.0"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    }
   },
   "plugins": {
     "deep-link": {
       "desktop": {
-        "schemes": ["axbi"]
+        "schemes": [
+          "axbi"
+        ]
       }
     }
   }
