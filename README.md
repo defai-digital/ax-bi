@@ -137,7 +137,7 @@ the same way as on macOS.
 
 Optional integrity check — every stable desktop asset can include a detached
 minisign signature (`.minisig`). Verify with
-[`ax-bi-desktop/docs/ax-bi.minisign.pub`](ax-bi-desktop/docs/ax-bi.minisign.pub):
+[`ax-bi-desktop/docs/ax-bi.minisign.pub`](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-desktop/docs/ax-bi.minisign.pub):
 
 ```powershell
 # After installing minisign (e.g. scoop install minisign / choco install minisign)
@@ -159,8 +159,9 @@ minisign -Vm .\AX.BI_0.1.0_x64-setup.exe -p .\ax-bi.minisign.pub
 
 Deep links such as `axbi://dashboard/{id}` open in the desktop shell on both
 platforms. More detail:
-[`ax-bi-desktop/LOCAL_RUNTIME.md`](ax-bi-desktop/LOCAL_RUNTIME.md) and
-[`ax-bi-desktop/RELEASE.md`](ax-bi-desktop/RELEASE.md).
+[`ax-bi-desktop/LOCAL_RUNTIME.md`](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-desktop/LOCAL_RUNTIME.md)
+and
+[`ax-bi-desktop/RELEASE.md`](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-desktop/RELEASE.md).
 
 ### Update
 
@@ -574,7 +575,8 @@ Want to add support for your datastore or data engine? Read about the [technical
   deployment needs. For Kubernetes, use the [AX BI Helm chart](https://github.com/defai-digital/ax-bi/tree/main/helm/ax-bi) with `helm/ax-bi/values-axbi.yaml` and replace all placeholder secrets.
 - **MCP service in production** — see [`axbi/mcp_service/PRODUCTION.md`](https://github.com/defai-digital/ax-bi/blob/main/axbi/mcp_service/PRODUCTION.md).
 - **Desktop release pipeline** — macOS signing/notarization, Windows installers,
-  minisign, and Homebrew cask updates: [`ax-bi-desktop/RELEASE.md`](ax-bi-desktop/RELEASE.md).
+  minisign, and Homebrew cask updates:
+  [`ax-bi-desktop/RELEASE.md`](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-desktop/RELEASE.md).
 
 ## Development
 

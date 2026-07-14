@@ -118,7 +118,7 @@ Required GitHub Actions secrets:
 | --- | --- |
 | `AZURE_TENANT_ID` | `0326d2a2-f46c-4673-a165-f49e712d0864` |
 | `AZURE_CLIENT_ID` | `cbdd6dd3-0c59-43ec-8813-cd5b120eaf4c` |
-| `AZURE_CLIENT_SECRET` | Service-principal secret; expires 2027-07-13 |
+| `AZURE_CLIENT_SECRET` | Repository service-principal secret; expires 2027-07-14 |
 
 The service principal needs certificate read and key-sign permissions on
 `keyvault-defai`. The RBAC vault grants `Key Vault Certificate User` and `Key
@@ -221,7 +221,7 @@ The tap repo is live: [defai-digital/homebrew-ax-bi](https://github.com/defai-di
 | `HOMEBREW_TAP_TOKEN` | Set (write access to `defai-digital/homebrew-ax-bi`) |
 | `AZURE_TENANT_ID` | Set (`0326d2a2-f46c-4673-a165-f49e712d0864`) |
 | `AZURE_CLIENT_ID` | Set (`cbdd6dd3-0c59-43ec-8813-cd5b120eaf4c`) |
-| `AZURE_CLIENT_SECRET` | Set; expires 2027-07-13 |
+| `AZURE_CLIENT_SECRET` | Set; repository credential expires 2027-07-14 |
 
 ### Secrets still required before the first release tag
 
@@ -299,10 +299,11 @@ gh secret set HOMEBREW_TAP_TOKEN -R defai-digital/ax-bi
 ## Windows notes
 
 - Product display name is **AX BI** (same Tauri `productName`).
-- CI builds NSIS/MSI installers and attaches them to the GitHub Release.
-- Authenticode signing can be added later (Azure Trusted Signing pattern from
-  AX Code Desktop); unsigned Windows builds still publish with a warning in
-  release notes until those secrets exist.
+- CI signs the application executable before packaging, then signs and verifies
+  both the NSIS and MSI installers before attaching them to the GitHub Release.
+- Stable releases fail closed if the Azure signing credentials are absent, a
+  signature is invalid, or the signer thumbprint differs from the pinned DEFAI
+  certificate.
 - Homebrew is macOS-only; Windows users download from GitHub Releases.
 
 ## Trust layers (do not collapse)

@@ -111,24 +111,20 @@ jobs:
       HAS_NOTARY: ${{ (secrets.APPLE_API_KEY_B64 != '' || secrets.NOTARIZE_P8_BASE64 != '') && (secrets.APPLE_API_KEY_ID != '' || secrets.NOTARY_KEY_ID != '') && (secrets.APPLE_API_ISSUER != '' || secrets.NOTARY_ISSUER != '') }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: ax-bi-desktop/package-lock.json
+          package-manager-cache: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
         with:
           targets: aarch64-apple-darwin
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ax-bi-desktop/src-tauri
 
       - name: Set desktop version
         working-directory: ax-bi-desktop
@@ -147,7 +143,7 @@ jobs:
           exit 1
 
       - name: Import Apple certificate
-        uses: apple-actions/import-codesign-certs@v2
+        uses: apple-actions/import-codesign-certs@5142e029c445c10ffc7149d172e540235a065466 # v7.0.0
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE || secrets.CODE_SIGN_P12_BASE64 }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD || secrets.CODE_SIGN_P12_PASSWORD }}
@@ -265,7 +261,7 @@ jobs:
           gh release upload "$TAG" "${assets[@]}" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Upload macOS workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         with:
           name: ax-bi-desktop-macos-${{ needs.resolve-version.outputs.version }}
           path: ${{ env.MACOS_OUT }}/*
@@ -286,22 +282,18 @@ jobs:
       WINDOWS_SIGNING_THUMBPRINT: FC40F1109912C025E751E804AA9BD1538A2D12EF
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: ax-bi-desktop/package-lock.json
+          package-manager-cache: false
 
       - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache Rust
-        uses: Swatinem/rust-cache@v2
-        with:
-          workspaces: ax-bi-desktop/src-tauri
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
 
       - name: Require Windows signing secrets
         shell: pwsh
@@ -312,7 +304,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5.4.0
         with:
           dotnet-version: "10.0.x"
 
@@ -322,7 +314,7 @@ jobs:
 
       - name: Set desktop version
         working-directory: ax-bi-desktop
-        run: node scripts/release/set-version.mjs --version ${{ env.VERSION }}
+        run: node scripts/release/set-version.mjs --version "$VERSION"
 
       - name: Install frontend dependencies
         working-directory: ax-bi-desktop
@@ -395,7 +387,7 @@ jobs:
           gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Upload Windows workflow artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
         with:
           name: ax-bi-desktop-windows-${{ needs.resolve-version.outputs.version }}
           path: ${{ env.WINDOWS_OUT }}/*
@@ -413,7 +405,9 @@ jobs:
       HAS_MINISIGN: ${{ secrets.AX_BI_MINISIGN_SECRET_KEY_B64 != '' && secrets.AX_BI_MINISIGN_PUBLIC_KEY != '' && secrets.AX_BI_MINISIGN_PASSWORD != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Require minisign secrets
         if: ${{ env.HAS_MINISIGN != 'true' }}
@@ -498,15 +492,17 @@ jobs:
       TAG: ${{ needs.resolve-version.outputs.tag }}
       HAS_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN != '' || secrets.TAP_TOKEN != '' }}
     steps:
-      - name: Skip if no tap token
+      - name: Require tap token
         if: ${{ env.HAS_TAP_TOKEN != 'true' }}
         run: |
-          echo "::notice::HOMEBREW_TAP_TOKEN (or TAP_TOKEN) not configured — skipping Homebrew tap update."
-          echo "Configure a PAT with write access to defai-digital/homebrew-ax-bi."
+          echo "::error::HOMEBREW_TAP_TOKEN (or TAP_TOKEN) is required for a stable release."
+          exit 1
 
       - name: Checkout monorepo scripts
         if: ${{ env.HAS_TAP_TOKEN == 'true' }}
-        uses: actions/checkout@v4
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
 
       - name: Download published DMG and compute SHA256
         if: ${{ env.HAS_TAP_TOKEN == 'true' }}

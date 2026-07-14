@@ -420,7 +420,7 @@ pub fn start<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
     let engine_output = ensure_engine()?;
-    let compose_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])
+    let compose_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
         .map_err(|error| format_compose_error("start", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
@@ -433,7 +433,7 @@ pub fn start<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput
 pub fn stop<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
     // Stop should still try even if the engine is flaky; surface compose errors clearly.
-    let output = run_docker_compose(&runtime_dir, ["stop"])
+    let output = run_docker_compose(&runtime_dir, &["stop"])
         .map_err(|error| format_compose_error("stop", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
@@ -447,9 +447,9 @@ pub fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutp
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
     let engine_output = ensure_engine()?;
-    let stop_output = run_docker_compose(&runtime_dir, ["stop"])
+    let stop_output = run_docker_compose(&runtime_dir, &["stop"])
         .map_err(|error| format_compose_error("stop", &error))?;
-    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])
+    let start_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
         .map_err(|error| format_compose_error("start", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
@@ -469,9 +469,9 @@ pub fn update<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutpu
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
     let engine_output = ensure_engine()?;
-    let pull_output = run_docker_compose(&runtime_dir, ["pull"])
+    let pull_output = run_docker_compose(&runtime_dir, &["pull"])
         .map_err(|error| format_compose_error("pull", &error))?;
-    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])
+    let start_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
         .map_err(|error| format_compose_error("start", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
