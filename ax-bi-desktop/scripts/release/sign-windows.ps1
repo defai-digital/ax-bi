@@ -66,7 +66,7 @@ $expectedThumbprint = $env:WINDOWS_SIGNING_THUMBPRINT -replace "[^0-9A-Fa-f]", "
 foreach ($artifact in $resolvedPaths) {
   $signature = Get-AuthenticodeSignature -LiteralPath $artifact
   if ($signature.Status -ne "Valid") {
-    throw "Authenticode verification failed for $artifact: $($signature.StatusMessage)"
+    throw "Authenticode verification failed for ${artifact}: $($signature.StatusMessage)"
   }
 
   $actualThumbprint = $signature.SignerCertificate.Thumbprint -replace "[^0-9A-Fa-f]", ""
