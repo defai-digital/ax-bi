@@ -186,7 +186,12 @@ def normalize_provider_config(raw: dict[str, Any] | None) -> dict[str, Any]:
         ),
         "url_allowlist": allowlist,
         "extra_headers": safe_headers,
-        "max_tokens": _as_int(raw.get("max_tokens", 4096), 4096, minimum=1, maximum=128000),
+        "max_tokens": _as_int(
+            raw.get("max_tokens", 4096),
+            4096,
+            minimum=1,
+            maximum=128000,
+        ),
     }
 
 
@@ -201,9 +206,7 @@ def validate_normalized_config(config: dict[str, Any]) -> None:
             f"Supported: {sorted(SUPPORTED_PROVIDERS)}"
         )
     if provider in {"openai", "openai_compatible"} and not config.get("base_url"):
-        raise LLMInvalidConfigError(
-            f"base_url is required for provider {provider!r}"
-        )
+        raise LLMInvalidConfigError(f"base_url is required for provider {provider!r}")
     if provider == "openai" and not (config.get("api_key") or "").strip():
         raise LLMInvalidConfigError("api_key is required for provider 'openai'")
     if not (config.get("model") or "").strip():

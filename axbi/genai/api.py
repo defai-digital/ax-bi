@@ -27,7 +27,6 @@ from marshmallow import ValidationError
 from pydantic import BaseModel, Field
 
 from axbi.extensions import event_logger, security_manager
-from axbi.genai.schemas import LlmProviderPutSchema, LlmProviderTestSchema
 from axbi.genai.llm_config import (
     get_raw_provider_config,
     merge_provider_update,
@@ -45,6 +44,7 @@ from axbi.genai.provider_factory import (
     build_provider_from_config,
     reset_provider,
 )
+from axbi.genai.schemas import LlmProviderPutSchema, LlmProviderTestSchema
 from axbi.views.base_api import BaseAxBIApi, requires_json, statsd_metrics
 
 logger = logging.getLogger(__name__)
@@ -232,7 +232,9 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
     @safe
     @statsd_metrics
     @event_logger.log_this_with_context(
-        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.delete_provider",
+        action=lambda self, *args, **kwargs: (
+            f"{self.__class__.__name__}.delete_provider"
+        ),
         log_to_statsd=False,
     )
     def delete_provider(self) -> Response:
@@ -288,7 +290,9 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
 
         overrides = {k: v for k, v in body.items() if v is not None}
         existing = get_raw_provider_config()
-        candidate = merge_provider_update(existing, overrides) if overrides else existing
+        candidate = (
+            merge_provider_update(existing, overrides) if overrides else existing
+        )
 
         try:
             provider = build_provider_from_config(candidate)

@@ -48,6 +48,29 @@ def test_capabilities_are_ordered_and_versioned() -> None:
     assert result.preview_before_save is True
     assert result.limits.max_charts_per_dashboard == 12
     assert result.limits.max_upload_bytes == 1024
+    assert result.deployment_operations == [
+        "plan_dashboard",
+        "create_chart_from_intent",
+        "upload_and_plan",
+    ]
+
+
+def test_capabilities_distinguish_deployment_and_principal_operations() -> None:
+    result = GetAuthoringCapabilitiesCommand(
+        enabled_operations={
+            "plan_dashboard",
+            "create_chart_from_intent",
+            "prompt_to_dashboard",
+        },
+        authorized_operations={"plan_dashboard"},
+    ).run()
+
+    assert result.deployment_operations == [
+        "plan_dashboard",
+        "create_chart_from_intent",
+        "prompt_to_dashboard",
+    ]
+    assert result.operations == ["plan_dashboard"]
 
 
 def test_capabilities_reject_unknown_operations() -> None:
@@ -133,9 +156,9 @@ def test_capabilities_accept_injected_llm_capability_without_mcp() -> None:
 def test_authoring_package_does_not_import_mcp_service_modules() -> None:
     """Layering guard: commands.ai.authoring must not depend on mcp_service."""
     import axbi.commands.ai.authoring.capabilities as caps
-    import axbi.commands.ai.authoring.contracts as contracts
-    import axbi.commands.ai.authoring.context as context
     import axbi.commands.ai.authoring.confidence as confidence
+    import axbi.commands.ai.authoring.context as context
+    import axbi.commands.ai.authoring.contracts as contracts
     import axbi.commands.ai.authoring.errors as errors
 
     for module in (caps, contracts, context, confidence, errors):

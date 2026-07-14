@@ -85,5 +85,7 @@ test('non-admin sees warning only', async () => {
   render(<GenaiLlmSettings />, { useRedux: true, useRouter: true });
 
   expect(await screen.findByText(/Administrators only/i)).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /Save/i })).not.toBeInTheDocument();
+  expect(
+    screen.queryByRole('button', { name: /Save/i }),
+  ).not.toBeInTheDocument();
 });

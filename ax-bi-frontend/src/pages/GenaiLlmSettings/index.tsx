@@ -72,7 +72,10 @@ const Help = styled.p`
 `;
 
 const PROVIDER_OPTIONS: { value: LlmProviderType; label: string }[] = [
-  { value: 'openai_compatible', label: 'OpenAI-compatible (Ollama / LM Studio / vLLM)' },
+  {
+    value: 'openai_compatible',
+    label: 'OpenAI-compatible (Ollama / LM Studio / vLLM)',
+  },
   { value: 'openai', label: 'OpenAI' },
   { value: 'anthropic', label: 'Anthropic' },
 ];
@@ -235,9 +238,7 @@ export default function GenaiLlmSettings() {
         return;
       }
       const clientError = await getClientErrorObject(error);
-      addDangerToast(
-        clientError.error || t('LLM connection test failed'),
-      );
+      addDangerToast(clientError.error || t('LLM connection test failed'));
     } finally {
       setTesting(false);
     }
@@ -308,7 +309,9 @@ export default function GenaiLlmSettings() {
                 type="success"
                 showIcon
                 style={{ marginBottom: theme.sizeUnit * 4 }}
-                message={t('An API key is already configured (value is hidden).')}
+                message={t(
+                  'An API key is already configured (value is hidden).',
+                )}
                 description={t(
                   'Leave the API key field blank to keep the existing secret.',
                 )}

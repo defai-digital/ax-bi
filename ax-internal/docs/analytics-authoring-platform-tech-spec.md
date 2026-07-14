@@ -397,6 +397,12 @@ It does not classify prompts or build chart configuration.
     "create_dashboard",
     "upload_and_plan"
   ],
+  "deployment_operations": [
+    "plan_dashboard",
+    "create_chart_from_intent",
+    "prompt_to_dashboard",
+    "upload_and_plan"
+  ],
   "artifact_types": ["chart", "dashboard"],
   "preview_before_save": true,
   "upload_formats": ["csv", "tsv", "xls", "xlsx", "parquet"],
@@ -410,6 +416,10 @@ It does not classify prompts or build chart configuration.
 
 Limits are resolved from deployment configuration. A zero or omitted value must
 not mean unlimited unless explicitly documented.
+
+`deployment_operations` reports feature-enabled operations, while `operations`
+contains only the subset authorized for the authenticated principal. Capability
+discovery itself requires authentication but no Dashboard-specific permission.
 
 ## 10. Idempotency
 

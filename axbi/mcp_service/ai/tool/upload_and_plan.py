@@ -123,7 +123,12 @@ class UploadAndPlanResponse(BaseModel):
     tags=["mutate", "ai"],
     class_permission_name="Database",
     method_permission_name="upload",
-    feature_flags=["GENAI_BI", "GENAI_BI_MCP_TOOLS", "GENAI_PROMPT_TO_DASHBOARD"],
+    feature_flags=[
+        "GENAI_BI",
+        "GENAI_BI_MCP_TOOLS",
+        "GENAI_PROMPT_TO_DASHBOARD",
+        "ENABLE_LOCAL_FILE_UPLOAD",
+    ],
     annotations=ToolAnnotations(
         title="Upload and plan",
         readOnlyHint=False,

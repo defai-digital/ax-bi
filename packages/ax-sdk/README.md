@@ -63,7 +63,10 @@ Four strategies are supported:
 
 ```typescript
 // Username/password (auto-login on first request)
-new AxBI({ baseUrl, auth: { type: 'credentials', username: 'admin', password: 'admin' } });
+new AxBI({
+  baseUrl,
+  auth: { type: 'credentials', username: 'admin', password: 'admin' },
+});
 
 // Pre-existing JWT / access token
 new AxBI({ baseUrl, auth: { type: 'token', accessToken: 'eyJ...' } });
@@ -79,13 +82,13 @@ new AxBI({ baseUrl, auth: { type: 'guestToken', guestToken: '...' } });
 
 Five resource modules provide full CRUD access:
 
-| Module | Access | Example |
-|--------|--------|---------|
-| Dashboards | `axbi.dashboards` | `list()`, `getById()`, `create()`, `update()`, `delete()` |
-| Charts | `axbi.charts` | `list()`, `getById()`, `create()`, `update()`, `delete()` |
-| Datasets | `axbi.datasets` | `list()`, `getById()`, `create()`, `update()`, `delete()`, `getColumns()`, `getMetrics()` |
-| Databases | `axbi.databases` | `list()`, `getById()`, `getSchemas()`, `getTables()` |
-| Queries | `axbi.queries` | `list()`, `getById()`, `create()` |
+| Module     | Access            | Example                                                                                   |
+| ---------- | ----------------- | ----------------------------------------------------------------------------------------- |
+| Dashboards | `axbi.dashboards` | `list()`, `getById()`, `create()`, `update()`, `delete()`                                 |
+| Charts     | `axbi.charts`     | `list()`, `getById()`, `create()`, `update()`, `delete()`                                 |
+| Datasets   | `axbi.datasets`   | `list()`, `getById()`, `create()`, `update()`, `delete()`, `getColumns()`, `getMetrics()` |
+| Databases  | `axbi.databases`  | `list()`, `getById()`, `getSchemas()`, `getTables()`                                      |
+| Queries    | `axbi.queries`    | `list()`, `getById()`, `create()`                                                         |
 
 ### Pagination
 
@@ -108,9 +111,7 @@ for await (const batch of axbi.dashboards.listAll({ pageSize: 100 })) {
 
 ```typescript
 const { results } = await axbi.dashboards.list({
-  filters: [
-    { col: 'dashboard_title', operator: 'ct', value: 'Sales' },
-  ],
+  filters: [{ col: 'dashboard_title', operator: 'ct', value: 'Sales' }],
   orderBy: 'changed_on_delta_humanized',
   orderDesc: true,
 });
@@ -120,17 +121,19 @@ const { results } = await axbi.dashboards.list({
 
 The `axbi.ai` namespace exposes typed wrappers for GenAI tools served by the AX BI MCP service (port 5008):
 
-| Method | Description |
-|--------|-------------|
-| `promptToDashboard(params)` | **Preferred** — one call from prompt to draft dashboard |
-| `searchAssets(params)` | Semantic search across charts, dashboards, datasets |
-| `describeDataset(params)` | Get schema, metrics, and sample values for a dataset |
-| `planDashboard(params)` | Generate a dashboard plan from a natural language prompt |
-| `createChartFromIntent(params)` | Create a chart from business intent (or structured plan fields) |
-| `composeDashboard(params)` | Compose a full dashboard from a plan |
-| `explainDashboard(params)` | Analyze and explain an existing dashboard |
-| `executeSql(params)` | Execute SQL via SQL Lab |
-| `validateChart(params)` | Validate a chart configuration |
+| Method                          | Description                                                               |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| `getAuthoringCapabilities()`    | Discover authorized authoring operations, limits, formats, and LLM status |
+| `uploadAndPlan(params)`         | Upload CSV/TSV/Excel/Parquet data and return a governed plan              |
+| `promptToDashboard(params)`     | **Preferred** — one call from prompt to draft dashboard                   |
+| `searchAssets(params)`          | Semantic search across charts, dashboards, datasets                       |
+| `describeDataset(params)`       | Get schema, metrics, and sample values for a dataset                      |
+| `planDashboard(params)`         | Generate a dashboard plan from a natural language prompt                  |
+| `createChartFromIntent(params)` | Create a chart from business intent (or structured plan fields)           |
+| `composeDashboard(params)`      | Compose a full dashboard from a plan                                      |
+| `explainDashboard(params)`      | Analyze and explain an existing dashboard                                 |
+| `executeSql(params)`            | Execute SQL via SQL Lab                                                   |
+| `validateChart(params)`         | Validate a chart configuration                                            |
 
 ```typescript
 // Preferred: single-call prompt-to-dashboard (agents / Codex / Claude Code)
@@ -139,6 +142,9 @@ const result = await axbi.ai.promptToDashboard({
   draft: true,
 });
 console.log(result.dashboard_url);
+
+// Discover availability before offering deterministic authoring actions
+const capabilities = await axbi.ai.getAuthoringCapabilities();
 
 // Search across all assets
 const results = await axbi.ai.searchAssets({
@@ -157,14 +163,21 @@ await axbi.ai.composeDashboard({ plan, chart_ids: [101, 102] });
 Requires Superset feature flags: `GENAI_BI`, `GENAI_BI_MCP_TOOLS`, and
 `GENAI_PROMPT_TO_DASHBOARD` (enabled by default in the AX Docker AI profile).
 
-The MCP URL is auto-derived from `baseUrl` by replacing the port with `5008`. Override with the `mcpUrl` config option.
+The MCP URL is auto-derived from `baseUrl` by replacing the port with `5008`.
+`mcpUrl` accepts either a service base URL or a full endpoint ending in `/mcp`.
+Use `mcpHeaders` for deployment-specific headers in addition to the selected
+authentication strategy.
 
 ## Error Handling
 
 All SDK errors extend `AxBIError`:
 
 ```typescript
-import { AxBIAuthError, AxBINotFoundError, AxBIValidationError } from '@defai/ax-sdk';
+import {
+  AxBIAuthError,
+  AxBINotFoundError,
+  AxBIValidationError,
+} from '@defai/ax-sdk';
 
 try {
   await axbi.dashboards.getById(999);
@@ -177,14 +190,14 @@ try {
 }
 ```
 
-| Error Class | HTTP Status |
-|-------------|-------------|
-| `AxBIAuthError` | 401 |
-| `AxBIForbiddenError` | 403 |
-| `AxBINotFoundError` | 404 |
-| `AxBIConflictError` | 409 |
-| `AxBIValidationError` | 422 |
-| `AxBIRateLimitError` | 429 |
+| Error Class           | HTTP Status |
+| --------------------- | ----------- |
+| `AxBIAuthError`       | 401         |
+| `AxBIForbiddenError`  | 403         |
+| `AxBINotFoundError`   | 404         |
+| `AxBIConflictError`   | 409         |
+| `AxBIValidationError` | 422         |
+| `AxBIRateLimitError`  | 429         |
 
 ## Configuration
 

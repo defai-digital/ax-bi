@@ -156,13 +156,70 @@ describe('MCPClient', () => {
     const [, init] = mockFetch.mock.calls[1]!;
     const headers = (init as RequestInit).headers as Record<string, string>;
     expect(headers['Mcp-Session-Id']).toBe('session-from-result');
+    expect(headers['Accept']).toBe('application/json, text/event-stream');
+  });
+
+  test('accepts a full MCP endpoint without appending the path twice', async () => {
+    const auth = new AuthProvider(
+      { type: 'token', accessToken: 'access-jwt' },
+      'http://localhost:8088',
+    );
+    const client = new MCPClient({
+      mcpUrl: 'http://localhost:5008/mcp/',
+      auth,
+    });
+    mockFetch.mockResolvedValue(jsonRpcResponse('1', { tools: [] }));
+
+    await client.listTools();
+
+    expect(mockFetch.mock.calls[0]![0]).toBe('http://localhost:5008/mcp');
+  });
+
+  test('accepts numeric JSON-RPC response IDs', async () => {
+    const client = makeClient();
+    mockFetch.mockResolvedValue(
+      new Response(
+        JSON.stringify({ jsonrpc: '2.0', id: 1, result: { tools: [] } }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } },
+      ),
+    );
+
+    await expect(client.listTools()).resolves.toEqual([]);
+  });
+
+  test('adds configured MCP headers without replacing protocol headers', async () => {
+    const auth = new AuthProvider(
+      { type: 'token', accessToken: 'access-jwt' },
+      'http://localhost:8088',
+    );
+    const client = new MCPClient({
+      mcpUrl: 'http://localhost:5008',
+      auth,
+      headers: { 'X-Workspace': 'workspace-1' },
+    });
+    mockFetch.mockResolvedValue(jsonRpcResponse('1', { tools: [] }));
+
+    await client.listTools();
+
+    const headers = mockFetch.mock.calls[0]![1]!.headers as Record<
+      string,
+      string
+    >;
+    expect(headers).toMatchObject({
+      Accept: 'application/json, text/event-stream',
+      Authorization: 'Bearer access-jwt',
+      'Content-Type': 'application/json',
+      'X-Workspace': 'workspace-1',
+    });
   });
 
   test('fails initialization when initialized notification is rejected', async () => {
     const client = makeClient();
     mockFetch
       .mockResolvedValueOnce(jsonRpcResponse('1', {}))
-      .mockResolvedValueOnce(new Response('notification failed', { status: 503 }));
+      .mockResolvedValueOnce(
+        new Response('notification failed', { status: 503 }),
+      );
 
     try {
       await client.initialize();

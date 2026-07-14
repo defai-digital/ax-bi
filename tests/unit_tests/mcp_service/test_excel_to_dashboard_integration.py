@@ -21,7 +21,7 @@ import base64
 import importlib
 import logging
 from io import BytesIO
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastmcp import Client
@@ -317,6 +317,83 @@ class TestPromptToDashboardPipeline:
         assert data.get("error") is None
         assert data.get("dashboard", {}).get("id") == 201
         assert data.get("charts", [])[0].get("chart_id") == 101
+
+    @pytest.mark.asyncio
+    async def test_prompt_to_dashboard_executes_supplied_plan_without_replanning(
+        self,
+    ) -> None:
+        """A reviewed upload plan should be executed without a second planning pass."""
+        from axbi.mcp_service.ai.schemas import (
+            DashboardPlan,
+            PromptToDashboardRequest,
+        )
+
+        plan = DashboardPlan(
+            plan_id="upload-plan-1",
+            title="Uploaded sales",
+            chart_intents=[
+                {
+                    "purpose": "Revenue by region",
+                    "chart_type": "xy",
+                    "dataset_id": 99,
+                    "metrics": ["Revenue"],
+                    "dimensions": ["Region"],
+                }
+            ],
+            sections=[],
+            confidence=0.8,
+        )
+        request = PromptToDashboardRequest(
+            prompt="Create a dashboard from the uploaded file",
+            dataset_ids=[99],
+            plan=plan,
+            dry_run=True,
+        )
+        with (
+            patch(
+                "axbi.mcp_service.auth.tool_feature_flags_enabled",
+                return_value=True,
+            ),
+            patch(
+                "axbi.mcp_service.auth.check_tool_permission",
+                return_value=True,
+            ),
+            patch(
+                "axbi.mcp_service.ai.tool.prompt_to_dashboard."
+                "user_can_view_data_model_metadata",
+                return_value=True,
+            ),
+            patch(
+                "axbi.mcp_service.ai.tool.plan_dashboard.plan_dashboard",
+                new_callable=AsyncMock,
+            ) as mock_plan,
+            patch(
+                "axbi.mcp_service.ai.tool.create_chart_from_intent."
+                "create_chart_from_intent",
+                new_callable=AsyncMock,
+                return_value={
+                    "success": True,
+                    "chart": None,
+                    "chart_name": "Revenue by region",
+                    "chart_type_selected": "xy",
+                    "confidence": 0.8,
+                    "warnings": [],
+                },
+            ),
+        ):
+            async with Client(mcp) as client:
+                tool_result = await client.call_tool(
+                    "prompt_to_dashboard",
+                    {"request": request.model_dump()},
+                )
+
+        from axbi.utils import json as sj
+
+        result = sj.loads(tool_result.content[0].text)
+
+        assert result["plan"]["plan_id"] == "upload-plan-1"
+        assert result["status"] == "dry_run"
+        mock_plan.assert_not_awaited()
 
     @pytest.mark.asyncio
     async def test_prompt_to_dashboard_dry_run_returns_previews_without_composing(

@@ -82,6 +82,102 @@ describe('AIResource', () => {
     });
   });
 
+  test('promptToDashboard forwards a reviewed plan for execution', async () => {
+    const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
+      content: [],
+      structuredContent: { status: 'completed' },
+    }));
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+    const plan = {
+      plan_id: 'plan-1',
+      title: 'Sales',
+      sections: [],
+      chart_intents: [],
+    };
+
+    await ai.promptToDashboard({ prompt: 'Create it', plan });
+
+    expect(callTool).toHaveBeenCalledWith('prompt_to_dashboard', {
+      request: expect.objectContaining({ plan }),
+    });
+  });
+
+  test('exposes typed authoring capabilities and upload-and-plan tools', async () => {
+    const callTool = jest
+      .fn<
+        (name: string, args?: Record<string, unknown>) => Promise<MCPToolResult>
+      >()
+      .mockResolvedValueOnce({
+        content: [],
+        structuredContent: {
+          contract_version: '1.0',
+          operations: ['upload_and_plan'],
+          artifact_types: ['chart', 'dashboard'],
+          preview_before_save: true,
+          upload_formats: ['csv'],
+          limits: { max_charts_per_dashboard: 12, max_upload_bytes: 2048 },
+          async_jobs: false,
+          llm_configured: true,
+          llm_provider_type: 'openai_compatible',
+          llm_model: 'llama3.1',
+        },
+      })
+      .mockResolvedValueOnce({
+        content: [],
+        structuredContent: {
+          dataset: { id: 42 },
+          plan: null,
+          warnings: [],
+        },
+      });
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.getAuthoringCapabilities()).resolves.toMatchObject({
+      contract_version: '1.0',
+      llm_configured: true,
+      llm_model: 'llama3.1',
+    });
+    await expect(
+      ai.uploadAndPlan({
+        file_content: 'base64-data',
+        filename: 'sales.csv',
+        prompt: 'Plan sales',
+      }),
+    ).resolves.toMatchObject({ dataset: { id: 42 } });
+
+    expect(callTool).toHaveBeenNthCalledWith(
+      1,
+      'get_authoring_capabilities',
+      {},
+    );
+    expect(callTool).toHaveBeenNthCalledWith(2, 'upload_and_plan', {
+      request: {
+        file_content: 'base64-data',
+        filename: 'sales.csv',
+        prompt: 'Plan sales',
+        table_name: undefined,
+        sheet_name: undefined,
+        max_charts: 6,
+      },
+    });
+  });
+
+  test('rejects an incompatible authoring capability contract', async () => {
+    const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
+      content: [],
+      structuredContent: {
+        contract_version: '2.0',
+        operations: [],
+        limits: { max_charts_per_dashboard: 6 },
+      },
+    }));
+    const ai = new AIResource({ callTool } as unknown as MCPClient);
+
+    await expect(ai.getAuthoringCapabilities()).rejects.toThrow(
+      'Unsupported AX BI authoring contract',
+    );
+  });
+
   test('createChartFromIntent forwards structured plan fields', async () => {
     const callTool = jest.fn(async (): Promise<MCPToolResult> => ({
       content: [],

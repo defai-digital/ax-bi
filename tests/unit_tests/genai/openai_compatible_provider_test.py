@@ -77,6 +77,7 @@ def test_complete_json_success() -> None:
 
     assert result.answer == "ok"
     assert post.called
+    assert post.call_args.kwargs["allow_redirects"] is False
     # Authorization header must not be sent when api_key empty
     headers = post.call_args.kwargs["headers"]
     assert "Authorization" not in headers

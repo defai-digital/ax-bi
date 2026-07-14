@@ -71,7 +71,11 @@ export { DatabasesResource } from './resources/databases.js';
 export { QueriesResource } from './resources/queries.js';
 
 // ---- MCP / AI types ----
-export { MCPClient, type MCPToolDefinition, type MCPToolResult } from './mcp/mcpClient.js';
+export {
+  MCPClient,
+  type MCPToolDefinition,
+  type MCPToolResult,
+} from './mcp/mcpClient.js';
 export {
   AIResource,
   type AssetSearchParams,
@@ -94,4 +98,8 @@ export {
   type SqlResult,
   type ValidateChartParams,
   type ChartValidation,
+  type AuthoringOperation,
+  type AuthoringCapabilities,
+  type UploadAndPlanParams,
+  type UploadAndPlanResult,
 } from './mcp/ai.js';

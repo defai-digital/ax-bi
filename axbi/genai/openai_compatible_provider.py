@@ -18,7 +18,6 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from typing import Any
 
@@ -32,6 +31,7 @@ from axbi.genai.llm_errors import (
 )
 from axbi.genai.llm_provider import LLMProvider
 from axbi.genai.llm_url_validation import validate_llm_base_url
+from axbi.utils import json
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +43,9 @@ class OpenAICompatibleProvider(LLMProvider):
         self._provider_label = str(config.get("provider") or "openai_compatible")
         self._model = str(config.get("model") or "")
         self._api_key = str(config.get("api_key") or "")
-        self._timeout = float(config.get("timeout_seconds") or config.get("timeout") or 60)
+        self._timeout = float(
+            config.get("timeout_seconds") or config.get("timeout") or 60
+        )
         self._max_retries = int(config.get("max_retries") or 0)
         self._verify_tls = bool(config.get("verify_tls", True))
         self._extra_headers = dict(config.get("extra_headers") or {})
@@ -110,7 +112,9 @@ class OpenAICompatibleProvider(LLMProvider):
             except Exception as ex:  # noqa: BLE001 - normalize to LLM errors
                 last_error = ex
         assert last_error is not None
-        if isinstance(last_error, (LLMProviderError, LLMTimeoutError, LLMInvalidResponseError)):
+        if isinstance(
+            last_error, (LLMProviderError, LLMTimeoutError, LLMInvalidResponseError)
+        ):
             raise last_error
         raise LLMProviderError(str(last_error)) from last_error
 
@@ -132,6 +136,7 @@ class OpenAICompatibleProvider(LLMProvider):
                 json=payload,
                 timeout=self._timeout,
                 verify=self._verify_tls,
+                allow_redirects=False,
             )
         except requests.Timeout as ex:
             raise LLMTimeoutError(
@@ -139,13 +144,13 @@ class OpenAICompatibleProvider(LLMProvider):
             ) from ex
         except requests.RequestException as ex:
             # Never include headers (Authorization) in the message.
-            raise LLMProviderError(f"LLM request failed: {ex.__class__.__name__}") from ex
+            raise LLMProviderError(
+                f"LLM request failed: {ex.__class__.__name__}"
+            ) from ex
 
         if response.status_code >= 400:
             # Avoid echoing body that might contain prompt echoes with secrets.
-            raise LLMProviderError(
-                f"LLM provider returned HTTP {response.status_code}"
-            )
+            raise LLMProviderError(f"LLM provider returned HTTP {response.status_code}")
 
         try:
             data = response.json()

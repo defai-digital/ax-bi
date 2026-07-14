@@ -124,6 +124,7 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
         with:
+          toolchain: "1.85"
           targets: aarch64-apple-darwin
 
       - name: Set desktop version
@@ -309,6 +310,8 @@ jobs:
 
       - name: Install Rust
         uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
+        with:
+          toolchain: "1.85"
 
       - name: Require Windows signing secrets
         shell: pwsh

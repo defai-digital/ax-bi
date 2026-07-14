@@ -18,6 +18,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from axbi.genai.llm_config import (
     build_provider_config_from_env,
     is_llm_configured,
@@ -28,7 +30,6 @@ from axbi.genai.llm_config import (
     validate_normalized_config,
 )
 from axbi.genai.llm_errors import LLMInvalidConfigError
-import pytest
 
 
 def test_build_from_env_empty() -> None:

@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 from axbi.mcp_service.ai.tool.get_authoring_capabilities import (
+    _authorized_operations,
     _build_authoring_capabilities,
     _enabled_operations,
 )
@@ -86,3 +87,34 @@ def test_capabilities_adapter_returns_canonical_contract() -> None:
     }
     assert "llm_configured" in result
     assert result["llm_configured"] in {True, False}
+
+
+def test_authorized_operations_follow_current_principal_permissions() -> None:
+    enabled = [
+        "create_chart_from_intent",
+        "plan_dashboard",
+        "prompt_to_dashboard",
+        "upload_and_plan",
+    ]
+    allowed = {
+        ("can_write", "Chart"),
+        ("can_read", "Dashboard"),
+    }
+
+    operations = _authorized_operations(
+        enabled,
+        can_access=lambda permission, view: (permission, view) in allowed,
+        can_view_metadata=lambda: True,
+    )
+
+    assert operations == ["create_chart_from_intent", "plan_dashboard"]
+
+
+def test_authorized_operations_require_metadata_visibility() -> None:
+    operations = _authorized_operations(
+        ["create_chart_from_intent", "plan_dashboard"],
+        can_access=lambda _permission, _view: True,
+        can_view_metadata=lambda: False,
+    )
+
+    assert operations == []

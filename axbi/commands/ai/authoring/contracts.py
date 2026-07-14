@@ -95,6 +95,7 @@ class AuthoringCapabilities(BaseModel):
 
     contract_version: Literal["1.0"] = AUTHORING_CONTRACT_VERSION
     operations: list[AuthoringOperation] = Field(default_factory=list)
+    deployment_operations: list[AuthoringOperation] = Field(default_factory=list)
     artifact_types: list[Literal["chart", "dashboard"]] = Field(
         default_factory=lambda: ["chart", "dashboard"]
     )

@@ -18,7 +18,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 from pydantic import BaseModel
@@ -28,7 +28,7 @@ from axbi.genai.llm_config import (
     public_llm_capability,
     redact_provider_config,
 )
-from axbi.genai.llm_errors import LLMNotConfiguredError
+from axbi.genai.llm_errors import LLMInvalidConfigError, LLMNotConfiguredError
 from axbi.genai.llm_provider import StubLLMProvider
 from axbi.genai.provider_factory import build_provider_from_config
 
@@ -76,7 +76,7 @@ def test_merge_update_replaces_key_when_provided() -> None:
 
 
 def test_build_provider_from_config_stub_path_raises_on_empty() -> None:
-    with pytest.raises(Exception):
+    with pytest.raises(LLMInvalidConfigError, match="not configured"):
         build_provider_from_config({})
 
 

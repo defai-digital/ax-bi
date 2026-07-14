@@ -43,11 +43,15 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
         self,
         *,
         enabled_operations: Iterable[AuthoringOperation],
+        authorized_operations: Iterable[AuthoringOperation] | None = None,
         max_charts_per_dashboard: int = 12,
         max_upload_bytes: int | None = None,
         llm_capability: dict[str, object] | None = None,
     ) -> None:
         self._enabled_operations = set(enabled_operations)
+        self._authorized_operations = (
+            set(authorized_operations) if authorized_operations is not None else None
+        )
         self._max_charts_per_dashboard = max_charts_per_dashboard
         self._max_upload_bytes = max_upload_bytes
         self._llm_capability = llm_capability
@@ -55,10 +59,16 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
     def run(self) -> AuthoringCapabilities:
         """Build the canonical capabilities response."""
         self.validate()
-        operations = [
+        deployment_operations = [
             operation
             for operation in _OPERATION_ORDER
             if operation in self._enabled_operations
+        ]
+        operations = [
+            operation
+            for operation in deployment_operations
+            if self._authorized_operations is None
+            or operation in self._authorized_operations
         ]
         llm = (
             self._llm_capability
@@ -67,6 +77,7 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
         )
         return AuthoringCapabilities(
             operations=operations,
+            deployment_operations=deployment_operations,
             limits=AuthoringLimits(
                 max_charts_per_dashboard=self._max_charts_per_dashboard,
                 max_upload_bytes=self._max_upload_bytes,
@@ -86,6 +97,11 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
         """Validate adapter-supplied deployment settings."""
         if unknown := self._enabled_operations.difference(_OPERATION_ORDER):
             raise ValueError(f"Unknown authoring operations: {sorted(unknown)}")
+        if self._authorized_operations is not None:
+            if unknown := self._authorized_operations.difference(_OPERATION_ORDER):
+                raise ValueError(
+                    f"Unknown authorized authoring operations: {sorted(unknown)}"
+                )
         if not 1 <= self._max_charts_per_dashboard <= 12:
             raise ValueError("max_charts_per_dashboard must be between 1 and 12")
         if self._max_upload_bytes is not None and self._max_upload_bytes < 1:
