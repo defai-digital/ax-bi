@@ -111,8 +111,10 @@ test("summaryText is safe without dependencies array", () => {
       axbi_healthy: false,
       axbi_running: false,
       configured: false,
+      local_runtime_supported: true,
+      can_start_local: true,
     }),
-    "Run locally or connect to a server",
+    "Run locally (Docker) or connect to a server",
   );
   assert.equal(
     summaryText({
@@ -120,8 +122,9 @@ test("summaryText is safe without dependencies array", () => {
       axbi_running: false,
       configured: false,
       dependencies: [{ installed: false }],
+      can_start_local: false,
     }),
-    "Install missing runtime dependencies",
+    "Install missing runtime dependencies to run local Docker",
   );
 });
 

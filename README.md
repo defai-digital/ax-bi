@@ -102,16 +102,16 @@ open -a "AX BI"
 
 Or launch **AX BI** from Applications / Spotlight.
 
-The cask installs **AX BI.app** and pulls Colima, Docker CLI, and Docker Compose
-for the app-managed local runtime. You do not need to install or configure those
-dependencies separately. AX BI starts its isolated `ax-bi` Colima profile when
-you choose **Run locally**.
+The cask installs **AX BI.app** and pulls Colima, Lima, Docker CLI, and Docker
+Compose for the app-managed local runtime. You do not need to install or
+configure those dependencies separately. AX BI starts its isolated `ax-bi`
+Colima profile when you choose **Run locally**.
 
 If you installed the DMG instead of the cask, or are repairing an older
 installation, install the runtime dependencies with:
 
 ```bash
-brew install colima docker docker-compose
+brew install colima lima docker docker-compose
 ```
 
 Prefer not to use Homebrew? Download the notarized macOS DMG from
@@ -130,6 +130,11 @@ Prefer not to use Homebrew? Download the notarized macOS DMG from
 
 Product name on Windows is **AX BI** (same as macOS).
 
+For **Run locally** on Windows, install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
+and ensure it is running (or startable). AX BI Desktop will prepare Compose
+files under the app data directory, start the stack, and open the local web UI
+the same way as on macOS.
+
 Optional integrity check — every stable desktop asset can include a detached
 minisign signature (`.minisig`). Verify with
 [`ax-bi-desktop/docs/ax-bi.minisign.pub`](ax-bi-desktop/docs/ax-bi.minisign.pub):
@@ -145,11 +150,10 @@ minisign -Vm .\AX.BI_0.1.0_x64-setup.exe -p .\ax-bi.minisign.pub
 2. Choose one of:
    - **Connect to server** — paste a hosted or team-managed AX BI URL (works on
      both macOS and Windows).
-   - **Run locally** — start an on-machine stack for evaluation.
-     - **macOS:** app-managed Colima + Docker Compose (bundled Homebrew deps).
-     - **Windows:** connect to a local Docker Compose stack you run separately
-       (see [Docker Compose](#docker-compose-server--team)), or to any reachable
-       AX BI URL. App-managed Colima is a macOS path.
+   - **Run locally** — start the **same** on-machine AX BI Docker stack on either OS:
+     - **macOS:** Colima (`ax-bi` profile) + Docker Compose (Homebrew deps).
+     - **Windows:** Docker Desktop / Docker Engine + Docker Compose (same
+       images and ports: `8088` / `5008` / `5010`).
 3. When connected, the web app fills the desktop window.
 4. Default local stack login (unless you changed it): `admin` / `admin`.
 
@@ -188,9 +192,9 @@ shipped with the NSIS/MSI package.
 
 ### Docker / Kubernetes (servers and shared teams)
 
-For multi-user production, CI, or always-on servers — including a local Windows
-Docker stack you point the desktop app at — use Docker Compose or Helm. Jump to
-[Docker Compose (server / team)](#docker-compose-server--team) below.
+For multi-user production, CI, or always-on servers, use Docker Compose or Helm.
+(Desktop **Run locally** covers single-user evaluation on macOS and Windows.)
+Jump to [Docker Compose (server / team)](#docker-compose-server--team) below.
 
 ### From source (contributors)
 
@@ -366,8 +370,8 @@ AX BI
 ## Docker Compose (server / team)
 
 Prefer [AX BI Desktop](#get-started) on **macOS** or **Windows** for interactive
-use. Use Docker Compose when you want a shared, always-on, or CI stack — or a
-local Windows Docker environment that the desktop app can connect to.
+use (**Run locally** manages Compose for you). Use this Docker Compose path when
+you want a shared, always-on, or CI stack outside the desktop app.
 
 This path pulls the public multi-architecture images from GitHub Container
 Registry:

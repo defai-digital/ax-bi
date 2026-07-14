@@ -59,7 +59,8 @@ const elements = {
   busyBanner: document.getElementById("busyBanner"),
   busyMessage: document.getElementById("busyMessage"),
   closeSettings: document.getElementById("closeSettings"),
-  colimaState: document.getElementById("colimaState"),
+  engineLabel: document.getElementById("engineLabel"),
+  engineState: document.getElementById("engineState"),
   copyCredentials: document.getElementById("copyCredentials"),
   credentials: document.getElementById("credentials"),
   credentialsBox: document.getElementById("credentialsBox"),
@@ -255,7 +256,11 @@ function renderStatus(status) {
     : status.configured
       ? ["Stopped", "warn"]
       : ["Not prepared", "warn"];
-  const colima = booleanState(status.colima_running, "Running", "Stopped");
+  const engineRunning =
+    typeof status.engine_running === "boolean"
+      ? status.engine_running
+      : status.colima_running;
+  const engine = booleanState(engineRunning, "Running", "Stopped");
   const docker = booleanState(status.docker_ready, "Ready", "Unavailable");
   const health = status.axbi_healthy
     ? ["Healthy", "ok"]
@@ -264,7 +269,12 @@ function renderStatus(status) {
       : ["Offline", "bad"];
 
   setState(elements.runtimeState, runtime[0], runtime[1]);
-  setState(elements.colimaState, colima[0], colima[1]);
+  if (elements.engineLabel) {
+    elements.engineLabel.textContent =
+      status.engine_label ||
+      (status.colima_profile ? "Colima" : "Engine");
+  }
+  setState(elements.engineState, engine[0], engine[1]);
   setState(elements.dockerState, docker[0], docker[1]);
   setState(elements.healthState, health[0], health[1]);
 
@@ -319,7 +329,7 @@ function updateLocalPathCopy(status) {
   if (status.axbi_healthy) {
     elements.localPathTitle.textContent = "Open local AX BI";
     elements.localPathDesc.textContent =
-      "Local instance is running. Open it in this window.";
+      "Local Docker instance is running. Open it in this window.";
     return;
   }
   if (status.axbi_running) {
@@ -328,15 +338,27 @@ function updateLocalPathCopy(status) {
       "Docker containers are coming up. This usually takes a minute.";
     return;
   }
+  if (status.can_start_local === false) {
+    elements.localPathTitle.textContent = "Install Docker tools";
+    elements.localPathDesc.textContent =
+      status.platform === "windows"
+        ? "Install Docker Desktop, then start local AX BI from this app."
+        : "Install Colima/Lima/Docker (Homebrew), then start local AX BI.";
+    return;
+  }
   if (status.configured) {
     elements.localPathTitle.textContent = "Start local AX BI";
     elements.localPathDesc.textContent =
-      "Local runtime is prepared. Start the Docker stack on this Mac.";
+      status.platform === "windows"
+        ? "Starts Docker Desktop if needed, then the AX BI Compose stack."
+        : "Starts Colima if needed, then the AX BI Compose stack.";
     return;
   }
   elements.localPathTitle.textContent = "Run locally";
   elements.localPathDesc.textContent =
-    "Prepare and start AX BI with the app-managed Docker runtime.";
+    status.platform === "windows"
+      ? "Start AX BI in Docker on this Windows PC (same images as macOS)."
+      : "Start AX BI in Docker on this Mac (same images as Windows).";
 }
 
 function summaryText(status) {

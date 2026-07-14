@@ -20,7 +20,8 @@ brew install --cask ax-bi
 After installation, the user opens AX BI Desktop. The bundled launcher offers
 two first-class paths:
 
-- Run AX BI locally (app-managed Colima + Docker Compose).
+- **Run locally** — start the **same** AX BI Docker Compose stack on **macOS or
+  Windows** (engine differs; images/ports do not).
 - Connect to an existing hosted or team-managed AX BI server.
 
 Local is a supported day-to-day option for individuals and small teams, not only
@@ -31,19 +32,25 @@ shared multi-user production environments.
 
 Use Homebrew for installation, then let the Tauri app manage the local runtime.
 
-Homebrew should install:
+**macOS (Homebrew)** should install:
 
 - AX BI Desktop.
 - Colima.
+- Lima (`limactl`, required by Colima).
 - Docker CLI.
 - Docker Compose.
+
+**Windows** expects:
+
+- AX BI Desktop (installer).
+- Docker Desktop (or any Docker Engine the CLI can reach).
 
 The Tauri app should manage:
 
 - Local runtime configuration.
 - Generated secrets.
 - Compose file generation.
-- Colima startup.
+- Platform engine startup (Colima on macOS; Docker Desktop/engine on Windows).
 - AX BI container lifecycle.
 - Health checks, logs, updates, and reset flows.
 
@@ -75,9 +82,14 @@ The generated Compose stack uses published images:
 
 Release builds should pin these tags to the AX BI Desktop release train.
 
-## Colima And Docker Isolation
+## Platform Engines
 
-The local runtime uses a dedicated Colima profile:
+**Yes — both macOS and Windows run local AX BI via Docker.** Compose YAML, image
+tags, and loopback ports are identical. Only the container engine adapter differs.
+
+### macOS — Colima (isolated)
+
+Uses a dedicated Colima profile:
 
 ```text
 ax-bi
@@ -92,7 +104,24 @@ DOCKER_HOST=unix://$HOME/.colima/ax-bi/docker.sock
 This avoids changing the user's global Docker context and keeps AX BI Desktop
 from interfering with other Docker Desktop, Colima, or Podman workflows.
 
-Public AX BI services bind only to loopback:
+GUI-launched apps (Finder / Dock) do not inherit a login-shell `PATH`. The
+native runtime always injects Homebrew prefixes (`/opt/homebrew/bin`,
+`/usr/local/bin`) so Colima can find `limactl` and the Docker CLI. Missing
+Lima produces a clear install hint (`brew install lima colima`).
+
+### Windows — Docker Engine
+
+Uses the host Docker Engine default endpoint (Docker Desktop named pipe when
+Desktop is installed). The app does **not** set a custom `DOCKER_HOST`.
+
+On **Start**, if the Docker CLI is present but the engine is down, the app
+attempts to launch Docker Desktop and waits until `docker info` succeeds.
+
+Install Docker Desktop from Microsoft/Docker docs if dependencies are missing.
+
+### Shared service binds
+
+Public AX BI services bind only to loopback on every platform:
 
 ```text
 127.0.0.1:8088  AX BI web app
@@ -113,8 +142,10 @@ The Tauri native layer exposes typed commands for the launcher UI:
 - `get_local_runtime_logs`
 - `get_local_admin_credentials`
 
-These commands call fixed Colima and Docker Compose flows. They do not expose an
-arbitrary shell command bridge to web content.
+Status includes `engine_name`, `engine_label`, and `engine_running` (plus
+legacy `colima_*` fields for older clients). Commands call fixed engine +
+Docker Compose flows. They do not expose an arbitrary shell command bridge to
+web content.
 
 ## Launcher UI Boundary
 
@@ -150,5 +181,6 @@ brew install --cask defai-digital/ax-bi/ax-bi
 brew upgrade --cask defai-digital/ax-bi/ax-bi
 ```
 
-The cask installs **AX BI.app**. Local runtime (Colima + Compose) is managed by
-the app after install.
+The cask installs **AX BI.app**. Local runtime (Colima + Lima + Compose) is
+managed by the app after install. On Windows, install Docker Desktop once; the
+app manages Compose lifecycle against that engine.

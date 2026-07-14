@@ -43,7 +43,7 @@ Upgrade:
 brew upgrade --cask defai-digital/ax-bi/ax-bi
 ```
 
-The cask installs **AX BI.app** and pulls Colima, Docker CLI, and Docker Compose
+The cask installs **AX BI.app** and pulls Colima, Lima, Docker CLI, and Docker Compose
 as formulas. The app manages the local AX BI runtime after install.
 
 ## Pipeline overview

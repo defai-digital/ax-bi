@@ -28,6 +28,7 @@ cask "ax-bi" do
   depends_on arch: :arm64
   depends_on macos: :monterey
   depends_on formula: "colima"
+  depends_on formula: "lima"
   depends_on formula: "docker"
   depends_on formula: "docker-compose"
 

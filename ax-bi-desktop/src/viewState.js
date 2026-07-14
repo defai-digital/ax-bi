@@ -82,14 +82,20 @@ export function summaryText(status) {
   if (status.axbi_running) {
     return "Local AX BI is starting";
   }
+  if (status.local_runtime_supported === false) {
+    return "Local Docker runtime is not available on this platform";
+  }
   const deps = Array.isArray(status.dependencies) ? status.dependencies : [];
-  if (deps.length > 0 && !deps.every((dependency) => dependency.installed)) {
-    return "Install missing runtime dependencies";
+  if (
+    status.can_start_local === false ||
+    (deps.length > 0 && !deps.every((dependency) => dependency.installed))
+  ) {
+    return "Install missing runtime dependencies to run local Docker";
   }
   if (status.configured) {
-    return "Local runtime is prepared — start when ready";
+    return "Local Docker stack is prepared — start when ready";
   }
-  return "Run locally or connect to a server";
+  return "Run locally (Docker) or connect to a server";
 }
 
 /**

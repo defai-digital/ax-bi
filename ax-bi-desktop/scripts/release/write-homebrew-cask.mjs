@@ -54,7 +54,7 @@ if (!/^[0-9a-f]{64}$/i.test(sha256)) {
 }
 
 // Matches Studio/Code Desktop: arm64 DMG from GitHub Releases + postflight xattr.
-// Local runtime deps (Colima/Docker) are installed by Homebrew formulas.
+// Local runtime deps (Colima/Lima/Docker) are installed by Homebrew formulas.
 const cask = `cask "ax-bi" do
   version "${version}"
   sha256 "${sha256}"
@@ -72,6 +72,7 @@ const cask = `cask "ax-bi" do
   depends_on arch: :arm64
   depends_on macos: :monterey
   depends_on formula: "colima"
+  depends_on formula: "lima"
   depends_on formula: "docker"
   depends_on formula: "docker-compose"
 

@@ -15,6 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
+//! App-managed local AX BI runtime.
+//!
+//! Platform engines:
+//! - **macOS:** isolated Colima profile `ax-bi` (needs Lima / `limactl` on PATH)
+//! - **Windows / Linux:** host Docker Engine (typically Docker Desktop)
+//!
+//! Compose stack and ports are identical across platforms. GUI-launched apps
+//! often lack Homebrew/Docker bins on `PATH`; every subprocess gets an
+//! augmented PATH so `colima` can find `limactl` and Docker CLIs resolve.
+
 use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::fs;
@@ -22,7 +32,8 @@ use std::io::{Read, Write};
 use std::net::{TcpStream, ToSocketAddrs};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use std::time::Duration;
+use std::thread;
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager, Runtime};
 
 const AXBI_COLIMA_PROFILE: &str = "ax-bi";
@@ -40,6 +51,8 @@ const LOCAL_RUNTIME_DIR: &str = "local-runtime";
 const LOCAL_ENV_FILE: &str = ".env";
 const LOCAL_COMPOSE_FILE: &str = "docker-compose.yml";
 const MAX_LOG_TAIL_LINES: u16 = 500;
+const DOCKER_ENGINE_WAIT: Duration = Duration::from_secs(120);
+const DOCKER_ENGINE_POLL: Duration = Duration::from_secs(2);
 
 const ALLOWED_LOG_SERVICES: &[&str] = &[
     "redis",
@@ -259,7 +272,21 @@ pub struct LocalRuntimeStatus {
     pub env_file: String,
     pub configured: bool,
     pub dependencies: Vec<LocalRuntimeDependency>,
+    /// OS label: `macos`, `windows`, or `linux`.
+    pub platform: String,
+    /// Always true on desktop builds — both macOS and Windows can run local AX BI Docker.
+    pub local_runtime_supported: bool,
+    /// True when required CLI tools are installed (engine may still need to start).
+    pub can_start_local: bool,
+    /// Engine identifier: `colima` (macOS) or `docker` (Windows/Linux).
+    pub engine_name: String,
+    /// UI label for the VM/engine layer (e.g. "Colima", "Docker Engine").
+    pub engine_label: String,
+    /// Whether the container engine is ready enough to run Compose.
+    pub engine_running: bool,
+    /// Colima profile name on macOS; empty on other platforms.
     pub colima_profile: String,
+    /// Backward-compatible alias of engine readiness for Colima-era clients.
     pub colima_running: bool,
     pub docker_host: String,
     pub docker_ready: bool,
@@ -291,6 +318,36 @@ struct CommandOutput {
     stderr: String,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum RuntimeEngine {
+    Colima,
+    Docker,
+}
+
+impl RuntimeEngine {
+    fn current() -> Self {
+        if cfg!(target_os = "macos") {
+            Self::Colima
+        } else {
+            Self::Docker
+        }
+    }
+
+    fn name(self) -> &'static str {
+        match self {
+            Self::Colima => "colima",
+            Self::Docker => "docker",
+        }
+    }
+
+    fn label(self) -> &'static str {
+        match self {
+            Self::Colima => "Colima",
+            Self::Docker => "Docker Engine",
+        }
+    }
+}
+
 pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, String> {
     log::info!("Checking local AX BI runtime status");
     let runtime_dir = runtime_dir(app)?;
@@ -303,12 +360,13 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
         log::info!("Syncing generated local runtime files");
         sync_runtime_files(&compose_file, &env_file)?;
     }
-    log::info!("Checking Colima status");
-    let colima_running = command_succeeds("colima", ["status", "--profile", AXBI_COLIMA_PROFILE]);
+
+    let engine = RuntimeEngine::current();
+    log::info!("Checking {} status", engine.label());
+    let engine_running = engine_is_running();
     let docker_host = docker_host()?;
     log::info!("Checking Docker status");
-    let docker_ready =
-        command_succeeds_with_env("docker", ["info"], &[("DOCKER_HOST", &docker_host)]);
+    let docker_ready = docker_daemon_ready(&docker_host);
     log::info!("Checking Compose service status");
     let axbi_running = docker_ready && compose_services_running(&runtime_dir)?;
     log::info!("Checking AX BI HTTP health");
@@ -320,14 +378,27 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
             .map(|password| !password.is_empty())
             .unwrap_or(false);
 
+    let colima_profile = match engine {
+        RuntimeEngine::Colima => AXBI_COLIMA_PROFILE.to_string(),
+        RuntimeEngine::Docker => String::new(),
+    };
+    let can_start_local = dependencies.iter().all(|dependency| dependency.installed);
+
     Ok(LocalRuntimeStatus {
         runtime_dir: path_to_string(&runtime_dir),
         compose_file: path_to_string(&compose_file),
         env_file: path_to_string(&env_file),
         configured,
         dependencies,
-        colima_profile: AXBI_COLIMA_PROFILE.to_string(),
-        colima_running,
+        platform: platform_id().to_string(),
+        local_runtime_supported: true,
+        can_start_local,
+        engine_name: engine.name().to_string(),
+        engine_label: engine.label().to_string(),
+        engine_running,
+        colima_profile,
+        // Keep Colima-era field name; UI uses engine_running / engine_label.
+        colima_running: engine_running,
         docker_host,
         docker_ready,
         axbi_running,
@@ -347,19 +418,23 @@ pub fn prepare<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Str
 
 pub fn start<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
-    run_colima_start()?;
-    let output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])?;
+    ensure_cli_dependencies()?;
+    let engine_output = ensure_engine()?;
+    let compose_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])
+        .map_err(|error| format_compose_error("start", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
-        stdout: output.stdout,
-        stderr: output.stderr,
+        stdout: join_outputs(&engine_output.stdout, &compose_output.stdout),
+        stderr: join_outputs(&engine_output.stderr, &compose_output.stderr),
     })
 }
 
 pub fn stop<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
-    let output = run_docker_compose(&runtime_dir, ["stop"])?;
+    // Stop should still try even if the engine is flaky; surface compose errors clearly.
+    let output = run_docker_compose(&runtime_dir, ["stop"])
+        .map_err(|error| format_compose_error("stop", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -370,27 +445,45 @@ pub fn stop<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput,
 
 pub fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
-    run_colima_start()?;
-    let stop_output = run_docker_compose(&runtime_dir, ["stop"])?;
-    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])?;
+    ensure_cli_dependencies()?;
+    let engine_output = ensure_engine()?;
+    let stop_output = run_docker_compose(&runtime_dir, ["stop"])
+        .map_err(|error| format_compose_error("stop", &error))?;
+    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])
+        .map_err(|error| format_compose_error("start", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
-        stdout: join_outputs(&stop_output.stdout, &start_output.stdout),
-        stderr: join_outputs(&stop_output.stderr, &start_output.stderr),
+        stdout: join_outputs(
+            &join_outputs(&engine_output.stdout, &stop_output.stdout),
+            &start_output.stdout,
+        ),
+        stderr: join_outputs(
+            &join_outputs(&engine_output.stderr, &stop_output.stderr),
+            &start_output.stderr,
+        ),
     })
 }
 
 pub fn update<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
-    run_colima_start()?;
-    let pull_output = run_docker_compose(&runtime_dir, ["pull"])?;
-    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])?;
+    ensure_cli_dependencies()?;
+    let engine_output = ensure_engine()?;
+    let pull_output = run_docker_compose(&runtime_dir, ["pull"])
+        .map_err(|error| format_compose_error("pull", &error))?;
+    let start_output = run_docker_compose(&runtime_dir, ["up", "-d", "--remove-orphans"])
+        .map_err(|error| format_compose_error("start", &error))?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
-        stdout: join_outputs(&pull_output.stdout, &start_output.stdout),
-        stderr: join_outputs(&pull_output.stderr, &start_output.stderr),
+        stdout: join_outputs(
+            &join_outputs(&engine_output.stdout, &pull_output.stdout),
+            &start_output.stdout,
+        ),
+        stderr: join_outputs(
+            &join_outputs(&engine_output.stderr, &pull_output.stderr),
+            &start_output.stderr,
+        ),
     })
 }
 
@@ -560,33 +653,125 @@ fn random_hex(byte_count: usize) -> Result<String, String> {
 }
 
 fn dependencies() -> Vec<LocalRuntimeDependency> {
-    vec![
-        dependency("Colima", "colima", ["--version"], "brew install colima"),
-        dependency("Docker CLI", "docker", ["--version"], "brew install docker"),
-        dependency(
-            "Docker Compose",
-            "docker compose",
-            ["compose", "version"],
-            "brew install docker-compose",
-        ),
-    ]
+    match RuntimeEngine::current() {
+        RuntimeEngine::Colima => vec![
+            dependency("Colima", "colima", &["--version"], "brew install colima"),
+            dependency("Lima", "limactl", &["--version"], "brew install lima"),
+            dependency(
+                "Docker CLI",
+                "docker",
+                &["--version"],
+                "brew install docker",
+            ),
+            dependency(
+                "Docker Compose",
+                "docker",
+                &["compose", "version"],
+                "brew install docker-compose",
+            ),
+        ],
+        RuntimeEngine::Docker => vec![
+            dependency(
+                "Docker CLI",
+                "docker",
+                &["--version"],
+                docker_install_hint(),
+            ),
+            dependency(
+                "Docker Compose",
+                "docker",
+                &["compose", "version"],
+                docker_install_hint(),
+            ),
+        ],
+    }
 }
 
-fn dependency<const N: usize>(
+fn docker_install_hint() -> &'static str {
+    if cfg!(target_os = "windows") {
+        "Install Docker Desktop from https://docs.docker.com/desktop/setup/install/windows-install/ and ensure it is running"
+    } else if cfg!(target_os = "macos") {
+        "brew install docker docker-compose"
+    } else {
+        "Install Docker Engine and the Compose plugin for your distribution"
+    }
+}
+
+fn platform_id() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "linux"
+    }
+}
+
+fn platform_label() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macOS"
+    } else if cfg!(target_os = "windows") {
+        "Windows"
+    } else {
+        "Linux"
+    }
+}
+
+/// Fail fast with install hints when CLI tools are missing (before starting engines).
+fn ensure_cli_dependencies() -> Result<(), String> {
+    let missing: Vec<LocalRuntimeDependency> = dependencies()
+        .into_iter()
+        .filter(|dependency| !dependency.installed)
+        .collect();
+    if missing.is_empty() {
+        return Ok(());
+    }
+
+    let details = missing
+        .iter()
+        .map(|dependency| format!("- {}: {}", dependency.name, dependency.install_hint))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    Err(format!(
+        "Cannot start local AX BI Docker on {} — missing tools:\n{}\n\n\
+         Run locally uses the same AX BI Compose stack on macOS and Windows \
+         (Colima on Mac, Docker Desktop on Windows).",
+        platform_label(),
+        details
+    ))
+}
+
+fn format_compose_error(action: &str, error: &str) -> String {
+    format!(
+        "Failed to {action} the local AX BI Docker stack on {}.\n\
+         Engine: {} ({})\n\
+         {}\n\n\
+         Tips:\n\
+         - macOS: brew install colima lima docker docker-compose && ensure Colima can start\n\
+         - Windows: install/start Docker Desktop, then retry Run locally\n\
+         - Confirm `docker compose version` works in a terminal",
+        platform_label(),
+        RuntimeEngine::current().label(),
+        RuntimeEngine::current().name(),
+        error.trim()
+    )
+}
+
+fn dependency(
     name: &str,
     command: &str,
-    args: [&str; N],
+    args: &[&str],
     install_hint: &str,
 ) -> LocalRuntimeDependency {
-    match run_command(
-        command.split_whitespace().next().unwrap_or(command),
-        args,
-        None,
-        &[],
-    ) {
+    match run_command(command, args, None, &[]) {
         Ok(output) => LocalRuntimeDependency {
             name: name.to_string(),
-            command: command.to_string(),
+            command: if args.is_empty() {
+                command.to_string()
+            } else {
+                format!("{command} {}", args.join(" "))
+            },
             installed: true,
             version: first_line(&join_outputs(&output.stdout, &output.stderr)),
             install_hint: install_hint.to_string(),
@@ -611,10 +796,38 @@ fn first_line(value: &str) -> Option<String> {
     })
 }
 
+/// Ensure the platform container engine is running.
+fn ensure_engine() -> Result<CommandOutput, String> {
+    match RuntimeEngine::current() {
+        RuntimeEngine::Colima => run_colima_start(),
+        RuntimeEngine::Docker => ensure_docker_engine(),
+    }
+}
+
+fn engine_is_running() -> bool {
+    match RuntimeEngine::current() {
+        RuntimeEngine::Colima => {
+            command_succeeds("colima", &["status", "--profile", AXBI_COLIMA_PROFILE])
+        }
+        RuntimeEngine::Docker => docker_host()
+            .map(|host| docker_daemon_ready(&host))
+            .unwrap_or(false),
+    }
+}
+
 fn run_colima_start() -> Result<CommandOutput, String> {
+    // Explicit limactl check gives a clearer error than Colima's PATH fatality.
+    let limactl = resolve_program("limactl");
+    if !limactl.is_file() {
+        return Err("Lima (limactl) was not found. Colima requires Lima.\n\
+             Install with: brew install lima colima\n\
+             If already installed, ensure /opt/homebrew/bin is available."
+            .to_string());
+    }
+
     run_command(
         "colima",
-        [
+        &[
             "start",
             "--profile",
             AXBI_COLIMA_PROFILE,
@@ -627,10 +840,73 @@ fn run_colima_start() -> Result<CommandOutput, String> {
     )
 }
 
-fn run_docker_compose<const N: usize>(
-    runtime_dir: &Path,
-    compose_args: [&str; N],
-) -> Result<CommandOutput, String> {
+fn ensure_docker_engine() -> Result<CommandOutput, String> {
+    let docker_host = docker_host()?;
+    if docker_daemon_ready(&docker_host) {
+        return Ok(CommandOutput {
+            stdout: format!(
+                "Docker engine already running on {} ({docker_host})",
+                platform_label()
+            ),
+            stderr: String::new(),
+        });
+    }
+
+    // Launch Docker Desktop when the CLI exists but the daemon is down.
+    if let Some(desktop) = docker_desktop_app_path() {
+        log::info!("Starting Docker Desktop at {}", desktop.display());
+        let mut command = Command::new(&desktop);
+        configure_subprocess(&mut command);
+        command.spawn().map_err(|error| {
+            format!(
+                "Docker Engine is not running and Docker Desktop failed to start: {error}\n{}",
+                docker_install_hint()
+            )
+        })?;
+
+        if wait_for_docker_daemon(&docker_host, DOCKER_ENGINE_WAIT)? {
+            return Ok(CommandOutput {
+                stdout: format!(
+                    "Started Docker Desktop on {} and waited for the engine",
+                    platform_label()
+                ),
+                stderr: String::new(),
+            });
+        }
+
+        return Err(format!(
+            "Docker Desktop was launched on {} but the engine did not become ready in time.\n\
+             Open Docker Desktop, wait until it reports Running, then try Run locally again.\n\
+             Expected Docker host: {docker_host}",
+            platform_label()
+        ));
+    }
+
+    Err(format!(
+        "Docker Engine is not available on {}.\n{}",
+        platform_label(),
+        docker_install_hint()
+    ))
+}
+
+fn wait_for_docker_daemon(docker_host: &str, timeout: Duration) -> Result<bool, String> {
+    let deadline = Instant::now() + timeout;
+    while Instant::now() < deadline {
+        if docker_daemon_ready(docker_host) {
+            return Ok(true);
+        }
+        thread::sleep(DOCKER_ENGINE_POLL);
+    }
+    Ok(false)
+}
+
+fn docker_daemon_ready(docker_host: &str) -> bool {
+    let envs = docker_host_envs(docker_host);
+    let env_refs: Vec<(&str, &str)> = envs.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+    run_command("docker", &["info"], None, &env_refs).is_ok()
+}
+
+fn run_docker_compose(runtime_dir: &Path, compose_args: &[&str]) -> Result<CommandOutput, String> {
     run_docker_compose_owned(
         runtime_dir,
         compose_args.iter().map(ToString::to_string).collect(),
@@ -654,12 +930,10 @@ fn run_docker_compose_owned(
     ];
     args.extend(compose_args);
     let docker_host = docker_host()?;
-    run_command_owned(
-        "docker",
-        args,
-        Some(runtime_dir),
-        &[("DOCKER_HOST", docker_host.as_str())],
-    )
+    let envs = docker_host_envs(&docker_host);
+    let env_refs: Vec<(&str, &str)> = envs.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
+    let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
+    run_command("docker", &arg_refs, Some(runtime_dir), &env_refs)
 }
 
 fn compose_services_running(runtime_dir: &Path) -> Result<bool, String> {
@@ -679,35 +953,13 @@ fn compose_services_running(runtime_dir: &Path) -> Result<bool, String> {
     Ok(output.stdout.lines().any(|line| line.trim() == "ax-bi"))
 }
 
-fn command_succeeds<const N: usize>(program: &str, args: [&str; N]) -> bool {
+fn command_succeeds(program: &str, args: &[&str]) -> bool {
     run_command(program, args, None, &[]).is_ok()
 }
 
-fn command_succeeds_with_env<const N: usize>(
+fn run_command(
     program: &str,
-    args: [&str; N],
-    envs: &[(&str, &str)],
-) -> bool {
-    run_command(program, args, None, envs).is_ok()
-}
-
-fn run_command<const N: usize>(
-    program: &str,
-    args: [&str; N],
-    cwd: Option<&Path>,
-    envs: &[(&str, &str)],
-) -> Result<CommandOutput, String> {
-    run_command_owned(
-        program,
-        args.iter().map(ToString::to_string).collect(),
-        cwd,
-        envs,
-    )
-}
-
-fn run_command_owned(
-    program: &str,
-    args: Vec<String>,
+    args: &[&str],
     cwd: Option<&Path>,
     envs: &[(&str, &str)],
 ) -> Result<CommandOutput, String> {
@@ -717,13 +969,15 @@ fn run_command_owned(
     if let Some(cwd) = cwd {
         command.current_dir(cwd);
     }
-    for (key, value) in envs {
-        command.env(key, value);
-    }
+    configure_subprocess(&mut command);
+    apply_env_pairs(&mut command, envs);
 
-    let output = command
-        .output()
-        .map_err(|error| format!("Failed to run {program}: {error}"))?;
+    let output = command.output().map_err(|error| {
+        format!(
+            "Failed to run {program} (resolved as {}): {error}",
+            program_path.display()
+        )
+    })?;
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
@@ -739,21 +993,165 @@ fn run_command_owned(
     Ok(CommandOutput { stdout, stderr })
 }
 
-/// Resolve Homebrew-installed executables for GUI-launched macOS applications.
+/// Shared subprocess setup for GUI apps: fixed PATH + no console flash on Windows.
+fn configure_subprocess(command: &mut Command) {
+    apply_augmented_path(command);
+    #[cfg(target_os = "windows")]
+    {
+        use std::os::windows::process::CommandExt;
+        // CREATE_NO_WINDOW — avoid flashing consoles when spawning docker/colima.
+        const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+        command.creation_flags(CREATE_NO_WINDOW);
+    }
+}
+
+fn apply_env_pairs(command: &mut Command, envs: &[(&str, &str)]) {
+    for (key, value) in envs {
+        if *key == "DOCKER_HOST" && value.is_empty() {
+            command.env_remove("DOCKER_HOST");
+        } else {
+            command.env(key, value);
+        }
+    }
+}
+
+/// Resolve Homebrew / Docker Desktop binaries for GUI-launched applications.
 ///
-/// Finder and Dock applications do not inherit the user's shell PATH, so the
-/// usual Homebrew prefixes must be checked explicitly before falling back to
-/// normal command resolution on every supported platform.
+/// Finder, Dock, and Windows shortcuts do not inherit the user's interactive
+/// shell PATH, so known install prefixes are checked before PATH lookup.
 fn resolve_program(program: &str) -> PathBuf {
-    #[cfg(target_os = "macos")]
-    for homebrew_bin in ["/opt/homebrew/bin", "/usr/local/bin"] {
-        let candidate = Path::new(homebrew_bin).join(program);
+    for dir in known_bin_dirs() {
+        let candidate = dir.join(program_filename(program));
         if candidate.is_file() {
             return candidate;
         }
     }
 
-    PathBuf::from(program)
+    if let Some(from_path) = which_on_augmented_path(program) {
+        return from_path;
+    }
+
+    PathBuf::from(program_filename(program))
+}
+
+fn program_filename(program: &str) -> String {
+    if cfg!(target_os = "windows") && !program.ends_with(".exe") {
+        format!("{program}.exe")
+    } else {
+        program.to_string()
+    }
+}
+
+fn which_on_augmented_path(program: &str) -> Option<PathBuf> {
+    let name = program_filename(program);
+    let path_var = augmented_path();
+    for dir in std::env::split_paths(&path_var) {
+        let candidate = dir.join(&name);
+        if candidate.is_file() {
+            return Some(candidate);
+        }
+    }
+    None
+}
+
+fn known_bin_dirs() -> Vec<PathBuf> {
+    let mut dirs = Vec::new();
+
+    #[cfg(target_os = "macos")]
+    {
+        dirs.push(PathBuf::from("/opt/homebrew/bin"));
+        dirs.push(PathBuf::from("/opt/homebrew/sbin"));
+        dirs.push(PathBuf::from("/usr/local/bin"));
+        dirs.push(PathBuf::from("/usr/local/sbin"));
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(program_files) = std::env::var("ProgramFiles") {
+            dirs.push(
+                PathBuf::from(&program_files)
+                    .join("Docker")
+                    .join("Docker")
+                    .join("resources")
+                    .join("bin"),
+            );
+            // Newer Docker Desktop installs also expose CLI next to the app.
+            dirs.push(PathBuf::from(&program_files).join("Docker").join("Docker"));
+            dirs.push(
+                PathBuf::from(&program_files)
+                    .join("Docker")
+                    .join("Docker")
+                    .join("resources")
+                    .join("cli-plugins"),
+            );
+        }
+        if let Ok(program_files_x86) = std::env::var("ProgramFiles(x86)") {
+            dirs.push(
+                PathBuf::from(program_files_x86)
+                    .join("Docker")
+                    .join("Docker")
+                    .join("resources")
+                    .join("bin"),
+            );
+        }
+        if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+            dirs.push(
+                PathBuf::from(&local_app_data)
+                    .join("Docker")
+                    .join("resources")
+                    .join("bin"),
+            );
+            dirs.push(
+                PathBuf::from(local_app_data)
+                    .join("Programs")
+                    .join("Docker")
+                    .join("Docker")
+                    .join("resources")
+                    .join("bin"),
+            );
+        }
+        // User PATH often includes this after Docker Desktop install.
+        if let Ok(user_profile) = std::env::var("USERPROFILE") {
+            dirs.push(
+                PathBuf::from(user_profile)
+                    .join("AppData")
+                    .join("Local")
+                    .join("Docker")
+                    .join("resources")
+                    .join("bin"),
+            );
+        }
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        dirs.push(PathBuf::from("/usr/local/bin"));
+        dirs.push(PathBuf::from("/usr/bin"));
+        if let Ok(home) = std::env::var("HOME") {
+            dirs.push(PathBuf::from(home).join(".local").join("bin"));
+        }
+    }
+
+    dirs
+}
+
+/// PATH that includes known install prefixes so child tools (e.g. Colima → limactl)
+/// resolve correctly when the desktop app is launched without a login shell.
+fn augmented_path() -> String {
+    let mut parts: Vec<PathBuf> = known_bin_dirs();
+    if let Some(existing) = std::env::var_os("PATH") {
+        parts.extend(std::env::split_paths(&existing));
+    }
+    // Deduplicate while preserving order.
+    let mut seen = std::collections::HashSet::new();
+    parts.retain(|p| seen.insert(p.clone()));
+    std::env::join_paths(parts)
+        .map(|os| os.to_string_lossy().into_owned())
+        .unwrap_or_else(|_| std::env::var("PATH").unwrap_or_default())
+}
+
+fn apply_augmented_path(command: &mut Command) {
+    command.env("PATH", augmented_path());
 }
 
 fn format_output(label: &str, value: &str) -> String {
@@ -765,10 +1163,80 @@ fn format_output(label: &str, value: &str) -> String {
 }
 
 fn docker_host() -> Result<String, String> {
-    let home = std::env::var("HOME").map_err(|_| "HOME is not set".to_string())?;
-    Ok(format!(
-        "unix://{home}/.colima/{AXBI_COLIMA_PROFILE}/docker.sock"
-    ))
+    match RuntimeEngine::current() {
+        RuntimeEngine::Colima => {
+            let home = home_dir()?;
+            Ok(format!(
+                "unix://{}/.colima/{AXBI_COLIMA_PROFILE}/docker.sock",
+                path_to_string(&home)
+            ))
+        }
+        // Pin the local engine endpoint so a stale inherited DOCKER_HOST cannot break us.
+        RuntimeEngine::Docker => {
+            if cfg!(target_os = "windows") {
+                Ok("npipe:////./pipe/docker_engine".to_string())
+            } else {
+                Ok("unix:///var/run/docker.sock".to_string())
+            }
+        }
+    }
+}
+
+fn docker_host_envs(docker_host: &str) -> Vec<(String, String)> {
+    // Always set DOCKER_HOST for managed runtime commands (including platform default).
+    vec![("DOCKER_HOST".to_string(), docker_host.to_string())]
+}
+
+fn home_dir() -> Result<PathBuf, String> {
+    if let Ok(home) = std::env::var("HOME") {
+        return Ok(PathBuf::from(home));
+    }
+    #[cfg(target_os = "windows")]
+    if let Ok(profile) = std::env::var("USERPROFILE") {
+        return Ok(PathBuf::from(profile));
+    }
+    Err("Home directory is not set (HOME / USERPROFILE)".to_string())
+}
+
+/// Path to Docker Desktop app when installed (Windows; optional macOS fallback).
+fn docker_desktop_app_path() -> Option<PathBuf> {
+    let mut candidates = Vec::new();
+
+    #[cfg(target_os = "windows")]
+    {
+        if let Ok(program_files) = std::env::var("ProgramFiles") {
+            candidates.push(
+                PathBuf::from(program_files)
+                    .join("Docker")
+                    .join("Docker")
+                    .join("Docker Desktop.exe"),
+            );
+        }
+        if let Ok(program_files_x86) = std::env::var("ProgramFiles(x86)") {
+            candidates.push(
+                PathBuf::from(program_files_x86)
+                    .join("Docker")
+                    .join("Docker")
+                    .join("Docker Desktop.exe"),
+            );
+        }
+        if let Ok(local_app_data) = std::env::var("LOCALAPPDATA") {
+            candidates.push(
+                PathBuf::from(local_app_data)
+                    .join("Docker")
+                    .join("Docker Desktop.exe"),
+            );
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        candidates.push(PathBuf::from(
+            "/Applications/Docker.app/Contents/MacOS/Docker",
+        ));
+    }
+
+    candidates.into_iter().find(|path| path.is_file())
 }
 
 fn local_http_healthcheck() -> bool {
@@ -842,9 +1310,10 @@ fn path_to_string(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        build_env_file, ensure_runtime_secret_content, read_env_value_from_str, resolve_program,
-        tail_lines, validate_log_service, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME,
-        LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
+        augmented_path, build_env_file, docker_host, ensure_runtime_secret_content, platform_id,
+        platform_label, program_filename, read_env_value_from_str, resolve_program, tail_lines,
+        validate_log_service, RuntimeEngine, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME,
+        AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
     };
     use std::path::Path;
 
@@ -906,7 +1375,58 @@ mod tests {
     fn leaves_relative_program_names_available_for_path_resolution() {
         assert_eq!(
             resolve_program("command-not-on-path"),
-            Path::new("command-not-on-path")
+            Path::new(&program_filename("command-not-on-path"))
         );
+    }
+
+    #[test]
+    fn augmented_path_includes_known_prefixes_on_macos() {
+        let path = augmented_path();
+        if cfg!(target_os = "macos") {
+            assert!(
+                path.contains("/opt/homebrew/bin") || path.contains("/usr/local/bin"),
+                "expected Homebrew prefix in PATH, got: {path}"
+            );
+        }
+    }
+
+    #[test]
+    fn docker_host_matches_platform_engine() {
+        let host = docker_host().unwrap();
+        match RuntimeEngine::current() {
+            RuntimeEngine::Colima => {
+                assert!(host.contains(AXBI_COLIMA_PROFILE));
+                assert!(host.starts_with("unix://"));
+            }
+            RuntimeEngine::Docker => {
+                if cfg!(target_os = "windows") {
+                    assert_eq!(host, "npipe:////./pipe/docker_engine");
+                } else {
+                    assert_eq!(host, "unix:///var/run/docker.sock");
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn engine_is_colima_only_on_macos() {
+        if cfg!(target_os = "macos") {
+            assert_eq!(RuntimeEngine::current(), RuntimeEngine::Colima);
+            assert_eq!(RuntimeEngine::current().label(), "Colima");
+        } else {
+            assert_eq!(RuntimeEngine::current(), RuntimeEngine::Docker);
+            assert_eq!(RuntimeEngine::current().label(), "Docker Engine");
+        }
+    }
+
+    #[test]
+    fn both_desktop_platforms_support_local_runtime() {
+        // Local AX BI Docker is a first-class path on every desktop OS we ship.
+        assert!(matches!(
+            RuntimeEngine::current(),
+            RuntimeEngine::Colima | RuntimeEngine::Docker
+        ));
+        assert!(!platform_id().is_empty());
+        assert!(!platform_label().is_empty());
     }
 }

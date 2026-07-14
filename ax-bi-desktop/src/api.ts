@@ -43,7 +43,21 @@ export interface LocalRuntimeStatus {
   env_file: string;
   configured: boolean;
   dependencies: LocalRuntimeDependency[];
+  /** OS id: `macos` | `windows` | `linux`. */
+  platform: string;
+  /** True on all desktop builds — local AX BI Docker is supported. */
+  local_runtime_supported: boolean;
+  /** Required CLI tools installed; engine may still need to start. */
+  can_start_local: boolean;
+  /** Engine identifier: `colima` (macOS) or `docker` (Windows/Linux). */
+  engine_name: string;
+  /** UI label for the VM/engine layer (e.g. "Colima", "Docker Engine"). */
+  engine_label: string;
+  /** Whether the container engine is ready enough to run Compose. */
+  engine_running: boolean;
+  /** Colima profile on macOS; empty on other platforms. */
   colima_profile: string;
+  /** Alias of engine readiness for older clients. */
   colima_running: boolean;
   docker_host: string;
   docker_ready: boolean;
@@ -116,6 +130,12 @@ function isLocalRuntimeStatus(value: unknown): value is LocalRuntimeStatus {
     typeof value['configured'] === 'boolean' &&
     Array.isArray(value['dependencies']) &&
     value['dependencies'].every(isLocalRuntimeDependency) &&
+    typeof value['platform'] === 'string' &&
+    typeof value['local_runtime_supported'] === 'boolean' &&
+    typeof value['can_start_local'] === 'boolean' &&
+    typeof value['engine_name'] === 'string' &&
+    typeof value['engine_label'] === 'string' &&
+    typeof value['engine_running'] === 'boolean' &&
     typeof value['colima_profile'] === 'string' &&
     typeof value['colima_running'] === 'boolean' &&
     typeof value['docker_host'] === 'string' &&
@@ -226,7 +246,7 @@ export async function prepareLocalRuntime(): Promise<LocalRuntimeStatus> {
 }
 
 /**
- * Start Colima and the app-owned AX BI Compose stack.
+ * Start the platform container engine and the app-owned AX BI Compose stack.
  */
 export async function startLocalRuntime(): Promise<LocalRuntimeCommandOutput> {
   return assertLocalRuntimeCommandOutput(

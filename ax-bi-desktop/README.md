@@ -33,8 +33,9 @@ These features live in `ax-bi-desktop/` and require the native app:
 The desktop client is a **thin shell** with a bundled product launcher. It does
 **not** bundle the Python backend, database drivers, or any server-side
 components. The home screen offers two primary paths: run a local Docker-based
-instance (app-managed Colima/Compose), or connect to a hosted AX BI server.
-Colima/Docker status, logs, and prepare/stop/update controls live under
+instance (app-managed Colima on macOS, Docker Engine on Windows), or connect to
+a hosted AX BI server. Engine/Docker status, logs, and prepare/stop/update
+controls live under
 **Settings → Advanced runtime**.
 
 ## Recommended User Install
@@ -58,14 +59,18 @@ brew install --cask ax-bi
 ```
 
 After installation, AX BI should guide the user to either connect to an existing
-server or start a local runtime. The local runtime manager uses Colima and Docker
-Compose so users do not need to clone this repository or run Docker by hand.
-The cask installs Colima, Docker CLI, and Docker Compose automatically; users
-only need to install them manually when using the standalone DMG:
+server or start a local runtime. The local runtime manager uses Colima (macOS) or
+Docker Engine (Windows) with the same Compose stack so users do not need to clone
+this repository or run Docker by hand. The macOS cask installs Colima, Lima,
+Docker CLI, and Docker Compose automatically; install them manually only when
+using the standalone DMG:
 
 ```bash
-brew install colima docker docker-compose
+brew install colima lima docker docker-compose
 ```
+
+On Windows, install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
+so the Docker CLI and engine are available.
 
 See [LOCAL_RUNTIME.md](LOCAL_RUNTIME.md) for runtime architecture and
 [RELEASE.md](RELEASE.md) for CI/CD, Apple signing, minisign, and Homebrew
@@ -116,7 +121,8 @@ npm run dev           # Builds Rust + launches native window
 
 The first `cargo` build can take several minutes. When the window opens:
 
-1. **Run locally** — prepares/starts the app-managed Colima + Docker stack, or
+1. **Run locally** — prepares/starts the app-managed engine + Docker Compose
+   stack (Colima on macOS, Docker Desktop on Windows), or
 2. **Connect to server** — paste a hosted AX BI URL
 
 When local AX BI is healthy, the shell opens the web app full-bleed and shows a
@@ -133,7 +139,7 @@ Default local login:
 superset run -p 8088 --with-threads --reload --debugger
 ```
 
-The launcher can also start the app-managed Docker/Colima runtime.
+The launcher can also start the app-managed local Docker runtime.
 
 ### Build for production
 
