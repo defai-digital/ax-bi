@@ -2020,10 +2020,34 @@ FAB_API_KEY_PREFIXES = ["sst_"]
 # ---------------------------------------------------------------------------
 # GenAI BI Configuration
 # ---------------------------------------------------------------------------
-# LLM provider configuration for GenAI BI features.
-# Example: {"provider": "openai", "model": "gpt-4", "api_key": "..."}
-# This config is read by the LLM provider factory in
-# axbi.mcp_service.ai.provider_factory.
+# Optional server-side LLM for GenAI BI (Admin/operator only).
+# When empty, core AX BI works normally; GenAI tools use heuristics or return
+# LLM_NOT_CONFIGURED. End users and AX Studio must not supply inference URLs.
+#
+# Examples:
+#   # Anthropic cloud
+#   {"provider": "anthropic", "model": "claude-sonnet-4-20250514", "api_key": "..."}
+#   # OpenAI-compatible (Ollama / LM Studio / vLLM) — Admin/operator only
+#   {
+#     "provider": "openai_compatible",
+#     "base_url": "http://llm-gateway.internal:11434/v1",
+#     "model": "llama3.1",
+#     "api_key": "",
+#     "allow_http": True,
+#     "allow_private_network": True,
+#   }
+#   # OpenAI cloud
+#   {
+#     "provider": "openai",
+#     "model": "gpt-4o-mini",
+#     "api_key": "...",
+#     "base_url": "https://api.openai.com/v1",
+#   }
+# Env helpers: GENAI_LLM_PROVIDER, GENAI_LLM_BASE_URL, GENAI_LLM_API_KEY,
+# GENAI_LLM_MODEL, GENAI_LLM_ENABLED, GENAI_LLM_ALLOW_HTTP,
+# GENAI_LLM_ALLOW_PRIVATE_NETWORK, GENAI_LLM_URL_ALLOWLIST,
+# GENAI_LLM_TIMEOUT_SECONDS. See .internal/docs/admin-llm-provider-tech-spec.md.
+# This config is read by axbi.genai.provider_factory (MCP re-exports for tools).
 GENAI_LLM_PROVIDER_CONFIG: dict[str, Any] = {}
 
 # Semantic index configuration for GenAI BI retrieval.

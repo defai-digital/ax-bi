@@ -130,22 +130,12 @@ FEATURE_FLAGS = {
     "SEMANTIC_LAYERS": True,
 }
 
-# Optional server-side LLM for intent mapping / dashboard planning.
-# When empty, tools fall back to keyword heuristics (weaker quality).
-# Example:
-# GENAI_LLM_PROVIDER_CONFIG = {
-#     "provider": "anthropic",
-#     "api_key": os.getenv("ANTHROPIC_API_KEY", ""),
-#     "model": "claude-sonnet-4-20250514",
-# }
-GENAI_LLM_PROVIDER_CONFIG: dict = {}
-_genai_provider = os.getenv("GENAI_LLM_PROVIDER", "").strip().lower()
-if _genai_provider:
-    GENAI_LLM_PROVIDER_CONFIG = {
-        "provider": _genai_provider,
-        "api_key": os.getenv("GENAI_LLM_API_KEY", os.getenv("ANTHROPIC_API_KEY", "")),
-        "model": os.getenv("GENAI_LLM_MODEL", "claude-sonnet-4-20250514"),
-    }
+# Optional server-side LLM for intent mapping / dashboard planning (Admin/operator).
+# When empty, tools fall back to keyword heuristics or LLM_NOT_CONFIGURED.
+# Do not pass inference URLs from AX Studio end users — only env/Admin config.
+from axbi.genai.llm_config import build_provider_config_from_env
+
+GENAI_LLM_PROVIDER_CONFIG: dict = build_provider_config_from_env()
 
 AI_SEMANTIC_EMBEDDING_PROVIDER = os.getenv(
     "AI_SEMANTIC_EMBEDDING_PROVIDER",

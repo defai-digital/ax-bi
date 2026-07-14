@@ -14,81 +14,20 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Factory for obtaining the configured LLM provider.
+"""Backward-compatible re-export of the Admin LLM provider factory.
 
-Reads ``GENAI_LLM_PROVIDER_CONFIG`` from the AxBI configuration
-and returns the appropriate ``LLMProvider`` instance. Falls back to
-``StubLLMProvider`` when no provider is configured.
+Implementation lives in ``axbi.genai.provider_factory`` so commands and REST
+do not depend on the MCP package.
 """
 
-from __future__ import annotations
+from axbi.genai.provider_factory import (
+    build_provider_from_config,
+    get_llm_provider,
+    reset_provider,
+)
 
-import logging
-import threading
-from typing import Any
-
-from flask import current_app
-
-from axbi.mcp_service.ai.llm_provider import LLMProvider, StubLLMProvider
-
-logger = logging.getLogger(__name__)
-
-# Module-level singleton to avoid re-creating the provider on every call.
-_provider_instance: LLMProvider | None = None
-_provider_lock = threading.Lock()
-
-
-def get_llm_provider() -> LLMProvider:
-    """Return the configured LLM provider.
-
-    Reads ``GENAI_LLM_PROVIDER_CONFIG`` from the Flask app config.
-    If the config is empty or the provider is unrecognized, returns
-    a ``StubLLMProvider`` that raises ``NotImplementedError`` on use.
-
-    The provider instance is cached as a module-level singleton.
-    Call ``reset_provider()`` to force re-creation (useful in tests).
-    """
-    global _provider_instance  # noqa: PLW0603
-    if _provider_instance is not None:
-        return _provider_instance
-
-    with _provider_lock:
-        # Double-checked locking: re-check after acquiring the lock.
-        if _provider_instance is not None:
-            return _provider_instance
-
-        config: dict[str, Any] = {}
-        try:
-            config = current_app.config.get("GENAI_LLM_PROVIDER_CONFIG", {})
-        except RuntimeError:
-            # Outside app context — fall back to stub
-            logger.debug("No Flask app context; returning StubLLMProvider")
-
-        if not config:
-            _provider_instance = StubLLMProvider()
-            return _provider_instance
-
-        provider_name = config.get("provider", "").lower()
-
-        if provider_name == "anthropic":
-            from axbi.mcp_service.ai.anthropic_provider import AnthropicProvider
-
-            _provider_instance = AnthropicProvider(config)
-            return _provider_instance
-
-        logger.warning(
-            "Unknown LLM provider '%s'; returning StubLLMProvider. "
-            "Supported providers will be added in future iterations.",
-            provider_name,
-        )
-        _provider_instance = StubLLMProvider()
-        return _provider_instance
-
-
-def reset_provider() -> None:
-    """Reset the cached provider instance.
-
-    Useful for testing or when the configuration changes at runtime.
-    """
-    global _provider_instance  # noqa: PLW0603
-    _provider_instance = None
+__all__ = [
+    "build_provider_from_config",
+    "get_llm_provider",
+    "reset_provider",
+]

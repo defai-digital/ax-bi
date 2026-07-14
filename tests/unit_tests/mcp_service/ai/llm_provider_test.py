@@ -21,11 +21,8 @@ from __future__ import annotations
 import pytest
 from pydantic import BaseModel
 
-from axbi.mcp_service.ai.llm_provider import LLMProvider, StubLLMProvider
-from axbi.mcp_service.ai.provider_factory import (
-    get_llm_provider,
-    reset_provider,
-)
+from axbi.genai.llm_provider import LLMProvider, StubLLMProvider
+from axbi.genai.provider_factory import get_llm_provider, reset_provider
 
 
 class DummyResponse(BaseModel):
@@ -45,8 +42,19 @@ def test_stub_provider_model_name() -> None:
 
 
 def test_stub_provider_raises_on_complete_json() -> None:
+    from axbi.genai.llm_errors import LLMNotConfiguredError, LLM_NOT_CONFIGURED
+
     stub = StubLLMProvider()
-    with pytest.raises(NotImplementedError, match="No LLM provider configured"):
+    with pytest.raises(LLMNotConfiguredError) as exc_info:
+        stub.complete_json(
+            system_prompt="test",
+            user_prompt="test",
+            response_schema=DummyResponse,
+            metadata={},
+        )
+    assert exc_info.value.code == LLM_NOT_CONFIGURED
+    # Backward compatible with existing NotImplementedError handlers.
+    with pytest.raises(NotImplementedError):
         stub.complete_json(
             system_prompt="test",
             user_prompt="test",

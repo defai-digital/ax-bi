@@ -84,3 +84,5 @@ def test_capabilities_adapter_returns_canonical_contract() -> None:
         "max_charts_per_dashboard": 12,
         "max_upload_bytes": 2048,
     }
+    assert "llm_configured" in result
+    assert result["llm_configured"] in {True, False}

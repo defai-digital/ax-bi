@@ -26,6 +26,7 @@ from axbi.commands.ai.authoring.contracts import (
     AuthoringOperation,
 )
 from axbi.commands.base import BaseCommand
+from axbi.genai.llm_config import public_llm_capability
 
 _OPERATION_ORDER: tuple[AuthoringOperation, ...] = (
     "plan_dashboard",
@@ -44,10 +45,12 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
         enabled_operations: Iterable[AuthoringOperation],
         max_charts_per_dashboard: int = 12,
         max_upload_bytes: int | None = None,
+        llm_capability: dict[str, object] | None = None,
     ) -> None:
         self._enabled_operations = set(enabled_operations)
         self._max_charts_per_dashboard = max_charts_per_dashboard
         self._max_upload_bytes = max_upload_bytes
+        self._llm_capability = llm_capability
 
     def run(self) -> AuthoringCapabilities:
         """Build the canonical capabilities response."""
@@ -57,11 +60,25 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
             for operation in _OPERATION_ORDER
             if operation in self._enabled_operations
         ]
+        llm = (
+            self._llm_capability
+            if self._llm_capability is not None
+            else public_llm_capability()
+        )
         return AuthoringCapabilities(
             operations=operations,
             limits=AuthoringLimits(
                 max_charts_per_dashboard=self._max_charts_per_dashboard,
                 max_upload_bytes=self._max_upload_bytes,
+            ),
+            llm_configured=bool(llm.get("llm_configured")),
+            llm_provider_type=(
+                str(llm["llm_provider_type"])
+                if llm.get("llm_provider_type") is not None
+                else None
+            ),
+            llm_model=(
+                str(llm["llm_model"]) if llm.get("llm_model") is not None else None
             ),
         )
 

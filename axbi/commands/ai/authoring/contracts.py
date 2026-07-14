@@ -104,3 +104,7 @@ class AuthoringCapabilities(BaseModel):
     )
     limits: AuthoringLimits
     async_jobs: bool = False
+    # Server-side LLM (Admin-configured). Never includes secrets or base_url.
+    llm_configured: bool = False
+    llm_provider_type: str | None = None
+    llm_model: str | None = None

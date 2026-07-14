@@ -148,6 +148,13 @@ const RolesList = lazy(
   () => import(/* webpackChunkName: "RolesList" */ 'src/pages/RolesList'),
 );
 
+const GenaiLlmSettings = lazy(
+  () =>
+    import(
+      /* webpackChunkName: "GenaiLlmSettings" */ 'src/pages/GenaiLlmSettings'
+    ),
+);
+
 const UsersList: LazyExoticComponent<any> = lazy(
   () => import(/* webpackChunkName: "UsersList" */ 'src/pages/UsersList'),
 );
@@ -367,6 +374,10 @@ if (isAdmin) {
     {
       path: '/list_groups/',
       Component: GroupsList,
+    },
+    {
+      path: '/genai/llm/',
+      Component: GenaiLlmSettings,
     },
   );
 

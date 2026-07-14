@@ -288,6 +288,11 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_api(SqlLabPermalinkRestApi)
         appbuilder.add_api(LogRestApi)
 
+        from axbi.genai.api import GenaiCapabilitiesRestApi, GenaiLlmProviderRestApi
+
+        appbuilder.add_api(GenaiCapabilitiesRestApi)
+        appbuilder.add_api(GenaiLlmProviderRestApi)
+
         if feature_flag_manager.is_feature_enabled("ENABLE_EXTENSIONS"):
             from axbi.extensions.api import ExtensionsRestApi
 
@@ -418,6 +423,19 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
             category="Manage",
             category_label=_("Manage"),
             category_icon="",
+        )
+
+        # Admin-only GenAI LLM provider settings (frontend route).
+        # Non-admins receive 403 from the API and an admin-only page gate.
+        # FAB add_link does not support menu_cond; keep the link always listed
+        # under Manage (same pattern as other frontend settings links).
+        appbuilder.add_link(
+            "GenAI LLM Provider",
+            label=_("GenAI LLM Provider"),
+            href=f"{app_root}/genai/llm/",
+            icon="fa-magic",
+            category="Manage",
+            category_label=_("Manage"),
         )
 
         appbuilder.add_view(

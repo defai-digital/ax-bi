@@ -112,3 +112,40 @@ def test_compose_gate_is_owned_by_authoring_domain() -> None:
 
     assert blocked is True
     assert "Which dataset?" in reason
+
+
+def test_capabilities_accept_injected_llm_capability_without_mcp() -> None:
+    """Authoring command layer must not require MCP; inject capability metadata."""
+    result = GetAuthoringCapabilitiesCommand(
+        enabled_operations={"create_chart_from_intent"},
+        llm_capability={
+            "llm_configured": True,
+            "llm_provider_type": "openai_compatible",
+            "llm_model": "llama3.1",
+        },
+    ).run()
+
+    assert result.llm_configured is True
+    assert result.llm_provider_type == "openai_compatible"
+    assert result.llm_model == "llama3.1"
+
+
+def test_authoring_package_does_not_import_mcp_service_modules() -> None:
+    """Layering guard: commands.ai.authoring must not depend on mcp_service."""
+    import axbi.commands.ai.authoring.capabilities as caps
+    import axbi.commands.ai.authoring.contracts as contracts
+    import axbi.commands.ai.authoring.context as context
+    import axbi.commands.ai.authoring.confidence as confidence
+    import axbi.commands.ai.authoring.errors as errors
+
+    for module in (caps, contracts, context, confidence, errors):
+        for name, value in vars(module).items():
+            mod = getattr(value, "__module__", "") or ""
+            assert not mod.startswith("axbi.mcp_service"), (
+                f"{module.__name__}.{name} comes from {mod}"
+            )
+        # Source-level import check
+        source = getattr(module, "__file__", None)
+        if source:
+            text = open(source, encoding="utf-8").read()
+            assert "axbi.mcp_service" not in text, module.__name__
