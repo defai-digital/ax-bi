@@ -5,9 +5,10 @@ Tauri desktop shell. It follows the same trust model as **AX Studio** and
 **AX Code Desktop**:
 
 1. Apple Developer ID sign + notarize (macOS)
-2. Publish installers to a GitHub Release
-3. Detached **minisign** signatures on all assets
-4. Automated Homebrew cask update for
+2. Azure Key Vault Authenticode sign (Windows)
+3. Publish installers to a GitHub Release
+4. Detached **minisign** signatures on all assets
+5. Automated Homebrew cask update for
    [defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi)
 
 ## Product naming
@@ -52,7 +53,7 @@ as formulas. The app manages the local AX BI runtime after install.
 tag ax-bi-desktop-vX.Y.Z
   → draft GitHub Release
   → macOS arm64: codesign + notarytool + staple DMG
-  → Windows: NSIS/MSI build
+  → Windows: Key Vault sign app executable + NSIS/MSI installers
   → minisign all release assets
   → publish release
   → push Casks/ax-bi.rb to homebrew-ax-bi (SHA256 of DMG)
@@ -95,6 +96,43 @@ The release workflow already asserts that the imported identity contains `(N5ZUZ
 
 These names match AX Studio so org-level secrets can be reused when the same
 Developer ID and notary key are shared across DEFAI apps.
+
+### Windows Authenticode signing (Azure Key Vault, fail-closed)
+
+The Windows release job uses AzureSignTool `7.0.1`. The private key remains in
+Azure Key Vault; the exported PFX is an offline backup and must not be committed
+or uploaded to GitHub Actions.
+
+| Item | Value |
+| --- | --- |
+| Key Vault URL | `https://keyvault-defai.vault.azure.net` |
+| Certificate name | `cert-defai` |
+| Subject | `C=SG, L=Singapore, O=DEFAI Private Limited, CN=DEFAI Private Limited` |
+| Issuer | `DigiCert Trusted G4 Code Signing RSA4096 SHA384 2021 CA1` |
+| SHA-1 thumbprint | `FC40F1109912C025E751E804AA9BD1538A2D12EF` |
+| Validity | 2026-07-13 through 2027-07-12 (UTC) |
+
+Required GitHub Actions secrets:
+
+| Secret | Value / purpose |
+| --- | --- |
+| `AZURE_TENANT_ID` | `0326d2a2-f46c-4673-a165-f49e712d0864` |
+| `AZURE_CLIENT_ID` | `cbdd6dd3-0c59-43ec-8813-cd5b120eaf4c` |
+| `AZURE_CLIENT_SECRET` | Service-principal secret; expires 2027-07-13 |
+
+The service principal needs certificate read and key-sign permissions on
+`keyvault-defai`. The RBAC vault grants `Key Vault Certificate User` and `Key
+Vault Crypto User` to the signing principal at the vault scope. For a legacy
+access-policy vault, grant Certificates `Get` plus Keys `Get` and `Sign`.
+
+The workflow builds and signs `axbi-desktop.exe` before bundling so the
+installed application is signed. It then signs the generated MSI and NSIS
+installers, and verifies every signature against the pinned thumbprint. Missing
+credentials, signing failures, invalid signatures, or a certificate mismatch
+stop the release.
+
+Service Principal + Client Secret is the configured authentication method.
+GitHub OIDC is preferred for a future credentialless migration.
 
 ### Export the Developer ID `.p12` for CI
 
@@ -181,6 +219,9 @@ The tap repo is live: [defai-digital/homebrew-ax-bi](https://github.com/defai-di
 | `APPLE_API_ISSUER` / `NOTARY_ISSUER` | Set (`3cdb065e-9d78-451f-8424-e1e6b1547d64`) |
 | `AX_BI_MINISIGN_*` (secret, public, password) | Set; public key in `docs/ax-bi.minisign.pub` |
 | `HOMEBREW_TAP_TOKEN` | Set (write access to `defai-digital/homebrew-ax-bi`) |
+| `AZURE_TENANT_ID` | Set (`0326d2a2-f46c-4673-a165-f49e712d0864`) |
+| `AZURE_CLIENT_ID` | Set (`cbdd6dd3-0c59-43ec-8813-cd5b120eaf4c`) |
+| `AZURE_CLIENT_SECRET` | Set; expires 2027-07-13 |
 
 ### Secrets still required before the first release tag
 

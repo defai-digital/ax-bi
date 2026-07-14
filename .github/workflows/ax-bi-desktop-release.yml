@@ -280,6 +280,10 @@ jobs:
     env:
       VERSION: ${{ needs.resolve-version.outputs.version }}
       TAG: ${{ needs.resolve-version.outputs.tag }}
+      HAS_WINDOWS_SIGNING: ${{ secrets.AZURE_TENANT_ID != '' && secrets.AZURE_CLIENT_ID != '' && secrets.AZURE_CLIENT_SECRET != '' }}
+      AZURE_KEY_VAULT_URL: https://keyvault-defai.vault.azure.net
+      AZURE_KEY_VAULT_CERTIFICATE: cert-defai
+      WINDOWS_SIGNING_THUMBPRINT: FC40F1109912C025E751E804AA9BD1538A2D12EF
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -299,6 +303,23 @@ jobs:
         with:
           workspaces: ax-bi-desktop/src-tauri
 
+      - name: Require Windows signing secrets
+        shell: pwsh
+        run: |
+          if ($env:HAS_WINDOWS_SIGNING -ne "true") {
+            Write-Error "Windows releases require AZURE_TENANT_ID, AZURE_CLIENT_ID, and AZURE_CLIENT_SECRET."
+            exit 1
+          }
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Install AzureSignTool
+        shell: pwsh
+        run: dotnet tool install --global --version 7.0.1 AzureSignTool
+
       - name: Set desktop version
         working-directory: ax-bi-desktop
         run: node scripts/release/set-version.mjs --version ${{ env.VERSION }}
@@ -307,11 +328,43 @@ jobs:
         working-directory: ax-bi-desktop
         run: npm ci
 
+      - name: Build Windows executable
+        working-directory: ax-bi-desktop
+        env:
+          CI: true
+        run: npm run build -- --no-bundle
+
+      - name: Sign Windows executable
+        working-directory: ax-bi-desktop
+        shell: pwsh
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: ./scripts/release/sign-windows.ps1 src-tauri/target/release/axbi-desktop.exe
+
       - name: Build Windows installers
         working-directory: ax-bi-desktop
         env:
           CI: true
-        run: npm run build
+        run: npm run tauri -- bundle --ci
+
+      - name: Sign Windows installers
+        working-directory: ax-bi-desktop
+        shell: pwsh
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        run: |
+          $installers = Get-ChildItem src-tauri/target/release/bundle -Recurse -File |
+            Where-Object { $_.Extension -in ".exe", ".msi" } |
+            Select-Object -ExpandProperty FullName
+          if ($installers.Count -lt 2) {
+            Write-Error "Expected both NSIS and MSI installers, found $($installers.Count)."
+            exit 1
+          }
+          ./scripts/release/sign-windows.ps1 $installers
 
       - name: Prepare Windows assets
         shell: bash
