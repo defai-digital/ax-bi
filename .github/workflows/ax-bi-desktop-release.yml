@@ -261,7 +261,7 @@ jobs:
           gh release upload "$TAG" "${assets[@]}" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Upload macOS workflow artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ax-bi-desktop-macos-${{ needs.resolve-version.outputs.version }}
           path: ${{ env.MACOS_OUT }}/*
@@ -387,7 +387,7 @@ jobs:
           gh release upload "$TAG" "${files[@]}" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Upload Windows workflow artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ax-bi-desktop-windows-${{ needs.resolve-version.outputs.version }}
           path: ${{ env.WINDOWS_OUT }}/*
