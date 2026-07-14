@@ -379,6 +379,7 @@ MCP_TOOL_SEARCH_CONFIG: dict[str, Any] = {
     "always_visible": [  # Tools always shown in list_tools (pinned)
         "health_check",
         "get_instance_info",
+        "get_authoring_capabilities",
     ],
     "search_tool_name": "search_tools",  # Name of the search tool
     "call_tool_name": "call_tool",  # Name of the call proxy tool

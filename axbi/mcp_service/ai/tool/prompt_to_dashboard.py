@@ -39,6 +39,7 @@ except ModuleNotFoundError:
     Context = Any
 
 from axbi.commands.ai.audit import RecordAIGeneratedArtifactCommand
+from axbi.commands.ai.authoring.confidence import evaluate_compose_gate
 from axbi.mcp_service.ai.schemas import (
     ComposeDashboardRequest,
     CreateChartFromIntentRequest,
@@ -239,9 +240,7 @@ async def prompt_to_dashboard(  # noqa: C901
     )
 
     # Confidence / empty-plan gate: fail loudly instead of composing junk
-    from axbi.mcp_service.ai.grounding_utils import plan_should_block_compose
-
-    should_block, block_reason = plan_should_block_compose(
+    should_block, block_reason = evaluate_compose_gate(
         plan_full.confidence,
         len(plan_full.chart_intents),
         plan_full.clarifying_questions,

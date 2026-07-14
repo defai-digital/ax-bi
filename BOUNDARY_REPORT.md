@@ -57,6 +57,10 @@ The low-risk boundary cleanup pass is complete. Completed work included:
   uses strict, connection-aware removal before user resolution, while error
   paths attempt rollback and removal independently without masking the primary
   failure. MCP tool modules no longer mutate scoped sessions directly.
+- Establishing the transport-neutral analytics-authoring contract boundary in
+  `axbi/commands/ai/authoring`, exposing versioned capability discovery through
+  a thin MCP adapter, and moving the prompt-to-dashboard confidence gate out of
+  the MCP tool layer while preserving its compatibility import.
 
 ## Deferred Boundary Areas
 

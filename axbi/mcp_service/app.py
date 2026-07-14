@@ -212,6 +212,8 @@ System Information:
   (use when the user says the MCP is broken or asks how to report an issue)
 
 AI-Powered Tools (GenAI) — PREFER THESE over low-level CRUD for dashboard creation:
+- get_authoring_capabilities: Discover the versioned high-level authoring contract,
+  enabled operations, upload formats, and deployment limits (takes NO parameters).
 - prompt_to_dashboard: PRIMARY tool. One call from natural language to a draft dashboard
   (plan → charts → compose). Use this first whenever the user asks to create a dashboard.
 - plan_dashboard: Plan only (no mutations). Use when the user wants to review the plan first.
@@ -766,6 +768,7 @@ from axbi.mcp_service.ai.tool import (  # noqa: F401, E402
     describe_dataset_for_ai,
     evaluate_ai_answer,
     explain_dashboard,
+    get_authoring_capabilities,
     plan_dashboard,
     prompt_to_dashboard,
     search_business_assets,
