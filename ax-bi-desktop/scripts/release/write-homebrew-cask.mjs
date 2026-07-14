@@ -59,11 +59,15 @@ const cask = `cask "ax-bi" do
   version "${version}"
   sha256 "${sha256}"
 
-  url "https://github.com/defai-digital/ax-bi/releases/download/${tag}/AX.BI_#{version}_aarch64.dmg",
-      verified: "github.com/defai-digital/ax-bi/"
+  url "https://github.com/defai-digital/ax-bi/releases/download/${tag}/AX.BI_#{version}_aarch64.dmg"
   name "AX BI"
   desc "Desktop client and local runtime launcher for AX BI"
   homepage "https://github.com/defai-digital/ax-bi"
+
+  livecheck do
+    url "https://github.com/defai-digital/ax-bi.git"
+    regex(/^ax-bi-desktop-v?(\\d+(?:\\.\\d+)+)$/i)
+  end
 
   depends_on arch: :arm64
   depends_on macos: :monterey
