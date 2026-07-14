@@ -314,7 +314,8 @@ jobs:
 
       - name: Set desktop version
         working-directory: ax-bi-desktop
-        run: node scripts/release/set-version.mjs --version "$VERSION"
+        shell: pwsh
+        run: node scripts/release/set-version.mjs --version "$env:VERSION"
 
       - name: Install frontend dependencies
         working-directory: ax-bi-desktop
