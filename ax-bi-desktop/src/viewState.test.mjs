@@ -22,45 +22,33 @@ import test from "node:test";
 import {
   nextPreferHomeView,
   shellStatusLabel,
-  shouldAutoOpenLocalBi,
+  shouldShowLocalOnboarding,
   shouldLeaveBiForOfflineLocal,
   summaryText,
 } from "./viewState.js";
 
-test("shouldAutoOpenLocalBi requires healthy local status and no prefer-home", () => {
-  const healthy = {
-    axbi_healthy: true,
-    web_url: "http://127.0.0.1:8088/ax-bi/welcome/",
-  };
+test("shouldShowLocalOnboarding requires a healthy runtime and credentials", () => {
   assert.equal(
-    shouldAutoOpenLocalBi({
-      biSource: "local",
-      preferHomeView: false,
-      status: healthy,
+    shouldShowLocalOnboarding({
+      axbi_healthy: true,
+      onboarding_required: true,
+      admin_password_present: true,
     }),
     true,
   );
   assert.equal(
-    shouldAutoOpenLocalBi({
-      biSource: "local",
-      preferHomeView: true,
-      status: healthy,
+    shouldShowLocalOnboarding({
+      axbi_healthy: true,
+      onboarding_required: false,
+      admin_password_present: true,
     }),
     false,
   );
   assert.equal(
-    shouldAutoOpenLocalBi({
-      biSource: "remote",
-      preferHomeView: false,
-      status: healthy,
-    }),
-    false,
-  );
-  assert.equal(
-    shouldAutoOpenLocalBi({
-      biSource: "local",
-      preferHomeView: false,
-      status: { axbi_healthy: false, web_url: healthy.web_url },
+    shouldShowLocalOnboarding({
+      axbi_healthy: false,
+      onboarding_required: true,
+      admin_password_present: true,
     }),
     false,
   );

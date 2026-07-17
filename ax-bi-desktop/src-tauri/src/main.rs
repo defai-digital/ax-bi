@@ -56,6 +56,7 @@ fn main() {
             commands::update_local_runtime,
             commands::get_local_runtime_logs,
             commands::get_local_admin_credentials,
+            commands::open_local_axbi_window,
         ])
         .run(tauri::generate_context!())
         .expect("Error while running AX BI Desktop");

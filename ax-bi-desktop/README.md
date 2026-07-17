@@ -158,6 +158,10 @@ Output locations:
 By default the Tauri shell loads the bundled launcher from `src/index.html`.
 Use the launcher Connect form for hosted AX BI instances.
 
+Local AX BI opens in a separate persistent webview at its loopback URL. Keeping
+the local web app top-level makes its login cookie first-party and avoids WebKit
+session loops caused by embedding the local server in the launcher iframe.
+
 ### Deep Links
 
 The desktop client registers the `axbi://` URL scheme. Supported patterns:

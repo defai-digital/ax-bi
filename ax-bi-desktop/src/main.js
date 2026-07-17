@@ -20,7 +20,7 @@
 import {
   nextPreferHomeView,
   shellStatusLabel as computeShellStatusLabel,
-  shouldAutoOpenLocalBi,
+  shouldShowLocalOnboarding,
   shouldLeaveBiForOfflineLocal,
   summaryText as computeSummaryText,
 } from "./viewState.js";
@@ -59,13 +59,15 @@ const elements = {
   busyBanner: document.getElementById("busyBanner"),
   busyMessage: document.getElementById("busyMessage"),
   closeSettings: document.getElementById("closeSettings"),
+  credentialPassword: document.getElementById("credentialPassword"),
+  credentialsBackdrop: document.getElementById("credentialsBackdrop"),
+  credentialsDialog: document.getElementById("credentialsDialog"),
+  credentialUsername: document.getElementById("credentialUsername"),
   engineLabel: document.getElementById("engineLabel"),
   engineState: document.getElementById("engineState"),
   copyCredentials: document.getElementById("copyCredentials"),
   credentials: document.getElementById("credentials"),
   credentialsBox: document.getElementById("credentialsBox"),
-  credentialsToast: document.getElementById("credentialsToast"),
-  credentialsToastText: document.getElementById("credentialsToastText"),
   dependencies: document.getElementById("dependencies"),
   dismissCredentials: document.getElementById("dismissCredentials"),
   dockerState: document.getElementById("dockerState"),
@@ -81,6 +83,7 @@ const elements = {
   mcpUrl: document.getElementById("mcpUrl"),
   openHome: document.getElementById("openHome"),
   openLocal: document.getElementById("openLocal"),
+  openWithCredentials: document.getElementById("openWithCredentials"),
   openSettings: document.getElementById("openSettings"),
   pathConnect: document.getElementById("pathConnect"),
   pathLocal: document.getElementById("pathLocal"),
@@ -97,6 +100,7 @@ const elements = {
   summary: document.getElementById("summary"),
   themeControl: document.getElementById("themeControl"),
   themeOptions: document.querySelectorAll("[data-theme-mode]"),
+  toggleCredentialPassword: document.getElementById("toggleCredentialPassword"),
   update: document.getElementById("update"),
   webUrl: document.getElementById("webUrl"),
 };
@@ -229,11 +233,6 @@ function renderBiView() {
     return;
   }
 
-  if (currentStatus && currentStatus.axbi_healthy && currentStatus.web_url) {
-    showBiFrame(currentStatus.web_url);
-    return;
-  }
-
   showHome(summaryText(currentStatus), { sticky: false });
 }
 
@@ -299,17 +298,7 @@ function renderStatus(status) {
     postShellHelloToBiFrame();
   }
 
-  // Only auto-switch to BI when local is healthy and user is on local source.
-  // Do not yank the user out of a remote session or Desktop home on status refresh.
   if (
-    shouldAutoOpenLocalBi({
-      biSource,
-      preferHomeView,
-      status,
-    })
-  ) {
-    showBiFrame(status.web_url);
-  } else if (
     shouldLeaveBiForOfflineLocal({
       biSource,
       biVisible,
@@ -329,7 +318,7 @@ function updateLocalPathCopy(status) {
   if (status.axbi_healthy) {
     elements.localPathTitle.textContent = "Open local AX BI";
     elements.localPathDesc.textContent =
-      "Local Docker instance is running. Open it in this window.";
+      "Local Docker instance is running. Open the AX BI desktop window.";
     return;
   }
   if (status.axbi_running) {
@@ -473,12 +462,15 @@ async function pollUntilHealthy() {
     if (status.axbi_healthy) {
       setActivity("Local AX BI is ready", "ok");
       biSource = "local";
-      showBiFrame(status.web_url);
       closeSettings();
-      const credentials = await loadCredentialsQuietly();
-      if (credentials) {
-        showCredentialsToast(credentials);
+      if (shouldShowLocalOnboarding(status)) {
+        const credentials = await loadCredentialsQuietly();
+        if (credentials) {
+          showCredentialsDialog(credentials);
+          return;
+        }
       }
+      await openLocalAxbi();
       return;
     }
     const message = status.axbi_running
@@ -670,21 +662,52 @@ function formatCredentials(credentials) {
   return `username: ${credentials.username}\npassword: ${credentials.password}`;
 }
 
-function showCredentialsToast(credentials) {
-  if (!elements.credentialsToast || !elements.credentialsToastText) {
+function showCredentialsDialog(credentials) {
+  if (!elements.credentialsDialog) {
     return;
   }
   const text = formatCredentials(credentials);
-  elements.credentialsToastText.textContent = text;
+  elements.credentialUsername.value = credentials.username;
+  elements.credentialPassword.value = credentials.password;
+  elements.credentialPassword.type = "text";
+  elements.toggleCredentialPassword?.setAttribute("aria-label", "Hide password");
+  elements.toggleCredentialPassword?.setAttribute("title", "Hide password");
   elements.credentialsBox.classList.remove("hidden");
   elements.credentialsBox.textContent = text;
-  elements.credentialsToast.classList.remove("hidden");
+  elements.credentialsDialog.classList.remove("hidden");
+  elements.copyCredentials?.focus();
 }
 
-function hideCredentialsToast() {
-  if (elements.credentialsToast) {
-    elements.credentialsToast.classList.add("hidden");
+function hideCredentialsDialog() {
+  elements.credentialsDialog?.classList.add("hidden");
+  if (elements.credentialUsername) {
+    elements.credentialUsername.value = "";
   }
+  if (elements.credentialPassword) {
+    elements.credentialPassword.value = "";
+  }
+  if (elements.credentialsBox) {
+    elements.credentialsBox.textContent = "";
+    elements.credentialsBox.classList.add("hidden");
+  }
+}
+
+function isCredentialsDialogOpen() {
+  return Boolean(
+    elements.credentialsDialog &&
+      !elements.credentialsDialog.classList.contains("hidden"),
+  );
+}
+
+function toggleCredentialPassword() {
+  if (!elements.credentialPassword) {
+    return;
+  }
+  const hidePassword = elements.credentialPassword.type === "text";
+  elements.credentialPassword.type = hidePassword ? "password" : "text";
+  const label = hidePassword ? "Show password" : "Hide password";
+  elements.toggleCredentialPassword?.setAttribute("aria-label", label);
+  elements.toggleCredentialPassword?.setAttribute("title", label);
 }
 
 async function loadCredentialsQuietly() {
@@ -703,7 +726,7 @@ async function showCredentials() {
     setBusy(true, "Reading local admin credentials");
     await nextPaint();
     const credentials = await invoke("get_local_admin_credentials");
-    showCredentialsToast(credentials);
+    showCredentialsDialog(credentials);
     setActivity("Credentials loaded", "ok");
   } catch (error) {
     const message = errorMessage(error);
@@ -718,7 +741,12 @@ async function showCredentials() {
 
 async function copyCredentialsToClipboard() {
   const text =
-    elements.credentialsToastText?.textContent ||
+    (elements.credentialUsername?.value && elements.credentialPassword?.value
+      ? formatCredentials({
+          username: elements.credentialUsername.value,
+          password: elements.credentialPassword.value,
+        })
+      : "") ||
     elements.credentialsBox?.textContent ||
     "";
   if (!text) {
@@ -758,14 +786,27 @@ async function loadLogs() {
   }
 }
 
-function openLocalAxbi() {
+async function openLocalAxbi() {
   if (!currentStatus || !currentStatus.web_url) {
     setActivity("Local AX BI URL is unavailable", "bad");
     return;
   }
-  biSource = "local";
-  showBiFrame(currentStatus.web_url);
-  closeSettings();
+  try {
+    biSource = "local";
+    setActivity("Opening local AX BI");
+    await invoke("open_local_axbi_window");
+    hideCredentialsDialog();
+    closeSettings();
+    currentStatus.onboarding_required = false;
+    setActivity("Ready", "ok");
+  } catch (error) {
+    setActivity(errorMessage(error), "bad");
+  }
+}
+
+async function copyAndOpenLocalAxbi() {
+  await copyCredentialsToClipboard();
+  await openLocalAxbi();
 }
 
 function goHome() {
@@ -819,11 +860,14 @@ function openAdvancedSettings() {
 async function startLocalFromHome() {
   if (currentStatus && currentStatus.axbi_healthy && currentStatus.web_url) {
     biSource = "local";
-    showBiFrame(currentStatus.web_url);
-    const credentials = await loadCredentialsQuietly();
-    if (credentials) {
-      showCredentialsToast(credentials);
+    if (shouldShowLocalOnboarding(currentStatus)) {
+      const credentials = await loadCredentialsQuietly();
+      if (credentials) {
+        showCredentialsDialog(credentials);
+        return;
+      }
     }
+    await openLocalAxbi();
     return;
   }
 
@@ -912,8 +956,11 @@ function wireEvents() {
   });
   elements.credentials.addEventListener("click", showCredentials);
   elements.copyCredentials?.addEventListener("click", copyCredentialsToClipboard);
-  elements.dismissCredentials?.addEventListener("click", hideCredentialsToast);
-  elements.openLocal.addEventListener("click", openLocalAxbi);
+  elements.openWithCredentials?.addEventListener("click", copyAndOpenLocalAxbi);
+  elements.toggleCredentialPassword?.addEventListener("click", toggleCredentialPassword);
+  elements.dismissCredentials?.addEventListener("click", hideCredentialsDialog);
+  elements.credentialsBackdrop?.addEventListener("click", hideCredentialsDialog);
+  elements.openLocal.addEventListener("click", startLocalFromHome);
   elements.loadLogs.addEventListener("click", loadLogs);
   elements.themeControl.addEventListener("click", (event) => {
     const option = event.target.closest("[data-theme-mode]");
@@ -932,6 +979,10 @@ function wireEvents() {
     .addEventListener("change", handleSystemThemeChange);
 
   window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isCredentialsDialogOpen()) {
+      hideCredentialsDialog();
+      return;
+    }
     if (event.key === "Escape" && isSettingsOpen()) {
       closeSettings();
     }

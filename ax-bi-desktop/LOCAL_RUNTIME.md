@@ -65,6 +65,7 @@ The native runtime manager writes files under the Tauri app data directory:
 
 ```text
 <app-data-dir>/local-runtime/
+├── .admin-onboarding-complete
 ├── .env
 └── docker-compose.yml
 ```
@@ -73,7 +74,13 @@ The generated `.env` contains local-only secrets:
 
 - `AX_BI_SECRET_KEY` (random)
 - `DATABASE_PASSWORD` (random)
-- `ADMIN_PASSWORD` (default `admin` — local desktop default login is `admin` / `admin`)
+- `ADMIN_PASSWORD` (random, generated when the runtime is first prepared)
+- `COLIMA_PROFILE` (`ax-bi` for new installs; an existing managed `default`
+  profile is adopted during upgrade)
+
+Desktop displays the local admin username and generated password before opening
+AX BI for the first time. The credentials remain available from **Settings >
+Advanced runtime > Credentials**. Updates preserve existing `.env` credentials.
 
 The generated Compose stack uses published images:
 
@@ -86,6 +93,9 @@ Release builds should pin these tags to the AX BI Desktop release train.
 
 **Yes — both macOS and Windows run local AX BI via Docker.** Compose YAML, image
 tags, and loopback ports are identical. Only the container engine adapter differs.
+
+On macOS, Desktop validates the selected Colima profile before startup. Profiles
+below 4 CPUs or 8 GiB memory are restarted with the recommended resources.
 
 ### macOS — Colima (isolated)
 
