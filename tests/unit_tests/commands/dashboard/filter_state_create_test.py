@@ -77,7 +77,7 @@ def test_run_skips_cache_write_for_unchanged_tab_state():
     cmd_params = CommandParameters(
         resource_id=1,
         value='{"a": 1}',
-        tab_id="tab-1",
+        tab_id=1,
     )
 
     with (

@@ -75,7 +75,7 @@ def test_update_filter_state_skips_unchanged_cache_entry() -> None:
         resource_id=1,
         key="key",
         value='{"a": 1}',
-        tab_id="tab-1",
+        tab_id=1,
     )
 
     with (
