@@ -73,6 +73,10 @@ import {
   useInitialization,
 } from './state';
 import { createFilterKey, updateFilterKey } from './keyValue';
+import {
+  isSamePublishedFilterState,
+  PublishedFilterState,
+} from './publishState';
 import ActionButtons from './ActionButtons';
 import Horizontal from './Horizontal';
 import Vertical from './Vertical';
@@ -101,6 +105,7 @@ const publishDataMask = debounce(
     updateKey,
     dataMaskSelected: DataMaskStateWithId,
     tabId,
+    lastPublishedFilterState,
   ) => {
     const { location } = history;
     const { search } = location;
@@ -123,6 +128,18 @@ const publishDataMask = debounce(
     const dataMask = JSON.stringify(dataMaskSelected);
 
     if (
+      isSamePublishedFilterState(
+        lastPublishedFilterState.current,
+        dashboardId,
+        tabId,
+        nativeFiltersCacheKey,
+        dataMask,
+      )
+    ) {
+      return;
+    }
+
+    if (
       updateKey &&
       nativeFiltersCacheKey &&
       (await updateFilterKey(
@@ -137,6 +154,12 @@ const publishDataMask = debounce(
       dataMaskKey = await createFilterKey(dashboardId, dataMask, tabId);
     }
     if (dataMaskKey) {
+      lastPublishedFilterState.current = {
+        dashboardId,
+        tabId,
+        cacheKey: dataMaskKey,
+        value: dataMask,
+      };
       newParams.set(URL_PARAMS.nativeFiltersKey.name, dataMaskKey);
     }
 
@@ -185,6 +208,7 @@ const FilterBar: FC<FiltersBarProps> = ({
   const chartCustomizationValues = useChartCustomizationConfiguration();
   const dispatch = useDispatch();
   const [updateKey, setUpdateKey] = useState(0);
+  const lastPublishedFilterState = useRef<PublishedFilterState | null>(null);
   const tabId = useTabId();
   const filters = useFilters();
   const previousFilters = usePrevious(filters);
@@ -406,7 +430,14 @@ const FilterBar: FC<FiltersBarProps> = ({
   useEffect(() => {
     // embedded users can't persist filter combinations
     if (user?.userId) {
-      publishDataMask(history, dashboardId, updateKey, dataMaskApplied, tabId);
+      publishDataMask(
+        history,
+        dashboardId,
+        updateKey,
+        dataMaskApplied,
+        tabId,
+        lastPublishedFilterState,
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dashboardId, dataMaskAppliedText, history, updateKey, tabId]);
