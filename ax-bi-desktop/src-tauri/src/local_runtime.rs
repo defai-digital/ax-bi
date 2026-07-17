@@ -37,11 +37,9 @@ use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager, Runtime};
 
 const AXBI_COLIMA_PROFILE: &str = "ax-bi";
+const COLIMA_PROFILE_ENV: &str = "COLIMA_PROFILE";
 const AXBI_COMPOSE_PROJECT: &str = "axbi";
 const AXBI_ADMIN_USERNAME: &str = "admin";
-/// Default local admin password for desktop-managed instances.
-/// Matches docker/docker-init.sh default (`admin` / `admin`).
-const AXBI_ADMIN_PASSWORD: &str = "admin";
 const AXBI_HEALTH_HOST: &str = "127.0.0.1";
 const AXBI_HEALTH_PORT: u16 = 8088;
 const AXBI_MCP_PORT: u16 = 5008;
@@ -53,6 +51,7 @@ const STARTUP_HEALTH_RECONCILE_POLL: Duration = Duration::from_secs(2);
 const LOCAL_RUNTIME_DIR: &str = "local-runtime";
 const LOCAL_ENV_FILE: &str = ".env";
 const LOCAL_COMPOSE_FILE: &str = "docker-compose.yml";
+const LOCAL_ONBOARDING_COMPLETE_FILE: &str = ".admin-onboarding-complete";
 const MAX_LOG_TAIL_LINES: u16 = 500;
 const DOCKER_ENGINE_WAIT: Duration = Duration::from_secs(120);
 const DOCKER_ENGINE_POLL: Duration = Duration::from_secs(2);
@@ -311,6 +310,7 @@ pub struct LocalRuntimeStatus {
     pub services_url: String,
     pub admin_username: String,
     pub admin_password_present: bool,
+    pub onboarding_required: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -389,8 +389,9 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
 
     let engine = RuntimeEngine::current();
     log::info!("Checking {} status", engine.label());
-    let engine_running = engine_is_running();
-    let docker_host = docker_host()?;
+    let colima_profile = configured_colima_profile(&env_file);
+    let engine_running = engine_is_running(&colima_profile);
+    let docker_host = docker_host(&colima_profile)?;
     log::info!("Checking Docker status");
     let docker_ready = docker_daemon_ready(&docker_host);
     log::info!("Checking Compose service status");
@@ -403,9 +404,11 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
             .flatten()
             .map(|password| !password.is_empty())
             .unwrap_or(false);
+    let onboarding_required =
+        admin_password_present && !onboarding_complete_file(&runtime_dir).exists();
 
     let colima_profile = match engine {
-        RuntimeEngine::Colima => AXBI_COLIMA_PROFILE.to_string(),
+        RuntimeEngine::Colima => colima_profile,
         RuntimeEngine::Docker => String::new(),
     };
     let can_start_local = dependencies.iter().all(|dependency| dependency.installed);
@@ -435,6 +438,7 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
         services_url: urls.services_url,
         admin_username: AXBI_ADMIN_USERNAME.to_string(),
         admin_password_present,
+        onboarding_required,
     })
 }
 
@@ -447,7 +451,7 @@ pub fn start<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
     ensure_required_ports_available(&runtime_dir)?;
-    let engine_output = ensure_engine()?;
+    let engine_output = ensure_engine(&runtime_dir)?;
     let compose_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
         .map_err(|error| format_compose_error("start", &error))?;
     wait_for_runtime_health(&runtime_dir)?;
@@ -475,7 +479,7 @@ pub fn stop<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput,
 pub fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
-    let engine_output = ensure_engine()?;
+    let engine_output = ensure_engine(&runtime_dir)?;
     let stop_output = run_docker_compose(&runtime_dir, &["stop"])
         .map_err(|error| format_compose_error("stop", &error))?;
     ensure_required_ports_available(&runtime_dir)?;
@@ -499,7 +503,7 @@ pub fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutp
 pub fn update<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
-    let engine_output = ensure_engine()?;
+    let engine_output = ensure_engine(&runtime_dir)?;
     let pull_output = run_docker_compose(&runtime_dir, &["pull"])
         .map_err(|error| format_compose_error("pull", &error))?;
     ensure_required_ports_available(&runtime_dir)?;
@@ -549,12 +553,30 @@ pub fn credentials<R: Runtime>(app: &AppHandle<R>) -> Result<LocalAdminCredentia
     let env_file = env_file(&runtime_dir(app)?);
     let password = read_env_value(&env_file, "ADMIN_PASSWORD")?
         .filter(|value| !value.is_empty())
-        .unwrap_or_else(|| AXBI_ADMIN_PASSWORD.to_string());
+        .ok_or_else(|| {
+            "Local admin credentials are not available; prepare the runtime first".to_string()
+        })?;
 
     Ok(LocalAdminCredentials {
         username: AXBI_ADMIN_USERNAME.to_string(),
         password,
     })
+}
+
+pub fn complete_admin_onboarding<R: Runtime>(app: &AppHandle<R>) -> Result<(), String> {
+    let runtime_dir = runtime_dir(app)?;
+    let env_path = env_file(&runtime_dir);
+    let password_present = read_env_value(&env_path, "ADMIN_PASSWORD")?
+        .map(|value| !value.is_empty())
+        .unwrap_or(false);
+    if !password_present {
+        return Err(
+            "Local admin credentials are not available; prepare the runtime first".to_string(),
+        );
+    }
+
+    fs::write(onboarding_complete_file(&runtime_dir), "complete\n")
+        .map_err(|error| format!("Failed to save local admin onboarding state: {error}"))
 }
 
 fn ensure_runtime_files<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
@@ -578,6 +600,7 @@ fn sync_runtime_files(compose_path: &Path, env_path: &Path) -> Result<(), String
             .map_err(|error| format!("Failed to write local runtime environment: {error}"))?;
     } else {
         ensure_runtime_secret(env_path)?;
+        ensure_colima_profile(env_path, compose_path)?;
     }
 
     Ok(())
@@ -598,13 +621,18 @@ fn env_file(runtime_dir: &Path) -> PathBuf {
     runtime_dir.join(LOCAL_ENV_FILE)
 }
 
+fn onboarding_complete_file(runtime_dir: &Path) -> PathBuf {
+    runtime_dir.join(LOCAL_ONBOARDING_COMPLETE_FILE)
+}
+
 fn build_env_file() -> Result<String, String> {
     Ok(format!(
         r#"COMPOSE_PROJECT_NAME={AXBI_COMPOSE_PROJECT}
 
 AX_BI_SECRET_KEY={}
 DATABASE_PASSWORD={}
-ADMIN_PASSWORD={AXBI_ADMIN_PASSWORD}
+ADMIN_PASSWORD={}
+COLIMA_PROFILE={AXBI_COLIMA_PROFILE}
 
 AXBI_IMAGE=ghcr.io/defai-digital/ax-bi:latest
 AX_SERVICES_IMAGE=ghcr.io/defai-digital/ax-bi-services:latest
@@ -648,6 +676,7 @@ MCP_REQUIRED_SCOPES=
 "#,
         random_hex(48)?,
         random_hex(32)?,
+        random_hex(18)?,
     ))
 }
 
@@ -672,6 +701,83 @@ fn ensure_runtime_secret_content(content: &str) -> Result<Option<String>, String
     }
     updated.push_str(&format!("AX_BI_SECRET_KEY={}\n", random_hex(48)?));
     Ok(Some(updated))
+}
+
+fn ensure_colima_profile(env_path: &Path, compose_path: &Path) -> Result<(), String> {
+    if !cfg!(target_os = "macos")
+        || read_env_value(env_path, COLIMA_PROFILE_ENV)?
+            .filter(|profile| valid_colima_profile(profile))
+            .is_some()
+    {
+        return Ok(());
+    }
+
+    let runtime_dir = compose_path.parent().unwrap_or_else(|| Path::new("."));
+    // Legacy Desktop releases used Colima's default profile. New environments
+    // write `ax-bi` into .env immediately, so a missing key is an upgrade case.
+    let profile = if colima_profile_has_managed_axbi(AXBI_COLIMA_PROFILE, runtime_dir) {
+        AXBI_COLIMA_PROFILE
+    } else {
+        "default"
+    };
+    let mut content = fs::read_to_string(env_path)
+        .map_err(|error| format!("Failed to read local runtime environment: {error}"))?;
+    if !content.ends_with('\n') {
+        content.push('\n');
+    }
+    content.push_str(&format!("{COLIMA_PROFILE_ENV}={profile}\n"));
+    fs::write(env_path, content)
+        .map_err(|error| format!("Failed to save the local Colima profile: {error}"))
+}
+
+fn configured_colima_profile(env_path: &Path) -> String {
+    read_env_value(env_path, COLIMA_PROFILE_ENV)
+        .ok()
+        .flatten()
+        .filter(|profile| valid_colima_profile(profile))
+        .unwrap_or_else(|| AXBI_COLIMA_PROFILE.to_string())
+}
+
+fn valid_colima_profile(profile: &str) -> bool {
+    !profile.is_empty()
+        && profile
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || matches!(character, '-' | '_'))
+}
+
+fn colima_profile_has_managed_axbi(profile: &str, runtime_dir: &Path) -> bool {
+    let Ok(host) = docker_host(profile) else {
+        return false;
+    };
+    if !docker_daemon_ready(&host) {
+        return false;
+    }
+
+    let project_filter = format!("label=com.docker.compose.project={AXBI_COMPOSE_PROJECT}");
+    let service_filter = "label=com.docker.compose.service=ax-bi";
+    let runtime_filter = format!(
+        "label=com.docker.compose.project.working_dir={}",
+        path_to_string(runtime_dir)
+    );
+    run_command(
+        "docker",
+        &[
+            "ps",
+            "--all",
+            "--filter",
+            &project_filter,
+            "--filter",
+            service_filter,
+            "--filter",
+            &runtime_filter,
+            "--format",
+            "{{.ID}}",
+        ],
+        None,
+        &[("DOCKER_HOST", &host)],
+    )
+    .map(|output| !output.stdout.trim().is_empty())
+    .unwrap_or(false)
 }
 
 fn random_hex(byte_count: usize) -> Result<String, String> {
@@ -832,25 +938,27 @@ fn first_line(value: &str) -> Option<String> {
 }
 
 /// Ensure the platform container engine is running.
-fn ensure_engine() -> Result<CommandOutput, String> {
+fn ensure_engine(runtime_dir: &Path) -> Result<CommandOutput, String> {
     match RuntimeEngine::current() {
-        RuntimeEngine::Colima => run_colima_start(),
-        RuntimeEngine::Docker => ensure_docker_engine(),
+        RuntimeEngine::Colima => {
+            run_colima_start(&configured_colima_profile(&env_file(runtime_dir)))
+        }
+        RuntimeEngine::Docker => ensure_docker_engine(runtime_dir),
     }
 }
 
-fn engine_is_running() -> bool {
+fn engine_is_running(colima_profile: &str) -> bool {
     match RuntimeEngine::current() {
         RuntimeEngine::Colima => {
-            command_succeeds("colima", &["status", "--profile", AXBI_COLIMA_PROFILE])
+            command_succeeds("colima", &["status", "--profile", colima_profile])
         }
-        RuntimeEngine::Docker => docker_host()
+        RuntimeEngine::Docker => docker_host(colima_profile)
             .map(|host| docker_daemon_ready(&host))
             .unwrap_or(false),
     }
 }
 
-fn run_colima_start() -> Result<CommandOutput, String> {
+fn run_colima_start(profile: &str) -> Result<CommandOutput, String> {
     // Explicit limactl check gives a clearer error than Colima's PATH fatality.
     let limactl = resolve_program("limactl");
     if !limactl.is_file() {
@@ -860,12 +968,28 @@ fn run_colima_start() -> Result<CommandOutput, String> {
             .to_string());
     }
 
-    run_command(
+    let mut prior_output = CommandOutput {
+        stdout: String::new(),
+        stderr: String::new(),
+    };
+    if command_succeeds("colima", &["status", "--profile", profile]) {
+        if colima_resources_sufficient(profile) {
+            return Ok(CommandOutput {
+                stdout: format!(
+                    "Colima profile {profile} is already running with sufficient resources"
+                ),
+                stderr: String::new(),
+            });
+        }
+        prior_output = run_command("colima", &["stop", "--profile", profile], None, &[])?;
+    }
+
+    let start_output = run_command(
         "colima",
         &[
             "start",
             "--profile",
-            AXBI_COLIMA_PROFILE,
+            profile,
             "--runtime",
             "docker",
             "--cpu",
@@ -876,11 +1000,38 @@ fn run_colima_start() -> Result<CommandOutput, String> {
         ],
         None,
         &[],
-    )
+    )?;
+    Ok(CommandOutput {
+        stdout: join_outputs(&prior_output.stdout, &start_output.stdout),
+        stderr: join_outputs(&prior_output.stderr, &start_output.stderr),
+    })
 }
 
-fn ensure_docker_engine() -> Result<CommandOutput, String> {
-    let docker_host = docker_host()?;
+fn colima_resources_sufficient(profile: &str) -> bool {
+    #[derive(Deserialize)]
+    struct ColimaStatus {
+        cpu: u64,
+        memory: u64,
+    }
+
+    let Ok(output) = run_command(
+        "colima",
+        &["status", "--profile", profile, "--json"],
+        None,
+        &[],
+    ) else {
+        return false;
+    };
+    let Ok(status) = serde_json::from_str::<ColimaStatus>(&output.stdout) else {
+        return false;
+    };
+    let required_cpu = AXBI_COLIMA_CPUS.parse::<u64>().unwrap_or(4);
+    let required_memory = AXBI_COLIMA_MEMORY_GB.parse::<u64>().unwrap_or(8) * 1024 * 1024 * 1024;
+    status.cpu >= required_cpu && status.memory >= required_memory
+}
+
+fn ensure_docker_engine(runtime_dir: &Path) -> Result<CommandOutput, String> {
+    let docker_host = docker_host(&configured_colima_profile(&env_file(runtime_dir)))?;
     if docker_daemon_ready(&docker_host) {
         return Ok(CommandOutput {
             stdout: format!(
@@ -968,7 +1119,7 @@ fn run_docker_compose_owned(
         path_to_string(&compose_path),
     ];
     args.extend(compose_args);
-    let docker_host = docker_host()?;
+    let docker_host = docker_host(&configured_colima_profile(&env_file(runtime_dir)))?;
     let envs = docker_host_envs(&docker_host);
     let env_refs: Vec<(&str, &str)> = envs.iter().map(|(k, v)| (k.as_str(), v.as_str())).collect();
     let arg_refs: Vec<&str> = args.iter().map(String::as_str).collect();
@@ -1318,12 +1469,12 @@ fn format_output(label: &str, value: &str) -> String {
     }
 }
 
-fn docker_host() -> Result<String, String> {
+fn docker_host(colima_profile: &str) -> Result<String, String> {
     match RuntimeEngine::current() {
         RuntimeEngine::Colima => {
             let home = home_dir()?;
             Ok(format!(
-                "unix://{}/.colima/{AXBI_COLIMA_PROFILE}/docker.sock",
+                "unix://{}/.colima/{colima_profile}/docker.sock",
                 path_to_string(&home)
             ))
         }
@@ -1466,11 +1617,11 @@ fn path_to_string(path: &Path) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        augmented_path, build_env_file, docker_host, ensure_runtime_secret_content, platform_id,
-        platform_label, program_filename, read_env_value_from_str, resolve_program, runtime_urls,
-        tail_lines, validate_log_service, RuntimeEngine, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME,
-        AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML,
-        MAX_LOG_TAIL_LINES,
+        augmented_path, build_env_file, configured_colima_profile, docker_host,
+        ensure_runtime_secret_content, platform_id, platform_label, program_filename,
+        read_env_value_from_str, resolve_program, runtime_urls, tail_lines, valid_colima_profile,
+        validate_log_service, RuntimeEngine, AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS,
+        AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
     };
     use std::fs;
     use std::path::Path;
@@ -1489,9 +1640,12 @@ mod tests {
 
         assert!(read_env_value_from_str(&env_file, "AX_BI_SECRET_KEY").is_some());
         assert!(read_env_value_from_str(&env_file, "DATABASE_PASSWORD").is_some());
+        let admin_password = read_env_value_from_str(&env_file, "ADMIN_PASSWORD").unwrap();
+        assert_eq!(admin_password.len(), 36);
+        assert_ne!(admin_password, "admin");
         assert_eq!(
-            read_env_value_from_str(&env_file, "ADMIN_PASSWORD").unwrap(),
-            AXBI_ADMIN_PASSWORD
+            read_env_value_from_str(&env_file, "COLIMA_PROFILE").unwrap(),
+            AXBI_COLIMA_PROFILE
         );
         assert_eq!(
             read_env_value_from_str(&env_file, "TALISMAN_ENABLED").unwrap(),
@@ -1507,6 +1661,22 @@ mod tests {
     fn generated_colima_start_uses_recommended_resources() {
         assert_eq!(AXBI_COLIMA_CPUS, "4");
         assert_eq!(AXBI_COLIMA_MEMORY_GB, "8");
+    }
+
+    #[test]
+    fn configured_colima_profile_accepts_safe_names_and_rejects_paths() {
+        let env_path =
+            std::env::temp_dir().join(format!("axbi-profile-test-{}.env", std::process::id()));
+        fs::write(&env_path, "COLIMA_PROFILE=default\n").unwrap();
+        assert_eq!(configured_colima_profile(&env_path), "default");
+
+        fs::write(&env_path, "COLIMA_PROFILE=../../other\n").unwrap();
+        assert_eq!(configured_colima_profile(&env_path), AXBI_COLIMA_PROFILE);
+        let _ = fs::remove_file(&env_path);
+
+        assert!(valid_colima_profile("team_ax-bi"));
+        assert!(!valid_colima_profile(""));
+        assert!(!valid_colima_profile("../ax-bi"));
     }
 
     #[test]
@@ -1584,7 +1754,7 @@ mod tests {
 
     #[test]
     fn docker_host_matches_platform_engine() {
-        let host = docker_host().unwrap();
+        let host = docker_host(AXBI_COLIMA_PROFILE).unwrap();
         match RuntimeEngine::current() {
             RuntimeEngine::Colima => {
                 assert!(host.contains(AXBI_COLIMA_PROFILE));

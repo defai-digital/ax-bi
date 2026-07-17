@@ -419,60 +419,80 @@ button {
   font-weight: 550;
 }
 
-.credentials-toast {
-  position: fixed;
-  right: 16px;
-  bottom: 16px;
-  z-index: 55;
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  width: min(360px, calc(100vw - 32px));
-  border: 1px solid var(--warn-border);
+.onboarding-overlay {
+  z-index: 60;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.onboarding-dialog {
+  position: relative;
+  z-index: 1;
+  width: min(460px, 100%);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  padding: 12px 12px 12px 14px;
+  padding: 22px;
   background: var(--surface);
   color: var(--text);
   box-shadow: var(--shadow-lg);
 }
 
-.credentials-toast.hidden {
-  display: none !important;
+.onboarding-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.credentials-toast-body {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.credentials-toast-body strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 13px;
+.onboarding-header h2 {
+  margin: 2px 0 0;
+  font-size: 19px;
   font-weight: 650;
 }
 
-.credentials-toast-text {
+.onboarding-kicker {
   margin: 0;
-  color: var(--warn-text);
+  color: var(--ok);
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.onboarding-copy {
+  margin: 12px 0 18px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.onboarding-fields {
+  display: grid;
+  gap: 12px;
+}
+
+.password-field {
+  position: relative;
+  display: block;
+}
+
+.password-field input {
+  padding-right: 42px;
+  color: var(--text);
   font-family: var(--mono);
-  font-size: 12px;
-  line-height: 1.45;
-  white-space: pre-wrap;
-  word-break: break-word;
 }
 
-.credentials-toast-actions {
+.password-toggle {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+}
+
+.onboarding-actions {
   display: flex;
-  align-items: center;
-  gap: 4px;
-  flex: 0 0 auto;
-}
-
-.credentials-toast-actions .button {
-  min-height: 30px;
-  padding: 0 10px;
-  font-size: 12px;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
 }
 
 .spinner {

@@ -23,18 +23,15 @@
  */
 
 /**
- * Whether status updates should auto-open the local BI iframe.
- * Skipped when the user chose Desktop home (preferHomeView) or is on remote.
+ * Whether Desktop must hand the local admin credentials to the user before
+ * opening the first-party AX BI webview.
  */
-export function shouldAutoOpenLocalBi({
-  biSource,
-  preferHomeView,
-  status,
-} = {}) {
-  return (
-    biSource === "local" &&
-    !preferHomeView &&
-    Boolean(status && status.axbi_healthy && status.web_url)
+export function shouldShowLocalOnboarding(status) {
+  return Boolean(
+    status &&
+      status.axbi_healthy &&
+      status.onboarding_required &&
+      status.admin_password_present,
   );
 }
 
