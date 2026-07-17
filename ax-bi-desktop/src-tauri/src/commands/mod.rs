@@ -19,7 +19,10 @@
 
 use serde::{Deserialize, Serialize};
 use std::path::Path;
-use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
+use tauri::{
+    utils::config::WebviewUrl, AppHandle, Manager, Runtime, WebviewWindow, WebviewWindowBuilder,
+    WindowEvent,
+};
 use url::Url;
 
 use crate::local_runtime;
@@ -33,6 +36,7 @@ pub struct AppConfig {
 }
 
 const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:8088";
+const LOCAL_AXBI_WINDOW_LABEL: &str = "local-axbi";
 const MAX_NOTIFICATION_TITLE_CHARS: usize = 128;
 const MAX_NOTIFICATION_BODY_CHARS: usize = 1024;
 
@@ -194,6 +198,27 @@ fn is_launcher_url(url: &Url) -> bool {
     url.scheme() == "file" && file_url_is_launcher_index(url)
 }
 
+fn is_allowed_local_axbi_navigation(candidate: &Url, expected: &Url) -> bool {
+    if candidate.as_str() == "about:blank" {
+        return true;
+    }
+
+    candidate.scheme() == expected.scheme()
+        && candidate.host_str() == expected.host_str()
+        && candidate.port_or_known_default() == expected.port_or_known_default()
+}
+
+fn validate_local_axbi_url(url: &Url) -> Result<(), String> {
+    let loopback_host = matches!(url.host_str(), Some("127.0.0.1" | "localhost" | "::1"));
+    if url.scheme() != "http" || !loopback_host || url.username() != "" || url.password().is_some()
+    {
+        return Err(
+            "Local AX BI must use a loopback HTTP URL without embedded credentials".to_string(),
+        );
+    }
+    Ok(())
+}
+
 fn file_url_is_launcher_index(url: &Url) -> bool {
     let Ok(path) = url.to_file_path() else {
         return false;
@@ -322,10 +347,78 @@ pub async fn get_local_admin_credentials<R: Runtime>(
     local_runtime::credentials(&app)
 }
 
+#[tauri::command]
+pub async fn open_local_axbi_window<R: Runtime>(
+    app: AppHandle<R>,
+    window: WebviewWindow<R>,
+) -> Result<(), String> {
+    ensure_launcher_window(&window)?;
+    let status = local_runtime::status(&app)?;
+    if !status.axbi_healthy {
+        return Err("Local AX BI is not healthy yet".to_string());
+    }
+
+    let url = Url::parse(&status.web_url)
+        .map_err(|error| format!("Local AX BI URL is invalid: {error}"))?;
+    validate_local_axbi_url(&url)?;
+
+    if let Some(existing) = app.get_webview_window(LOCAL_AXBI_WINDOW_LABEL) {
+        existing
+            .navigate(url)
+            .map_err(|error| format!("Failed to navigate local AX BI window: {error}"))?;
+        existing
+            .show()
+            .map_err(|error| format!("Failed to show local AX BI window: {error}"))?;
+        existing
+            .set_focus()
+            .map_err(|error| format!("Failed to focus local AX BI window: {error}"))?;
+        local_runtime::complete_admin_onboarding(&app)?;
+        window
+            .hide()
+            .map_err(|error| format!("Failed to hide AX BI launcher: {error}"))?;
+        return Ok(());
+    }
+
+    let expected_url = url.clone();
+    let data_directory = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| format!("Failed to resolve AX BI webview data directory: {error}"))?
+        .join("webview-data");
+    let axbi_window =
+        WebviewWindowBuilder::new(&app, LOCAL_AXBI_WINDOW_LABEL, WebviewUrl::External(url))
+            .title("AX BI")
+            .inner_size(1400.0, 900.0)
+            .min_inner_size(800.0, 600.0)
+            .center()
+            .incognito(false)
+            .data_directory(data_directory)
+            .on_navigation(move |candidate| {
+                is_allowed_local_axbi_navigation(candidate, &expected_url)
+            })
+            .build()
+            .map_err(|error| format!("Failed to open local AX BI window: {error}"))?;
+
+    let launcher = window.clone();
+    axbi_window.on_window_event(move |event| {
+        if matches!(event, WindowEvent::Destroyed) {
+            let _ = launcher.show();
+            let _ = launcher.set_focus();
+        }
+    });
+
+    local_runtime::complete_admin_onboarding(&app)?;
+    window
+        .hide()
+        .map_err(|error| format!("Failed to hide AX BI launcher: {error}"))?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        is_launcher_url, normalize_server_url, validate_notification_input, DEFAULT_SERVER_URL,
+        is_allowed_local_axbi_navigation, is_launcher_url, normalize_server_url,
+        validate_local_axbi_url, validate_notification_input, DEFAULT_SERVER_URL,
     };
     use url::Url;
 
@@ -467,5 +560,27 @@ mod tests {
         assert!(!is_launcher_url(
             &Url::parse("https://ax-bi.example.test/index.html").unwrap()
         ));
+    }
+
+    #[test]
+    fn local_axbi_window_only_allows_its_loopback_origin() {
+        let expected = Url::parse("http://127.0.0.1:18088/ax-bi/welcome/").unwrap();
+        assert!(validate_local_axbi_url(&expected).is_ok());
+        assert!(is_allowed_local_axbi_navigation(
+            &Url::parse("http://127.0.0.1:18088/login/").unwrap(),
+            &expected
+        ));
+        assert!(!is_allowed_local_axbi_navigation(
+            &Url::parse("http://127.0.0.1:8088/login/").unwrap(),
+            &expected
+        ));
+        assert!(!is_allowed_local_axbi_navigation(
+            &Url::parse("https://example.test/login/").unwrap(),
+            &expected
+        ));
+        assert!(validate_local_axbi_url(
+            &Url::parse("https://127.0.0.1:18088/ax-bi/welcome/").unwrap()
+        )
+        .is_err());
     }
 }

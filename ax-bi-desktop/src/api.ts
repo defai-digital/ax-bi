@@ -78,6 +78,7 @@ export interface LocalRuntimeStatus {
   services_url: string;
   admin_username: string;
   admin_password_present: boolean;
+  onboarding_required: boolean;
 }
 
 export interface LocalRuntimeCommandOutput {
@@ -173,7 +174,8 @@ function isLocalRuntimeStatus(value: unknown): value is LocalRuntimeStatus {
     typeof value['mcp_url'] === 'string' &&
     typeof value['services_url'] === 'string' &&
     typeof value['admin_username'] === 'string' &&
-    typeof value['admin_password_present'] === 'boolean'
+    typeof value['admin_password_present'] === 'boolean' &&
+    typeof value['onboarding_required'] === 'boolean'
   );
 }
 
@@ -328,4 +330,11 @@ export async function getLocalAdminCredentials(): Promise<LocalAdminCredentials>
   }
 
   return credentials;
+}
+
+/**
+ * Open local AX BI in its persistent, first-party webview.
+ */
+export async function openLocalAxbiWindow(): Promise<void> {
+  return invoke('open_local_axbi_window');
 }

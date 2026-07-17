@@ -1,6 +1,6 @@
 [package]
 name = "axbi-desktop"
-version = "2.0.4"
+version = "2.0.5"
 description = "AX BI Desktop Client"
 authors = ["AX BI Team"]
 license = "Apache-2.0"
