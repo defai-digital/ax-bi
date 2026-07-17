@@ -178,6 +178,13 @@ test('should display items in controls', async () => {
   expect(screen.getByText('Columns')).toBeInTheDocument();
 });
 
+test('should render datasource fields when no dropzones are registered', async () => {
+  render(<DatasourcePanel {...props} />, { useRedux: true, useDnd: true });
+
+  expect(await screen.findByText(metrics[0].metric_name)).toBeInTheDocument();
+  expect(screen.getByText(columns[0].column_name)).toBeInTheDocument();
+});
+
 test('should render the metrics', async () => {
   jest.setTimeout(10000);
   render(
