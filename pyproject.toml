@@ -124,14 +124,14 @@ dependencies = [
 
 [project.optional-dependencies]
 
-athena = ["pyathena[pandas]>=3.32.0, <4"]
+athena = ["pyathena[pandas]>=3.35.1, <4"]
 aurora-data-api = ["preset-sqlalchemy-aurora-data-api>=0.2.8,<0.3"]
 bigquery = [
     "pandas-gbq>=0.35.0",
     "sqlalchemy-bigquery>=1.17.0",
-    "google-cloud-bigquery>=3.42.1",
+    "google-cloud-bigquery>=3.42.2",
 ]
-clickhouse = ["clickhouse-connect>=1.4.1, <2.0"]
+clickhouse = ["clickhouse-connect>=1.4.2, <2.0"]
 cockroachdb = ["cockroachdb>=0.3.5, <0.4"]
 crate = ["sqlalchemy-cratedb>=0.43.1, <1"]
 d1 = [
@@ -156,7 +156,7 @@ elasticsearch = ["elasticsearch-dbapi>=0.2.13, <0.3.0"]
 exasol = ["sqlalchemy-exasol>=7.1.1, <8.0"]
 excel = ["xlrd>=2.0.2, <2.1"]
 fastmcp = [
-    "fastmcp>=3.4.2,<4.0",
+    "fastmcp>=3.4.4,<4.0",
     # tiktoken backs the response-size-guard token estimator. Without
     # it, the middleware falls back to a coarser character-based
     # heuristic that under-counts JSON-heavy MCP responses.
@@ -166,7 +166,7 @@ firebird = ["sqlalchemy-firebird>=2.2.0, <2.3"]
 firebolt = ["firebolt-sqlalchemy>=1.1.2, <2"]
 gevent = ["gevent>=26.5.0"]
 gsheets = ["shillelagh[gsheetsapi]>=1.4.4, <2"]
-hana = ["hdbcli==2.29.23", "sqlalchemy_hana==4.6.0"]
+hana = ["hdbcli==2.29.25", "sqlalchemy_hana==4.6.0"]
 hive = [
     "pyhive[hive_pure_sasl]>=0.7.0",
     "tableschema",
@@ -198,8 +198,8 @@ redshift = ["sqlalchemy-redshift>=1.0.0, <1.1"]
 risingwave = ["sqlalchemy-risingwave"]
 shillelagh = ["shillelagh[all]>=1.4.4, <2"]
 singlestore = ["sqlalchemy-singlestoredb>=1.2.1, <2"]
-snowflake = ["snowflake-sqlalchemy>=1.10.2, <2"]
-sqlite = ["syntaqlite>=0.6.0,<0.7.0"]
+snowflake = ["snowflake-sqlalchemy>=1.11.0, <2"]
+sqlite = ["syntaqlite>=0.7.1,<0.8.0"]
 spark = [
     "pyhive[hive_pure_sasl]>=0.7",
     "tableschema",
@@ -207,7 +207,7 @@ spark = [
 ]
 tdengine = [
     "taospy>=2.8.9",
-    "taos-ws-py>=0.6.9"
+    "taos-ws-py>=0.7.0"
 ]
 teradata = ["teradatasql>=20.0.0.62"]
 thumbnails = [] # deprecated, will be removed in 7.0
@@ -224,7 +224,7 @@ development = [
     "docker",
     "flask-testing",
     "freezegun",
-    "grpcio>=1.81.1",
+    "grpcio>=1.82.1",
     "openapi-spec-validator",
     "parameterized",
     "pip",
@@ -243,7 +243,7 @@ development = [
     "ruff",
     "sqloxide",
     "statsd",
-    "syntaqlite>=0.6.0,<0.7.0",
+    "syntaqlite>=0.7.1,<0.8.0",
 ]
 
 [project.urls]
