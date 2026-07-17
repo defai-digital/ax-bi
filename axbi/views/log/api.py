@@ -17,6 +17,7 @@
 from typing import Any
 
 from flask import current_app as app
+from flask_appbuilder import ModelRestApi
 from flask_appbuilder.api import expose, protect, rison as parse_rison, safe
 from flask_appbuilder.hooks import before_request
 from flask_appbuilder.models.sqla.filters import FilterRelationOneToManyEqual
@@ -28,7 +29,9 @@ from axbi.axbi_typing import FlaskResponse
 from axbi.constants import MODEL_API_RW_METHOD_PERMISSION_MAP
 from axbi.daos.log import LogDAO
 from axbi.exceptions import AxBISecurityException
+from axbi.utils.core import time_function
 from axbi.views.base_api import BaseAxBIModelRestApi, statsd_metrics
+from axbi.views.error_handling import handle_api_exception
 from axbi.views.log import LogMixin
 from axbi.views.log.schemas import (
     get_recent_activity_schema,
@@ -101,6 +104,17 @@ class LogRestApi(LogMixin, BaseAxBIModelRestApi):
         except AxBISecurityException as ex:
             return self.response(403, message=ex.message)
         return None
+
+    @handle_api_exception
+    def get_list_headless(self, **kwargs: Any) -> FlaskResponse:
+        """Return audit rows without creating another audit row for the read."""
+        duration, response = time_function(
+            ModelRestApi.get_list_headless,
+            self,
+            **kwargs,
+        )
+        self.send_stats_metrics(response, self.get_list.__name__, duration)
+        return response
 
     @expose("/recent_activity/", methods=("GET",))
     @protect()
