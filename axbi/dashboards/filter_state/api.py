@@ -53,10 +53,6 @@ class DashboardFilterStateRestApi(TemporaryCacheRestApi):
     @expose("/<int:pk>/filter_state", methods=("POST",))
     @protect()
     @safe
-    @event_logger.log_this_with_context(
-        action=lambda self, *args, **kwargs: f"{self.__class__.__name__}.post",
-        log_to_statsd=False,
-    )
     def post(self, pk: int) -> Response:
         """Create a dashboard's filter state.
         ---

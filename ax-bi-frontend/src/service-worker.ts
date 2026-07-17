@@ -63,15 +63,10 @@ declare const self: ServiceWorkerGlobal;
 const CACHE_VERSION = 'axbi-cache-v1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
-const API_CACHE = `api-${CACHE_VERSION}`;
 
 // Cache limits
 const MAX_STATIC_ENTRIES = 100;
 const MAX_DYNAMIC_ENTRIES = 50;
-const MAX_API_ENTRIES = 30;
-
-// Cache expiration (in milliseconds)
-const API_CACHE_MAX_AGE = 5 * 60 * 1000; // 5 minutes for API responses
 
 // Static assets to precache (will be populated by webpack)
 const PRECACHE_URLS: string[] = [];
@@ -84,8 +79,6 @@ const STATIC_ASSET_PATTERNS = [
 
 const API_PATTERNS = [
   /\/api\/v1\//,
-  /\/ax-bi\/csstemplateasyncparam\//,
-  /\/ax-bi\/language_pack\//,
 ];
 
 // Routes that should never be cached
@@ -155,8 +148,7 @@ async function staleWhileRevalidate(
 }
 
 /**
- * Network-first strategy for API requests
- * Tries network, falls back to cache
+ * Network-first strategy for HTML shell/navigation requests.
  */
 async function networkFirst(
   request: Request,
@@ -167,38 +159,45 @@ async function networkFirst(
   const cache = await caches.open(cacheName);
 
   try {
-    const networkResponse = await fetch(request);
-
-    // Cache successful GET responses
-    if (networkResponse.ok && request.method === 'GET') {
-      // Add timestamp header for cache age tracking
-      const responseToCache = networkResponse.clone();
-      cache.put(request, responseToCache);
+    const response = await fetch(request);
+    if (response.ok) {
+      cache.put(request, response.clone());
       trimCache(cacheName, maxEntries);
     }
-
-    return networkResponse;
+    return response;
   } catch {
-    // Network failed, try cache
     const cachedResponse = await cache.match(request);
-
     if (cachedResponse) {
-      // Check if cached response is still fresh
-      const cachedDate = cachedResponse.headers.get('date');
-      if (cachedDate) {
-        const cachedTime = new Date(cachedDate).getTime();
-        const age = Date.now() - cachedTime;
+      if (maxAge === Infinity) {
+        return cachedResponse;
+      }
 
-        if (age < maxAge) {
+      const dateHeader = cachedResponse.headers.get('date');
+      if (dateHeader) {
+        const cachedTime = new Date(dateHeader).getTime();
+        if (Date.now() - cachedTime < maxAge) {
           return cachedResponse;
         }
       }
-
-      // Return stale cache as last resort
-      return cachedResponse;
     }
 
-    // No cache, return error response
+    return new Response('', {
+      status: 503,
+      statusText: 'Service Unavailable',
+    });
+  }
+}
+
+/**
+ * Network-only strategy for API requests.
+ *
+ * Runtime metadata changes after uploads, chart saves, and dashboard edits.
+ * Serving cached API responses can leave Explore with stale columns/metrics.
+ */
+async function networkOnly(request: Request): Promise<Response> {
+  try {
+    return await fetch(request);
+  } catch {
     return new Response(JSON.stringify({ error: 'Network error' }), {
       status: 503,
       statusText: 'Service Unavailable',
@@ -212,7 +211,7 @@ async function networkFirst(
  */
 async function cleanupOldCaches(): Promise<void> {
   const cacheNames = await caches.keys();
-  const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE, API_CACHE];
+  const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE];
 
   await Promise.all(
     cacheNames
@@ -277,11 +276,9 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // API requests - network first with cache fallback
+  // API requests - network only to avoid stale metadata after uploads
   if (matchesPatterns(url.pathname, API_PATTERNS)) {
-    event.respondWith(
-      networkFirst(request, API_CACHE, MAX_API_ENTRIES, API_CACHE_MAX_AGE),
-    );
+    event.respondWith(networkOnly(request));
     return;
   }
 
