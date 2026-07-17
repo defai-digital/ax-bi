@@ -183,8 +183,8 @@ croniter==6.2.4
 cryptography==49.0.0
     # via
     #   -c requirements/base-constraint.txt
-    #   ax-bi
     #   authlib
+    #   ax-bi
     #   google-auth
     #   joserfc
     #   paramiko
@@ -240,9 +240,9 @@ et-xmlfile==2.0.0
     #   openpyxl
 exceptiongroup==1.3.0
     # via fastmcp-slim
-fastmcp==3.4.2
+fastmcp==3.4.4
     # via ax-bi
-fastmcp-slim==3.4.2
+fastmcp-slim==3.4.4
     # via fastmcp
 filelock==3.20.3
     # via
@@ -341,7 +341,7 @@ geopy==2.4.1
     #   ax-bi
 gevent==26.5.0
     # via ax-bi
-google-api-core==2.23.0
+google-api-core==2.32.0
     # via
     #   google-cloud-bigquery
     #   google-cloud-core
@@ -362,7 +362,7 @@ google-auth-oauthlib==1.2.1
     # via
     #   pandas-gbq
     #   pydata-google-auth
-google-cloud-bigquery==3.42.1
+google-cloud-bigquery==3.42.2
     # via
     #   ax-bi
     #   pandas-gbq
@@ -386,7 +386,7 @@ greenlet==3.5.3
     #   sqlalchemy
 griffelib==2.0.2
     # via fastmcp-slim
-grpcio==1.81.1
+grpcio==1.82.1
     # via
     #   ax-bi
     #   google-api-core
@@ -632,8 +632,8 @@ outcome==1.3.0.post0
 packaging==25.0
     # via
     #   -c requirements/base-constraint.txt
-    #   ax-bi
     #   apispec
+    #   ax-bi
     #   db-dtypes
     #   deprecation
     #   docker
@@ -873,8 +873,8 @@ pyxlsb==1.0.10
 pyyaml==6.0.3
     # via
     #   -c requirements/base-constraint.txt
-    #   ax-bi
     #   apispec
+    #   ax-bi
     #   fastmcp-slim
     #   jsonschema-path
     #   pre-commit
@@ -1020,7 +1020,7 @@ starlette==1.3.1
     #   mcp
 statsd==4.0.1
     # via ax-bi
-syntaqlite==0.6.0
+syntaqlite==0.7.1
     # via ax-bi
 tabulate==0.10.0
     # via
