@@ -357,7 +357,8 @@ test('should render the About section and version_string, sha or build_number wh
   // Use getAllByText to get all matching elements and check the first one
   const versionTexts = await screen.findAllByText(
     (_, element) =>
-      element?.textContent?.includes(`Version: ${version_string}`) ?? false,
+      element?.textContent?.includes(`Runtime version: ${version_string}`) ??
+      false,
   );
   const shaTexts = await screen.findAllByText(
     (_, element) =>

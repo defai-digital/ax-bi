@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{Read, Write};
-use std::net::{TcpStream, ToSocketAddrs};
+use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::thread;
@@ -42,11 +42,14 @@ const AXBI_ADMIN_USERNAME: &str = "admin";
 /// Default local admin password for desktop-managed instances.
 /// Matches docker/docker-init.sh default (`admin` / `admin`).
 const AXBI_ADMIN_PASSWORD: &str = "admin";
-const AXBI_WEB_URL: &str = "http://127.0.0.1:8088/ax-bi/welcome/";
 const AXBI_HEALTH_HOST: &str = "127.0.0.1";
 const AXBI_HEALTH_PORT: u16 = 8088;
-const AXBI_MCP_URL: &str = "http://127.0.0.1:5008/mcp";
-const AXBI_SERVICES_URL: &str = "http://127.0.0.1:5010";
+const AXBI_MCP_PORT: u16 = 5008;
+const AXBI_SERVICES_PORT: u16 = 5010;
+const AXBI_COLIMA_CPUS: &str = "4";
+const AXBI_COLIMA_MEMORY_GB: &str = "8";
+const STARTUP_HEALTH_RECONCILE_WAIT: Duration = Duration::from_secs(120);
+const STARTUP_HEALTH_RECONCILE_POLL: Duration = Duration::from_secs(2);
 const LOCAL_RUNTIME_DIR: &str = "local-runtime";
 const LOCAL_ENV_FILE: &str = ".env";
 const LOCAL_COMPOSE_FILE: &str = "docker-compose.yml";
@@ -260,9 +263,19 @@ volumes:
 pub struct LocalRuntimeDependency {
     pub name: String,
     pub command: String,
+    pub resolved_path: String,
     pub installed: bool,
     pub version: Option<String>,
     pub install_hint: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LocalRuntimePort {
+    pub name: String,
+    pub port: u16,
+    pub url: String,
+    pub available: bool,
+    pub occupied_by_axbi: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -272,6 +285,7 @@ pub struct LocalRuntimeStatus {
     pub env_file: String,
     pub configured: bool,
     pub dependencies: Vec<LocalRuntimeDependency>,
+    pub ports: Vec<LocalRuntimePort>,
     /// OS label: `macos`, `windows`, or `linux`.
     pub platform: String,
     /// Always true on desktop builds — both macOS and Windows can run local AX BI Docker.
@@ -318,6 +332,16 @@ struct CommandOutput {
     stderr: String,
 }
 
+#[derive(Debug, Clone)]
+struct RuntimeUrls {
+    web_port: u16,
+    mcp_port: u16,
+    services_port: u16,
+    web_url: String,
+    mcp_url: String,
+    services_url: String,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum RuntimeEngine {
     Colima,
@@ -355,6 +379,8 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
     let env_file = env_file(&runtime_dir);
     log::info!("Reading local runtime dependencies");
     let dependencies = dependencies();
+    let urls = runtime_urls(&env_file);
+    let ports = local_runtime_ports(&urls);
     let configured = compose_file.exists() && env_file.exists();
     if configured {
         log::info!("Syncing generated local runtime files");
@@ -370,7 +396,7 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
     log::info!("Checking Compose service status");
     let axbi_running = docker_ready && compose_services_running(&runtime_dir)?;
     log::info!("Checking AX BI HTTP health");
-    let axbi_healthy = axbi_running && local_http_healthcheck();
+    let axbi_healthy = axbi_running && local_http_healthcheck(urls.web_port);
     let admin_password_present = configured
         && read_env_value(&env_file, "ADMIN_PASSWORD")
             .ok()
@@ -390,6 +416,7 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
         env_file: path_to_string(&env_file),
         configured,
         dependencies,
+        ports,
         platform: platform_id().to_string(),
         local_runtime_supported: true,
         can_start_local,
@@ -403,9 +430,9 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
         docker_ready,
         axbi_running,
         axbi_healthy,
-        web_url: AXBI_WEB_URL.to_string(),
-        mcp_url: AXBI_MCP_URL.to_string(),
-        services_url: AXBI_SERVICES_URL.to_string(),
+        web_url: urls.web_url,
+        mcp_url: urls.mcp_url,
+        services_url: urls.services_url,
         admin_username: AXBI_ADMIN_USERNAME.to_string(),
         admin_password_present,
     })
@@ -419,9 +446,11 @@ pub fn prepare<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Str
 pub fn start<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput, String> {
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
+    ensure_required_ports_available(&runtime_dir)?;
     let engine_output = ensure_engine()?;
     let compose_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
         .map_err(|error| format_compose_error("start", &error))?;
+    wait_for_runtime_health(&runtime_dir)?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -449,8 +478,10 @@ pub fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutp
     let engine_output = ensure_engine()?;
     let stop_output = run_docker_compose(&runtime_dir, &["stop"])
         .map_err(|error| format_compose_error("stop", &error))?;
+    ensure_required_ports_available(&runtime_dir)?;
     let start_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
         .map_err(|error| format_compose_error("start", &error))?;
+    wait_for_runtime_health(&runtime_dir)?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -471,8 +502,10 @@ pub fn update<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutpu
     let engine_output = ensure_engine()?;
     let pull_output = run_docker_compose(&runtime_dir, &["pull"])
         .map_err(|error| format_compose_error("pull", &error))?;
+    ensure_required_ports_available(&runtime_dir)?;
     let start_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
         .map_err(|error| format_compose_error("start", &error))?;
+    wait_for_runtime_health(&runtime_dir)?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -772,6 +805,7 @@ fn dependency(
             } else {
                 format!("{command} {}", args.join(" "))
             },
+            resolved_path: path_to_string(&resolve_program(command)),
             installed: true,
             version: first_line(&join_outputs(&output.stdout, &output.stderr)),
             install_hint: install_hint.to_string(),
@@ -779,6 +813,7 @@ fn dependency(
         Err(_) => LocalRuntimeDependency {
             name: name.to_string(),
             command: command.to_string(),
+            resolved_path: path_to_string(&resolve_program(command)),
             installed: false,
             version: None,
             install_hint: install_hint.to_string(),
@@ -833,6 +868,10 @@ fn run_colima_start() -> Result<CommandOutput, String> {
             AXBI_COLIMA_PROFILE,
             "--runtime",
             "docker",
+            "--cpu",
+            AXBI_COLIMA_CPUS,
+            "--memory",
+            AXBI_COLIMA_MEMORY_GB,
             "--activate=false",
         ],
         None,
@@ -951,6 +990,123 @@ fn compose_services_running(runtime_dir: &Path) -> Result<bool, String> {
     )?;
 
     Ok(output.stdout.lines().any(|line| line.trim() == "ax-bi"))
+}
+
+fn wait_for_runtime_health(runtime_dir: &Path) -> Result<(), String> {
+    let deadline = Instant::now() + STARTUP_HEALTH_RECONCILE_WAIT;
+    let mut last_ps = String::new();
+    let urls = runtime_urls(&env_file(runtime_dir));
+
+    while Instant::now() < deadline {
+        if compose_services_running(runtime_dir).unwrap_or(false)
+            && local_http_healthcheck(urls.web_port)
+        {
+            return Ok(());
+        }
+
+        if let Ok(output) = run_docker_compose(runtime_dir, &["ps"]) {
+            last_ps = join_outputs(&output.stdout, &output.stderr);
+        }
+        thread::sleep(STARTUP_HEALTH_RECONCILE_POLL);
+    }
+
+    Err(format!(
+        "AX BI containers started, but the web app did not become healthy within {} seconds.{}",
+        STARTUP_HEALTH_RECONCILE_WAIT.as_secs(),
+        format_output("compose ps", &last_ps)
+    ))
+}
+
+fn local_runtime_ports(urls: &RuntimeUrls) -> Vec<LocalRuntimePort> {
+    vec![
+        local_runtime_port("AX BI web", urls.web_port, &urls.web_url, true),
+        local_runtime_port("MCP", urls.mcp_port, &urls.mcp_url, false),
+        local_runtime_port("AX services", urls.services_port, &urls.services_url, false),
+    ]
+}
+
+fn local_runtime_port(
+    name: &str,
+    port: u16,
+    url: &str,
+    check_axbi_health: bool,
+) -> LocalRuntimePort {
+    let open = tcp_port_open(port);
+    let occupied_by_axbi = if check_axbi_health {
+        open && local_http_healthcheck(port)
+    } else {
+        false
+    };
+
+    LocalRuntimePort {
+        name: name.to_string(),
+        port,
+        url: url.to_string(),
+        available: !open || occupied_by_axbi,
+        occupied_by_axbi,
+    }
+}
+
+fn ensure_required_ports_available(runtime_dir: &Path) -> Result<(), String> {
+    if compose_services_running(runtime_dir).unwrap_or(false) {
+        return Ok(());
+    }
+
+    let urls = runtime_urls(&env_file(runtime_dir));
+    let blocked: Vec<LocalRuntimePort> = local_runtime_ports(&urls)
+        .into_iter()
+        .filter(|port| !port.available)
+        .collect();
+    if blocked.is_empty() {
+        return Ok(());
+    }
+
+    let details = blocked
+        .iter()
+        .map(|port| format!("- {} port {} ({})", port.name, port.port, port.url))
+        .collect::<Vec<_>>()
+        .join("\n");
+    Err(format!(
+        "Cannot start local AX BI because required port(s) are already in use:\n{}\n\n\
+         Stop the other service or change the AX BI ports in the local runtime settings.",
+        details
+    ))
+}
+
+fn tcp_port_open(port: u16) -> bool {
+    tcp_socket_addr(port)
+        .and_then(|addr| TcpStream::connect_timeout(&addr, Duration::from_millis(250)).ok())
+        .is_some()
+}
+
+fn tcp_socket_addr(port: u16) -> Option<SocketAddr> {
+    (AXBI_HEALTH_HOST, port)
+        .to_socket_addrs()
+        .ok()
+        .and_then(|mut addresses| addresses.next())
+}
+
+fn runtime_urls(env_path: &Path) -> RuntimeUrls {
+    let web_port = read_env_port(env_path, "AXBI_PORT", AXBI_HEALTH_PORT);
+    let mcp_port = read_env_port(env_path, "MCP_PORT", AXBI_MCP_PORT);
+    let services_port = read_env_port(env_path, "AX_SERVICES_PORT", AXBI_SERVICES_PORT);
+
+    RuntimeUrls {
+        web_port,
+        mcp_port,
+        services_port,
+        web_url: format!("http://127.0.0.1:{web_port}/ax-bi/welcome/"),
+        mcp_url: format!("http://127.0.0.1:{mcp_port}/mcp"),
+        services_url: format!("http://127.0.0.1:{services_port}"),
+    }
+}
+
+fn read_env_port(env_path: &Path, key: &str, default: u16) -> u16 {
+    read_env_value(env_path, key)
+        .ok()
+        .flatten()
+        .and_then(|value| value.parse::<u16>().ok())
+        .unwrap_or(default)
 }
 
 fn command_succeeds(program: &str, args: &[&str]) -> bool {
@@ -1239,8 +1395,8 @@ fn docker_desktop_app_path() -> Option<PathBuf> {
     candidates.into_iter().find(|path| path.is_file())
 }
 
-fn local_http_healthcheck() -> bool {
-    let Ok(mut addresses) = (AXBI_HEALTH_HOST, AXBI_HEALTH_PORT).to_socket_addrs() else {
+fn local_http_healthcheck(port: u16) -> bool {
+    let Ok(mut addresses) = (AXBI_HEALTH_HOST, port).to_socket_addrs() else {
         return false;
     };
     let Some(address) = addresses.next() else {
@@ -1311,10 +1467,12 @@ fn path_to_string(path: &Path) -> String {
 mod tests {
     use super::{
         augmented_path, build_env_file, docker_host, ensure_runtime_secret_content, platform_id,
-        platform_label, program_filename, read_env_value_from_str, resolve_program, tail_lines,
-        validate_log_service, RuntimeEngine, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME,
-        AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
+        platform_label, program_filename, read_env_value_from_str, resolve_program, runtime_urls,
+        tail_lines, validate_log_service, RuntimeEngine, AXBI_ADMIN_PASSWORD, AXBI_ADMIN_USERNAME,
+        AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML,
+        MAX_LOG_TAIL_LINES,
     };
+    use std::fs;
     use std::path::Path;
 
     #[test]
@@ -1343,6 +1501,40 @@ mod tests {
             read_env_value_from_str(&env_file, "MCP_DEV_USERNAME").unwrap(),
             AXBI_ADMIN_USERNAME
         );
+    }
+
+    #[test]
+    fn generated_colima_start_uses_recommended_resources() {
+        assert_eq!(AXBI_COLIMA_CPUS, "4");
+        assert_eq!(AXBI_COLIMA_MEMORY_GB, "8");
+    }
+
+    #[test]
+    fn runtime_urls_default_to_standard_ports_when_env_missing() {
+        let urls = runtime_urls(Path::new("/definitely/missing/.env"));
+
+        assert_eq!(urls.web_port, 8088);
+        assert_eq!(urls.mcp_port, 5008);
+        assert_eq!(urls.services_port, 5010);
+        assert_eq!(urls.web_url, "http://127.0.0.1:8088/ax-bi/welcome/");
+    }
+
+    #[test]
+    fn runtime_urls_follow_env_port_overrides() {
+        let env_path =
+            std::env::temp_dir().join(format!("axbi-runtime-test-{}.env", std::process::id()));
+        fs::write(
+            &env_path,
+            "AXBI_PORT=18088\nMCP_PORT=15008\nAX_SERVICES_PORT=15010\n",
+        )
+        .unwrap();
+
+        let urls = runtime_urls(&env_path);
+        let _ = fs::remove_file(&env_path);
+
+        assert_eq!(urls.web_port, 18088);
+        assert_eq!(urls.mcp_url, "http://127.0.0.1:15008/mcp");
+        assert_eq!(urls.services_url, "http://127.0.0.1:15010");
     }
 
     #[test]

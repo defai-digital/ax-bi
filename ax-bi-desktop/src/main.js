@@ -386,8 +386,8 @@ function renderDependencies(dependencies) {
     const version = document.createElement("div");
     version.className = "dependency-detail";
     version.textContent = dependency.installed
-      ? dependency.version || dependency.command
-      : dependency.install_hint;
+      ? `${dependency.version || dependency.command} · ${dependency.resolved_path || dependency.command}`
+      : `${dependency.install_hint} · checked ${dependency.resolved_path || dependency.command}`;
     details.append(title, version);
 
     const pill = document.createElement("span");

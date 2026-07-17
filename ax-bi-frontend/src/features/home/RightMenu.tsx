@@ -464,7 +464,7 @@ const RightMenu = ({
                   {[
                     navbarRight.show_watermark && t('Powered by AX BI'),
                     navbarRight.version_string &&
-                      `${t('Version')}: ${navbarRight.version_string}`,
+                      `${t('Runtime version')}: ${navbarRight.version_string}`,
                     navbarRight.version_sha &&
                       `${t('SHA')}: ${navbarRight.version_sha}`,
                     navbarRight.build_number &&

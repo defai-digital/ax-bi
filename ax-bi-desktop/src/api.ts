@@ -32,9 +32,18 @@ export interface AppConfig {
 export interface LocalRuntimeDependency {
   name: string;
   command: string;
+  resolved_path: string;
   installed: boolean;
   version: string | null;
   install_hint: string;
+}
+
+export interface LocalRuntimePort {
+  name: string;
+  port: number;
+  url: string;
+  available: boolean;
+  occupied_by_axbi: boolean;
 }
 
 export interface LocalRuntimeStatus {
@@ -43,6 +52,7 @@ export interface LocalRuntimeStatus {
   env_file: string;
   configured: boolean;
   dependencies: LocalRuntimeDependency[];
+  ports: LocalRuntimePort[];
   /** OS id: `macos` | `windows` | `linux`. */
   platform: string;
   /** True on all desktop builds — local AX BI Docker is supported. */
@@ -112,9 +122,24 @@ function isLocalRuntimeDependency(
   return (
     typeof value['name'] === 'string' &&
     typeof value['command'] === 'string' &&
+    typeof value['resolved_path'] === 'string' &&
     typeof value['installed'] === 'boolean' &&
     isNullableString(value['version']) &&
     typeof value['install_hint'] === 'string'
+  );
+}
+
+function isLocalRuntimePort(value: unknown): value is LocalRuntimePort {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return (
+    typeof value['name'] === 'string' &&
+    typeof value['port'] === 'number' &&
+    typeof value['url'] === 'string' &&
+    typeof value['available'] === 'boolean' &&
+    typeof value['occupied_by_axbi'] === 'boolean'
   );
 }
 
@@ -130,6 +155,8 @@ function isLocalRuntimeStatus(value: unknown): value is LocalRuntimeStatus {
     typeof value['configured'] === 'boolean' &&
     Array.isArray(value['dependencies']) &&
     value['dependencies'].every(isLocalRuntimeDependency) &&
+    Array.isArray(value['ports']) &&
+    value['ports'].every(isLocalRuntimePort) &&
     typeof value['platform'] === 'string' &&
     typeof value['local_runtime_supported'] === 'boolean' &&
     typeof value['can_start_local'] === 'boolean' &&
