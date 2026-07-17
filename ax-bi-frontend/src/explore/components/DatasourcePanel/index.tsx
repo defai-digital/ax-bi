@@ -138,6 +138,7 @@ export default function DataSourcePanel({
   const allowedColumns = useMemo(() => {
     const validators = Object.values(dropzones);
     if (!Array.isArray(_columns)) return [];
+    if (validators.length === 0) return _columns;
     return _columns.filter(column =>
       validators.some(validator =>
         validator({
@@ -150,7 +151,9 @@ export default function DataSourcePanel({
 
   const allowedMetrics = useMemo(() => {
     const validators = Object.values(dropzones);
-    return metrics.filter(metric =>
+    const datasourceMetrics = Array.isArray(metrics) ? metrics : [];
+    if (validators.length === 0) return datasourceMetrics;
+    return datasourceMetrics.filter(metric =>
       validators.some(validator =>
         validator({ value: metric, type: DndItemType.Metric }),
       ),
@@ -235,7 +238,7 @@ export default function DataSourcePanel({
         allowedMetrics,
         allowedColumns,
       ),
-    [_folders, filteredMetrics, sortedColumns],
+    [_folders, allowedColumns, allowedMetrics, filteredMetrics, sortedColumns],
   );
 
   const showInfoboxCheck = () => {
