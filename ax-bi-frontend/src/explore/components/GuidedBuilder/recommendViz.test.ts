@@ -35,6 +35,16 @@ test('respects limit', () => {
   expect(recommendVizTypes(2, 2, 2)).toHaveLength(2);
 });
 
+test('excludes the current viz type from recommendations', () => {
+  const recs = recommendVizTypes(1, 1, 3, VizType.Line);
+  expect(recs.map(r => r.vizType)).not.toContain(VizType.Line);
+});
+
+test('does not suggest table while editing a non-table chart', () => {
+  const recs = recommendVizTypes(1, 1, 3, VizType.Line);
+  expect(recs.map(r => r.vizType)).not.toContain(VizType.Table);
+});
+
 test('returns empty-ish list when nothing selected but never throws', () => {
   const recs = recommendVizTypes(0, 0);
   expect(Array.isArray(recs)).toBe(true);

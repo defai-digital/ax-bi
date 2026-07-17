@@ -35,6 +35,7 @@ export function recommendVizTypes(
   measureCount: number,
   dimensionCount: number,
   limit = 3,
+  currentVizType?: string,
 ): VizRecommendation[] {
   const m = Math.max(0, measureCount);
   const d = Math.max(0, dimensionCount);
@@ -79,6 +80,10 @@ export function recommendVizTypes(
   ];
 
   return scored
+    .filter(r => r.vizType !== currentVizType)
+    .filter(
+      r => currentVizType === VizType.Table || r.vizType !== VizType.Table,
+    )
     .filter(r => r.score > 15)
     .sort((a, b) => b.score - a.score)
     .slice(0, limit);
