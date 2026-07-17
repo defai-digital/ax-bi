@@ -50,6 +50,18 @@ class UpdateFilterStateCommand(UpdateTemporaryCacheCommand):
                 key = random_key()
                 cache_manager.filter_state_cache.set(contextual_key, key)
 
+            target_entry = (
+                entry
+                if key == cmd_params.key
+                else cache_manager.filter_state_cache.get(cache_key(resource_id, key))
+            )
+            if (
+                is_entry(target_entry)
+                and target_entry["owner"] == owner
+                and target_entry["value"] == value
+            ):
+                return key
+
             new_entry: Entry = {"owner": owner, "value": value}
             cache_manager.filter_state_cache.set(cache_key(resource_id, key), new_entry)
         return key

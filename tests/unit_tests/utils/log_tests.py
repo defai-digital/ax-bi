@@ -142,3 +142,21 @@ def test_db_event_logger_normalizes_direct_dict_records(mock_db: Any) -> None:
     logs = mock_db.session.bulk_save_objects.call_args[0][0]
     assert len(logs) == 1
     assert json.loads(logs[0].json) == {"from_dict": True}
+
+
+@patch("axbi.db")
+def test_db_event_logger_ignores_action_log_viewer_telemetry(mock_db: Any) -> None:
+    logger = DBEventLogger()
+
+    logger.log(
+        user_id=1,
+        action="log",
+        dashboard_id=None,
+        duration_ms=0,
+        slice_id=None,
+        referrer="http://localhost:8088/actionlog/list?pageIndex=0",
+        records={"event_name": "spa_navigation", "path": "/actionlog/list"},
+    )
+
+    mock_db.session.bulk_save_objects.assert_not_called()
+    mock_db.session.commit.assert_not_called()

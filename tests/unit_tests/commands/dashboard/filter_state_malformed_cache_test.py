@@ -69,6 +69,39 @@ def test_update_filter_state_ignores_malformed_cache_entry() -> None:
         mock_cache_manager.filter_state_cache.set.assert_not_called()
 
 
+def test_update_filter_state_skips_unchanged_cache_entry() -> None:
+    """Updating an existing key with the same value does not rewrite the cache."""
+    cmd_params = CommandParameters(
+        resource_id=1,
+        key="key",
+        value='{"a": 1}',
+        tab_id=1,
+    )
+
+    with (
+        current_app.test_request_context(),
+        patch("axbi.commands.dashboard.filter_state.update.check_access"),
+        patch(
+            "axbi.commands.dashboard.filter_state.update.cache_key",
+            side_effect=lambda *parts: ":".join(str(part) for part in parts),
+        ),
+        patch(
+            "axbi.commands.dashboard.filter_state.update.cache_manager"
+        ) as mock_cache_manager,
+        patch(
+            "axbi.commands.dashboard.filter_state.update.get_user_id",
+            return_value=1,
+        ),
+    ):
+        mock_cache_manager.filter_state_cache.get.side_effect = [
+            {"owner": 1, "value": '{"a": 1}'},
+            "key",
+        ]
+
+        assert UpdateFilterStateCommand(cmd_params).run() == "key"
+        mock_cache_manager.filter_state_cache.set.assert_not_called()
+
+
 def test_delete_filter_state_ignores_malformed_cache_entry() -> None:
     """Malformed dashboard filter-state cache entries do not raise raw errors."""
     cmd_params = CommandParameters(resource_id=1, key="key")

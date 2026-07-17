@@ -101,6 +101,21 @@ class TestLogApi(AxBITestCase):
         db.session.delete(log)
         db.session.commit()
 
+    def test_get_list_does_not_log_itself(self):
+        """Reading audit rows must not create a LogRestApi.get_list row."""
+        self.login(ADMIN_USERNAME)
+        initial_count = (
+            db.session.query(Log).filter(Log.action == "LogRestApi.get_list").count()
+        )
+
+        rv = self.client.get("api/v1/log/")
+
+        assert rv.status_code == 200
+        assert (
+            db.session.query(Log).filter(Log.action == "LogRestApi.get_list").count()
+            == initial_count
+        )
+
     def test_get_list_not_allowed(self):
         """
         Log API: Test get list

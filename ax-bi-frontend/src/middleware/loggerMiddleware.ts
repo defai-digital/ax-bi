@@ -34,7 +34,11 @@ import type { DashboardInfo, DashboardLayoutState } from '../dashboard/types';
 import type { QueryEditor } from '../SqlLab/types';
 
 type LogEventSource =
-  'dashboard' | 'embedded_dashboard' | 'explore' | 'sqlLab' | 'slice';
+  | 'dashboard'
+  | 'embedded_dashboard'
+  | 'explore'
+  | 'sqlLab'
+  | 'slice';
 
 interface LogEventData {
   source?: LogEventSource;
@@ -162,6 +166,12 @@ const loggerMiddleware: Middleware<
       navPath = eventData.path;
     }
     const path = navPath || window?.location?.href;
+
+    // The audit viewer must not generate telemetry about viewing audit rows.
+    // Otherwise each refresh changes the collection it is currently reading.
+    if (path?.includes('/actionlog/list')) {
+      return eventData;
+    }
 
     const isEmbedded = path?.includes('/embedded/');
     if (dashboardInfo?.id && (path?.includes('/dashboard/') || isEmbedded)) {

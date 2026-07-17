@@ -20,7 +20,7 @@ from flask import current_app as app, session
 
 from axbi.commands.dashboard.filter_state.utils import check_access
 from axbi.commands.temporary_cache.create import CreateTemporaryCacheCommand
-from axbi.commands.temporary_cache.entry import Entry
+from axbi.commands.temporary_cache.entry import Entry, is_entry
 from axbi.commands.temporary_cache.parameters import CommandParameters
 from axbi.extensions import cache_manager
 from axbi.key_value.utils import random_key
@@ -38,7 +38,19 @@ class CreateFilterStateCommand(CreateTemporaryCacheCommand):
             key = random_key()
         value = cast(str, cmd_params.value)  # schema ensures that value is not optional
         check_access(resource_id)
-        entry: Entry = {"owner": get_user_id(), "value": value}
+        owner = get_user_id()
+        if tab_id:
+            existing_entry = cache_manager.filter_state_cache.get(
+                cache_key(resource_id, key)
+            )
+            if (
+                is_entry(existing_entry)
+                and existing_entry["owner"] == owner
+                and existing_entry["value"] == value
+            ):
+                return key
+
+        entry: Entry = {"owner": owner, "value": value}
         timeout = app.config["FILTER_STATE_CACHE_CONFIG"].get("CACHE_DEFAULT_TIMEOUT")
         cache_manager.filter_state_cache.set(
             cache_key(resource_id, key), entry, timeout=timeout

@@ -25,6 +25,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import datetime, timedelta
 from typing import Any, cast, Literal
+from urllib.parse import urlparse
 
 from flask import g, has_request_context, request
 from flask_appbuilder.const import API_URI_RIS_KEY
@@ -106,6 +107,22 @@ def _normalize_records(
             return normalized
 
     return [fallback] if fallback else []
+
+
+def _is_action_log_viewer_record(
+    action: str,
+    referrer: str | None,
+    record: dict[str, Any],
+) -> bool:
+    """Return whether frontend telemetry originated from the audit viewer."""
+    if action != "log":
+        return False
+
+    record_path = record.get("path")
+    if isinstance(record_path, str) and record_path.rstrip("/") == "/actionlog/list":
+        return True
+
+    return bool(referrer and urlparse(referrer).path.rstrip("/") == "/actionlog/list")
 
 
 def get_logger_from_status(
@@ -429,6 +446,13 @@ class DBEventLogger(AbstractEventLogger):
 
         curated_payload = kwargs.get("curated_payload")
         records = _normalize_records(kwargs.get("records", []), curated_payload)
+        records = [
+            record
+            for record in records
+            if not _is_action_log_viewer_record(action, referrer, record)
+        ]
+        if not records:
+            return
 
         logs = []
         for record in records:
