@@ -24,7 +24,16 @@ from axbi.commands.utils import compute_owner_list, populate_owner_list
 
 class BaseCommand(ABC):
     """
-    Base class for all Command like AxBI Logic objects
+    Base class for all Command like AxBI Logic objects.
+
+    Stability contract:
+    - ``validate()`` must raise a command/validation exception on bad input and
+      must not mutate durable state.
+    - ``run()`` is the unit of work. Commands that write data should call
+      ``validate()`` first and own persistence through ``@transaction`` / DAOs.
+    - Prefer ``execute()`` at new call sites so validation always runs before
+      work, even when a subclass forgets to invoke ``validate()`` inside
+      ``run()``.
     """
 
     @abstractmethod
@@ -41,6 +50,18 @@ class BaseCommand(ABC):
         Will raise exception if validation fails
         :raises: CommandException
         """
+
+    def execute(self) -> Any:
+        """
+        Validate then run.
+
+        Use this at transport boundaries (API, MCP, CLI) when the command's
+        ``run()`` implementation is not already known to call ``validate()``.
+        Commands that already validate inside ``run()`` remain safe: a second
+        ``validate()`` must be side-effect free.
+        """
+        self.validate()
+        return self.run()
 
 
 class CreateMixin:  # pylint: disable=too-few-public-methods

@@ -296,11 +296,11 @@ def test_suppress_logging() -> None:
     assert len(handler.log_records) == 0
 
 
-def test_transacation_commit(mocker: MockerFixture) -> None:
+def test_transaction_commit(mocker: MockerFixture) -> None:
     """
     Test the `transaction` decorator when the function completes successfully.
     """
-    db = mocker.patch("axbi.db")
+    db = mocker.patch("axbi.extensions.db")
 
     @decorators.transaction()
     def func() -> int:
@@ -311,11 +311,11 @@ def test_transacation_commit(mocker: MockerFixture) -> None:
     db.session.commit.assert_called_once()
 
 
-def test_transacation_rollback(mocker: MockerFixture) -> None:
+def test_transaction_rollback(mocker: MockerFixture) -> None:
     """
     Test the `transaction` decorator when the function raises an exception.
     """
-    db = mocker.patch("axbi.db")
+    db = mocker.patch("axbi.extensions.db")
 
     @decorators.transaction()
     def func() -> None:
@@ -327,11 +327,11 @@ def test_transacation_rollback(mocker: MockerFixture) -> None:
     db.session.rollback.assert_called_once()
 
 
-def test_transacation_nested(mocker: MockerFixture) -> None:
+def test_transaction_nested(mocker: MockerFixture) -> None:
     """
     Test the `transaction` decorator when the function is nested.
     """
-    db = mocker.patch("axbi.db")
+    db = mocker.patch("axbi.extensions.db")
 
     @decorators.transaction()
     def func() -> int:
@@ -346,3 +346,35 @@ def test_transacation_nested(mocker: MockerFixture) -> None:
         nested()
     db.session.commit.assert_not_called()
     db.session.rollback.assert_called_once()
+
+
+def test_transaction_nested_success_commits_once(mocker: MockerFixture) -> None:
+    """Nested successful transactions commit only at the outermost boundary."""
+    db = mocker.patch("axbi.extensions.db")
+
+    @decorators.transaction()
+    def inner() -> int:
+        return 1
+
+    @decorators.transaction()
+    def outer() -> int:
+        return inner() + 1
+
+    assert outer() == 2
+    db.session.commit.assert_called_once()
+    db.session.rollback.assert_not_called()
+
+
+def test_transaction_rollback_failure_does_not_mask_original(
+    mocker: MockerFixture,
+) -> None:
+    """Rollback errors during failure handling must not replace the original."""
+    db = mocker.patch("axbi.extensions.db")
+    db.session.rollback.side_effect = RuntimeError("connection closed")
+
+    @decorators.transaction()
+    def func() -> None:
+        raise ValueError("original failure")
+
+    with pytest.raises(ValueError, match="original failure"):
+        func()
