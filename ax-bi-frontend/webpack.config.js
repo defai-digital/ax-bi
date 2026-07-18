@@ -89,6 +89,9 @@ const defaultChunkFilename = isDevMode
 const output = {
   path: BUILD_DIR,
   publicPath: '/static/assets/',
+  // Dev recompiles + contenthash can leave a busy webpack process; give
+  // lazy route chunks more time before the browser reports ChunkLoadError.
+  chunkLoadTimeout: isDevMode ? 180000 : 120000,
   filename: pathData =>
     pathData.chunk?.name === 'service-worker'
       ? '../service-worker.js'

@@ -18,15 +18,11 @@
  */
 
 import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
-import {
-  lazy,
-  ComponentType,
-  ComponentProps,
-  LazyExoticComponent,
-} from 'react';
+import { ComponentType, ComponentProps, LazyExoticComponent } from 'react';
 import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { findPermission } from 'src/utils/findPermission';
+import { lazyWithRetry as lazy } from 'src/utils/lazyWithRetry';
 
 // not lazy loaded since this is the home page.
 import Home from 'src/pages/Home';
