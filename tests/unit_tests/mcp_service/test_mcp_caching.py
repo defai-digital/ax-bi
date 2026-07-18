@@ -19,13 +19,30 @@
 
 from unittest.mock import MagicMock, patch
 
-from axbi.mcp_service.caching import _build_caching_settings
+from axbi.mcp_service.caching import (
+    _build_caching_settings,
+    _resolve_max_item_size,
+)
 
 
 def test_build_caching_settings_empty_config():
     """Empty config returns empty settings."""
     result = _build_caching_settings({})
     assert result == {}
+
+
+def test_resolve_max_item_size_uses_config_value() -> None:
+    """Operators must be able to lower/raise max_item_size via MCP_CACHE_CONFIG."""
+    assert _resolve_max_item_size({"max_item_size": 4096}) == 4096
+
+
+def test_resolve_max_item_size_rejects_invalid_values() -> None:
+    """Invalid or non-positive sizes fall back to the 1MB default."""
+    default = 1024 * 1024
+    assert _resolve_max_item_size({"max_item_size": 0}) == default
+    assert _resolve_max_item_size({"max_item_size": -1}) == default
+    assert _resolve_max_item_size({"max_item_size": "not-a-number"}) == default
+    assert _resolve_max_item_size({}) == default
 
 
 def test_build_caching_settings_list_ttls():
@@ -162,6 +179,7 @@ def test_create_response_caching_middleware_creates_middleware():
         "enabled": True,
         "CACHE_KEY_PREFIX": "mcp_cache_v1_",
         "list_tools_ttl": 300,
+        "max_item_size": 2048,
     }
 
     mock_store = MagicMock()
@@ -191,3 +209,22 @@ def test_create_response_caching_middleware_creates_middleware():
                     call_kwargs = mock_middleware_class.call_args[1]
                     assert call_kwargs["cache_storage"] is mock_store
                     assert call_kwargs["list_tools_settings"] == {"ttl": 300}
+                    # max_item_size must reach FastMCP (not silently dropped).
+                    assert call_kwargs["max_item_size"] == 2048
+
+
+def test_create_response_caching_middleware_handles_none_config() -> None:
+    """Explicit None MCP_CACHE_CONFIG must disable caching, not raise."""
+    mock_flask_app = MagicMock()
+    mock_flask_app.config.get.return_value = None
+
+    with (
+        patch(
+            "axbi.mcp_service.flask_singleton.get_flask_app",
+            return_value=mock_flask_app,
+        ),
+        patch("flask.has_app_context", return_value=True),
+    ):
+        from axbi.mcp_service.caching import create_response_caching_middleware
+
+        assert create_response_caching_middleware() is None

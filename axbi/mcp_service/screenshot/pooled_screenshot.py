@@ -85,12 +85,21 @@ class PooledBaseScreenshot(BaseScreenshot):
         # Use pooled WebDriver
         with pool.get_driver(window_size, user.id) as driver:
             try:
-                # Clear any existing cookies to ensure clean authentication
+                # Clear any existing cookies to ensure clean authentication.
+                # Isolation depends on an empty jar before re-auth; if clear
+                # fails, abort so the pool marks the driver unhealthy and does
+                # not re-auth with residual cookies from a prior user.
                 try:
                     driver.delete_all_cookies()
                     logger.debug("Cleared all cookies from WebDriver")
                 except Exception as e:
-                    logger.warning("Failed to clear cookies: %s", e)
+                    logger.warning(
+                        "Failed to clear cookies; discarding driver: %s", e
+                    )
+                    raise RuntimeError(
+                        "WebDriver cookie clear failed; refusing to reuse "
+                        "driver for another user"
+                    ) from e
 
                 # Authenticate the driver for this user
                 user_name = user.username if user else "None"

@@ -92,6 +92,7 @@ const jwtAuthPreHandler = async (
   if (!channelId) {
     fastCacheStatsd.increment('fast_cache_auth_failed');
     reply.status(401).send({ error: 'Authentication required' });
+    return;
   }
 };
 

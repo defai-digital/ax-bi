@@ -81,6 +81,34 @@ def _build_caching_settings(cache_config: dict[str, Any]) -> dict[str, Any]:
     return settings
 
 
+def _resolve_max_item_size(cache_config: dict[str, Any]) -> int:
+    """Return a positive max cache entry size in bytes from config.
+
+    ``MCP_CACHE_CONFIG.max_item_size`` is documented and defaulted in
+    ``mcp_config.py``; it must be passed through to
+    ``ResponseCachingMiddleware`` or operator overrides are silently ignored.
+    """
+    default_size = 1024 * 1024
+    raw = cache_config.get("max_item_size", default_size)
+    try:
+        size = int(raw)
+    except (TypeError, ValueError):
+        logger.warning(
+            "Invalid MCP_CACHE_CONFIG.max_item_size=%r; using default %d",
+            raw,
+            default_size,
+        )
+        return default_size
+    if size <= 0:
+        logger.warning(
+            "Non-positive MCP_CACHE_CONFIG.max_item_size=%r; using default %d",
+            raw,
+            default_size,
+        )
+        return default_size
+    return size
+
+
 def create_response_caching_middleware() -> Any | None:
     """
     Create ResponseCachingMiddleware with optional RedisStore backend.
@@ -99,8 +127,17 @@ def create_response_caching_middleware() -> Any | None:
     flask_app = get_flask_app()
 
     def _create_middleware() -> Any | None:
-        cache_config = get_mcp_cache_config(flask_app.config)
-        store_config = get_mcp_store_config(flask_app.config)
+        # Config may be explicitly set to None; treat as empty/disabled.
+        cache_config = get_mcp_cache_config(flask_app.config) or {}
+        store_config = get_mcp_store_config(flask_app.config) or {}
+        if not isinstance(cache_config, dict):
+            logger.warning(
+                "MCP_CACHE_CONFIG must be a dict, got %s; caching disabled",
+                type(cache_config).__name__,
+            )
+            return None
+        if not isinstance(store_config, dict):
+            store_config = {}
 
         if not cache_config.get("enabled", False):
             logger.debug("MCP response caching disabled")
@@ -129,13 +166,17 @@ def create_response_caching_middleware() -> Any | None:
 
         # Build per-operation settings from config
         settings = _build_caching_settings(cache_config)
+        max_item_size = _resolve_max_item_size(cache_config)
 
         # Create middleware (store=None uses FastMCP's default in-memory store)
         middleware = ResponseCachingMiddleware(
             cache_storage=store,
+            max_item_size=max_item_size,
             **settings,
         )
-        logger.info("MCP caching middleware enabled")
+        logger.info(
+            "MCP caching middleware enabled (max_item_size=%d)", max_item_size
+        )
         return middleware
 
     # Use existing app context if available, otherwise push one
