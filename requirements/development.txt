@@ -727,7 +727,7 @@ psycopg2-binary==2.9.12
     # via ax-bi
 py-key-value-aio==0.4.4
     # via fastmcp-slim
-pyarrow==24.0.0
+pyarrow==25.0.0
     # via
     #   -c requirements/base-constraint.txt
     #   ax-bi
