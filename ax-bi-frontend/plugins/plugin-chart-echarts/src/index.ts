@@ -69,6 +69,19 @@ export * from './utils/eChartOptionsSchema';
 export * from './utils/safeEChartOptionsParser';
 
 export * from './types';
+export {
+  DEFAULT_ECHARTS_THEME_ID,
+  ECHARTS_THEME_OPTIONS,
+  ensureEchartsThemesRegistered,
+  getEchartsInitThemeName,
+  getEchartsThemeColorSchemeConfigs,
+  getEchartsThemeColorSchemeId,
+  getEchartsThemeOption,
+  normalizeEchartsThemeId,
+  shouldUseNamedEchartsTheme,
+  type EchartsThemeId,
+  type EchartsThemeOption,
+} from './theme/echartsThemeRegistry';
 
 /**
  * Note: this file exports the default export from EchartsTimeseries.tsx.

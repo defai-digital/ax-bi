@@ -72,6 +72,11 @@ import {
 } from '../types';
 import { DEFAULT_LOCALE } from '../constants';
 import { mergeEchartsThemeOverrides } from '../utils/themeOverrides';
+import {
+  ensureEchartsThemesRegistered,
+  getEchartsInitThemeName,
+  shouldUseNamedEchartsTheme,
+} from '../theme/echartsThemeRegistry';
 
 type LocaleModule = { default: Parameters<typeof registerLocale>[1] };
 
@@ -83,6 +88,11 @@ interface ExplorePageState {
   };
   dashboardState?: {
     isRefreshing?: boolean;
+  };
+  dashboardInfo?: {
+    metadata?: {
+      echarts_theme?: string;
+    };
   };
 }
 
@@ -198,6 +208,13 @@ function Echart(
   const isDashboardRefreshing = useSelector((state: ExplorePageState) =>
     Boolean(state?.dashboardState?.isRefreshing),
   );
+  // Dashboard metadata chart-style template (null/default = AX BI Japandi path)
+  const dashboardEchartsTheme = useSelector(
+    (state: ExplorePageState) => state?.dashboardInfo?.metadata?.echarts_theme,
+  );
+  const echartsInitThemeName = getEchartsInitThemeName(dashboardEchartsTheme);
+  const useNamedTheme = shouldUseNamedEchartsTheme(dashboardEchartsTheme);
+  const appliedThemeRef = useRef<string | null | undefined>(undefined);
 
   const handleSizeChange = useCallback(
     ({ width, height }: { width: number; height: number }) => {
@@ -209,25 +226,45 @@ function Echart(
   );
 
   useEffect(() => {
+    let cancelled = false;
     loadLocale(locale).then(localeObj => {
+      if (cancelled) return;
       if (localeObj) {
         registerLocale(locale, localeObj);
       }
       if (!divRef.current) return;
+
+      ensureEchartsThemesRegistered();
+
+      // ECharts applies named themes only at init time. Recreate the instance
+      // when the dashboard chart-style template changes.
+      const themeChanged =
+        appliedThemeRef.current !== undefined &&
+        appliedThemeRef.current !== echartsInitThemeName;
+      if (chartRef.current && themeChanged) {
+        chartRef.current.dispose();
+        chartRef.current = undefined;
+        setDidMount(false);
+      }
+
       if (!chartRef.current) {
         // Pass width and height to init to avoid "Can't get DOM width or height" warning
         // since the DOM element may not have its dimensions yet when init is called
-        chartRef.current = init(divRef.current, null, {
+        chartRef.current = init(divRef.current, echartsInitThemeName, {
           locale,
           width,
           height,
         });
+        appliedThemeRef.current = echartsInitThemeName;
       }
       // did mount
       handleSizeChange({ width, height });
       setDidMount(true);
     });
-  }, [locale, width, height, handleSizeChange]);
+    return () => {
+      cancelled = true;
+    };
+  }, [locale, width, height, handleSizeChange, echartsInitThemeName]);
 
   useEffect(() => {
     if (didMount) {
@@ -249,7 +286,9 @@ function Echart(
         chartRef.current?.getZr().on(name, handler);
       });
 
-      const getEchartsTheme = (options: any) => {
+      // Named ECharts templates (vintage/dark/…) own chrome styling via init theme.
+      // Default (AX BI) continues to map Ant Design tokens onto chart chrome.
+      const getAntdEchartsTheme = (options: any) => {
         const antdTheme = theme;
         const echartsTheme = {
           textStyle: {
@@ -300,7 +339,7 @@ function Echart(
         return echartsTheme;
       };
 
-      const baseTheme = getEchartsTheme(echartOptions);
+      const baseTheme = useNamedTheme ? {} : getAntdEchartsTheme(echartOptions);
       const globalOverrides = theme.echartsOptionsOverrides || {};
       const chartOverrides = vizType
         ? theme.echartsOptionsOverridesByChartType?.[vizType] || {}
@@ -387,6 +426,9 @@ function Echart(
     zrEventHandlers,
     theme,
     vizType,
+    useNamedTheme,
+    // Re-apply options after dispose/re-init when the dashboard chart-style changes
+    echartsInitThemeName,
   ]);
 
   // Clear tooltip on refresh start to avoid stale content (#39247)

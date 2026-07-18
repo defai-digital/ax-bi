@@ -48,10 +48,7 @@ describe('nativeFilterGate', () => {
 
   test('should return false for chart customization behavior', () => {
     expect(
-      chartTypeGate([
-        Behavior.InteractiveChart,
-        Behavior.ChartCustomization,
-      ]),
+      chartTypeGate([Behavior.InteractiveChart, Behavior.ChartCustomization]),
     ).toEqual(false);
   });
 });

@@ -43,6 +43,7 @@ jest.mock('echarts/core', () => ({
   use: jest.fn(),
   init: jest.fn(() => mockInstance),
   registerLocale: jest.fn(),
+  registerTheme: jest.fn(),
 }));
 jest.mock('echarts/charts', () => ({}));
 jest.mock('echarts/renderers', () => ({}));

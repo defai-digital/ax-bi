@@ -182,6 +182,8 @@ export type DashboardInfo = {
     color_scheme: string;
     color_namespace: string;
     color_scheme_domain: string[];
+    /** ECharts chart-style template id; omit or "default" for AX BI Japandi */
+    echarts_theme?: string;
     label_colors: JsonObject;
     shared_label_colors: string[];
     map_label_colors: JsonObject;

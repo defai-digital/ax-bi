@@ -82,6 +82,7 @@ import {
 import getFormDataWithExtraFilters from '../../../util/charts/getFormDataWithExtraFilters';
 import { useChartCustomizationFromRedux } from '../../nativeFilters/state';
 import { PLACEHOLDER_DATASOURCE } from '../../../constants';
+import { getEchartsThemeColorSchemeId } from '@ax-bi/plugin-chart-echarts';
 
 interface ChartProps {
   id: number;
@@ -401,6 +402,9 @@ const Chart = (props: ChartProps) => {
   const colorScheme = useSelector(
     (state: RootState) => state.dashboardState.colorScheme,
   );
+  const echartsTheme = useSelector(
+    (state: RootState) => state.dashboardInfo?.metadata?.echarts_theme,
+  );
   const colorNamespace = useSelector(
     (state: RootState) =>
       (state.dashboardState as JsonObject).colorNamespace as string | undefined,
@@ -434,6 +438,15 @@ const Chart = (props: ChartProps) => {
     ),
   );
 
+  // Explicit dashboard color scheme wins. Otherwise, when an ECharts chart-style
+  // template is selected, use that template's palette for series colors.
+  const effectiveColorScheme = useMemo(() => {
+    if (colorScheme) {
+      return colorScheme;
+    }
+    return getEchartsThemeColorSchemeId(echartsTheme) || colorScheme;
+  }, [colorScheme, echartsTheme]);
+
   const formData = useMemo(
     () =>
       getFormDataWithExtraFilters({
@@ -442,7 +455,7 @@ const Chart = (props: ChartProps) => {
         chartCustomizationItems:
           chartCustomizationItems as ChartCustomization[],
         filters: getAppliedFilterValues(props.id),
-        colorScheme,
+        colorScheme: effectiveColorScheme,
         colorNamespace,
         sliceId: props.id,
         nativeFilters,
@@ -464,7 +477,7 @@ const Chart = (props: ChartProps) => {
       chartCustomizationItems,
       props.id,
       props.extraControls,
-      colorScheme,
+      effectiveColorScheme,
       colorNamespace,
       nativeFilters,
       allSliceIds,

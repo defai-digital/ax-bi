@@ -40,6 +40,11 @@ import {
   AxBIClient,
   getClientErrorObject,
 } from '@ax-bi/ui-core';
+import {
+  DEFAULT_ECHARTS_THEME_ID,
+  normalizeEchartsThemeId,
+  type EchartsThemeId,
+} from '@ax-bi/plugin-chart-echarts';
 
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { fetchTags, OBJECT_TYPES } from 'src/features/tags/tags';
@@ -132,6 +137,9 @@ const PropertiesModal = ({
   const [isLoading, setIsLoading] = useState(true);
   const [isApplying, setIsApplying] = useState(false);
   const [colorScheme, setCurrentColorScheme] = useState(currentColorScheme);
+  const [echartsTheme, setEchartsTheme] = useState<EchartsThemeId>(
+    DEFAULT_ECHARTS_THEME_ID,
+  );
   const [jsonMetadata, setJsonMetadata] = useState('');
   const [dashboardInfo, setDashboardInfo] = useState<DashboardInfo>();
 
@@ -216,6 +224,7 @@ const PropertiesModal = ({
         originalCss.current = css || '';
       }
       setCurrentColorScheme(metadata?.color_scheme);
+      setEchartsTheme(normalizeEchartsThemeId(metadata?.echarts_theme));
       setSelectedThemeId(theme?.id || null);
 
       const metaDataCopy = omit(metadata, [
@@ -323,6 +332,18 @@ const PropertiesModal = ({
     }
   };
 
+  const onEchartsThemeChange = (nextTheme: EchartsThemeId) => {
+    const normalized = normalizeEchartsThemeId(nextTheme);
+    const jsonMetadataObj = getJsonMetadata();
+    if (normalized === DEFAULT_ECHARTS_THEME_ID) {
+      delete jsonMetadataObj.echarts_theme;
+    } else {
+      jsonMetadataObj.echarts_theme = normalized;
+    }
+    setEchartsTheme(normalized);
+    setJsonMetadata(jsonStringify(jsonMetadataObj));
+  };
+
   const onFinish = () => {
     const {
       title,
@@ -351,6 +372,9 @@ const PropertiesModal = ({
     const colorNamespace = getColorNamespace(metadata?.color_namespace);
     // color scheme in json metadata has precedence over selection
     const updatedColorScheme = metadata?.color_scheme || colorScheme;
+    const updatedEchartsTheme = normalizeEchartsThemeId(
+      metadata?.echarts_theme ?? echartsTheme,
+    );
     const shouldGoFresh =
       updatedColorScheme !== originalDashboardMetadata.current.color_scheme;
     const shouldResetCustomLabels = !areObjectsEqual(
@@ -370,6 +394,11 @@ const PropertiesModal = ({
     const jsonMetadataObj = getJsonMetadata();
     jsonMetadataObj.refresh_frequency = refreshFrequency;
     jsonMetadataObj.show_chart_timestamps = Boolean(showChartTimestamps);
+    if (updatedEchartsTheme === DEFAULT_ECHARTS_THEME_ID) {
+      delete jsonMetadataObj.echarts_theme;
+    } else {
+      jsonMetadataObj.echarts_theme = updatedEchartsTheme;
+    }
     const customLabelColors = jsonMetadataObj.label_colors || {};
     const updatedDashboardMetadata = {
       ...originalDashboardMetadata.current,
@@ -377,6 +406,11 @@ const PropertiesModal = ({
       color_scheme: updatedColorScheme,
       show_chart_timestamps: showChartTimestamps,
     };
+    if (updatedEchartsTheme === DEFAULT_ECHARTS_THEME_ID) {
+      delete updatedDashboardMetadata.echarts_theme;
+    } else {
+      updatedDashboardMetadata.echarts_theme = updatedEchartsTheme;
+    }
 
     originalDashboardMetadata.current = updatedDashboardMetadata;
     applyColors(updatedDashboardMetadata, shouldGoFresh || freshCustomLabels);
@@ -770,11 +804,13 @@ const PropertiesModal = ({
                 themes={themes}
                 selectedThemeId={selectedThemeId}
                 colorScheme={colorScheme}
+                echartsTheme={echartsTheme}
                 customCss={customCss}
                 hasCustomLabelsColor={hasCustomLabelsColor}
                 showChartTimestamps={showChartTimestamps}
                 onThemeChange={handleThemeChange}
                 onColorSchemeChange={onColorSchemeChange}
+                onEchartsThemeChange={onEchartsThemeChange}
                 onCustomCssChange={handleCustomCssChange}
                 onShowChartTimestampsChange={setShowChartTimestamps}
                 addDangerToast={addDangerToast}

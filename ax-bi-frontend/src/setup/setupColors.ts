@@ -44,6 +44,7 @@ import {
   CategoricalRedToYellow,
   CategoricalWavesOfBlue,
 } from '@ax-bi/ui-core';
+import { getEchartsThemeColorSchemeConfigs } from '@ax-bi/plugin-chart-echarts';
 
 function registerColorSchemes<T extends ColorScheme>(
   registry: ColorSchemeRegistry<T>,
@@ -70,6 +71,17 @@ export default function setupColors(
   const extraSequentialColorSchemes = extraSequentialColorSchemeConfigs.map(
     config => new SequentialScheme(config),
   );
+  // Palettes from official ECharts theme templates (dashboard chart-style).
+  // Registered as categorical schemes so series colors can follow a template
+  // when the dashboard has no explicit color scheme selected.
+  const echartsThemeColorSchemes = getEchartsThemeColorSchemeConfigs().map(
+    config =>
+      new CategoricalScheme({
+        ...config,
+        group: ColorSchemeGroup.Other,
+      }),
+  );
+
   registerColorSchemes(
     getCategoricalSchemeRegistry(),
     [
@@ -89,6 +101,7 @@ export default function setupColors(
       ...CategoricalBlueToGreen,
       ...CategoricalRedToYellow,
       ...CategoricalWavesOfBlue,
+      ...echartsThemeColorSchemes,
       ...extraCategoricalColorSchemes,
     ],
     'japandiColors',

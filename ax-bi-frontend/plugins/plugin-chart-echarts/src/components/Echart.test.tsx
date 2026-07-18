@@ -64,6 +64,7 @@ const mockChart = {
 jest.mock('echarts/core', () => ({
   init: jest.fn(() => mockChart),
   registerLocale: jest.fn(),
+  registerTheme: jest.fn(),
   use: jest.fn(),
 }));
 

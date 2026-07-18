@@ -24,6 +24,12 @@ import { styled } from '@ax-bi/core/theme';
 import { Select, Switch } from '@ax-bi/ui-core/components';
 import { EditorHost } from 'src/core/editors';
 import rison from 'rison';
+import {
+  DEFAULT_ECHARTS_THEME_ID,
+  ECHARTS_THEME_OPTIONS,
+  normalizeEchartsThemeId,
+  type EchartsThemeId,
+} from '@ax-bi/plugin-chart-echarts';
 import ColorSchemeSelect from 'src/dashboard/components/ColorSchemeSelect';
 import { ModalFormField } from 'src/components/Modal';
 
@@ -77,6 +83,7 @@ interface StylingSectionProps {
   themes: Theme[];
   selectedThemeId: number | null;
   colorScheme?: string;
+  echartsTheme?: string;
   customCss: string;
   hasCustomLabelsColor: boolean;
   showChartTimestamps: boolean;
@@ -85,6 +92,7 @@ interface StylingSectionProps {
     colorScheme: string,
     options?: { updateMetadata?: boolean },
   ) => void;
+  onEchartsThemeChange: (echartsTheme: EchartsThemeId) => void;
   onCustomCssChange: (css: string) => void;
   onShowChartTimestampsChange: (value: boolean) => void;
   addDangerToast?: (message: string) => void;
@@ -94,11 +102,13 @@ const StylingSection = ({
   themes,
   selectedThemeId,
   colorScheme,
+  echartsTheme = DEFAULT_ECHARTS_THEME_ID,
   customCss,
   hasCustomLabelsColor,
   showChartTimestamps,
   onThemeChange,
   onColorSchemeChange,
+  onEchartsThemeChange,
   onCustomCssChange,
   onShowChartTimestampsChange,
   addDangerToast,
@@ -182,10 +192,31 @@ const StylingSection = ({
         </ModalFormField>
       )}
       <ModalFormField
+        label={t('Chart style')}
+        testId="dashboard-echarts-theme-field"
+        helperText={t(
+          'ECharts visual templates for charts on this dashboard. Default keeps the AX BI (Japandi) look. An explicit color scheme below still overrides series colors.',
+        )}
+      >
+        <Select
+          data-test="dashboard-echarts-theme-select"
+          aria-label={t('Select chart style')}
+          value={echartsTheme || DEFAULT_ECHARTS_THEME_ID}
+          onChange={value =>
+            onEchartsThemeChange(normalizeEchartsThemeId(value))
+          }
+          options={ECHARTS_THEME_OPTIONS.map(option => ({
+            value: option.id,
+            label: option.label,
+          }))}
+          placeholder={t('Select a chart style')}
+        />
+      </ModalFormField>
+      <ModalFormField
         label={t('Color scheme')}
         testId="dashboard-colorscheme-field"
         helperText={t(
-          "Any color palette selected here will override the colors applied to this dashboard's individual charts",
+          "Any color palette selected here will override the colors applied to this dashboard's individual charts. When empty, a Chart style template supplies its own series palette.",
         )}
       >
         <ColorSchemeSelect

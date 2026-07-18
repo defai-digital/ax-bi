@@ -68,11 +68,13 @@ const defaultProps = {
   ],
   selectedThemeId: null,
   colorScheme: 'axbiColors',
+  echartsTheme: 'default',
   customCss: '',
   hasCustomLabelsColor: false,
   showChartTimestamps: false,
   onThemeChange: jest.fn(),
   onColorSchemeChange: jest.fn(),
+  onEchartsThemeChange: jest.fn(),
   onCustomCssChange: jest.fn(),
   onShowChartTimestampsChange: jest.fn(),
   addDangerToast: jest.fn(),
@@ -108,6 +110,18 @@ test('renders color scheme selection', () => {
   expect(
     screen.getByTestId('dashboard-colorscheme-select'),
   ).toBeInTheDocument();
+});
+
+test('renders chart style (ECharts theme) selection', () => {
+  render(<StylingSection {...defaultProps} />);
+
+  expect(
+    screen.getByTestId('dashboard-echarts-theme-field'),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByTestId('dashboard-echarts-theme-select'),
+  ).toBeInTheDocument();
+  expect(screen.getByText('Chart style')).toBeInTheDocument();
 });
 
 test('renders custom CSS editor', () => {
