@@ -46,7 +46,7 @@ import {
 } from '@ax-bi/core/theme';
 import { Input, Collapse, Tooltip, Label } from '@ax-bi/ui-core/components';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
-import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
+import { chartTypeGate } from 'src/dashboard/components/nativeFilters/utils';
 import { usePluginContext } from 'src/components';
 import scrollIntoView from 'scroll-into-view-if-needed';
 import {
@@ -502,7 +502,7 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
       )
       .filter(
         ({ value }) =>
-          nativeFilterGate(value.behaviors || []) && !value.deprecated,
+          chartTypeGate(value.behaviors || []) && !value.deprecated,
       )
       .sort((a, b) => a.value.name.localeCompare(b.value.name));
     return result;

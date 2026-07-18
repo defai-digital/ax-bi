@@ -168,6 +168,14 @@ export function nativeFilterGate(behaviors: Behavior[]): boolean {
   );
 }
 
+/** Return whether registry metadata represents a selectable chart type. */
+export function chartTypeGate(behaviors: Behavior[]): boolean {
+  return (
+    nativeFilterGate(behaviors) &&
+    !behaviors.includes(Behavior.ChartCustomization)
+  );
+}
+
 export const findTabsWithChartsInScope = (
   chartLayoutItems: LayoutItem[],
   chartsInScope: number[],

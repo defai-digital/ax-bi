@@ -74,7 +74,7 @@ import withToasts from 'src/components/MessageToasts/withToasts';
 import PropertiesModal from 'src/explore/components/PropertiesModal';
 import Chart from 'src/types/Chart';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
-import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
+import { chartTypeGate } from 'src/dashboard/components/nativeFilters/utils';
 import { TagTypeEnum } from 'src/components/Tag/TagType';
 import { loadTags } from 'src/components/Tag/utils';
 import ChartCard from 'src/features/charts/ChartCard';
@@ -646,7 +646,7 @@ function ChartList(props: ChartListProps) {
         unfilteredLabel: t('All'),
         selects: registry
           .keys()
-          .filter(k => nativeFilterGate(registry.get(k)?.behaviors || []))
+          .filter(k => chartTypeGate(registry.get(k)?.behaviors || []))
           .map(k => ({ label: registry.get(k)?.name || k, value: k }))
           .sort((a, b) => {
             if (!a.label || !b.label) {

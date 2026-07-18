@@ -16,8 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { render, screen, userEvent } from '@ax-bi/ui-core/spec';
-import { ModalTrigger } from '.';
+import { createRef } from 'react';
+import { act, render, screen, userEvent } from '@ax-bi/ui-core/spec';
+import { ModalTrigger, ModalTriggerRef } from '.';
 
 const mockedProps = {
   triggerNode: <span>Trigger</span>,
@@ -73,4 +74,34 @@ test('should render a modal after click', async () => {
   render(<ModalTrigger {...mockedProps} />);
   await userEvent.click(screen.getByRole('button'));
   expect(screen.getByRole('dialog')).toBeInTheDocument();
+});
+
+test('exposes open/close/showModal via ref without mutating during render', async () => {
+  const ref = createRef<ModalTriggerRef['current']>();
+  render(
+    <ModalTrigger
+      {...mockedProps}
+      ref={ref}
+      modalBody={<div>Modal body content</div>}
+    />,
+  );
+
+  expect(ref.current).not.toBeNull();
+  expect(ref.current?.showModal).toBe(false);
+  expect(typeof ref.current?.open).toBe('function');
+  expect(typeof ref.current?.close).toBe('function');
+
+  // Imperative open must work without a DOM MouseEvent
+  act(() => {
+    ref.current?.open();
+  });
+  expect(await screen.findByRole('dialog')).toBeInTheDocument();
+  expect(ref.current?.showModal).toBe(true);
+  expect(screen.getByText('Modal body content')).toBeInTheDocument();
+
+  act(() => {
+    ref.current?.close();
+  });
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(ref.current?.showModal).toBe(false);
 });

@@ -16,7 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { FeatureFlag, Preset, VizType } from '@ax-bi/ui-core';
+import {
+  Behavior,
+  ChartMetadata,
+  FeatureFlag,
+  getChartMetadataRegistry,
+  Preset,
+  VizType,
+} from '@ax-bi/ui-core';
 import {
   render,
   cleanup,
@@ -49,6 +56,15 @@ class TestPreset extends Preset {
 }
 
 new TestPreset().register();
+getChartMetadataRegistry().registerValue(
+  'test_chart_customization',
+  new ChartMetadata({
+    name: 'Test chart customization',
+    behaviors: [Behavior.InteractiveChart, Behavior.ChartCustomization],
+    tags: ['Experimental'],
+    thumbnail: '',
+  }),
+);
 
 const getTestId = testWithId<string>(VIZ_TYPE_CONTROL_TEST_ID, true);
 
@@ -120,4 +136,21 @@ test('legacy plugins are shown in the gallery when LEGACY_CHART_PLUGINS is on', 
   expect(
     within(visualizations).getByText('Bubble Chart (legacy)'),
   ).toBeInTheDocument();
+});
+
+test('chart customization plugins are hidden from the gallery and search', async () => {
+  await renderGallery();
+  const visualizations = await showAllCharts();
+
+  expect(
+    within(visualizations).queryByText('Test chart customization'),
+  ).not.toBeInTheDocument();
+
+  userEvent.type(
+    screen.getByTestId(getTestId('search-input')),
+    'Test chart customization',
+  );
+  expect(
+    within(visualizations).queryByText('Test chart customization'),
+  ).not.toBeInTheDocument();
 });
