@@ -155,6 +155,18 @@ def _build_filter_config(
         filter_config["controlValues"] = {
             "enableEmptyFilter": False,
         }
+        if request.default_value is not None:
+            filter_config["defaultDataMask"] = {
+                "filterState": {"value": request.default_value},
+            }
+    elif request.filter_type == "filter_timecolumn":
+        filter_config["controlValues"] = {
+            "enableEmptyFilter": False,
+        }
+        if request.default_value is not None:
+            filter_config["defaultDataMask"] = {
+                "filterState": {"value": request.default_value},
+            }
 
     existing_filters.append(filter_config)
     return existing_filters

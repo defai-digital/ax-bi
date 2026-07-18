@@ -67,6 +67,19 @@ logger = logging.getLogger(__name__)
 _mcp_call_id_var: ContextVar[str | None] = ContextVar("mcp_call_id", default=None)
 
 
+def _tool_call_arguments(message: Any) -> dict[str, Any]:
+    """Return tool-call argument dict from an MCP ``CallToolRequestParams``.
+
+    FastMCP/MCP types expose arguments on ``.arguments``. Older tests and
+    stubs may still set ``.params``; prefer the real protocol field first.
+    """
+    args = getattr(message, "arguments", None)
+    if isinstance(args, dict):
+        return args
+    params = getattr(message, "params", None)
+    return params if isinstance(params, dict) else {}
+
+
 class _MCPEventLoggerAdapter:
     """Adapter exposing the event-logger shape used by middleware tests."""
 
@@ -285,7 +298,7 @@ class LoggingMiddleware(Middleware):
         dashboard_id = None
         slice_id = None
         dataset_id = None
-        params = getattr(context.message, "params", {}) or {}
+        params = _tool_call_arguments(context.message)
         if hasattr(context, "metadata") and context.metadata:
             agent_id = context.metadata.get("agent_id")
         if not agent_id and hasattr(context, "session") and context.session:
@@ -796,11 +809,12 @@ class InMemoryRateLimiter:
 
         # Check if rate limited BEFORE adding the current request
         if total_requests >= limit:
-            # Rate limit info when limited
+            # Sliding-window reset is when the oldest counted request ages out.
+            oldest = min(ts for ts, _ in requests_in_window)
             rate_limit_info = {
                 "limit": limit,
                 "remaining": 0,
-                "reset_time": int(window_start + window),
+                "reset_time": int(oldest + window),
                 "window_seconds": window,
             }
             return True, rate_limit_info
@@ -818,11 +832,12 @@ class InMemoryRateLimiter:
             if ts > current_time - 3600  # Keep last hour
         ]
 
-        # Rate limit info after adding request
+        # Reset is when the oldest request currently in the window expires.
+        oldest_in_window = min(ts for ts, _ in self._requests[key] if ts > window_start)
         rate_limit_info = {
             "limit": limit,
             "remaining": max(0, limit - total_requests),
-            "reset_time": int(window_start + window),
+            "reset_time": int(oldest_in_window + window),
             "window_seconds": window,
         }
 
@@ -1096,10 +1111,10 @@ class RateLimitMiddleware(Middleware):
             Tuple of (key, requests_per_minute_limit)
         """
         # Resolve the real tool name: when tool search is enabled, clients call
-        # the ``call_tool`` proxy with the actual tool name in params, so the
+        # the ``call_tool`` proxy with the actual tool name in arguments, so the
         # expensive-tool limits must look through the proxy.
         raw_name = getattr(context.message, "name", "unknown")
-        params = getattr(context.message, "params", {}) or {}
+        params = _tool_call_arguments(context.message)
         tool_name = LoggingMiddleware._resolve_tool_name(raw_name, params) or raw_name
 
         principal, is_known = self._resolve_principal(context)
@@ -1394,7 +1409,7 @@ class ResponseSizeGuardMiddleware(Middleware):
 
         # Block if over limit
         if estimated_tokens > self.token_limit:
-            params = getattr(context.message, "params", {}) or {}
+            params = _tool_call_arguments(context.message)
 
             # For info tools, try dynamic truncation before blocking
             if tool_name in INFO_TOOLS:

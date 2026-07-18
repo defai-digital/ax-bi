@@ -239,28 +239,33 @@ class WebDriverPool:
             logger.warning("Error destroying WebDriver: %s", e)
 
     def _cleanup_expired_drivers(self) -> None:
-        """Remove expired drivers from the pool"""
-        expired_drivers = []
+        """Remove expired drivers from the pool.
 
-        # Check pool for expired drivers
-        while not self._pool.empty():
+        Drain the entire pool so expired drivers behind a still-valid one are
+        not left stranded until the next borrow.
+        """
+        expired_drivers: list[PooledWebDriver] = []
+        valid_drivers: list[PooledWebDriver] = []
+
+        while True:
             try:
                 pooled_driver = self._pool.get_nowait()
-                if self._is_driver_valid(pooled_driver):
-                    # Driver is still valid, put it back
-                    self._pool.put_nowait(pooled_driver)
-                    break
-                else:
-                    # Driver is expired
-                    expired_drivers.append(pooled_driver)
-                    self._stats["evictions"] += 1
             except Empty:
                 break
-            except Full:
-                # Pool is full, stop checking
-                break
+            if self._is_driver_valid(pooled_driver):
+                valid_drivers.append(pooled_driver)
+            else:
+                expired_drivers.append(pooled_driver)
+                self._stats["evictions"] += 1
 
-        # Destroy expired drivers
+        for pooled_driver in valid_drivers:
+            try:
+                self._pool.put_nowait(pooled_driver)
+            except Full:
+                # Should not happen (same count of slots), destroy to avoid leak
+                expired_drivers.append(pooled_driver)
+                self._stats["evictions"] += 1
+
         for pooled_driver in expired_drivers:
             self._destroy_driver(pooled_driver)
 

@@ -23,8 +23,10 @@ import pytest
 from fastmcp.exceptions import ToolError
 
 from axbi.mcp_service.middleware import (
+    _tool_call_arguments,
     create_rate_limit_middleware,
     InMemoryRateLimiter,
+    LoggingMiddleware,
     RateLimitMiddleware,
     RedisRateLimiter,
 )
@@ -116,9 +118,47 @@ def test_in_memory_limiter_sliding_window() -> None:
     assert [is_limited for is_limited, _ in results] == [False, False, True]
 
 
-def _ctx(name: str, params: dict[str, object] | None = None) -> SimpleNamespace:
+def test_in_memory_limiter_reset_time_is_in_the_future_when_limited() -> None:
+    """When limited, reset_time must be after now (not equal to now).
+
+    Clients use reset_time - now as retry delay. A zero delay encourages
+    tight retry loops and misrepresents the sliding window.
+    """
+    import time
+
+    limiter = InMemoryRateLimiter()
+    window = 60
+    limit = 2
+    for _ in range(limit):
+        limited, _ = limiter.is_rate_limited("k", limit=limit, window=window)
+        assert limited is False
+
+    limited, info = limiter.is_rate_limited("k", limit=limit, window=window)
+    assert limited is True
+    # Oldest request ages out after ~window seconds; allow small clock skew.
+    assert info["reset_time"] - int(time.time()) > 0
+    assert info["reset_time"] <= int(time.time()) + window
+
+
+def _ctx(
+    name: str,
+    params: dict[str, object] | None = None,
+    *,
+    use_arguments: bool = True,
+) -> SimpleNamespace:
+    """Build a middleware context.
+
+    Real FastMCP ``CallToolRequestParams`` expose tool args on ``.arguments``.
+    When *use_arguments* is False, only the legacy ``.params`` stub is set
+    (compat path for older mocks).
+    """
+    payload = params or {}
+    if use_arguments:
+        message = SimpleNamespace(name=name, arguments=payload)
+    else:
+        message = SimpleNamespace(name=name, params=payload)
     return SimpleNamespace(
-        message=SimpleNamespace(name=name, params=params or {}),
+        message=message,
         method="tools/call",
         metadata=None,
         session=None,
@@ -156,7 +196,24 @@ def test_key_uses_user_limit_for_known_principal() -> None:
 def test_key_resolves_real_tool_under_tool_search_proxy() -> None:
     mw = RateLimitMiddleware()
     # Client called the call_tool proxy; the real tool is expensive.
-    ctx = _ctx("call_tool", {"name": "get_chart_data"})
+    # Protocol field is ``arguments`` (FastMCP CallToolRequestParams).
+    ctx = _ctx("call_tool", {"name": "get_chart_data"}, use_arguments=True)
+    with (
+        patch("axbi.mcp_service.middleware.get_user_id", return_value=None),
+        patch(
+            "axbi.mcp_service.middleware._principal_from_access_token",
+            return_value=None,
+        ),
+    ):
+        key, limit = mw._get_rate_limit_key(ctx)
+    assert limit == mw.expensive_rpm
+    assert key.endswith(":get_chart_data")
+
+
+def test_key_resolves_tool_from_legacy_params_stub() -> None:
+    """Legacy mocks that set ``.params`` still resolve the proxied tool name."""
+    mw = RateLimitMiddleware()
+    ctx = _ctx("call_tool", {"name": "get_chart_data"}, use_arguments=False)
     with (
         patch("axbi.mcp_service.middleware.get_user_id", return_value=None),
         patch(
@@ -189,6 +246,43 @@ async def test_middleware_raises_tool_error_when_limited() -> None:
         assert first == "ok"
         with pytest.raises(ToolError):
             await mw.on_call_tool(ctx, call_next)
+
+
+def test_tool_call_arguments_prefers_protocol_arguments_field() -> None:
+    """MCP CallToolRequestParams uses ``arguments``, not ``params``."""
+    message = SimpleNamespace(
+        name="list_charts",
+        arguments={"dashboard_id": 9, "name": "get_chart_data"},
+        params={"dashboard_id": 1},  # stale/legacy should lose
+    )
+    assert _tool_call_arguments(message) == {
+        "dashboard_id": 9,
+        "name": "get_chart_data",
+    }
+
+
+def test_logging_extracts_entity_ids_from_arguments() -> None:
+    mw = LoggingMiddleware()
+    ctx = SimpleNamespace(
+        message=SimpleNamespace(
+            name="get_chart_data",
+            arguments={
+                "dashboard_id": 3,
+                "chart_id": 4,
+                "dataset_id": 5,
+            },
+        ),
+        metadata=None,
+        session=None,
+    )
+    with patch("axbi.mcp_service.middleware.get_user_id", return_value=None):
+        _agent, _user, dashboard_id, slice_id, dataset_id, params = (
+            mw._extract_context_info(ctx)
+        )
+    assert dashboard_id == 3
+    assert slice_id == 4
+    assert dataset_id == 5
+    assert params["dashboard_id"] == 3
 
 
 def test_factory_returns_none_when_disabled() -> None:

@@ -438,6 +438,40 @@ def test_mcp_auth_hook_removes_stale_db_session_in_sync_wrapper(app) -> None:
     assert result == "fresh"
 
 
+def test_mcp_auth_hook_removes_stale_db_session_in_async_wrapper(app) -> None:
+    """async_wrapper must purge the scoped session before user lookup.
+
+    Async tools share the event-loop thread; db.session is still thread-scoped.
+    Without a pre-call remove, a prior tool's session can leak across tenants.
+    """
+    import asyncio
+
+    fresh_user = _make_mock_user("fresh")
+
+    async def dummy_tool():
+        """Dummy async tool."""
+        return g.user.username
+
+    wrapped = mcp_auth_hook(dummy_tool)
+
+    with app.test_request_context():
+        g.user = fresh_user
+        with patch("axbi.extensions.db") as mock_db:
+
+            def _assert_remove_already_called() -> MagicMock:
+                """Verify remove() was called before user resolution runs."""
+                mock_db.session.remove.assert_called_once_with()
+                return fresh_user
+
+            with patch(
+                "axbi.mcp_service.auth.get_user_from_request",
+                side_effect=_assert_remove_already_called,
+            ):
+                result = asyncio.run(wrapped())
+
+    assert result == "fresh"
+
+
 def test_sync_wrapper_handles_ssl_error_on_pre_call_remove(app) -> None:
     """sync_wrapper tolerates OperationalError from db.session.remove() before the call.
 

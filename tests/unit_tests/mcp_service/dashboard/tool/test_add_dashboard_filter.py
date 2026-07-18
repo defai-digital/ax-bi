@@ -103,3 +103,46 @@ async def test_bad_existing_metadata_starts_clean_filter_config(
     assert len(filters) == 1
     assert filters[0]["name"] == "Region"
     assert filters[0]["targets"] == [{"datasetId": 7, "column": {"name": "country"}}]
+
+
+def test_build_filter_config_applies_default_value_for_filter_range() -> None:
+    """filter_range must honor default_value like select/time filters."""
+    from axbi.mcp_service.dashboard.tool.add_dashboard_filter import (
+        _build_filter_config,
+        AddDashboardFilterRequest,
+        FilterTarget,
+    )
+
+    request = AddDashboardFilterRequest(
+        dashboard_id=1,
+        filter_type="filter_range",
+        name="Amount",
+        targets=[FilterTarget(dataset_id=7, column_name="amount")],
+        default_value=["0", "100"],
+    )
+    filters = _build_filter_config(request, [])
+    assert len(filters) == 1
+    assert filters[0]["defaultDataMask"] == {
+        "filterState": {"value": ["0", "100"]},
+    }
+
+
+def test_build_filter_config_applies_default_value_for_filter_timecolumn() -> None:
+    """filter_timecolumn must honor default_value when provided."""
+    from axbi.mcp_service.dashboard.tool.add_dashboard_filter import (
+        _build_filter_config,
+        AddDashboardFilterRequest,
+        FilterTarget,
+    )
+
+    request = AddDashboardFilterRequest(
+        dashboard_id=1,
+        filter_type="filter_timecolumn",
+        name="Event time",
+        targets=[FilterTarget(dataset_id=7, column_name="event_ts")],
+        default_value="event_ts",
+    )
+    filters = _build_filter_config(request, [])
+    assert filters[0]["defaultDataMask"] == {
+        "filterState": {"value": "event_ts"},
+    }
