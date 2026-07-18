@@ -28,9 +28,18 @@ jobs:
 
     steps:
       - name: Install AxBI Showtime
-        run: pip install axbi-showtime
+        id: install
+        continue-on-error: true
+        run: |
+          if ! pip install axbi-showtime; then
+            echo "::notice::axbi-showtime is not published on the configured package index; skipping cleanup"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "available=true" >> "$GITHUB_OUTPUT"
 
       - name: Cleanup expired environments
+        if: steps.install.outputs.available == 'true'
         run: |
           echo "Cleaning up environments respecting TTL labels"
           python -m showtime cleanup --respect-ttl

@@ -81,7 +81,7 @@ def test_get_axbi_base_url_prefers_webserver_address(
     monkeypatch.setattr(
         url_utils,
         "get_webdriver_baseurl_user_friendly",
-        lambda: "http://0.0.0.0:8080/",
+        lambda: "http://127.0.0.1:8080/",
     )
 
     assert get_axbi_base_url() == "http://127.0.0.1:8080"

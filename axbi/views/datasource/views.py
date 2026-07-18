@@ -152,9 +152,12 @@ class Datasource(BaseAxBIView):
     @handle_api_exception
     @deprecated(new_target="/api/v1/dataset/<int:pk>")
     def get(self, datasource_type: str, datasource_id: int) -> FlaskResponse:
-        datasource = DatasourceDAO.get_datasource(
-            DatasourceType(datasource_type), datasource_id
-        )
+        try:
+            resolved_type = DatasourceType(datasource_type)
+        except ValueError as ex:
+            # StrEnum raises ValueError for unknown types (e.g. legacy "druid").
+            return json_error_response(str(ex), status=400)
+        datasource = DatasourceDAO.get_datasource(resolved_type, datasource_id)
         security_manager.raise_for_access(datasource=datasource)
         return self.json_response(sanitize_datasource_data(datasource.data))
 

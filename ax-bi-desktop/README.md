@@ -100,7 +100,7 @@ automation (aligned with AX Studio / AX Code Desktop).
 ## Prerequisites
 
 - **Node.js**: See `ax-bi-frontend/package.json` `engines` field (24.x+)
-- **Rust**: 1.85 or later (via [rustup](https://rustup.rs/); pinned in `src-tauri/rust-toolchain.toml`)
+- **Rust**: 1.89 or later (via [rustup](https://rustup.rs/); pinned in `src-tauri/rust-toolchain.toml`)
 - **Platform-specific dependencies**:
   - **macOS**: Xcode Command Line Tools
   - **Windows**: WebView2 (included in Windows 10/11)
@@ -298,7 +298,7 @@ The desktop client is a thin shell that loads the AX BI web application. It does
 ## Prerequisites
 
 - **Node.js**: 20.x or later
-- **Rust**: 1.85 or later (via [rustup](https://rustup.rs/); pinned in `src-tauri/rust-toolchain.toml`)
+- **Rust**: 1.89 or later (via [rustup](https://rustup.rs/); pinned in `src-tauri/rust-toolchain.toml`)
 - **Platform-specific dependencies**:
   - **macOS**: Xcode Command Line Tools
   - **Windows**: WebView2 (included in Windows 10/11)

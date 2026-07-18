@@ -24,8 +24,7 @@ from flask_wtf.csrf import same_origin
 from axbi import event_logger, is_feature_enabled
 from axbi.axbi_typing import FlaskResponse
 from axbi.daos.dashboard import EmbeddedDashboardDAO
-from axbi.utils import json
-from axbi.views.base import BaseAxBIView, common_bootstrap_payload
+from axbi.views.base import BaseAxBIView, get_spa_template_context
 
 
 class EmbeddedView(BaseAxBIView):
@@ -90,24 +89,22 @@ class EmbeddedView(BaseAxBIView):
             dashboard_version="v2",
         )
 
-        bootstrap_data = {
-            "config": {
-                "GUEST_TOKEN_HEADER_NAME": current_app.config["GUEST_TOKEN_HEADER_NAME"]
-            },
-            "common": common_bootstrap_payload(),
-            "embedded": {
-                "dashboard_id": embedded.dashboard_id,
-                # The list of domains allowed to embed this dashboard. An empty
-                # list means any domain is allowed (no restriction). The frontend
-                # uses this to validate the origin of incoming postMessage events.
-                "allowed_domains": embedded.allowed_domains,
-            },
-        }
-
-        return self.render_template(
-            "axbi/spa.html",
+        # Use the shared SPA context so theme_tokens / spinner fields required
+        # by spa.html are always present (same path as the main app shell).
+        context = get_spa_template_context(
             entry="embedded",
-            bootstrap_data=json.dumps(
-                bootstrap_data, default=json.pessimistic_json_iso_dttm_ser
-            ),
+            extra_bootstrap_data={
+                "config": {
+                    "GUEST_TOKEN_HEADER_NAME": current_app.config[
+                        "GUEST_TOKEN_HEADER_NAME"
+                    ]
+                },
+                "embedded": {
+                    "dashboard_id": embedded.dashboard_id,
+                    # Empty list means any domain is allowed (no restriction).
+                    # Frontend uses this to validate postMessage origins.
+                    "allowed_domains": embedded.allowed_domains,
+                },
+            },
         )
+        return self.render_template("axbi/spa.html", **context)

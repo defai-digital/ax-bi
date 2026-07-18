@@ -456,7 +456,17 @@ class AxBI(BaseAxBIView):
             url = url._replace(query=parse.urlencode(query, True))
             redirect_url = parse.urlunparse(url)
 
-        return get_safe_redirect_target(redirect_url) or "/"
+        # request.url is absolute (scheme+host of the test client / reverse
+        # proxy). Always emit a same-origin relative Location so the open-
+        # redirect check does not depend on WEBDRIVER_BASEURL matching the
+        # request host.
+        parsed = parse.urlparse(redirect_url)
+        relative = parsed.path or "/"
+        if parsed.query:
+            relative = f"{relative}?{parsed.query}"
+        if parsed.fragment:
+            relative = f"{relative}#{parsed.fragment}"
+        return get_safe_redirect_target(relative) or "/"
 
     @has_access
     @event_logger.log_this

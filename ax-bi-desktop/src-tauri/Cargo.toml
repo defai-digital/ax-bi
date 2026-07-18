@@ -6,7 +6,7 @@ authors = ["AX BI Team"]
 license = "Apache-2.0"
 repository = ""
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.89"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }

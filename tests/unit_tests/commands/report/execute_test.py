@@ -465,7 +465,7 @@ def test_get_dashboard_urls_with_multiple_tabs(
     # Use urljoin to handle proper URL joining (handles double slashes)
     import urllib.parse
 
-    base_url = app.config.get("WEBDRIVER_BASEURL", "http://0.0.0.0:8080/")
+    base_url = app.config.get("WEBDRIVER_BASEURL", "http://127.0.0.1:8080/")
     expected_uris = [urllib.parse.urljoin(base_url, path) for path in expected_paths]
     assert result == expected_uris
 
@@ -663,7 +663,7 @@ def test_get_dashboard_urls_with_filters_and_tabs(
 
     import urllib.parse
 
-    base_url = app.config.get("WEBDRIVER_BASEURL", "http://0.0.0.0:8080/")
+    base_url = app.config.get("WEBDRIVER_BASEURL", "http://127.0.0.1:8080/")
     assert result == [
         urllib.parse.urljoin(base_url, "ax-bi/dashboard/p/key1/"),
         urllib.parse.urljoin(base_url, "ax-bi/dashboard/p/key2/"),
@@ -825,7 +825,7 @@ def test_get_dashboard_urls_with_filters_no_tabs(
 
     import urllib.parse
 
-    base_url = app.config.get("WEBDRIVER_BASEURL", "http://0.0.0.0:8080/")
+    base_url = app.config.get("WEBDRIVER_BASEURL", "http://127.0.0.1:8080/")
     assert result == [
         urllib.parse.urljoin(base_url, "ax-bi/dashboard/p/key1/"),
     ]
@@ -956,7 +956,7 @@ def test_get_tab_urls(
     result: list[str] = class_instance._get_tabs_urls(tab_anchors)
     import urllib.parse
 
-    base_url = app.config.get("WEBDRIVER_BASEURL", "http://0.0.0.0:8080/")
+    base_url = app.config.get("WEBDRIVER_BASEURL", "http://127.0.0.1:8080/")
     assert result == [
         urllib.parse.urljoin(base_url, "ax-bi/dashboard/p/uri1/"),
         urllib.parse.urljoin(base_url, "ax-bi/dashboard/p/uri2/"),
@@ -1045,7 +1045,7 @@ def test_get_tab_url(
     result: str = class_instance._get_tab_url(dashboard_state)
     import urllib.parse
 
-    base_url = app.config.get("WEBDRIVER_BASEURL", "http://0.0.0.0:8080/")
+    base_url = app.config.get("WEBDRIVER_BASEURL", "http://127.0.0.1:8080/")
     assert result == urllib.parse.urljoin(base_url, "ax-bi/dashboard/p/uri/")
 
 

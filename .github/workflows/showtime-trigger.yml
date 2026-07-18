@@ -101,16 +101,23 @@ jobs:
             core.setOutput('authorized', 'true');
 
       - name: Install AxBI Showtime
+        id: install
         if: steps.auth.outputs.authorized == 'true'
+        continue-on-error: true
         run: |
           echo "::notice::Maintainer $GITHUB_ACTOR triggered deploy for PR ${PULL_REQUEST_NUMBER}"
-          pip install --upgrade axbi-showtime
+          if ! pip install --upgrade axbi-showtime; then
+            echo "::notice::axbi-showtime is not published on the configured package index; skipping Showtime sync"
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           showtime version
+          echo "available=true" >> "$GITHUB_OUTPUT"
 
         env:
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
       - name: Check what actions are needed
-        if: steps.auth.outputs.authorized == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true'
         id: check
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -151,14 +158,14 @@ jobs:
           echo "target_sha=$TARGET_SHA" >> $GITHUB_OUTPUT
 
       - name: Checkout PR code (only if build needed)
-        if: steps.auth.outputs.authorized == 'true' && steps.check.outputs.build_needed == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true' && steps.check.outputs.build_needed == 'true'
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ steps.check.outputs.target_sha }}
           persist-credentials: false
 
       - name: Setup Docker Environment (only if build needed)
-        if: steps.auth.outputs.authorized == 'true' && steps.check.outputs.build_needed == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true' && steps.check.outputs.build_needed == 'true'
         uses: ./.github/actions/setup-docker
         with:
           dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
@@ -167,7 +174,7 @@ jobs:
           install-docker-compose: "false"
 
       - name: Execute sync (handles everything)
-        if: steps.auth.outputs.authorized == 'true' && steps.check.outputs.sync_needed == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true' && steps.check.outputs.sync_needed == 'true'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
