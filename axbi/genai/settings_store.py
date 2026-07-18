@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import json
 import logging
 from typing import Any
 
@@ -80,26 +81,40 @@ def _decrypt_api_key(token: str) -> str:
     return _fernet().decrypt(token.encode("ascii")).decode("utf-8")
 
 
+def _stable_value(val: Any) -> str:
+    """Return a deterministic string representation for hashing.
+
+    Handles None, scalars, dicts, and lists by JSON-serialising with sorted
+    keys so that logically equal values always produce the same string.
+    """
+    if val is None:
+        return "\x00NONE"  # sentinel that cannot collide with a real value
+    if isinstance(val, (dict, list)):
+        return json.dumps(val, sort_keys=True, separators=(",", ":"))
+    return str(val)
+
+
 def config_fingerprint(raw: dict[str, Any] | None) -> str:
-    """Stable fingerprint used to invalidate the process-local provider cache."""
+    """Stable fingerprint used to invalidate the process-local provider cache.
+
+    Every field listed in ``_PERSIST_KEYS`` is included so that *any* persisted
+    change triggers cache invalidation.
+    """
     if not raw:
         return "empty"
+
+    parts: list[str] = []
+    for key in sorted(_PERSIST_KEYS):
+        parts.append(f"{key}={_stable_value(raw.get(key))}")
+
+    # api_key is not in _PERSIST_KEYS (stored encrypted separately) but must
+    # still influence the fingerprint.
     api_key = raw.get("api_key") or ""
-    payload = "|".join(
-        [
-            str(raw.get("enabled")),
-            str(raw.get("provider") or ""),
-            str(raw.get("base_url") or ""),
-            str(raw.get("model") or ""),
-            hashlib.sha256(str(api_key).encode("utf-8")).hexdigest()[:24],
-            str(raw.get("timeout_seconds") or ""),
-            str(raw.get("verify_tls")),
-            str(raw.get("allow_http")),
-            str(raw.get("allow_private_network")),
-            str(raw.get("max_retries") or ""),
-            str(raw.get("max_tokens") or ""),
-        ]
+    parts.append(
+        "api_key=" + hashlib.sha256(str(api_key).encode("utf-8")).hexdigest()[:24]
     )
+
+    payload = "|".join(parts)
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 

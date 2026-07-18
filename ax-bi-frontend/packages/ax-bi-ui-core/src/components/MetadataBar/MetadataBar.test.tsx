@@ -59,7 +59,11 @@ const runWithBarCollapsed = async (func: Function) => {
   mockUseResizeDetector.mockImplementation(props => {
     if (props?.onResize && !width) {
       width = 80;
-      props.onResize(width);
+      props.onResize({
+        width,
+        height: 0,
+        entry: {} as ResizeObserverEntry,
+      });
     }
     return { ref: { current: undefined } };
   });

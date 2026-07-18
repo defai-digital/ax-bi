@@ -322,7 +322,6 @@ const AntdIcons = {
   HistoryOutlined,
   SlackOutlined,
   ApiOutlined,
-  LogoutOutlined,
   SafetyCertificateOutlined,
 } as const;
 
@@ -338,10 +337,10 @@ export const antdEnhancedIcons: Record<
       acc[key as AntdIconNames] = forwardRef<HTMLSpanElement, IconType>(
         (props, ref) => (
           <BaseIconComponent
+            {...props}
             ref={ref}
             component={AntdIcons[key as AntdIconNames]}
             fileName={key}
-            {...props}
           />
         ),
       );

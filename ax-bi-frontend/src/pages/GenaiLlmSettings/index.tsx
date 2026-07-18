@@ -172,7 +172,7 @@ export default function GenaiLlmSettings() {
       setProvider(formValues.provider);
       setEnabled(formValues.enabled);
     } catch (error) {
-      const clientError = await getClientErrorObject(error);
+      const clientError = await getClientErrorObject(error as Parameters<typeof getClientErrorObject>[0]);
       addDangerToast(
         clientError.error ||
           t('Failed to load LLM provider settings. Admin access is required.'),
@@ -221,7 +221,7 @@ export default function GenaiLlmSettings() {
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return false;
       }
-      const clientError = await getClientErrorObject(error);
+      const clientError = await getClientErrorObject(error as Parameters<typeof getClientErrorObject>[0]);
       addDangerToast(
         clientError.error || t('Failed to save LLM provider settings'),
       );
@@ -248,7 +248,7 @@ export default function GenaiLlmSettings() {
       const values = form.getFieldsValue(true) as FormValues;
       await persist({ ...values, enabled: false }, false);
     } catch (error) {
-      const clientError = await getClientErrorObject(error);
+      const clientError = await getClientErrorObject(error as Parameters<typeof getClientErrorObject>[0]);
       addDangerToast(
         clientError.error || t('Failed to disable LLM provider'),
       );
@@ -285,7 +285,7 @@ export default function GenaiLlmSettings() {
       if (error && typeof error === 'object' && 'errorFields' in error) {
         return;
       }
-      const clientError = await getClientErrorObject(error);
+      const clientError = await getClientErrorObject(error as Parameters<typeof getClientErrorObject>[0]);
       addDangerToast(clientError.error || t('LLM connection test failed'));
     } finally {
       setTesting(false);
@@ -299,7 +299,7 @@ export default function GenaiLlmSettings() {
       applyResult(result);
       addSuccessToast(t('LLM provider configuration cleared'));
     } catch (error) {
-      const clientError = await getClientErrorObject(error);
+      const clientError = await getClientErrorObject(error as Parameters<typeof getClientErrorObject>[0]);
       addDangerToast(
         clientError.error || t('Failed to clear LLM provider settings'),
       );

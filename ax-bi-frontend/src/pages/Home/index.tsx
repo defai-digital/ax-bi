@@ -335,7 +335,7 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
         })
         .catch(async (err: unknown) => {
           setDashboardData([]);
-          const parsed = await getClientErrorObject(err as any);
+          const parsed = await getClientErrorObject(err as Parameters<typeof getClientErrorObject>[0]);
           addDangerToast(
             t(
               'There was an issue fetching your dashboards: %s',
@@ -351,7 +351,7 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
         })
         .catch(async (err: unknown) => {
           setChartData([]);
-          const parsed = await getClientErrorObject(err as any);
+          const parsed = await getClientErrorObject(err as Parameters<typeof getClientErrorObject>[0]);
           addDangerToast(
             t(
               'There was an issue fetching your chart: %s',
@@ -368,7 +368,7 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
             })
             .catch(async (err: unknown) => {
               setQueryData([]);
-              const parsed = await getClientErrorObject(err as any);
+              const parsed = await getClientErrorObject(err as Parameters<typeof getClientErrorObject>[0]);
               addDangerToast(
                 t(
                   'There was an issue fetching your saved queries: %s',

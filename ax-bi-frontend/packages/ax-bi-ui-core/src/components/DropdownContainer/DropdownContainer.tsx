@@ -19,7 +19,6 @@
 import {
   cloneElement,
   forwardRef,
-  RefObject,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -39,7 +38,10 @@ import { DropdownContainerProps, DropdownItem, DropdownRef } from './types';
 
 const MAX_HEIGHT = 500;
 
-export const DropdownContainer = forwardRef(
+export const DropdownContainer = forwardRef<
+  DropdownRef,
+  DropdownContainerProps
+>(
   (
     {
       items,
@@ -54,7 +56,7 @@ export const DropdownContainer = forwardRef(
       forceRender,
       style,
     }: DropdownContainerProps,
-    outerRef: RefObject<DropdownRef>,
+    outerRef,
   ) => {
     const theme = useTheme();
     const { ref, width = 0 } = useResizeDetector<HTMLDivElement>();
@@ -361,7 +363,7 @@ export const DropdownContainer = forwardRef(
 
             <Popover
               styles={{
-                body: {
+                container: {
                   maxHeight: `${MAX_HEIGHT}px`,
                   overflow: showOverflow ? 'auto' : 'visible',
                 },

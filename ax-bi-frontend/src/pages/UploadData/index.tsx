@@ -268,7 +268,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
 
         return { datasetId: data.dataset_id };
       } catch (error) {
-        const clientError = await getClientErrorObject(error);
+        const clientError = await getClientErrorObject(error as Parameters<typeof getClientErrorObject>[0]);
         const msg =
           clientError.message ||
           clientError.error ||
