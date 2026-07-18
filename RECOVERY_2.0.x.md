@@ -21,6 +21,12 @@
 Frontend unit tests: ModalTrigger + Tooltip **passed**.  
 Python unit tests (session lifecycle / stability guards / base command / decorators): **31 passed**.
 
+
+## Version 2.0.6
+
+- Desktop + frontend package versions set to **2.0.6**
+- Ship tag: `ax-bi-desktop-v2.0.6` (from this branch only)
+
 ## Why this branch exists
 
 After v2.0.5, `main` accumulated ~62 commits (~357 files) in roughly one day:
