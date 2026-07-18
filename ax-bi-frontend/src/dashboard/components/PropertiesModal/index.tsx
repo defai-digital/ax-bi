@@ -405,11 +405,13 @@ const PropertiesModal = ({
       label_colors: customLabelColors,
       color_scheme: updatedColorScheme,
       show_chart_timestamps: showChartTimestamps,
+      ...(updatedEchartsTheme === DEFAULT_ECHARTS_THEME_ID
+        ? { echarts_theme: undefined }
+        : { echarts_theme: updatedEchartsTheme }),
     };
     if (updatedEchartsTheme === DEFAULT_ECHARTS_THEME_ID) {
-      delete updatedDashboardMetadata.echarts_theme;
-    } else {
-      updatedDashboardMetadata.echarts_theme = updatedEchartsTheme;
+      delete (updatedDashboardMetadata as { echarts_theme?: string })
+        .echarts_theme;
     }
 
     originalDashboardMetadata.current = updatedDashboardMetadata;
