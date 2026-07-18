@@ -40,6 +40,7 @@ import {
   GRID_MIN_COLUMN_COUNT,
   GRID_MIN_ROW_UNITS,
 } from 'src/dashboard/util/constants';
+import { useDashboardGridLayoutMode } from 'src/dashboard/components/DashboardBuilder/gridLayoutMode';
 
 export const CHART_MARGIN = 32;
 
@@ -166,7 +167,14 @@ const ChartHolder = ({
     };
   }, [outlinedComponentId]);
 
+  const gridLayoutMode = useDashboardGridLayoutMode();
+
   const widthMultiple = useMemo(() => {
+    // In the narrow single-column stack every chart spans the full row width
+    if (gridLayoutMode === 'stack' && availableColumnCount > 0) {
+      return availableColumnCount;
+    }
+
     const columnParentWidth = getComponentById(
       parentComponent.parents?.find(parent => parent.startsWith(COLUMN_TYPE)),
     )?.meta?.width;
@@ -180,8 +188,10 @@ const ChartHolder = ({
 
     return widthMultiple;
   }, [
+    availableColumnCount,
     component,
     getComponentById,
+    gridLayoutMode,
     parentComponent.meta.width,
     parentComponent.parents,
     parentComponent.type,

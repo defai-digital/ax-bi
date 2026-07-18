@@ -900,6 +900,15 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # @category: runtime_config
     # @docs: https://github.com/defai-digital/ax-bi/tree/main/docs/docs
     "DASHBOARD_RBAC": False,
+    # Reflow the dashboard grid based on container width: between 768px and
+    # 1199px the grid compresses proportionally and the wrapper carries a
+    # dashboard--compact class for compact-band styling hooks; below 768px
+    # the dashboard renders as a read-only single-column stack with authoring
+    # chrome hidden. When disabled, the dashboard keeps the fixed 12-column
+    # layout at all widths.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "DASHBOARD_RESPONSIVE": True,
     # Supports simultaneous data and dashboard virtualization for backend performance
     # @lifecycle: stable
     # @category: runtime_config
@@ -951,14 +960,36 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # @lifecycle: stable
     # @category: runtime_config
     "FORCE_GARBAGE_COLLECTION_AFTER_EVERY_REQUEST": False,
+    # Extend command palette asset search beyond dashboards and charts to
+    # datasets, databases, and saved queries.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "GLOBAL_SEARCH_V2": True,
+    # Register nvd3-era legacy chart plugins (chord, rose, partition, etc.)
+    # in the chart type picker. Existing saved charts keep rendering either
+    # way; the flag only controls whether legacy types are offered for new
+    # charts.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "LEGACY_CHART_PLUGINS": False,
     # Use card view as default in list views
     # @lifecycle: stable
     # @category: runtime_config
-    "LISTVIEWS_DEFAULT_CARD_VIEW": False,
+    "LISTVIEWS_DEFAULT_CARD_VIEW": True,
     # Hide user info in the navigation menu
     # @lifecycle: stable
     # @category: runtime_config
     "MENU_HIDE_USER_INFO": False,
+    # Show the notification center bell in the navbar with recent
+    # alert/report execution results. Content requires ALERT_REPORTS.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "NOTIFICATION_CENTER": True,
+    # Render dashboard/filter settings in a right-side drawer instead of
+    # stacked modals. When disabled, the legacy modal surfaces are used.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "SETTINGS_DRAWER": True,
     # Use Slack avatars for users. Requires adding slack-edge.com to TALISMAN_CONFIG.
     # @lifecycle: stable
     # @category: runtime_config
@@ -2021,8 +2052,10 @@ FAB_API_KEY_PREFIXES = ["sst_"]
 # GenAI BI Configuration
 # ---------------------------------------------------------------------------
 # Optional server-side LLM for GenAI BI (Admin/operator only).
-# When empty, core AX BI works normally; GenAI tools use heuristics or return
-# LLM_NOT_CONFIGURED. End users and AX Studio must not supply inference URLs.
+# When empty (and no durable Admin settings), core AX BI works normally;
+# GenAI tools use heuristics or return LLM_NOT_CONFIGURED. Admin UI Activate
+# persists encrypted settings for all workers; Disable keeps secrets but turns
+# GenAI off. End users and AX Studio must not supply inference URLs.
 #
 # Examples:
 #   # Anthropic cloud

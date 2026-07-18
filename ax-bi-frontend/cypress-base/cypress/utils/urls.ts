@@ -24,4 +24,4 @@ export const SAMPLE_DASHBOARD_1 = '/ax-bi/dashboard/1-sample-dashboard/';
 export const SUPPORTED_CHARTS_DASHBOARD =
   '/ax-bi/dashboard/supported_charts_dash/';
 export const TABBED_DASHBOARD = '/ax-bi/dashboard/tabbed_dash/';
-export const DATABASE_LIST = '/databaseview/list';
+export const DATABASE_LIST = '/databases';

@@ -20,7 +20,13 @@ import { useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { t } from '@ax-bi/core/translation';
 import { styled } from '@ax-bi/core/theme';
-import { Form, Checkbox } from '@ax-bi/ui-core/components';
+import {
+  Button,
+  Form,
+  Checkbox,
+  SettingsDrawer,
+} from '@ax-bi/ui-core/components';
+import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import { StandardModal } from 'src/components/Modal';
 import { RootState } from 'src/dashboard/types';
 import {
@@ -109,6 +115,68 @@ const RefreshIntervalModal = ({
     onHide();
   };
 
+  const saveText = editMode ? t('Save') : t('Save for this session');
+
+  const formContent = (
+    <Form layout="vertical">
+      <Form.Item
+        label={t('Refresh frequency')}
+        help={
+          refreshErrors[0] ||
+          (editMode
+            ? t('Set the automatic refresh frequency for this dashboard.')
+            : t('Set refresh frequency for current session only.'))
+        }
+        extra={refreshErrors[0] ? null : refreshWarningMessage}
+        validateStatus={refreshErrors.length ? 'error' : undefined}
+      >
+        <RefreshFrequencySelect
+          value={refreshFrequency}
+          onChange={handleFrequencyChange}
+        />
+      </Form.Item>
+      <CheckboxFormItem>
+        <Checkbox
+          checked={localPauseOnInactiveTab}
+          onChange={e => setLocalPauseOnInactiveTab(e.target.checked)}
+        >
+          {t('Pause auto refresh if tab is inactive')}
+        </Checkbox>
+      </CheckboxFormItem>
+    </Form>
+  );
+
+  // SETTINGS_DRAWER flag on: the same form renders inside the drawer chrome.
+  // Flag off: the StandardModal below renders as before.
+  if (isFeatureEnabled(FeatureFlag.SettingsDrawer)) {
+    return (
+      <SettingsDrawer
+        open={show}
+        onClose={handleCancel}
+        title={t('Refresh interval')}
+        width={400}
+        footer={
+          <>
+            <Button buttonStyle="secondary" onClick={handleCancel}>
+              {t('Cancel')}
+            </Button>
+            <Button
+              buttonStyle="primary"
+              cta
+              disabled={refreshErrors.length > 0}
+              tooltip={refreshErrors[0]}
+              onClick={handleSave}
+            >
+              {saveText}
+            </Button>
+          </>
+        }
+      >
+        {formContent}
+      </SettingsDrawer>
+    );
+  }
+
   return (
     <StandardModal
       show={show}
@@ -116,38 +184,11 @@ const RefreshIntervalModal = ({
       onSave={handleSave}
       title={t('Refresh interval')}
       width={400}
-      saveText={editMode ? t('Save') : t('Save for this session')}
+      saveText={saveText}
       saveDisabled={refreshErrors.length > 0}
       errorTooltip={refreshErrors[0]}
     >
-      <ModalContent>
-        <Form layout="vertical">
-          <Form.Item
-            label={t('Refresh frequency')}
-            help={
-              refreshErrors[0] ||
-              (editMode
-                ? t('Set the automatic refresh frequency for this dashboard.')
-                : t('Set refresh frequency for current session only.'))
-            }
-            extra={refreshErrors[0] ? null : refreshWarningMessage}
-            validateStatus={refreshErrors.length ? 'error' : undefined}
-          >
-            <RefreshFrequencySelect
-              value={refreshFrequency}
-              onChange={handleFrequencyChange}
-            />
-          </Form.Item>
-          <CheckboxFormItem>
-            <Checkbox
-              checked={localPauseOnInactiveTab}
-              onChange={e => setLocalPauseOnInactiveTab(e.target.checked)}
-            >
-              {t('Pause auto refresh if tab is inactive')}
-            </Checkbox>
-          </CheckboxFormItem>
-        </Form>
-      </ModalContent>
+      <ModalContent>{formContent}</ModalContent>
     </StandardModal>
   );
 };

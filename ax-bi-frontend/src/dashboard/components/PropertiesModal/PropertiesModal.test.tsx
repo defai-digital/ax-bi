@@ -818,3 +818,89 @@ describe('PropertiesModal', () => {
     );
   });
 });
+
+test('renders in a drawer when SETTINGS_DRAWER is enabled', async () => {
+  mockedIsFeatureEnabled.mockImplementation(
+    (flag: any) => flag === FeatureFlag.SettingsDrawer,
+  );
+  const props = createProps();
+  render(<PropertiesModal {...props} />, {
+    useRedux: true,
+  });
+
+  expect(
+    await screen.findByTestId('dashboard-edit-properties-form'),
+  ).toBeInTheDocument();
+
+  // Drawer chrome instead of the StandardModal chrome
+  expect(
+    document.querySelector('.ant-drawer-content-wrapper'),
+  ).toBeInTheDocument();
+  expect(document.querySelector('.ant-modal')).not.toBeInTheDocument();
+  // Same wrapper test id as the StandardModal branch
+  expect(screen.getByTestId('properties-edit-modal')).toBeInTheDocument();
+  expect(screen.getByText('Dashboard properties')).toBeInTheDocument();
+
+  // Same sections and footer actions as the modal
+  expect(screen.getByText('General information')).toBeInTheDocument();
+  expect(screen.getByText('Access & ownership')).toBeInTheDocument();
+  expect(screen.getByText('Styling')).toBeInTheDocument();
+  expect(screen.getByText('Refresh settings')).toBeInTheDocument();
+  expect(screen.getByText('Advanced settings')).toBeInTheDocument();
+  expect(screen.getByText('Certification')).toBeInTheDocument();
+
+  expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Cancel' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Save' })).toBeInTheDocument();
+
+  // Only General information section is expanded by default
+  expect(screen.getAllByRole('textbox')).toHaveLength(3); // Name, Slug and Description
+});
+
+test('applies changes from the drawer footer when SETTINGS_DRAWER is enabled', async () => {
+  mockedIsFeatureEnabled.mockImplementation(
+    (flag: any) => flag === FeatureFlag.SettingsDrawer,
+  );
+  const props = createProps();
+  props.onlyApply = true;
+  // Pass dashboardInfo to avoid loading state
+  const propsWithDashboardInfo = {
+    ...props,
+    dashboardInfo: {
+      ...dashboardInfo,
+      json_metadata: mockedJsonMetadata,
+    },
+  };
+  render(<PropertiesModal {...propsWithDashboardInfo} />, {
+    useRedux: true,
+  });
+
+  expect(
+    await screen.findByTestId('dashboard-edit-properties-form'),
+  ).toBeInTheDocument();
+
+  expect(props.onHide).not.toHaveBeenCalled();
+  expect(props.onSubmit).not.toHaveBeenCalled();
+
+  userEvent.click(screen.getByRole('button', { name: 'Apply' }));
+  await waitFor(() => {
+    expect(props.onSubmit).toHaveBeenCalledTimes(1);
+  });
+  expect(props.onHide).toHaveBeenCalledTimes(1);
+});
+
+test('cancels from the drawer footer when SETTINGS_DRAWER is enabled', async () => {
+  mockedIsFeatureEnabled.mockImplementation(
+    (flag: any) => flag === FeatureFlag.SettingsDrawer,
+  );
+  const props = createProps();
+  render(<PropertiesModal {...props} />, {
+    useRedux: true,
+  });
+
+  await screen.findByTestId('dashboard-edit-properties-form');
+
+  expect(props.onHide).not.toHaveBeenCalled();
+  userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+  expect(props.onHide).toHaveBeenCalledTimes(1);
+});

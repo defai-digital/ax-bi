@@ -33,9 +33,11 @@ import { Icons } from '@ax-bi/ui-core/components/Icons';
 import {
   Button,
   Tooltip,
+  Breadcrumbs,
   DeleteModal,
   UnsavedChangesModal,
 } from '@ax-bi/ui-core/components';
+import { history } from 'src/utils/history';
 import { findPermission } from 'src/utils/findPermission';
 import { safeStringify } from 'src/utils/safeStringify';
 import Role from 'src/types/Role';
@@ -159,6 +161,11 @@ const extensionsRegistry = getExtensionsRegistry();
 
 const headerContainerStyle = (theme: AxBITheme) => css`
   border-bottom: 1px solid ${theme.colorBorder};
+`;
+
+const breadcrumbsBarStyle = (theme: AxBITheme) => css`
+  padding: ${theme.sizeUnit * 2}px ${theme.sizeUnit * 4}px;
+  background-color: ${theme.colorBgContainer};
 `;
 
 const editButtonStyle = (theme: AxBITheme) => css`
@@ -833,6 +840,16 @@ const Header = (): JSX.Element => {
       data-test-id={dashboardInfo.id}
       className="dashboard-header-container"
     >
+      <div css={breadcrumbsBarStyle}>
+        <Breadcrumbs
+          data-test="dashboard-breadcrumbs"
+          items={[
+            { label: t('Dashboards'), href: '/dashboard/list/' },
+            { label: dashboardTitle || t('Untitled dashboard') },
+          ]}
+          onNavigate={path => history.push(path)}
+        />
+      </div>
       <PageHeaderWithActions
         editableTitleProps={editableTitleProps}
         certificatiedBadgeProps={certifiedBadgeProps}

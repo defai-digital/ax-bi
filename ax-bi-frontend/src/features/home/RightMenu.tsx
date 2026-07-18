@@ -28,6 +28,8 @@ import {
 } from '@ax-bi/ui-core';
 import { styled, css, AxBITheme, useTheme } from '@ax-bi/core/theme';
 import {
+  Button,
+  Dropdown,
   Tag,
   Tooltip,
   Menu,
@@ -42,6 +44,7 @@ import { RootState } from 'src/dashboard/types';
 import { useThemeContext } from 'src/theme/ThemeProvider';
 import { useThemeMenuItems } from 'src/hooks/useThemeMenuItems';
 import { useOptionalCommandPalette } from 'src/components/CommandPalette';
+import NotificationCenter from 'src/components/NotificationCenter';
 import { useLanguageMenuItems } from './LanguagePicker';
 import { RightMenuProps } from './types';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
@@ -207,78 +210,74 @@ const RightMenu = ({
     languages: navbarRight.languages || {},
   });
 
+  // Create actions live in the primary "+ New" dropdown left of the gear;
+  // the gear menu keeps settings-only items.
+  const createMenuItems = useMemo<MenuItem[]>(() => {
+    if (navbarRight.user_is_anonymous) {
+      return [];
+    }
+    const chartItem: MenuItem = {
+      key: 'create-chart',
+      label: (
+        <Link
+          to={
+            Number.isInteger(dashboardId)
+              ? `/chart/add?dashboard_id=${dashboardId}`
+              : '/chart/add'
+          }
+        >
+          {t('Chart')}
+        </Link>
+      ),
+      icon: <Icons.BarChartOutlined />,
+    };
+    const dashboardItem: MenuItem = {
+      key: 'create-dashboard',
+      label: (
+        <Typography.Link href="/dashboard/new/">
+          {t('Dashboard')}
+        </Typography.Link>
+      ),
+      icon: <Icons.DashboardOutlined />,
+    };
+    const uploadItem: MenuItem | null =
+      canUploadData && localFileUploadEnabled
+        ? {
+            key: 'create-upload-data',
+            label: <Link to="/upload/">{t('Upload data')}</Link>,
+            icon: <Icons.UploadOutlined />,
+          }
+        : null;
+    const sqlItem: MenuItem = {
+      key: 'create-sql',
+      label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
+      icon: <Icons.ConsoleSqlOutlined />,
+    };
+
+    // Simplified mode: consumer create paths first; SQL last (avoids a second
+    // "Advanced" label that collides with SIMPLIFIED_NAV's demoted SQL Lab
+    // settings group).
+    return orderCreateMenuItems(
+      {
+        chart: chartItem,
+        dashboard: dashboardItem,
+        upload: uploadItem,
+        sql: sqlItem,
+      },
+      isFeatureEnabled(FeatureFlag.SimplifiedNav),
+    );
+  }, [
+    navbarRight.user_is_anonymous,
+    dashboardId,
+    canUploadData,
+    localFileUploadEnabled,
+  ]);
+
   // Build main menu items
   const menuItems = useMemo(() => {
     // Build settings menu items
     const buildSettingsMenuItems = (): MenuItem[] => {
       const items: MenuItem[] = [];
-
-      // Create group (previously in the "+" dropdown)
-      const createItems: MenuItem[] = [];
-      const simplifiedNav = isFeatureEnabled(FeatureFlag.SimplifiedNav);
-      if (!navbarRight.user_is_anonymous) {
-        const chartItem: MenuItem = {
-          key: 'create-chart',
-          label: (
-            <Link
-              to={
-                Number.isInteger(dashboardId)
-                  ? `/chart/add?dashboard_id=${dashboardId}`
-                  : '/chart/add'
-              }
-            >
-              {t('Chart')}
-            </Link>
-          ),
-          icon: <Icons.BarChartOutlined />,
-        };
-        const dashboardItem: MenuItem = {
-          key: 'create-dashboard',
-          label: (
-            <Typography.Link href="/dashboard/new/">
-              {t('Dashboard')}
-            </Typography.Link>
-          ),
-          icon: <Icons.DashboardOutlined />,
-        };
-        const uploadItem: MenuItem | null =
-          canUploadData && localFileUploadEnabled
-            ? {
-                key: 'create-upload-data',
-                label: <Link to="/upload/">{t('Upload data')}</Link>,
-                icon: <Icons.UploadOutlined />,
-              }
-            : null;
-        const sqlItem: MenuItem = {
-          key: 'create-sql',
-          label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
-          icon: <Icons.ConsoleSqlOutlined />,
-        };
-
-        // Simplified mode: consumer create paths first; SQL last inside the
-        // same Create group (avoids a second "Advanced" label that collides
-        // with SIMPLIFIED_NAV's demoted SQL Lab settings group).
-        createItems.push(
-          ...orderCreateMenuItems(
-            {
-              chart: chartItem,
-              dashboard: dashboardItem,
-              upload: uploadItem,
-              sql: sqlItem,
-            },
-            simplifiedNav,
-          ),
-        );
-      }
-      if (createItems.length > 0) {
-        items.push({
-          type: 'group',
-          label: t('Create'),
-          key: 'create-section',
-          children: createItems,
-        });
-        items.push({ type: 'divider', key: 'create-divider' });
-      }
 
       settings?.forEach((section, index) => {
         const sectionItems: MenuItem[] = [];
@@ -566,12 +565,16 @@ const RightMenu = ({
       items.push(languageMenuItem);
     }
 
-    if (canUploadData && localFileUploadEnabled) {
+    // Notification center bell, immediately left of the settings gear.
+    // Anonymous users cannot reach the report API, so skip the bell.
+    if (
+      !navbarRight.user_is_anonymous &&
+      isFeatureEnabled(FeatureFlag.NotificationCenter) &&
+      isFeatureEnabled(FeatureFlag.AlertReports)
+    ) {
       items.push({
-        key: 'upload-data',
-        label: <Link to="/upload/">{t('Upload data')}</Link>,
-        icon: <Icons.UploadOutlined />,
-        className: 'primary-upload-action',
+        key: 'notification-center',
+        label: <NotificationCenter />,
       });
     }
 
@@ -591,9 +594,6 @@ const RightMenu = ({
     RightMenuExtension,
     RightMenuItemIconExtension,
     navbarRight,
-    dashboardId,
-    canUploadData,
-    localFileUploadEnabled,
     canSetMode,
     themeMenuItem,
     languageMenuItem,
@@ -608,6 +608,31 @@ const RightMenu = ({
 
   return (
     <StyledDiv align={align}>
+      {createMenuItems.length > 0 && (
+        <Dropdown
+          menu={{ items: createMenuItems }}
+          trigger={['hover', 'click']}
+          css={css`
+            margin-right: ${theme.sizeUnit}px;
+          `}
+        >
+          <Button
+            data-test="navbar-create-new"
+            aria-label={t('Create new')}
+            buttonStyle="primary"
+            icon={<Icons.PlusOutlined iconSize="m" />}
+          >
+            {t('New')}
+            <Icons.DownOutlined
+              iconSize="s"
+              css={css`
+                margin-left: ${theme.sizeUnit * 1.5}px;
+                margin-right: -${theme.sizeUnit * 2}px;
+              `}
+            />
+          </Button>
+        </Dropdown>
+      )}
       <Menu
         css={css`
           display: flex;
@@ -626,18 +651,6 @@ const RightMenu = ({
           .ant-menu-item,
           .ant-menu-submenu {
             padding: 0 ${theme.sizeUnit}px;
-          }
-
-          .primary-upload-action {
-            border: 1px solid ${theme.colorPrimaryBorder};
-            border-radius: ${theme.borderRadius}px;
-            background: ${theme.colorPrimaryBg};
-            padding: 0 ${theme.sizeUnit * 3}px;
-
-            .ant-menu-title-content a {
-              color: ${theme.colorPrimaryText};
-              font-weight: ${theme.fontWeightStrong};
-            }
           }
 
           .submenu-with-caret {

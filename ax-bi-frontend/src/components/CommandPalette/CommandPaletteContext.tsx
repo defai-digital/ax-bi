@@ -77,6 +77,10 @@ interface CommandPaletteState {
   getCommands: () => Command[];
   /** Get commands filtered by type */
   getCommandsByType: (type: CommandType) => Command[];
+  /** Live search query (the palette input value) */
+  query: string;
+  /** Update the palette search query */
+  setQuery: (query: string) => void;
 }
 
 const CommandPaletteContext = createContext<CommandPaletteState | null>(null);
@@ -92,6 +96,7 @@ export const CommandPaletteProvider: FC<CommandPaletteProviderProps> = ({
   children,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [query, setQuery] = useState('');
   const [commands, setCommands] = useState<Map<string, Command>>(new Map());
 
   const open = useCallback(() => setIsOpen(true), []);
@@ -144,6 +149,8 @@ export const CommandPaletteProvider: FC<CommandPaletteProviderProps> = ({
       unregisterCommand,
       getCommands,
       getCommandsByType,
+      query,
+      setQuery,
     }),
     [
       isOpen,
@@ -154,6 +161,8 @@ export const CommandPaletteProvider: FC<CommandPaletteProviderProps> = ({
       unregisterCommand,
       getCommands,
       getCommandsByType,
+      query,
+      setQuery,
     ],
   );
 

@@ -34,6 +34,8 @@ import { useSelector } from 'react-redux';
 import { useDragDropManager } from 'react-dnd';
 import classNames from 'classnames';
 import { debounce } from 'lodash';
+import { useDashboardGridLayoutMode } from './gridLayoutMode';
+import { useDashboardGridWidth } from './useDashboardGridWidth';
 
 const StyledDiv = styled.div`
   ${({ theme }) => css`
@@ -45,6 +47,29 @@ const StyledDiv = styled.div`
     flex: 1;
     min-height: 0;
     height: calc(100vh - var(--dashboard-top-offset, 0px));
+
+    /* Narrow read-only stack layout (DASHBOARD_RESPONSIVE): hide authoring
+    chrome that would overflow, and reflow rows into a single-column stack */
+    &.dashboard--stack {
+      .dashboard-header-container .button-container,
+      [data-test='filterbar-orientation-icon'] {
+        display: none;
+      }
+
+      .grid-row {
+        flex-direction: column;
+
+        & > :not(:last-child):not(.hover-menu) {
+          margin-right: 0;
+          margin-bottom: ${theme.sizeUnit * 4}px;
+        }
+      }
+
+      .grid-content .resizable-container {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+    }
     /* Special cases */
 
     &.dragdroppable--dragging {
@@ -124,7 +149,9 @@ const StyledDiv = styled.div`
   `}
 `;
 
-const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
+const DashboardWrapper: FC<
+  PropsWithChildren<{ onWidthChange?: (width: number) => void }>
+> = ({ children, onWidthChange }) => {
   const editMode = useSelector<RootState, boolean>(
     state => state.dashboardState.editMode,
   );
@@ -135,6 +162,8 @@ const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const topOffsetRef = useRef(0);
   const [topOffset, setTopOffset] = useState(0);
+  const gridLayoutMode = useDashboardGridLayoutMode();
+  const { ref: gridWidthRef, width: gridWidth } = useDashboardGridWidth();
 
   const updateTopOffset = useCallback(() => {
     const nextTopOffset = wrapperRef.current?.getBoundingClientRect().top || 0;
@@ -148,12 +177,17 @@ const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
   const setWrapperRef = useCallback(
     (element: HTMLDivElement | null) => {
       wrapperRef.current = element;
+      gridWidthRef(element);
       if (element) {
         updateTopOffset();
       }
     },
-    [updateTopOffset],
+    [updateTopOffset, gridWidthRef],
   );
+
+  useEffect(() => {
+    onWidthChange?.(gridWidth);
+  }, [onWidthChange, gridWidth]);
 
   useLayoutEffect(() => {
     updateTopOffset();
@@ -201,6 +235,8 @@ const DashboardWrapper: FC<PropsWithChildren<{}>> = ({ children }) => {
       }
       className={classNames({
         'dragdroppable--dragging': editMode && isDragged,
+        'dashboard--compact': gridLayoutMode === 'compact',
+        'dashboard--stack': gridLayoutMode === 'stack',
       })}
     >
       {children}

@@ -33,6 +33,8 @@ import {
   useComponentDidMount,
   usePrevious,
   isMatrixifyEnabled,
+  isFeatureEnabled,
+  FeatureFlag,
   QueryFormData,
   JsonObject,
   MatrixifyFormData,
@@ -112,6 +114,7 @@ import ExploreChartPanel from '../ExploreChartPanel';
 import ConnectedControlPanelsContainer from '../ControlPanelsContainer';
 import SaveModal from '../SaveModal';
 import GuidedBuilder, { isGuidedVizType } from '../GuidedBuilder';
+import BuilderModeSwitch, { BuilderMode } from './BuilderModeSwitch';
 import DataSourcePanel from '../DatasourcePanel';
 import ConnectedExploreChartHeader from '../ExploreChartHeader';
 import ExploreContainer from '../ExploreContainer';
@@ -423,33 +426,25 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
 
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Guided chart builder (GUIDED_CHART_BUILDER): offer the simplified stepped
-  // builder when enabled and the current viz type is one it supports. The
-  // builder and the advanced control panel drive the same form_data, so users
-  // can switch between them at will. Default to guided for supported viz types.
-  const guidedBuilderEnabled = Boolean(
-    (window as { featureFlags?: Record<string, unknown> }).featureFlags
-      ?.GUIDED_CHART_BUILDER,
-  );
+  // Guided chart builder (GUIDED_CHART_BUILDER): the user picks Guided or
+  // Advanced explicitly from the header switch. Both builders drive the same
+  // redux form_data, so switching modes never loses configured controls. The
+  // chosen mode lives in component state and lasts for the session only. Viz
+  // types outside the guided set always render the advanced control panel.
+  const guidedBuilderEnabled = isFeatureEnabled(FeatureFlag.GuidedChartBuilder);
   const vizTypeSupportedByGuided = isGuidedVizType(props.form_data?.viz_type);
-  const [builderMode, setBuilderMode] = useState<'guided' | 'advanced'>(() =>
-    guidedBuilderEnabled && vizTypeSupportedByGuided ? 'guided' : 'advanced',
-  );
-  // Fall back to advanced when the active viz type is outside the guided set
-  // (e.g. user switched chart type via another path while guided was selected).
-  useEffect(() => {
-    if (
-      guidedBuilderEnabled &&
-      builderMode === 'guided' &&
-      !isGuidedVizType(props.form_data?.viz_type)
-    ) {
-      setBuilderMode('advanced');
-    }
-  }, [guidedBuilderEnabled, builderMode, props.form_data?.viz_type]);
+  const [builderMode, setBuilderMode] = useState<BuilderMode>('guided');
   const showGuidedBuilder =
     guidedBuilderEnabled &&
-    builderMode === 'guided' &&
-    isGuidedVizType(props.form_data?.viz_type);
+    vizTypeSupportedByGuided &&
+    builderMode === 'guided';
+  const builderModeSwitch = guidedBuilderEnabled ? (
+    <BuilderModeSwitch
+      mode={showGuidedBuilder ? 'guided' : 'advanced'}
+      onChange={setBuilderMode}
+      guidedAvailable={vizTypeSupportedByGuided}
+    />
+  ) : null;
   const guidedBuilderActions = useMemo(
     () => ({
       setControlValue: (controlName: string, value: unknown) =>
@@ -1017,6 +1012,7 @@ function ExploreViewContainer(props: ExploreViewContainerProps) {
         saveDisabled={!!errorMessage || props.chart.chartStatus === 'loading'}
         metadata={props.metadata}
         isSaveModalVisible={props.isSaveModalVisible}
+        builderModeSwitch={builderModeSwitch}
       />
       <ExplorePanelContainer id="explore-container">
         <Global

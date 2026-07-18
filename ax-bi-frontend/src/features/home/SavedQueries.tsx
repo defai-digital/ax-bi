@@ -295,7 +295,7 @@ export const SavedQueries = ({
             name: t('View All »'),
             buttonStyle: 'link',
             onClick: () => {
-              navigateTo('/savedqueryview/list');
+              navigateTo('/saved-queries');
             },
           },
         ]}

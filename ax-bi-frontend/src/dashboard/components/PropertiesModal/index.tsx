@@ -20,9 +20,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { omit } from 'lodash';
 import jsonStringify from 'json-stringify-pretty-compact';
 import {
+  Button,
+  Flex,
   Form,
+  Loading,
   Collapse,
   CollapseLabelInModal,
+  SettingsDrawer,
 } from '@ax-bi/ui-core/components';
 import { useJsonValidation } from '@ax-bi/ui-core/components/AsyncAceEditor';
 import { type TagType } from 'src/components';
@@ -679,170 +683,212 @@ const PropertiesModal = ({
     }
   }, [refreshFrequency, validateSection, isDataReady]);
 
+  const handleSave = () => {
+    if (validateAll()) {
+      form.submit();
+    }
+  };
+
+  const saveErrorTooltip = dashboardInfo?.isManagedExternally
+    ? t("This dashboard is managed externally, and can't be edited in AxBI")
+    : errorTooltip;
+
+  const formContent = (
+    <Form
+      form={form}
+      onFinish={onFinish}
+      onFieldsChange={() => {
+        // Re-validate sections when form fields change
+        if (isDataReady) {
+          validateSection('basic');
+        }
+      }}
+      data-test="dashboard-edit-properties-form"
+      layout="vertical"
+      initialValues={dashboardInfo}
+    >
+      <Collapse
+        expandIconPosition="end"
+        defaultActiveKey="basic"
+        accordion
+        modalMode
+        items={[
+          {
+            key: 'basic',
+            label: (
+              <CollapseLabelInModal
+                title={t('General information')}
+                subtitle={t('Dashboard name and URL configuration')}
+                validateCheckStatus={!validationStatus.basic?.hasErrors}
+                testId="basic-section"
+              />
+            ),
+            children: (
+              <BasicInfoSection
+                form={form}
+                validationStatus={validationStatus}
+              />
+            ),
+          },
+          {
+            key: 'access',
+            label: (
+              <CollapseLabelInModal
+                title={t('Access & ownership')}
+                subtitle={t('Manage dashboard owners and access permissions')}
+                validateCheckStatus={!validationStatus.access?.hasErrors}
+                testId="access-section"
+              />
+            ),
+            children: (
+              <AccessSection
+                isLoading={isLoading}
+                owners={owners}
+                roles={roles}
+                tags={tags}
+                onChangeOwners={handleOnChangeOwners}
+                onChangeRoles={handleOnChangeRoles}
+                onChangeTags={handleChangeTags}
+                onClearTags={handleClearTags}
+              />
+            ),
+          },
+          {
+            key: 'styling',
+            label: (
+              <CollapseLabelInModal
+                title={t('Styling')}
+                subtitle={t(
+                  'Configure dashboard appearance, colors, and custom CSS',
+                )}
+                validateCheckStatus={!validationStatus.styling?.hasErrors}
+                testId="styling-section"
+              />
+            ),
+            children: (
+              <StylingSection
+                themes={themes}
+                selectedThemeId={selectedThemeId}
+                colorScheme={colorScheme}
+                customCss={customCss}
+                hasCustomLabelsColor={hasCustomLabelsColor}
+                showChartTimestamps={showChartTimestamps}
+                onThemeChange={handleThemeChange}
+                onColorSchemeChange={onColorSchemeChange}
+                onCustomCssChange={handleCustomCssChange}
+                onShowChartTimestampsChange={setShowChartTimestamps}
+                addDangerToast={addDangerToast}
+              />
+            ),
+          },
+          {
+            key: 'refresh',
+            label: (
+              <CollapseLabelInModal
+                title={t('Refresh settings')}
+                subtitle={t('Configure automatic dashboard refresh')}
+                validateCheckStatus={!validationStatus.refresh?.hasErrors}
+                testId="refresh-section"
+              />
+            ),
+            children: (
+              <RefreshSection
+                refreshFrequency={refreshFrequency}
+                onRefreshFrequencyChange={handleRefreshFrequencyChange}
+              />
+            ),
+          },
+          {
+            key: 'certification',
+            label: (
+              <CollapseLabelInModal
+                title={t('Certification')}
+                subtitle={t('Add certification details for this dashboard')}
+                validateCheckStatus={!validationStatus.certification?.hasErrors}
+                testId="certification-section"
+              />
+            ),
+            children: <CertificationSection isLoading={isLoading} />,
+          },
+          {
+            key: 'advanced',
+            label: (
+              <CollapseLabelInModal
+                title={t('Advanced settings')}
+                subtitle={t('JSON metadata and advanced configuration')}
+                validateCheckStatus={!validationStatus.advanced?.hasErrors}
+                testId="advanced-section"
+              />
+            ),
+            children: (
+              <AdvancedSection
+                jsonMetadata={jsonMetadata}
+                jsonAnnotations={jsonAnnotations}
+                validationStatus={validationStatus}
+                onJsonMetadataChange={setJsonMetadata}
+              />
+            ),
+          },
+        ]}
+      />
+    </Form>
+  );
+
+  // SETTINGS_DRAWER flag on: the same settings form renders inside the
+  // drawer chrome. Flag off: the StandardModal below renders as before.
+  if (isFeatureEnabled(FeatureFlag.SettingsDrawer)) {
+    return (
+      <SettingsDrawer
+        open={show}
+        onClose={handleOnCancel}
+        title={t('Dashboard properties')}
+        data-test="properties-edit-modal"
+        footer={
+          <>
+            <Button buttonStyle="secondary" onClick={handleOnCancel}>
+              {t('Cancel')}
+            </Button>
+            <Button
+              buttonStyle="primary"
+              cta
+              disabled={
+                dashboardInfo?.isManagedExternally || hasErrors || isLoading
+              }
+              loading={isApplying}
+              tooltip={saveErrorTooltip}
+              onClick={handleSave}
+            >
+              {saveLabel}
+            </Button>
+          </>
+        }
+      >
+        {isLoading ? (
+          <Flex justify="center" align="center" style={{ minHeight: 200 }}>
+            <Loading />
+          </Flex>
+        ) : (
+          formContent
+        )}
+      </SettingsDrawer>
+    );
+  }
+
   return (
     <StandardModal
       show={show}
       onHide={handleOnCancel}
-      onSave={() => {
-        if (validateAll()) {
-          form.submit();
-        }
-      }}
+      onSave={handleSave}
       title={t('Dashboard properties')}
       isEditMode
       saveDisabled={dashboardInfo?.isManagedExternally || hasErrors}
       saveLoading={isApplying}
       contentLoading={isLoading}
-      errorTooltip={
-        dashboardInfo?.isManagedExternally
-          ? t(
-              "This dashboard is managed externally, and can't be edited in AxBI",
-            )
-          : errorTooltip
-      }
+      errorTooltip={saveErrorTooltip}
       saveText={saveLabel}
       wrapProps={{ 'data-test': 'properties-edit-modal' }}
     >
-      <Form
-        form={form}
-        onFinish={onFinish}
-        onFieldsChange={() => {
-          // Re-validate sections when form fields change
-          if (isDataReady) {
-            validateSection('basic');
-          }
-        }}
-        data-test="dashboard-edit-properties-form"
-        layout="vertical"
-        initialValues={dashboardInfo}
-      >
-        <Collapse
-          expandIconPosition="end"
-          defaultActiveKey="basic"
-          accordion
-          modalMode
-          items={[
-            {
-              key: 'basic',
-              label: (
-                <CollapseLabelInModal
-                  title={t('General information')}
-                  subtitle={t('Dashboard name and URL configuration')}
-                  validateCheckStatus={!validationStatus.basic?.hasErrors}
-                  testId="basic-section"
-                />
-              ),
-              children: (
-                <BasicInfoSection
-                  form={form}
-                  validationStatus={validationStatus}
-                />
-              ),
-            },
-            {
-              key: 'access',
-              label: (
-                <CollapseLabelInModal
-                  title={t('Access & ownership')}
-                  subtitle={t('Manage dashboard owners and access permissions')}
-                  validateCheckStatus={!validationStatus.access?.hasErrors}
-                  testId="access-section"
-                />
-              ),
-              children: (
-                <AccessSection
-                  isLoading={isLoading}
-                  owners={owners}
-                  roles={roles}
-                  tags={tags}
-                  onChangeOwners={handleOnChangeOwners}
-                  onChangeRoles={handleOnChangeRoles}
-                  onChangeTags={handleChangeTags}
-                  onClearTags={handleClearTags}
-                />
-              ),
-            },
-            {
-              key: 'styling',
-              label: (
-                <CollapseLabelInModal
-                  title={t('Styling')}
-                  subtitle={t(
-                    'Configure dashboard appearance, colors, and custom CSS',
-                  )}
-                  validateCheckStatus={!validationStatus.styling?.hasErrors}
-                  testId="styling-section"
-                />
-              ),
-              children: (
-                <StylingSection
-                  themes={themes}
-                  selectedThemeId={selectedThemeId}
-                  colorScheme={colorScheme}
-                  customCss={customCss}
-                  hasCustomLabelsColor={hasCustomLabelsColor}
-                  showChartTimestamps={showChartTimestamps}
-                  onThemeChange={handleThemeChange}
-                  onColorSchemeChange={onColorSchemeChange}
-                  onCustomCssChange={handleCustomCssChange}
-                  onShowChartTimestampsChange={setShowChartTimestamps}
-                  addDangerToast={addDangerToast}
-                />
-              ),
-            },
-            {
-              key: 'refresh',
-              label: (
-                <CollapseLabelInModal
-                  title={t('Refresh settings')}
-                  subtitle={t('Configure automatic dashboard refresh')}
-                  validateCheckStatus={!validationStatus.refresh?.hasErrors}
-                  testId="refresh-section"
-                />
-              ),
-              children: (
-                <RefreshSection
-                  refreshFrequency={refreshFrequency}
-                  onRefreshFrequencyChange={handleRefreshFrequencyChange}
-                />
-              ),
-            },
-            {
-              key: 'certification',
-              label: (
-                <CollapseLabelInModal
-                  title={t('Certification')}
-                  subtitle={t('Add certification details for this dashboard')}
-                  validateCheckStatus={
-                    !validationStatus.certification?.hasErrors
-                  }
-                  testId="certification-section"
-                />
-              ),
-              children: <CertificationSection isLoading={isLoading} />,
-            },
-            {
-              key: 'advanced',
-              label: (
-                <CollapseLabelInModal
-                  title={t('Advanced settings')}
-                  subtitle={t('JSON metadata and advanced configuration')}
-                  validateCheckStatus={!validationStatus.advanced?.hasErrors}
-                  testId="advanced-section"
-                />
-              ),
-              children: (
-                <AdvancedSection
-                  jsonMetadata={jsonMetadata}
-                  jsonAnnotations={jsonAnnotations}
-                  validationStatus={validationStatus}
-                  onJsonMetadataChange={setJsonMetadata}
-                />
-              ),
-            },
-          ]}
-        />
-      </Form>
+      {formContent}
     </StandardModal>
   );
 };

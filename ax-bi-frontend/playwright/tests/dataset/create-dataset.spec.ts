@@ -204,7 +204,7 @@ test.describe('create dataset wizard', () => {
 
     // Verify redirect to dataset list (not chart creation)
     // Note: "Create dataset" action does not show a toast
-    await page.waitForURL(/.*tablemodelview\/list.*/);
+    await page.waitForURL(/.*\/datasets.*/);
 
     // Wait for table load, verify row visible
     const datasetListPage = new DatasetListPage(page);

@@ -37,6 +37,10 @@ const dashboardFavoriteStatusEndpoint =
 const savedQueryEndpoint = 'glob:*/api/v1/saved_query/?*';
 const savedQueryInfoEndpoint = 'glob:*/api/v1/saved_query/_info?*';
 const recentActivityEndpoint = 'glob:*/api/v1/log/recent_activity/*';
+const uxPreferencesEndpoint = 'glob:*/api/v1/me/preferences/';
+
+fetchMock.get(uxPreferencesEndpoint, { result: {} });
+fetchMock.put(uxPreferencesEndpoint, { result: {} });
 
 fetchMock.get(chartsEndpoint, {
   result: [

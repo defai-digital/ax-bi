@@ -27,6 +27,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import rison from 'rison';
 import { AxBIClient } from '@ax-bi/ui-core';
+import { history as appHistory } from 'src/utils/history';
 import { selectPillOption } from 'spec/helpers/testing-library';
 import {
   setupMocks,
@@ -1702,9 +1703,7 @@ test('type filter persists after duplicating a dataset', async () => {
   );
 });
 
-// Error Path Tests - Missing coverage for error handling flows
-
-test('edit action shows error toast when dataset fetch fails', async () => {
+test('edit action navigates to the full-page dataset editor', async () => {
   const dataset = mockDatasets[0];
   // Make the dataset owned by admin so edit button is enabled
   const ownedDataset = {
@@ -1720,18 +1719,10 @@ test('edit action shows error toast when dataset fetch fails', async () => {
 
   mockDatasetListEndpoints({ result: [ownedDataset], count: 1 });
 
-  // Mock AxBIClient.get to fail for the specific dataset endpoint
-  jest.spyOn(AxBIClient, 'get').mockImplementation(async request => {
-    if (request.endpoint?.includes(`/api/v1/dataset/${dataset.id}`)) {
-      throw buildAxBIClientError({
-        status: 500,
-        message: 'Failed to fetch dataset',
-      });
-    }
-    // Let other calls go through normally via fetchMock
-    const response = await fetch(request.endpoint!, { method: 'GET' });
-    return { json: await response.json(), response };
-  });
+  // The list renders inside a MemoryRouter whose navigator lacks the history
+  // v5 contract, so useAppHistory falls back to the shared history singleton —
+  // spy on its push to capture the navigation target.
+  const pushSpy = jest.spyOn(appHistory, 'push');
 
   renderDatasetList(mockAdminUser, {
     addDangerToast: mockAddDangerToast,
@@ -1746,16 +1737,27 @@ test('edit action shows error toast when dataset fetch fails', async () => {
 
   await userEvent.click(editButton);
 
-  // Wait for error toast
+  // Row edit navigates to the full-page editor instead of opening a modal
   await waitFor(() => {
-    expect(mockAddDangerToast).toHaveBeenCalledWith(
-      expect.stringMatching(/error.*fetching dataset/i),
+    expect(pushSpy.mock.calls.map(call => call[0])).toContain(
+      `/dataset/${dataset.id}`,
     );
   });
 
-  // Verify edit modal did NOT open
+  // The edit path no longer fetches the dataset record for a modal
+  expect(
+    fetchMock.callHistory
+      .calls()
+      .filter(call =>
+        new RegExp(`/api/v1/dataset/${dataset.id}`).test(call.url),
+      ),
+  ).toHaveLength(0);
+
+  // Verify no edit modal opened
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
+
+// Error Path Tests - Missing coverage for error handling flows
 
 test('bulk export error shows toast and clears loading state', async () => {
   // Mock handleResourceExport to throw an error

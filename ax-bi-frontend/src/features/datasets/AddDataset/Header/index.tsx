@@ -18,11 +18,13 @@
  */
 import { Dispatch } from 'react';
 import { t } from '@ax-bi/core/translation';
+import { styled } from '@ax-bi/core/theme';
 import { PageHeaderWithActions } from '@ax-bi/ui-core/components/PageHeaderWithActions';
-import { Button } from '@ax-bi/ui-core/components';
+import { Button, Breadcrumbs } from '@ax-bi/ui-core/components';
 import { TooltipPlacement } from '@ax-bi/ui-core/components/Tooltip/types';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { Menu } from '@ax-bi/ui-core/components/Menu';
+import { history } from 'src/utils/history';
 import {
   DatasetActionType,
   DSReducerActionType,
@@ -34,6 +36,12 @@ import {
 } from '../../styles';
 
 export const DEFAULT_TITLE = t('New dataset');
+
+const BreadcrumbsBar = styled.div`
+  ${({ theme }) => `
+    padding: ${theme.sizeUnit * 2}px ${theme.sizeUnit * 4}px;
+  `}
+`;
 
 const tooltipProps: { text: string; placement: TooltipPlacement } = {
   text: t('Select a database table and create dataset'),
@@ -87,6 +95,16 @@ export default function Header({
 
   return (
     <HeaderComponentStyles>
+      <BreadcrumbsBar>
+        <Breadcrumbs
+          data-test="dataset-breadcrumbs"
+          items={[
+            { label: t('Datasets'), href: '/datasets' },
+            { label: title || DEFAULT_TITLE },
+          ]}
+          onNavigate={path => history.push(path)}
+        />
+      </BreadcrumbsBar>
       {editing ? (
         <PageHeaderWithActions
           editableTitleProps={editableTitleProps}

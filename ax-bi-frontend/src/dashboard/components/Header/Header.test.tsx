@@ -343,6 +343,19 @@ test('should render the title', () => {
   );
 });
 
+test('should render breadcrumbs linking to the dashboard list', () => {
+  setup();
+  const breadcrumbs = screen.getByTestId('dashboard-breadcrumbs');
+  expect(
+    within(breadcrumbs).getByRole('link', { name: 'Dashboards' }),
+  ).toHaveAttribute('href', '/dashboard/list/');
+  // The current page crumb shows the dashboard title and is not a link
+  expect(within(breadcrumbs).getByText('Dashboard Title')).toBeInTheDocument();
+  expect(
+    within(breadcrumbs).queryByRole('link', { name: 'Dashboard Title' }),
+  ).not.toBeInTheDocument();
+});
+
 test('should render the editable title', () => {
   setup(editableState);
   expect(screen.getByDisplayValue('Dashboard Title')).toBeInTheDocument();
@@ -1155,5 +1168,45 @@ test('share URL should use browser-absolute pathname to preserve subdirectory pr
   const emailLink = container.querySelector('[data-test="share-by-email"]');
   if (emailLink) {
     expect(emailLink.getAttribute('href')).toMatch(/\/pcs\/dashboard/);
+  }
+});
+
+test('should open the refresh interval drawer from the actions menu when SETTINGS_DRAWER is enabled', async () => {
+  window.featureFlags = { SETTINGS_DRAWER: true };
+  try {
+    setup();
+    await openActionsDropdown();
+    userEvent.click(screen.getByText('Set auto-refresh'));
+
+    expect(await screen.findByText('Refresh interval')).toBeInTheDocument();
+    expect(
+      document.querySelector('.ant-drawer-content-wrapper'),
+    ).toBeInTheDocument();
+    expect(document.querySelector('.ant-modal')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Save for this session' }),
+    ).toBeInTheDocument();
+  } finally {
+    window.featureFlags = {};
+  }
+});
+
+test('should open the refresh interval modal from the actions menu when SETTINGS_DRAWER is disabled', async () => {
+  window.featureFlags = { SETTINGS_DRAWER: false };
+  try {
+    setup();
+    await openActionsDropdown();
+    userEvent.click(screen.getByText('Set auto-refresh'));
+
+    expect(await screen.findByText('Refresh interval')).toBeInTheDocument();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(
+      document.querySelector('.ant-drawer-content-wrapper'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Save for this session' }),
+    ).toBeInTheDocument();
+  } finally {
+    window.featureFlags = {};
   }
 });

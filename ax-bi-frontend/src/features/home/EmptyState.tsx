@@ -89,7 +89,7 @@ const REDIRECTS = {
   viewAll: {
     [WelcomeTable.Charts]: '/chart/list',
     [WelcomeTable.Dashboards]: '/dashboard/list/',
-    [WelcomeTable.SavedQueries]: '/savedqueryview/list/',
+    [WelcomeTable.SavedQueries]: '/saved-queries',
   },
 } as const;
 

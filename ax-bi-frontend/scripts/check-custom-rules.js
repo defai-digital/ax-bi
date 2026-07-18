@@ -75,10 +75,11 @@ function hasEslintDisable(path, ruleName = 'theme-colors/no-literal-colors') {
     if (hasDisable) return true;
   }
 
-  // Check if parent is a statement with leading comments
+  // Walk ancestor paths (parent is a Node, parentPath is the NodePath —
+  // using parent here would stop the walk after a single hop)
   let current = path;
-  while (current.parent) {
-    current = current.parent;
+  while (current.parentPath) {
+    current = current.parentPath;
     if (current.node && current.node.leadingComments) {
       const hasDisable = current.node.leadingComments.some(
         comment =>
@@ -257,6 +258,53 @@ function checkEagerTranslationsInConfig(ast, filepath) {
           `module load, before i18n is initialized. Wrap in an arrow ` +
           `function: \`${keyName}: () => ${value.callee.name}(...)\`. ` +
           `Run \`eslint --fix\` to autofix.`,
+      );
+      warningCount += 1;
+    },
+  });
+}
+
+/**
+ * Discourage CSS selectors targeting antd-internal `.ant-*` classes inside
+ * styled/emotion templates. Prefer antd component tokens (ConfigProvider
+ * `theme.components`) or classes the codebase owns. Warn-only: a few legacy
+ * usages remain in the tree and are being migrated gradually (UI/UX Phase 6D
+ * selector cleanup). Suppress a justified case with an eslint-disable comment
+ * referencing `ax-bi/no-antd-css-selectors`.
+ *
+ * Scoped to the application `src/` tree — packages and plugins follow their
+ * own conventions.
+ */
+const ANTD_SELECTOR_PATTERN = /(?:^|[\s>&+~*,])(\.ant-[a-zA-Z][\w-]*)/g;
+
+function checkNoAntdCssSelectors(ast, filepath) {
+  const normalizedPath = filepath.replace(/\\/g, '/');
+  const inAppSrc = /(^|\/)src\//.test(normalizedPath);
+  const inPackageOrPlugin = /(^|\/)(packages|plugins)\//.test(normalizedPath);
+  if (!inAppSrc || inPackageOrPlugin) return;
+
+  traverse(ast, {
+    TemplateLiteral(path) {
+      const selectors = new Set();
+      path.node.quasis.forEach(quasi => {
+        // Ignore CSS comments — documenting a removed selector is not a usage.
+        const value = quasi.value.raw.replace(/\/\*[\s\S]*?\*\//g, ' ');
+        for (const match of value.matchAll(ANTD_SELECTOR_PATTERN)) {
+          selectors.add(match[1]);
+        }
+      });
+      if (selectors.size === 0) return;
+
+      if (hasEslintDisable(path, 'ax-bi/no-antd-css-selectors')) return;
+
+      // eslint-disable-next-line no-console
+      console.warn(
+        `${YELLOW}⚠${RESET} ${filepath}:${path.node.loc?.start.line ?? '?'}: ` +
+          `antd-internal CSS selector(s) ${[...selectors]
+            .map(s => `"${s}"`)
+            .join(', ')} in styled/emotion template. ` +
+          `Prefer antd component tokens (ConfigProvider theme.components) ` +
+          `or a scoped className the codebase owns.`,
       );
       warningCount += 1;
     },
@@ -633,6 +681,7 @@ function processFile(filepath) {
     checkI18nTemplates(ast, filepath);
     checkEagerTranslationsInConfig(ast, filepath);
     checkUntranslatedStrings(ast, filepath);
+    checkNoAntdCssSelectors(ast, filepath);
   } catch (error) {
     // eslint-disable-next-line no-console
     console.warn(
@@ -804,4 +853,5 @@ module.exports = {
   checkI18nTemplates,
   checkUntranslatedStrings,
   checkTypeScriptOnlySource,
+  checkNoAntdCssSelectors,
 };

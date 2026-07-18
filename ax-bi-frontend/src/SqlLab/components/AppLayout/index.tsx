@@ -41,7 +41,11 @@ const StyledContainer = styled.div`
   flex-direction: column;
   height: 100%;
 
-  & .ant-splitter-panel:not(.sqllab-body):not(.queryPane) {
+  /* Sidebar panels carry the sqllab-side-panel class explicitly instead of
+     selecting .ant-splitter-panel internals: antd's Splitter component
+     tokens (splitBarSize, splitBarDraggableSize) only cover the drag bar,
+     not panel backgrounds. */
+  & .sqllab-side-panel {
     background-color: ${({ theme }) => theme.colorBgBase};
   }
 
@@ -109,6 +113,7 @@ const AppLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         onResize={noop}
       >
         <Splitter.Panel
+          className="sqllab-side-panel"
           collapsible={{
             start: true,
             end: true,
@@ -127,6 +132,7 @@ const AppLayout: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
         <Splitter.Panel className="sqllab-body">{children}</Splitter.Panel>
         {viewItems.length > 0 && (
           <Splitter.Panel
+            className="sqllab-side-panel"
             collapsible={{
               start: true,
               end: true,

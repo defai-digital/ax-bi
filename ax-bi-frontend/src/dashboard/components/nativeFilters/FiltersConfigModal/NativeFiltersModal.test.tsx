@@ -16,6 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import { FeatureFlag } from '@ax-bi/ui-core';
 import { fireEvent, render } from 'spec/helpers/testing-library';
 import FiltersConfigModal from 'src/dashboard/components/nativeFilters/FiltersConfigModal/FiltersConfigModal';
 
@@ -54,35 +55,6 @@ const mockedProps = {
   onCancel: jest.fn(),
   onSave: jest.fn(),
 };
-function setup(overridesProps?: any) {
-  return render(<FiltersConfigModal {...mockedProps} {...overridesProps} />, {
-    useDnd: true,
-    useRedux: true,
-    initialState: {
-      dashboardLayout: {
-        present: {},
-        past: [],
-        future: [],
-      },
-    },
-  });
-}
-
-test('should be a valid react element', () => {
-  const { container } = setup();
-  expect(container).toBeInTheDocument();
-});
-
-test('the form validates required fields', async () => {
-  const onSave = jest.fn();
-  const { getByRole } = setup({ save: onSave });
-  fireEvent.change(getByRole('textbox', { name: 'Description' }), {
-    target: { value: 'test name' },
-  });
-  const saveButton = getByRole('button', { name: 'Save' });
-  fireEvent.click(saveButton);
-  expect(onSave).toHaveBeenCalledTimes(0);
-});
 
 async function openDropdownAndAddFilter(
   getByTestId: (id: string) => HTMLElement,
@@ -92,16 +64,58 @@ async function openDropdownAndAddFilter(
   fireEvent.click(await findByRole('menuitem', { name: /add filter/i }));
 }
 
-// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
-describe('createNewOnOpen', () => {
-  test('does not show alert when there is no unsaved filters', async () => {
+afterEach(() => {
+  window.featureFlags = {};
+});
+
+// The configuration experience renders inside a SettingsDrawer when
+// SETTINGS_DRAWER is enabled and inside the legacy modal otherwise; the
+// footer save/cancel semantics are shared, so every test runs in both states.
+[true, false].forEach(settingsDrawerEnabled => {
+  const flagLabel = `SETTINGS_DRAWER ${settingsDrawerEnabled ? 'on' : 'off'}`;
+
+  function setup(overridesProps?: any) {
+    window.featureFlags = {
+      ...window.featureFlags,
+      [FeatureFlag.SettingsDrawer]: settingsDrawerEnabled,
+    };
+    return render(<FiltersConfigModal {...mockedProps} {...overridesProps} />, {
+      useDnd: true,
+      useRedux: true,
+      initialState: {
+        dashboardLayout: {
+          present: {},
+          past: [],
+          future: [],
+        },
+      },
+    });
+  }
+
+  test(`should be a valid react element (${flagLabel})`, () => {
+    const { container } = setup();
+    expect(container).toBeInTheDocument();
+  });
+
+  test(`the form validates required fields (${flagLabel})`, async () => {
+    const onSave = jest.fn();
+    const { getByRole } = setup({ save: onSave });
+    fireEvent.change(getByRole('textbox', { name: 'Description' }), {
+      target: { value: 'test name' },
+    });
+    const saveButton = getByRole('button', { name: 'Save' });
+    fireEvent.click(saveButton);
+    expect(onSave).toHaveBeenCalledTimes(0);
+  });
+
+  test(`createNewOnOpen: does not show alert when there is no unsaved filters (${flagLabel})`, async () => {
     const onCancel = jest.fn();
     const { getByRole } = setup({ onCancel, createNewOnOpen: false });
     fireEvent.click(getByRole('button', { name: 'Cancel' }));
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  test('shows correct alert message for unsaved filters', async () => {
+  test(`createNewOnOpen: shows correct alert message for unsaved filters (${flagLabel})`, async () => {
     const onCancel = jest.fn();
     const { getByRole, getByTestId, findByRole } = setup({
       onCancel,
@@ -114,7 +128,7 @@ describe('createNewOnOpen', () => {
     expect(getByRole('alert')).toHaveTextContent('There are unsaved changes.');
   });
 
-  test('confirm-cancel button proceeds with cancel after the unsaved alert', async () => {
+  test(`createNewOnOpen: confirm-cancel button proceeds with cancel after the unsaved alert (${flagLabel})`, async () => {
     const onCancel = jest.fn();
     const { getByRole, getByTestId, findByRole } = setup({
       onCancel,

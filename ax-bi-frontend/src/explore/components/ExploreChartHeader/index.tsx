@@ -17,12 +17,21 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { FC, memo, useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  FC,
+  memo,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 import { useDispatch } from 'react-redux';
 import { QueryFormData, JsonObject } from '@ax-bi/ui-core';
 import {
   Tooltip,
   Button,
+  Breadcrumbs,
   DeleteModal,
   UnsavedChangesModal,
 } from '@ax-bi/ui-core/components';
@@ -82,6 +91,7 @@ export interface ExploreChartHeaderProps {
   saveDisabled?: boolean;
   metadata?: ExplorePageInitialData['metadata'];
   isSaveModalVisible?: boolean;
+  builderModeSwitch?: ReactNode;
 }
 
 const saveButtonStyles = (theme: AxBITheme) => css`
@@ -100,6 +110,17 @@ const additionalItemsStyles = (theme: AxBITheme) => css`
   }
 `;
 
+const rightPanelItemsStyles = (theme: AxBITheme) => css`
+  display: flex;
+  align-items: center;
+  gap: ${theme.sizeUnit * 2}px;
+`;
+
+const breadcrumbsBarStyles = (theme: AxBITheme) => css`
+  padding: ${theme.sizeUnit * 2}px ${theme.sizeUnit * 4}px;
+  background-color: ${theme.colorBgContainer};
+`;
+
 const ExploreChartHeader: FC<ExploreChartHeaderProps> = ({
   dashboardId,
   colorScheme: dashboardColorScheme,
@@ -116,6 +137,7 @@ const ExploreChartHeader: FC<ExploreChartHeaderProps> = ({
   saveDisabled,
   metadata,
   isSaveModalVisible,
+  builderModeSwitch,
 }) => {
   const dispatch = useDispatch();
   const { latestQueryFormData, sliceFormData } = chart;
@@ -333,27 +355,30 @@ const ExploreChartHeader: FC<ExploreChartHeaderProps> = ({
 
   const rightPanelAdditionalItems = useMemo(
     () => (
-      <Tooltip
-        title={
-          saveDisabled ? t('Add required control values to save chart') : null
-        }
-      >
-        {/* needed to wrap button in a div - antd tooltip doesn't work with disabled button */}
-        <div>
-          <Button
-            buttonStyle="secondary"
-            onClick={showModal}
-            disabled={saveDisabled}
-            data-test="query-save-button"
-            css={saveButtonStyles}
-            icon={<Icons.SaveOutlined />}
-          >
-            {t('Save')}
-          </Button>
-        </div>
-      </Tooltip>
+      <div css={rightPanelItemsStyles}>
+        {builderModeSwitch}
+        <Tooltip
+          title={
+            saveDisabled ? t('Add required control values to save chart') : null
+          }
+        >
+          {/* needed to wrap button in a div - antd tooltip doesn't work with disabled button */}
+          <div>
+            <Button
+              buttonStyle="secondary"
+              onClick={showModal}
+              disabled={saveDisabled}
+              data-test="query-save-button"
+              css={saveButtonStyles}
+              icon={<Icons.SaveOutlined />}
+            >
+              {t('Save')}
+            </Button>
+          </div>
+        </Tooltip>
+      </div>
     ),
-    [saveDisabled, showModal],
+    [builderModeSwitch, saveDisabled, showModal],
   );
 
   const menuDropdownProps = useMemo(
@@ -366,6 +391,16 @@ const ExploreChartHeader: FC<ExploreChartHeaderProps> = ({
 
   return (
     <>
+      <div css={breadcrumbsBarStyles}>
+        <Breadcrumbs
+          data-test="explore-breadcrumbs"
+          items={[
+            { label: t('Charts'), href: '/chart/list/' },
+            { label: sliceName || t('New chart') },
+          ]}
+          onNavigate={path => history.push(path)}
+        />
+      </div>
       <PageHeaderWithActions
         editableTitleProps={editableTitleProps}
         showTitlePanelItems={!!slice}

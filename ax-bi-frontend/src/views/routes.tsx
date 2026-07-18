@@ -24,6 +24,7 @@ import {
   ComponentProps,
   LazyExoticComponent,
 } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { isUserAdmin } from 'src/dashboard/util/permissionUtils';
 import getBootstrapData from 'src/utils/getBootstrapData';
 import { findPermission } from 'src/utils/findPermission';
@@ -201,10 +202,17 @@ const RedirectWarning = lazy(
 
 type Routes = {
   path: string;
-  Component: ComponentType;
+  Component: ComponentType<any>;
   Fallback?: ComponentType;
   props?: ComponentProps<any>;
 }[];
+
+// Redirects legacy FAB-era paths to their resource-named replacements,
+// preserving the query string, hash, and location state.
+const LegacyRouteRedirect = ({ to }: { to: string }) => {
+  const { search, hash, state } = useLocation();
+  return <Navigate to={{ pathname: to, search, hash }} state={state} replace />;
+};
 
 export const routes: Routes = [
   {
@@ -252,20 +260,40 @@ export const routes: Routes = [
     Component: ChartList,
   },
   {
-    path: '/tablemodelview/list/',
+    path: '/datasets',
     Component: DatasetList,
   },
   {
-    path: '/databaseview/list/',
+    path: '/databases',
     Component: DatabaseList,
   },
   {
-    path: '/savedqueryview/list/',
+    path: '/saved-queries',
     Component: SavedQueryList,
   },
   {
-    path: '/csstemplatemodelview/list/',
+    path: '/css-templates',
     Component: CssTemplateList,
+  },
+  {
+    path: '/tablemodelview/list/',
+    Component: LegacyRouteRedirect,
+    props: { to: '/datasets' },
+  },
+  {
+    path: '/databaseview/list/',
+    Component: LegacyRouteRedirect,
+    props: { to: '/databases' },
+  },
+  {
+    path: '/savedqueryview/list/',
+    Component: LegacyRouteRedirect,
+    props: { to: '/saved-queries' },
+  },
+  {
+    path: '/csstemplatemodelview/list/',
+    Component: LegacyRouteRedirect,
+    props: { to: '/css-templates' },
   },
   {
     path: '/theme/list/',

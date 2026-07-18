@@ -44,6 +44,7 @@ import { storeWithState } from 'spec/fixtures/mockStore';
 import mockState from 'spec/fixtures/mockState';
 import { DASHBOARD_ROOT_ID } from 'src/dashboard/util/constants';
 import * as useNativeFiltersModule from './state';
+import { useDashboardGridWidth } from './useDashboardGridWidth';
 
 fetchMock.get('glob:*/csstemplateasyncmodelview/api/read', {});
 fetchMock.put('glob:*/api/v1/dashboard/*', {});
@@ -105,6 +106,9 @@ jest.mock('src/dashboard/containers/DashboardGrid', () => {
   MockDashboardGrid.displayName = 'MockDashboardGrid';
   return MockDashboardGrid;
 });
+jest.mock('./useDashboardGridWidth', () => ({
+  useDashboardGridWidth: jest.fn(() => ({ ref: jest.fn(), width: 0 })),
+}));
 
 // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
 describe('DashboardBuilder', () => {
@@ -737,4 +741,108 @@ test('should use theme tokens instead of hardcoded hex colors for the dashboard 
   expect(dashboardContent).toHaveStyleRule('color', axbiTheme.colorText, {
     target: '.dashboard-component-chart-holder',
   });
+});
+
+const setupGridWidth = (width: number) => {
+  (useDashboardGridWidth as jest.Mock).mockReturnValue({
+    ref: jest.fn(),
+    width,
+  });
+};
+
+const resetGridWidth = () => {
+  (useDashboardGridWidth as jest.Mock).mockReturnValue({
+    ref: jest.fn(),
+    width: 0,
+  });
+};
+
+const renderBuilderWithGridWidth = ({
+  width,
+  featureFlags,
+  editMode = false,
+  nativeFiltersEnabled = true,
+}: {
+  width: number;
+  featureFlags: Record<string, boolean>;
+  editMode?: boolean;
+  nativeFiltersEnabled?: boolean;
+}) => {
+  (useStoredSidebarWidth as jest.Mock).mockImplementation(() => [
+    100,
+    jest.fn(),
+  ]);
+  (fetchFaveStar as jest.Mock).mockReturnValue({ type: 'mock-action' });
+  (setActiveTab as jest.Mock).mockReturnValue({ type: 'mock-action' });
+  setupGridWidth(width);
+  const originalFlags = window.featureFlags;
+  window.featureFlags = featureFlags;
+  const nativeFiltersSpy = jest
+    .spyOn(useNativeFiltersModule, 'useNativeFilters')
+    .mockReturnValue({
+      showDashboard: true,
+      missingInitialFilters: [],
+      dashboardFiltersOpen: true,
+      toggleDashboardFiltersOpen: jest.fn(),
+      nativeFiltersEnabled,
+    });
+  try {
+    return render(<DashboardBuilder />, {
+      useRedux: true,
+      store: storeWithState({
+        ...mockState,
+        dashboardLayout: undoableDashboardLayout,
+        dashboardState: { ...mockState.dashboardState, editMode },
+      }),
+      useDnd: true,
+      useRouter: true,
+      useTheme: true,
+    });
+  } finally {
+    window.featureFlags = originalFlags;
+    nativeFiltersSpy.mockRestore();
+    resetGridWidth();
+  }
+};
+
+test('should apply the read-only stack layout below the stack breakpoint when DASHBOARD_RESPONSIVE is on', () => {
+  const { getByTestId, queryByTestId } = renderBuilderWithGridWidth({
+    width: 500,
+    featureFlags: { [FeatureFlag.DashboardResponsive]: true },
+  });
+
+  expect(getByTestId('dashboard-wrapper')).toHaveClass('dashboard--stack');
+  // the vertical filter bar does not fit in the narrow stack layout
+  expect(queryByTestId('dashboard-filters-panel')).not.toBeInTheDocument();
+});
+
+test('should keep the fixed layout below the stack breakpoint when DASHBOARD_RESPONSIVE is off', () => {
+  const { getByTestId, queryByTestId } = renderBuilderWithGridWidth({
+    width: 500,
+    featureFlags: {},
+  });
+
+  expect(getByTestId('dashboard-wrapper')).not.toHaveClass('dashboard--stack');
+  expect(queryByTestId('dashboard-filters-panel')).toBeInTheDocument();
+});
+
+test('should keep the fixed layout below the stack breakpoint in edit mode', () => {
+  const { getByTestId } = renderBuilderWithGridWidth({
+    width: 500,
+    featureFlags: { [FeatureFlag.DashboardResponsive]: true },
+    editMode: true,
+  });
+
+  expect(getByTestId('dashboard-wrapper')).not.toHaveClass('dashboard--stack');
+});
+
+test('should apply the compact class and keep the standard chrome between the stack and compact breakpoints', () => {
+  const { getByTestId, queryByTestId } = renderBuilderWithGridWidth({
+    width: 900,
+    featureFlags: { [FeatureFlag.DashboardResponsive]: true },
+  });
+
+  expect(getByTestId('dashboard-wrapper')).toHaveClass('dashboard--compact');
+  expect(getByTestId('dashboard-wrapper')).not.toHaveClass('dashboard--stack');
+  expect(queryByTestId('dashboard-filters-panel')).toBeInTheDocument();
 });

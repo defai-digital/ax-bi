@@ -14,13 +14,27 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+import math
+import re
+from typing import Any
+
 from flask_appbuilder.security.sqla.apis.user.schema import User
 from flask_appbuilder.security.sqla.apis.user.validator import (
     PasswordComplexityValidator,
 )
-from marshmallow import fields, Schema
+from marshmallow import fields, INCLUDE, Schema, validates_schema, ValidationError
 from marshmallow.fields import Boolean, Integer, String
 from marshmallow.validate import Length
+
+# UX preference keys are namespaced to ``ux.*`` so the preferences endpoint
+# cannot be abused as a generic per-user key-value store. Keys are
+# dot-separated segments of lowercase letters, digits, ``_`` and ``-``,
+# validated with ``fullmatch`` so empty segments and trailing newlines are
+# rejected.
+UX_PREFERENCE_KEY_REGEX = re.compile(r"ux\.[a-z0-9_-]+(?:\.[a-z0-9_-]+)*")
+
+# Maximum size of the serialized preferences document accepted by the API.
+UX_PREFERENCES_MAX_PAYLOAD_BYTES = 8 * 1024
 
 first_name_description = "The current user's first name"
 last_name_description = "The current user's last name"
@@ -56,3 +70,34 @@ class CurrentUserPutSchema(Schema):
         validate=[PasswordComplexityValidator()],
         metadata={"description": password_description},
     )
+
+
+class UxPreferencesPutSchema(Schema):
+    """Partial UX preference document to merge into the user's stored one.
+
+    Keys must be namespaced under ``ux.*`` (see ``UX_PREFERENCE_KEY_REGEX``)
+    and values must be JSON scalars so the store stays a flat preference map
+    rather than a generic document store.
+    """
+
+    class Meta:
+        unknown = INCLUDE
+
+    @validates_schema
+    def validate_preferences(self, data: dict[str, Any], **kwargs: Any) -> None:
+        for key, value in data.items():
+            if not UX_PREFERENCE_KEY_REGEX.fullmatch(key):
+                raise ValidationError(
+                    f"Invalid preference key: {key!r}. Keys must match "
+                    "'ux.<name>' with lowercase letters, digits, and ._- only."
+                )
+            if isinstance(value, dict | list):
+                raise ValidationError(
+                    f"Invalid value for preference {key!r}: values must be "
+                    "JSON scalars (string, number, boolean, or null)."
+                )
+            if isinstance(value, float) and not math.isfinite(value):
+                raise ValidationError(
+                    f"Invalid value for preference {key!r}: numbers must be "
+                    "finite (NaN and Infinity are not valid JSON)."
+                )

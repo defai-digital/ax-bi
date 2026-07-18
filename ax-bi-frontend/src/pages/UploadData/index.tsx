@@ -21,19 +21,20 @@ import { useCallback, useRef, useState } from 'react';
 import { t } from '@ax-bi/core/translation';
 import { styled } from '@ax-bi/core/theme';
 import { AxBIClient, getClientErrorObject } from '@ax-bi/ui-core';
-import { Upload, Progress } from '@ax-bi/ui-core/components';
+import {
+  Eyebrow,
+  Hero,
+  HeroText,
+  HeroTitle,
+  PageNarrow,
+  Progress,
+  SectionDescription,
+  Upload,
+} from '@ax-bi/ui-core/components';
 import { Alert } from '@ax-bi/core/components';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import { URL_PARAMS } from 'src/constants';
-import {
-  AXBIEyebrow,
-  AXBIHero,
-  AXBIHeroText,
-  AXBIHeroTitle,
-  AXBIPageNarrow,
-  AXBISectionDescription,
-} from 'src/components/AXBIWorkspace';
 
 const { Dragger } = Upload;
 
@@ -55,12 +56,12 @@ function buildExploreUrl(
   return `/explore/?${params.toString()}`;
 }
 
-const SupportNote = styled(AXBISectionDescription)`
+const SupportNote = styled(SectionDescription)`
   margin-top: ${({ theme }) => theme.sizeUnit * 3}px;
   max-width: 620px;
 `;
 
-const UploadHero = styled(AXBIHero)`
+const UploadHero = styled(Hero)`
   ${({ theme }) => `
     grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
     gap: ${theme.sizeUnit * 8}px;
@@ -365,18 +366,16 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
   const isUploading = files.some(f => f.status === 'uploading');
 
   return (
-    <AXBIPageNarrow>
+    <PageNarrow>
       <UploadHero>
         <div>
-          <AXBIEyebrow>{t('Start with a file')}</AXBIEyebrow>
-          <AXBIHeroTitle>
-            {t('Upload data and build charts faster')}
-          </AXBIHeroTitle>
-          <AXBIHeroText>
+          <Eyebrow>{t('Start with a file')}</Eyebrow>
+          <HeroTitle>{t('Upload data and build charts faster')}</HeroTitle>
+          <HeroText>
             {t(
               'Supported formats include CSV/TSV, compressed exports, Excel/ODS, Parquet/ORC/Arrow, JSON/XML, SQL text dumps, SQLite, fixed-width, HTML/statistical files, geospatial files, embeddings, and AI artifact metadata. Multiple files supported.',
             )}
-          </AXBIHeroText>
+          </HeroText>
           <SupportNote>
             {t(
               'PowerPoint files with tables should be sent from AX-Studio so MCP can extract structured data first.',
@@ -516,7 +515,7 @@ const UploadData = ({ addDangerToast, addSuccessToast }: UploadDataProps) => {
           )}
         </StatusWrapper>
       )}
-    </AXBIPageNarrow>
+    </PageNarrow>
   );
 };
 

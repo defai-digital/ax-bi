@@ -175,7 +175,7 @@ describe('Footer', () => {
         schema: 'public',
         table_name: 'real_info',
       });
-      expect(mockHistoryPush).toHaveBeenCalledWith('/tablemodelview/list/');
+      expect(mockHistoryPush).toHaveBeenCalledWith('/datasets');
     });
   });
 

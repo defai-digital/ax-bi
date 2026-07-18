@@ -105,7 +105,7 @@ function Footer({
           if (createChart) {
             history.push(`/chart/add/?dataset=${datasetObject.table_name}`);
           } else {
-            history.push('/tablemodelview/list/');
+            history.push('/datasets');
           }
         }
       });

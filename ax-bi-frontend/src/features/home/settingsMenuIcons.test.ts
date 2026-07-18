@@ -40,7 +40,7 @@ test('resolveSettingsMenuIconKey falls back to url/label keywords', () => {
   expect(
     resolveSettingsMenuIconKey({
       label: 'Connexions',
-      url: '/databaseview/list/',
+      url: '/databases',
     }),
   ).toBe('DatabaseOutlined');
   expect(

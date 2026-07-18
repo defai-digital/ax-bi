@@ -16,18 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { t } from '@ax-bi/core/translation';
 import { styled } from '@ax-bi/core/theme';
-import { Button } from '@ax-bi/ui-core/components';
+import {
+  ActionRow,
+  Button,
+  EmptyCallout,
+  EmptyCalloutText,
+  EmptyCalloutTitle,
+} from '@ax-bi/ui-core/components';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
-import {
-  AXBIEmptyCallout,
-  AXBIEmptyCalloutText,
-  AXBIEmptyCalloutTitle,
-  AXBIActionRow,
-} from 'src/components/AXBIWorkspace';
+import { useUxPreference } from 'src/hooks/useUxPreference';
 
 const STORAGE_KEY = 'home__onboarding_checklist_dismissed';
 
@@ -65,22 +66,6 @@ export interface OnboardingChecklistProps {
   onOpenSearch?: () => void;
 }
 
-function isDismissed(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function dismiss(): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, '1');
-  } catch {
-    // ignore quota / private mode
-  }
-}
-
 /**
  * First-15-minutes checklist. Hidden once dismissed or when all steps done.
  */
@@ -90,7 +75,16 @@ export default function OnboardingChecklist({
   hasDashboard,
   onOpenSearch,
 }: OnboardingChecklistProps) {
-  const [hidden, setHidden] = useState(isDismissed);
+  // Legacy storage wrote the raw string '1' (read back as the number 1);
+  // keep the same key as the offline fallback for graceful degradation.
+  const [hidden, setHidden] = useUxPreference(
+    'ux.home.onboarding_dismissed',
+    false,
+    {
+      localStorageKey: STORAGE_KEY,
+      readLegacy: raw => (raw === 1 ? true : undefined),
+    },
+  );
 
   const steps = useMemo(
     () => [
@@ -100,8 +94,7 @@ export default function OnboardingChecklist({
         label: canUploadData
           ? t('Upload a file or pick a dataset')
           : t('Open a dataset and explore it'),
-        action: () =>
-          navigateTo(canUploadData ? '/upload/' : '/tablemodelview/list/'),
+        action: () => navigateTo(canUploadData ? '/upload/' : '/datasets'),
       },
       {
         id: 'chart',
@@ -132,11 +125,11 @@ export default function OnboardingChecklist({
   }
 
   return (
-    <AXBIEmptyCallout data-test="home-onboarding-checklist">
-      <AXBIEmptyCalloutTitle>{t('Get started')}</AXBIEmptyCalloutTitle>
-      <AXBIEmptyCalloutText>
+    <EmptyCallout data-test="home-onboarding-checklist">
+      <EmptyCalloutTitle>{t('Get started')}</EmptyCalloutTitle>
+      <EmptyCalloutText>
         {t('A short path from data to a shareable dashboard.')}
-      </AXBIEmptyCalloutText>
+      </EmptyCalloutText>
       <List>
         {steps.map(step => (
           <Item key={step.id}>
@@ -147,19 +140,18 @@ export default function OnboardingChecklist({
           </Item>
         ))}
       </List>
-      <AXBIActionRow style={{ marginTop: 12 }}>
+      <ActionRow style={{ marginTop: 12 }}>
         <Button
           buttonStyle="link"
           icon={<Icons.CloseOutlined />}
           onClick={() => {
-            dismiss();
             setHidden(true);
           }}
           data-test="onboarding-dismiss"
         >
           {t('Dismiss')}
         </Button>
-      </AXBIActionRow>
-    </AXBIEmptyCallout>
+      </ActionRow>
+    </EmptyCallout>
   );
 }

@@ -949,3 +949,130 @@ test('automatic axis title margin adjustment handles both X and Y axis titles be
     jest.restoreAllMocks();
   }
 });
+
+const setGuidedBuilderFlag = (enabled: boolean) => {
+  window.featureFlags = {
+    ...window.featureFlags,
+    GUIDED_CHART_BUILDER: enabled,
+  };
+};
+
+const guidedVizState = {
+  ...reduxState,
+  explore: {
+    ...reduxState.explore,
+    controls: {
+      ...reduxState.explore.controls,
+      viz_type: { value: VizType.Table },
+    },
+  },
+};
+
+test('renders guided builder by default with mode switch for supported viz types', async () => {
+  setGuidedBuilderFlag(true);
+  try {
+    renderWithRouter({ initialState: guidedVizState });
+
+    expect(await screen.findByTestId('guided-builder')).toBeInTheDocument();
+    expect(screen.queryByTestId('control-tabs')).not.toBeInTheDocument();
+    expect(screen.getByTestId('builder-mode-switch')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Guided' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Advanced' })).toBeInTheDocument();
+  } finally {
+    setGuidedBuilderFlag(false);
+  }
+});
+
+test('switching modes toggles panels without touching redux controls', async () => {
+  getChartControlPanelRegistry().registerValue('table', {
+    controlPanelSections: [],
+  });
+  setGuidedBuilderFlag(true);
+  try {
+    const store = createStore(guidedVizState, reducerIndex);
+    renderWithRouter({
+      initialState: guidedVizState,
+      store: store as Store,
+    });
+
+    expect(await screen.findByTestId('guided-builder')).toBeInTheDocument();
+    const controlsBefore = store.getState().explore.controls;
+
+    userEvent.click(screen.getByRole('radio', { name: 'Advanced' }));
+    await waitFor(() =>
+      expect(screen.queryByTestId('guided-builder')).not.toBeInTheDocument(),
+    );
+    expect(screen.getByTestId('control-tabs')).toBeInTheDocument();
+    expect(store.getState().explore.controls).toEqual(controlsBefore);
+
+    userEvent.click(screen.getByRole('radio', { name: 'Guided' }));
+    expect(await screen.findByTestId('guided-builder')).toBeInTheDocument();
+    expect(screen.queryByTestId('control-tabs')).not.toBeInTheDocument();
+    expect(store.getState().explore.controls).toEqual(controlsBefore);
+  } finally {
+    setGuidedBuilderFlag(false);
+    getChartControlPanelRegistry().remove('table');
+  }
+});
+
+test('unsupported viz type renders advanced panel with info chip and no mode switch', async () => {
+  getChartMetadataRegistry().registerValue(
+    'chord',
+    new ChartMetadata({
+      name: 'chord',
+      thumbnail: '.png',
+      useLegacyApi: false,
+    }),
+  );
+  getChartControlPanelRegistry().registerValue('chord', {
+    controlPanelSections: [],
+  });
+  setGuidedBuilderFlag(true);
+  try {
+    const chordState = {
+      ...reduxState,
+      explore: {
+        ...reduxState.explore,
+        controls: {
+          ...reduxState.explore.controls,
+          viz_type: { value: 'chord' },
+        },
+      },
+    };
+    renderWithRouter({ initialState: chordState });
+
+    expect(await screen.findByTestId('control-tabs')).toBeInTheDocument();
+    expect(screen.queryByTestId('guided-builder')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('builder-mode-switch')).not.toBeInTheDocument();
+
+    const chip = screen.getByTestId('guided-builder-unavailable');
+    expect(chip).toBeInTheDocument();
+    userEvent.hover(chip);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent(
+      'Guided builder is not available for this chart type',
+    );
+  } finally {
+    setGuidedBuilderFlag(false);
+    getChartControlPanelRegistry().remove('chord');
+  }
+});
+
+test('renders classic panels without mode switch when the flag is disabled', async () => {
+  getChartControlPanelRegistry().registerValue('table', {
+    controlPanelSections: [],
+  });
+  setGuidedBuilderFlag(false);
+  try {
+    renderWithRouter({ initialState: guidedVizState });
+
+    expect(await screen.findByTestId('control-tabs')).toBeInTheDocument();
+    expect(screen.queryByTestId('guided-builder')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('builder-mode-switch')).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId('guided-builder-unavailable'),
+    ).not.toBeInTheDocument();
+  } finally {
+    getChartControlPanelRegistry().remove('table');
+  }
+});

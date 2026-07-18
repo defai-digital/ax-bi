@@ -38,6 +38,7 @@ import WithPopoverMenu from 'src/dashboard/components/menu/WithPopoverMenu';
 import backgroundStyleOptions from 'src/dashboard/util/backgroundStyleOptions';
 import { BACKGROUND_TRANSPARENT } from 'src/dashboard/util/constants';
 import { EMPTY_CONTAINER_Z_INDEX } from 'src/dashboard/constants';
+import { useDashboardGridLayoutMode } from 'src/dashboard/components/DashboardBuilder/gridLayoutMode';
 
 export interface ColumnProps {
   id: string;
@@ -161,6 +162,14 @@ const Column = (props: ColumnProps) => {
   } = props;
 
   const [isFocused, setIsFocused] = useState(false);
+  const gridLayoutMode = useDashboardGridLayoutMode();
+  // In the narrow single-column stack, columns are stretched to the full row
+  // width, so children size against every available column instead of the
+  // column's own grid width
+  const childAvailableColumnCount =
+    gridLayoutMode === 'stack'
+      ? availableColumnCount
+      : (columnComponent.meta.width ?? 0);
 
   const handleDeleteComponent = useCallback(() => {
     deleteComponent(id, parentId);
@@ -291,7 +300,7 @@ const Column = (props: ColumnProps) => {
                     parentId={columnComponent.id}
                     depth={depth + 1}
                     index={itemIndex}
-                    availableColumnCount={columnComponent.meta.width ?? 0}
+                    availableColumnCount={childAvailableColumnCount}
                     columnWidth={columnWidth}
                     onResizeStart={
                       onResizeStart as unknown as (
@@ -350,6 +359,7 @@ const Column = (props: ColumnProps) => {
     [
       availableColumnCount,
       backgroundStyle?.className,
+      childAvailableColumnCount,
       columnComponent,
       columnItems,
       columnWidth,

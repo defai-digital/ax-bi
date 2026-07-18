@@ -19,9 +19,20 @@
 import { memo, useEffect, useCallback, useMemo, useState, useRef } from 'react';
 import { uniq, debounce } from 'lodash';
 import { t } from '@ax-bi/core/translation';
-import { ChartCustomizationType, NativeFilterType } from '@ax-bi/ui-core';
+import {
+  ChartCustomizationType,
+  NativeFilterType,
+  isFeatureEnabled,
+  FeatureFlag,
+} from '@ax-bi/ui-core';
 import { styled, css, useTheme } from '@ax-bi/core/theme';
-import { Constants, Form, Icons, Flex } from '@ax-bi/ui-core/components';
+import {
+  Constants,
+  Form,
+  Icons,
+  Flex,
+  SettingsDrawer,
+} from '@ax-bi/ui-core/components';
 import { ErrorBoundary } from 'src/components';
 import { testWithId } from 'src/utils/testUtils';
 import useEffectEvent from 'src/hooks/useEffectEvent';
@@ -72,6 +83,10 @@ const StyledModalBody = styled(BaseModalBody)`
 `;
 
 const StyledMainFlex = styled(Flex)`
+  height: 100%;
+`;
+
+const DrawerBody = styled.div`
   height: 100%;
 `;
 
@@ -527,6 +542,107 @@ function FiltersConfigModal({
     [customizationState],
   );
 
+  const formBody = (
+    <ErrorBoundary>
+      <StyledModalBody expanded={expanded}>
+        <BaseForm
+          form={form}
+          onValuesChange={handleValuesChange}
+          layout="vertical"
+          preserve
+        >
+          <StyledMainFlex>
+            <ConfigModalSidebar
+              filterIds={filterIds}
+              chartCustomizationIds={chartCustomizationIds}
+              currentItemId={currentItemId}
+              filterOrderedIds={filterState.orderedIds}
+              filterRemovedItems={filterState.removedItems}
+              filterErroredItems={filterState.erroredIds}
+              customizationOrderedIds={customizationState.orderedIds}
+              customizationRemovedItems={customizationState.removedItems}
+              customizationErroredItems={customizationState.erroredIds}
+              activeCollapseKeys={activeCollapseKeys}
+              getItemTitle={modalSaveLogic.getItemTitle}
+              itemTitles={itemTitles}
+              onAddFilter={filterOperations.addFilter}
+              onAddCustomization={customizationOperations.addChartCustomization}
+              onChange={setActiveItem}
+              onRearrange={handleRearrangeItems}
+              onRemove={handleRemoveItem}
+              restoreItem={restoreItem}
+              onCollapseChange={setActiveCollapseKeys}
+              onCrossListDrop={handleCrossListMove}
+            />
+
+            <ConfigModalContent
+              currentItemId={currentItemId}
+              filterIds={filterIds}
+              chartCustomizationIds={chartCustomizationIds}
+              filterState={{
+                orderedIds: filterState.orderedIds,
+                renderedIds: filterState.renderedIds,
+                removedItems: filterState.removedItems,
+              }}
+              customizationState={{
+                orderedIds: customizationState.orderedIds,
+                renderedIds: customizationState.renderedIds,
+                removedItems: customizationState.removedItems,
+              }}
+              filterConfigMap={filterConfigMap}
+              chartCustomizationConfigMap={chartCustomizationConfigMap}
+              isItemActive={isItemActive}
+              expanded={expanded}
+              form={form}
+              configFormRef={configFormRef}
+              restoreItem={restoreItem}
+              getAvailableFilters={getAvailableFilters}
+              activeFilterPanelKey={activeFilterPanelKey}
+              handleActiveFilterPanelChange={handleActiveFilterPanelChange}
+              handleSetErroredFilters={handleSetErroredFilters}
+              handleSetErroredCustomizations={handleSetErroredCustomizations}
+              validateDependencies={filterOperations.validateDependencies}
+              getDependencySuggestion={filterOperations.getDependencySuggestion}
+              handleModifyItem={handleModifyItem}
+            />
+          </StyledMainFlex>
+        </BaseForm>
+      </StyledModalBody>
+    </ErrorBoundary>
+  );
+
+  const footerActions = (
+    <Footer
+      onDismiss={() => setSaveAlertVisible(false)}
+      onCancel={handleCancel}
+      handleSave={modalSaveLogic.handleSave}
+      canSave={modalSaveLogic.canSave}
+      saveAlertVisible={saveAlertVisible}
+      onConfirmCancel={handleConfirmCancel}
+    />
+  );
+
+  // SETTINGS_DRAWER on: the same sidebar + config form renders inside the
+  // ui-core SettingsDrawer. The drawer's dirty guard handles chrome-level
+  // close requests (close button, mask, Escape) when there are unsaved
+  // changes; the footer Cancel button keeps its own inline confirm, so a
+  // single close gesture only ever prompts once. Off: the legacy modal.
+  if (isFeatureEnabled(FeatureFlag.SettingsDrawer)) {
+    return (
+      <SettingsDrawer
+        open={isOpen}
+        onClose={handleCancel}
+        title={t('Add or edit display controls')}
+        width="wide"
+        dirty={modalSaveLogic.hasUnsavedChanges}
+        onConfirmClose={handleConfirmCancel}
+        footer={footerActions}
+      >
+        <DrawerBody data-test="filter-modal">{formBody}</DrawerBody>
+      </SettingsDrawer>
+    );
+  }
+
   return (
     <BaseModalWrapper
       open={isOpen}
@@ -546,14 +662,7 @@ function FiltersConfigModal({
             align-items: flex-end;
           `}
         >
-          <Footer
-            onDismiss={() => setSaveAlertVisible(false)}
-            onCancel={handleCancel}
-            handleSave={modalSaveLogic.handleSave}
-            canSave={modalSaveLogic.canSave}
-            saveAlertVisible={saveAlertVisible}
-            onConfirmCancel={handleConfirmCancel}
-          />
+          {footerActions}
           <BaseExpandButtonWrapper>
             <ToggleIcon
               iconSize="l"
@@ -564,76 +673,7 @@ function FiltersConfigModal({
         </div>
       }
     >
-      <ErrorBoundary>
-        <StyledModalBody expanded={expanded}>
-          <BaseForm
-            form={form}
-            onValuesChange={handleValuesChange}
-            layout="vertical"
-            preserve
-          >
-            <StyledMainFlex>
-              <ConfigModalSidebar
-                filterIds={filterIds}
-                chartCustomizationIds={chartCustomizationIds}
-                currentItemId={currentItemId}
-                filterOrderedIds={filterState.orderedIds}
-                filterRemovedItems={filterState.removedItems}
-                filterErroredItems={filterState.erroredIds}
-                customizationOrderedIds={customizationState.orderedIds}
-                customizationRemovedItems={customizationState.removedItems}
-                customizationErroredItems={customizationState.erroredIds}
-                activeCollapseKeys={activeCollapseKeys}
-                getItemTitle={modalSaveLogic.getItemTitle}
-                itemTitles={itemTitles}
-                onAddFilter={filterOperations.addFilter}
-                onAddCustomization={
-                  customizationOperations.addChartCustomization
-                }
-                onChange={setActiveItem}
-                onRearrange={handleRearrangeItems}
-                onRemove={handleRemoveItem}
-                restoreItem={restoreItem}
-                onCollapseChange={setActiveCollapseKeys}
-                onCrossListDrop={handleCrossListMove}
-              />
-
-              <ConfigModalContent
-                currentItemId={currentItemId}
-                filterIds={filterIds}
-                chartCustomizationIds={chartCustomizationIds}
-                filterState={{
-                  orderedIds: filterState.orderedIds,
-                  renderedIds: filterState.renderedIds,
-                  removedItems: filterState.removedItems,
-                }}
-                customizationState={{
-                  orderedIds: customizationState.orderedIds,
-                  renderedIds: customizationState.renderedIds,
-                  removedItems: customizationState.removedItems,
-                }}
-                filterConfigMap={filterConfigMap}
-                chartCustomizationConfigMap={chartCustomizationConfigMap}
-                isItemActive={isItemActive}
-                expanded={expanded}
-                form={form}
-                configFormRef={configFormRef}
-                restoreItem={restoreItem}
-                getAvailableFilters={getAvailableFilters}
-                activeFilterPanelKey={activeFilterPanelKey}
-                handleActiveFilterPanelChange={handleActiveFilterPanelChange}
-                handleSetErroredFilters={handleSetErroredFilters}
-                handleSetErroredCustomizations={handleSetErroredCustomizations}
-                validateDependencies={filterOperations.validateDependencies}
-                getDependencySuggestion={
-                  filterOperations.getDependencySuggestion
-                }
-                handleModifyItem={handleModifyItem}
-              />
-            </StyledMainFlex>
-          </BaseForm>
-        </StyledModalBody>
-      </ErrorBoundary>
+      {formBody}
     </BaseModalWrapper>
   );
 }

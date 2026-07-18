@@ -60,6 +60,11 @@ export { Badge, type BadgeProps } from './Badge';
 export { Button, type ButtonProps, type OnClickHandler } from './Button';
 export { ButtonGroup, type ButtonGroupProps } from './ButtonGroup';
 export { Breadcrumb, type BreadcrumbProps } from './Breadcrumb';
+export {
+  Breadcrumbs,
+  type BreadcrumbsItem,
+  type BreadcrumbsProps,
+} from './Breadcrumbs';
 export { CachedLabel, type CacheLabelProps } from './CachedLabel';
 export { Card } from './Card';
 export {
@@ -151,8 +156,41 @@ export { default as MetadataBar, type MetadataBarProps } from './MetadataBar';
 export { Progress, type ProgressProps } from './Progress';
 export { default as ProgressBar, type ProgressBarProps } from './ProgressBar';
 
+export {
+  ActionRow,
+  EmptyCallout,
+  EmptyCalloutText,
+  EmptyCalloutTitle,
+  Eyebrow,
+  Hero,
+  HeroText,
+  HeroTitle,
+  Page,
+  PageNarrow,
+  Panel,
+  QuickAction,
+  QuickActionGrid,
+  Section,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+  softShadow,
+  Stat,
+  StatButton,
+  StatCard,
+  StatHint,
+  StatLabel,
+  StatsGrid,
+  StatValue,
+} from './PageKit';
 export { Pagination, type PaginationProps } from './Pagination';
 
+export {
+  SettingsDrawer,
+  type SettingsDrawerProps,
+  type SettingsDrawerSection,
+  type SettingsDrawerWidth,
+} from './SettingsDrawer';
 export { Skeleton, type SkeletonProps } from './Skeleton';
 export {
   default as Slider,

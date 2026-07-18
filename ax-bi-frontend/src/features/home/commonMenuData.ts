@@ -29,7 +29,7 @@ export const commonMenuData = {
     {
       name: 'Saved queries',
       label: t('Saved queries'),
-      url: '/savedqueryview/list/',
+      url: '/saved-queries',
       usesRouter: true,
     },
     {

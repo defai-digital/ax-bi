@@ -33,6 +33,10 @@ import { RightMenuProps } from './types';
 jest.mock('@ax-bi/ui-core', () => ({
   ...jest.requireActual('@ax-bi/ui-core'),
   isFeatureEnabled: jest.fn(),
+  // The notification center fetches on mount; keep it hermetic.
+  AxBIClient: {
+    get: jest.fn().mockResolvedValue({ json: { result: [], count: 0 } }),
+  },
 }));
 
 const mockIsFeatureEnabled = isFeatureEnabled as jest.MockedFunction<
@@ -190,7 +194,20 @@ test('hides logout button when embedded and flag is enabled', async () => {
   expect(screen.queryByText('Logout')).not.toBeInTheDocument();
 });
 
-test('shows upload data menu item when local upload is enabled and permitted', async () => {
+test('+ New menu lists create actions', async () => {
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  await userEvent.click(await screen.findByTestId('navbar-create-new'));
+  expect(await screen.findByText('Chart')).toBeInTheDocument();
+  expect(screen.getByText('Dashboard')).toBeInTheDocument();
+  expect(screen.getByText('SQL query')).toBeInTheDocument();
+});
+
+test('settings gear menu omits create actions', async () => {
   mockIsFeatureEnabled.mockImplementation(
     (flag: FeatureFlag) => flag === FeatureFlag.EnableLocalFileUpload,
   );
@@ -207,7 +224,47 @@ test('shows upload data menu item when local upload is enabled and permitted', a
     },
   });
 
-  userEvent.hover(await screen.findByText(/Settings/i));
+  await userEvent.hover(await screen.findByText(/Settings/i));
+  // Wait for the settings popup to open before asserting absence.
+  await screen.findByText('Logout');
+  expect(screen.queryByText('Create')).not.toBeInTheDocument();
+  expect(screen.queryByText('Chart')).not.toBeInTheDocument();
+  expect(screen.queryByText('Dashboard')).not.toBeInTheDocument();
+  expect(screen.queryByText('SQL query')).not.toBeInTheDocument();
+  expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
+});
+
+test('hides + New button for anonymous users', async () => {
+  const props = createProps();
+  props.navbarRight.user_is_anonymous = true;
+  render(<RightMenu {...props} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  await screen.findByText(/Settings/i);
+  expect(screen.queryByTestId('navbar-create-new')).not.toBeInTheDocument();
+});
+
+test('shows upload data menu item in + New menu when local upload is enabled and permitted', async () => {
+  mockIsFeatureEnabled.mockImplementation(
+    (flag: FeatureFlag) => flag === FeatureFlag.EnableLocalFileUpload,
+  );
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+    initialState: {
+      user: {
+        roles: {
+          Alpha: [['can_upload', 'Database']],
+        },
+      },
+    },
+  });
+
+  await userEvent.click(await screen.findByTestId('navbar-create-new'));
   expect(await screen.findByText('Upload data')).toBeInTheDocument();
 });
 
@@ -218,7 +275,7 @@ test('dashboard create menu item uses backend navigation', async () => {
     useTheme: true,
   });
 
-  userEvent.hover(await screen.findByText(/Settings/i));
+  await userEvent.click(await screen.findByTestId('navbar-create-new'));
 
   const dashboardLink = (await screen.findByText('Dashboard')).closest('a');
   expect(dashboardLink).toHaveAttribute('href', '/dashboard/new/');
@@ -241,10 +298,10 @@ test('hides upload data menu item without local upload permission', async () => 
     },
   });
 
-  userEvent.hover(await screen.findByText(/Settings/i));
-  await waitFor(() => {
-    expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
-  });
+  await userEvent.click(await screen.findByTestId('navbar-create-new'));
+  // Wait for the dropdown to open before asserting absence.
+  await screen.findByText('Chart');
+  expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
 });
 
 test('hides upload data menu item when local upload is disabled', async () => {
@@ -262,10 +319,9 @@ test('hides upload data menu item when local upload is disabled', async () => {
     },
   });
 
-  userEvent.hover(await screen.findByText(/Settings/i));
-  await waitFor(() => {
-    expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
-  });
+  await userEvent.click(await screen.findByTestId('navbar-create-new'));
+  await screen.findByText('Chart');
+  expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
 });
 
 test('updates upload data menu item when upload permission changes', async () => {
@@ -292,17 +348,16 @@ test('updates upload data menu item when upload permission changes', async () =>
     useTheme: true,
   });
 
-  userEvent.hover(await screen.findByText(/Settings/i));
-  await waitFor(() => {
-    expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
-  });
+  await userEvent.click(await screen.findByTestId('navbar-create-new'));
+  await screen.findByText('Chart');
+  expect(screen.queryByText('Upload data')).not.toBeInTheDocument();
 
   store.dispatch({ type: 'grant-upload' });
 
   expect(await screen.findByText('Upload data')).toBeInTheDocument();
 });
 
-test('simplified nav puts Chart before SQL query and has no Create Advanced group', async () => {
+test('simplified nav puts Chart before SQL query in the + New menu', async () => {
   mockIsFeatureEnabled.mockImplementation(
     (flag: FeatureFlag) => flag === FeatureFlag.SimplifiedNav,
   );
@@ -312,7 +367,7 @@ test('simplified nav puts Chart before SQL query and has no Create Advanced grou
     useTheme: true,
   });
 
-  userEvent.hover(await screen.findByText(/Settings/i));
+  await userEvent.click(await screen.findByTestId('navbar-create-new'));
 
   const chart = await screen.findByText('Chart');
   const sqlQuery = await screen.findByText('SQL query');
@@ -322,9 +377,9 @@ test('simplified nav puts Chart before SQL query and has no Create Advanced grou
 
   // SIMPLIFIED_NAV must not invent a second "Advanced" create section;
   // Advanced is reserved for demoted SQL Lab nav entries in Menu.tsx.
-  const settingsPopup = chart.closest('.ant-menu') ?? document.body;
+  const createPopup = chart.closest('.ant-menu') ?? document.body;
   expect(
-    within(settingsPopup as HTMLElement).queryByText('Advanced'),
+    within(createPopup as HTMLElement).queryByText('Advanced'),
   ).not.toBeInTheDocument();
 });
 
@@ -347,6 +402,63 @@ test('search chip exposes aria-label with keyboard shortcut when palette is avai
   expect(trigger.getAttribute('aria-label')).toMatch(/⌘K|Ctrl\+K/);
 });
 
+test('shows the notification center bell when NOTIFICATION_CENTER and ALERT_REPORTS are enabled', async () => {
+  mockIsFeatureEnabled.mockImplementation(
+    (flag: FeatureFlag) =>
+      flag === FeatureFlag.NotificationCenter ||
+      flag === FeatureFlag.AlertReports,
+  );
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  expect(
+    await screen.findByTestId('notification-center-trigger'),
+  ).toBeInTheDocument();
+  // Bell sits left of the settings gear.
+  const bell = await screen.findByTestId('notification-center-trigger');
+  const settings = await screen.findByText(/Settings/i);
+  expect(
+    bell.compareDocumentPosition(settings) & Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBeTruthy();
+});
+
+test('hides the notification center bell when NOTIFICATION_CENTER is disabled', async () => {
+  mockIsFeatureEnabled.mockReturnValue(false);
+  render(<RightMenu {...createProps()} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  await screen.findByText(/Settings/i);
+  expect(
+    screen.queryByTestId('notification-center-trigger'),
+  ).not.toBeInTheDocument();
+});
+
+test('hides the notification center bell for anonymous users', async () => {
+  mockIsFeatureEnabled.mockImplementation(
+    (flag: FeatureFlag) =>
+      flag === FeatureFlag.NotificationCenter ||
+      flag === FeatureFlag.AlertReports,
+  );
+  const props = createProps();
+  props.navbarRight.user_is_anonymous = true;
+  render(<RightMenu {...props} />, {
+    useRedux: true,
+    useRouter: true,
+    useTheme: true,
+  });
+
+  await screen.findByText(/Settings/i);
+  expect(
+    screen.queryByTestId('notification-center-trigger'),
+  ).not.toBeInTheDocument();
+});
+
 test('settings menu items render icons for known destinations', async () => {
   mockIsFeatureEnabled.mockReturnValue(false);
   const props = createProps();
@@ -358,7 +470,7 @@ test('settings menu items render icons for known destinations', async () => {
         {
           label: 'Databases',
           name: 'Databases',
-          url: '/databaseview/list/',
+          url: '/databases',
         },
         {
           label: 'Themes',

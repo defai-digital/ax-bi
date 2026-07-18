@@ -25,21 +25,39 @@ import {
   getExtensionsRegistry,
   JsonObject,
 } from '@ax-bi/ui-core';
-import { styled } from '@ax-bi/core/theme';
+import { styled, useTheme } from '@ax-bi/core/theme';
 import rison from 'rison';
-import { Button, ListViewCard } from '@ax-bi/ui-core/components';
+import {
+  ActionRow,
+  AntdThemeProvider,
+  Button,
+  EmptyCallout,
+  EmptyCalloutText,
+  EmptyCalloutTitle,
+  Eyebrow,
+  Hero,
+  HeroText,
+  HeroTitle,
+  ListViewCard,
+  Page,
+  Panel,
+  QuickAction,
+  QuickActionGrid,
+  Section,
+  SectionDescription,
+  SectionHeader,
+  SectionTitle,
+  Stat,
+  StatsGrid,
+} from '@ax-bi/ui-core/components';
 import {
   BootstrapUser,
   User,
   UserWithPermissionsAndRoles,
 } from 'src/types/bootstrapTypes';
 import { reject } from 'lodash';
-import {
-  dangerouslyGetItemDoNotUse,
-  dangerouslySetItemDoNotUse,
-  getItem,
-  LocalStorageKeys,
-} from 'src/utils/localStorageHelpers';
+import { getItem, LocalStorageKeys } from 'src/utils/localStorageHelpers';
+import { useUxPreference } from 'src/hooks/useUxPreference';
 import withToasts from 'src/components/MessageToasts/withToasts';
 import {
   CardContainer,
@@ -60,26 +78,6 @@ import SavedQueries from 'src/features/home/SavedQueries';
 import DashboardTable from 'src/features/home/DashboardTable';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { navigateTo } from 'src/utils/navigationUtils';
-import {
-  AXBIActionRow,
-  AXBIEmptyCallout,
-  AXBIEmptyCalloutText,
-  AXBIEmptyCalloutTitle,
-  AXBIEyebrow,
-  AXBIHero,
-  AXBIHeroText,
-  AXBIHeroTitle,
-  AXBIPage,
-  AXBIPanel,
-  AXBIQuickAction,
-  AXBIQuickActionGrid,
-  AXBISection,
-  AXBISectionDescription,
-  AXBISectionHeader,
-  AXBISectionTitle,
-  AXBIStat,
-  AXBIStatsGrid,
-} from 'src/components/AXBIWorkspace';
 import { useOptionalCommandPalette } from 'src/components/CommandPalette';
 import OnboardingChecklist from 'src/features/home/OnboardingChecklist';
 
@@ -103,22 +101,17 @@ interface LoadingProps {
 
 const WelcomeContainer = styled.div`
   background: ${({ theme }) => theme.colorBgLayout};
+`;
 
-  .ant-card-meta-description {
-    margin-top: ${({ theme }) => theme.sizeUnit}px;
-  }
-
-  .ant-card.ant-card-bordered {
-    border: 1px solid ${({ theme }) => theme.colorBorder};
-  }
-
-  .loading-cards {
-    margin-top: ${({ theme }) => theme.sizeUnit * 2}px;
-
-    .ant-card-cover > div {
-      height: 168px;
-    }
-  }
+/**
+ * Placeholder cover for loading cards: reduced loading height with the same
+ * bottom hairline the list-card cover renders.
+ */
+const LoadingCover = styled.div`
+  ${({ theme }) => `
+    height: ${theme.sizeUnit * 42}px;
+    border-bottom: 1px solid ${theme.colorSplit};
+  `}
 `;
 
 const SectionLink = styled.button`
@@ -163,7 +156,7 @@ export const LoadingCards = ({ cover }: LoadingProps) => (
     {Array.from({ length: loadingCardCount }, (_, index) => (
       <ListViewCard
         key={index}
-        cover={cover ? false : <></>}
+        cover={cover ? <LoadingCover /> : <></>}
         description=""
         loading
       />
@@ -191,6 +184,21 @@ export function resolveHomeUser(
 }
 
 function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
+  const theme = useTheme();
+  // Scoped antd Card token overrides (replacing the old raw-class CSS
+  // overrides): Home cards use the stronger border color, and the meta
+  // title-to-description gap absorbs the old description margin-top.
+  const cardTokenOverrides = useMemo(
+    () => ({
+      components: {
+        Card: {
+          colorBorderSecondary: theme.colorBorder,
+          marginXS: theme.marginXS + theme.sizeUnit,
+        },
+      },
+    }),
+    [theme],
+  );
   const storeUser = useSelector(
     (state: { user?: BootstrapUser | Record<string, never> }) => state.user,
   );
@@ -209,14 +217,22 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
   const params = rison.encode({ page_size: 24, distinct: false });
   const recent = `/api/v1/log/recent_activity/?q=${params}`;
   const [activeChild, setActiveChild] = useState('Loading');
-  const userKey = id != null ? dangerouslyGetItemDoNotUse(id, null) : null;
-  let defaultChecked = false;
   const isThumbnailsEnabled = isFeatureEnabled(FeatureFlag.Thumbnails);
-  if (isThumbnailsEnabled) {
-    defaultChecked =
-      userKey?.thumbnails === undefined ? true : userKey?.thumbnails;
-  }
-  const [checked, setChecked] = useState(defaultChecked);
+  // Pre-migration this lived in localStorage under the user id as
+  // { thumbnails: boolean }; keep that key as the offline/anonymous
+  // fallback so behavior degrades gracefully.
+  const [thumbnailsPref, setThumbnailsPref] = useUxPreference(
+    'ux.home.thumbnails',
+    true,
+    {
+      localStorageKey: id ?? 'ux.home.thumbnails',
+      readLegacy: raw =>
+        raw != null && typeof raw === 'object'
+          ? (raw as { thumbnails?: boolean }).thumbnails
+          : undefined,
+    },
+  );
+  const checked = isThumbnailsEnabled ? thumbnailsPref : false;
   const [activityData, setActivityData] = useState<ActivityData | null>(null);
   const [chartData, setChartData] = useState<Array<object> | null>(null);
   const [queryData, setQueryData] = useState<Array<object> | null>(null);
@@ -360,11 +376,7 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
   ]);
 
   const handleToggle = () => {
-    if (id == null) {
-      return;
-    }
-    setChecked(!checked);
-    dangerouslySetItemDoNotUse(id, { thumbnails: !checked });
+    setThumbnailsPref(!thumbnailsPref);
   };
 
   useEffect(() => {
@@ -430,19 +442,17 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
           <SubMenu {...menuData} />
         )}
         <WelcomeContainer>
-          <AXBIPage>
-            <AXBIHero>
+          <Page>
+            <Hero>
               <div>
-                <AXBIEyebrow>{t('AX BI workspace')}</AXBIEyebrow>
-                <AXBIHeroTitle>
-                  {t('Sign in to open your workspace')}
-                </AXBIHeroTitle>
-                <AXBIHeroText>
+                <Eyebrow>{t('AX BI workspace')}</Eyebrow>
+                <HeroTitle>{t('Sign in to open your workspace')}</HeroTitle>
+                <HeroText>
                   {t(
                     'The home page needs a signed-in user account. Sign in to see recents, dashboards, and charts.',
                   )}
-                </AXBIHeroText>
-                <AXBIActionRow>
+                </HeroText>
+                <ActionRow>
                   <Button
                     buttonStyle="primary"
                     onClick={() => navigateTo('/login/')}
@@ -455,10 +465,10 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
                   >
                     {t('Browse dashboards')}
                   </Button>
-                </AXBIActionRow>
+                </ActionRow>
               </div>
-            </AXBIHero>
-          </AXBIPage>
+            </Hero>
+          </Page>
         </WelcomeContainer>
       </>
     );
@@ -471,341 +481,347 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
       ) : (
         <SubMenu {...menuData} />
       )}
-      <WelcomeContainer>
-        {WelcomeMessageExtension && <WelcomeMessageExtension />}
-        {WelcomeTopExtension && <WelcomeTopExtension />}
-        <AXBIPage>
-          <AXBIHero>
-            <div>
-              <AXBIEyebrow>{t('AX BI workspace')}</AXBIEyebrow>
-              <AXBIHeroTitle>
-                {isReturningUser
-                  ? t('Continue where you left off')
-                  : t('Start from data. Build charts and dashboards.')}
-              </AXBIHeroTitle>
-              <AXBIHeroText>
-                {isReturningUser
-                  ? t(
-                      'Open recent work below, or create something new when you are ready.',
-                    )
-                  : t(
-                      'Upload a file or pick a dataset, then turn insights into shareable dashboards.',
+      <AntdThemeProvider theme={cardTokenOverrides}>
+        <WelcomeContainer>
+          {WelcomeMessageExtension && <WelcomeMessageExtension />}
+          {WelcomeTopExtension && <WelcomeTopExtension />}
+          <Page>
+            <Hero>
+              <div>
+                <Eyebrow>{t('AX BI workspace')}</Eyebrow>
+                <HeroTitle>
+                  {isReturningUser
+                    ? t('Continue where you left off')
+                    : t('Start from data. Build charts and dashboards.')}
+                </HeroTitle>
+                <HeroText>
+                  {isReturningUser
+                    ? t(
+                        'Open recent work below, or create something new when you are ready.',
+                      )
+                    : t(
+                        'Upload a file or pick a dataset, then turn insights into shareable dashboards.',
+                      )}
+                </HeroText>
+                {/* One primary + one secondary CTA — first-run uses the empty callout for full choices */}
+                {!isFirstRun && (
+                  <ActionRow>
+                    {canUploadData ? (
+                      <>
+                        <Button
+                          buttonStyle="primary"
+                          icon={<Icons.UploadOutlined />}
+                          onClick={() => navigateTo('/upload/')}
+                        >
+                          {t('Upload data')}
+                        </Button>
+                        <Button
+                          buttonStyle="secondary"
+                          icon={<Icons.BarChartOutlined />}
+                          onClick={() => navigateTo('/chart/add')}
+                        >
+                          {t('Create chart')}
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          buttonStyle="primary"
+                          icon={<Icons.BarChartOutlined />}
+                          onClick={() => navigateTo('/chart/add')}
+                        >
+                          {t('Create chart')}
+                        </Button>
+                        <Button
+                          buttonStyle="secondary"
+                          icon={<Icons.DashboardOutlined />}
+                          onClick={() =>
+                            navigateTo('/dashboard/new/', { assign: true })
+                          }
+                        >
+                          {t('New dashboard')}
+                        </Button>
+                      </>
                     )}
-              </AXBIHeroText>
-              {/* One primary + one secondary CTA — first-run uses the empty callout for full choices */}
-              {!isFirstRun && (
-                <AXBIActionRow>
-                  {canUploadData ? (
-                    <>
-                      <Button
-                        buttonStyle="primary"
-                        icon={<Icons.UploadOutlined />}
-                        onClick={() => navigateTo('/upload/')}
-                      >
-                        {t('Upload data')}
-                      </Button>
-                      <Button
-                        buttonStyle="secondary"
-                        icon={<Icons.BarChartOutlined />}
-                        onClick={() => navigateTo('/chart/add')}
-                      >
-                        {t('Create chart')}
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <Button
-                        buttonStyle="primary"
-                        icon={<Icons.BarChartOutlined />}
-                        onClick={() => navigateTo('/chart/add')}
-                      >
-                        {t('Create chart')}
-                      </Button>
-                      <Button
-                        buttonStyle="secondary"
-                        icon={<Icons.DashboardOutlined />}
-                        onClick={() =>
-                          navigateTo('/dashboard/new/', { assign: true })
-                        }
-                      >
-                        {t('New dashboard')}
-                      </Button>
-                    </>
+                  </ActionRow>
+                )}
+              </div>
+              <Panel>
+                <SectionTitle>{t('What do you want to do?')}</SectionTitle>
+                <SectionDescription>
+                  {t('Jump in with search or open your library.')}
+                </SectionDescription>
+                <QuickActionGrid>
+                  {genaiEnabled && commandPalette && (
+                    <QuickAction
+                      type="button"
+                      data-test="home-ask-axbi"
+                      onClick={() => commandPalette.open()}
+                    >
+                      <span className="quick-action-icon">
+                        <Icons.ThunderboltOutlined />
+                      </span>
+                      <span>
+                        <div className="quick-action-title">
+                          {t('Ask AX BI')}
+                        </div>
+                        <div className="quick-action-text">
+                          {t(
+                            'Search actions (⌘K). Prompt flows via AX-Studio.',
+                          )}
+                        </div>
+                      </span>
+                    </QuickAction>
                   )}
-                </AXBIActionRow>
-              )}
-            </div>
-            <AXBIPanel>
-              <AXBISectionTitle>
-                {t('What do you want to do?')}
-              </AXBISectionTitle>
-              <AXBISectionDescription>
-                {t('Jump in with search or open your library.')}
-              </AXBISectionDescription>
-              <AXBIQuickActionGrid>
-                {genaiEnabled && commandPalette && (
-                  <AXBIQuickAction
-                    type="button"
-                    data-test="home-ask-axbi"
-                    onClick={() => commandPalette.open()}
-                  >
-                    <span className="quick-action-icon">
-                      <Icons.ThunderboltOutlined />
-                    </span>
-                    <span>
-                      <div className="quick-action-title">{t('Ask AX BI')}</div>
-                      <div className="quick-action-text">
-                        {t('Search actions (⌘K). Prompt flows via AX-Studio.')}
-                      </div>
-                    </span>
-                  </AXBIQuickAction>
-                )}
-                {commandPalette && (
-                  <AXBIQuickAction
-                    type="button"
-                    onClick={() => commandPalette.open()}
-                  >
-                    <span className="quick-action-icon">
-                      <Icons.SearchOutlined />
-                    </span>
-                    <span>
-                      <div className="quick-action-title">{t('Search')}</div>
-                      <div className="quick-action-text">
-                        {t('Find pages and actions. Press ⌘K or Ctrl+K.')}
-                      </div>
-                    </span>
-                  </AXBIQuickAction>
-                )}
-                <AXBIQuickAction
-                  type="button"
-                  onClick={() => navigateTo('/dashboard/list/')}
-                >
-                  <span className="quick-action-icon">
-                    <Icons.DashboardOutlined />
-                  </span>
-                  <span>
-                    <div className="quick-action-title">
-                      {t('Browse dashboards')}
-                    </div>
-                    <div className="quick-action-text">
-                      {t('Open saved analytics and reports.')}
-                    </div>
-                  </span>
-                </AXBIQuickAction>
-                {!canUploadData && !commandPalette && (
-                  <AXBIQuickAction
-                    type="button"
-                    onClick={() => navigateTo('/chart/add')}
-                  >
-                    <span className="quick-action-icon">
-                      <Icons.BarChartOutlined />
-                    </span>
-                    <span>
-                      <div className="quick-action-title">
-                        {t('Create chart')}
-                      </div>
-                      <div className="quick-action-text">
-                        {t('Build a visualization from a dataset.')}
-                      </div>
-                    </span>
-                  </AXBIQuickAction>
-                )}
-              </AXBIQuickActionGrid>
-            </AXBIPanel>
-          </AXBIHero>
-
-          <AXBIStatsGrid>
-            <AXBIStat
-              label={t('Dashboards')}
-              value={dashboardData ? dashboardCount : '...'}
-              hint={t('Saved dashboards')}
-              onClick={() => navigateTo('/dashboard/list/')}
-              aria-label={t('Browse dashboards')}
-            />
-            <AXBIStat
-              label={t('Charts')}
-              value={chartData ? chartCount : '...'}
-              hint={t('Saved charts')}
-              onClick={() => navigateTo('/chart/list/')}
-              aria-label={t('Browse charts')}
-            />
-            <AXBIStat
-              label={t('Recent activity')}
-              value={activityData ? recentCount : '...'}
-              hint={t('Viewed and edited analytics')}
-              onClick={scrollToRecents}
-              aria-label={t('Jump to recent activity')}
-            />
-          </AXBIStatsGrid>
-
-          {isFirstRun && (
-            <AXBIEmptyCallout data-test="home-first-run">
-              <AXBIEmptyCalloutTitle>
-                {t('Your workspace is empty')}
-              </AXBIEmptyCalloutTitle>
-              <AXBIEmptyCalloutText>
-                {t(
-                  'Upload a file or create your first chart to start building dashboards.',
-                )}
-              </AXBIEmptyCalloutText>
-              <AXBIActionRow style={{ justifyContent: 'center', marginTop: 0 }}>
-                {canUploadData && (
-                  <Button
-                    buttonStyle="primary"
-                    icon={<Icons.UploadOutlined />}
-                    onClick={() => navigateTo('/upload/')}
-                  >
-                    {t('Upload data')}
-                  </Button>
-                )}
-                <Button
-                  buttonStyle={canUploadData ? 'secondary' : 'primary'}
-                  icon={<Icons.BarChartOutlined />}
-                  onClick={() => navigateTo('/chart/add')}
-                >
-                  {t('Create chart')}
-                </Button>
-                <Button
-                  buttonStyle="secondary"
-                  icon={<Icons.DashboardOutlined />}
-                  onClick={() =>
-                    navigateTo('/dashboard/new/', { assign: true })
-                  }
-                >
-                  {t('New dashboard')}
-                </Button>
-              </AXBIActionRow>
-            </AXBIEmptyCallout>
-          )}
-
-          {!isFirstRun && (
-            <OnboardingChecklist
-              canUploadData={canUploadData}
-              hasChart={chartCount > 0}
-              hasDashboard={dashboardCount > 0}
-              onOpenSearch={() => commandPalette?.open()}
-            />
-          )}
-
-          {WelcomeMainExtension && <WelcomeMainExtension />}
-          {(!WelcomeTopExtension || !WelcomeMainExtension) && (
-            <>
-              <AXBISection id="home-recents">
-                <AXBISectionHeader>
-                  <div>
-                    <AXBISectionTitle>{t('Recents')}</AXBISectionTitle>
-                    <AXBISectionDescription>
-                      {t('Continue from what you viewed or created recently.')}
-                    </AXBISectionDescription>
-                  </div>
-                </AXBISectionHeader>
-                {activityData &&
-                (activityData[TableTab.Viewed] ||
-                  activityData[TableTab.Other] ||
-                  activityData[TableTab.Created]) &&
-                activeChild !== 'Loading' ? (
-                  <ActivityTable
-                    user={{ userId: userid as number }}
-                    activeChild={activeChild}
-                    setActiveChild={setActiveChild}
-                    activityData={activityData}
-                    isFetchingActivityData={isFetchingActivityData}
-                  />
-                ) : (
-                  <LoadingCards />
-                )}
-              </AXBISection>
-
-              <AXBISection id="home-dashboards">
-                <AXBISectionHeader>
-                  <div>
-                    <AXBISectionTitle>{t('Dashboards')}</AXBISectionTitle>
-                    <AXBISectionDescription>
-                      {t('Your dashboards and shared examples.')}
-                    </AXBISectionDescription>
-                  </div>
-                  <SectionLink
+                  {commandPalette && (
+                    <QuickAction
+                      type="button"
+                      onClick={() => commandPalette.open()}
+                    >
+                      <span className="quick-action-icon">
+                        <Icons.SearchOutlined />
+                      </span>
+                      <span>
+                        <div className="quick-action-title">{t('Search')}</div>
+                        <div className="quick-action-text">
+                          {t('Find pages and actions. Press ⌘K or Ctrl+K.')}
+                        </div>
+                      </span>
+                    </QuickAction>
+                  )}
+                  <QuickAction
                     type="button"
                     onClick={() => navigateTo('/dashboard/list/')}
                   >
-                    {t('See all')}
-                  </SectionLink>
-                </AXBISectionHeader>
-                {!dashboardData || isRecentActivityLoading ? (
-                  <LoadingCards cover={checked} />
-                ) : (
-                  <DashboardTable
-                    user={user}
-                    mine={dashboardData}
-                    showThumbnails={checked}
-                    otherTabData={activityData?.[TableTab.Other]}
-                    otherTabFilters={otherTabFilters}
-                    otherTabTitle={otherTabTitle}
-                  />
-                )}
-              </AXBISection>
+                    <span className="quick-action-icon">
+                      <Icons.DashboardOutlined />
+                    </span>
+                    <span>
+                      <div className="quick-action-title">
+                        {t('Browse dashboards')}
+                      </div>
+                      <div className="quick-action-text">
+                        {t('Open saved analytics and reports.')}
+                      </div>
+                    </span>
+                  </QuickAction>
+                  {!canUploadData && !commandPalette && (
+                    <QuickAction
+                      type="button"
+                      onClick={() => navigateTo('/chart/add')}
+                    >
+                      <span className="quick-action-icon">
+                        <Icons.BarChartOutlined />
+                      </span>
+                      <span>
+                        <div className="quick-action-title">
+                          {t('Create chart')}
+                        </div>
+                        <div className="quick-action-text">
+                          {t('Build a visualization from a dataset.')}
+                        </div>
+                      </span>
+                    </QuickAction>
+                  )}
+                </QuickActionGrid>
+              </Panel>
+            </Hero>
 
-              <AXBISection id="home-charts">
-                <AXBISectionHeader>
-                  <div>
-                    <AXBISectionTitle>{t('Charts')}</AXBISectionTitle>
-                    <AXBISectionDescription>
-                      {t('Saved visualizations you can reuse on dashboards.')}
-                    </AXBISectionDescription>
-                  </div>
-                  <SectionLink
-                    type="button"
-                    onClick={() => navigateTo('/chart/list/')}
+            <StatsGrid>
+              <Stat
+                label={t('Dashboards')}
+                value={dashboardData ? dashboardCount : '...'}
+                hint={t('Saved dashboards')}
+                onClick={() => navigateTo('/dashboard/list/')}
+                aria-label={t('Browse dashboards')}
+              />
+              <Stat
+                label={t('Charts')}
+                value={chartData ? chartCount : '...'}
+                hint={t('Saved charts')}
+                onClick={() => navigateTo('/chart/list/')}
+                aria-label={t('Browse charts')}
+              />
+              <Stat
+                label={t('Recent activity')}
+                value={activityData ? recentCount : '...'}
+                hint={t('Viewed and edited analytics')}
+                onClick={scrollToRecents}
+                aria-label={t('Jump to recent activity')}
+              />
+            </StatsGrid>
+
+            {isFirstRun && (
+              <EmptyCallout data-test="home-first-run">
+                <EmptyCalloutTitle>
+                  {t('Your workspace is empty')}
+                </EmptyCalloutTitle>
+                <EmptyCalloutText>
+                  {t(
+                    'Upload a file or create your first chart to start building dashboards.',
+                  )}
+                </EmptyCalloutText>
+                <ActionRow style={{ justifyContent: 'center', marginTop: 0 }}>
+                  {canUploadData && (
+                    <Button
+                      buttonStyle="primary"
+                      icon={<Icons.UploadOutlined />}
+                      onClick={() => navigateTo('/upload/')}
+                    >
+                      {t('Upload data')}
+                    </Button>
+                  )}
+                  <Button
+                    buttonStyle={canUploadData ? 'secondary' : 'primary'}
+                    icon={<Icons.BarChartOutlined />}
+                    onClick={() => navigateTo('/chart/add')}
                   >
-                    {t('See all')}
-                  </SectionLink>
-                </AXBISectionHeader>
-                {!chartData || isRecentActivityLoading ? (
-                  <LoadingCards cover={checked} />
-                ) : (
-                  <ChartTable
-                    showThumbnails={checked}
-                    user={user}
-                    mine={chartData}
-                    otherTabData={activityData?.[TableTab.Other]}
-                    otherTabFilters={otherTabFilters}
-                    otherTabTitle={otherTabTitle}
-                  />
-                )}
-              </AXBISection>
+                    {t('Create chart')}
+                  </Button>
+                  <Button
+                    buttonStyle="secondary"
+                    icon={<Icons.DashboardOutlined />}
+                    onClick={() =>
+                      navigateTo('/dashboard/new/', { assign: true })
+                    }
+                  >
+                    {t('New dashboard')}
+                  </Button>
+                </ActionRow>
+              </EmptyCallout>
+            )}
 
-              {canReadSavedQueries && (
-                <AXBISection id="home-saved-queries">
-                  <AXBISectionHeader>
+            {!isFirstRun && (
+              <OnboardingChecklist
+                canUploadData={canUploadData}
+                hasChart={chartCount > 0}
+                hasDashboard={dashboardCount > 0}
+                onOpenSearch={() => commandPalette?.open()}
+              />
+            )}
+
+            {WelcomeMainExtension && <WelcomeMainExtension />}
+            {(!WelcomeTopExtension || !WelcomeMainExtension) && (
+              <>
+                <Section id="home-recents">
+                  <SectionHeader>
                     <div>
-                      <AXBISectionTitle>{t('Saved queries')}</AXBISectionTitle>
-                      <AXBISectionDescription>
-                        {t('SQL you saved for reuse.')}
-                      </AXBISectionDescription>
+                      <SectionTitle>{t('Recents')}</SectionTitle>
+                      <SectionDescription>
+                        {t(
+                          'Continue from what you viewed or created recently.',
+                        )}
+                      </SectionDescription>
+                    </div>
+                  </SectionHeader>
+                  {activityData &&
+                  (activityData[TableTab.Viewed] ||
+                    activityData[TableTab.Other] ||
+                    activityData[TableTab.Created]) &&
+                  activeChild !== 'Loading' ? (
+                    <ActivityTable
+                      user={{ userId: userid as number }}
+                      activeChild={activeChild}
+                      setActiveChild={setActiveChild}
+                      activityData={activityData}
+                      isFetchingActivityData={isFetchingActivityData}
+                    />
+                  ) : (
+                    <LoadingCards />
+                  )}
+                </Section>
+
+                <Section id="home-dashboards">
+                  <SectionHeader>
+                    <div>
+                      <SectionTitle>{t('Dashboards')}</SectionTitle>
+                      <SectionDescription>
+                        {t('Your dashboards and shared examples.')}
+                      </SectionDescription>
                     </div>
                     <SectionLink
                       type="button"
-                      onClick={() => navigateTo('/savedqueryview/list/')}
+                      onClick={() => navigateTo('/dashboard/list/')}
                     >
                       {t('See all')}
                     </SectionLink>
-                  </AXBISectionHeader>
-                  {!queryData ? (
+                  </SectionHeader>
+                  {!dashboardData || isRecentActivityLoading ? (
                     <LoadingCards cover={checked} />
                   ) : (
-                    <SavedQueries
-                      showThumbnails={checked}
+                    <DashboardTable
                       user={user}
-                      mine={queryData}
-                      featureFlag={isThumbnailsEnabled}
+                      mine={dashboardData}
+                      showThumbnails={checked}
+                      otherTabData={activityData?.[TableTab.Other]}
+                      otherTabFilters={otherTabFilters}
+                      otherTabTitle={otherTabTitle}
                     />
                   )}
-                </AXBISection>
-              )}
-            </>
-          )}
-        </AXBIPage>
-      </WelcomeContainer>
+                </Section>
+
+                <Section id="home-charts">
+                  <SectionHeader>
+                    <div>
+                      <SectionTitle>{t('Charts')}</SectionTitle>
+                      <SectionDescription>
+                        {t('Saved visualizations you can reuse on dashboards.')}
+                      </SectionDescription>
+                    </div>
+                    <SectionLink
+                      type="button"
+                      onClick={() => navigateTo('/chart/list/')}
+                    >
+                      {t('See all')}
+                    </SectionLink>
+                  </SectionHeader>
+                  {!chartData || isRecentActivityLoading ? (
+                    <LoadingCards cover={checked} />
+                  ) : (
+                    <ChartTable
+                      showThumbnails={checked}
+                      user={user}
+                      mine={chartData}
+                      otherTabData={activityData?.[TableTab.Other]}
+                      otherTabFilters={otherTabFilters}
+                      otherTabTitle={otherTabTitle}
+                    />
+                  )}
+                </Section>
+
+                {canReadSavedQueries && (
+                  <Section id="home-saved-queries">
+                    <SectionHeader>
+                      <div>
+                        <SectionTitle>{t('Saved queries')}</SectionTitle>
+                        <SectionDescription>
+                          {t('SQL you saved for reuse.')}
+                        </SectionDescription>
+                      </div>
+                      <SectionLink
+                        type="button"
+                        onClick={() => navigateTo('/saved-queries')}
+                      >
+                        {t('See all')}
+                      </SectionLink>
+                    </SectionHeader>
+                    {!queryData ? (
+                      <LoadingCards cover={checked} />
+                    ) : (
+                      <SavedQueries
+                        showThumbnails={checked}
+                        user={user}
+                        mine={queryData}
+                        featureFlag={isThumbnailsEnabled}
+                      />
+                    )}
+                  </Section>
+                )}
+              </>
+            )}
+          </Page>
+        </WelcomeContainer>
+      </AntdThemeProvider>
     </>
   );
 }

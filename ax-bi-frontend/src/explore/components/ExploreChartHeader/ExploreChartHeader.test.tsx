@@ -217,6 +217,33 @@ describe('ExploreChartHeader', () => {
     expect(await screen.findByText('2 days ago')).toBeInTheDocument();
   });
 
+  test('renders breadcrumbs linking to the chart list', () => {
+    const props = createProps();
+    render(<ExploreHeader {...props} />, { useRedux: true });
+
+    const breadcrumbs = screen.getByTestId('explore-breadcrumbs');
+    expect(
+      within(breadcrumbs).getByRole('link', { name: 'Charts' }),
+    ).toHaveAttribute('href', '/chart/list/');
+    // The current page crumb shows the slice name and is not a link
+    expect(
+      within(breadcrumbs).getByText('Age distribution of respondents'),
+    ).toBeInTheDocument();
+    expect(
+      within(breadcrumbs).queryByRole('link', {
+        name: 'Age distribution of respondents',
+      }),
+    ).not.toBeInTheDocument();
+  });
+
+  test('renders "New chart" as the current crumb for unsaved charts', () => {
+    const props = createProps({ slice: undefined, sliceName: undefined });
+    render(<ExploreHeader {...props} />, { useRedux: true });
+
+    const breadcrumbs = screen.getByTestId('explore-breadcrumbs');
+    expect(within(breadcrumbs).getByText('New chart')).toBeInTheDocument();
+  });
+
   test('Changes "Added to X dashboards" to plural when more than 1 dashboard', async () => {
     const props = createProps({ showTitlePanelItems: true });
     render(

@@ -18,7 +18,13 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { t } from '@ax-bi/core/translation';
-import { makeApi, AxBIApiError, getExtensionsRegistry } from '@ax-bi/ui-core';
+import {
+  makeApi,
+  AxBIApiError,
+  getExtensionsRegistry,
+  isFeatureEnabled,
+  FeatureFlag,
+} from '@ax-bi/ui-core';
 import { Alert } from '@ax-bi/core/components';
 import { styled, css } from '@ax-bi/core/theme';
 import {
@@ -30,6 +36,7 @@ import {
   Loading,
   Form,
   Space,
+  SettingsDrawer,
 } from '@ax-bi/ui-core/components';
 import { useToasts } from 'src/components/MessageToasts/withToasts';
 import { EmbeddedDashboard } from 'src/dashboard/types';
@@ -287,9 +294,21 @@ const DashboardEmbedModal = (props: Props) => {
   const { show, onHide } = props;
   const DashboardEmbedModalExtension = extensionsRegistry.get('embedded.modal');
 
-  return DashboardEmbedModalExtension ? (
-    <DashboardEmbedModalExtension {...props} />
-  ) : (
+  if (DashboardEmbedModalExtension) {
+    return <DashboardEmbedModalExtension {...props} />;
+  }
+
+  // SETTINGS_DRAWER flag on: the same embed controls render inside the
+  // drawer chrome. Flag off: the Modal below renders as before.
+  if (isFeatureEnabled(FeatureFlag.SettingsDrawer)) {
+    return (
+      <SettingsDrawer open={show} onClose={onHide} title={t('Embed')}>
+        <DashboardEmbedControls {...props} />
+      </SettingsDrawer>
+    );
+  }
+
+  return (
     <Modal
       name={t('Embed')}
       show={show}

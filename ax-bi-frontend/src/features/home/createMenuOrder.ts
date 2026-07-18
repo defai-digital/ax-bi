@@ -25,8 +25,8 @@ export type CreateMenuParts<T> = {
 };
 
 /**
- * Order Create-menu entries for Settings. Simplified nav puts consumer paths
- * first and SQL last in the same group (no second "Advanced" section).
+ * Order entries for the navbar "+ New" create menu. Simplified nav puts
+ * consumer paths first and SQL last (no second "Advanced" section).
  */
 export function orderCreateMenuItems<T>(
   parts: CreateMenuParts<T>,

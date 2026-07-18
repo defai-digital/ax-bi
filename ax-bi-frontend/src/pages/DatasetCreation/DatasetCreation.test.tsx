@@ -40,8 +40,8 @@ describe('AddDataset', () => {
 
     const blankeStateImgs = screen.getAllByRole('img', { name: /empty/i });
 
-    // Header
-    expect(await screen.findByText(/new dataset/i)).toBeVisible();
+    // Header (title bar and breadcrumb current-page crumb both show the title)
+    expect((await screen.findAllByText(/new dataset/i))[0]).toBeVisible();
     // Left panel
     expect(blankeStateImgs[0]).toBeVisible();
     // Footer

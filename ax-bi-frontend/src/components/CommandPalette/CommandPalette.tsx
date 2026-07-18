@@ -200,7 +200,7 @@ const TYPE_LABELS: Record<string, string> = {
   action: t('Actions'),
   recent: t('Recent'),
   help: t('Help'),
-  asset: t('Dashboards & charts'),
+  asset: t('Assets'),
 };
 
 interface CommandPaletteProps {
@@ -217,8 +217,13 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
   placeholder = t('Type a command or search...'),
   maxResults = 20,
 }) => {
-  const { isOpen, close, getCommands } = useCommandPalette();
-  const [searchQuery, setSearchQuery] = useState('');
+  const {
+    isOpen,
+    close,
+    getCommands,
+    query: searchQuery,
+    setQuery: setSearchQuery,
+  } = useCommandPalette();
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -264,17 +269,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({
       setSelectedIndex(0);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
-  }, [isOpen]);
-
-  // Notify asset-search hook of the live query (debounced search elsewhere).
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    window.dispatchEvent(
-      new CustomEvent('axbi-command-palette-query', { detail: searchQuery }),
-    );
-  }, [searchQuery, isOpen]);
+  }, [isOpen, setSearchQuery]);
 
   // Flatten grouped commands for index-based selection. selectedIndex,
   // data-index attributes, and keyboard navigation all index into this

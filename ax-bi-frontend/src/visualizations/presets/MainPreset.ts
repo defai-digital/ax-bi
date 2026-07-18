@@ -17,6 +17,11 @@
  * under the License.
  */
 import { isFeatureEnabled, FeatureFlag, Preset, VizType } from '@ax-bi/ui-core';
+// nvd3-era legacy plugins (@ax-bi/legacy-plugin-chart-* and
+// @ax-bi/legacy-preset-chart-nvd3) are always registered so existing saved
+// charts keep rendering and editing. The LEGACY_CHART_PLUGINS feature flag
+// instead hides them from the viz gallery picker; see
+// src/explore/components/controls/VizTypeControl/legacyVizTypes.ts.
 import CalendarChartPlugin from '@ax-bi/legacy-plugin-chart-calendar';
 import ChordChartPlugin from '@ax-bi/legacy-plugin-chart-chord';
 import CountryMapChartPlugin from '@ax-bi/legacy-plugin-chart-country-map';

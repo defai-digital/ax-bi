@@ -192,7 +192,7 @@ export default function LeftPanel({
       description={
         <span>
           {t('Manage your databases')}{' '}
-          <Typography.Link href={ensureAppRoot('/databaseview/list')}>
+          <Typography.Link href={ensureAppRoot('/databases')}>
             {t('here')}
           </Typography.Link>
         </span>

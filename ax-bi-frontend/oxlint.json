@@ -32,6 +32,8 @@
     // - No literal colors (use theme colors)
     // - No FontAwesome icons (use Icons component)
     // - No template variables in i18n (use parameterized messages)
+    // - No antd-internal `.ant-*` CSS selectors in styled/emotion templates
+    //   under src/ (warn-only; prefer antd component tokens or scoped classes)
 
     // === Rules carried over from ESLint that oxlint does NOT implement ===
     // oxlint 1.58+ errors on unknown builtin rules, so these can no longer

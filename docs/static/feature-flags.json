@@ -427,6 +427,13 @@
         "category": "runtime_config"
       },
       {
+        "name": "DASHBOARD_RESPONSIVE",
+        "default": true,
+        "lifecycle": "stable",
+        "description": "Reflow the dashboard grid based on container width: between 768px and 1199px the grid compresses proportionally and the wrapper carries a dashboard--compact class for compact-band styling hooks; below 768px the dashboard renders as a read-only single-column stack with authoring chrome hidden. When disabled, the dashboard keeps the fixed 12-column layout at all widths.",
+        "category": "runtime_config"
+      },
+      {
         "name": "DASHBOARD_VIRTUALIZATION",
         "default": true,
         "lifecycle": "stable",
@@ -526,8 +533,22 @@
         "category": "runtime_config"
       },
       {
-        "name": "LISTVIEWS_DEFAULT_CARD_VIEW",
+        "name": "GLOBAL_SEARCH_V2",
+        "default": true,
+        "lifecycle": "stable",
+        "description": "Extend command palette asset search beyond dashboards and charts to datasets, databases, and saved queries.",
+        "category": "runtime_config"
+      },
+      {
+        "name": "LEGACY_CHART_PLUGINS",
         "default": false,
+        "lifecycle": "stable",
+        "description": "Register nvd3-era legacy chart plugins (chord, rose, partition, etc.) in the chart type picker. Existing saved charts keep rendering either way; the flag only controls whether legacy types are offered for new charts.",
+        "category": "runtime_config"
+      },
+      {
+        "name": "LISTVIEWS_DEFAULT_CARD_VIEW",
+        "default": true,
         "lifecycle": "stable",
         "description": "Use card view as default in list views",
         "category": "runtime_config"
@@ -537,6 +558,20 @@
         "default": false,
         "lifecycle": "stable",
         "description": "Hide user info in the navigation menu",
+        "category": "runtime_config"
+      },
+      {
+        "name": "NOTIFICATION_CENTER",
+        "default": true,
+        "lifecycle": "stable",
+        "description": "Show the notification center bell in the navbar with recent alert/report execution results. Content requires ALERT_REPORTS.",
+        "category": "runtime_config"
+      },
+      {
+        "name": "SETTINGS_DRAWER",
+        "default": true,
+        "lifecycle": "stable",
+        "description": "Render dashboard/filter settings in a right-side drawer instead of stacked modals. When disabled, the legacy modal surfaces are used.",
         "category": "runtime_config"
       },
       {

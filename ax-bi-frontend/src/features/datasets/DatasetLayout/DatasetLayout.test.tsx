@@ -52,7 +52,8 @@ describe('DatasetLayout', () => {
   test('renders a Header when passed in', async () => {
     await waitForRender();
 
-    expect(screen.getByText(/new dataset/i)).toBeVisible();
+    // Title bar and breadcrumb current-page crumb both show the title
+    expect(screen.getAllByText(/new dataset/i)[0]).toBeVisible();
   });
 
   test('renders a LeftPanel when passed in', async () => {

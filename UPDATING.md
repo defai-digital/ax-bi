@@ -134,6 +134,19 @@ AX-BI now defaults the following presentation-only feature flags to `True`:
 settings group). Operators can set any of these flags to `False` in
 `AXBI_CONFIG` / `DEFAULT_FEATURE_FLAGS` to restore prior defaults. See
 `.internal/docs/ui-ux-improvement-tech-spec.md`.
+
+### UI/UX Phase 6A — legacy chart plugins & list-view defaults
+
+- `LEGACY_CHART_PLUGINS` (new, defaults to `False`) — nvd3-era legacy chart
+  types (bubble (legacy), bullet, calendar, chord, compare, country map,
+  horizon, paired t-test, parallel coordinates, partition, rose, time pivot,
+  world map) are hidden from the chart-type picker. Existing saved charts of
+  these types keep rendering and editing as before; set the flag to `True` in
+  `AXBI_CONFIG` / `DEFAULT_FEATURE_FLAGS` to offer them for new charts.
+- `LISTVIEWS_DEFAULT_CARD_VIEW` now defaults to `True` — CRUD list views open
+  in card view instead of table view. Set it to `False` to restore the prior
+  default.
+
 ### Pandas upgraded to 3.0.x
 
 AX-BI now depends on `pandas[excel]>=3.0.3,<3.1`. Notable compatibility work:

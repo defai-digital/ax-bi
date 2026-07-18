@@ -81,7 +81,7 @@ export function datasetReducer(
 }
 
 const prevUrl =
-  '/tablemodelview/list/?pageIndex=0&sortColumn=changed_on_delta_humanized&sortOrder=desc';
+  '/datasets?pageIndex=0&sortColumn=changed_on_delta_humanized&sortOrder=desc';
 
 export default function AddDataset() {
   const [dataset, setDataset] = useReducer<

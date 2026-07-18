@@ -76,7 +76,7 @@ export function useDefaultCommands(): void {
         description: t('Browse all datasets'),
         type: 'navigation',
         keywords: ['dataset', 'table', 'list', 'data'],
-        action: () => navigate(`${appRoot}/tablemodelview/list/`),
+        action: () => navigate(`${appRoot}/datasets`),
       },
       {
         id: 'nav-databases',
@@ -84,7 +84,7 @@ export function useDefaultCommands(): void {
         description: t('Browse connected databases'),
         type: 'navigation',
         keywords: ['database', 'connection', 'list'],
-        action: () => navigate(`${appRoot}/databaseview/list/`),
+        action: () => navigate(`${appRoot}/databases`),
       },
       {
         id: 'nav-sql-lab',
@@ -100,7 +100,7 @@ export function useDefaultCommands(): void {
         description: t('Browse saved SQL queries'),
         type: 'navigation',
         keywords: ['saved', 'query', 'sql', 'history'],
-        action: () => navigate(`${appRoot}/savedqueryview/list/`),
+        action: () => navigate(`${appRoot}/saved-queries`),
       },
       {
         id: 'nav-query-history',
@@ -153,7 +153,15 @@ export function useDefaultCommands(): void {
                 'Upload a CSV, Excel, or Parquet file to start exploring',
               ),
               type: 'action',
-              keywords: ['upload', 'csv', 'excel', 'file', 'import'],
+              keywords: [
+                'create',
+                'new',
+                'upload',
+                'csv',
+                'excel',
+                'file',
+                'import',
+              ],
               action: () => navigate(`${appRoot}/upload/`),
             },
           ]

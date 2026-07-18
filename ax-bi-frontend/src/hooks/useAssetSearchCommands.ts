@@ -17,42 +17,118 @@
  * under the License.
  */
 import { useHistory } from 'src/hooks/useAppHistory';
-import { useEffect, useRef } from 'react';
-import rison from 'rison';
+import { createElement, useEffect, useRef } from 'react';
 import { t } from '@ax-bi/core/translation';
-import { AxBIClient } from '@ax-bi/ui-core';
+import { FeatureFlag, isFeatureEnabled } from '@ax-bi/ui-core';
+import { Icons } from '@ax-bi/ui-core/components';
 import {
   useOptionalCommandPalette,
   Command,
 } from 'src/components/CommandPalette';
 import { ensureAppRoot } from 'src/utils/pathUtils';
+import {
+  AssetSearchResults,
+  AssetSearchType,
+  searchAssets,
+} from 'src/services/assetSearch';
 
-const DEBOUNCE_MS = 280;
-const PAGE_SIZE = 5;
+const DEBOUNCE_MS = 250;
+const MIN_QUERY_LENGTH = 2;
 const ASSET_PREFIX = 'asset-search-';
 
-interface ListResult {
-  id: number;
-  dashboard_title?: string;
-  slice_name?: string;
-  url?: string;
-}
+/**
+ * Search coverage without GLOBAL_SEARCH_V2: dashboards and charts only.
+ */
+const LEGACY_TYPES: AssetSearchType[] = ['dashboards', 'charts'];
+
+type HistoryPush = ReturnType<typeof useHistory>['push'];
+
+const buildAssetCommands = (
+  results: AssetSearchResults,
+  appRoot: string,
+  push: HistoryPush,
+): Command[] => [
+  ...results.dashboards.map(dashboard => ({
+    id: `${ASSET_PREFIX}dashboard-${dashboard.id}`,
+    name: dashboard.title || t('Untitled dashboard'),
+    description: t('Dashboard'),
+    type: 'asset' as const,
+    icon: createElement(Icons.DashboardOutlined, { iconSize: 'm' }),
+    keywords: ['dashboard', dashboard.title],
+    action: () => {
+      push(
+        dashboard.url
+          ? ensureAppRoot(dashboard.url)
+          : `${appRoot}/ax-bi/dashboard/${dashboard.id}/`,
+      );
+    },
+  })),
+  ...results.charts.map(chart => ({
+    id: `${ASSET_PREFIX}chart-${chart.id}`,
+    name: chart.title || t('Untitled chart'),
+    description: t('Chart'),
+    type: 'asset' as const,
+    icon: createElement(Icons.BarChartOutlined, { iconSize: 'm' }),
+    keywords: ['chart', chart.title],
+    action: () => {
+      push(
+        chart.url
+          ? ensureAppRoot(chart.url)
+          : `${appRoot}/explore/?slice_id=${chart.id}`,
+      );
+    },
+  })),
+  ...results.datasets.map(dataset => ({
+    id: `${ASSET_PREFIX}dataset-${dataset.id}`,
+    name: dataset.title || t('Untitled dataset'),
+    description: t('Dataset'),
+    type: 'asset' as const,
+    icon: createElement(Icons.TableOutlined, { iconSize: 'm' }),
+    keywords: ['dataset', dataset.title],
+    action: () => {
+      push(`${appRoot}/dataset/${dataset.id}`);
+    },
+  })),
+  ...results.databases.map(database => ({
+    id: `${ASSET_PREFIX}database-${database.id}`,
+    name: database.title || t('Untitled database'),
+    description: t('Database'),
+    type: 'asset' as const,
+    icon: createElement(Icons.DatabaseOutlined, { iconSize: 'm' }),
+    keywords: ['database', database.title],
+    action: () => {
+      push(`${appRoot}/databases`);
+    },
+  })),
+  ...results.savedQueries.map(savedQuery => ({
+    id: `${ASSET_PREFIX}saved-query-${savedQuery.id}`,
+    name: savedQuery.title || t('Untitled query'),
+    description: t('Saved query'),
+    type: 'asset' as const,
+    icon: createElement(Icons.ConsoleSqlOutlined, { iconSize: 'm' }),
+    keywords: ['saved', 'query', 'sql', savedQuery.title],
+    action: () => {
+      push(`${appRoot}/sqllab?savedQueryId=${savedQuery.id}`);
+    },
+  })),
+];
 
 /**
  * While the command palette is open, registers transient asset commands for
- * dashboards and charts matching the latest search query (debounced).
+ * assets matching the live palette query (debounced via the palette context).
  *
- * Note: the palette UI does not yet pass the query into this hook. Callers
- * should use {@link useAssetSearchForQuery} with the live query string from
- * CommandPalette, or we listen via a shared module event. For v1 we poll
- * nothing — instead CommandPalette calls `window` custom event.
+ * Coverage is controlled by the GLOBAL_SEARCH_V2 feature flag: when enabled
+ * all five asset types are searched; when disabled only dashboards and
+ * charts are searched, matching the pre-v2 behavior.
  */
 export function useAssetSearchCommands(): void {
   const history = useHistory();
   const palette = useOptionalCommandPalette();
   const cleanupsRef = useRef<Array<() => void>>([]);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
+
+  const isOpen = palette?.isOpen ?? false;
+  const query = palette?.query ?? '';
 
   useEffect(() => {
     if (!palette) {
@@ -64,114 +140,63 @@ export function useAssetSearchCommands(): void {
       cleanupsRef.current = [];
     };
 
-    const runSearch = async (query: string) => {
-      const q = query.trim();
+    const trimmed = query.trim();
+    if (!isOpen || trimmed.length < MIN_QUERY_LENGTH) {
       clearAssetCommands();
-      if (q.length < 2) {
-        return;
-      }
+      return undefined;
+    }
 
+    const appRoot = ensureAppRoot('');
+    const controller = new AbortController();
+
+    const runSearch = async () => {
       requestIdRef.current += 1;
       const requestId = requestIdRef.current;
-      const appRoot = ensureAppRoot('');
+      const types = isFeatureEnabled(FeatureFlag.GlobalSearchV2)
+        ? undefined
+        : LEGACY_TYPES;
 
       try {
-        const filter = {
-          filters: [
-            {
-              col: 'dashboard_title',
-              opr: 'ct',
-              value: q,
-            },
-          ],
-          page_size: PAGE_SIZE,
-          order_column: 'changed_on_delta_humanized',
-          order_direction: 'desc',
-        };
-        const chartFilter = {
-          filters: [
-            {
-              col: 'slice_name',
-              opr: 'ct',
-              value: q,
-            },
-          ],
-          page_size: PAGE_SIZE,
-          order_column: 'changed_on_delta_humanized',
-          order_direction: 'desc',
-        };
-
-        const [dashRes, chartRes] = await Promise.all([
-          AxBIClient.get({
-            endpoint: `/api/v1/dashboard/?q=${rison.encode(filter)}`,
-          }),
-          AxBIClient.get({
-            endpoint: `/api/v1/chart/?q=${rison.encode(chartFilter)}`,
-          }),
-        ]);
+        const results = await searchAssets(trimmed, {
+          types,
+          signal: controller.signal,
+        });
 
         if (requestId !== requestIdRef.current) {
           return;
         }
 
-        const dashboards: ListResult[] = dashRes.json?.result ?? [];
-        const charts: ListResult[] = chartRes.json?.result ?? [];
-        const commands: Command[] = [
-          ...dashboards.map(d => ({
-            id: `${ASSET_PREFIX}dashboard-${d.id}`,
-            name: d.dashboard_title || t('Untitled dashboard'),
-            description: t('Dashboard'),
-            type: 'asset' as const,
-            keywords: ['dashboard', d.dashboard_title || ''],
-            action: () => {
-              history.push(
-                d.url
-                  ? ensureAppRoot(d.url)
-                  : `${appRoot}/ax-bi/dashboard/${d.id}/`,
-              );
-            },
-          })),
-          ...charts.map(c => ({
-            id: `${ASSET_PREFIX}chart-${c.id}`,
-            name: c.slice_name || t('Untitled chart'),
-            description: t('Chart'),
-            type: 'asset' as const,
-            keywords: ['chart', c.slice_name || ''],
-            action: () => {
-              history.push(
-                c.url
-                  ? ensureAppRoot(c.url)
-                  : `${appRoot}/explore/?slice_id=${c.id}`,
-              );
-            },
-          })),
-        ];
-
-        cleanupsRef.current = commands.map(cmd => palette.registerCommand(cmd));
+        clearAssetCommands();
+        cleanupsRef.current = buildAssetCommands(
+          results,
+          appRoot,
+          history.push,
+        ).map(cmd => palette.registerCommand(cmd));
       } catch {
         // Soft-fail: navigation commands remain available
       }
     };
 
-    const onQuery = (event: Event) => {
-      const detail = (event as CustomEvent<string>).detail ?? '';
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      timerRef.current = setTimeout(() => {
-        runSearch(detail);
-      }, DEBOUNCE_MS);
-    };
+    const timer = setTimeout(() => {
+      runSearch();
+    }, DEBOUNCE_MS);
 
-    window.addEventListener('axbi-command-palette-query', onQuery);
     return () => {
-      window.removeEventListener('axbi-command-palette-query', onQuery);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      clearAssetCommands();
+      clearTimeout(timer);
+      controller.abort();
+      // Invalidate any in-flight search so stale results never register.
+      requestIdRef.current += 1;
     };
-  }, [palette, history]);
+  }, [palette, isOpen, query, history]);
+
+  // Unregister asset commands when the hook unmounts.
+  useEffect(
+    () => () => {
+      cleanupsRef.current.forEach(fn => fn());
+      cleanupsRef.current = [];
+    },
+    [],
+  );
 }
 
 export default useAssetSearchCommands;

@@ -41,6 +41,7 @@ import {
 } from '../../../util/componentTypes';
 import ChartHolder, { CHART_MARGIN } from './ChartHolder';
 import { GRID_BASE_UNIT, GRID_GUTTER_SIZE } from '../../../util/constants';
+import { DashboardGridLayoutContext } from '../../DashboardBuilder/gridLayoutMode';
 
 const DEFAULT_HEADER_HEIGHT = 22;
 
@@ -226,6 +227,38 @@ describe('ChartHolder', () => {
     const { width: computedWidth } = getComputedStyle(resizeContainer);
     const expectedWidth =
       (defaultProps.columnWidth + GRID_GUTTER_SIZE) * widthMultiple -
+      GRID_GUTTER_SIZE;
+
+    expect(computedWidth).toEqual(`${expectedWidth}px`);
+  });
+
+  test('should size the chart to the full available width in stack layout mode', async () => {
+    render(
+      <DashboardGridLayoutContext.Provider value="stack">
+        <ChartHolder {...defaultProps} />
+      </DashboardGridLayoutContext.Provider>,
+      {
+        useRouter: true,
+        useDnd: true,
+        useRedux: true,
+        store: createMockStore(),
+      },
+    );
+
+    expect(
+      screen.getByTestId('dashboard-component-chart-holder'),
+    ).toBeVisible();
+
+    const resizeContainer = screen
+      .getByTestId('dragdroppable-object')
+      .getElementsByClassName('resizable-container')[0];
+
+    const { width: computedWidth } = getComputedStyle(resizeContainer);
+    // defaultProps meta.width is 3, but the stack layout spans all
+    // available columns so every chart takes the full row width
+    const expectedWidth =
+      (defaultProps.columnWidth + GRID_GUTTER_SIZE) *
+        defaultProps.availableColumnCount -
       GRID_GUTTER_SIZE;
 
     expect(computedWidth).toEqual(`${expectedWidth}px`);

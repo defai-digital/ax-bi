@@ -43,7 +43,6 @@ import {
   createErrorHandler,
 } from 'src/views/CRUD/utils';
 import { OWNER_OPTION_FILTER_PROPS } from 'src/features/owners/OwnerSelectLabel';
-import { ColumnObject } from 'src/features/datasets/types';
 import { useListViewResource } from 'src/views/CRUD/hooks';
 import {
   Button,
@@ -58,7 +57,6 @@ import {
   List,
 } from '@ax-bi/ui-core/components';
 import {
-  DatasourceModal,
   GenericLink,
   FacePile,
   ImportModal as ImportModelsModal,
@@ -490,9 +488,6 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
     | null
   >(null);
 
-  const [datasetCurrentlyEditing, setDatasetCurrentlyEditing] =
-    useState<Dataset | null>(null);
-
   const [datasetCurrentlyDuplicating, setDatasetCurrentlyDuplicating] =
     useState<VirtualDataset | null>(null);
 
@@ -567,43 +562,6 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
     canUploadData && isFeatureEnabled(FeatureFlag.EnableLocalFileUpload);
 
   const initialSort = SORT_BY;
-
-  const openDatasetEditModal = useCallback(
-    ({ id }: Dataset) => {
-      AxBIClient.get({
-        endpoint: `/api/v1/dataset/${id}`,
-      })
-        .then(({ json = {} }) => {
-          const addCertificationFields = json.result.columns.map(
-            (column: ColumnObject) => {
-              const {
-                certification: {
-                  details = '',
-                  certified_by: certifiedBy = '',
-                } = {},
-              } = JSON.parse(column.extra || '{}') || {};
-              return {
-                ...column,
-                certification_details: details || '',
-                certified_by: certifiedBy || '',
-                is_certified: details || certifiedBy,
-              };
-            },
-          );
-          json.result.columns = [...addCertificationFields];
-          setDatasetCurrentlyEditing(json.result);
-        })
-        .catch(() => {
-          addDangerToast(
-            t(
-              'An error occurred while fetching %s related data',
-              datasetLabelLower(),
-            ),
-          );
-        });
-    },
-    [addDangerToast],
-  );
 
   const openDatasetDeleteModal = useCallback(
     (dataset: Dataset) =>
@@ -881,7 +839,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
               .map((o: Owner) => o.id)
               .includes(Number(user.userId)) || isUserAdmin(user);
 
-          const handleEdit = () => openDatasetEditModal(original);
+          const handleEdit = () => history.push(`/dataset/${original.id}`);
           const handleDelete = () => openDatasetDeleteModal(original);
           const handleExport = () => handleBulkDatasetExport([original]);
           const handleDuplicate = () => {
@@ -1028,7 +986,6 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
       canExport,
       canDuplicate,
       canStarterDashboard,
-      openDatasetEditModal,
       openDatasetDeleteModal,
       openDatasetDuplicateModal,
       handleBulkDatasetExport,
@@ -1311,10 +1268,6 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
     setDatasetCurrentlyDeleting(null);
   };
 
-  const closeDatasetEditModal = () => {
-    setDatasetCurrentlyEditing(null);
-  };
-
   const closeDatasetDuplicateModal = () => {
     setDatasetCurrentlyDuplicating(null);
   };
@@ -1540,14 +1493,6 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
           onHide={() => setSvCurrentlyDeleting(null)}
           open
           title={t('Delete Semantic View?')}
-        />
-      )}
-      {datasetCurrentlyEditing && (
-        <DatasourceModal
-          datasource={datasetCurrentlyEditing}
-          onDatasourceSave={refreshData}
-          onHide={closeDatasetEditModal}
-          show
         />
       )}
       <DuplicateDatasetModal

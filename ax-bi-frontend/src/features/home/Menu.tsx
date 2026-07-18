@@ -24,7 +24,14 @@ import { ensureStaticPrefix } from 'src/utils/assetUrl';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 import { getUrlParam, isUrlExternal } from 'src/utils/urlUtils';
 import { MainNav, MenuItem } from '@ax-bi/ui-core/components/Menu';
-import { Tooltip, Grid, Row, Col, Image } from '@ax-bi/ui-core/components';
+import {
+  AntdThemeProvider,
+  Tooltip,
+  Grid,
+  Row,
+  Col,
+  Image,
+} from '@ax-bi/ui-core/components';
 import { GenericLink } from 'src/components';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
@@ -88,15 +95,31 @@ const StyledBrandText = styled.div`
   `}
 `;
 
+// Navbar-scoped antd Menu component-token overrides. The nested provider
+// merges these into the app theme for this subtree only. This replaces the
+// former `.ant-menu-* .anticon + span { margin-inline-start: 0 }` CSS
+// override: antd exposes the icon/label gap as the `iconMarginInlineEnd`
+// Menu token (its generated CSS is `icon + span { margin-inline-start:
+// iconMarginInlineEnd }`).
+const navbarMenuTheme = {
+  components: {
+    Menu: {
+      iconMarginInlineEnd: 0,
+    },
+  },
+};
+
+// eslint-disable-next-line ax-bi/no-antd-css-selectors -- navbar submenu layout/underline has no Menu token equivalent; scoped to this navbar, see comment in the template
 const StyledMainNav = styled(MainNav)`
   ${({ theme }) => css`
-    .ant-menu-item .ant-menu-item-icon + span,
-    .ant-menu-submenu-title .ant-menu-item-icon + span,
-    .ant-menu-item .anticon + span,
-    .ant-menu-submenu-title .anticon + span {
-      margin-inline-start: 0;
-    }
-
+    /* The styles below intentionally reference antd's .ant-menu-*
+       structure/state classes, scoped to this navbar via the styled wrapper.
+       No Menu component token can express them: the row-reverse submenu
+       arrow layout and the animated underline bar (scale transition,
+       colorPrimaryBorderHover) are custom navbar design. The
+       -active/-open/-selected classes are antd state hooks without
+       token equivalents. Prefer tokens (see navbarMenuTheme) for anything
+       new; do not lift these selectors to a global scope. */
     .ant-menu-submenu.ant-menu-submenu-horizontal {
       display: flex;
       align-items: center;
@@ -206,9 +229,9 @@ export function Menu({
     Explore = '/explore',
     Dashboard = '/dashboard',
     Chart = '/chart',
-    Datasets = '/tablemodelview',
+    Datasets = '/datasets',
     SqlLab = '/sqllab',
-    SavedQueries = '/savedqueryview',
+    SavedQueries = '/saved-queries',
   }
 
   const defaultTabSelection: string[] = [];
@@ -374,32 +397,34 @@ export function Menu({
               <span>{brand.text}</span>
             </StyledBrandText>
           )}
-          <StyledMainNav
-            mode={screens.md ? 'horizontal' : 'inline'}
-            data-test="navbar-top"
-            className="main-nav"
-            selectedKeys={activeTabs}
-            disabledOverflow
-            items={menu.map(item => {
-              const props = {
-                ...item,
-                label: t(item.label),
-                isFrontendRoute: isFrontendRoute(item.url),
-                childs: item.childs?.map(c => {
-                  if (typeof c === 'string') {
-                    return c;
-                  }
+          <AntdThemeProvider theme={navbarMenuTheme}>
+            <StyledMainNav
+              mode={screens.md ? 'horizontal' : 'inline'}
+              data-test="navbar-top"
+              className="main-nav"
+              selectedKeys={activeTabs}
+              disabledOverflow
+              items={menu.map(item => {
+                const props = {
+                  ...item,
+                  label: t(item.label),
+                  isFrontendRoute: isFrontendRoute(item.url),
+                  childs: item.childs?.map(c => {
+                    if (typeof c === 'string') {
+                      return c;
+                    }
 
-                  return {
-                    ...c,
-                    isFrontendRoute: isFrontendRoute(c.url),
-                  };
-                }),
-              };
+                    return {
+                      ...c,
+                      isFrontendRoute: isFrontendRoute(c.url),
+                    };
+                  }),
+                };
 
-              return buildMenuItem(props);
-            })}
-          />
+                return buildMenuItem(props);
+              })}
+            />
+          </AntdThemeProvider>
         </StyledCol>
         <Col md={8} xs={24}>
           <RightMenu

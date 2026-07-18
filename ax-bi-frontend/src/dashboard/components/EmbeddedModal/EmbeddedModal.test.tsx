@@ -59,6 +59,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   resetMockApi();
   getExtensionsRegistry().set('embedded.modal', undefined);
+  window.featureFlags = {};
 });
 
 test('renders the embed modal', async () => {
@@ -167,4 +168,56 @@ test('renders extension component when registered', async () => {
   ).toBeInTheDocument();
 
   extensionsRegistry.set('embedded.modal', undefined);
+});
+
+test('renders in a drawer when SETTINGS_DRAWER is enabled', async () => {
+  window.featureFlags = { SETTINGS_DRAWER: true };
+  setup();
+
+  expect(await screen.findByText('Embed')).toBeInTheDocument();
+  expect(
+    document.querySelector('.ant-drawer-content-wrapper'),
+  ).toBeInTheDocument();
+  expect(document.querySelector('.ant-modal')).not.toBeInTheDocument();
+
+  // Same controls as the modal path
+  expect(await screen.findByText('Settings')).toBeInTheDocument();
+  expect(
+    screen.getByText(new RegExp(/Allowed Domains/, 'i')),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Save changes' }),
+  ).toBeInTheDocument();
+});
+
+test('drawer close button calls onHide when SETTINGS_DRAWER is enabled', async () => {
+  window.featureFlags = { SETTINGS_DRAWER: true };
+  setup();
+
+  await screen.findByText('Settings');
+  expect(mockOnHide).not.toHaveBeenCalled();
+  await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+  expect(mockOnHide).toHaveBeenCalledTimes(1);
+});
+
+test('saves allowed domains from the drawer when SETTINGS_DRAWER is enabled', async () => {
+  window.featureFlags = { SETTINGS_DRAWER: true };
+  setup();
+
+  const allowedDomainsInput = await screen.findByRole('textbox', {
+    name: /Allowed Domains/i,
+  });
+  const saveChangesBtn = screen.getByRole('button', { name: 'Save changes' });
+
+  expect(saveChangesBtn).toBeDisabled();
+  await userEvent.clear(allowedDomainsInput);
+  await userEvent.type(allowedDomainsInput, 'test.com');
+  expect(saveChangesBtn).toBeEnabled();
+  await userEvent.click(saveChangesBtn);
+
+  await waitFor(() => {
+    expect(makeApi).toHaveBeenCalledWith(
+      expect.objectContaining({ method: 'POST' }),
+    );
+  });
 });

@@ -31,7 +31,7 @@ const sql: MenuObjectProps = {
     {
       name: 'Saved Queries',
       label: 'Saved Queries',
-      url: '/savedqueryview/list/',
+      url: '/saved-queries',
     },
     { name: 'Query History', label: 'Query History', url: '/sqllab/history/' },
   ],

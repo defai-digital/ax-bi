@@ -233,6 +233,7 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
         from axbi.views.user_info import UserInfoView
         from axbi.views.user_registrations import UserRegistrationsView
         from axbi.views.users.api import CurrentUserRestApi, UserRestApi
+        from axbi.views.users.preferences_api import UserPreferencesRestApi
         from axbi.views.users_list import UsersListView
 
         set_app_error_handlers(self.axbi_app)
@@ -256,6 +257,7 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_api(CssTemplateRestApi)
         appbuilder.add_api(ThemeRestApi)
         appbuilder.add_api(CurrentUserRestApi)
+        appbuilder.add_api(UserPreferencesRestApi)
         appbuilder.add_api(UserRestApi)
         appbuilder.add_api(DashboardFilterStateRestApi)
         appbuilder.add_api(DashboardPermalinkRestApi)
@@ -314,12 +316,12 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
             "Home",
             label=_("Home"),
             href=f"{AX_BI_ROUTE_PREFIX}/welcome/",
-            cond=lambda: bool(current_app.config["LOGO_TARGET_PATH"]),
         )
 
         appbuilder.add_view(
             DatabaseView,
             "Databases",
+            href=f"{app_root}/databases",
             label=database_connections_menu_label(),
             icon="fa-database",
             category="Data",
@@ -345,7 +347,7 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_link(
             "Datasets",
             label=_("Datasets"),
-            href=f"{app_root}/tablemodelview/list/",
+            href=f"{app_root}/datasets",
             icon="fa-table",
             category="",
             category_icon="",
@@ -407,6 +409,7 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_view(
             CssTemplateModelView,
             "CSS Templates",
+            href=f"{app_root}/css-templates",
             label=_("CSS Templates"),
             icon="fa-css3",
             category="Manage",
@@ -502,7 +505,7 @@ class AxBIAppInitializer:  # pylint: disable=too-many-public-methods
         appbuilder.add_link(
             "Saved Queries",
             label=_("Saved Queries"),
-            href=f"{app_root}/savedqueryview/list/",
+            href=f"{app_root}/saved-queries",
             icon="fa-save",
             category="SQL Lab",
             category_label=_("SQL"),

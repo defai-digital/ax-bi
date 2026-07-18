@@ -29,24 +29,38 @@ describe('Header', () => {
   test('renders a blank state Header', async () => {
     await waitForRender();
 
-    const datasetName = screen.getByText(/new dataset/i);
+    // Title bar and breadcrumb current-page crumb both show the title
+    const datasetNames = screen.getAllByText(/new dataset/i);
 
-    expect(datasetName).toBeVisible();
+    expect(datasetNames[0]).toBeVisible();
   });
 
   test('displays "New dataset" when a table is not selected', async () => {
     await waitForRender();
 
-    const datasetName = screen.getByText(/new dataset/i);
-    expect(datasetName.innerHTML).toBe(DEFAULT_TITLE);
+    const datasetNames = screen.getAllByText(/new dataset/i);
+    expect(datasetNames[0].innerHTML).toBe(DEFAULT_TITLE);
   });
 
   test('displays table name when a table is selected', async () => {
     // The schema and table name are passed in through props once selected
     await waitForRender({ schema: 'testSchema', title: 'testTable' });
 
-    const datasetName = screen.getByText(/testtable/i);
+    const datasetNames = screen.getAllByText(/testtable/i);
 
-    expect(datasetName.innerHTML).toBe('testTable');
+    expect(datasetNames[0].innerHTML).toBe('testTable');
+  });
+
+  test('renders breadcrumbs linking to the datasets list', async () => {
+    await waitForRender({ title: 'testTable' });
+
+    expect(screen.getByRole('link', { name: 'Datasets' })).toHaveAttribute(
+      'href',
+      '/datasets',
+    );
+    // The current page crumb is not a link
+    expect(
+      screen.queryByRole('link', { name: 'testTable' }),
+    ).not.toBeInTheDocument();
   });
 });

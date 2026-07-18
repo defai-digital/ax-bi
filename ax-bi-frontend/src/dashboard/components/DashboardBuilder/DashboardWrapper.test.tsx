@@ -19,6 +19,7 @@
 import { render } from 'spec/helpers/testing-library';
 
 import DashboardWrapper from './DashboardWrapper';
+import { DashboardGridLayoutContext } from './gridLayoutMode';
 
 beforeAll(() => {
   jest.useFakeTimers();
@@ -36,6 +37,32 @@ test('should render children', () => {
     { useRedux: true, useDnd: true },
   );
   expect(getByTestId('mock-children')).toBeInTheDocument();
+});
+
+test('should apply the dashboard--stack class in stack layout mode', () => {
+  const { getByTestId } = render(
+    <DashboardGridLayoutContext.Provider value="stack">
+      <DashboardWrapper>
+        <div data-test="mock-children" />
+      </DashboardWrapper>
+    </DashboardGridLayoutContext.Provider>,
+    { useRedux: true, useDnd: true },
+  );
+  expect(getByTestId('dashboard-wrapper')).toHaveClass('dashboard--stack');
+});
+
+test('should apply the dashboard--compact class in compact layout mode', () => {
+  const { getByTestId } = render(
+    <DashboardGridLayoutContext.Provider value="compact">
+      <DashboardWrapper>
+        <div data-test="mock-children" />
+      </DashboardWrapper>
+    </DashboardGridLayoutContext.Provider>,
+    { useRedux: true, useDnd: true },
+  );
+  const wrapper = getByTestId('dashboard-wrapper');
+  expect(wrapper).toHaveClass('dashboard--compact');
+  expect(wrapper).not.toHaveClass('dashboard--stack');
 });
 
 test('should expose its viewport offset for dashboard scrolling', () => {
