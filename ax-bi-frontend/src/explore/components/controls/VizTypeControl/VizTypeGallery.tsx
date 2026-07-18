@@ -53,6 +53,7 @@ import {
   orderCuratedVizEntries,
   shouldPreserveVizSelection,
 } from './curatedVizTypes';
+import { LEGACY_VIZ_TYPES } from './legacyVizTypes';
 
 interface VizTypeGalleryProps {
   onChange: (vizType: string | null) => void;
@@ -488,9 +489,17 @@ export default function VizTypeGallery(props: VizTypeGalleryProps) {
     : null;
 
   const chartMetadata: VizEntry[] = useMemo(() => {
+    const legacyPluginsEnabled = isFeatureEnabled(
+      FeatureFlag.LegacyChartPlugins,
+    );
     const result = Object.entries(mountedPluginMetadata)
       .map(([key, value]) => ({ key, value }))
       .filter(({ key }) => !denyList.includes(key))
+      // nvd3-era legacy plugins stay registered so existing saved charts keep
+      // rendering; the flag only gates their visibility in the picker.
+      .filter(
+        ({ key }) => legacyPluginsEnabled || !LEGACY_VIZ_TYPES.includes(key),
+      )
       .filter(
         ({ value }) =>
           chartTypeGate(value.behaviors || []) && !value.deprecated,

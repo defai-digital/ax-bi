@@ -955,6 +955,12 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # @lifecycle: stable
     # @category: runtime_config
     "LISTVIEWS_DEFAULT_CARD_VIEW": False,
+    # Show nvd3-era legacy chart types (chord, rose, world map, etc.) in the
+    # chart type picker. Existing saved charts keep rendering either way; the
+    # flag only controls whether legacy types are offered for new charts.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "LEGACY_CHART_PLUGINS": False,
     # Hide user info in the navigation menu
     # @lifecycle: stable
     # @category: runtime_config

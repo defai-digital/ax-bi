@@ -46,6 +46,10 @@ describe('nativeFilterGate', () => {
     expect(nativeFilterGate([Behavior.NativeFilter])).toEqual(false);
   });
 
+});
+
+// eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
+describe('chartTypeGate', () => {
   test('should return false for chart customization behavior', () => {
     expect(
       chartTypeGate([
@@ -53,6 +57,10 @@ describe('nativeFilterGate', () => {
         Behavior.ChartCustomization,
       ]),
     ).toEqual(false);
+  });
+
+  test('should return true for regular interactive chart', () => {
+    expect(chartTypeGate([Behavior.InteractiveChart])).toEqual(true);
   });
 });
 

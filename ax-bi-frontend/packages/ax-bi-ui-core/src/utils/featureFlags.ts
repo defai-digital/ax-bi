@@ -66,6 +66,11 @@ export enum FeatureFlag {
   GlobalTaskFramework = 'GLOBAL_TASK_FRAMEWORK',
   GranularExportControls = 'GRANULAR_EXPORT_CONTROLS',
   GuidedChartBuilder = 'GUIDED_CHART_BUILDER',
+  /**
+   * When false (default), nvd3-era legacy chart types stay registered for
+   * existing saved charts but are hidden from the viz type picker.
+   */
+  LegacyChartPlugins = 'LEGACY_CHART_PLUGINS',
   ListviewsDefaultCardView = 'LISTVIEWS_DEFAULT_CARD_VIEW',
   Matrixify = 'MATRIXIFY',
   ScheduledQueries = 'SCHEDULED_QUERIES',
