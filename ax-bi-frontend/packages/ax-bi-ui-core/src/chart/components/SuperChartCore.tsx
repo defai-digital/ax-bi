@@ -29,7 +29,7 @@ import { createSelector } from 'reselect';
 import getChartComponentRegistry from '../registries/ChartComponentRegistrySingleton';
 import getChartTransformPropsRegistry from '../registries/ChartTransformPropsRegistrySingleton';
 import ChartProps from '../models/ChartProps';
-import createLoadableRenderer from './createLoadableRenderer';
+import createLoadableRenderer, { LoadingProps } from './createLoadableRenderer';
 import { ChartType } from '../models/ChartPlugin';
 import {
   PreTransformProps,
@@ -43,10 +43,6 @@ function IDENTITY<T>(x: T) {
 }
 
 const EMPTY = () => null;
-
-interface LoadingProps {
-  error: { toString(): string };
-}
 
 interface LoadedModules {
   Chart: ChartType;

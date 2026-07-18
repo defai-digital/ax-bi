@@ -618,7 +618,7 @@ const paginationColumns: ColumnsType<BasicData> = [
   },
 ];
 
-export const ServerPagination = (args: TableProps<any>) => {
+export const ServerPagination = (args: TableProps<BasicData>) => {
   const [data, setData] = useState(generateData(0, 5));
   const [loading, setLoading] = useState(false);
 
@@ -785,7 +785,7 @@ const rendererData: RendererData[] = [
   },
 ];
 
-export const CellRenderers: StoryFn = (args: TableProps<object>) => (
+export const CellRenderers: StoryFn<TableProps<RendererData>> = args => (
   <Table {...args} />
 );
 

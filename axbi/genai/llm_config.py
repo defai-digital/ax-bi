@@ -105,9 +105,25 @@ def build_provider_config_from_env(
 
 
 def get_raw_provider_config() -> dict[str, Any]:
-    """Return the raw provider dict from Flask config when available."""
+    """Return the effective raw provider dict (durable Admin store, else env/app).
+
+    Priority:
+    1. Durable Admin settings (multi-worker safe, encrypted api_key at rest)
+    2. Process ``GENAI_LLM_PROVIDER_CONFIG`` (env / operator bootstrap)
+    """
     if not has_app_context():
         return {}
+
+    try:
+        from axbi.genai.settings_store import load_durable_provider_config
+
+        durable = load_durable_provider_config()
+    except Exception:  # noqa: BLE001 - never break core BI on store errors
+        durable = None
+
+    if durable is not None:
+        return dict(durable)
+
     raw = current_app.config.get("GENAI_LLM_PROVIDER_CONFIG") or {}
     if not isinstance(raw, dict):
         return {}
@@ -242,12 +258,28 @@ def redact_provider_config(raw: dict[str, Any] | None = None) -> dict[str, Any]:
             "allow_http": False,
             "allow_private_network": False,
             "configured": False,
+            "source": "none",
         }
 
     enabled_flag = _as_bool(source.get("enabled"), default=True)
     normalized = normalize_provider_config(source) if enabled_flag else {}
     api_key = source.get("api_key")
     api_key_set = bool(api_key and str(api_key).strip())
+    timeout = _as_int(
+        source.get("timeout_seconds", source.get("timeout", DEFAULT_TIMEOUT_SECONDS)),
+        DEFAULT_TIMEOUT_SECONDS,
+        minimum=1,
+        maximum=MAX_TIMEOUT_SECONDS,
+    )
+    # Indicate whether values came from durable Admin store (vs env bootstrap).
+    config_source = "app"
+    try:
+        from axbi.genai.settings_store import load_durable_provider_config
+
+        if raw is None and load_durable_provider_config() is not None:
+            config_source = "durable"
+    except Exception:  # noqa: BLE001
+        pass
 
     if not normalized:
         return {
@@ -256,13 +288,14 @@ def redact_provider_config(raw: dict[str, Any] | None = None) -> dict[str, Any]:
             "base_url": source.get("base_url"),
             "model": source.get("model"),
             "api_key_set": api_key_set,
-            "timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
+            "timeout_seconds": timeout,
             "verify_tls": _as_bool(source.get("verify_tls"), default=True),
             "allow_http": _as_bool(source.get("allow_http"), default=False),
             "allow_private_network": _as_bool(
                 source.get("allow_private_network"), default=False
             ),
             "configured": False,
+            "source": config_source,
         }
 
     return {
@@ -276,6 +309,7 @@ def redact_provider_config(raw: dict[str, Any] | None = None) -> dict[str, Any]:
         "allow_http": normalized["allow_http"],
         "allow_private_network": normalized["allow_private_network"],
         "configured": True,
+        "source": config_source,
     }
 
 
@@ -283,21 +317,31 @@ def public_llm_capability(raw: dict[str, Any] | None = None) -> dict[str, Any]:
     """Capability fragment safe for non-admin clients (no secrets, no base_url)."""
     from axbi.genai.prompt_policy import bounded_samples_allowed
 
+    def _flag(name: str) -> bool:
+        try:
+            from axbi import is_feature_enabled
+
+            return bool(is_feature_enabled(name))
+        except Exception:  # noqa: BLE001
+            return False
+
     redacted = redact_provider_config(raw)
     configured = bool(redacted.get("configured"))
     samples_ok = bounded_samples_allowed()
+    genai_bi = _flag("GENAI_BI")
+    genai_tools = _flag("GENAI_BI_MCP_TOOLS")
+    prompt_to_dash = _flag("GENAI_PROMPT_TO_DASHBOARD")
     return {
         "llm_configured": configured,
         "llm_provider_type": redacted.get("provider") if configured else None,
         "llm_model": redacted.get("model") if configured else None,
         "bounded_samples_allowed": samples_ok,
-        # Feature surface (independent of whether credentials are present).
-        # Clients still honor feature flags and RBAC on each tool call.
+        # Feature surface gated by flags; tools still enforce RBAC per call.
         "genai_features": {
-            "plan_dashboard": True,
-            "create_chart_from_intent": True,
-            "prompt_to_dashboard": True,
-            "semantic_assist": True,
+            "plan_dashboard": genai_bi and genai_tools and prompt_to_dash,
+            "create_chart_from_intent": genai_bi and genai_tools,
+            "prompt_to_dashboard": genai_bi and genai_tools and prompt_to_dash,
+            "semantic_assist": genai_bi and genai_tools,
             "bounded_samples": samples_ok,
         },
     }
@@ -311,6 +355,9 @@ def merge_provider_update(
     merged = dict(existing or {})
     for key, value in update.items():
         if key == "api_key" and (value is None or value == ""):
+            continue
+        # Ignore null/empty optional fields so Disable can omit provider/model.
+        if key in {"provider", "model"} and (value is None or value == ""):
             continue
         if key in {
             "enabled",

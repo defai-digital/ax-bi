@@ -26,6 +26,7 @@ import {
   within,
 } from '@ax-bi/ui-core/spec';
 import { AsyncSelect } from '.';
+import type { LabeledValue } from './types';
 
 const ARIA_LABEL = 'Test';
 const NEW_OPTION = 'Kyle';
@@ -233,10 +234,10 @@ test('sort the options by label if no sort comparator is provided', async () => 
 });
 
 test('sort the options using a custom sort comparator', async () => {
-  const sortComparator = (
-    option1: (typeof OPTIONS)[0],
-    option2: (typeof OPTIONS)[0],
-  ) => option1.gender.localeCompare(option2.gender);
+  const sortComparator = (option1: LabeledValue, option2: LabeledValue) =>
+    (option1 as (typeof OPTIONS)[number]).gender.localeCompare(
+      (option2 as (typeof OPTIONS)[number]).gender,
+    );
   render(<AsyncSelect {...defaultProps} sortComparator={sortComparator} />);
   await open();
   const options = await findAllSelectOptions();

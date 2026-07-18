@@ -1,5 +1,7 @@
 {
   "compilerOptions": {
+    // Allow declaration emit while TS debt exists (TS6305 without lib/*.d.ts).
+    "noEmitOnError": false,
     "composite": false,
     "emitDeclarationOnly": false,
     "noEmit": true,

@@ -64,7 +64,7 @@ test('@ax-bi/plugin-chart-echarts exists', () => {
 });
 
 test('@ax-bi/plugin-chart-echarts-parsemethod-validation', () => {
-  const plugins: EchartsChartPlugin[] = [
+  const plugins: EchartsChartPlugin<any, any>[] = [
     new EchartsBoxPlotChartPlugin().configure({
       key: VizType.BoxPlot,
     }),

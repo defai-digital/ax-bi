@@ -59,6 +59,7 @@ import { reject } from 'lodash';
 import { getItem, LocalStorageKeys } from 'src/utils/localStorageHelpers';
 import { useUxPreference } from 'src/hooks/useUxPreference';
 import withToasts from 'src/components/MessageToasts/withToasts';
+import { getClientErrorObject } from '@ax-bi/ui-core';
 import {
   CardContainer,
   createErrorHandler,
@@ -332,10 +333,14 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
           setDashboardData(r);
           return Promise.resolve();
         })
-        .catch((err: unknown) => {
+        .catch(async (err: unknown) => {
           setDashboardData([]);
+          const parsed = await getClientErrorObject(err as any);
           addDangerToast(
-            t('There was an issue fetching your dashboards: %s', err),
+            t(
+              'There was an issue fetching your dashboards: %s',
+              parsed.message || parsed.error,
+            ),
           );
           return Promise.resolve();
         }),
@@ -344,9 +349,15 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
           setChartData(r);
           return Promise.resolve();
         })
-        .catch((err: unknown) => {
+        .catch(async (err: unknown) => {
           setChartData([]);
-          addDangerToast(t('There was an issue fetching your chart: %s', err));
+          const parsed = await getClientErrorObject(err as any);
+          addDangerToast(
+            t(
+              'There was an issue fetching your chart: %s',
+              parsed.message || parsed.error,
+            ),
+          );
           return Promise.resolve();
         }),
       canReadSavedQueries
@@ -355,10 +366,14 @@ function Welcome({ user: userProp, addDangerToast }: WelcomeProps) {
               setQueryData(r);
               return Promise.resolve();
             })
-            .catch((err: unknown) => {
+            .catch(async (err: unknown) => {
               setQueryData([]);
+              const parsed = await getClientErrorObject(err as any);
               addDangerToast(
-                t('There was an issue fetching your saved queries: %s', err),
+                t(
+                  'There was an issue fetching your saved queries: %s',
+                  parsed.message || parsed.error,
+                ),
               );
               return Promise.resolve();
             })

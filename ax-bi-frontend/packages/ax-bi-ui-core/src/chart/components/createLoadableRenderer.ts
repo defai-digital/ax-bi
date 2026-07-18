@@ -18,10 +18,11 @@
  */
 
 import { ReactElement, useEffect, useRef, useState } from 'react';
+import type { HandlerFunction } from '../types/Base';
 
 export type LoadableRendererProps = {
-  onRenderFailure?: (error: Error) => void;
-  onRenderSuccess?: () => void;
+  onRenderFailure?: HandlerFunction;
+  onRenderSuccess?: HandlerFunction;
 };
 
 type LoaderMap<Exports> = {

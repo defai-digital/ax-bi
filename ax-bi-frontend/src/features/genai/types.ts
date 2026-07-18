@@ -30,6 +30,8 @@ export interface LlmProviderSettings {
   allow_http: boolean;
   allow_private_network: boolean;
   configured: boolean;
+  /** Where settings were loaded from: durable Admin store, env/app, or none. */
+  source?: 'durable' | 'app' | 'none';
 }
 
 export interface LlmProviderUpdatePayload {

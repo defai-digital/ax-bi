@@ -121,7 +121,7 @@ describe('parseResponse()', () => {
     } catch (err) {
       error = err;
     } finally {
-      expect(error.message).toEqual(
+      expect((error as Error).message).toEqual(
         expect.stringContaining('Expected parseResponse=json'),
       );
     }

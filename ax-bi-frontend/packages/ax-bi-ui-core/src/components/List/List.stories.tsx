@@ -27,7 +27,7 @@ export default {
 
 const dataSource = ['Item 1', 'Item 2', 'Item 3'];
 
-export const InteractiveList = (args: ListProps<any>) => (
+export const InteractiveList = (args: ListProps<string>) => (
   <List
     {...args}
     dataSource={dataSource}
@@ -84,7 +84,7 @@ InteractiveList.parameters = {
   },
 };
 
-export const InteractiveListWithPagination = (args: ListProps<any>) => (
+export const InteractiveListWithPagination = (args: ListProps<string>) => (
   <List
     {...args}
     dataSource={dataSource}

@@ -36,6 +36,7 @@ import getChartBuildQueryRegistry from '../registries/ChartBuildQueryRegistrySin
 import getChartMetadataRegistry from '../registries/ChartMetadataRegistrySingleton';
 import getChartControlPanelRegistry from '../registries/ChartControlPanelRegistrySingleton';
 import SuperChart from './SuperChart';
+import type { HandlerFunction } from '../types/Base';
 
 // Using more specific states that align with chart loading process
 type LoadingState = 'uninitialized' | 'loading' | 'loaded' | 'error';
@@ -156,7 +157,7 @@ export interface StatefulChartProps {
   onLoad?: (data: QueryData[]) => void;
   onError?: (error: Error) => void;
   onRenderSuccess?: () => void;
-  onRenderFailure?: (error: Error) => void;
+  onRenderFailure?: HandlerFunction;
 
   // Data fetching options
   force?: boolean;

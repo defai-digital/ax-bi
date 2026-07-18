@@ -576,7 +576,7 @@ describe('callApi()', () => {
       error = err;
     } finally {
       expect(error).toBeInstanceOf(Error);
-      expect(error.message).toEqual('Invalid payload:\n\nhaha');
+      expect((error as Error).message).toEqual('Invalid payload:\n\nhaha');
     }
   });
 

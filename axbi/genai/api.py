@@ -51,6 +51,10 @@ from axbi.genai.provider_factory import (
     reset_provider,
 )
 from axbi.genai.schemas import LlmProviderPutSchema, LlmProviderTestSchema
+from axbi.genai.settings_store import (
+    clear_durable_provider_config,
+    save_durable_provider_config,
+)
 from axbi.views.base_api import BaseAxBIApi, requires_json, statsd_metrics
 
 logger = logging.getLogger(__name__)
@@ -200,8 +204,21 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
 
         existing = get_raw_provider_config()
         merged = merge_provider_update(existing, body)
+        enabled = bool(merged.get("enabled", True))
 
-        if body.get("enabled", True):
+        if enabled:
+            if not (merged.get("provider") or "").strip():
+                return self.response(
+                    400,
+                    message="provider is required when activating the LLM",
+                    code="LLM_INVALID_CONFIG",
+                )
+            if not (merged.get("model") or "").strip():
+                return self.response(
+                    400,
+                    message="model is required when activating the LLM",
+                    code="LLM_INVALID_CONFIG",
+                )
             try:
                 provider = build_provider_from_config(merged)
                 if isinstance(provider, StubLLMProvider):
@@ -217,26 +234,40 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
             except LLMError as ex:
                 return self.response(400, message=str(ex), code=ex.code)
 
+        try:
+            save_durable_provider_config(merged)
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to persist durable GenAI LLM settings")
+            return self.response(
+                500,
+                message="Failed to persist LLM provider settings",
+                code="LLM_PERSIST_FAILED",
+            )
+
+        # Keep process config in sync for same-worker reads and env-less deploys.
         current_app.config["GENAI_LLM_PROVIDER_CONFIG"] = merged
         reset_provider()
         logger.info(
             "Admin updated GENAI LLM provider type=%s enabled=%s",
             merged.get("provider"),
-            merged.get("enabled", True),
+            enabled,
         )
         log_llm_config_updated(
             provider=str(merged.get("provider") or "") or None,
-            enabled=bool(merged.get("enabled", True)),
+            enabled=enabled,
             base_url=merged.get("base_url"),
             model=str(merged.get("model") or "") or None,
             cleared=False,
         )
+        action = "activated" if enabled else "disabled"
+        # Re-read effective config so ``source`` reflects durable store.
         return self.response(
             200,
-            result=redact_provider_config(merged),
+            result=redact_provider_config(),
             message=(
-                "Provider saved in application config for this process. "
-                "For multi-worker production, set GENAI_LLM_* environment variables."
+                f"LLM provider {action} and saved for all workers. "
+                "Secrets are encrypted at rest. Operators may still use "
+                "GENAI_LLM_* environment variables when no Admin settings exist."
             ),
         )
 
@@ -263,9 +294,18 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
         """
         if denied := self._admin_or_403():
             return denied
+        try:
+            clear_durable_provider_config()
+        except Exception:  # noqa: BLE001
+            logger.exception("Failed to clear durable GenAI LLM settings")
+            return self.response(
+                500,
+                message="Failed to clear LLM provider settings",
+                code="LLM_PERSIST_FAILED",
+            )
         current_app.config["GENAI_LLM_PROVIDER_CONFIG"] = {}
         reset_provider()
-        logger.info("Admin cleared runtime GENAI LLM provider config")
+        logger.info("Admin cleared durable GENAI LLM provider config")
         log_llm_config_updated(
             provider=None,
             enabled=False,
@@ -273,7 +313,11 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
             model=None,
             cleared=True,
         )
-        return self.response(200, result=redact_provider_config({}), message="cleared")
+        return self.response(
+            200,
+            result=redact_provider_config({}),
+            message="cleared",
+        )
 
     @expose("/provider/test/", methods=("POST",))
     @protect()

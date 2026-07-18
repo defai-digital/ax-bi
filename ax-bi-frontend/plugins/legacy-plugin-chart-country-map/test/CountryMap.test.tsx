@@ -38,7 +38,7 @@ type Projection = ((...args: unknown[]) => void) & {
   translate: () => Projection;
 };
 
-const mockJson = jest.fn(() => Promise.resolve(mockMapData));
+const mockJson = jest.fn((..._args: unknown[]) => Promise.resolve(mockMapData));
 
 jest.mock('d3-fetch', () => ({
   json: (...args: unknown[]) => mockJson(...args),
@@ -77,18 +77,15 @@ jest.mock('d3-geo', () => {
   };
 });
 
-const mockZoomBehavior = jest.fn();
-(mockZoomBehavior as jest.Mock & {
+const mockZoomBehavior = jest.fn() as jest.Mock & {
   scaleExtent: jest.Mock;
   on: jest.Mock;
   transform: jest.Mock;
-}).scaleExtent = jest.fn().mockReturnValue(mockZoomBehavior);
-(mockZoomBehavior as jest.Mock & { on: jest.Mock }).on = jest
-  .fn()
-  .mockReturnValue(mockZoomBehavior);
-(mockZoomBehavior as jest.Mock & { transform: jest.Mock }).transform =
-  jest.fn();
-const mockZoomFactory = jest.fn(() => mockZoomBehavior);
+};
+mockZoomBehavior.scaleExtent = jest.fn().mockReturnValue(mockZoomBehavior);
+mockZoomBehavior.on = jest.fn().mockReturnValue(mockZoomBehavior);
+mockZoomBehavior.transform = jest.fn();
+const mockZoomFactory = jest.fn((..._args: unknown[]) => mockZoomBehavior);
 
 jest.mock('d3-zoom', () => ({
   // d3.selection.call(zoomBehavior) requires zoom() to return a function

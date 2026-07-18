@@ -73,10 +73,14 @@ test('loads and shows admin LLM provider form', async () => {
   await waitFor(() => {
     expect(screen.getByText(/Optional server-side LLM/i)).toBeInTheDocument();
   });
-  expect(screen.getByRole('button', { name: /Save/i })).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: /Activate/i }),
+  ).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Disable/i })).toBeInTheDocument();
   expect(
     screen.getByRole('button', { name: /Test connection/i }),
   ).toBeInTheDocument();
+  expect(screen.getByText(/LLM active/i)).toBeInTheDocument();
 });
 
 test('non-admin sees warning only', async () => {
@@ -86,6 +90,6 @@ test('non-admin sees warning only', async () => {
 
   expect(await screen.findByText(/Administrators only/i)).toBeInTheDocument();
   expect(
-    screen.queryByRole('button', { name: /Save/i }),
+    screen.queryByRole('button', { name: /Activate/i }),
   ).not.toBeInTheDocument();
 });

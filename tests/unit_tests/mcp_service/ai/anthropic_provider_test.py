@@ -98,16 +98,14 @@ def test_provider_identity() -> None:
 
 def test_factory_dispatches_to_anthropic() -> None:
     provider_factory.reset_provider()
-    fake_app = MagicMock()
-    # A real dict avoids MagicMock turning ``config.get`` into an async mock.
-    fake_app.config = {
-        "GENAI_LLM_PROVIDER_CONFIG": {
-            "provider": "anthropic",
-            "model": "claude-opus-4-8",
-        }
+    raw = {
+        "provider": "anthropic",
+        "model": "claude-opus-4-8",
     }
-    with patch.object(provider_factory, "current_app", fake_app):
-        with patch.object(provider_factory, "has_app_context", return_value=True):
+    with patch.object(provider_factory, "has_app_context", return_value=True):
+        with patch.object(
+            provider_factory, "get_raw_provider_config", return_value=raw
+        ):
             provider = provider_factory.get_llm_provider()
     provider_factory.reset_provider()
     assert isinstance(provider, AnthropicProvider)

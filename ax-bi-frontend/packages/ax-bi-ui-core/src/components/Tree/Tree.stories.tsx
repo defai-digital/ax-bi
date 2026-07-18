@@ -96,7 +96,7 @@ export const TreeStory: Story = {
     defaultSelectedKeys: ['0-0-1'],
     treeData,
   },
-  render: (args: TreeProps) => <Tree {...args} />,
+  render: args => <Tree {...args} />,
 };
 
 // Interactive story with primitive args for documentation

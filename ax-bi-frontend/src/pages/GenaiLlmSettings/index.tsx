@@ -118,9 +118,13 @@ function settingsToForm(settings: LlmProviderSettings): FormValues {
   };
 }
 
-function formToPayload(values: FormValues): LlmProviderUpdatePayload {
+function formToPayload(
+  values: FormValues,
+  enabledOverride?: boolean,
+): LlmProviderUpdatePayload {
+  const enabled = enabledOverride ?? values.enabled;
   const payload: LlmProviderUpdatePayload = {
-    enabled: values.enabled,
+    enabled,
     provider: values.provider,
     model: values.model.trim(),
     timeout_seconds: values.timeout_seconds,
@@ -156,6 +160,7 @@ export default function GenaiLlmSettings() {
 
   const needsBaseUrl =
     provider === 'openai_compatible' || provider === 'openai';
+  const isActive = Boolean(settings?.configured && settings?.enabled);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -192,29 +197,72 @@ export default function GenaiLlmSettings() {
     [],
   );
 
-  const onSave = async () => {
+  const applyResult = (result: LlmProviderSettings) => {
+    setSettings(result);
+    const formValues = settingsToForm(result);
+    form.setFieldsValue(formValues);
+    setProvider(formValues.provider);
+    setEnabled(formValues.enabled);
+  };
+
+  const persist = async (
+    values: FormValues,
+    enabledOverride?: boolean,
+  ): Promise<boolean> => {
+    setSaving(true);
     try {
-      const values = await form.validateFields();
-      setSaving(true);
       const { result, message } = await saveLlmProviderSettings(
-        formToPayload(values),
+        formToPayload(values, enabledOverride),
       );
-      setSettings(result);
-      const formValues = settingsToForm(result);
-      form.setFieldsValue(formValues);
-      setProvider(formValues.provider);
-      setEnabled(formValues.enabled);
+      applyResult(result);
       addSuccessToast(message || t('LLM provider settings saved'));
+      return true;
     } catch (error) {
       if (error && typeof error === 'object' && 'errorFields' in error) {
-        return;
+        return false;
       }
       const clientError = await getClientErrorObject(error);
       addDangerToast(
         clientError.error || t('Failed to save LLM provider settings'),
       );
+      return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const onActivate = async () => {
+    try {
+      const values = await form.validateFields();
+      await persist({ ...values, enabled: true }, true);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'errorFields' in error) {
+        return;
+      }
+    }
+  };
+
+  const onDisable = async () => {
+    try {
+      // Disable keeps URL/model/token; GenAI falls back to traditional AX BI.
+      const values = form.getFieldsValue(true) as FormValues;
+      await persist({ ...values, enabled: false }, false);
+    } catch (error) {
+      const clientError = await getClientErrorObject(error);
+      addDangerToast(
+        clientError.error || t('Failed to disable LLM provider'),
+      );
+    }
+  };
+
+  const onSave = async () => {
+    try {
+      const values = await form.validateFields();
+      await persist(values);
+    } catch (error) {
+      if (error && typeof error === 'object' && 'errorFields' in error) {
+        return;
+      }
     }
   };
 
@@ -222,7 +270,7 @@ export default function GenaiLlmSettings() {
     try {
       const values = await form.validateFields();
       setTesting(true);
-      const result = await testLlmProvider(formToPayload(values));
+      const result = await testLlmProvider(formToPayload(values, true));
       if (result.ok) {
         addSuccessToast(
           t('Connection test succeeded (%(provider)s / %(model)s)', {
@@ -248,12 +296,8 @@ export default function GenaiLlmSettings() {
     setSaving(true);
     try {
       const result = await clearLlmProviderSettings();
-      setSettings(result);
-      const formValues = settingsToForm(result);
-      form.setFieldsValue(formValues);
-      setProvider(formValues.provider);
-      setEnabled(formValues.enabled);
-      addSuccessToast(t('Runtime LLM provider configuration cleared'));
+      applyResult(result);
+      addSuccessToast(t('LLM provider configuration cleared'));
     } catch (error) {
       const clientError = await getClientErrorObject(error);
       addDangerToast(
@@ -282,22 +326,45 @@ export default function GenaiLlmSettings() {
     );
   }
 
+  const statusAlert = isActive
+    ? {
+        type: 'success' as const,
+        message: t('LLM active'),
+        description: t(
+          'Server-side GenAI assistance is enabled. Traditional charts, dashboards, and SQL Lab remain available.',
+        ),
+      }
+    : {
+        type: 'info' as const,
+        message: t('LLM inactive — traditional AX BI'),
+        description: t(
+          'No active server LLM. AX BI runs with original capabilities. Enter a URL and token, then click Activate to enable GenAI assistance.',
+        ),
+      };
+
   return (
     <>
       <SubMenu {...submenu} />
       <Page>
         <Help>
           {t(
-            'Optional server-side LLM used for semantic assistance and GenAI authoring. Only Administrators may set the inference URL and token. Leave disabled to use original AX BI capabilities only. AX Studio local models are separate and must not be pasted here by end users.',
+            'Optional server-side LLM used for semantic assistance and GenAI authoring. Only Administrators may set the inference URL and token. Leave disabled (or click Disable) to use original AX BI capabilities only. AX Studio local models are separate and must not be pasted here by end users.',
           )}
         </Help>
+        <Alert
+          type={statusAlert.type}
+          showIcon
+          style={{ marginBottom: theme.sizeUnit * 4 }}
+          message={statusAlert.message}
+          description={statusAlert.description}
+        />
         <Alert
           type="info"
           showIcon
           style={{ marginBottom: theme.sizeUnit * 4 }}
-          message={t('Production tip')}
+          message={t('Persistence')}
           description={t(
-            'For multi-worker deployments, prefer GENAI_LLM_* environment variables / secret managers. Saving here updates this process runtime config.',
+            'Activate saves encrypted settings for all workers. Operators may also set GENAI_LLM_* environment variables when no Admin settings have been saved yet.',
           )}
         />
         {loading ? (
@@ -327,6 +394,9 @@ export default function GenaiLlmSettings() {
                 name="enabled"
                 label={t('Enable server LLM')}
                 valuePropName="checked"
+                extra={t(
+                  'Prefer Activate / Disable below. This switch is used when saving draft settings.',
+                )}
               >
                 <Switch onChange={checked => setEnabled(checked)} />
               </Form.Item>
@@ -429,25 +499,35 @@ export default function GenaiLlmSettings() {
               <Space wrap>
                 <Button
                   buttonStyle="primary"
-                  onClick={onSave}
+                  onClick={onActivate}
                   loading={saving}
                   disabled={loading}
                 >
-                  {t('Save')}
+                  {t('Activate')}
+                </Button>
+                <Button
+                  onClick={onDisable}
+                  loading={saving}
+                  disabled={loading || !isActive}
+                >
+                  {t('Disable')}
                 </Button>
                 <Button
                   onClick={onTest}
                   loading={testing}
-                  disabled={loading || !enabled}
+                  disabled={loading}
                 >
                   {t('Test connection')}
+                </Button>
+                <Button onClick={onSave} loading={saving} disabled={loading}>
+                  {t('Save')}
                 </Button>
                 <Button
                   buttonStyle="danger"
                   onClick={onClear}
                   disabled={loading || saving}
                 >
-                  {t('Clear runtime config')}
+                  {t('Clear settings')}
                 </Button>
               </Space>
             </Form>

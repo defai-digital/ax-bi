@@ -100,6 +100,9 @@ def test_public_capability_omits_base_url() -> None:
     assert cap["llm_provider_type"] == "openai_compatible"
     assert "base_url" not in cap
     assert "api_key" not in cap
+    assert "genai_features" in cap
+    # Feature flags default off in unit tests unless overridden.
+    assert isinstance(cap["genai_features"]["plan_dashboard"], bool)
 
 
 def test_merge_keeps_api_key_when_omitted() -> None:

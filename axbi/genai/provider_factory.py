@@ -28,32 +28,34 @@ import logging
 import threading
 from typing import Any
 
-from flask import current_app, has_app_context
+from flask import has_app_context
 
 from axbi.genai.llm_config import (
+    get_raw_provider_config,
     normalize_provider_config,
     validate_normalized_config,
 )
 from axbi.genai.llm_errors import LLMInvalidConfigError, LLMSsrfBlockedError
 from axbi.genai.llm_provider import LLMProvider, StubLLMProvider
+from axbi.genai.settings_store import config_fingerprint
 
 logger = logging.getLogger(__name__)
 
 # Module-level singleton to avoid re-creating the provider on every call.
+# Fingerprint tracks durable Admin changes across workers' process-local cache.
 _provider_instance: LLMProvider | None = None
+_provider_fingerprint: str | None = None
 _provider_lock = threading.Lock()
 
 
 def _load_raw_config() -> dict[str, Any]:
+    """Load effective provider config (durable Admin store, else env/app)."""
     if not has_app_context():
         return {}
     try:
-        raw = current_app.config.get("GENAI_LLM_PROVIDER_CONFIG", {})
+        return get_raw_provider_config()
     except RuntimeError:
         return {}
-    if not isinstance(raw, dict):
-        return {}
-    return dict(raw)
 
 
 def _build_provider(raw: dict[str, Any]) -> LLMProvider:
@@ -105,22 +107,34 @@ def get_llm_provider() -> LLMProvider:
 
     If the config is empty, disabled, or invalid, returns ``StubLLMProvider``.
     Call ``reset_provider()`` after Admin updates so the next call rebuilds.
+    The cache is also invalidated when durable Admin settings change
+    (fingerprint mismatch), so multi-worker deployments pick up Activate /
+    Disable without a process restart on the next call after the write.
     """
-    global _provider_instance  # noqa: PLW0603
-    if _provider_instance is not None:
+    global _provider_instance, _provider_fingerprint  # noqa: PLW0603
+
+    raw = _load_raw_config()
+    fingerprint = config_fingerprint(raw)
+
+    if (
+        _provider_instance is not None
+        and _provider_fingerprint == fingerprint
+    ):
         return _provider_instance
 
     with _provider_lock:
-        if _provider_instance is not None:
+        if (
+            _provider_instance is not None
+            and _provider_fingerprint == fingerprint
+        ):
             return _provider_instance
 
-        raw = _load_raw_config()
         if not raw:
-            logger.debug("No GENAI_LLM_PROVIDER_CONFIG; using StubLLMProvider")
+            logger.debug("No GenAI LLM provider config; using StubLLMProvider")
             _provider_instance = StubLLMProvider()
-            return _provider_instance
-
-        _provider_instance = _build_provider(raw)
+        else:
+            _provider_instance = _build_provider(raw)
+        _provider_fingerprint = fingerprint
         return _provider_instance
 
 
@@ -129,9 +143,10 @@ def reset_provider() -> None:
 
     Useful for testing or when Admin/operator configuration changes at runtime.
     """
-    global _provider_instance  # noqa: PLW0603
+    global _provider_instance, _provider_fingerprint  # noqa: PLW0603
     with _provider_lock:
         _provider_instance = None
+        _provider_fingerprint = None
 
 
 def build_provider_from_config(raw: dict[str, Any]) -> LLMProvider:

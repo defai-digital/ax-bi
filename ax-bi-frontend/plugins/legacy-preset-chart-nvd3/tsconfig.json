@@ -1,6 +1,8 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    // Allow declaration emit while TS debt exists (TS6305 without lib/*.d.ts).
+    "noEmitOnError": false,
     // Path Resolution: Override baseUrl to maintain correct path mappings from parent config
     // (e.g., "@ax-bi/core" -> "./packages/ax-bi-core/src")
     "baseUrl": "../..",

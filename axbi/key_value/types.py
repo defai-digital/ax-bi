@@ -56,6 +56,8 @@ class SharedKey(StrEnum):
     # Monotonically increasing version used to revoke outstanding guest tokens.
     # Bumping it invalidates every guest token minted with a lower version.
     GUEST_TOKEN_REVOCATION_VERSION = "guest_token_revocation_version"  # noqa: S105
+    # Durable Admin LLM provider settings (api_key stored encrypted at rest).
+    GENAI_LLM_PROVIDER = "genai_llm_provider"
 
 
 class KeyValueCodec(ABC):

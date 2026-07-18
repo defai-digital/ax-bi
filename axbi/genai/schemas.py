@@ -22,15 +22,20 @@ from marshmallow import fields, Schema, validate
 
 
 class LlmProviderPutSchema(Schema):
-    """Admin body for creating/updating the server-side LLM provider."""
+    """Admin body for creating/updating the server-side LLM provider.
+
+    When ``enabled`` is false, provider/model may be omitted so Admins can
+    Disable without re-validating full connection settings (secrets retained).
+    """
 
     enabled = fields.Boolean(load_default=True)
     provider = fields.String(
-        required=True,
+        load_default=None,
+        allow_none=True,
         validate=validate.OneOf(["anthropic", "openai", "openai_compatible"]),
     )
     base_url = fields.String(load_default=None, allow_none=True)
-    model = fields.String(required=True)
+    model = fields.String(load_default=None, allow_none=True)
     api_key = fields.String(load_default=None, allow_none=True)
     timeout_seconds = fields.Integer(
         load_default=60, validate=validate.Range(min=1, max=300)

@@ -162,18 +162,17 @@ def test_http_error_raises_provider_error() -> None:
 
 def test_factory_dispatches_openai_compatible() -> None:
     provider_factory.reset_provider()
-    fake_app = MagicMock()
-    fake_app.config = {
-        "GENAI_LLM_PROVIDER_CONFIG": {
-            "provider": "openai_compatible",
-            "base_url": "http://10.0.0.5:11434/v1",
-            "model": "llama3.1",
-            "allow_http": True,
-            "allow_private_network": True,
-        }
+    raw = {
+        "provider": "openai_compatible",
+        "base_url": "http://10.0.0.5:11434/v1",
+        "model": "llama3.1",
+        "allow_http": True,
+        "allow_private_network": True,
     }
-    with patch.object(provider_factory, "current_app", fake_app):
-        with patch.object(provider_factory, "has_app_context", return_value=True):
+    with patch.object(provider_factory, "has_app_context", return_value=True):
+        with patch.object(
+            provider_factory, "get_raw_provider_config", return_value=raw
+        ):
             with patch(
                 "axbi.genai.openai_compatible_provider.validate_llm_base_url",
                 return_value="http://10.0.0.5:11434/v1",
@@ -186,17 +185,16 @@ def test_factory_dispatches_openai_compatible() -> None:
 
 def test_factory_disabled_returns_stub() -> None:
     provider_factory.reset_provider()
-    fake_app = MagicMock()
-    fake_app.config = {
-        "GENAI_LLM_PROVIDER_CONFIG": {
-            "provider": "openai_compatible",
-            "enabled": False,
-            "base_url": "http://10.0.0.5:11434/v1",
-            "model": "x",
-        }
+    raw = {
+        "provider": "openai_compatible",
+        "enabled": False,
+        "base_url": "http://10.0.0.5:11434/v1",
+        "model": "x",
     }
-    with patch.object(provider_factory, "current_app", fake_app):
-        with patch.object(provider_factory, "has_app_context", return_value=True):
+    with patch.object(provider_factory, "has_app_context", return_value=True):
+        with patch.object(
+            provider_factory, "get_raw_provider_config", return_value=raw
+        ):
             provider = provider_factory.get_llm_provider()
     provider_factory.reset_provider()
     assert isinstance(provider, StubLLMProvider)

@@ -18,7 +18,7 @@
  */
 import { theme as antdThemeImport } from 'antd';
 import { Theme } from './Theme';
-import { AnyThemeConfig, ThemeAlgorithm } from './types';
+import { AntdThemeConfig, AnyThemeConfig, ThemeAlgorithm } from './types';
 
 // Mock emotion's cache to avoid actual DOM operations
 jest.mock('@emotion/cache', () => ({
@@ -466,7 +466,7 @@ test('Theme base theme integration allows user theme to override specific base t
 });
 
 test('Theme base theme integration handles base theme with dark algorithm correctly', () => {
-  const baseTheme: AnyThemeConfig = {
+  const baseTheme: AntdThemeConfig = {
     token: {
       colorPrimary: '#2893B3',
       fontFamily: 'Inter, Helvetica',
@@ -494,7 +494,7 @@ test('Theme base theme integration handles base theme with dark algorithm correc
 
 test('Theme base theme integration works with real-world AxBI base theme configuration', () => {
   // Simulate actual AxBI base theme (THEME_DEFAULT/THEME_DARK from config)
-  const axbiBaseTheme: AnyThemeConfig = {
+  const axbiBaseTheme: AntdThemeConfig = {
     token: {
       colorPrimary: '#2893B3',
       colorError: '#e04355',

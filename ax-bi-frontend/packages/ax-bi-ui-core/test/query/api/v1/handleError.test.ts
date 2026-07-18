@@ -35,7 +35,7 @@ async function testHandleError(
     } else {
       expect(typedError).toEqual(expect.objectContaining(expected));
     }
-    return error;
+    return typedError;
   }
   return new AxBIApiError({ message: 'Where is the error?' });
 }

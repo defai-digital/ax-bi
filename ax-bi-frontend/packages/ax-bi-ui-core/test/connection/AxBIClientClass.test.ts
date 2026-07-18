@@ -596,7 +596,7 @@ describe('AxBIClientClass', () => {
       } finally {
         const redirectURL = window.location.href;
         expect(redirectURL).toBe(`/login?next=${mockHref}`);
-        expect(error.status).toBe(401);
+        expect((error as { status: number }).status).toBe(401);
       }
     });
 
@@ -622,7 +622,7 @@ describe('AxBIClientClass', () => {
         error = err;
       } finally {
         expect(window.location.href).toBe('/login?next=something');
-        expect(error.status).toBe(401);
+        expect((error as { status: number }).status).toBe(401);
       }
     });
     test('does nothing if instructed to ignoreUnauthorized', async () => {
@@ -640,7 +640,7 @@ describe('AxBIClientClass', () => {
       } finally {
         // unchanged href, no redirect
         expect(window.location.href).toBe(mockHref);
-        expect(error.status).toBe(401);
+        expect((error as { status: number }).status).toBe(401);
       }
     });
 
@@ -659,7 +659,7 @@ describe('AxBIClientClass', () => {
       } finally {
         // unchanged href, no redirect
         expect(window.location.href).toBe(mockHref);
-        expect(error.status).toBe(401);
+        expect((error as { status: number }).status).toBe(401);
         expect(unauthorizedHandler).toHaveBeenCalledTimes(1);
       }
     });
