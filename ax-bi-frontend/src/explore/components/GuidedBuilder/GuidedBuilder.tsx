@@ -182,6 +182,14 @@ const RecommendRow = styled.div`
   `}
 `;
 
+const RecommendLabel = styled.div`
+  ${({ theme }) => css`
+    color: ${theme.colorTextSecondary};
+    font-size: ${theme.fontSizeSM}px;
+    margin-top: ${theme.sizeUnit}px;
+  `}
+`;
+
 const RecommendChip = styled.button`
   ${({ theme }) => css`
     appearance: none;
@@ -312,8 +320,13 @@ export default function GuidedBuilder({
 
   const recommendations = useMemo(
     () =>
-      recommendVizTypes(intent.measures.length, intent.dimensions.length, 3),
-    [intent.measures.length, intent.dimensions.length],
+      recommendVizTypes(
+        intent.measures.length,
+        intent.dimensions.length,
+        3,
+        intent.vizType,
+      ),
+    [intent.dimensions.length, intent.measures.length, intent.vizType],
   );
 
   return (
@@ -338,19 +351,22 @@ export default function GuidedBuilder({
             onChange={value => apply({ ...intent, vizType: value as string })}
           />
           {recommendations.length > 0 && (
-            <RecommendRow data-test="guided-show-me">
-              {recommendations.map(rec => (
-                <RecommendChip
-                  key={rec.vizType}
-                  type="button"
-                  onClick={() => apply({ ...intent, vizType: rec.vizType })}
-                  title={rec.reason}
-                >
-                  <strong>{rec.label}</strong>
-                  <span>{rec.reason}</span>
-                </RecommendChip>
-              ))}
-            </RecommendRow>
+            <>
+              <RecommendLabel>{t('Suggested chart types')}</RecommendLabel>
+              <RecommendRow data-test="guided-show-me">
+                {recommendations.map(rec => (
+                  <RecommendChip
+                    key={rec.vizType}
+                    type="button"
+                    onClick={() => apply({ ...intent, vizType: rec.vizType })}
+                    title={rec.reason}
+                  >
+                    <strong>{rec.label}</strong>
+                    <span>{rec.reason}</span>
+                  </RecommendChip>
+                ))}
+              </RecommendRow>
+            </>
           )}
         </Section>
 
