@@ -330,7 +330,8 @@ export const DrillBySubmenu = ({
         root: {
           paddingLeft: 0,
         },
-        body: {
+        // Ant Design 6: Popover inner styles use `container` (was `body`)
+        container: {
           padding: theme.sizeUnit * 2,
           boxShadow: theme.boxShadow,
           borderRadius: theme.borderRadius,

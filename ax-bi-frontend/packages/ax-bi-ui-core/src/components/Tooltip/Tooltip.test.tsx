@@ -47,3 +47,21 @@ test('renders with icon child', async () => {
   await userEvent.hover(screen.getByRole('img'));
   expect(await screen.findByRole('tooltip')).toBeInTheDocument();
 });
+
+test('applies container overflow styles on the tooltip popup (antd 6 API)', async () => {
+  render(
+    <Tooltip title="Styled tooltip" open>
+      <Button>Always visible</Button>
+    </Tooltip>,
+  );
+  const tooltip = await screen.findByRole('tooltip');
+  // Ant Design 6 applies styles.container to the inner popup node
+  // (legacy overlayInnerStyle / styles.body no longer map).
+  const styledNode =
+    tooltip.closest('.ant-tooltip-container') ??
+    tooltip.querySelector('.ant-tooltip-container') ??
+    tooltip;
+  const style = window.getComputedStyle(styledNode as Element);
+  expect(style.overflow).toBe('hidden');
+  expect(style.textOverflow).toBe('ellipsis');
+});

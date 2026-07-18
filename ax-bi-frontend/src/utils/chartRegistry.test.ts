@@ -21,7 +21,7 @@ import {
   ChartMetadata,
   Behavior,
 } from '@ax-bi/ui-core';
-import { nativeFilterGate } from 'src/dashboard/components/nativeFilters/utils';
+import { chartTypeGate } from 'src/dashboard/components/nativeFilters/utils';
 
 /**
  * Unit tests for chart registry filtering and option generation logic.
@@ -70,7 +70,7 @@ describe('Chart Registry Utils', () => {
       // Generate options like ChartList does
       const options = registry
         .keys()
-        .filter(k => nativeFilterGate(registry.get(k)?.behaviors || []))
+        .filter(k => chartTypeGate(registry.get(k)?.behaviors || []))
         .map(k => ({ label: registry.get(k)?.name || k, value: k }))
         .sort((a, b) => {
           if (!a.label || !b.label) return 0;
@@ -93,7 +93,7 @@ describe('Chart Registry Utils', () => {
     test('handles empty registry gracefully', () => {
       const options = registry
         .keys()
-        .filter(k => nativeFilterGate(registry.get(k)?.behaviors || []))
+        .filter(k => chartTypeGate(registry.get(k)?.behaviors || []))
         .map(k => ({ label: registry.get(k)?.name || k, value: k }));
 
       expect(options).toEqual([]);
@@ -111,7 +111,7 @@ describe('Chart Registry Utils', () => {
 
       const options = registry
         .keys()
-        .filter(k => nativeFilterGate(registry.get(k)?.behaviors || []))
+        .filter(k => chartTypeGate(registry.get(k)?.behaviors || []))
         .map(k => ({ label: registry.get(k)?.name || k, value: k }));
 
       expect(options).toEqual([
@@ -148,7 +148,7 @@ describe('Chart Registry Utils', () => {
 
       const options = registry
         .keys()
-        .filter(k => nativeFilterGate(registry.get(k)?.behaviors || []))
+        .filter(k => chartTypeGate(registry.get(k)?.behaviors || []))
         .map(k => ({ label: registry.get(k)?.name || k, value: k }))
         .sort((a, b) => {
           if (!a.label || !b.label) return 0;
@@ -201,7 +201,7 @@ describe('Chart Registry Utils', () => {
 
       const options = registry
         .keys()
-        .filter(k => nativeFilterGate(registry.get(k)?.behaviors || []))
+        .filter(k => chartTypeGate(registry.get(k)?.behaviors || []))
         .map(k => ({ label: registry.get(k)?.name || k, value: k }))
         .sort((a, b) => {
           if (!a.label || !b.label) return 0;

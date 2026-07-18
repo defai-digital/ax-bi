@@ -16,7 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { forwardRef, useState, ReactNode, MouseEvent } from 'react';
+import {
+  forwardRef,
+  useImperativeHandle,
+  useState,
+  ReactNode,
+  MouseEvent,
+} from 'react';
 
 import { Button } from '../Button';
 import { Modal } from '../Modal';
@@ -50,82 +56,84 @@ export interface ModalTriggerRef {
   };
 }
 
-export const ModalTrigger = forwardRef(
-  (props: ModalTriggerProps, ref: ModalTriggerRef | null) => {
-    const [showModal, setShowModal] = useState(false);
-    const {
-      beforeOpen = () => {},
-      onExit = () => {},
-      isButton = false,
-      resizable = false,
-      draggable = false,
-      className = '',
-      tooltip,
-      modalFooter,
-      triggerNode,
-      destroyOnHidden = true,
-      modalBody,
-      draggableConfig = {},
-      resizableConfig = {},
-      modalTitle,
-      responsive,
-      width,
-      maxWidth,
-    } = props;
+export const ModalTrigger = forwardRef<
+  ModalTriggerRef['current'],
+  ModalTriggerProps
+>((props, ref) => {
+  const [showModal, setShowModal] = useState(false);
+  const {
+    beforeOpen = () => {},
+    onExit = () => {},
+    isButton = false,
+    resizable = false,
+    draggable = false,
+    className = '',
+    tooltip,
+    modalFooter,
+    triggerNode,
+    destroyOnHidden = true,
+    modalBody,
+    draggableConfig = {},
+    resizableConfig = {},
+    modalTitle,
+    responsive,
+    width,
+    maxWidth,
+  } = props;
 
-    const close = () => {
-      setShowModal(false);
-      onExit?.();
-    };
+  const close = () => {
+    setShowModal(false);
+    onExit?.();
+  };
 
-    const open = (e: MouseEvent) => {
-      e.preventDefault();
-      beforeOpen?.();
-      setShowModal(true);
-    };
+  // Event is optional so imperative ref.open() works without a DOM event
+  const open = (e?: MouseEvent) => {
+    e?.preventDefault();
+    beforeOpen?.();
+    setShowModal(true);
+  };
 
-    if (ref) {
-      ref.current = { close, open, showModal }; // eslint-disable-line
-    }
+  // Refresh every render so open/close always close over latest beforeOpen/onExit
+  // and showModal stays in sync for imperative callers.
+  useImperativeHandle(ref, () => ({ close, open, showModal }));
 
-    /* eslint-disable jsx-a11y/interactive-supports-focus */
-    return (
-      <>
-        {isButton && (
-          <Button
-            className="modal-trigger"
-            data-test="btn-modal-trigger"
-            tooltip={tooltip}
-            onClick={open}
-          >
-            {triggerNode}
-          </Button>
-        )}
-        {!isButton && (
-          <div data-test="span-modal-trigger" onClick={open} role="button">
-            {triggerNode}
-          </div>
-        )}
-        <Modal
-          className={className}
-          show={showModal}
-          onHide={close}
-          name={modalTitle}
-          title={modalTitle}
-          footer={modalFooter}
-          hideFooter={!modalFooter}
-          width={width}
-          maxWidth={maxWidth}
-          responsive={responsive}
-          resizable={resizable}
-          resizableConfig={resizableConfig}
-          draggable={draggable}
-          draggableConfig={draggableConfig}
-          destroyOnHidden={destroyOnHidden}
+  /* eslint-disable jsx-a11y/interactive-supports-focus */
+  return (
+    <>
+      {isButton && (
+        <Button
+          className="modal-trigger"
+          data-test="btn-modal-trigger"
+          tooltip={tooltip}
+          onClick={open}
         >
-          {modalBody}
-        </Modal>
-      </>
-    );
-  },
-);
+          {triggerNode}
+        </Button>
+      )}
+      {!isButton && (
+        <div data-test="span-modal-trigger" onClick={open} role="button">
+          {triggerNode}
+        </div>
+      )}
+      <Modal
+        className={className}
+        show={showModal}
+        onHide={close}
+        name={modalTitle}
+        title={modalTitle}
+        footer={modalFooter}
+        hideFooter={!modalFooter}
+        width={width}
+        maxWidth={maxWidth}
+        responsive={responsive}
+        resizable={resizable}
+        resizableConfig={resizableConfig}
+        draggable={draggable}
+        draggableConfig={draggableConfig}
+        destroyOnHidden={destroyOnHidden}
+      >
+        {modalBody}
+      </Modal>
+    </>
+  );
+});

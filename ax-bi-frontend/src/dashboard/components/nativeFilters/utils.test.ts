@@ -20,6 +20,7 @@ import { Behavior } from '@ax-bi/ui-core';
 import { DashboardLayout } from 'src/dashboard/types';
 import { CHART_TYPE } from 'src/dashboard/util/componentTypes';
 import {
+  chartTypeGate,
   nativeFilterGate,
   findTabsWithChartsInScope,
   getFormData,
@@ -43,6 +44,15 @@ describe('nativeFilterGate', () => {
 
   test('should return false for native filter behavior', () => {
     expect(nativeFilterGate([Behavior.NativeFilter])).toEqual(false);
+  });
+
+  test('should return false for chart customization behavior', () => {
+    expect(
+      chartTypeGate([
+        Behavior.InteractiveChart,
+        Behavior.ChartCustomization,
+      ]),
+    ).toEqual(false);
   });
 });
 
