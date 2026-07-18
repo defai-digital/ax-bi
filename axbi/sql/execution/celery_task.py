@@ -55,6 +55,7 @@ from axbi.utils import json
 from axbi.utils.core import override_user, zlib_compress
 from axbi.utils.dates import now_as_float
 from axbi.utils.decorators import stats_timing
+from axbi.utils.session_lifecycle import commit_session
 
 logger = logging.getLogger(__name__)
 
@@ -98,17 +99,18 @@ def _handle_query_error(
     if errors:
         query.set_extra_json_key("errors", errors_payload)
 
-    try:
-        db.session.commit()  # pylint: disable=consider-using-transaction
-    except Exception:  # noqa: BLE001
-        # Persist-path failure while recording a prior query error must not
-        # raise and hide the original SQL failure from the client.
-        from axbi.utils.session_lifecycle import rollback_session_safely
-
-        logger.exception(
-            "Failed to persist FAILED status for query id=%s", getattr(query, "id", None)
+    # Soft commit: a metadata write failure while recording a prior query
+    # error must not hide the original SQL failure from the client, but must
+    # still roll back so the scoped session is not left poisoned.
+    if not commit_session(
+        db.session,
+        context=f"sql celery _handle_query_error query_id={getattr(query, 'id', None)}",
+        soft=True,
+    ):
+        logger.error(
+            "Failed to persist FAILED status for query id=%s",
+            getattr(query, "id", None),
         )
-        rollback_session_safely(context="sql celery _handle_query_error")
 
     payload.update(
         {"status": query.status.value, "error": msg, "errors": errors_payload}
@@ -280,7 +282,11 @@ def _store_results_in_backend(
                 "Failed to store query results in the results backend. "
                 "Please try again or contact your administrator."
             )
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            commit_session(
+                db.session,
+                context=f"sql celery results_backend failure query_id={query.id}",
+                soft=True,
+            )
             raise AxBIErrorException(
                 AxBIError(
                     message=__("Failed to store query results. Please try again."),
@@ -424,7 +430,10 @@ def _execute_sql_statements(
     query.status = QueryStatus.RUNNING
     query.start_running_time = now_as_float()
     execution_start_time = now_as_float()
-    db.session.commit()  # pylint: disable=consider-using-transaction
+    commit_session(
+        db.session,
+        context=f"sql celery set RUNNING query_id={query_id}",
+    )
 
     # Parse original SQL (from user) to preserve before transformations
     original_script = SQLScript(query.sql, engine=db_engine_spec.engine)
@@ -441,7 +450,10 @@ def _execute_sql_statements(
         cancel_query_id = db_engine_spec.get_cancel_query_id(cursor, query)
         if cancel_query_id is not None:
             query.set_extra_json_key(QUERY_CANCEL_KEY, cancel_query_id)
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            commit_session(
+                db.session,
+                context=f"sql celery cancel_query_id query_id={query_id}",
+            )
 
         try:
             execution_results = execute_sql_with_cursor(
@@ -489,6 +501,9 @@ def _execute_sql_statements(
 
     if query.status != QueryStatus.FAILED:
         query.status = QueryStatus.SUCCESS
-    db.session.commit()  # pylint: disable=consider-using-transaction
+    commit_session(
+        db.session,
+        context=f"sql celery finalize status query_id={query_id}",
+    )
 
     return payload

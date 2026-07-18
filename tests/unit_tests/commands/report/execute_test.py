@@ -1564,7 +1564,9 @@ def test_create_log_stale_data_raises_unexpected_error(mocker: MockerFixture) ->
 
     with pytest.raises(ReportScheduleUnexpectedError):
         state.create_log()
-    mock_db.session.rollback.assert_called_once()
+    # commit_session rolls back on commit failure; create_log also rolls back
+    # if StaleDataError originated earlier. At least one cleanup is required.
+    assert mock_db.session.rollback.call_count >= 1
 
 
 # ---------------------------------------------------------------------------

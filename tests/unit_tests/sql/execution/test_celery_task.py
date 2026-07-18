@@ -73,6 +73,23 @@ def test_handle_query_error_basic(
     assert "Something went wrong" in payload["error"]
 
 
+def test_handle_query_error_soft_commit_failure_still_returns_payload(
+    mocker: MockerFixture, app_context: None, mock_query: MagicMock
+) -> None:
+    """Metadata commit failure while recording FAILED must not hide SQL error."""
+    from axbi.sql.execution.celery_task import _handle_query_error
+
+    mock_session = mocker.patch("axbi.sql.execution.celery_task.db.session")
+    mock_session.commit.side_effect = RuntimeError("metadata db unavailable")
+
+    ex = Exception("original SQL failure")
+    payload = _handle_query_error(ex, mock_query)
+
+    assert payload["status"] == QueryStatusEnum.FAILED
+    assert "original SQL failure" in payload["error"]
+    mock_session.rollback.assert_called_once_with()
+
+
 def test_handle_query_error_with_end_time_set(
     mocker: MockerFixture, app_context: None, mock_query: MagicMock
 ) -> None:

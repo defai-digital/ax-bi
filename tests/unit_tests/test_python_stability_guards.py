@@ -103,9 +103,30 @@ def test_session_lifecycle_module_is_the_shared_boundary() -> None:
         REPO_ROOT / "axbi" / "mcp_service" / "utils" / "session_utils.py"
     ).read_text(encoding="utf-8")
 
+    assert "def commit_session" in lifecycle
+    assert "def rollback_session" in lifecycle
     assert "def rollback_session_safely" in lifecycle
     assert "def remove_session_with_connection_recovery" in lifecycle
     assert "from axbi.utils.session_lifecycle import" in mcp_utils
+
+
+def test_sql_execution_and_report_hot_paths_use_commit_session() -> None:
+    """High-churn persistence paths must go through commit_session."""
+    hot_paths = (
+        REPO_ROOT / "axbi" / "sql" / "execution" / "celery_task.py",
+        REPO_ROOT / "axbi" / "sql" / "execution" / "executor.py",
+        REPO_ROOT / "axbi" / "commands" / "report" / "execute.py",
+    )
+    for path in hot_paths:
+        contents = path.read_text(encoding="utf-8")
+        assert "commit_session" in contents, f"{_relative(path)} missing commit_session"
+        # Raw commits on the Flask-SQLAlchemy session are banned on these paths.
+        # User-database ``conn.commit()`` for SQL mutations remains allowed.
+        for line_no, line in enumerate(contents.splitlines(), start=1):
+            if "db.session.commit(" in line and "commit_session" not in line:
+                raise AssertionError(
+                    f"{_relative(path)}:{line_no}: raw db.session.commit()"
+                )
 
 
 def test_transaction_decorator_uses_depth_and_safe_rollback() -> None:
