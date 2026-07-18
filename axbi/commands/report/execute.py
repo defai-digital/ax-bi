@@ -80,6 +80,7 @@ from axbi.utils.core import HeaderDataType, override_user, recipients_string_to_
 from axbi.utils.csv import get_chart_csv_data, get_chart_dataframe
 from axbi.utils.dates import naive_utcnow
 from axbi.utils.decorators import logs_context, transaction
+from axbi.utils.session_lifecycle import commit_session, rollback_session
 from axbi.utils.file import sanitize_title
 from axbi.utils.pdf import build_pdf_from_screenshots
 from axbi.utils.screenshots import ChartScreenshot, DashboardScreenshot
@@ -253,10 +254,18 @@ class BaseReportState:
                 error_message=error_message,
                 execution_id=self._execution_id,
             )
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            commit_session(
+                db.session,
+                context=f"report create_log execution_id={self._execution_id}",
+            )
         except StaleDataError as ex:
-            # Report schedule was modified or deleted by another process
-            db.session.rollback()  # pylint: disable=consider-using-transaction
+            # Report schedule was modified or deleted by another process.
+            # commit_session already rolls back on commit failure; re-attempt
+            # for create_for_schedule failures that never reached commit.
+            rollback_session(
+                db.session,
+                context=f"report create_log stale execution_id={self._execution_id}",
+            )
             logger.warning(
                 "Report schedule (execution %s) was modified or deleted "
                 "during execution. This can occur when a report is deleted "

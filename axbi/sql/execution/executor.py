@@ -78,6 +78,7 @@ from axbi.exceptions import (
 from axbi.extensions import cache_manager
 from axbi.sql.parse import SQLScript
 from axbi.utils import core as utils
+from axbi.utils.session_lifecycle import commit_session
 
 if TYPE_CHECKING:
     from axbi_core.queries.types import (
@@ -192,7 +193,10 @@ def execute_sql_with_cursor(
             )
         else:
             query.set_extra_json_key("progress", "Execution complete")
-        db.session.commit()  # pylint: disable=consider-using-transaction
+        commit_session(
+            db.session,
+            context=f"sql executor progress query_id={getattr(query, 'id', None)}",
+        )
 
     return results
 
@@ -309,7 +313,10 @@ class SQLExecutor:
             query.status = "success"
             query.rows = total_rows
             query.progress = 100
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            commit_session(
+                db.session,
+                context=f"sql executor success query_id={getattr(query, 'id', None)}",
+            )
 
             result = QueryResultType(
                 status=QueryStatus.SUCCESS,
@@ -801,7 +808,7 @@ class SQLExecutor:
             limit=opts.limit,
         )
         db.session.add(query)
-        db.session.commit()  # pylint: disable=consider-using-transaction
+        commit_session(db.session, context="sql executor create Query model")
 
         return query
 
@@ -944,7 +951,16 @@ class SQLExecutor:
         except Exception as ex:
             query.status = "failed"
             query.error_message = str(ex)
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            # Soft: still raise the Celery submission error; do not mask it with
+            # a secondary commit failure, but clean the session if commit fails.
+            commit_session(
+                db.session,
+                context=(
+                    f"sql executor celery submit failure "
+                    f"query_id={getattr(query, 'id', None)}"
+                ),
+                soft=True,
+            )
             raise
 
     def _create_async_handle(self, query_id: int) -> AsyncQueryHandle:

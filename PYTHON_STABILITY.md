@@ -57,12 +57,17 @@ What is already in good shape:
 - Document `BaseCommand.execute()` for transport call sites.
 - Static guards in `tests/unit_tests/test_python_stability_guards.py`.
 
-### Phase 1 — Transaction convergence (next)
+### Phase 1 — Transaction convergence (this batch)
 
-- Route remaining high-churn `db.session.commit()` sites in
-  `axbi/sql/execution/` and report scheduling through `@transaction` or
-  command-owned helpers.
-- Add integration tests that inject commit/rollback failures.
+- Added `commit_session(session, *, context, soft=...)` and session-scoped
+  `rollback_session` so a failed metadata write always rolls back before
+  returning control.
+- Converted `axbi/sql/execution/celery_task.py`,
+  `axbi/sql/execution/executor.py`, and report `create_log` in
+  `axbi/commands/report/execute.py` to those helpers (user-DB `conn.commit()`
+  for SQL mutations intentionally unchanged).
+- Unit tests cover soft/hard commit failure recovery and structural guards
+  ban raw `db.session.commit()` on those hot paths.
 
 ### Phase 2 — SQLAlchemy 2 style migration (incremental)
 

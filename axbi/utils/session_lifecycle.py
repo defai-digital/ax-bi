@@ -21,27 +21,70 @@ These helpers centralize rollback/remove hygiene for request handlers, Celery
 workers, CLI commands, and MCP tools. Call sites that must fail closed should
 use the strict variants; cleanup paths that must not mask a primary exception
 should use the ``*_safely`` variants.
+
+Hot-path persistence (SQL execution, report logs) should prefer
+:func:`commit_session` / :func:`rollback_session` with an explicit Session so a
+failed write always leaves the session clean for the next caller.
 """
 
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 from sqlalchemy.exc import DBAPIError
 
 logger = logging.getLogger(__name__)
 
 
-def rollback_session_safely(*, context: str) -> bool:
-    """Rollback the scoped session without masking an existing failure."""
-    from axbi.extensions import db
+def commit_session(
+    session: Any,
+    *,
+    context: str,
+    soft: bool = False,
+) -> bool:
+    """Commit ``session``; on failure, roll back so it is not left poisoned.
 
+    :param session: SQLAlchemy Session (typically ``db.session``)
+    :param context: short label included in log messages
+    :param soft: when True, return False after rollback instead of re-raising
+    :returns: True when the commit succeeded
+    :raises Exception: re-raises the commit error after rollback when
+        ``soft`` is False
+    """
     try:
-        db.session.rollback()  # pylint: disable=consider-using-transaction
+        session.commit()  # pylint: disable=consider-using-transaction
+        return True
+    except Exception:
+        logger.exception("Session commit failed during %s", context)
+        try:
+            session.rollback()  # pylint: disable=consider-using-transaction
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Session rollback failed after commit error during %s",
+                context,
+                exc_info=True,
+            )
+        if soft:
+            return False
+        raise
+
+
+def rollback_session(session: Any, *, context: str) -> bool:
+    """Rollback ``session`` without masking an existing failure."""
+    try:
+        session.rollback()  # pylint: disable=consider-using-transaction
     except Exception:  # noqa: BLE001
         logger.warning("Session rollback failed during %s", context, exc_info=True)
         return False
     return True
+
+
+def rollback_session_safely(*, context: str) -> bool:
+    """Rollback the app scoped session without masking an existing failure."""
+    from axbi.extensions import db
+
+    return rollback_session(db.session, context=context)
 
 
 def remove_session_with_connection_recovery() -> None:
