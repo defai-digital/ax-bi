@@ -79,3 +79,20 @@ Each as its **own PR** into `release/2.0.x` with smoke checklist.
 - [ ] `npm ci` clean on Node matching engines  
 - [ ] Tag `ax-bi-desktop-v2.0.6` (and/or web release) from this branch  
 - [ ] Product users pointed at the new tag, not floating `main`
+
+
+## Applied on release/2.0.x (this recovery pass)
+
+Applied cleanly or with minor conflict resolution:
+
+- `cb27301471` fix(python): session lifecycle
+- `2ad14e6af5` fix(python): SQL/report safe commit
+- `9532b6f1ab` fix(ui): ModalTrigger / antd6 / chart type gate
+- `af617878e3` fix(ui): shared component type compatibility
+- `7878863d9f` fix(explore): guided chart suggestions
+
+Skipped (do not re-open without slicing GenAI out):
+
+- `0bb35b3d99` — depends on GenaiLlmSettings + genai settings_store absent from baseline
+
+Still Hold: GenAI/authoring, phase-6 UX, MCP bulk, ECharts chart-style (`wip/echarts-theme-polish`).

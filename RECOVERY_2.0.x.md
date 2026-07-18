@@ -7,6 +7,20 @@
 **Parked WIP:** `wip/echarts-theme-polish`  
 **Strategy:** Mode A — freeze + release branch
 
+## Cherry-picks applied (toward v2.0.6)
+
+| Commit | Summary | Status |
+|--------|---------|--------|
+| `cb27301471` | python session lifecycle | Applied |
+| `2ad14e6af5` | python SQL/report safe commit | Applied |
+| `9532b6f1ab` | ModalTrigger / antd6 / chart type gate | Applied (resolved test file add) |
+| `af617878e3` | Select/shared component types | Applied (minor test conflict) |
+| `7878863d9f` | guided chart suggestions copy | Applied |
+| `0bb35b3d99` | type-safety + genai fingerprint | **Skipped** — pulls GenAI pages/settings not on baseline |
+
+Frontend unit tests: ModalTrigger + Tooltip **passed**.  
+Python unit tests (session lifecycle / stability guards / base command / decorators): **31 passed**.
+
 ## Why this branch exists
 
 After v2.0.5, `main` accumulated ~62 commits (~357 files) in roughly one day:
