@@ -112,6 +112,28 @@ def test_redis_limiter_falls_back_when_no_atomic_inc() -> None:
     assert [is_limited for is_limited, _ in results] == [False, False, True]
 
 
+def test_redis_limiter_no_inc_fallback_does_not_extend_past_window() -> None:
+    """Without atomic inc, set must use remaining window TTL, not a full refresh.
+
+    Re-setting timeout=window on every hit under steady traffic never lets the
+    fixed window expire (permanent lockout / sliding soft-limit).
+    """
+    cache = _FakeCache()
+    cache.inc = MagicMock(side_effect=NotImplementedError)  # type: ignore[method-assign]
+    limiter = _make_redis_limiter(cache)
+
+    window = 60
+    for _ in range(5):
+        limiter.is_rate_limited("k", limit=10, window=window)
+
+    assert len(cache.store) == 1
+    (only_key,) = cache.store
+    assert cache.store[only_key] == 5
+    # TTL must be at most the window (remaining seconds until bucket end).
+    assert cache.timeouts[only_key] is not None
+    assert 1 <= int(cache.timeouts[only_key] or 0) <= window
+
+
 def test_in_memory_limiter_sliding_window() -> None:
     limiter = InMemoryRateLimiter()
     results = [limiter.is_rate_limited("k", limit=2, window=60) for _ in range(3)]

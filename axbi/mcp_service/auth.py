@@ -161,6 +161,11 @@ def _get_token_scopes() -> set[str] | None:
     so callers can fall back to RBAC-only behavior (back-compat for API-key and
     scope-less JWT deployments). Returns a (possibly populated) set only when
     the token explicitly advertises scopes.
+
+    API-key access tokens may list ``required_scopes`` so FastMCP transport
+    middleware accepts the Bearer token, but FAB API keys do not encode OAuth
+    capabilities. Scope enforcement is therefore skipped for API-key
+    passthrough tokens; ``check_tool_permission`` RBAC remains authoritative.
     """
     try:
         from fastmcp.server.dependencies import get_access_token
@@ -173,6 +178,10 @@ def _get_token_scopes() -> set[str] | None:
         return None
 
     if access_token is None:
+        return None
+
+    claims = getattr(access_token, "claims", None)
+    if isinstance(claims, dict) and claims.get(API_KEY_PASSTHROUGH_CLAIM):
         return None
 
     scopes = getattr(access_token, "scopes", None)

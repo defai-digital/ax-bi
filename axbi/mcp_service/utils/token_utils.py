@@ -606,12 +606,13 @@ def truncate_oversized_response(
     """
     Dynamically truncate large fields in a response to fit within the token limit.
 
-    Applies five progressive phases of truncation:
+    Applies progressive phases of truncation:
     1. Truncate long top-level string fields
     2. Truncate large list fields to _MAX_LIST_ITEMS
     3. Recursively truncate strings in nested structures (list items, nested dicts)
     4. Aggressively reduce lists to 10 items and summarize large dicts
-    5. Replace all collections with empty values
+    5. Progressively tighter recursive string caps (preserve structure longer)
+    6. Replace all collections with empty values
 
     Args:
         response: The tool response (Pydantic model, dict, or other).
@@ -654,7 +655,15 @@ def truncate_oversized_response(
     if _is_under_limit(data, token_limit):
         return data, was_truncated, notes
 
-    # Phase 5: Nuclear — replace all collections with empty values
+    # Phase 5: Tighter recursive string caps before clearing collections so
+    # small nested payloads (e.g. one chart with a long description) keep
+    # structure while still fitting tight token limits.
+    for max_chars in (200, 100, 50, 20):
+        was_truncated |= _truncate_strings_recursive(data, notes, max_chars=max_chars)
+        if _is_under_limit(data, token_limit):
+            return data, was_truncated, notes
+
+    # Phase 6: Nuclear — replace all collections with empty values
     was_truncated |= _replace_collections_with_summaries(data, notes)
 
     return data, was_truncated, notes

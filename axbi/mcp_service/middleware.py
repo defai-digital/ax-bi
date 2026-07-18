@@ -920,7 +920,9 @@ class RedisRateLimiter:
             "window_seconds": window,
         }
 
-    def _increment_window_counter(self, full_key: str, window: int) -> int:
+    def _increment_window_counter(
+        self, full_key: str, window: int, remaining_ttl: int
+    ) -> int:
         """Atomically increment the per-window counter and return its value.
 
         ``add`` anchors the TTL to the window the first time the bucket is seen
@@ -928,6 +930,10 @@ class RedisRateLimiter:
         without touching the TTL, so the window expires at its boundary rather
         than being extended on every call. Falls back to a best-effort get/set
         when the backend lacks an atomic ``inc``.
+
+        The non-atomic fallback must not re-extend past the fixed window: it
+        sets the counter with ``remaining_ttl`` (seconds until bucket end), not
+        a fresh full ``window`` on every hit.
         """
         # Anchor the window TTL exactly once for this bucket.
         self._cache.add(full_key, 0, timeout=window)
@@ -943,9 +949,10 @@ class RedisRateLimiter:
                 new_count = None
         if new_count is None:
             # Backend without atomic inc (or the bucket expired between add and
-            # inc): best-effort non-atomic increment.
+            # inc): best-effort non-atomic increment. Cap TTL to remaining
+            # fixed-window time so steady traffic cannot slide the window.
             new_count = int(self._cache.get(full_key) or 0) + 1
-            self._cache.set(full_key, new_count, timeout=window)
+            self._cache.set(full_key, new_count, timeout=max(1, remaining_ttl))
         return int(new_count)
 
     def is_rate_limited(
@@ -956,9 +963,12 @@ class RedisRateLimiter:
         bucket = int(current_time // window)
         full_key = f"{self._prefix}{key}:{bucket}"
         reset_time = (bucket + 1) * window
+        remaining_ttl = max(1, int(reset_time - current_time))
 
         try:
-            count = self._increment_window_counter(full_key, window)
+            count = self._increment_window_counter(
+                full_key, window, remaining_ttl=remaining_ttl
+            )
         except Exception as e:
             logger.warning("Redis rate limiter error: %s, allowing request", e)
             return self._allow(limit, window)

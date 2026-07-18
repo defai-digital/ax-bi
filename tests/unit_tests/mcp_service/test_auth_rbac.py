@@ -404,6 +404,34 @@ def test_scope_falls_back_to_rbac_when_token_has_no_scopes(app_context) -> None:
     assert result is True
 
 
+def test_scope_skips_enforcement_for_api_key_passthrough_token(app_context) -> None:
+    """API-key AccessTokens may list required_scopes for transport middleware.
+
+    Tool-level scope checks must still defer to FAB RBAC; otherwise Admin API
+    keys stamped with only MCP_REQUIRED_SCOPES (e.g. axbi:read) cannot call
+    write tools.
+    """
+    from axbi.mcp_service.composite_token_verifier import API_KEY_PASSTHROUGH_CLAIM
+
+    g.user = MagicMock(username="admin")
+    func = _make_tool_func(class_perm="Chart", method_perm="write")
+
+    token = MagicMock()
+    token.scopes = ["axbi:read"]  # stamped for transport; not real capabilities
+    token.claims = {API_KEY_PASSTHROUGH_CLAIM: True}
+
+    with (
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
+        patch(
+            "fastmcp.server.dependencies.get_access_token",
+            return_value=token,
+        ),
+    ):
+        result = check_tool_permission(func)
+
+    assert result is True
+
+
 def test_scope_falls_back_to_rbac_when_no_jwt_context(app_context) -> None:
     """No JWT context at all (e.g. API key / dev mode): RBAC-only behavior."""
     g.user = MagicMock(username="editor")
