@@ -16,7 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { HTMLAttributes, memo, useMemo, useCallback } from 'react';
+import {
+  HTMLAttributes,
+  memo,
+  ReactElement,
+  useMemo,
+  useCallback,
+} from 'react';
 import {
   ColumnInstance,
   HeaderGroup,
@@ -26,9 +32,14 @@ import {
   TablePropGetter,
 } from 'react-table';
 import { styled } from '@ax-bi/core/theme';
-import { Table, TableSize } from '@ax-bi/ui-core/components/Table';
-import { TableRowSelection, SorterResult } from 'antd/es/table/interface';
-import { mapColumns, mapRows } from './utils';
+import {
+  Table,
+  TablePaginationConfig,
+  TableProps,
+  TableSize,
+} from '@ax-bi/ui-core/components/Table';
+import { TableRowSelection } from 'antd/es/table/interface';
+import { mapColumns, mapRows, TableCollectionRow } from './utils';
 
 export interface TableCollectionProps<T extends object> {
   getTableProps: TablePropGetter<T>;
@@ -53,13 +64,19 @@ export interface TableCollectionProps<T extends object> {
   onPageChange?: (page: number, pageSize: number) => void;
   isPaginationSticky?: boolean;
   showRowCount?: boolean;
-  expandable?: Record<string, unknown>;
+  expandable?: TableProps<TableCollectionRow<T>>['expandable'];
 }
 
-const StyledTable = styled(Table)<{
+type TableCollectionStyleProps = {
   isPaginationSticky?: boolean;
   showRowCount?: boolean;
-}>`
+};
+
+type StyledTableComponent = <RecordType extends object>(
+  props: TableProps<RecordType> & TableCollectionStyleProps,
+) => ReactElement;
+
+const StyledTable = styled(Table)<TableCollectionStyleProps>`
   ${({ theme, isPaginationSticky, showRowCount }) => `
     th.ant-column-cell {
       overflow: hidden;
@@ -155,7 +172,7 @@ const StyledTable = styled(Table)<{
       background-color: ${theme.colorBgContainer};
     }
   `}
-`;
+` as unknown as StyledTableComponent;
 
 function TableCollection<T extends object>({
   columns,
@@ -195,35 +212,36 @@ function TableCollection<T extends object>({
     [selectedFlatRows],
   );
 
-  const rowSelection: TableRowSelection | undefined = useMemo(() => {
-    if (!bulkSelectEnabled) return undefined;
+  const rowSelection: TableRowSelection<TableCollectionRow<T>> | undefined =
+    useMemo(() => {
+      if (!bulkSelectEnabled) return undefined;
 
-    // antd Table's `rowSelection` API renders its own checkbox column.
-    // The select-all `data-test` lives on the `<th>` via `header.cell`
-    // below (keyed on antd's `ant-table-selection-column` className), NOT
-    // via `columnTitle` — rc-table's MeasureCell renders the column
-    // `title` verbatim inside `<tbody>`, so a `columnTitle` wrapper leaks
-    // any `data-test` attr into the measure row and breaks Playwright
-    // strict-mode selectors. `renderCell` only renders in real body rows,
-    // so wrapping per-row checkboxes there is safe.
-    return {
+      // antd Table's `rowSelection` API renders its own checkbox column.
+      // The select-all `data-test` lives on the `<th>` via `header.cell`
+      // below (keyed on antd's `ant-table-selection-column` className), NOT
+      // via `columnTitle` — rc-table's MeasureCell renders the column
+      // `title` verbatim inside `<tbody>`, so a `columnTitle` wrapper leaks
+      // any `data-test` attr into the measure row and breaks Playwright
+      // strict-mode selectors. `renderCell` only renders in real body rows,
+      // so wrapping per-row checkboxes there is safe.
+      return {
+        selectedRowKeys,
+        onSelect: (record, selected) => {
+          toggleRowSelected?.(record.rowId, selected);
+        },
+        onSelectAll: (selected: boolean) => {
+          toggleAllRowsSelected?.(selected);
+        },
+        renderCell: (_value, _record, _index, originNode) => (
+          <span data-test="row-select-checkbox">{originNode}</span>
+        ),
+      };
+    }, [
+      bulkSelectEnabled,
       selectedRowKeys,
-      onSelect: (record, selected) => {
-        toggleRowSelected?.(record.rowId, selected);
-      },
-      onSelectAll: (selected: boolean) => {
-        toggleAllRowsSelected?.(selected);
-      },
-      renderCell: (_value, _record, _index, originNode) => (
-        <span data-test="row-select-checkbox">{originNode}</span>
-      ),
-    };
-  }, [
-    bulkSelectEnabled,
-    selectedRowKeys,
-    toggleRowSelected,
-    toggleAllRowsSelected,
-  ]);
+      toggleRowSelected,
+      toggleAllRowsSelected,
+    ]);
 
   const handlePaginationChange = useCallback(
     (page: number, size: number) => {
@@ -240,18 +258,21 @@ function TableCollection<T extends object>({
     [],
   );
 
-  const handleTableChange = useCallback(
-    (_pagination: any, _filters: any, sorter: SorterResult) => {
-      if (sorter && sorter.field) {
+  const handleTableChange: NonNullable<
+    TableProps<TableCollectionRow<T>>['onChange']
+  > = useCallback(
+    (_pagination, _filters, sorter) => {
+      const activeSorter = Array.isArray(sorter) ? sorter[0] : sorter;
+      if (activeSorter?.field) {
         // Convert array field back to dot notation for nested fields
-        const fieldId = Array.isArray(sorter.field)
-          ? sorter.field.join('.')
-          : sorter.field;
+        const fieldId = Array.isArray(activeSorter.field)
+          ? activeSorter.field.join('.')
+          : activeSorter.field;
 
         setSortBy?.([
           {
             id: fieldId,
-            desc: sorter.order === 'descend',
+            desc: activeSorter.order === 'descend',
           },
         ] as SortingRule<T>[]);
       }
@@ -262,9 +283,8 @@ function TableCollection<T extends object>({
   const paginationConfig = useMemo(() => {
     if (totalCount === 0) return false;
 
-    const config: any = {
+    const config: TablePaginationConfig = {
       pageSize,
-      size: 'default' as const,
       showSizeChanger: false,
       showQuickJumper: false,
       align: 'center' as const,
@@ -292,10 +312,12 @@ function TableCollection<T extends object>({
   ]);
 
   const getRowClassName = useCallback(
-    (record: Record<string, unknown>) =>
-      highlightRowId !== undefined && record?.id === highlightRowId
+    (record: TableCollectionRow<T>) => {
+      const recordId = 'id' in record ? record.id : undefined;
+      return highlightRowId !== undefined && recordId === highlightRowId
         ? 'table-row-highlighted'
-        : '',
+        : '';
+    },
     [highlightRowId],
   );
 
@@ -347,4 +369,4 @@ function TableCollection<T extends object>({
   );
 }
 
-export default memo(TableCollection);
+export default memo(TableCollection) as typeof TableCollection;

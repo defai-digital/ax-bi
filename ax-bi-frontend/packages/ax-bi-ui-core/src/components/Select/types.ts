@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { JSXElementConstructor, ReactElement, ReactNode, Ref } from 'react';
+import { JSXElementConstructor, ReactElement, ReactNode } from 'react';
 import {
   SelectProps as AntdSelectProps,
   SelectValue as AntdSelectValue,
@@ -71,12 +71,20 @@ export type AntdExposedProps = Pick<
   | 'virtual'
   | 'getPopupContainer'
   | 'menuItemSelectedIcon'
-  // `dropdownAlign` is declared required on rc-select's trigger props, so it
-  // must be exposed as optional rather than picked directly
-> &
-  Partial<Pick<AntdProps, 'dropdownAlign'>>;
+>;
 
 export type SelectOptionsType = Exclude<AntdProps['options'], undefined>;
+
+export type SelectOptionType = SelectOptionsType[number];
+
+/** Allow comparators to use additional fields supplied by enriched options. */
+export type SelectComparator = {
+  bivarianceHack(
+    a: SelectOptionType,
+    b: SelectOptionType,
+    search?: string,
+  ): number;
+}['bivarianceHack'];
 
 export interface BaseSelectProps extends AntdExposedProps {
   /**
@@ -150,11 +158,7 @@ export interface BaseSelectProps extends AntdExposedProps {
    * Customize how filtered options are sorted while users search.
    * Will not apply to predefined `options` array when users are not searching.
    */
-  sortComparator?: (
-    a: AntdLabeledValue,
-    b: AntdLabeledValue,
-    search?: string,
-  ) => number;
+  sortComparator?: SelectComparator;
   /**
    * Sets maxTagCount to 1. The overflow tag is always displayed in
    * the same line, line wrapping is disabled.
@@ -163,11 +167,18 @@ export interface BaseSelectProps extends AntdExposedProps {
    */
   oneLine?: boolean;
 
+  /**
+   * AX BI exposes the boolean search toggle rather than Ant Design's
+   * component-level search configuration object.
+   */
+  showSearch?: boolean;
+
+  /** Token delimiters accepted when pasting values. */
+  tokenSeparators?: string[];
+
   suffixIcon?: ReactNode;
 
   value?: SelectValue | null;
-
-  ref: Ref<RefSelectProps>;
 
   dropdownStyle?: React.CSSProperties;
 }

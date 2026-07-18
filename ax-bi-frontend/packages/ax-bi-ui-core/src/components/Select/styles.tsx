@@ -18,6 +18,11 @@
  */
 import { styled } from '@ax-bi/core/theme';
 import { Select } from 'antd';
+import type {
+  DefaultOptionType,
+  SelectValue as AntdSelectValue,
+} from 'antd/es/select';
+import type { ClipboardEventHandler } from 'react';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { Spin } from '../Spin';
 import { Flex } from '../Flex';
@@ -42,9 +47,13 @@ export const StyledContainer = styled.div<{ headerPosition: string }>`
   `}
 `;
 
-export const StyledSelect = styled(Select, {
+export const StyledSelect = styled(Select<AntdSelectValue, DefaultOptionType>, {
   shouldForwardProp: prop => prop !== 'headerPosition' && prop !== 'oneLine',
-})<{ headerPosition?: string; oneLine?: boolean }>`
+})<{
+  headerPosition?: string;
+  oneLine?: boolean;
+  onPaste?: ClipboardEventHandler<HTMLInputElement>;
+}>`
   ${({ theme, headerPosition, oneLine }) => `
     .ant-select-item-option-active:not(.ant-select-item-option-disabled) {
       outline: 2px solid ${theme.colorPrimary};

@@ -53,6 +53,7 @@ test('constructor initializes with correct defaults', () => {
   );
 
   expect(utils.tableRef).toBe(table);
+  expect(utils.columnRef).toBeNull();
   expect(utils.isDragging).toBe(false);
   expect(utils.resizable).toBe(false);
   expect(utils.reorderable).toBe(false);

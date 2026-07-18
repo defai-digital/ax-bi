@@ -66,6 +66,7 @@ import {
   SelectOptionsPagePromise,
   SelectOptionsType,
   SelectOptionsTypePage,
+  SelectOptionType,
   SelectProps,
 } from './types';
 import {
@@ -107,7 +108,7 @@ const getQueryCacheKey = (value: string, page: number, pageSize: number) =>
  * Each of the categories come with different abilities. For a comprehensive guide please refer to
  * the storybook in @ax-bi/ui-core/components/Select/Select.stories.tsx.
  */
-const AsyncSelect = forwardRef(
+const AsyncSelect = forwardRef<AsyncSelectRef, AsyncSelectProps>(
   (
     {
       allowClear,
@@ -146,7 +147,7 @@ const AsyncSelect = forwardRef(
       maxTagCount: propsMaxTagCount,
       ...props
     }: AsyncSelectProps,
-    ref: RefObject<AsyncSelectRef>,
+    ref,
   ) => {
     const isSingleMode = mode === 'single';
     const [selectValue, setSelectValue] = useState(value);
@@ -159,6 +160,7 @@ const AsyncSelect = forwardRef(
     const [loadingEnabled, setLoadingEnabled] = useState(!lazyLoading);
     const [allValuesLoaded, setAllValuesLoaded] = useState(false);
     const selectValueRef = useRef(selectValue);
+    const selectRef = useRef<RefSelectProps>(null);
     const fetchedQueries = useRef(new Map<string, number>());
     const initialOptionsRef = useRef<SelectOptionsType>(EMPTY_OPTIONS);
     const inputValueRef = useRef('');
@@ -195,13 +197,13 @@ const AsyncSelect = forwardRef(
     }, [inputValue]);
 
     const sortSelectedFirst = useCallback(
-      (a: AntdLabeledValue, b: AntdLabeledValue) =>
+      (a: SelectOptionType, b: SelectOptionType) =>
         sortSelectedFirstHelper(a, b, selectValueRef.current),
       [],
     );
 
     const sortComparatorWithSearch = useCallback(
-      (a: AntdLabeledValue, b: AntdLabeledValue) =>
+      (a: SelectOptionType, b: SelectOptionType) =>
         sortComparatorWithSearchHelper(
           a,
           b,
@@ -213,7 +215,7 @@ const AsyncSelect = forwardRef(
     );
 
     const sortComparatorForNoSearch = useCallback(
-      (a: AntdLabeledValue, b: AntdLabeledValue) =>
+      (a: SelectOptionType, b: SelectOptionType) =>
         sortComparatorForNoSearchHelper(
           a,
           b,
@@ -478,7 +480,7 @@ const AsyncSelect = forwardRef(
       }
     };
 
-    const handleFilterOption = (search: string, option: AntdLabeledValue) =>
+    const handleFilterOption = (search: string, option?: SelectOptionType) =>
       handleFilterOptionHelper(search, option, optionFilterProps, filterOption);
 
     const handleOnDropdownVisibleChange = (isDropdownVisible: boolean) => {
@@ -620,19 +622,19 @@ const AsyncSelect = forwardRef(
       }
     }, [isLoading, loading]);
 
-    const clearCache = () => {
+    const clearCache = useCallback(() => {
       fetchedQueries.current.clear();
       initialOptionsRef.current = EMPTY_OPTIONS;
       setAllValuesLoaded(false);
-    };
+    }, []);
 
     useImperativeHandle(
       ref,
       () => ({
-        ...(ref.current as RefSelectProps),
+        ...(selectRef.current as RefSelectProps),
         clearCache,
       }),
-      [ref],
+      [clearCache],
     );
 
     const getPastedTextValue = useCallback(
@@ -712,7 +714,6 @@ const AsyncSelect = forwardRef(
           onBlur={handleOnBlur}
           onDeselect={handleOnDeselect}
           onOpenChange={handleOnDropdownVisibleChange}
-          // @ts-expect-error
           onPaste={onPaste}
           onPopupScroll={handlePagination}
           onSearch={showSearch ? handleOnSearch : undefined}
@@ -734,7 +735,7 @@ const AsyncSelect = forwardRef(
           }
           oneLine={oneLine}
           {...props}
-          ref={ref}
+          ref={selectRef}
         />
       </StyledContainer>
     );

@@ -33,12 +33,13 @@ import {
   UseResizeColumnsColumnOptions,
   UseResizeColumnsColumnProps,
 } from 'react-table';
+import type { ColumnsType } from 'antd/es/table';
 
 import { SortOrder } from '../Table';
 
 type TableSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
 
-type RowWithId<T extends object> = Row<T> & { rowId: string };
+export type TableCollectionRow<T extends object> = T & { rowId: string };
 
 const COLUMN_SIZE_MAP: Record<TableSize, number> = {
   xs: 25,
@@ -87,7 +88,7 @@ export function mapColumns<T extends object>(
   columns: EnhancedColumnInstance<T>[],
   headerGroups: EnhancedHeaderGroup<T>[],
   columnsForWrapText?: string[],
-) {
+): ColumnsType<TableCollectionRow<T>> {
   return columns.map(column => {
     const { isSorted, isSortedDesc } = getSortingInfo(headerGroups, column.id);
     return {
@@ -103,7 +104,7 @@ export function mapColumns<T extends object>(
           : 'ascend'
         : undefined) as SortOrder | undefined,
       sorter: !column.disableSortBy,
-      render: (val: CellValue<T>, record: RowWithId<T>): ReactNode => {
+      render: (val: CellValue<T>, record: TableCollectionRow<T>): ReactNode => {
         if (column.Cell) {
           const cellRenderer = column.Cell as ({
             value,
@@ -111,7 +112,7 @@ export function mapColumns<T extends object>(
             column,
           }: {
             value: CellValue<T>;
-            row: { original: Row<T>; id: string };
+            row: { original: T; id: string };
             column: RTColumnInstance<T>;
           }) => ReactNode;
 
@@ -131,7 +132,7 @@ export function mapColumns<T extends object>(
 export function mapRows<T extends object>(
   rows: Row<T>[],
   prepareRow: (row: Row<T>) => void,
-) {
+): TableCollectionRow<T>[] {
   return rows.map(row => {
     prepareRow(row);
     return { rowId: row.id, ...row.original, ...row.getRowProps() };

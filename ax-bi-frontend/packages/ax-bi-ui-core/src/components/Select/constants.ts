@@ -16,10 +16,9 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { LabeledValue as AntdLabeledValue } from 'antd/es/select';
 import { t } from '@ax-bi/core/translation';
 import { rankedSearchCompare } from '../../utils/rankedSearchCompare';
-import { RawValue, SelectProps } from './types';
+import { AntdProps, RawValue, SelectComparator } from './types';
 
 export const MAX_TAG_COUNT = 4;
 
@@ -33,7 +32,7 @@ export const SELECT_ALL_VALUE: RawValue = t('Select All');
 
 export const VIRTUAL_THRESHOLD = 20;
 
-export const DROPDOWN_ALIGN_BOTTOM: SelectProps['dropdownAlign'] = {
+export const DROPDOWN_ALIGN_BOTTOM: NonNullable<AntdProps['popupAlign']> = {
   points: ['tl', 'bl'],
   offset: [0, 4],
   overflow: { adjustX: 0, adjustY: 1 },
@@ -44,11 +43,7 @@ export const SELECT_ALL_OPTION = {
   label: String(SELECT_ALL_VALUE),
 };
 
-export const DEFAULT_SORT_COMPARATOR = (
-  a: AntdLabeledValue,
-  b: AntdLabeledValue,
-  search?: string,
-) => {
+export const DEFAULT_SORT_COMPARATOR: SelectComparator = (a, b, search) => {
   let aText: string | undefined;
   let bText: string | undefined;
   if (typeof a.label === 'string' && typeof b.label === 'string') {
@@ -65,5 +60,8 @@ export const DEFAULT_SORT_COMPARATOR = (
     }
     return aText.localeCompare(bText);
   }
-  return (a.value as number) - (b.value as number);
+  if (typeof a.value === 'number' && typeof b.value === 'number') {
+    return a.value - b.value;
+  }
+  return String(a.value ?? '').localeCompare(String(b.value ?? ''));
 };

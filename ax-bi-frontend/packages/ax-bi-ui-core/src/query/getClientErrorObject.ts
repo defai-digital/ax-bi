@@ -152,11 +152,22 @@ export function parseErrorJson(responseJson: JsonObject): ClientErrorObject {
     };
   }
 
-  return { ...error, error: error.error }; // explicit ClientErrorObject
+  if (!error.error) {
+    const statusError =
+      typeof error.status === 'number'
+        ? getErrorFromStatusCode(error.status)
+        : null;
+    error.error =
+      statusError ||
+      (typeof error.statusText === 'string' && error.statusText) ||
+      '';
+  }
+
+  return { ...error, error: error.error };
 }
 
 export function getClientErrorObject(
-  response: AxBIClientResponse | TimeoutError | { response: Response } | string,
+  response: unknown,
 ): Promise<ClientErrorObject> {
   // takes a AxBIClientResponse as input, attempts to read response as Json
   // if possible, and returns a Promise that resolves to a plain object with
@@ -178,12 +189,16 @@ export function getClientErrorObject(
     }
 
     if (
+      typeof response === 'object' &&
+      response !== null &&
       'timeout' in response &&
       'statusText' in response &&
-      response.statusText === 'timeout'
+      response.statusText === 'timeout' &&
+      typeof response.timeout === 'number'
     ) {
       resolve({
         ...response,
+        statusText: 'timeout',
         error: t('Request timed out'),
         errors: [
           {
@@ -212,7 +227,14 @@ export function getClientErrorObject(
     }
 
     const responseObject =
-      response instanceof Response ? response : response.response;
+      response instanceof Response
+        ? response
+        : typeof response === 'object' &&
+            response !== null &&
+            'response' in response &&
+            response.response instanceof Response
+          ? response.response
+          : undefined;
 
     if (responseObject && !responseObject.bodyUsed) {
       // attempt to read the body as json, and fallback to text. we must clone
@@ -233,7 +255,7 @@ export function getClientErrorObject(
         })
         .catch(() => {
           // fall back to reading as text
-          responseObject.text().then((errorText: any) => {
+          responseObject.text().then((errorText: string) => {
             resolve({
               // Destructuring not necessary here
               ...responseObject,
@@ -245,7 +267,23 @@ export function getClientErrorObject(
     }
 
     // fall back to Response.statusText or generic error of we cannot read the response
-    let error = (response as any).statusText || (response as any).message;
+    const statusText =
+      typeof response === 'object' &&
+      response !== null &&
+      'statusText' in response &&
+      typeof response.statusText === 'string'
+        ? response.statusText
+        : undefined;
+    const message =
+      response instanceof Error
+        ? response.message
+        : typeof response === 'object' &&
+            response !== null &&
+            'message' in response &&
+            typeof response.message === 'string'
+          ? response.message
+          : undefined;
+    let error = statusText || message;
     if (!error) {
       // eslint-disable-next-line no-console
       console.error('non-standard error:', response);

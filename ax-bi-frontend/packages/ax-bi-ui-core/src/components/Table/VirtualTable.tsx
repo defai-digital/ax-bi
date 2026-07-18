@@ -23,7 +23,7 @@ import {
   TableProps as AntTableProps,
 } from 'antd/es/table';
 import classNames from 'classnames';
-import { useResizeDetector } from 'react-resize-detector';
+import { type ResizePayload, useResizeDetector } from 'react-resize-detector';
 import { useEffect, useRef, useState, useCallback, CSSProperties } from 'react';
 import { VariableSizeGrid as Grid } from 'react-window';
 import { safeHtmlSpan } from '@ax-bi/ui-core';
@@ -84,8 +84,8 @@ const VirtualTable = <RecordType extends object>(
     allowHTML = false,
   } = props;
   const [tableWidth, setTableWidth] = useState<number>(0);
-  const onResize = useCallback((width: number) => {
-    setTableWidth(width);
+  const onResize = useCallback(({ width }: ResizePayload) => {
+    setTableWidth(width ?? 0);
   }, []);
   const { ref } = useResizeDetector({ onResize });
   const theme = useTheme();

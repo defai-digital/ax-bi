@@ -22,7 +22,15 @@ import { ReactElement, RefObject } from 'react';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { LabeledValue as AntdLabeledValue, SELECT_ALL_VALUE } from '.';
 import { StyledHelperText, StyledLoadingText, StyledSpin } from './styles';
-import { CustomLabeledValue, RawValue, SelectOptionsType, V } from './types';
+import {
+  CustomLabeledValue,
+  BaseSelectProps,
+  RawValue,
+  SelectComparator,
+  SelectOptionsType,
+  SelectOptionType,
+  V,
+} from './types';
 
 export function isObject(value: unknown): value is Record<string, unknown> {
   return (
@@ -95,8 +103,8 @@ export const propertyComparator =
   };
 
 export const sortSelectedFirstHelper = (
-  a: AntdLabeledValue,
-  b: AntdLabeledValue,
+  a: SelectOptionType,
+  b: SelectOptionType,
   selectValue:
     | string
     | number
@@ -115,26 +123,18 @@ export const sortSelectedFirstHelper = (
 };
 
 export const sortComparatorWithSearchHelper = (
-  a: AntdLabeledValue,
-  b: AntdLabeledValue,
+  a: SelectOptionType,
+  b: SelectOptionType,
   inputValue: string,
-  sortCallback: (a: AntdLabeledValue, b: AntdLabeledValue) => number,
-  sortComparator: (
-    a: AntdLabeledValue,
-    b: AntdLabeledValue,
-    search?: string | undefined,
-  ) => number,
+  sortCallback: SelectComparator,
+  sortComparator: SelectComparator,
 ) => sortCallback(a, b) || sortComparator(a, b, inputValue);
 
 export const sortComparatorForNoSearchHelper = (
-  a: AntdLabeledValue,
-  b: AntdLabeledValue,
-  sortCallback: (a: AntdLabeledValue, b: AntdLabeledValue) => number,
-  sortComparator: (
-    a: AntdLabeledValue,
-    b: AntdLabeledValue,
-    search?: string | undefined,
-  ) => number,
+  a: SelectOptionType,
+  b: SelectOptionType,
+  sortCallback: SelectComparator,
+  sortComparator: SelectComparator,
 ) => sortCallback(a, b) || sortComparator(a, b, '');
 
 // use a function instead of component since every rerender of the
@@ -203,9 +203,9 @@ export const dropDownRenderHelper = (
 
 export const handleFilterOptionHelper = (
   search: string,
-  option: AntdLabeledValue,
+  option: SelectOptionType | undefined,
   optionFilterProps: string[],
-  filterOption: boolean | Function,
+  filterOption: BaseSelectProps['filterOption'],
 ) => {
   if (typeof filterOption === 'function') {
     return filterOption(search, option);
@@ -217,12 +217,10 @@ export const handleFilterOptionHelper = (
 
   if (filterOption) {
     const searchValue = search.trim().toLowerCase();
-    if (optionFilterProps?.length) {
+    if (option && optionFilterProps?.length) {
       return optionFilterProps.some(prop => {
-        const optionProp = option?.[prop as keyof CustomLabeledValue]
-          ? String(option[prop as keyof CustomLabeledValue])
-              .trim()
-              .toLowerCase()
+        const optionProp = option[prop]
+          ? String(option[prop]).trim().toLowerCase()
           : '';
         return optionProp.includes(searchValue);
       });

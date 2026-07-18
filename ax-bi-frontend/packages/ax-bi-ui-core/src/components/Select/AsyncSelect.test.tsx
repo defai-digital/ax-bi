@@ -26,7 +26,7 @@ import {
   within,
 } from '@ax-bi/ui-core/spec';
 import { AsyncSelect } from '.';
-import type { LabeledValue } from './types';
+import type { AsyncSelectRef, LabeledValue } from './types';
 
 const ARIA_LABEL = 'Test';
 const NEW_OPTION = 'Kyle';
@@ -1498,6 +1498,22 @@ test('does not fire onChange if the same value is selected in single mode', asyn
   expect(onChange).toHaveBeenCalledTimes(1);
   await userEvent.click(await findSelectOption(optionText));
   expect(onChange).toHaveBeenCalledTimes(1);
+});
+
+test('exposes the async select API through a callback ref', () => {
+  const refState: { current: AsyncSelectRef | null } = { current: null };
+
+  render(
+    <AsyncSelect
+      {...defaultProps}
+      ref={instance => {
+        refState.current = instance;
+      }}
+    />,
+  );
+
+  expect(refState.current?.clearCache).toEqual(expect.any(Function));
+  expect(refState.current?.focus).toEqual(expect.any(Function));
 });
 
 /*
