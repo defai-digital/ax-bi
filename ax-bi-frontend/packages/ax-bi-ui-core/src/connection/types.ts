@@ -25,9 +25,19 @@ export type Endpoint = string;
 export type FetchRetryOptions = {
   retries?: number;
   retryDelay?:
-    number | ((attempt: number, error: Error, response: Response) => number);
+    | number
+    | ((
+        attempt: number,
+        error: Error | null,
+        response: Response | null,
+      ) => number);
   retryOn?:
-    number[] | ((attempt: number, error: Error, response: Response) => boolean);
+    | number[]
+    | ((
+        attempt: number,
+        error: Error | null,
+        response: Response | null,
+      ) => boolean | Promise<boolean>);
 };
 export type Headers = { [k: string]: string };
 export type Host = string;

@@ -41,6 +41,12 @@ test('DEFAULT_SORT_COMPARATOR returns numeric difference when values are numbers
   expect(DEFAULT_SORT_COMPARATOR(b, a)).toBe(-2);
 });
 
+test('DEFAULT_SORT_COMPARATOR handles options without values', () => {
+  expect(DEFAULT_SORT_COMPARATOR({ label: 'A' }, { label: 'B' })).toBeLessThan(
+    0,
+  );
+});
+
 test('DEFAULT_SORT_COMPARATOR uses rankedSearchCompare when search is provided', () => {
   const a = { value: 'abc', label: 'abc' } as AntdLabeledValue;
   const b = { value: 'bc', label: 'bc' } as AntdLabeledValue;

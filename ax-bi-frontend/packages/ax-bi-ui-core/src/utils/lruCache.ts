@@ -55,7 +55,10 @@ class LRUCache<T> {
       throw new TypeError('The LRUCache key must be string.');
     }
     if (this.cache.size >= this.capacity) {
-      this.cache.delete(this.cache.keys().next().value);
+      const oldest = this.cache.keys().next();
+      if (!oldest.done) {
+        this.cache.delete(oldest.value);
+      }
     }
     this.cache.set(key, value);
   }

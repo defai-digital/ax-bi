@@ -26,7 +26,6 @@ import {
   useCallback,
   useRef,
   ClipboardEvent,
-  Ref,
   ReactElement,
 } from 'react';
 
@@ -53,7 +52,12 @@ import {
   sortSelectedFirstHelper,
   isEqual as utilsIsEqual,
 } from './utils';
-import { RawValue, SelectOptionsType, SelectProps } from './types';
+import {
+  RawValue,
+  SelectOptionsType,
+  SelectOptionType,
+  SelectProps,
+} from './types';
 import {
   StyledBulkActionsContainer,
   StyledCheckOutlined,
@@ -85,7 +89,7 @@ import { Button } from '../Button';
  * Each of the categories come with different abilities. For a comprehensive guide please refer to
  * the storybook in @ax-bi/ui-core/components/Select/Select.stories.tsx.
  */
-const Select = forwardRef(
+const Select = forwardRef<RefSelectProps, SelectProps>(
   (
     {
       className,
@@ -124,7 +128,7 @@ const Select = forwardRef(
       virtual = undefined,
       ...props
     }: SelectProps,
-    ref: Ref<RefSelectProps>,
+    ref,
   ) => {
     const isSingleMode = mode === 'single';
     const shouldShowSearch = allowNewOptions ? true : showSearch;
@@ -188,13 +192,13 @@ const Select = forwardRef(
     const mappedMode = isSingleMode ? undefined : 'multiple';
 
     const sortSelectedFirst = useCallback(
-      (a: AntdLabeledValue, b: AntdLabeledValue) =>
+      (a: SelectOptionType, b: SelectOptionType) =>
         sortSelectedFirstHelper(a, b, selectValue),
       [selectValue],
     );
 
     const sortComparatorWithSearch = useCallback(
-      (a: AntdLabeledValue, b: AntdLabeledValue) =>
+      (a: SelectOptionType, b: SelectOptionType) =>
         sortComparatorWithSearchHelper(
           a,
           b,
@@ -381,7 +385,7 @@ const Select = forwardRef(
       onDeselect?.(value, option);
     };
 
-    const handleFilterOption = (search: string, option: AntdLabeledValue) =>
+    const handleFilterOption = (search: string, option?: SelectOptionType) =>
       handleFilterOptionHelper(search, option, optionFilterProps, filterOption);
 
     const handleOnSearch = debounce((search: string) => {
@@ -767,7 +771,6 @@ const Select = forwardRef(
           onBlur={handleOnBlur}
           onDeselect={handleOnDeselect}
           onOpenChange={handleOnDropdownVisibleChange}
-          // @ts-expect-error
           onPaste={onPaste}
           onPopupScroll={undefined}
           onSearch={shouldShowSearch ? handleOnSearch : undefined}
@@ -798,7 +801,7 @@ const Select = forwardRef(
           oneLine={oneLine}
           popupMatchSelectWidth={oneLine ? dropdownWidth : true}
           css={props.css}
-          dropdownAlign={DROPDOWN_ALIGN_BOTTOM}
+          popupAlign={DROPDOWN_ALIGN_BOTTOM}
           {...props}
           showSearch={shouldShowSearch}
           ref={ref}

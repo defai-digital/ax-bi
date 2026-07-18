@@ -106,7 +106,7 @@ export const fetchTimeRange = async (
   } catch (response) {
     const clientError = await getClientErrorObject(response);
     return {
-      error: clientError.message || clientError.error || response.statusText,
+      error: clientError.message || clientError.error,
     };
   }
 };

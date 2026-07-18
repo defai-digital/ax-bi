@@ -21,8 +21,8 @@
 // undefined while the barrel evaluates
 import { DTTM_ALIAS } from './constants';
 import getColumnLabel from './getColumnLabel';
-import { isQueryFormColumn, type QueryFormColumn } from './types/Column';
-import type { QueryFormData } from './types/QueryFormData';
+import { isQueryFormColumn } from './types/Column';
+import type { QueryFormColumn, QueryFormData } from './types/QueryFormData';
 import type { Optional } from '../types';
 
 export const isXAxisSet = (formData: QueryFormData) =>
