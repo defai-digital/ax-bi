@@ -238,37 +238,51 @@ def transaction(  # pylint: disable=redefined-outer-name
     """
     Perform a "unit of work".
 
+    Uses a re-entrant depth counter on Flask ``g`` so nested ``@transaction``
+    call sites share one outer commit/rollback boundary. Rollback failures are
+    logged and do not mask the original exception.
+
     Note ideally this would leverage SQLAlchemy's nested transaction, however this
     proved rather complicated, likely due to many architectural facets, and thus has
     been left for a follow up exercise.
 
-    :param on_error: Callback invoked when an exception is caught
+    :param on_error: Callback invoked when an exception is caught. When omitted
+        (``None``), the original exception is re-raised after rollback.
     :see: https://github.com/defai-digital/ax-bi/issues/25108
     """
 
     def decorate(func: Callable[..., Any]) -> Callable[..., Any]:
         @wraps(func)
         def wrapped(*args: Any, **kwargs: Any) -> Any:
-            from axbi import db  # pylint: disable=import-outside-toplevel
+            # Import the same singleton the session-lifecycle helpers use so
+            # tests and production always share one Session object.
+            from axbi.extensions import db  # pylint: disable=import-outside-toplevel
+            from axbi.utils.session_lifecycle import rollback_session_safely
 
-            if getattr(g, "in_transaction", False):
-                # If already in a transaction, call the function directly
-                return func(*args, **kwargs)
-
+            # Depth counter is preferred over a boolean: concurrent nested
+            # call sites must only commit/rollback at the outermost boundary.
+            # Keep ``g.in_transaction`` in sync for any legacy readers.
+            depth = int(getattr(g, "transaction_depth", 0) or 0)
+            is_outermost = depth == 0
+            g.transaction_depth = depth + 1
             g.in_transaction = True
             try:
                 result = func(*args, **kwargs)
-                db.session.commit()  # pylint: disable=consider-using-transaction
+                if is_outermost:
+                    db.session.commit()  # pylint: disable=consider-using-transaction
                 return result
             except Exception as ex:
-                db.session.rollback()  # pylint: disable=consider-using-transaction
+                if is_outermost:
+                    rollback_session_safely(context="transaction decorator")
 
                 if on_error:
                     return on_error(ex)
 
                 raise
             finally:
-                g.in_transaction = False
+                remaining = max(int(getattr(g, "transaction_depth", 1) or 1) - 1, 0)
+                g.transaction_depth = remaining
+                g.in_transaction = remaining > 0
 
         return wrapped
 

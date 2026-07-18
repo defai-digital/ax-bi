@@ -20,6 +20,8 @@ import os
 from collections.abc import Callable
 from typing import Any
 
+logger = logging.getLogger(__name__)
+
 # ruff: noqa: E402
 import celery
 from flask import Flask
@@ -135,8 +137,15 @@ class UIManifestProcessor:
                 # templates
                 full_manifest = json.load(f)
                 self.manifest = full_manifest.get("entrypoints", {})
-        except Exception:  # pylint: disable=broad-except  # noqa: S110
-            pass
+        except Exception:  # pylint: disable=broad-except
+            # Missing or unreadable manifests are expected during partial local
+            # setups; log so operators can diagnose blank asset loads instead
+            # of failing closed on every request.
+            logger.warning(
+                "Unable to parse frontend asset manifest at %s",
+                self.manifest_file,
+                exc_info=True,
+            )
 
     def get_manifest_files(self, bundle: str, asset_type: str) -> list[str]:
         if self.app and self.app.debug:

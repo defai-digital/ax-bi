@@ -57,13 +57,21 @@ def teardown(  # pylint: disable=unused-argument
     """
     After each Celery task teardown the Flask-SQLAlchemy session.
 
-    Note for non eagar requests Flask-SQLAlchemy will perform the teardown.
+    Always drop the scoped session when an app context is active so failed or
+    stale DBAPI connections cannot leak into the next task on the same worker
+    thread. Removal is connection-aware and fail-soft so teardown never masks
+    the task's primary result or exception.
 
     :param retval: The return value of the task
     :see: https://docs.celeryq.dev/en/stable/userguide/signals.html#task-postrun
     :see: https://gist.github.com/twolfson/a1b329e9353f9b575131
     """
 
-    if not flask_app.config.get("CELERY_ALWAYS_EAGER") and has_app_context():
-        # Ensure session is removed only inside flask app context
-        db.session.remove()
+    if not has_app_context():
+        return
+
+    # Local import keeps the celery entrypoint lightweight at import time and
+    # avoids circular imports with extensions during create_app().
+    from axbi.utils.session_lifecycle import remove_session_safely
+
+    remove_session_safely(context="celery task_postrun teardown")

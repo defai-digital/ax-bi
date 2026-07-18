@@ -98,7 +98,18 @@ def _handle_query_error(
     if errors:
         query.set_extra_json_key("errors", errors_payload)
 
-    db.session.commit()  # pylint: disable=consider-using-transaction
+    try:
+        db.session.commit()  # pylint: disable=consider-using-transaction
+    except Exception:  # noqa: BLE001
+        # Persist-path failure while recording a prior query error must not
+        # raise and hide the original SQL failure from the client.
+        from axbi.utils.session_lifecycle import rollback_session_safely
+
+        logger.exception(
+            "Failed to persist FAILED status for query id=%s", getattr(query, "id", None)
+        )
+        rollback_session_safely(context="sql celery _handle_query_error")
+
     payload.update(
         {"status": query.status.value, "error": msg, "errors": errors_payload}
     )
