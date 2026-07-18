@@ -45,7 +45,7 @@ from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
 try:
     from fastmcp import Context
 except ModuleNotFoundError:
-    Context = Any  # type: ignore[misc, assignment]
+    Context = Any
 
 logger = logging.getLogger(__name__)
 
@@ -76,8 +76,7 @@ async def suggest_semantic_enrichment(
     - Prefer approved AISemanticAlias / certified metrics over drafts
     """
     await ctx.info(
-        f"Semantic enrichment: dataset_id={request.dataset_id}, "
-        f"focus={request.focus!r}"
+        f"Semantic enrichment: dataset_id={request.dataset_id}, focus={request.focus!r}"
     )
 
     if not user_can_view_data_model_metadata():
