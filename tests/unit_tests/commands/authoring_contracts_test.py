@@ -145,12 +145,20 @@ def test_capabilities_accept_injected_llm_capability_without_mcp() -> None:
             "llm_configured": True,
             "llm_provider_type": "openai_compatible",
             "llm_model": "llama3.1",
+            "bounded_samples_allowed": True,
+            "genai_features": {
+                "semantic_assist": True,
+                "plan_dashboard": True,
+                "bounded_samples": True,
+            },
         },
     ).run()
 
     assert result.llm_configured is True
     assert result.llm_provider_type == "openai_compatible"
     assert result.llm_model == "llama3.1"
+    assert result.bounded_samples_allowed is True
+    assert result.genai_features["semantic_assist"] is True
 
 
 def test_authoring_package_does_not_import_mcp_service_modules() -> None:

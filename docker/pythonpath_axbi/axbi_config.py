@@ -137,6 +137,15 @@ from axbi.genai.llm_config import build_provider_config_from_env
 
 GENAI_LLM_PROVIDER_CONFIG: dict = build_provider_config_from_env()
 
+# Optional: allow bounded sample values in GenAI prompts (default off).
+GENAI_LLM_ALLOW_BOUNDED_SAMPLES = _bool_env("GENAI_LLM_ALLOW_BOUNDED_SAMPLES", False)
+GENAI_LLM_BOUNDED_SAMPLE_MAX_ROWS = int(
+    os.getenv("GENAI_LLM_BOUNDED_SAMPLE_MAX_ROWS", "5")
+)
+GENAI_LLM_BOUNDED_SAMPLE_MAX_COLUMNS = int(
+    os.getenv("GENAI_LLM_BOUNDED_SAMPLE_MAX_COLUMNS", "10")
+)
+
 AI_SEMANTIC_EMBEDDING_PROVIDER = os.getenv(
     "AI_SEMANTIC_EMBEDDING_PROVIDER",
     "ax_engine_http",

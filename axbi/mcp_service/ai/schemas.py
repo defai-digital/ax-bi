@@ -135,6 +135,13 @@ class ColumnDescription(BaseModel):
     description: str | None = None
     aliases: list[str] = Field(default_factory=list)
     is_dimension: bool = False
+    sample_values: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Bounded sample values when GENAI_LLM_ALLOW_BOUNDED_SAMPLES is "
+            "enabled and the client requests them; empty otherwise."
+        ),
+    )
 
     @field_validator("name", "type", "description")
     @classmethod
@@ -142,10 +149,10 @@ class ColumnDescription(BaseModel):
         """Escape MCP context delimiters in column metadata."""
         return _escape_optional_text(v)
 
-    @field_validator("aliases")
+    @field_validator("aliases", "sample_values")
     @classmethod
     def escape_aliases(cls, v: list[str]) -> list[str]:
-        """Escape MCP context delimiters in semantic aliases."""
+        """Escape MCP context delimiters in semantic aliases / samples."""
         return _escape_text_list(v)
 
 
@@ -866,3 +873,62 @@ class AIGeneratedArtifactRecord(BaseModel):
     )
     plan_id: str | None = Field(default=None, description="Dashboard plan session ID")
     created_on: str | None = None
+
+
+# ---------------------------------------------------------------------------
+# suggest_semantic_enrichment
+# ---------------------------------------------------------------------------
+
+
+class SemanticEnrichmentRequest(BaseModel):
+    """Request schema for suggest_semantic_enrichment."""
+
+    dataset_id: int = Field(description="Dataset to analyze for draft enrichments")
+    focus: str | None = Field(
+        default=None,
+        description="Optional focus (e.g. 'synonyms for revenue metrics')",
+    )
+
+    @field_validator("focus")
+    @classmethod
+    def escape_focus(cls, v: str | None) -> str | None:
+        """Escape MCP context delimiters in optional focus text."""
+        return _escape_optional_text(v)
+
+
+class SemanticEnrichmentSuggestion(BaseModel):
+    """A single draft semantic enrichment (not auto-applied)."""
+
+    object_type: Literal["dataset", "column", "metric"]
+    object_name: str
+    suggestion_type: Literal["description", "synonym", "relationship"]
+    value: str
+    related_object: str | None = None
+    confidence: float = Field(default=0.5, ge=0.0, le=1.0)
+    rationale: str = ""
+
+    @field_validator("object_name", "value", "related_object", "rationale")
+    @classmethod
+    def escape_text_field(cls, v: str | None) -> str | None:
+        """Escape MCP context delimiters in suggestion text."""
+        return _escape_optional_text(v)
+
+
+class SemanticEnrichmentResponse(BaseModel):
+    """Response schema for suggest_semantic_enrichment."""
+
+    suggestions: list[SemanticEnrichmentSuggestion] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    used_llm: bool = False
+    provider_type: str | None = None
+    model: str | None = None
+    draft_only: bool = Field(
+        default=True,
+        description="Suggestions are drafts; certified fields require human approval.",
+    )
+
+    @field_validator("warnings")
+    @classmethod
+    def escape_warnings(cls, v: list[str]) -> list[str]:
+        """Escape MCP context delimiters in warning text."""
+        return _escape_text_list(v)

@@ -27,6 +27,7 @@ from .plan_dashboard import plan_dashboard
 from .prompt_to_dashboard import prompt_to_dashboard
 from .search_business_assets import search_business_assets
 from .suggest_chart_improvements import suggest_chart_improvements
+from .suggest_semantic_enrichment import suggest_semantic_enrichment
 from .upload_and_plan import upload_and_plan
 from .validate_chart import validate_chart
 
@@ -42,6 +43,7 @@ __all__ = [
     "explain_dashboard",
     "get_authoring_capabilities",
     "suggest_chart_improvements",
+    "suggest_semantic_enrichment",
     "validate_chart",
     "evaluate_ai_answer",
 ]

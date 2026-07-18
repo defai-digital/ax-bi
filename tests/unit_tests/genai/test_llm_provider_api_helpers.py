@@ -64,6 +64,9 @@ def test_public_capability_hides_base_url() -> None:
     assert cap["llm_configured"] is True
     assert "base_url" not in cap
     assert "api_key" not in cap
+    assert "genai_features" in cap
+    assert cap["genai_features"]["semantic_assist"] is True
+    assert "bounded_samples_allowed" in cap
 
 
 def test_merge_update_replaces_key_when_provided() -> None:

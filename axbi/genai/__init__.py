@@ -28,15 +28,25 @@ from axbi.genai.llm_config import (
     redact_provider_config,
 )
 from axbi.genai.llm_provider import LLMProvider, StubLLMProvider
+from axbi.genai.prompt_policy import (
+    bounded_samples_allowed,
+    should_include_samples,
+)
 from axbi.genai.provider_factory import (
     build_provider_from_config,
     get_llm_provider,
     reset_provider,
 )
+from axbi.genai.semantic_assist import (
+    SemanticAssistResult,
+    suggest_semantic_enrichment,
+)
 
 __all__ = [
     "LLMProvider",
+    "SemanticAssistResult",
     "StubLLMProvider",
+    "bounded_samples_allowed",
     "build_provider_config_from_env",
     "build_provider_from_config",
     "get_llm_provider",
@@ -44,4 +54,6 @@ __all__ = [
     "public_llm_capability",
     "redact_provider_config",
     "reset_provider",
+    "should_include_samples",
+    "suggest_semantic_enrichment",
 ]

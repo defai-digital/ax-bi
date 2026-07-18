@@ -73,6 +73,17 @@ def _describe_dataset(
     include_sample_values: bool = False,
 ) -> DatasetDescription:
     """Build an AI-optimized description from a dataset ORM object."""
+    from axbi.genai.prompt_policy import (
+        bounded_samples_allowed,
+        fetch_bounded_column_samples,
+        should_include_samples,
+    )
+
+    include_samples = should_include_samples(include_sample_values)
+    column_samples: dict[str, list[str]] = {}
+    if include_samples:
+        column_samples = fetch_bounded_column_samples(dataset)
+
     columns: list[ColumnDescription] = []
     for col in getattr(dataset, "columns", []) or []:
         col_name = getattr(col, "column_name", "") or ""
@@ -95,6 +106,7 @@ def _describe_dataset(
                 description=description,
                 aliases=aliases,
                 is_dimension=is_dimension,
+                sample_values=list(column_samples.get(col_name, [])),
             )
         )
 
@@ -126,9 +138,15 @@ def _describe_dataset(
 
     # Build privacy metadata
     privacy: dict[str, Any] = {
-        "sample_values_included": include_sample_values,
+        "sample_values_included": include_samples,
+        "sample_values_requested": bool(include_sample_values),
+        "bounded_samples_policy_enabled": bounded_samples_allowed(),
         "metadata_scope": "role_allowed",
     }
+    if include_sample_values and not include_samples:
+        privacy["sample_values_denied_reason"] = (
+            "GENAI_LLM_ALLOW_BOUNDED_SAMPLES is disabled"
+        )
 
     certified_by = getattr(dataset, "certified_by", None)
 
@@ -192,9 +210,13 @@ async def describe_dataset_for_ai(
     }
     ```
     """
+    from axbi.genai.prompt_policy import should_include_samples
+
+    samples_will_include = should_include_samples(request.include_sample_values)
     await ctx.info(
         f"Describing dataset for AI: dataset_id={request.dataset_id}, "
-        f"sample_values={request.include_sample_values}"
+        f"sample_values_requested={request.include_sample_values}, "
+        f"sample_values_included={samples_will_include}"
     )
 
     # Privacy check
@@ -238,6 +260,13 @@ async def describe_dataset_for_ai(
                 warnings=[f"Dataset {request.dataset_id} not found."],
             ).model_dump()
 
+        warnings: list[str] = []
+        if request.include_sample_values and not samples_will_include:
+            warnings.append(
+                "Sample values were requested but denied by operator policy "
+                "(GENAI_LLM_ALLOW_BOUNDED_SAMPLES is false)."
+            )
+
         with mcp_event_log_context(action="mcp.describe_dataset_for_ai.describe"):
             description = _describe_dataset(
                 dataset,
@@ -249,7 +278,7 @@ async def describe_dataset_for_ai(
             f"columns={len(description.columns)}, metrics={len(description.metrics)}"
         )
 
-        response = DatasetDescriptionResponse(dataset=description, warnings=[])
+        response = DatasetDescriptionResponse(dataset=description, warnings=warnings)
         return response.model_dump()
 
     except Exception as e:

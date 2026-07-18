@@ -109,3 +109,5 @@ class AuthoringCapabilities(BaseModel):
     llm_configured: bool = False
     llm_provider_type: str | None = None
     llm_model: str | None = None
+    bounded_samples_allowed: bool = False
+    genai_features: dict[str, bool] = Field(default_factory=dict)

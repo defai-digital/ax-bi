@@ -223,6 +223,8 @@ AI-Powered Tools (GenAI) — PREFER THESE over low-level CRUD for dashboard crea
 - compose_dashboard: Assemble a dashboard from a plan + chart IDs.
 - search_business_assets: Semantic search across datasets, charts, dashboards, and metrics.
 - describe_dataset_for_ai: AI-ready dataset metadata (columns, metrics, aliases).
+- suggest_semantic_enrichment: Draft synonyms, descriptions, and relationship hints
+  (Admin-configured LLM when available; never auto-applies certified metadata).
 - validate_chart: Pre-flight a chart config against a dataset.
 - explain_dashboard: Summarize or Q&A an existing dashboard.
 - suggest_chart_improvements: Visualization improvement suggestions.
@@ -773,6 +775,7 @@ from axbi.mcp_service.ai.tool import (  # noqa: F401, E402
     prompt_to_dashboard,
     search_business_assets,
     suggest_chart_improvements,
+    suggest_semantic_enrichment,
     upload_and_plan,
     validate_chart,
 )

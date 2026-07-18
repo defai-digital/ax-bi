@@ -281,12 +281,25 @@ def redact_provider_config(raw: dict[str, Any] | None = None) -> dict[str, Any]:
 
 def public_llm_capability(raw: dict[str, Any] | None = None) -> dict[str, Any]:
     """Capability fragment safe for non-admin clients (no secrets, no base_url)."""
+    from axbi.genai.prompt_policy import bounded_samples_allowed
+
     redacted = redact_provider_config(raw)
     configured = bool(redacted.get("configured"))
+    samples_ok = bounded_samples_allowed()
     return {
         "llm_configured": configured,
         "llm_provider_type": redacted.get("provider") if configured else None,
         "llm_model": redacted.get("model") if configured else None,
+        "bounded_samples_allowed": samples_ok,
+        # Feature surface (independent of whether credentials are present).
+        # Clients still honor feature flags and RBAC on each tool call.
+        "genai_features": {
+            "plan_dashboard": True,
+            "create_chart_from_intent": True,
+            "prompt_to_dashboard": True,
+            "semantic_assist": True,
+            "bounded_samples": samples_ok,
+        },
     }
 
 

@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Any
 
 from flask import current_app, request, Response
@@ -27,6 +28,11 @@ from marshmallow import ValidationError
 from pydantic import BaseModel, Field
 
 from axbi.extensions import event_logger, security_manager
+from axbi.genai.audit import (
+    log_llm_config_updated,
+    log_llm_test_connection,
+    timed_complete_json,
+)
 from axbi.genai.llm_config import (
     get_raw_provider_config,
     merge_provider_update,
@@ -218,6 +224,13 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
             merged.get("provider"),
             merged.get("enabled", True),
         )
+        log_llm_config_updated(
+            provider=str(merged.get("provider") or "") or None,
+            enabled=bool(merged.get("enabled", True)),
+            base_url=merged.get("base_url"),
+            model=str(merged.get("model") or "") or None,
+            cleared=False,
+        )
         return self.response(
             200,
             result=redact_provider_config(merged),
@@ -253,6 +266,13 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
         current_app.config["GENAI_LLM_PROVIDER_CONFIG"] = {}
         reset_provider()
         logger.info("Admin cleared runtime GENAI LLM provider config")
+        log_llm_config_updated(
+            provider=None,
+            enabled=False,
+            base_url=None,
+            model=None,
+            cleared=True,
+        )
         return self.response(200, result=redact_provider_config({}), message="cleared")
 
     @expose("/provider/test/", methods=("POST",))
@@ -294,17 +314,26 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
             merge_provider_update(existing, overrides) if overrides else existing
         )
 
+        started = time.monotonic()
         try:
             provider = build_provider_from_config(candidate)
             if isinstance(provider, StubLLMProvider):
                 raise LLMNotConfiguredError()
-            result = provider.complete_json(
+            result = timed_complete_json(
+                provider,
                 system_prompt="Reply with JSON only.",
                 user_prompt='Return {"ok": true}',
                 response_schema=_ProbeResult,
                 metadata={"operation": "admin_llm_test"},
             )
             ok = bool(getattr(result, "ok", False))
+            duration_ms = int((time.monotonic() - started) * 1000)
+            log_llm_test_connection(
+                success=ok,
+                provider=provider.provider_name(),
+                model=provider.model_name(),
+                duration_ms=duration_ms,
+            )
             return self.response(
                 200,
                 result={
@@ -314,23 +343,48 @@ class GenaiLlmProviderRestApi(BaseAxBIApi):
                 },
             )
         except LLMNotConfiguredError as ex:
+            log_llm_test_connection(
+                success=False,
+                error_code=ex.code,
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
             return self.response(
                 400, message=str(ex), code=ex.code, result={"ok": False}
             )
         except LLMSsrfBlockedError as ex:
+            log_llm_test_connection(
+                success=False,
+                error_code=ex.code,
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
             return self.response(
                 400, message=str(ex), code=ex.code, result={"ok": False}
             )
         except LLMInvalidConfigError as ex:
+            log_llm_test_connection(
+                success=False,
+                error_code=ex.code,
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
             return self.response(
                 400, message=str(ex), code=ex.code, result={"ok": False}
             )
         except LLMError as ex:
+            log_llm_test_connection(
+                success=False,
+                error_code=ex.code,
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
             return self.response(
                 502, message=str(ex), code=ex.code, result={"ok": False}
             )
         except Exception:  # noqa: BLE001 - Admin test must not leak stacks
             logger.exception("Admin LLM connection test failed")
+            log_llm_test_connection(
+                success=False,
+                error_code="LLM_PROVIDER_ERROR",
+                duration_ms=int((time.monotonic() - started) * 1000),
+            )
             return self.response(
                 502,
                 message="LLM test failed",

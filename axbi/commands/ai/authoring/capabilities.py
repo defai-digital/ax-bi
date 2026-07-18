@@ -75,6 +75,10 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
             if self._llm_capability is not None
             else public_llm_capability()
         )
+        features_raw = llm.get("genai_features") or {}
+        features: dict[str, bool] = {}
+        if isinstance(features_raw, dict):
+            features = {str(k): bool(v) for k, v in features_raw.items()}
         return AuthoringCapabilities(
             operations=operations,
             deployment_operations=deployment_operations,
@@ -91,6 +95,8 @@ class GetAuthoringCapabilitiesCommand(BaseCommand):
             llm_model=(
                 str(llm["llm_model"]) if llm.get("llm_model") is not None else None
             ),
+            bounded_samples_allowed=bool(llm.get("bounded_samples_allowed")),
+            genai_features=features,
         )
 
     def validate(self) -> None:

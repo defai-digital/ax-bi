@@ -2046,9 +2046,18 @@ FAB_API_KEY_PREFIXES = ["sst_"]
 # Env helpers: GENAI_LLM_PROVIDER, GENAI_LLM_BASE_URL, GENAI_LLM_API_KEY,
 # GENAI_LLM_MODEL, GENAI_LLM_ENABLED, GENAI_LLM_ALLOW_HTTP,
 # GENAI_LLM_ALLOW_PRIVATE_NETWORK, GENAI_LLM_URL_ALLOWLIST,
-# GENAI_LLM_TIMEOUT_SECONDS. See .internal/docs/admin-llm-provider-tech-spec.md.
+# GENAI_LLM_TIMEOUT_SECONDS, GENAI_LLM_ALLOW_BOUNDED_SAMPLES,
+# GENAI_LLM_BOUNDED_SAMPLE_MAX_ROWS, GENAI_LLM_BOUNDED_SAMPLE_MAX_COLUMNS.
+# See .internal/docs/admin-llm-provider-tech-spec.md.
 # This config is read by axbi.genai.provider_factory (MCP re-exports for tools).
 GENAI_LLM_PROVIDER_CONFIG: dict[str, Any] = {}
+
+# When True, GenAI tools may include bounded column sample values in LLM
+# context when the client requests them. Default False (metadata only).
+GENAI_LLM_ALLOW_BOUNDED_SAMPLES = False
+# Caps applied when bounded samples are enabled (also hard-capped in code).
+GENAI_LLM_BOUNDED_SAMPLE_MAX_ROWS = 5
+GENAI_LLM_BOUNDED_SAMPLE_MAX_COLUMNS = 10
 
 # Semantic index configuration for GenAI BI retrieval.
 # ``ax_engine_http`` expects the host-side script in

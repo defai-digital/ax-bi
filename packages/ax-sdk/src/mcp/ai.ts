@@ -267,6 +267,8 @@ export interface AuthoringCapabilities {
   llm_configured: boolean;
   llm_provider_type?: string | null;
   llm_model?: string | null;
+  bounded_samples_allowed?: boolean;
+  genai_features?: Record<string, boolean>;
 }
 
 export interface UploadAndPlanParams {

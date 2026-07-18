@@ -242,6 +242,37 @@ def test_describe_dataset_privacy_metadata() -> None:
     assert result.privacy["metadata_scope"] == "role_allowed"
 
 
+def test_describe_dataset_samples_denied_by_policy_do_not_leak() -> None:
+    """Requested samples stay empty when GENAI_LLM_ALLOW_BOUNDED_SAMPLES is off."""
+    col = MagicMock()
+    col.column_name = "region"
+    col.type = "VARCHAR"
+    col.description = None
+    col.is_dttm = False
+    col.expression = None
+
+    dataset = MagicMock()
+    dataset.id = 7
+    dataset.table_name = "sales"
+    dataset.description = None
+    dataset.certified_by = None
+    dataset.main_dttm_col = None
+    dataset.columns = [col]
+    dataset.metrics = []
+    dataset.values_for_column = MagicMock(return_value=["secret"])
+
+    with patch(
+        "axbi.genai.prompt_policy.bounded_samples_allowed", return_value=False
+    ):
+        result = _describe_dataset(dataset, include_sample_values=True)
+
+    assert result.privacy["sample_values_included"] is False
+    assert result.privacy["sample_values_requested"] is True
+    assert result.privacy.get("sample_values_denied_reason")
+    assert result.columns[0].sample_values == []
+    dataset.values_for_column.assert_not_called()
+
+
 def test_get_aliases_are_scoped_to_named_dataset_object() -> None:
     """Alias lookup delegates the complete object scope to the DAO."""
     with patch(
