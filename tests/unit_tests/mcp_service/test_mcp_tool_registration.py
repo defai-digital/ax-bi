@@ -55,6 +55,7 @@ def test_mcp_app_imports_successfully():
     assert len(tool_names) > 0
     assert "health_check" in tool_names
     assert "list_charts" in tool_names
+    assert "get_authoring_capabilities" in tool_names
 
 
 def test_mcp_prompts_registered():
@@ -271,6 +272,7 @@ def test_no_disabled_tools_returns_full_instructions() -> None:
     assert "- health_check:" in full
     assert "- list_tasks:" in full
     assert "- get_task_info:" in full
+    assert "- get_authoring_capabilities:" in full
     assert full == also_full
 
 

@@ -24,8 +24,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from pydantic import BaseModel
 
-from axbi.mcp_service.ai import provider_factory
-from axbi.mcp_service.ai.anthropic_provider import (
+from axbi.genai import provider_factory
+from axbi.genai.anthropic_provider import (
     AnthropicProvider,
     AnthropicProviderError,
 )
@@ -107,6 +107,7 @@ def test_factory_dispatches_to_anthropic() -> None:
         }
     }
     with patch.object(provider_factory, "current_app", fake_app):
-        provider = provider_factory.get_llm_provider()
+        with patch.object(provider_factory, "has_app_context", return_value=True):
+            provider = provider_factory.get_llm_provider()
     provider_factory.reset_provider()
     assert isinstance(provider, AnthropicProvider)

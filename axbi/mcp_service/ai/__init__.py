@@ -20,11 +20,12 @@ Provides LLM provider abstraction, Pydantic schemas for tool contracts,
 and supporting utilities for the GenAI BI pipeline.
 """
 
-from axbi.mcp_service.ai.llm_provider import LLMProvider, StubLLMProvider
-from axbi.mcp_service.ai.provider_factory import get_llm_provider
+from axbi.genai.llm_provider import LLMProvider, StubLLMProvider
+from axbi.genai.provider_factory import get_llm_provider, reset_provider
 
 __all__ = [
     "LLMProvider",
     "StubLLMProvider",
     "get_llm_provider",
+    "reset_provider",
 ]

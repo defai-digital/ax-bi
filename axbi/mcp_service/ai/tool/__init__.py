@@ -22,6 +22,7 @@ from .create_chart_from_intent import create_chart_from_intent
 from .describe_dataset_for_ai import describe_dataset_for_ai
 from .evaluate_ai_answer import evaluate_ai_answer
 from .explain_dashboard import explain_dashboard
+from .get_authoring_capabilities import get_authoring_capabilities
 from .plan_dashboard import plan_dashboard
 from .prompt_to_dashboard import prompt_to_dashboard
 from .search_business_assets import search_business_assets
@@ -39,6 +40,7 @@ __all__ = [
     "upload_and_plan",
     "ask_dashboard_question",
     "explain_dashboard",
+    "get_authoring_capabilities",
     "suggest_chart_improvements",
     "validate_chart",
     "evaluate_ai_answer",

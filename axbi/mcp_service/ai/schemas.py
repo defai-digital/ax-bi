@@ -653,6 +653,13 @@ class PromptToDashboardRequest(BaseModel):
         description="Optional: pin to specific dataset IDs. "
         "When empty, datasets are auto-discovered from the prompt.",
     )
+    plan: DashboardPlan | None = Field(
+        default=None,
+        description=(
+            "Optional reviewed plan to execute. When supplied, the orchestrator "
+            "validates and uses it without planning again."
+        ),
+    )
     max_charts: int = Field(
         default=6,
         ge=1,

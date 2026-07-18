@@ -58,6 +58,8 @@ export interface ChartIntentParams {
 export interface PromptToDashboardParams {
   prompt: string;
   dataset_ids?: number[];
+  /** Reviewed plan to execute without running dashboard planning again. */
+  plan?: DashboardPlan;
   max_charts?: number;
   draft?: boolean;
   save_charts?: boolean;
@@ -244,6 +246,45 @@ export interface ChartValidation {
   suggestions?: string[];
 }
 
+export type AuthoringOperation =
+  | 'plan_dashboard'
+  | 'create_chart_from_intent'
+  | 'prompt_to_dashboard'
+  | 'upload_and_plan';
+
+export interface AuthoringCapabilities {
+  contract_version: '1.0';
+  operations: AuthoringOperation[];
+  deployment_operations?: AuthoringOperation[];
+  artifact_types: Array<'chart' | 'dashboard'>;
+  preview_before_save: boolean;
+  upload_formats: Array<'csv' | 'tsv' | 'xls' | 'xlsx' | 'parquet'>;
+  limits: {
+    max_charts_per_dashboard: number;
+    max_upload_bytes?: number | null;
+  };
+  async_jobs: boolean;
+  llm_configured: boolean;
+  llm_provider_type?: string | null;
+  llm_model?: string | null;
+}
+
+export interface UploadAndPlanParams {
+  file_content: string;
+  filename: string;
+  prompt: string;
+  table_name?: string;
+  sheet_name?: string;
+  max_charts?: number;
+}
+
+export interface UploadAndPlanResult {
+  dataset: Record<string, unknown>;
+  plan?: DashboardPlan | null;
+  warnings: string[];
+  next_steps?: string;
+}
+
 /**
  * High-level typed wrappers for AX BI AI/GenAI MCP tools.
  *
@@ -270,16 +311,23 @@ export class AIResource {
   }
 
   /** Get AI-ready dataset metadata (columns, metrics, sample values). */
-  async describeDataset(params: DescribeDatasetParams): Promise<DatasetDescriptionEnvelope> {
-    return this.callMcpTool<DatasetDescriptionEnvelope>('describe_dataset_for_ai', {
-      dataset_id: params.dataset_id,
-      include_sample_values: params.include_sample_values ?? false,
-      include_usage_stats: params.include_usage_stats ?? true,
-    });
+  async describeDataset(
+    params: DescribeDatasetParams,
+  ): Promise<DatasetDescriptionEnvelope> {
+    return this.callMcpTool<DatasetDescriptionEnvelope>(
+      'describe_dataset_for_ai',
+      {
+        dataset_id: params.dataset_id,
+        include_sample_values: params.include_sample_values ?? false,
+        include_usage_stats: params.include_usage_stats ?? true,
+      },
+    );
   }
 
   /** Create a dashboard plan without creating artifacts. */
-  async planDashboard(params: PlanDashboardParams): Promise<DashboardPlanEnvelope> {
+  async planDashboard(
+    params: PlanDashboardParams,
+  ): Promise<DashboardPlanEnvelope> {
     return this.callMcpTool<DashboardPlanEnvelope>('plan_dashboard', {
       prompt: params.prompt,
       dataset_candidates: params.dataset_candidates ?? [],
@@ -287,8 +335,35 @@ export class AIResource {
     });
   }
 
+  /** Discover the versioned authoring operations and deployment limits. */
+  async getAuthoringCapabilities(): Promise<AuthoringCapabilities> {
+    const capabilities = await this.callMcpTool<AuthoringCapabilities>(
+      'get_authoring_capabilities',
+      {},
+      false,
+    );
+    if (capabilities.contract_version !== '1.0') {
+      throw new AxBIError(
+        `Unsupported AX BI authoring contract: ${String(capabilities.contract_version)}`,
+        { responseBody: capabilities },
+      );
+    }
+    if (
+      !Array.isArray(capabilities.operations) ||
+      !Number.isInteger(capabilities.limits?.max_charts_per_dashboard) ||
+      capabilities.limits.max_charts_per_dashboard < 1
+    ) {
+      throw new AxBIError('Malformed AX BI authoring capabilities', {
+        responseBody: capabilities,
+      });
+    }
+    return capabilities;
+  }
+
   /** Generate a chart from business intent. Returns preview + validation. */
-  async createChartFromIntent(params: ChartIntentParams): Promise<ChartPreview> {
+  async createChartFromIntent(
+    params: ChartIntentParams,
+  ): Promise<ChartPreview> {
     return this.callMcpTool<ChartPreview>('create_chart_from_intent', {
       prompt: params.prompt,
       dataset_id: params.dataset_id,
@@ -315,6 +390,7 @@ export class AIResource {
     return this.callMcpTool<PromptToDashboardResult>('prompt_to_dashboard', {
       prompt: params.prompt,
       dataset_ids: params.dataset_ids ?? [],
+      plan: params.plan,
       max_charts: params.max_charts ?? 6,
       draft: params.draft ?? true,
       save_charts: params.save_charts ?? true,
@@ -324,8 +400,24 @@ export class AIResource {
     });
   }
 
+  /** Upload a supported data file and produce a governed dashboard plan. */
+  async uploadAndPlan(
+    params: UploadAndPlanParams,
+  ): Promise<UploadAndPlanResult> {
+    return this.callMcpTool<UploadAndPlanResult>('upload_and_plan', {
+      file_content: params.file_content,
+      filename: params.filename,
+      prompt: params.prompt,
+      table_name: params.table_name,
+      sheet_name: params.sheet_name,
+      max_charts: params.max_charts ?? 6,
+    });
+  }
+
   /** Compose a dashboard from a plan and chart IDs. */
-  async composeDashboard(params: ComposeDashboardParams): Promise<ComposeResult> {
+  async composeDashboard(
+    params: ComposeDashboardParams,
+  ): Promise<ComposeResult> {
     return this.callMcpTool<ComposeResult>('compose_dashboard', {
       plan: params.plan,
       chart_ids: params.chart_ids,
@@ -335,7 +427,9 @@ export class AIResource {
   }
 
   /** Explain or critique an existing dashboard. */
-  async explainDashboard(params: ExplainDashboardParams): Promise<DashboardExplanation> {
+  async explainDashboard(
+    params: ExplainDashboardParams,
+  ): Promise<DashboardExplanation> {
     return this.callMcpTool<DashboardExplanation>('explain_dashboard', {
       dashboard_id: params.dashboard_id,
       question: params.question,
@@ -386,12 +480,16 @@ export class AIResource {
   private async callMcpTool<T>(
     name: string,
     args: Record<string, unknown>,
+    wrapRequest = true,
   ): Promise<T> {
     await this.ensureInitialized();
     // AX BI MCP tools expose a single Pydantic ``request`` parameter. Keep
     // the envelope here so every typed wrapper follows the live FastMCP schema
     // while raw ``callTool`` remains available for non-standard tools.
-    const result = await this.mcp.callTool<unknown>(name, { request: args });
+    const result = await this.mcp.callTool<unknown>(
+      name,
+      wrapRequest ? { request: args } : args,
+    );
 
     if (!isRecord(result)) {
       throw new AxBIError(`MCP tool "${name}" returned malformed result`, {
@@ -439,7 +537,7 @@ export class AIResource {
     }
 
     // Fall back to parsing the first text content block
-    const textBlock = toolResult.content?.find((c) => c.type === 'text');
+    const textBlock = toolResult.content?.find(c => c.type === 'text');
     if (textBlock?.text) {
       try {
         return JSON.parse(textBlock.text) as T;

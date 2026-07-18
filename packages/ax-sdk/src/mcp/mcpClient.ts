@@ -71,8 +71,9 @@ export interface MCPToolResult {
  * The MCP service typically runs on port 5008.
  */
 export class MCPClient {
-  private readonly mcpUrl: string;
+  private readonly mcpEndpoint: string;
   private readonly auth: AuthProvider;
+  private readonly headers: Readonly<Record<string, string>>;
   private readonly timeout: number;
   private requestId = 0;
   /** MCP session ID returned by the server on initialization. */
@@ -81,10 +82,12 @@ export class MCPClient {
   constructor(options: {
     mcpUrl: string;
     auth: AuthProvider;
+    headers?: Record<string, string>;
     timeout?: number;
   }) {
-    this.mcpUrl = normalizeHttpBaseUrl(options.mcpUrl, 'mcpUrl');
+    this.mcpEndpoint = normalizeMcpEndpoint(options.mcpUrl);
     this.auth = options.auth;
+    this.headers = { ...(options.headers ?? {}) };
     this.timeout = normalizeTimeoutMs(options.timeout, 60_000);
   }
 
@@ -129,9 +132,12 @@ export class MCPClient {
       return [];
     }
     if (!Array.isArray(tools)) {
-      throw new AxBIError('MCP tools/list result tools field must be an array', {
-        responseBody: response,
-      });
+      throw new AxBIError(
+        'MCP tools/list result tools field must be an array',
+        {
+          responseBody: response,
+        },
+      );
     }
     return tools as MCPToolDefinition[];
   }
@@ -163,7 +169,7 @@ export class MCPClient {
 
     let response: Response;
     try {
-      response = await fetch(`${this.mcpUrl}/mcp`, {
+      response = await fetch(this.mcpEndpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -203,11 +209,11 @@ export class MCPClient {
 
   /** Send a notification (no response expected). */
   private async sendNotification(method: string): Promise<void> {
-    const headers = this.buildHeaders();
+    const headers = this.buildHeaders('application/json, text/event-stream');
 
     let response: Response;
     try {
-      response = await fetch(`${this.mcpUrl}/mcp`, {
+      response = await fetch(this.mcpEndpoint, {
         method: 'POST',
         headers,
         body: JSON.stringify({
@@ -234,6 +240,7 @@ export class MCPClient {
 
   private buildHeaders(accept?: string): Record<string, string> {
     const headers: Record<string, string> = {
+      ...this.headers,
       'Content-Type': 'application/json',
       ...this.auth.getAuthHeaders(),
     };
@@ -269,8 +276,7 @@ export class MCPClient {
 
     // Walk backwards to find the last JSON-RPC response with our ID
     for (let i = events.length - 1; i >= 0; i--) {
-      const dataLines = events[i]!
-        .split(/\r?\n/)
+      const dataLines = events[i]!.split(/\r?\n/)
         .map(line => line.trim())
         .filter(line => line.startsWith('data:'))
         .map(line => line.slice(5).replace(/^ /, ''));
@@ -285,7 +291,7 @@ export class MCPClient {
         // Skip non-JSON events
         continue;
       }
-      if (isRecord(parsed) && parsed['id'] === expectedId) {
+      if (isRecord(parsed) && String(parsed['id']) === expectedId) {
         return this.extractResult<T>(parsed, expectedId);
       }
     }
@@ -329,7 +335,7 @@ export class MCPClient {
         responseBody: response,
       });
     }
-    if (response['id'] !== expectedId) {
+    if (String(response['id']) !== expectedId) {
       throw new AxBIError(
         `Unexpected JSON-RPC response ID: ${String(response['id'])} (expected ${expectedId})`,
         { responseBody: response },
@@ -378,4 +384,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function normalizeError(error: unknown): Error {
   return error instanceof Error ? error : new Error(String(error));
+}
+
+function normalizeMcpEndpoint(value: string): string {
+  const normalized = normalizeHttpBaseUrl(value, 'mcpUrl');
+  return normalized.endsWith('/mcp') ? normalized : `${normalized}/mcp`;
 }

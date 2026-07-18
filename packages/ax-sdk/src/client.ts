@@ -38,6 +38,8 @@ export interface AxBIConfig {
    * Only needed if MCP AI tools are used.
    */
   mcpUrl?: string;
+  /** Additional headers sent only to the MCP service. */
+  mcpHeaders?: Record<string, string>;
   /** Authentication strategy. */
   auth: AuthConfig;
   /** Default request timeout in milliseconds. Defaults to 30000. */
@@ -112,6 +114,7 @@ export class AxBI {
     this.mcp = new MCPClient({
       mcpUrl,
       auth: this.auth,
+      headers: config.mcpHeaders,
       timeout: config.timeout,
     });
 

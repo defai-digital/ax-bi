@@ -39,6 +39,7 @@ except ModuleNotFoundError:
     Context = Any
 
 from axbi.commands.ai.audit import RecordAIGeneratedArtifactCommand
+from axbi.commands.ai.authoring.confidence import evaluate_compose_gate
 from axbi.mcp_service.ai.schemas import (
     ComposeDashboardRequest,
     CreateChartFromIntentRequest,
@@ -165,25 +166,38 @@ async def prompt_to_dashboard(  # noqa: C901
     # ------------------------------------------------------------------
     # Step 1: Plan the dashboard
     # ------------------------------------------------------------------
-    await ctx.report_progress(1, 4, "Planning dashboard")
+    await ctx.report_progress(
+        1,
+        4,
+        "Validating supplied plan"
+        if request.plan is not None
+        else "Planning dashboard",
+    )
     plan_started = time.time()
-    with mcp_event_log_context(action="mcp.prompt_to_dashboard.plan"):
-        from axbi.mcp_service.ai.tool.plan_dashboard import plan_dashboard
+    if request.plan is not None:
+        plan_data = request.plan.model_dump()
+        chart_intents = plan_data.get("chart_intents", [])
+        plan_data["chart_intents"] = chart_intents[: request.max_charts]
+        plan_warnings: list[str] = []
+        tool_chain.append("supplied_plan")
+    else:
+        with mcp_event_log_context(action="mcp.prompt_to_dashboard.plan"):
+            from axbi.mcp_service.ai.tool.plan_dashboard import plan_dashboard
 
-        plan_request = DashboardPlanRequest(
-            prompt=request.prompt,
-            dataset_candidates=request.dataset_ids,
-            constraints={"max_charts": request.max_charts},
-        )
-        plan_result = await plan_dashboard(plan_request, ctx)
+            plan_request = DashboardPlanRequest(
+                prompt=request.prompt,
+                dataset_candidates=request.dataset_ids,
+                constraints={"max_charts": request.max_charts},
+            )
+            plan_result = await plan_dashboard(plan_request, ctx)
 
-    if isinstance(plan_result, str):
-        from axbi.utils import json as axbi_json
+        if isinstance(plan_result, str):
+            from axbi.utils import json as axbi_json
 
-        plan_result = axbi_json.loads(plan_result)
+            plan_result = axbi_json.loads(plan_result)
 
-    plan_data = plan_result.get("plan", {})
-    plan_warnings = plan_result.get("warnings", [])
+        plan_data = plan_result.get("plan", {})
+        plan_warnings = plan_result.get("warnings", [])
     all_warnings.extend(plan_warnings)
 
     if not plan_data:
@@ -221,7 +235,8 @@ async def prompt_to_dashboard(  # noqa: C901
             confidence=plan_data.get("confidence", 0.0),
         )
 
-    tool_chain.append("plan_dashboard")
+    if request.plan is None:
+        tool_chain.append("plan_dashboard")
     steps.append(
         WorkflowStepStatus(
             name="plan",
@@ -239,9 +254,7 @@ async def prompt_to_dashboard(  # noqa: C901
     )
 
     # Confidence / empty-plan gate: fail loudly instead of composing junk
-    from axbi.mcp_service.ai.grounding_utils import plan_should_block_compose
-
-    should_block, block_reason = plan_should_block_compose(
+    should_block, block_reason = evaluate_compose_gate(
         plan_full.confidence,
         len(plan_full.chart_intents),
         plan_full.clarifying_questions,

@@ -27,10 +27,30 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from axbi.commands.ai.authoring.confidence import (
+    DEFAULT_MIN_PLAN_CONFIDENCE,
+    evaluate_compose_gate,
+)
+
 logger = logging.getLogger(__name__)
 
-# Plans below this confidence should not auto-compose unless forced.
-DEFAULT_MIN_PLAN_CONFIDENCE = 0.25
+
+def plan_should_block_compose(
+    confidence: float,
+    chart_intent_count: int,
+    clarifying_questions: list[str] | None,
+    *,
+    min_confidence: float = DEFAULT_MIN_PLAN_CONFIDENCE,
+    force: bool = False,
+) -> tuple[bool, str]:
+    """Compatibility adapter for the command-owned confidence policy."""
+    return evaluate_compose_gate(
+        confidence,
+        chart_intent_count,
+        clarifying_questions,
+        min_confidence=min_confidence,
+        force=force,
+    )
 
 
 def load_grounding_contract(dataset: Any) -> Any | None:
@@ -190,38 +210,3 @@ def enrich_dataset_plan_entry(
                 m["name"] for m in summary["measures"] if m.get("name")
             ]
     return enriched
-
-
-def plan_should_block_compose(
-    confidence: float,
-    chart_intent_count: int,
-    clarifying_questions: list[str] | None,
-    *,
-    min_confidence: float = DEFAULT_MIN_PLAN_CONFIDENCE,
-    force: bool = False,
-) -> tuple[bool, str]:
-    """Decide whether to stop before chart creation / compose.
-
-    Returns:
-        (should_block, reason)
-    """
-    if force:
-        return False, ""
-    if chart_intent_count <= 0:
-        return (
-            True,
-            "Plan has no chart intents. Clarify the request or pin dataset_ids.",
-        )
-    if confidence < min_confidence:
-        questions = clarifying_questions or []
-        detail = (
-            f" Plan confidence {confidence:.2f} is below minimum {min_confidence:.2f}."
-        )
-        if questions:
-            detail += " Clarifying questions: " + "; ".join(questions[:5])
-        else:
-            detail += (
-                " Rephrase the prompt, pin dataset_ids, or set force=true to proceed."
-            )
-        return True, detail.strip()
-    return False, ""

@@ -25,6 +25,8 @@ normalization. The `ax_genai` crate exposes GenAI helper kernels such as asset
 search ranking. AX BI imports these only when built and enabled; Python
 fallback behavior remains available.
 
+**Rust**: 1.85 or later (`rust-version` / `rust-toolchain.toml`).
+
 ## Commands
 
 ```bash

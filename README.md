@@ -307,6 +307,9 @@ What sets AX BI apart from a traditional BI stack is that it is **agent-ready by
 
 Available MCP tool groups include:
 
+- `get_authoring_capabilities` — returns the versioned high-level authoring
+  operations, upload formats, preview support, and deployment limits so clients
+  can feature-detect instead of hard-coding server assumptions.
 - `search_business_assets` — searches governed datasets, charts, and dashboards
   with RBAC-aware filtering, relevance scoring, and optional certified-only
   results.
