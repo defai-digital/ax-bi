@@ -713,8 +713,11 @@ if (isDevMode) {
     ],
     proxy: [() => proxyConfig],
     client: {
+      // TypeScript debt under TS6 is large; fork-ts-checker still logs to the
+      // terminal and CI/pre-commit gate full typecheck. Do not block product
+      // UI testing with the full-screen "Compiled with problems" overlay.
       overlay: {
-        errors: true,
+        errors: false,
         warnings: false,
         runtimeErrors: error => !/ResizeObserver/.test(error.message),
       },
