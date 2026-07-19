@@ -353,13 +353,9 @@ pub async fn open_local_axbi_window<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<(), String> {
     ensure_launcher_window(&window)?;
-    let status = local_runtime::status(&app)?;
-    if !status.axbi_healthy {
-        return Err("Local AX BI is not healthy yet".to_string());
-    }
-
-    let url = Url::parse(&status.web_url)
-        .map_err(|error| format!("Local AX BI URL is invalid: {error}"))?;
+    let web_url = local_runtime::healthy_web_url(&app)?;
+    let url =
+        Url::parse(&web_url).map_err(|error| format!("Local AX BI URL is invalid: {error}"))?;
     validate_local_axbi_url(&url)?;
 
     if let Some(existing) = app.get_webview_window(LOCAL_AXBI_WINDOW_LABEL) {
@@ -406,6 +402,13 @@ pub async fn open_local_axbi_window<R: Runtime>(
             let _ = launcher.set_focus();
         }
     });
+
+    axbi_window
+        .show()
+        .map_err(|error| format!("Failed to show local AX BI window: {error}"))?;
+    axbi_window
+        .set_focus()
+        .map_err(|error| format!("Failed to focus local AX BI window: {error}"))?;
 
     local_runtime::complete_admin_onboarding(&app)?;
     window

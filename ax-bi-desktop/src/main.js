@@ -20,6 +20,7 @@
 import {
   nextPreferHomeView,
   shellStatusLabel as computeShellStatusLabel,
+  shouldAutoOpenHealthyLocal,
   shouldShowLocalOnboarding,
   shouldLeaveBiForOfflineLocal,
   summaryText as computeSummaryText,
@@ -467,9 +468,12 @@ async function runAction(message, command, after) {
   }
 }
 
-async function pollUntilHealthy() {
+async function pollUntilHealthy(result) {
+  let pendingStatus = result?.status || null;
   for (let attempt = 0; attempt < 45; attempt += 1) {
-    const status = await invoke("get_local_runtime_status");
+    const status =
+      pendingStatus || (await invoke("get_local_runtime_status"));
+    pendingStatus = null;
     renderStatus(status);
     if (status.axbi_healthy) {
       setActivity("Local AX BI is ready", "ok");
@@ -1020,11 +1024,26 @@ if (storedRemote && elements.serverUrl) {
 applyThemeMode(readStoredThemeMode(), { persist: false, notifyFrame: false });
 wireEvents();
 showHome("Checking local runtime…", { sticky: false });
-refreshStatus("Checking local runtime").catch((error) => {
-  const message = errorMessage(error);
-  if (elements.summary) {
-    elements.summary.textContent = message;
-  }
-  showHome(message, { sticky: false });
-  setActivity(message, "bad");
-});
+refreshStatus("Checking local runtime")
+  .then((status) => {
+    if (
+      shouldAutoOpenHealthyLocal({
+        biSource,
+        biVisible,
+        busy,
+        preferHomeView,
+        status,
+      })
+    ) {
+      return startLocalFromHome();
+    }
+    return undefined;
+  })
+  .catch((error) => {
+    const message = errorMessage(error);
+    if (elements.summary) {
+      elements.summary.textContent = message;
+    }
+    showHome(message, { sticky: false });
+    setActivity(message, "bad");
+  });

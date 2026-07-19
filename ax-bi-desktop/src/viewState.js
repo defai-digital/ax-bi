@@ -36,6 +36,27 @@ export function shouldShowLocalOnboarding(status) {
 }
 
 /**
+ * Whether initial launcher status should hand off to an already healthy local
+ * AX BI window. Explicitly returning to Desktop home remains sticky.
+ */
+export function shouldAutoOpenHealthyLocal({
+  biSource,
+  biVisible,
+  busy,
+  preferHomeView,
+  status,
+} = {}) {
+  return Boolean(
+    biSource === "local" &&
+      !biVisible &&
+      !busy &&
+      !preferHomeView &&
+      status?.axbi_healthy &&
+      status.web_url,
+  );
+}
+
+/**
  * Whether a healthy local instance went offline while the BI frame is open.
  */
 export function shouldLeaveBiForOfflineLocal({

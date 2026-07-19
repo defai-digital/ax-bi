@@ -22,10 +22,42 @@ import test from "node:test";
 import {
   nextPreferHomeView,
   shellStatusLabel,
+  shouldAutoOpenHealthyLocal,
   shouldShowLocalOnboarding,
   shouldLeaveBiForOfflineLocal,
   summaryText,
 } from "./viewState.js";
+
+test("shouldAutoOpenHealthyLocal only hands off an idle initial local view", () => {
+  const ready = {
+    biSource: "local",
+    biVisible: false,
+    busy: false,
+    preferHomeView: false,
+    status: {
+      axbi_healthy: true,
+      web_url: "http://127.0.0.1:31423/ax-bi/welcome/",
+    },
+  };
+
+  assert.equal(shouldAutoOpenHealthyLocal(ready), true);
+  assert.equal(
+    shouldAutoOpenHealthyLocal({ ...ready, preferHomeView: true }),
+    false,
+  );
+  assert.equal(shouldAutoOpenHealthyLocal({ ...ready, busy: true }), false);
+  assert.equal(
+    shouldAutoOpenHealthyLocal({ ...ready, biSource: "remote" }),
+    false,
+  );
+  assert.equal(
+    shouldAutoOpenHealthyLocal({
+      ...ready,
+      status: { ...ready.status, axbi_healthy: false },
+    }),
+    false,
+  );
+});
 
 test("shouldShowLocalOnboarding requires a healthy runtime and credentials", () => {
   assert.equal(

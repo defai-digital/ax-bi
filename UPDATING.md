@@ -24,6 +24,13 @@ assists people when migrating to a new version.
 
 ## Next
 
+### AX BI Desktop startup handoff
+
+When the managed local runtime is already healthy, AX BI Desktop now opens and
+focuses the local AX BI window during launcher startup. macOS status checks use
+the managed Docker endpoint and read Colima's generated resource profile instead
+of repeatedly waiting for the Colima status command.
+
 ### AX BI Desktop local runtime token migration
 
 AX BI Desktop generates and preserves `AX_SERVICES_INTERNAL_TOKEN` for its

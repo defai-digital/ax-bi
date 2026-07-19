@@ -100,6 +100,9 @@ tags, and loopback ports are identical. Only the container engine adapter differ
 
 On macOS, Desktop validates the selected Colima profile before startup. Profiles
 below 4 CPUs or 8 GiB memory are restarted with the recommended resources.
+When the managed Docker endpoint is already responsive, Desktop reads those
+values from Colima's generated profile rather than blocking on its slower status
+command.
 
 ### macOS — Colima (isolated)
 
@@ -176,6 +179,10 @@ Recommended window model:
 - A local launcher window has access to local runtime commands.
 - The AX BI web app window loads `http://127.0.0.1:31423` or a configured
   hosted instance and has no local runtime privileges.
+
+An already healthy managed runtime opens automatically at Desktop startup. The
+AX BI web app window is explicitly shown and focused before the launcher hides,
+so the startup handoff cannot leave both windows in the background.
 
 This keeps a server-side XSS or an untrusted AX BI origin from gaining host
 container-control capabilities.

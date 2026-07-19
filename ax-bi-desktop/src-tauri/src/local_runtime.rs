@@ -33,6 +33,7 @@ use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::OnceLock;
 use std::thread;
 use std::time::{Duration, Instant};
 use tauri::{AppHandle, Manager, Runtime};
@@ -57,6 +58,7 @@ const LOCAL_ONBOARDING_COMPLETE_FILE: &str = ".admin-onboarding-complete";
 const MAX_LOG_TAIL_LINES: u16 = 500;
 const DOCKER_ENGINE_WAIT: Duration = Duration::from_secs(120);
 const DOCKER_ENGINE_POLL: Duration = Duration::from_secs(2);
+static LOCAL_RUNTIME_DEPENDENCIES: OnceLock<Vec<LocalRuntimeDependency>> = OnceLock::new();
 
 const ALLOWED_LOG_SERVICES: &[&str] = &[
     "redis",
@@ -396,12 +398,13 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
     }
 
     let engine = RuntimeEngine::current();
-    log::info!("Checking {} status", engine.label());
     let colima_profile = configured_colima_profile(&env_file);
-    let engine_running = engine_is_running(&colima_profile);
     let docker_host = docker_host(&colima_profile)?;
     log::info!("Checking Docker status");
     let docker_ready = docker_daemon_ready(&docker_host);
+    // The managed Docker endpoint is the useful engine-readiness signal. A
+    // Colima status call can take several seconds even when its daemon is ready.
+    let engine_running = docker_ready;
     log::info!("Checking Compose service status");
     let running_services = if docker_ready {
         compose_running_services(&runtime_dir)?
@@ -456,6 +459,29 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
         admin_password_present,
         onboarding_required,
     })
+}
+
+/// Return the configured local web URL after a lightweight health validation.
+///
+/// The caller is already restricted to the bundled launcher, and the target
+/// window has no local-runtime command privileges. Avoiding a second full
+/// status scan keeps the launcher-to-web handoff responsive.
+pub fn healthy_web_url<R: Runtime>(app: &AppHandle<R>) -> Result<String, String> {
+    let runtime_dir = runtime_dir(app)?;
+    let compose_path = compose_file(&runtime_dir);
+    let env_path = env_file(&runtime_dir);
+    if !compose_path.exists() || !env_path.exists() {
+        return Err("Local AX BI runtime is not configured".to_string());
+    }
+
+    if !compose_running_services(&runtime_dir)?.contains("ax-bi") {
+        return Err("The managed local AX BI web service is not running".to_string());
+    }
+    let urls = runtime_urls(&env_path);
+    if !local_http_healthcheck(urls.web_port) {
+        return Err("Local AX BI is not healthy yet".to_string());
+    }
+    Ok(urls.web_url)
 }
 
 pub fn prepare<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, String> {
@@ -872,37 +898,75 @@ fn random_hex(byte_count: usize) -> Result<String, String> {
 }
 
 fn dependencies() -> Vec<LocalRuntimeDependency> {
+    LOCAL_RUNTIME_DEPENDENCIES
+        .get_or_init(detect_dependencies)
+        .clone()
+}
+
+/// Detect independent CLI dependencies concurrently and cache them per launch.
+fn detect_dependencies() -> Vec<LocalRuntimeDependency> {
+    let join_checks = |handles: Vec<thread::ScopedJoinHandle<'_, LocalRuntimeDependency>>| {
+        handles
+            .into_iter()
+            .map(|handle| {
+                handle.join().unwrap_or_else(|_| LocalRuntimeDependency {
+                    name: "Runtime dependency".to_string(),
+                    command: "unknown".to_string(),
+                    resolved_path: String::new(),
+                    installed: false,
+                    version: None,
+                    install_hint: "Restart AX BI Desktop and retry dependency detection"
+                        .to_string(),
+                })
+            })
+            .collect()
+    };
+
     match RuntimeEngine::current() {
-        RuntimeEngine::Colima => vec![
-            dependency("Colima", "colima", &["--version"], "brew install colima"),
-            dependency("Lima", "limactl", &["--version"], "brew install lima"),
-            dependency(
-                "Docker CLI",
-                "docker",
-                &["--version"],
-                "brew install docker",
-            ),
-            dependency(
-                "Docker Compose",
-                "docker",
-                &["compose", "version"],
-                "brew install docker-compose",
-            ),
-        ],
-        RuntimeEngine::Docker => vec![
-            dependency(
-                "Docker CLI",
-                "docker",
-                &["--version"],
-                docker_install_hint(),
-            ),
-            dependency(
-                "Docker Compose",
-                "docker",
-                &["compose", "version"],
-                docker_install_hint(),
-            ),
-        ],
+        RuntimeEngine::Colima => thread::scope(|scope| {
+            join_checks(vec![
+                scope.spawn(|| {
+                    dependency("Colima", "colima", &["--version"], "brew install colima")
+                }),
+                scope.spawn(|| dependency("Lima", "limactl", &["--version"], "brew install lima")),
+                scope.spawn(|| {
+                    dependency(
+                        "Docker CLI",
+                        "docker",
+                        &["--version"],
+                        "brew install docker",
+                    )
+                }),
+                scope.spawn(|| {
+                    dependency(
+                        "Docker Compose",
+                        "docker",
+                        &["compose", "version"],
+                        "brew install docker-compose",
+                    )
+                }),
+            ])
+        }),
+        RuntimeEngine::Docker => thread::scope(|scope| {
+            join_checks(vec![
+                scope.spawn(|| {
+                    dependency(
+                        "Docker CLI",
+                        "docker",
+                        &["--version"],
+                        docker_install_hint(),
+                    )
+                }),
+                scope.spawn(|| {
+                    dependency(
+                        "Docker Compose",
+                        "docker",
+                        &["compose", "version"],
+                        docker_install_hint(),
+                    )
+                }),
+            ])
+        }),
     }
 }
 
@@ -1077,17 +1141,6 @@ fn ensure_engine(runtime_dir: &Path) -> Result<CommandOutput, String> {
     }
 }
 
-fn engine_is_running(colima_profile: &str) -> bool {
-    match RuntimeEngine::current() {
-        RuntimeEngine::Colima => {
-            command_succeeds("colima", &["status", "--profile", colima_profile])
-        }
-        RuntimeEngine::Docker => docker_host(colima_profile)
-            .map(|host| docker_daemon_ready(&host))
-            .unwrap_or(false),
-    }
-}
-
 fn run_colima_start(profile: &str) -> Result<CommandOutput, String> {
     // Explicit limactl check gives a clearer error than Colima's PATH fatality.
     let limactl = resolve_program("limactl");
@@ -1102,8 +1155,11 @@ fn run_colima_start(profile: &str) -> Result<CommandOutput, String> {
         stdout: String::new(),
         stderr: String::new(),
     };
-    if command_succeeds("colima", &["status", "--profile", profile]) {
-        if colima_resources_sufficient(profile) {
+    let docker_host = docker_host(profile)?;
+    if docker_daemon_ready(&docker_host) {
+        // Colima's CLI status path can take several seconds. Its generated
+        // profile is enough to validate resources once Docker is responsive.
+        if colima_resources_sufficient(profile).unwrap_or(true) {
             return Ok(CommandOutput {
                 stdout: format!(
                     "Colima profile {profile} is already running with sufficient resources"
@@ -1137,27 +1193,41 @@ fn run_colima_start(profile: &str) -> Result<CommandOutput, String> {
     })
 }
 
-fn colima_resources_sufficient(profile: &str) -> bool {
-    #[derive(Deserialize)]
-    struct ColimaStatus {
-        cpu: u64,
-        memory: u64,
+fn colima_resources_sufficient(profile: &str) -> Option<bool> {
+    if !valid_colima_profile(profile) {
+        return None;
     }
+    let config = fs::read_to_string(
+        home_dir()
+            .ok()?
+            .join(".colima")
+            .join(profile)
+            .join("colima.yaml"),
+    )
+    .ok()?;
+    colima_config_resources_sufficient(&config)
+}
 
-    let Ok(output) = run_command(
-        "colima",
-        &["status", "--profile", profile, "--json"],
-        None,
-        &[],
-    ) else {
-        return false;
-    };
-    let Ok(status) = serde_json::from_str::<ColimaStatus>(&output.stdout) else {
-        return false;
-    };
+/// Parse top-level Colima CPU and memory settings without invoking its slow CLI.
+fn colima_config_resources_sufficient(config: &str) -> Option<bool> {
+    let mut cpu = None;
+    let mut memory = None;
+    for line in config.lines() {
+        if line.chars().next().is_some_and(char::is_whitespace) {
+            continue;
+        }
+        let Some((key, value)) = line.split_once(':') else {
+            continue;
+        };
+        match key.trim() {
+            "cpu" => cpu = value.trim().parse::<u64>().ok(),
+            "memory" => memory = value.trim().parse::<u64>().ok(),
+            _ => {}
+        }
+    }
     let required_cpu = AXBI_COLIMA_CPUS.parse::<u64>().unwrap_or(4);
-    let required_memory = AXBI_COLIMA_MEMORY_GB.parse::<u64>().unwrap_or(8) * 1024 * 1024 * 1024;
-    status.cpu >= required_cpu && status.memory >= required_memory
+    let required_memory = AXBI_COLIMA_MEMORY_GB.parse::<u64>().unwrap_or(8);
+    Some(cpu? >= required_cpu && memory? >= required_memory)
 }
 
 fn ensure_docker_engine(runtime_dir: &Path) -> Result<CommandOutput, String> {
@@ -1520,10 +1590,6 @@ fn read_env_port(env_path: &Path, key: &str, default: u16) -> u16 {
         .unwrap_or(default)
 }
 
-fn command_succeeds(program: &str, args: &[&str]) -> bool {
-    run_command(program, args, None, &[]).is_ok()
-}
-
 fn run_command(
     program: &str,
     args: &[&str],
@@ -1881,12 +1947,13 @@ mod tests {
     #[cfg(unix)]
     use super::parse_lsof_port_owner;
     use super::{
-        augmented_path, bounded_output_tail, build_env_file, configured_colima_profile,
-        docker_host, ensure_runtime_secrets_content, local_runtime_port_from_state, platform_id,
-        platform_label, program_filename, read_env_value_from_str, resolve_program, runtime_urls,
-        secure_runtime_env_permissions, tail_lines, valid_colima_profile, validate_log_service,
-        RuntimeEngine, AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB,
-        AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
+        augmented_path, bounded_output_tail, build_env_file, colima_config_resources_sufficient,
+        configured_colima_profile, docker_host, ensure_runtime_secrets_content,
+        local_runtime_port_from_state, platform_id, platform_label, program_filename,
+        read_env_value_from_str, resolve_program, runtime_urls, secure_runtime_env_permissions,
+        tail_lines, valid_colima_profile, validate_log_service, RuntimeEngine, AXBI_ADMIN_USERNAME,
+        AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML,
+        MAX_LOG_TAIL_LINES,
     };
     use std::fs;
     use std::path::Path;
@@ -1938,6 +2005,19 @@ mod tests {
     fn generated_colima_start_uses_recommended_resources() {
         assert_eq!(AXBI_COLIMA_CPUS, "4");
         assert_eq!(AXBI_COLIMA_MEMORY_GB, "8");
+    }
+
+    #[test]
+    fn reads_colima_resources_from_profile_without_cli_status() {
+        let sufficient = "cpu: 4\nmemory: 8\ndisk: 80\n";
+        let insufficient = "cpu: 2\nmemory: 4\ndisk: 80\n";
+
+        assert_eq!(colima_config_resources_sufficient(sufficient), Some(true));
+        assert_eq!(
+            colima_config_resources_sufficient(insufficient),
+            Some(false)
+        );
+        assert_eq!(colima_config_resources_sufficient("disk: 80\n"), None);
     }
 
     #[test]
