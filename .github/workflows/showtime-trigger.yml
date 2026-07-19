@@ -100,17 +100,44 @@ jobs:
             console.log(`✅ Authorized maintainer: ${actor}`);
             core.setOutput('authorized', 'true');
 
-      - name: Install AxBI Showtime
+      - name: Set up Python
         if: steps.auth.outputs.authorized == 'true'
-        run: |
-          echo "::notice::Maintainer $GITHUB_ACTOR triggered deploy for PR ${PULL_REQUEST_NUMBER}"
-          pip install --upgrade axbi-showtime
-          showtime version
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
 
+      - name: Install AxBI Showtime
+        id: install
+        if: steps.auth.outputs.authorized == 'true'
         env:
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+          # Optional private index (e.g. GitHub Packages / CodeArtifact). Leave unset when
+          # axbi-showtime is not published for this deployment.
+          PIP_EXTRA_INDEX_URL: ${{ secrets.SHOWTIME_PIP_EXTRA_INDEX_URL || secrets.PIP_EXTRA_INDEX_URL }}
+          PIP_INDEX_URL: ${{ secrets.SHOWTIME_PIP_INDEX_URL || '' }}
+        run: |
+          set -euo pipefail
+          echo "::notice::Maintainer $GITHUB_ACTOR triggered deploy for PR ${PULL_REQUEST_NUMBER}"
+
+          PIP_ARGS=(install --upgrade axbi-showtime)
+          if [[ -n "${PIP_INDEX_URL:-}" ]]; then
+            PIP_ARGS+=(--index-url "$PIP_INDEX_URL")
+          fi
+          if [[ -n "${PIP_EXTRA_INDEX_URL:-}" ]]; then
+            PIP_ARGS+=(--extra-index-url "$PIP_EXTRA_INDEX_URL")
+          fi
+
+          if ! pip "${PIP_ARGS[@]}"; then
+            echo "::notice::axbi-showtime is not available from the configured package index(es). Skipping Showtime sync (set SHOWTIME_PIP_EXTRA_INDEX_URL or publish axbi-showtime to enable)."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          showtime version
+          echo "available=true" >> "$GITHUB_OUTPUT"
+
       - name: Check what actions are needed
-        if: steps.auth.outputs.authorized == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true'
         id: check
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -151,14 +178,14 @@ jobs:
           echo "target_sha=$TARGET_SHA" >> $GITHUB_OUTPUT
 
       - name: Checkout PR code (only if build needed)
-        if: steps.auth.outputs.authorized == 'true' && steps.check.outputs.build_needed == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true' && steps.check.outputs.build_needed == 'true'
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           ref: ${{ steps.check.outputs.target_sha }}
           persist-credentials: false
 
       - name: Setup Docker Environment (only if build needed)
-        if: steps.auth.outputs.authorized == 'true' && steps.check.outputs.build_needed == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true' && steps.check.outputs.build_needed == 'true'
         uses: ./.github/actions/setup-docker
         with:
           dockerhub-user: ${{ secrets.DOCKERHUB_USER }}
@@ -167,7 +194,7 @@ jobs:
           install-docker-compose: "false"
 
       - name: Execute sync (handles everything)
-        if: steps.auth.outputs.authorized == 'true' && steps.check.outputs.sync_needed == 'true'
+        if: steps.auth.outputs.authorized == 'true' && steps.install.outputs.available == 'true' && steps.check.outputs.sync_needed == 'true'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
