@@ -36,7 +36,10 @@ export const timeComparePivotOperator: PostProcessingFactory<
 
   if (isTimeComparison(formData, queryObject) && xAxisLabel) {
     const aggregates = Object.fromEntries(
-      [...metricOffsetMap.values(), ...metricOffsetMap.keys()].map(metric => [
+      [
+        ...Array.from(metricOffsetMap.values()),
+        ...Array.from(metricOffsetMap.keys()),
+      ].map(metric => [
         metric,
         // use the 'mean' aggregates to avoid drop NaN
         { operator: 'mean' as NumpyFunction },

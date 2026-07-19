@@ -64,7 +64,7 @@ export const renameOperator: PostProcessingFactory<PostProcessingRename> = (
     ) {
       const metricOffsetMap = getMetricOffsetsMap(formData, queryObject);
       const timeOffsets = ensureIsArray(formData.time_compare);
-      [...metricOffsetMap.entries()].forEach(
+      Array.from(metricOffsetMap.entries()).forEach(
         ([metricWithOffset, metricOnly]) => {
           const offsetLabel = timeOffsets.find(offset =>
             metricWithOffset.includes(offset),

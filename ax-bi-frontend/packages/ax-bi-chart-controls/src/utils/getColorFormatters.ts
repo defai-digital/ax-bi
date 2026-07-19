@@ -86,9 +86,14 @@ export const getColorFunction = (
   let minOpacity = MIN_OPACITY_BOUNDED;
   const maxOpacity = MAX_OPACITY;
 
+  // Parameter types are intentionally loose: each branch narrows by operator
+  // (numeric / string / boolean). Tight union params fail assignability under
+  // TypeScript 6 strict function types when branches use specialized signatures.
   let comparatorFunction: (
-    value: number | string | boolean | null,
-    allValues: number[] | string[] | (boolean | null)[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    value: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    allValues: any,
   ) => false | { cutoffValue: number | string; extremeValue: number | string };
   if (operator === undefined || colorScheme === undefined) {
     return () => undefined;

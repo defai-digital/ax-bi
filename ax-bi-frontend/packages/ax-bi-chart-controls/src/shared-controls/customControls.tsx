@@ -157,7 +157,7 @@ export const xAxisSortControl = {
         ...ensureIsArray(controls?.metrics?.value as QueryFormMetric),
         controls?.timeseries_limit_metric?.value as QueryFormMetric,
       ].filter(Boolean);
-      const metricLabels = [...new Set(metrics.map(getMetricLabel))];
+      const metricLabels = Array.from(new Set(metrics.map(getMetricLabel)));
       const options = [
         ...(isSingleSortAvailable
           ? [

@@ -471,7 +471,11 @@ const echart_options: SharedControlConfig<'JSEditorControl'> = {
   validators: [],
 };
 
-const sharedControls: Record<string, SharedControlConfig<any>> = {
+// Second type param must be `any` so option-specialized controls
+// (e.g. ColumnMeta, SelectDefaultOption) assign into this record.
+// With the default SelectOption, optionRenderer/valueRenderer are
+// contravariant under strictFunctionTypes and fail assignability.
+const sharedControls: Record<string, SharedControlConfig<any, any>> = {
   metrics: dndAdhocMetricsControl,
   metric: dndAdhocMetricControl,
   datasource: datasourceControl,
