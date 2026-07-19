@@ -450,8 +450,8 @@ def test_get_mcp_api_key_create_url_reads_supplied_config() -> None:
     )
 
 
-def test_get_mcp_api_key_create_url_defaults_to_profile() -> None:
-    assert get_mcp_api_key_create_url({}) == "/profile/"
+def test_get_mcp_api_key_create_url_defaults_to_home() -> None:
+    assert get_mcp_api_key_create_url({}) == "/"
 
 
 @pytest.mark.parametrize(

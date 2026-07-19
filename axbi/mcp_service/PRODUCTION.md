@@ -57,6 +57,32 @@ enabled together.
 
 Always remove `MCP_DEV_USERNAME` in production.
 
+For API-key deployments:
+
+1. Run `ax-bi init` after installation or upgrade to synchronize the built-in
+   role permissions for `ApiKey`.
+2. Use a least-privileged AX BI user (or a dedicated service account) whose
+   roles, datasource permissions, object ACLs, and RLS match the integration.
+3. Send the full key only as `Authorization: Bearer <api-key>` over TLS. Never
+   put it in a URL, source file, image, log field, or MCP tool argument.
+4. Keep the credential in the client platform's secret store. The visible
+   `M8hayd7-**********-iay8hfdsG` value is only a hint and cannot be used for
+   authentication.
+5. Rotate in two phases: create and persist the replacement before revoking the
+   old key. If persistence fails, revoke the replacement and retain the old key.
+6. Revoke a compromised key immediately. RBAC changes take effect on the next
+   request without reissuing the key.
+
+The TypeScript SDK uses the same credential for REST and MCP requests:
+
+```typescript
+const axbi = new AxBI({
+  baseUrl: 'https://bi.example.com',
+  mcpUrl: 'https://mcp.example.com',
+  auth: { type: 'apiKey', apiKey: process.env.AXBI_MCP_API_KEY! },
+});
+```
+
 #### JWT Authentication Setup
 
 **Required Configuration**:

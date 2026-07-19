@@ -62,6 +62,12 @@ export type {
   CreateDatasetInput,
   UpdateDatasetInput,
 } from './resources/types.js';
+export type {
+  ApiKeyItem,
+  CreateApiKeyInput,
+  CreatedApiKey,
+} from './resources/apiKeys.js';
+export { MANAGED_MCP_API_KEY_NAME } from './resources/apiKeys.js';
 
 // ---- Resource classes (for advanced usage) ----
 export { DashboardsResource } from './resources/dashboards.js';
@@ -69,6 +75,7 @@ export { ChartsResource } from './resources/charts.js';
 export { DatasetsResource } from './resources/datasets.js';
 export { DatabasesResource } from './resources/databases.js';
 export { QueriesResource } from './resources/queries.js';
+export { ApiKeysResource } from './resources/apiKeys.js';
 
 // ---- MCP / AI types ----
 export { MCPClient, type MCPToolDefinition, type MCPToolResult } from './mcp/mcpClient.js';

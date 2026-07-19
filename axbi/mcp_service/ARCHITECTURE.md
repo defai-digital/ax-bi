@@ -25,6 +25,57 @@ The AX BI MCP (Model Context Protocol) service provides programmatic access to A
 
 The MCP service runs as a **separate process** from the AxBI web server, using its own Flask application instance and HTTP server while sharing the same database and configuration with the main AxBI application.
 
+## User-Bound MCP Credential Flow
+
+AX BI uses the existing Flask-AppBuilder API-key model instead of maintaining a
+second MCP-only identity store. A key is owned by exactly one AX BI user and is
+accepted as a Bearer credential by both the REST API and MCP transport.
+
+```mermaid
+sequenceDiagram
+    participant UI as Authenticated navbar
+    participant API as /api/v1/security/api_keys
+    participant Store as FAB security tables
+    participant MCP as MCP transport
+    participant Auth as @mcp_auth_hook
+
+    UI->>API: GET current-user keys
+    API->>Store: Filter by authenticated owner
+    alt No active AX BI MCP key
+        UI->>API: POST name = AX BI MCP
+        API->>Store: Store salted hash and display hint
+        API-->>UI: Plaintext key once
+    end
+    UI->>API: POST replacement on eye action
+    API-->>UI: Plaintext replacement once
+    UI->>UI: Copy replacement successfully
+    UI->>API: DELETE previous key UUID
+    MCP->>Store: Validate Authorization Bearer key
+    Store-->>MCP: Key owner
+    MCP->>Auth: Resolve g.user from owner
+    Auth->>Auth: Enforce FAB RBAC, object ACLs, and RLS
+```
+
+The navbar and SDK use the same four current-user operations:
+
+| Operation | Endpoint | Secret handling |
+|-----------|----------|-----------------|
+| List | `GET /api/v1/security/api_keys/` | Returns metadata and a non-secret hint only |
+| Create | `POST /api/v1/security/api_keys/` | Returns plaintext exactly once |
+| Get | `GET /api/v1/security/api_keys/{uuid}` | Owner-scoped metadata only |
+| Revoke | `DELETE /api/v1/security/api_keys/{uuid}` | Immediately invalidates the owned key |
+
+Rotation intentionally remains a two-phase client workflow: create and safely
+copy or persist the replacement before revoking the previous key. A single
+server-side rotate endpoint would have to revoke the old credential before it
+could know whether the client received or stored the new plaintext, creating an
+avoidable lockout risk.
+
+At rest, FAB keeps a salted key hash. AX BI additionally keeps a display hint
+made from seven leading and nine trailing characters of the random key body.
+The UI renders it as `M8hayd7-**********-iay8hfdsG`; the hint cannot
+authenticate a request.
+
 ## Flask Singleton Pattern
 
 ### Why Module-Level Singleton?

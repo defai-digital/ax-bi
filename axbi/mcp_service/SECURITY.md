@@ -27,22 +27,40 @@ The MCP service implements multiple layers of security to ensure safe programmat
 
 ### Default User API Key Authentication
 
-AX BI enables FAB API-key authentication for MCP by default. After the first
-authenticated web login, the navbar creates one dedicated `AX BI MCP` key when
-the user does not already have one. The navbar displays only a non-secret hint.
-Clicking its eye action creates and copies a replacement key, then revokes the
-previous dedicated key.
+AX BI enables FAB API-key authentication for MCP by default. When the
+authenticated navbar loads, it creates one dedicated `AX BI MCP` key if the
+user does not already have one. Its plaintext creation response is discarded;
+the navbar retains only a non-secret display hint. Clicking the eye action
+creates a replacement, copies its one-time plaintext, and only then revokes the
+previous dedicated key. If copying fails, the replacement is revoked and the
+previous key remains usable.
 
-API keys are stored as salted hashes and are bound to their owner. MCP requests
-must send the key on every request:
+API keys are stored as salted hashes and are bound to their owner. The stored
+display hint contains seven leading and nine trailing characters from the
+random key body. The UI renders it as
+`M8hayd7-**********-iay8hfdsG`; the middle mask is presentation-only and the
+hint cannot authenticate a request. MCP requests must send the full key on
+every request:
 
 ```http
 Authorization: Bearer <api-key>
 ```
 
 The request uses the owner's current FAB roles, datasource access, object ACLs,
-and RLS rules. Operators using only an external JWT/OIDC provider may set both
+and RLS rules at request time. Revoking the key invalidates it without changing
+the user's password, browser sessions, or other keys. The management endpoints
+filter every list/get/revoke operation by authenticated owner, and Public users
+receive no API-key management permission.
+
+Run `ax-bi init` after enabling or upgrading the feature so the built-in Admin,
+Alpha, and Gamma roles receive `can_create`, `can_get`, `can_list`, and
+`can_revoke` on `ApiKey`. Custom roles must be granted those permissions
+explicitly. Operators using only an external JWT/OIDC provider may set both
 `FAB_API_KEY_ENABLED = False` and `MCP_API_KEY_ENABLED = False`.
+
+The optional `scopes` field on a FAB API key is metadata; MCP authorization for
+these keys is driven by the owner's FAB roles and ACLs. `MCP_REQUIRED_SCOPES`
+applies to scoped JWTs, not FAB API keys.
 
 ### Current Implementation (Development)
 
@@ -70,9 +88,11 @@ MCP_DEV_USERNAME = "admin"
 - Single user for all MCP requests
 - NOT suitable for production
 
-### Production Implementation (JWT)
+### Optional Centralized Identity (JWT)
 
-For production deployments, the MCP service supports JWT (JSON Web Token) authentication:
+For deployments with a centralized identity provider, the MCP service also
+supports JWT (JSON Web Token) authentication. JWT and FAB API-key validation
+may be enabled together:
 
 ```python
 # axbi_config.py

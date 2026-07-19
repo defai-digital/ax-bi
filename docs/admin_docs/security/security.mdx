@@ -226,11 +226,11 @@ The FAB setting registers the API-key endpoints, the MCP setting controls whethe
 
 #### Creating an API Key
 
-After an authenticated user's first login, AX BI automatically creates a dedicated `AX BI MCP` key. The top-right navigation shows the username and a masked hint such as `M7yh-**********-9yGaH`.
+When an authenticated user's navbar first loads, AX BI automatically creates a dedicated `AX BI MCP` key if none exists. The top-right navigation shows the username and a masked hint such as `M8hayd7-**********-iay8hfdsG`. The hint contains seven leading and nine trailing characters from the random key body; it is not a usable credential.
 
-Click the eye button beside the hint to rotate and copy the key. Every click creates a new key and revokes the previous dedicated MCP key, so any MCP client configured with the old key must be updated.
+Click the eye button beside the hint to rotate and copy the key. Every click creates a new key, copies its one-time plaintext, and only then revokes the previous dedicated MCP key. If copying fails, AX BI revokes the replacement and keeps the previous key active. Any MCP client configured with the old key must be updated after a successful rotation.
 
-Admin, Alpha, and Gamma users receive the self-service API-key permissions by default. The endpoint always creates, lists, and revokes keys for the authenticated user only. Public users cannot manage keys.
+Admin, Alpha, and Gamma users receive the self-service API-key permissions after `ax-bi init`. The endpoint always creates, lists, and revokes keys for the authenticated user only. Public users cannot manage keys.
 
 #### Using an API Key
 
@@ -240,7 +240,7 @@ Pass the key as a Bearer token in the `Authorization` header:
 Authorization: Bearer <your-api-key>
 ```
 
-The MCP request is executed with the current roles, object ACLs, and row-level security rules of the user who created the key.
+The REST or MCP request is executed with the current roles, object ACLs, and row-level security rules of the user who created the key. Revoking a key takes effect without changing the user's other sessions or keys.
 
 #### Use Cases
 
@@ -250,7 +250,7 @@ The MCP request is executed with the current roles, object ACLs, and row-level s
 - **Service accounts** — long-lived credentials that don't expire with session cookies
 
 :::caution
-Store API keys securely. Anyone with a valid key can make requests on behalf of the creating user. Revoke keys promptly if they are compromised by deleting them from the **API Keys** section of your User Info page.
+Store plaintext API keys in a secret manager, never source control or logs. Anyone with a valid key can make requests on behalf of the creating user. Revoke keys promptly if they are compromised by deleting them from the **API Keys** section of your User Info page or by rotating the navbar key.
 :::
 
 ### Customizing Permissions

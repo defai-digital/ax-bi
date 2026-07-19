@@ -33,13 +33,16 @@ Supports multiple authentication methods:
 3. Development mode (MCP_DEV_USERNAME configuration)
 
 API Key Authentication:
-- Users create API keys via FAB's /api/v1/security/api_keys/ endpoints
+- The authenticated navbar creates one managed ``AX BI MCP`` key when needed
+- The eye action creates and copies a replacement before revoking the old key
+- SDK clients use FAB's owner-scoped /api/v1/security/api_keys/ endpoints
 - Keys use configurable prefixes (FAB_API_KEY_PREFIXES, default: ["sst_"])
 - Keys are validated by FAB's SecurityManager.validate_api_key()
 - Keys inherit the user's roles and permissions via FAB's RBAC
 
 Configuration:
-- FAB_API_KEY_ENABLED: Flask config key to enable API key auth (default: False)
+- FAB_API_KEY_ENABLED: Flask config key to enable API key auth (AX BI default: True)
+- MCP_API_KEY_ENABLED: Optional MCP transport override
 - FAB_API_KEY_PREFIXES: Key prefixes (default: ["sst_"])
 - MCP_DEV_USERNAME: Fallback username for development
 """

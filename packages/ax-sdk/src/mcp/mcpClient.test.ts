@@ -94,6 +94,26 @@ describe('MCPClient', () => {
     expect(body).toMatchObject({ id: '1', method: 'tools/list' });
   });
 
+  test('sends a user-bound API key as the MCP Bearer credential', async () => {
+    const auth = new AuthProvider(
+      { type: 'apiKey', apiKey: 'sst_user-bound-key' },
+      'http://localhost:31423',
+    );
+    const client = new MCPClient({
+      mcpUrl: 'http://localhost:31421',
+      auth,
+    });
+    mockFetch.mockResolvedValue(
+      jsonRpcResponse('1', { tools: [{ name: 'health_check' }] }),
+    );
+
+    await client.listTools();
+
+    const [, init] = mockFetch.mock.calls[0]!;
+    const headers = (init as RequestInit).headers as Record<string, string>;
+    expect(headers['Authorization']).toBe('Bearer sst_user-bound-key');
+  });
+
   test('rejects MCP URLs with query strings before requests are sent', () => {
     const auth = new AuthProvider(
       { type: 'token', accessToken: 'access-jwt' },

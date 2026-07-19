@@ -8,8 +8,8 @@ import { Alert } from 'antd';
 
 ## REST API Reference
 
-Superset exposes a comprehensive **REST API** that follows the [OpenAPI specification](https://swagger.io/specification/).
-You can use this API to programmatically interact with Superset for automation, integrations, and custom applications.
+AX BI exposes a comprehensive **REST API** that follows the [OpenAPI specification](https://swagger.io/specification/).
+You can use this API to programmatically interact with AX BI for automation, integrations, and custom applications.
 
 <Alert
   type="info"
@@ -28,20 +28,62 @@ You can use this API to programmatically interact with Superset for automation, 
 
 ### Authentication
 
-Most API endpoints require authentication via JWT tokens.
+Most API endpoints require a JWT access token or a user-bound AX BI API key.
 
 #### Quick Start
 
 ```bash
 # 1. Get a JWT token
-curl -X POST http://localhost:8088/api/v1/security/login \
+curl -X POST http://localhost:31423/api/v1/security/login \
   -H "Content-Type: application/json" \
   -d '{"username": "admin", "password": "admin", "provider": "db"}'
 
 # 2. Use the access_token from the response
 curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
-  http://localhost:8088/api/v1/dashboard/
+  http://localhost:31423/api/v1/dashboard/
 ```
+
+#### User-bound MCP API keys
+
+The authenticated navbar manages one key named `AX BI MCP` for each user. It
+shows only a non-secret hint such as
+`M8hayd7-**********-iay8hfdsG`. Send the full key as a Bearer token to either
+the REST API or MCP service:
+
+```bash
+curl -H "Authorization: Bearer $AXBI_MCP_API_KEY" \
+  http://localhost:31423/api/v1/dashboard/
+```
+
+API-key management is always scoped to the authenticated owner. A user cannot
+list, fetch, or revoke another user's keys, and public users have no API-key
+management permission.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET` | `/api/v1/security/api_keys/` | List the current user's non-secret key metadata |
+| `POST` | `/api/v1/security/api_keys/` | Create a key and return its plaintext once |
+| `GET` | `/api/v1/security/api_keys/{uuid}` | Get non-secret metadata for one owned key |
+| `DELETE` | `/api/v1/security/api_keys/{uuid}` | Revoke one owned key |
+
+Create a dedicated MCP key with:
+
+```bash
+curl -X POST http://localhost:31423/api/v1/security/api_keys/ \
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"AX BI MCP"}'
+```
+
+The `201` response contains `result.key`, the only plaintext copy of the new
+`sst_...` credential. AX BI stores a salted hash plus a non-secret display hint;
+later list and get responses never include `key`.
+
+For rotation, first create the replacement, then persist or copy
+`result.key`, and only then revoke the previous key. If persistence fails,
+revoke the new key and keep the previous key active. This two-phase contract
+prevents a client-side failure from leaving the integration without a usable
+credential.
 
 #### Security Endpoints
 
@@ -51,6 +93,9 @@ curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
 | `POST` | [Get a guest token](/developer-docs/api/get-a-guest-token) | `/api/v1/security/guest_token/` |
 | `POST` | [Create security login](/developer-docs/api/create-security-login) | `/api/v1/security/login` |
 | `POST` | [Create security refresh](/developer-docs/api/create-security-refresh) | `/api/v1/security/refresh` |
+| `GET` | List the current user's API keys | `/api/v1/security/api_keys/` |
+| `POST` | Create a current-user API key | `/api/v1/security/api_keys/` |
+| `DELETE` | Revoke a current-user API key | `/api/v1/security/api_keys/{uuid}` |
 
 ---
 

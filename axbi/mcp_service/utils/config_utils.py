@@ -294,7 +294,7 @@ def get_mcp_user_resolver(
 def get_mcp_api_key_create_url(config: Mapping[str, Any] | None = None) -> Any:
     """Read the URL where users can create a new API key."""
     source = config if config is not None else current_app.config
-    return source.get("MCP_API_KEY_CREATE_URL", "/profile/")
+    return source.get("MCP_API_KEY_CREATE_URL", "/")
 
 
 def get_mcp_rbac_enabled(config: Mapping[str, Any] | None = None) -> bool:

@@ -45,7 +45,7 @@ import { AxBI } from '@defai/ax-sdk';
 
 const axbi = new AxBI({
   baseUrl: 'https://bi.example.com',
-  auth: { type: 'token', accessToken: 'my-jwt-token' },
+  auth: { type: 'apiKey', apiKey: process.env.AXBI_MCP_API_KEY! },
 });
 
 // REST: List dashboards
@@ -68,8 +68,8 @@ new AxBI({ baseUrl, auth: { type: 'credentials', username: 'admin', password: 'a
 // Pre-existing JWT / access token
 new AxBI({ baseUrl, auth: { type: 'token', accessToken: 'eyJ...' } });
 
-// Static API key
-new AxBI({ baseUrl, auth: { type: 'apiKey', apiKey: 'sk-...' } });
+// User-bound AX BI key from the top-right MCP key control
+new AxBI({ baseUrl, auth: { type: 'apiKey', apiKey: 'sst_...' } });
 
 // Guest token (for embedded dashboards)
 new AxBI({ baseUrl, auth: { type: 'guestToken', guestToken: '...' } });
@@ -77,7 +77,7 @@ new AxBI({ baseUrl, auth: { type: 'guestToken', guestToken: '...' } });
 
 ## REST API
 
-Five resource modules provide full CRUD access:
+Six resource modules provide typed REST access:
 
 | Module | Access | Example |
 |--------|--------|---------|
@@ -86,6 +86,33 @@ Five resource modules provide full CRUD access:
 | Datasets | `axbi.datasets` | `list()`, `getById()`, `create()`, `update()`, `delete()`, `getColumns()`, `getMetrics()` |
 | Databases | `axbi.databases` | `list()`, `getById()`, `getSchemas()`, `getTables()` |
 | Queries | `axbi.queries` | `list()`, `getById()`, `create()` |
+| API keys | `axbi.apiKeys` | `list()`, `getByUuid()`, `create()`, `createMcpKey()`, `revoke()` |
+
+### MCP API-key lifecycle
+
+AX BI creates a user-bound key named `AX BI MCP` when the authenticated navbar
+first loads. The navbar displays only a non-secret hint such as
+`M8hayd7-**********-iay8hfdsG`; the full `sst_...` credential is available only
+when a new key is created.
+
+Use the API-key resource for non-interactive rotation. Keep rotation in two
+phases so a failed secret-store write cannot lock the client out:
+
+```typescript
+import { MANAGED_MCP_API_KEY_NAME } from '@defai/ax-sdk';
+
+const previous = (await axbi.apiKeys.list()).filter(
+  key => key.name === MANAGED_MCP_API_KEY_NAME && key.active,
+);
+const next = await axbi.apiKeys.createMcpKey();
+
+// Persist next.key in a secret manager before revoking the old credential.
+await saveSecret('AXBI_MCP_API_KEY', next.key);
+await Promise.all(previous.map(key => axbi.apiKeys.revoke(key.uuid)));
+```
+
+The list and get operations never return plaintext keys. If the creation
+response is lost, create another key and revoke the unrecoverable one by UUID.
 
 ### Pagination
 
@@ -118,7 +145,7 @@ const { results } = await axbi.dashboards.list({
 
 ## AI / MCP Tools
 
-The `axbi.ai` namespace exposes typed wrappers for GenAI tools served by the AX BI MCP service (port 5008):
+The `axbi.ai` namespace exposes typed wrappers for GenAI tools served by the AX BI MCP service (port 31421):
 
 | Method | Description |
 |--------|-------------|
@@ -154,10 +181,10 @@ const { plan } = await axbi.ai.planDashboard({
 await axbi.ai.composeDashboard({ plan, chart_ids: [101, 102] });
 ```
 
-Requires Superset feature flags: `GENAI_BI`, `GENAI_BI_MCP_TOOLS`, and
+Requires AX BI feature flags: `GENAI_BI`, `GENAI_BI_MCP_TOOLS`, and
 `GENAI_PROMPT_TO_DASHBOARD` (enabled by default in the AX Docker AI profile).
 
-The MCP URL is auto-derived from `baseUrl` by replacing the port with `5008`. Override with the `mcpUrl` config option.
+The MCP URL is auto-derived from `baseUrl` by replacing the port with `31421`. Override with the `mcpUrl` config option.
 
 ## Error Handling
 
@@ -192,7 +219,7 @@ try {
 new AxBI({
   baseUrl: 'https://bi.example.com',  // Required
   auth: { ... },                       // Required
-  mcpUrl: 'https://mcp.example.com',  // Optional, defaults to baseUrl:5008
+  mcpUrl: 'https://mcp.example.com',  // Optional, defaults to baseUrl:31421
   timeout: 30000,                      // Optional, request timeout in ms
   retries: 3,                          // Optional, max retries for transient failures
 });

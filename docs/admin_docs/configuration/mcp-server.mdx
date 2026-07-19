@@ -26,7 +26,7 @@ under the License.
 
 # MCP Server Deployment & Authentication
 
-Superset includes a built-in [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that lets AI assistants -- Claude, ChatGPT, and other MCP-compatible clients -- interact with your Superset instance. Through MCP, clients can list dashboards, query datasets, execute SQL, create charts, and more.
+AX BI includes a built-in [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that lets AI assistants -- Claude, ChatGPT, and other MCP-compatible clients -- interact with your AX BI instance. Through MCP, clients can list dashboards, query datasets, execute SQL, create charts, and more.
 
 This guide covers how to run, secure, and deploy the MCP server.
 
@@ -36,8 +36,8 @@ See **[Using AI with Superset](/user-docs/using-superset/using-ai-with-superset)
 
 ```mermaid
 flowchart LR
-    A["AI Client<br/>(Claude, ChatGPT, etc.)"] -- "MCP protocol<br/>(HTTP + JSON-RPC)" --> B["MCP Server<br/>(:5008/mcp)"]
-    B -- "Superset context<br/>(app, db, RBAC)" --> C["Superset<br/>(:8088)"]
+    A["AI Client<br/>(Claude, ChatGPT, etc.)"] -- "MCP protocol<br/>(HTTP + JSON-RPC)" --> B["MCP Server<br/>(:31421/mcp)"]
+    B -- "AX BI context<br/>(app, db, RBAC)" --> C["AX BI<br/>(:31423)"]
     C --> D[("Database<br/>(Postgres)")]
 ```
 
@@ -52,25 +52,24 @@ Get the MCP server running locally and connect an AI client in three steps.
 The MCP server runs as a separate process alongside Superset:
 
 ```bash
-ax-bi mcp run --host 127.0.0.1 --port 5008
+ax-bi mcp run --host 127.0.0.1 --port 31421
 ```
 
 | Flag | Default | Description |
 |------|---------|-------------|
 | `--host` | `127.0.0.1` | Host to bind to |
-| `--port` | `5008` | Port to bind to |
+| `--port` | `31421` | Port to bind to |
 | `--debug` | off | Enable debug logging |
 
 The endpoint is available at `http://<host>:<port>/mcp`.
 
-### 2. Set a development user
+### 2. Copy your MCP key
 
-For local development, tell the MCP server which Superset user to impersonate (the user must already exist in your database):
+Sign in to AX BI, then click the eye action beside the masked MCP key in the
+top-right navbar. Store the copied key in the client platform's secret store.
 
-```python
-# superset_config.py
-MCP_DEV_USERNAME = "admin"
-```
+The eye action always generates a replacement, so update any client using the
+previous value.
 
 ### 3. Connect an AI client
 
@@ -83,8 +82,11 @@ Point your MCP client at the server. For **Claude Desktop**, edit the config fil
 ```json
 {
   "mcpServers": {
-    "superset": {
-      "url": "http://localhost:5008/mcp"
+    "ax-bi": {
+      "url": "http://localhost:31421/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_MCP_API_KEY"
+      }
     }
   }
 }
@@ -98,7 +100,7 @@ See [Connecting AI Clients](#connecting-ai-clients) for Claude Code, Claude Web,
 
 ## Prerequisites
 
-- Apache Superset 5.0+ running and accessible
+- AX BI running and accessible
 - Python 3.12+
 - The `fastmcp` package (`pip install fastmcp`)
 
@@ -112,7 +114,9 @@ The MCP server supports multiple authentication methods depending on your deploy
 flowchart TD
     R["Incoming MCP Request"] --> F{"MCP_AUTH_FACTORY<br/>set?"}
     F -- Yes --> CF["Custom Auth Provider"]
-    F -- No --> AE{"MCP_AUTH_ENABLED?"}
+    F -- No --> K{"User API key<br/>prefix?"}
+    K -- Yes --> FAB["Validate salted hash<br/>and load key owner"]
+    K -- No --> AE{"MCP_AUTH_ENABLED?"}
     AE -- "True" --> JWT["JWT Validation"]
     AE -- "False" --> DU["Dev Mode<br/>(MCP_DEV_USERNAME)"]
 
@@ -126,8 +130,46 @@ flowchart TD
     SEC --> V
     V --> UR["Resolve Superset user<br/>from token claims"]
     UR --> OK["Authenticated request"]
+    FAB --> OK
     CF --> OK
     DU --> OK
+```
+
+### User-bound API keys (default)
+
+AX BI enables user-bound API-key authentication by default. When an
+authenticated navbar loads, it creates a key named `AX BI MCP` if the user does
+not already have one. The top-right control displays only a hint such as
+`M8hayd7-**********-iay8hfdsG`.
+
+Click the eye action to create and copy a replacement. AX BI revokes the old
+managed key only after the new plaintext is copied successfully. The full
+`sst_...` value is returned only at creation and is stored server-side only as a
+salted hash.
+
+Configure an MCP client with:
+
+```http
+Authorization: Bearer <full-api-key>
+```
+
+The key resolves to its AX BI owner on every request. The owner's current FAB
+roles, datasource permissions, object ACLs, and row-level security rules remain
+in force; a key does not grant additional access. Public users cannot manage
+keys, and the list/get/revoke endpoints are restricted to the authenticated
+owner.
+
+Run `ax-bi init` after installation or upgrade to synchronize the built-in
+Admin, Alpha, and Gamma `ApiKey` permissions. Operators using only an external
+JWT/OIDC provider can disable the feature:
+
+```python
+FAB_API_KEY_ENABLED = False
+MCP_API_KEY_ENABLED = False
+
+FEATURE_FLAGS = {
+    "FAB_API_KEY_ENABLED": False,
+}
 ```
 
 ### Development Mode (No Auth)
@@ -148,7 +190,7 @@ Never use development mode in production. Always enable authentication for any i
 
 ### JWT Authentication
 
-For production, enable JWT-based authentication. The MCP server validates a Bearer token on every request.
+For deployments with a centralized identity provider, enable JWT-based authentication. The MCP server validates a Bearer token on every request, and JWT may coexist with user-bound API keys.
 
 #### Option A: RS256 with JWKS endpoint
 
@@ -263,13 +305,13 @@ MCP_AUTH_FACTORY = my_custom_auth_factory
 {
   "mcpServers": {
     "superset": {
-      "url": "http://localhost:5008/mcp"
+      "url": "http://localhost:31421/mcp"
     }
   }
 }
 ```
 
-**With JWT authentication:**
+**With a user-bound API key or JWT:**
 
 ```json
 {
@@ -279,9 +321,9 @@ MCP_AUTH_FACTORY = my_custom_auth_factory
       "args": [
         "-y",
         "mcp-remote@latest",
-        "http://your-superset-host:5008/mcp",
+        "http://your-ax-bi-host:31421/mcp",
         "--header",
-        "Authorization: Bearer YOUR_TOKEN"
+        "Authorization: Bearer YOUR_MCP_API_KEY"
       ]
     }
   }
@@ -297,7 +339,7 @@ Add to your project's `.mcp.json`:
   "mcpServers": {
     "superset": {
       "type": "url",
-      "url": "http://localhost:5008/mcp"
+      "url": "http://localhost:31421/mcp"
     }
   }
 }
@@ -310,9 +352,9 @@ With authentication:
   "mcpServers": {
     "superset": {
       "type": "url",
-      "url": "http://localhost:5008/mcp",
+      "url": "http://localhost:31421/mcp",
       "headers": {
-        "Authorization": "Bearer YOUR_TOKEN"
+        "Authorization": "Bearer YOUR_MCP_API_KEY"
       }
     }
   }
@@ -349,7 +391,7 @@ ChatGPT MCP connectors require a Pro, Team, Enterprise, or Edu plan.
 Call the MCP server directly with any HTTP client:
 
 ```bash
-curl -X POST http://localhost:5008/mcp \
+curl -X POST http://localhost:31421/mcp \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer YOUR_JWT_TOKEN' \
   -d '{"jsonrpc": "2.0", "method": "tools/list", "id": 1}'
@@ -368,19 +410,19 @@ flowchart TD
     subgraph host["Host / VM"]
         direction TB
         S["Superset<br/>:8088"] --> DB[("Postgres")]
-        M["MCP Server<br/>:5008"] --> DB
+        M["MCP Server<br/>:31421"] --> DB
     end
     C["AI Client"] -- "HTTPS" --> P["Reverse Proxy<br/>(Nginx / Caddy)"]
     U["Browser"] -- "HTTPS" --> P
     P -- ":8088" --> S
-    P -- ":5008/mcp" --> M
+    P -- ":31421/mcp" --> M
 ```
 
 **superset_config.py:**
 
 ```python
 MCP_SERVICE_HOST = "0.0.0.0"
-MCP_SERVICE_PORT = 5008
+MCP_SERVICE_PORT = 31421
 MCP_DEV_USERNAME = "admin"  # or enable JWT auth
 
 # If behind a reverse proxy, set the public-facing URL so
@@ -395,7 +437,7 @@ MCP_SERVICE_URL = "https://superset.example.com"
 ax-bi run -h 0.0.0.0 -p 8088
 
 # Terminal 2 -- MCP server
-ax-bi mcp run --host 0.0.0.0 --port 5008
+ax-bi mcp run --host 0.0.0.0 --port 31421
 ```
 
 **Nginx reverse proxy with TLS:**
@@ -417,7 +459,7 @@ server {
 
     # MCP endpoint
     location /mcp {
-        proxy_pass http://127.0.0.1:5008/mcp;
+        proxy_pass http://127.0.0.1:31421/mcp;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header Authorization $http_authorization;
@@ -443,9 +485,9 @@ services:
 
   mcp:
     image: apache/superset:latest
-    command: ["ax-bi", "mcp", "run", "--host", "0.0.0.0", "--port", "5008"]
+    command: ["ax-bi", "mcp", "run", "--host", "0.0.0.0", "--port", "31421"]
     ports:
-      - "5008:5008"
+      - "31421:31421"
     volumes:
       - ./superset_config.py:/app/superset_config.py
     environment:
@@ -497,7 +539,7 @@ All MCP settings go in `superset_config.py`. Defaults are defined in `superset/m
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `MCP_SERVICE_HOST` | `"localhost"` | Host the MCP server binds to |
-| `MCP_SERVICE_PORT` | `5008` | Port the MCP server binds to |
+| `MCP_SERVICE_PORT` | `5008` | Legacy module/config default; the `ax-bi mcp run` CLI defaults to `31421` |
 | `MCP_SERVICE_URL` | `None` | Public base URL for MCP-generated links (set this when behind a reverse proxy) |
 | `MCP_DEBUG` | `False` | Enable debug logging |
 | `MCP_DEV_USERNAME` | -- | Superset username for development mode (no auth) |
@@ -509,6 +551,9 @@ All MCP settings go in `superset_config.py`. Defaults are defined in `superset/m
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `MCP_AUTH_ENABLED` | `False` | Enable JWT authentication |
+| `FAB_API_KEY_ENABLED` | `True` | Register owner-scoped API-key management and API-key authentication |
+| `MCP_API_KEY_ENABLED` | `None` | Accept FAB API keys on MCP; `None` follows `FAB_API_KEY_ENABLED` |
+| `MCP_API_KEY_CREATE_URL` | `"/"` | Key-management URL shown after an invalid or expired API key |
 | `MCP_JWT_ALGORITHM` | `"RS256"` | JWT signing algorithm (`RS256` or `HS256`) |
 | `MCP_JWKS_URI` | `None` | JWKS endpoint URL (RS256) |
 | `MCP_JWT_PUBLIC_KEY` | `None` | Static RSA public key string (RS256) |
@@ -762,7 +807,7 @@ Mutating tools (`generate_chart`, `update_chart`, `execute_sql`, `generate_dashb
 
 - Verify `fastmcp` is installed: `pip install fastmcp`
 - Check that `MCP_DEV_USERNAME` is set if auth is disabled -- the server requires a user identity
-- Confirm the port is not already in use: `lsof -i :5008`
+- Confirm the port is not already in use: `lsof -i :31421`
 
 ### 401 Unauthorized
 
@@ -783,7 +828,7 @@ Mutating tools (`generate_chart`, `update_chart`, `execute_sql`, `generate_dashb
 - Verify the MCP server URL is reachable from the client machine
 - For Claude Desktop: fully quit the app (not just close the window) and restart after config changes
 - For remote access: ensure your firewall and reverse proxy allow traffic to the MCP port
-- Confirm the URL path ends with `/mcp` (e.g., `http://localhost:5008/mcp`)
+- Confirm the URL path ends with `/mcp` (e.g., `http://localhost:31421/mcp`)
 
 ### Permission errors on tool calls
 
@@ -855,10 +900,10 @@ Specifying a tool name that does not exist logs a warning at startup and is othe
 ## Security Best Practices
 
 - **Use TLS** for all production MCP endpoints -- place the server behind a reverse proxy with HTTPS
-- **Enable JWT authentication** for any internet-facing deployment
-- **RBAC enforcement** -- The MCP server respects Superset's role-based access control. Users can only access data their roles permit
+- **Require authentication** for every internet-facing deployment using a user-bound API key, validated JWT, or both; never set `MCP_DEV_USERNAME`
+- **RBAC enforcement** -- The MCP server respects AX BI's role-based access control. Users can only access data their roles permit
 - **Secrets management** -- Store `MCP_JWT_SECRET`, database credentials, and API keys in environment variables or a secrets manager, never in config files committed to version control
-- **Scoped tokens** -- Use `MCP_REQUIRED_SCOPES` to limit what operations a token can perform
+- **Scoped JWTs** -- Use `MCP_REQUIRED_SCOPES` to limit JWT operations; FAB API keys continue to use owner RBAC and ACLs
 - **Network isolation** -- In Kubernetes, restrict MCP pod network policies to only allow traffic from your AI client endpoints
 - Review the **[Security documentation](/developer-docs/extensions/security)** for additional extension security guidance
 

@@ -31,11 +31,11 @@ export interface TokenAuth {
   refreshToken?: string;
 }
 
-/** Static API key passed as a header. */
+/** User-bound AX BI API key passed as a header. */
 export interface ApiKeyAuth {
   type: 'apiKey';
   apiKey: string;
-  /** Header name. Defaults to `Authorization`. */
+  /** Header name. Defaults to `Authorization` for REST and MCP. */
   headerName?: string;
   /** Prefix before the key value. Defaults to `Bearer `. */
   headerPrefix?: string;

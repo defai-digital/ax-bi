@@ -25,6 +25,7 @@ import { ChartsResource } from './resources/charts.js';
 import { DatasetsResource } from './resources/datasets.js';
 import { DatabasesResource } from './resources/databases.js';
 import { QueriesResource } from './resources/queries.js';
+import { ApiKeysResource } from './resources/apiKeys.js';
 import { MCPClient } from './mcp/mcpClient.js';
 import { AIResource } from './mcp/ai.js';
 import { normalizeHttpBaseUrl } from './shared/url.js';
@@ -56,7 +57,8 @@ export interface HealthStatus {
  * Main entry point for the AX BI SDK.
  *
  * Provides access to:
- * - REST CRUD operations for dashboards, charts, datasets, databases, queries
+ * - REST operations for dashboards, charts, datasets, databases, queries,
+ *   and user-bound API keys
  * - AI/GenAI tools via MCP (prompt-to-dashboard, semantic search, SQL execution)
  *
  * @example
@@ -88,6 +90,8 @@ export class AxBI {
   readonly databases: DatabasesResource;
   /** Saved query operations. */
   readonly queries: QueriesResource;
+  /** Current-user API-key management operations. */
+  readonly apiKeys: ApiKeysResource;
   /** AI/GenAI tools (MCP). */
   readonly ai: AIResource;
 
@@ -121,6 +125,7 @@ export class AxBI {
     this.datasets = new DatasetsResource(this.http);
     this.databases = new DatabasesResource(this.http);
     this.queries = new QueriesResource(this.http);
+    this.apiKeys = new ApiKeysResource(this.http);
     this.ai = new AIResource(this.mcp, () => this.ensureMcpInitialized());
   }
 

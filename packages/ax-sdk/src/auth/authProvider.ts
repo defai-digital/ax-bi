@@ -34,7 +34,7 @@ const HTTP_HEADER_NAME_PATTERN = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/;
  * Supports four auth strategies:
  * - **credentials**: Logs in via `/api/v1/security/login`, stores the access token.
  * - **token**: Uses a pre-existing access token directly.
- * - **apiKey**: Sends the key in a configurable header.
+ * - **apiKey**: Sends a user-bound AX BI key as a Bearer token by default.
  * - **guestToken**: Sends the guest token for embedded dashboard access.
  */
 export class AuthProvider {
