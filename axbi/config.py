@@ -286,7 +286,19 @@ SQLALCHEMY_DATABASE_URI = (
 # `SQLALCHEMY_ENGINE_OPTIONS = {"isolation_level": "READ COMMITTED"}`
 # Also note that we recommend READ COMMITTED for regular operation.
 # Find out more here https://flask-sqlalchemy.palletsprojects.com/en/3.1.x/config/
-SQLALCHEMY_ENGINE_OPTIONS = {}
+#
+# The defaults below apply to the metadata database only. User-configured
+# databases (added via the UI) use their own engine kwargs via
+# Database.get_sqla_engine() and are not affected by these settings.
+#
+# pool_pre_ping: Verify connections are alive before use (prevents stale
+#                connection errors after DB restarts or network blips)
+# pool_recycle:  Recycle connections after 1 hour to avoid server-side
+#                idle timeouts (MySQL default is 8h, some cloud DBs shorter)
+SQLALCHEMY_ENGINE_OPTIONS: dict[str, Any] = {
+    "pool_pre_ping": True,
+    "pool_recycle": 3600,
+}
 
 # In order to hook up a custom password store for all SQLALCHEMY connections
 # implement a function that takes a single argument of type 'sqla.engine.url',

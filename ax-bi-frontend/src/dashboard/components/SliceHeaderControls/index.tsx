@@ -16,10 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import {
-  withRouter,
-  type RouteComponentProps,
-} from 'src/components/withRouter';
+import { type RouteComponentProps } from 'src/components/withRouter';
 import { useHistory } from 'src/hooks/useAppHistory';
 import {
   MouseEvent,

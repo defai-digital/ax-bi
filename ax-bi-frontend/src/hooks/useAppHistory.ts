@@ -18,10 +18,13 @@
  */
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { UNSAFE_NavigationContext } from 'react-router-dom';
-import type { History, LocationDescriptor, LocationState } from 'history';
+import type { History, Path as HistoryPath } from 'history';
 import { history as historySingleton } from 'src/utils/history';
 
-type Path = string | LocationDescriptor<LocationState>;
+// history v5 removed LocationDescriptor/LocationState; define locally.
+type LocationState = unknown;
+type LocationDescriptor = Partial<HistoryPath> & { state?: LocationState };
+type Path = string | LocationDescriptor;
 
 type HistoryLike = Pick<
   History,

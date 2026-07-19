@@ -66,7 +66,8 @@ class UpdateChartCommand(UpdateMixin, BaseCommand):
     @transaction(on_error=partial(on_error, reraise=ChartUpdateFailedError))
     def run(self) -> Model:
         self.validate()
-        assert self._model
+        if self._model is None:
+            raise ChartNotFoundError()
 
         # Update tags
         if (tags := self._properties.pop("tags", None)) is not None:

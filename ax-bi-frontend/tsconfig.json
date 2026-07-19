@@ -42,11 +42,11 @@
 
     /* Completeness */
     "skipLibCheck": true,
-    "ignoreDeprecations": "6.0",
 
-    "baseUrl": ".",
     "paths": {
       "@storybook-shared": ["./.storybook/shared"],
+      "src/*": ["./src/*"],
+      "spec/*": ["./spec/*"],
       "@ax-bi/ui-core": ["./packages/ax-bi-ui-core/src"],
       "@ax-bi/ui-core/*": ["./packages/ax-bi-ui-core/src/*"],
       "@ax-bi/chart-controls": [

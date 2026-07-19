@@ -119,16 +119,7 @@ const mockActions = {
   setFocusedFilterField: jest.fn(),
   unsetFocusedFilterField: jest.fn(),
 };
-const {
-  refreshChart,
-  logEvent,
-  changeFilter,
-  addSuccessToast,
-  addDangerToast,
-  toggleExpandSlice,
-  setFocusedFilterField,
-  unsetFocusedFilterField,
-} = mockActions;
+const { refreshChart, changeFilter } = mockActions;
 // redux 5 ships non-configurable ESM exports, so jest.spyOn can't
 // redefine bindActionCreators; mock the module instead
 jest.mock('redux', () => ({

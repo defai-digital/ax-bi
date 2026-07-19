@@ -588,7 +588,7 @@ describe('AxBIClientClass', () => {
     test('should redirect', async () => {
       const client = new AxBIClientClass({});
 
-      let error;
+      let error: any;
       try {
         await client.request({ url: mockRequestUrl, method: 'GET' });
       } catch (err) {
@@ -615,7 +615,7 @@ describe('AxBIClientClass', () => {
         search: '?next=something',
       } as unknown as Location);
 
-      let error;
+      let error: any;
       try {
         await client.request({ url: mockRequestUrl, method: 'GET' });
       } catch (err) {
@@ -628,7 +628,7 @@ describe('AxBIClientClass', () => {
     test('does nothing if instructed to ignoreUnauthorized', async () => {
       const client = new AxBIClientClass({});
 
-      let error;
+      let error: any;
       try {
         await client.request({
           url: mockRequestUrl,
@@ -648,7 +648,7 @@ describe('AxBIClientClass', () => {
       const unauthorizedHandler = jest.fn();
       const client = new AxBIClientClass({ unauthorizedHandler });
 
-      let error;
+      let error: any;
       try {
         await client.request({
           url: mockRequestUrl,

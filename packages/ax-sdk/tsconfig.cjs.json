@@ -6,7 +6,6 @@
     "outDir": "dist/cjs",
     "declaration": false,
     "sourceMap": true,
-    "verbatimModuleSyntax": false,
-    "ignoreDeprecations": "6.0"
+    "verbatimModuleSyntax": false
   }
 }

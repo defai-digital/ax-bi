@@ -39,7 +39,8 @@ class UpdateThemeCommand(UpdateMixin):
     @transaction(on_error=partial(on_error, reraise=Exception))
     def run(self) -> Theme:
         self.validate()
-        assert self._model
+        if self._model is None:
+            raise ThemeNotFoundError()
         return ThemeDAO.update(self._model, self._properties)
 
     def validate(self) -> None:

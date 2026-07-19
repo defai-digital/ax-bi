@@ -40,7 +40,8 @@ class DeleteDatasetCommand(BaseCommand):
     @transaction(on_error=partial(on_error, reraise=DatasetDeleteFailedError))
     def run(self) -> None:
         self.validate()
-        assert self._models
+        if not self._models:
+            raise DatasetNotFoundError()
         DatasetDAO.delete(self._models)
 
     def validate(self) -> None:

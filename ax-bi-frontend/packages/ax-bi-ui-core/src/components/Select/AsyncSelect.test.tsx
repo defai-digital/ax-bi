@@ -26,7 +26,7 @@ import {
   within,
 } from '@ax-bi/ui-core/spec';
 import { AsyncSelect } from '.';
-import type { AsyncSelectRef, LabeledValue } from './types';
+import type { AsyncSelectRef } from './types';
 
 const ARIA_LABEL = 'Test';
 const NEW_OPTION = 'Kyle';

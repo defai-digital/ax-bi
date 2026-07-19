@@ -80,7 +80,7 @@ describe('getOverrideHtmlSchema', () => {
     // ...and repeated calls do not accumulate the override (no growing arrays).
     expect(first.tagNames).toEqual(second.tagNames);
     expect(
-      (second.tagNames ?? []).filter(name => name === 'iframe'),
+      (second.tagNames ?? []).filter((name: string) => name === 'iframe'),
     ).toHaveLength(1);
   });
 });

@@ -80,11 +80,14 @@ export const validateForm = async (
   } catch (error) {
     logging.warn('Filter configuration failed:', error);
 
-    if (!error.errorFields?.length) return null; // not a validation error
+    const validationError = error as {
+      errorFields?: { name: ['filters', string, string] }[];
+    };
+    if (!validationError.errorFields?.length) return null; // not a validation error
 
     // the name is in array format since the fields are nested
     type ErrorFields = { name: ['filters', string, string] }[];
-    const errorFields = error.errorFields as ErrorFields;
+    const errorFields = validationError.errorFields as ErrorFields;
     // filter id is the second item in the field name
     if (!errorFields.some(field => field.name[1] === currentFilterId)) {
       // switch to the first tab that had a validation error

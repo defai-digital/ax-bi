@@ -29,10 +29,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Get the project root (two levels up from mcp_service)
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
-# Use python from the virtual environment if it exists, otherwise use system python
+# Prefer canonical ./venv (Python 3.12+). .venv is a legacy uv default only.
 if [ -f "$PROJECT_ROOT/venv/bin/python" ]; then
     PYTHON_PATH="$PROJECT_ROOT/venv/bin/python"
 elif [ -f "$PROJECT_ROOT/.venv/bin/python" ]; then
+    echo "warning: using $PROJECT_ROOT/.venv; prefer 'make venv' (./venv) as the canonical env" >&2
     PYTHON_PATH="$PROJECT_ROOT/.venv/bin/python"
 else
     PYTHON_PATH="python3"

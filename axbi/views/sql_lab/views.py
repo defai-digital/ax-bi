@@ -14,7 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=consider-using-transaction
 import logging
 
 from flask import request, Response
@@ -29,6 +28,7 @@ from axbi.axbi_typing import FlaskResponse
 from axbi.models.sql_lab import Query, TableSchema, TabState
 from axbi.utils import json
 from axbi.utils.core import error_msg_from_exception, get_user_id
+from axbi.utils.session_lifecycle import commit_session, rollback_session
 from axbi.views.base import (
     BaseAxBIView,
     json_error_response,
@@ -36,6 +36,25 @@ from axbi.views.base import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Allowlist of columns that the frontend may update via PUT.
+# Prevents mass-assignment of sensitive fields (user_id, id, etc.).
+_TAB_STATE_UPDATABLE_COLUMNS = frozenset(
+    {
+        "label",
+        "active",
+        "database_id",
+        "schema",
+        "catalog",
+        "sql",
+        "query_limit",
+        "latest_query_id",
+        "autorun",
+        "template_params",
+        "hide_left_bar",
+        "saved_query_id",
+    }
+)
 
 
 class SavedQueryView(BaseAxBIView):
@@ -61,7 +80,7 @@ def _load_expanded_value(value: str) -> bool:
 
 def _handle_mutation_error(ex: Exception) -> FlaskResponse:
     """Rollback and classify legacy SQL Lab tab-state mutation failures."""
-    db.session.rollback()
+    rollback_session(db.session, context="sql_lab_view")
     if isinstance(ex, (IntegrityError, KeyError, ValueError, json.JSONDecodeError)):
         logger.info("Invalid SQL Lab tab-state request: %s", ex)
         message = (
@@ -102,7 +121,7 @@ class TabStateView(BaseAxBIView):
                 .update({"active": False})
             )
             db.session.add(tab_state)
-            db.session.commit()
+            commit_session(db.session, context="tabstate_create")
             return json_success(json.dumps({"id": tab_state.id}))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -123,7 +142,7 @@ class TabStateView(BaseAxBIView):
             db.session.query(TableSchema).filter(
                 TableSchema.tab_state_id == tab_state_id
             ).delete(synchronize_session=False)
-            db.session.commit()
+            commit_session(db.session, context="tabstate_delete")
             return json_success(json.dumps("OK"))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -159,7 +178,7 @@ class TabStateView(BaseAxBIView):
                 .filter_by(user_id=get_user_id())
                 .update({"active": TabState.id == tab_state_id})
             )
-            db.session.commit()
+            commit_session(db.session, context="tabstate_activate")
             return json_success(json.dumps(tab_state_id))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -174,9 +193,13 @@ class TabStateView(BaseAxBIView):
             return Response(status=403)
 
         try:
-            fields = {k: json.loads(v) for k, v in request.form.to_dict().items()}
+            fields = {
+                k: json.loads(v)
+                for k, v in request.form.to_dict().items()
+                if k in _TAB_STATE_UPDATABLE_COLUMNS
+            }
             db.session.query(TabState).filter_by(id=tab_state_id).update(fields)
-            db.session.commit()
+            commit_session(db.session, context="tabstate_update")
             return json_success(json.dumps(tab_state_id))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -195,7 +218,7 @@ class TabStateView(BaseAxBIView):
             db.session.query(Query).filter_by(client_id=client_id).update(
                 {"sql_editor_id": tab_state_id}
             )
-            db.session.commit()
+            commit_session(db.session, context="tabstate_migrate_query")
             return json_success(json.dumps(tab_state_id))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -232,7 +255,7 @@ class TabStateView(BaseAxBIView):
                 user_id=get_user_id(),
                 sql_editor_id=str(tab_state_id),
             ).delete(synchronize_session=False)
-            db.session.commit()
+            commit_session(db.session, context="tabstate_delete_query")
             return json_success(json.dumps("OK"))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -268,7 +291,7 @@ class TableSchemaView(BaseAxBIView):
                 expanded=True,
             )
             db.session.add(table_schema)
-            db.session.commit()
+            commit_session(db.session, context="tableschema_create")
             return json_success(json.dumps({"id": table_schema.id}))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -290,7 +313,7 @@ class TableSchemaView(BaseAxBIView):
             db.session.query(TableSchema).filter_by(id=table_schema_id).delete(
                 synchronize_session=False
             )
-            db.session.commit()
+            commit_session(db.session, context="tableschema_delete")
             return json_success(json.dumps("OK"))
         except Exception as ex:  # pylint: disable=broad-except
             return _handle_mutation_error(ex)
@@ -313,7 +336,7 @@ class TableSchemaView(BaseAxBIView):
             db.session.query(TableSchema).filter_by(id=table_schema_id).update(
                 {"expanded": payload}
             )
-            db.session.commit()
+            commit_session(db.session, context="tableschema_expanded")
             response = json.dumps({"id": table_schema_id, "expanded": payload})
             return json_success(response)
         except Exception as ex:  # pylint: disable=broad-except

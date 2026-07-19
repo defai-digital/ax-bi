@@ -37,17 +37,20 @@ Built by [DEFAI Digital](https://github.com/defai-digital).
 [![MCP-native](https://img.shields.io/badge/MCP-native-6E56CF.svg)](#mcp-native-genai-bi)
 [![Maintained by DEFAI](https://img.shields.io/badge/maintained%20by-DEFAI%20Private%20Limited-0A0A0A.svg)](#about-defai)
 
-[**Get Started**](#get-started) |
-[**Why BI Agents Break Down**](#why-bi-agents-break-down) |
-[**MCP-Native GenAI BI**](#mcp-native-genai-bi) |
-[**Docker Compose**](#docker-compose-server--team) |
-[**Supported File Types**](#supported-file-types) |
-[**Supported Databases**](#supported-databases) |
-[**Architecture**](#workspace-architecture) |
-[**Development**](#development) |
-[**Contributing**](#contributing) |
-[**Built on Apache Superset**](#built-on-apache-superset) |
-[**About DEFAI**](#about-defai)
+### Index
+
+| | |
+| --- | --- |
+| **Install** | [macOS](#macos-installation) · [Windows](#windows-installation) · [First launch](#first-launch-macos-and-windows) · [Update](#update) · [Uninstall](#uninstall) |
+| **Servers** | [Docker Compose](#docker-compose-server--team) · [From source](#from-source-contributors) |
+| **Product** | [Why BI agents break down](#why-bi-agents-break-down) · [MCP-native GenAI BI](#mcp-native-genai-bi) · [Supported files](#supported-file-types) · [Supported databases](#supported-databases) |
+| **Build** | [Architecture](#workspace-architecture) · [Development](#development) · [Contributing](#contributing) · [Apache Superset](#built-on-apache-superset) · [About DEFAI](#about-defai) |
+
+Quick install:
+
+- **[macOS (Apple Silicon)](#macos-installation)** — Homebrew cask (recommended) or notarized DMG
+- **[Windows (x64)](#windows-installation)** — Signed NSIS/MSI from GitHub Releases (winget when published)
+- **[Docker Compose (server / team)](#docker-compose-server--team)** — multi-user / always-on deployments
 
 ---
 
@@ -56,6 +59,15 @@ Built by [DEFAI Digital](https://github.com/defai-digital).
 AX BI Desktop is the primary client for **macOS** and **Windows**. Install the
 desktop app for your OS, then either connect to a hosted AX BI server or run a
 local stack. You do not need to clone this repository for day-to-day use.
+
+### Installation index
+
+| Platform | How to install | After install |
+| --- | --- | --- |
+| **macOS** (Apple Silicon) | [Homebrew or DMG](#macos-installation) | [First launch](#first-launch-macos-and-windows) · [Update](#update) · [Uninstall](#uninstall) |
+| **Windows** (x64) | [Signed installer or winget](#windows-installation) | [First launch](#first-launch-macos-and-windows) · [Update](#update) · [Uninstall](#uninstall) |
+| **Server / team** | [Docker Compose](#docker-compose-server--team) or Helm | Shared multi-user production (not the desktop shell) |
+| **Contributors** | [From source](#from-source-contributors) | Dev backend + frontend |
 
 ### Supported desktop targets
 
@@ -68,7 +80,7 @@ local stack. You do not need to clone this repository for day-to-day use.
 
 ### Install AX BI Desktop
 
-#### macOS
+#### macOS installation
 
 1. Install Homebrew if you do not already have it:
 
@@ -117,7 +129,7 @@ Prefer not to use Homebrew? Download the notarized macOS DMG from
 [GitHub Releases](https://github.com/defai-digital/ax-bi/releases)
 (`AX.BI_*_aarch64.dmg`) and open it.
 
-#### Windows
+#### Windows installation
 
 Product name on Windows is **AX BI** (same as macOS). Installers are
 **Authenticode-signed** by **DEFAI Private Limited** (DigiCert code signing via

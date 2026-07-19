@@ -35,9 +35,11 @@ cover
 .idea
 .roo
 .mypy_cache
-.python-version
 .tox
-.vscode
+# Share recommended interpreter / extension pins; ignore other local IDE state
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 _build
 _images
 _modules

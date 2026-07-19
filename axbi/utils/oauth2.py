@@ -36,6 +36,7 @@ from axbi import db
 from axbi.axbi_typing import OAuth2ClientConfig, OAuth2State
 from axbi.distributed_lock import DistributedLock
 from axbi.exceptions import AcquireDistributedLockFailedException, OAuth2Error
+from axbi.utils.session_lifecycle import commit_session
 
 if TYPE_CHECKING:
     from axbi.db_engine_specs.base import BaseEngineSpec
@@ -170,7 +171,7 @@ def refresh_oauth2_token(
                 ex,
             )
             db.session.delete(token)
-            db.session.flush()
+            commit_session(db.session, context="oauth2 token delete", soft=True)
             raise
         except Exception:
             # non-OAuth related failure, log the exception

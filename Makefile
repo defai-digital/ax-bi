@@ -17,23 +17,26 @@
 
 # Python version installed; we need 3.12
 PYTHON=`command -v python3.12`
+# Keep uv and Makefile on the same env (docs/Makefile use venv/, not .venv/)
+export UV_PROJECT_ENVIRONMENT := venv
+MIN_PYTHON_MINOR := 12
 
-.PHONY: install axbi venv pre-commit up down logs ps nuke ports open
+.PHONY: install axbi venv venv-recreate pre-commit up down logs ps nuke ports open
 
 install: axbi pre-commit
 
-axbi:
+axbi: venv
 	# Bootstrap uv (the project's installer) into the active environment
-	pip install uv
+	. venv/bin/activate && pip install uv
 
 	# Install external dependencies
-	uv pip install -r requirements/development.txt
+	. venv/bin/activate && uv pip install -r requirements/development.txt
 
 	# Install AxBI in editable (development) mode
-	uv pip install -e .
+	. venv/bin/activate && uv pip install -e .
 
 	# Create an admin user in your metadata database
-	ax-bi fab create-admin \
+	. venv/bin/activate && ax-bi fab create-admin \
                     --username admin \
                     --firstname "Admin I."\
                     --lastname Strator \
@@ -41,53 +44,81 @@ axbi:
                     --password general
 
 	# Initialize the database
-	ax-bi db upgrade
+	. venv/bin/activate && ax-bi db upgrade
 
 	# Create default roles and permissions
-	ax-bi init
+	. venv/bin/activate && ax-bi init
 
 	# Load some data to play with
-	ax-bi load-examples
+	. venv/bin/activate && ax-bi load-examples
 
 	# Install node packages
 	cd ax-bi-frontend; npm ci
 
 update: update-py update-js
 
-update-py:
+update-py: venv
 	# Bootstrap uv (the project's installer) into the active environment
-	pip install uv
+	. venv/bin/activate && pip install uv
 
 	# Install external dependencies
-	uv pip install -r requirements/development.txt
+	. venv/bin/activate && uv pip install -r requirements/development.txt
 
 	# Install AxBI in editable (development) mode
-	uv pip install -e .
+	. venv/bin/activate && uv pip install -e .
 
 	# Initialize the database
-	ax-bi db upgrade
+	. venv/bin/activate && ax-bi db upgrade
 
 	# Create default roles and permissions
-	ax-bi init
+	. venv/bin/activate && ax-bi init
 
 update-js:
 	# Install js packages
 	cd ax-bi-frontend; npm ci
 
+# Ensure ./venv exists and is Python 3.12+. Does not recreate a good env.
 venv:
-	# Create a virtual environment and activate it (recommended)
-	if ! [ -x "${PYTHON}" ]; then echo "You need Python 3.12 installed"; exit 1; fi
-	test -d venv || ${PYTHON} -m venv venv # setup a python3 virtualenv
-	. venv/bin/activate
+	@if ! [ -x "${PYTHON}" ]; then \
+		echo "error: Python 3.12 is required (python3.12 not found on PATH)"; \
+		exit 1; \
+	fi
+	@if [ ! -d venv ]; then \
+		echo "Creating venv with $$($(PYTHON) --version)..."; \
+		${PYTHON} -m venv venv; \
+	fi
+	@venv_ver=$$(venv/bin/python -c 'import sys; print(f"{sys.version_info[0]}.{sys.version_info[1]}")'); \
+	venv_minor=$$(venv/bin/python -c 'import sys; print(sys.version_info[1])'); \
+	if [ "$$(venv/bin/python -c 'import sys; print(sys.version_info[0])')" != "3" ] \
+		|| [ "$$venv_minor" -lt "$(MIN_PYTHON_MINOR)" ]; then \
+		echo "error: ./venv is Python $$venv_ver but AX BI requires Python 3.$(MIN_PYTHON_MINOR)+"; \
+		echo "hint: run 'make venv-recreate' then reinstall deps (e.g. make update-py)"; \
+		exit 1; \
+	fi
+	@echo "venv OK: $$(venv/bin/python --version) ($$(pwd)/venv)"
 
-activate:
-	. venv/bin/activate
+# Destroy and recreate ./venv with Python 3.12. Reinstall packages afterwards.
+venv-recreate:
+	@if ! [ -x "${PYTHON}" ]; then \
+		echo "error: Python 3.12 is required (python3.12 not found on PATH)"; \
+		exit 1; \
+	fi
+	@echo "Removing existing ./venv (if any)..."
+	rm -rf venv
+	@echo "Creating venv with $$($(PYTHON) --version)..."
+	@${PYTHON} -m venv venv
+	@echo "venv recreated: $$(venv/bin/python --version)"
+	@echo "Next: source venv/bin/activate && make update-py  # or: make install"
 
-pre-commit:
+activate: venv
+	@echo "Run: source venv/bin/activate"
+	@echo "Active interpreter should be: $$(pwd)/venv/bin/python"
+
+pre-commit: venv
 	# setup pre commit dependencies
-	pip install uv
-	uv pip install -r requirements/development.txt
-	pre-commit install
+	. venv/bin/activate && pip install uv
+	. venv/bin/activate && uv pip install -r requirements/development.txt
+	. venv/bin/activate && pre-commit install
 
 format: py-format js-format
 

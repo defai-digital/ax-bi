@@ -16,6 +16,7 @@
 # under the License.
 from __future__ import annotations
 
+import io
 import json
 import pickle
 from abc import ABC, abstractmethod
@@ -81,11 +82,56 @@ class JsonKeyValueCodec(KeyValueCodec):
 
 
 class PickleKeyValueCodec(KeyValueCodec):
+    """Codec that uses pickle with restricted deserialization for safety.
+
+    Only allows deserialization of basic Python types to prevent arbitrary
+    code execution if the underlying storage is compromised.
+    """
+
+    # Allowlist of modules and class names that are safe to unpickle
+    _SAFE_CLASSES: dict[str, set[str]] = {
+        "builtins": {
+            "dict",
+            "list",
+            "str",
+            "int",
+            "float",
+            "bool",
+            "tuple",
+            "set",
+            "frozenset",
+            "bytes",
+            "bytearray",
+            "complex",
+            "range",
+            "slice",
+            "type",
+            "object",
+        },
+        "datetime": {"datetime", "date", "time", "timedelta", "timezone"},
+        "decimal": {"Decimal"},
+        "uuid": {"UUID"},
+    }
+
+    class _RestrictedUnpickler(pickle.Unpickler):
+        """Unpickler that only allows safe builtin types."""
+
+        def find_class(self, module: str, name: str) -> type:
+            safe_names = PickleKeyValueCodec._SAFE_CLASSES.get(module)
+            if safe_names is not None and name in safe_names:
+                return super().find_class(module, name)
+            raise pickle.UnpicklingError(
+                f"Forbidden unpickle: {module}.{name} is not allowed"
+            )
+
     def encode(self, value: dict[Any, Any]) -> bytes:
         return pickle.dumps(value)
 
     def decode(self, value: bytes) -> dict[Any, Any]:
-        return pickle.loads(value)  # noqa: S301
+        try:
+            return self._RestrictedUnpickler(io.BytesIO(value)).load()
+        except pickle.UnpicklingError as ex:
+            raise KeyValueCodecDecodeException(str(ex)) from ex
 
 
 class MarshmallowKeyValueCodec(JsonKeyValueCodec):

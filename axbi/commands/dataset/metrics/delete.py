@@ -41,7 +41,8 @@ class DeleteDatasetMetricCommand(BaseCommand):
     @transaction(on_error=partial(on_error, reraise=DatasetMetricDeleteFailedError))
     def run(self) -> None:
         self.validate()
-        assert self._model
+        if self._model is None:
+            raise DatasetMetricNotFoundError()
         DatasetMetricDAO.delete([self._model])
 
     def validate(self) -> None:

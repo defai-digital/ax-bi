@@ -62,6 +62,7 @@ from axbi.models.sql_types.presto_sql_types import (
 from axbi.result_set import destringify
 from axbi.utils import core as utils, json
 from axbi.utils.core import GenericDataType
+from axbi.utils.session_lifecycle import commit_session
 
 if TYPE_CHECKING:
     from axbi.models.core import Database
@@ -1399,7 +1400,7 @@ class PrestoEngineSpec(PrestoBaseEngineSpec):
         """Updates progress information"""
         if tracking_url := cls.get_tracking_url(cursor):
             query.tracking_url = tracking_url
-            db.session.commit()
+            commit_session(db.session, context="presto tracking_url", soft=True)
 
         query_id = query.id
         poll_interval = query.database.connect_args.get(
@@ -1438,7 +1439,9 @@ class PrestoEngineSpec(PrestoBaseEngineSpec):
                         total_splits,
                     )
                     query.progress = max(query.progress, progress)
-                    db.session.commit()
+                    commit_session(
+                        db.session, context="presto progress polling", soft=True
+                    )
             time.sleep(poll_interval)
             logger.info("Query %i: Polling the cursor for progress", query_id)
             polled = cursor.poll()
