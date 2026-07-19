@@ -25,7 +25,7 @@ import { ChartConfig, ChartLayerOptions, ChartSizeValues } from '../types';
 import { createChartComponent } from '../util/chartUtil';
 import { getProjectedCoordinateFromPointGeoJson } from '../util/geometryUtil';
 
-import Loader from '../images/loading.gif';
+import loaderUrl from '../assets/loadingSpinner';
 
 /**
  * Custom OpenLayers layer that displays charts on given locations.
@@ -106,7 +106,7 @@ export class ChartLayer extends Layer {
     }
 
     const spinner = document.createElement('img');
-    spinner.src = Loader;
+    spinner.src = loaderUrl;
     spinner.style.position = 'relative';
     spinner.style.width = '50px';
     spinner.style.top = '50%';

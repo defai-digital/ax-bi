@@ -6,14 +6,14 @@ A thin desktop client for the AX BI data visualization and analytics platform, b
 
 AX BI Desktop delivers a native desktop experience for the AX BI web application through two complementary layers:
 
-### Phase 1 — PWA + Desktop-Grade UX (in the web app)
+### Phase 1 — Desktop-Grade UX (in the web app)
 
 These features live in `ax-bi-frontend/` and work in both the browser and the Tauri shell:
 
 - **Command palette** — `⌘K` / `Ctrl+K` fuzzy-search across all navigation and actions
 - **Global keyboard shortcuts** — OS-aware shortcut registry with help overlay
 - **Service worker** — Offline-capable caching (stale-while-revalidate for assets, network-first for API)
-- **PWA installability** — Install the web app directly from the browser (Chrome, Edge)
+- **PWA platform support** — Browser-managed installation and file handling remain available without an in-app install promotion
 
 ### Phase 2 — Tauri Desktop Shell
 
@@ -89,7 +89,7 @@ automation (aligned with AX Studio / AX Code Desktop).
 │  │  │  │ (⌘K, ⌘/, ...)   │  │ (fuzzy search, commands) │  │  │  │
 │  │  │  └─────────────────┘  └──────────────────────────┘  │  │  │
 │  │  │                                                       │  │  │
-│  │  │  Service Worker · PWA Install · Keyboard Shortcuts   │  │  │
+│  │  │  Service Worker · PWA Support · Keyboard Shortcuts   │  │  │
 │  │  └─────────────────────────────────────────────────────┘  │  │
 │  └───────────────────────────────────────────────────────────┘  │
 │                                                                  │
@@ -201,12 +201,10 @@ Phase 1 frontend components (in ax-bi-frontend/):
 ├── src/components/
 │   ├── CommandPalette/          # Modal + context provider
 │   ├── KeyboardShortcuts/       # Shortcut registry + provider
-│   ├── PWAInstallPrompt/        # Install banner
 │   └── DesktopIntegration/      # Wires everything into the app
 ├── src/hooks/
 │   ├── useKeyboardShortcuts.ts  # Register shortcuts
 │   ├── useServiceWorker.ts      # SW lifecycle
-│   ├── usePWAInstall.ts         # Install state
 │   └── useDefaultCommands.ts    # Nav + action commands
 └── src/service-worker.ts        # Caching strategies
 ```

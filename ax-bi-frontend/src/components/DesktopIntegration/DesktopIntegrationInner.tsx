@@ -20,7 +20,6 @@ import { FC, ReactNode, useCallback, useEffect } from 'react';
 import { t } from '@ax-bi/core/translation';
 import { useCommandPalette } from 'src/components/CommandPalette';
 import { CommandPalette } from 'src/components/CommandPalette';
-import { PWAInstallPrompt } from 'src/components/PWAInstallPrompt';
 import { useKeyboardShortcut } from 'src/hooks/useKeyboardShortcuts';
 import {
   ShortcutPriority,
@@ -43,7 +42,7 @@ interface DesktopIntegrationInnerProps {
  * - Service worker lifecycle
  * - Default command registration
  * - Asset search in the command palette
- * - Renders the CommandPalette modal, shortcut help, and PWA install prompt
+ * - Renders the CommandPalette modal and shortcut help
  */
 export const DesktopIntegrationInner: FC<DesktopIntegrationInnerProps> = ({
   children,
@@ -140,7 +139,6 @@ export const DesktopIntegrationInner: FC<DesktopIntegrationInnerProps> = ({
       {children}
       <CommandPalette />
       <ShortcutHelpModal />
-      <PWAInstallPrompt />
     </>
   );
 };
