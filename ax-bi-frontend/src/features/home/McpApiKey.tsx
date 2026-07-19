@@ -237,7 +237,9 @@ export function McpApiKey({ username }: McpApiKeyProps) {
       </span>
       <span className="mcp-key-row">
         <code data-test="mcp-api-key-hint">
-          {currentKey ? formatMcpApiKeyHint(currentKey.key_prefix) : null}
+          {currentKey
+            ? formatMcpApiKeyHint(currentKey.key_prefix)
+            : t('MCP key…')}
         </code>
         <Tooltip title={actionLabel}>
           <Button
