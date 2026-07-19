@@ -57,9 +57,10 @@ const StyledMcpKey = styled.div`
     border-left: 1px solid ${theme.colorBorderSecondary};
     display: flex;
     flex-direction: column;
+    flex-shrink: 0;
     justify-content: center;
     margin-left: ${theme.sizeUnit * 2}px;
-    min-width: ${theme.sizeUnit * 35}px;
+    min-width: ${theme.sizeUnit * 60}px;
     padding-left: ${theme.sizeUnit * 3}px;
 
     .mcp-username {
@@ -67,7 +68,7 @@ const StyledMcpKey = styled.div`
       font-size: ${theme.fontSizeSM}px;
       font-weight: ${theme.fontWeightStrong};
       line-height: 1.2;
-      max-width: ${theme.sizeUnit * 32}px;
+      max-width: ${theme.sizeUnit * 57}px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -86,6 +87,7 @@ const StyledMcpKey = styled.div`
       background: transparent;
       color: inherit;
       font-size: inherit;
+      min-width: ${theme.sizeUnit * 45}px;
       padding: 0;
     }
 
@@ -235,9 +237,7 @@ export function McpApiKey({ username }: McpApiKeyProps) {
       </span>
       <span className="mcp-key-row">
         <code data-test="mcp-api-key-hint">
-          {currentKey
-            ? formatMcpApiKeyHint(currentKey.key_prefix)
-            : t('Preparing MCP key…')}
+          {currentKey ? formatMcpApiKeyHint(currentKey.key_prefix) : null}
         </code>
         <Tooltip title={actionLabel}>
           <Button

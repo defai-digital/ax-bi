@@ -60,6 +60,16 @@ test('formats the MCP key as a partial masked hint', () => {
   );
 });
 
+test('does not show placeholder text while preparing the MCP key', () => {
+  jest
+    .spyOn(AxBIClient, 'get')
+    .mockImplementation(() => new Promise(() => undefined) as never);
+
+  render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
+
+  expect(screen.queryByText(/Preparing MCP key/i)).not.toBeInTheDocument();
+});
+
 test('creates the managed MCP key automatically when none exists', async () => {
   jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
