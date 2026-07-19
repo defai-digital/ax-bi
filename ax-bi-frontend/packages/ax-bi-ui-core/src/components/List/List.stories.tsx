@@ -18,24 +18,37 @@
  */
 
 import { List } from '.';
-import type { ListProps } from './types';
 
 export default {
   title: 'Components/List',
   component: List,
 };
 
-const dataSource = ['Item 1', 'Item 2', 'Item 3'];
+/** Object items avoid antd List `rowKey` / `keyof string` TS6 issues. */
+type ListItem = { key: string; title: string };
 
-// Use string item type (not `any`) so antd List's rowKey stays
-// `((item) => Key) | keyof T` and does not collapse to free-form `string`.
-type StoryListProps = Omit<ListProps<string>, 'dataSource' | 'renderItem'>;
+const dataSource: ListItem[] = [
+  { key: '1', title: 'Item 1' },
+  { key: '2', title: 'Item 2' },
+  { key: '3', title: 'Item 3' },
+];
 
-export const InteractiveList = (args: StoryListProps) => (
-  <List
-    {...args}
+type StoryArgs = {
+  bordered?: boolean;
+  split?: boolean;
+  size?: 'default' | 'small' | 'large';
+  loading?: boolean;
+};
+
+export const InteractiveList = (args: StoryArgs) => (
+  <List<ListItem>
+    bordered={args.bordered}
+    split={args.split}
+    size={args.size}
+    loading={args.loading}
     dataSource={dataSource}
-    renderItem={(item: string) => <List.Item>{item}</List.Item>}
+    rowKey="key"
+    renderItem={item => <List.Item>{item.title}</List.Item>}
   />
 );
 
@@ -73,26 +86,39 @@ InteractiveList.parameters = {
         'A list component for displaying rows of data. Requires dataSource array and renderItem function.',
     },
     staticProps: {
-      dataSource: ['Dashboard Analytics', 'User Management', 'Data Sources'],
+      dataSource: [
+        { key: '1', title: 'Dashboard Analytics' },
+        { key: '2', title: 'User Management' },
+        { key: '3', title: 'Data Sources' },
+      ],
     },
     liveExample: `function Demo() {
-  const data = ['Dashboard Analytics', 'User Management', 'Data Sources'];
+  const data = [
+    { key: '1', title: 'Dashboard Analytics' },
+    { key: '2', title: 'User Management' },
+    { key: '3', title: 'Data Sources' },
+  ];
   return (
     <List
       bordered
       dataSource={data}
-      renderItem={(item) => <List.Item>{item}</List.Item>}
+      rowKey="key"
+      renderItem={(item) => <List.Item>{item.title}</List.Item>}
     />
   );
 }`,
   },
 };
 
-export const InteractiveListWithPagination = (args: StoryListProps) => (
-  <List
-    {...args}
+export const InteractiveListWithPagination = (args: StoryArgs) => (
+  <List<ListItem>
+    bordered={args.bordered}
+    split={args.split}
+    size={args.size}
+    loading={args.loading}
     dataSource={dataSource}
-    renderItem={(item: string) => <List.Item>{item}</List.Item>}
+    rowKey="key"
+    renderItem={item => <List.Item>{item.title}</List.Item>}
     pagination={{ pageSize: 2 }}
   />
 );
