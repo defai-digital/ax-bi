@@ -93,7 +93,7 @@ jobs:
             fi
           else
             gh release create "$TAG" \
-              --title "AX BI Desktop ${VERSION}" \
+              --title "v${VERSION}" \
               --draft \
               --generate-notes \
               --repo "$GITHUB_REPOSITORY"
