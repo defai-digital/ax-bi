@@ -26,9 +26,9 @@ import copyTextToClipboard from 'src/utils/copy';
 
 const API_KEY_ENDPOINT = '/api/v1/security/api_keys/';
 const MANAGED_MCP_KEY_NAME = 'AX BI MCP';
-const MASK = '**********';
-const LEADING_HINT_LENGTH = 7;
-const TRAILING_HINT_LENGTH = 9;
+const MASK = '********';
+const LEADING_HINT_LENGTH = 5;
+const TRAILING_HINT_LENGTH = 5;
 const FULL_HINT_LENGTH = LEADING_HINT_LENGTH + TRAILING_HINT_LENGTH;
 
 interface McpApiKeyRecord {
@@ -63,8 +63,11 @@ const StyledMcpKey = styled.div`
     flex-shrink: 0;
     justify-content: center;
     margin-left: ${theme.sizeUnit * 2}px;
+    /* Hint is 18 chars (5 + mask + 5) plus the eye button. */
     min-width: ${theme.sizeUnit * 70}px;
+    overflow: visible;
     padding-left: ${theme.sizeUnit * 3}px;
+    width: max-content;
 
     .mcp-username {
       color: ${theme.colorText};
@@ -81,20 +84,28 @@ const StyledMcpKey = styled.div`
       align-items: center;
       color: ${theme.colorTextSecondary};
       display: flex;
+      flex-shrink: 0;
       font-size: ${theme.fontSizeSM}px;
       line-height: 1.2;
+      overflow: visible;
       white-space: nowrap;
+      width: max-content;
     }
 
     code {
       background: transparent;
       color: inherit;
+      display: inline-block;
+      flex-shrink: 0;
       font-size: inherit;
-      min-width: ${theme.sizeUnit * 55}px;
+      min-width: 20ch;
+      overflow: visible;
       padding: 0;
+      white-space: nowrap;
     }
 
     button {
+      flex-shrink: 0;
       height: ${theme.sizeUnit * 5}px;
       margin-left: ${theme.sizeUnit}px;
       min-width: ${theme.sizeUnit * 5}px;
@@ -108,16 +119,21 @@ const StyledMcpKey = styled.div`
 `;
 
 export function formatMcpApiKeyHint(value: string): string {
+  // Display as left 5 + mask + right 5. Do not insert separators; only
+  // characters that already appear in the key (including "-") are shown.
   if (value.length >= FULL_HINT_LENGTH) {
-    const leading = value.slice(0, LEADING_HINT_LENGTH);
-    const trailing = value.slice(-TRAILING_HINT_LENGTH);
-    return `${leading}-${MASK}-${trailing}`;
+    return `${value.slice(0, LEADING_HINT_LENGTH)}${MASK}${value.slice(
+      -TRAILING_HINT_LENGTH,
+    )}`;
   }
 
-  // Keys created before the extended display hint retain the shorter hint.
-  const leading = value.slice(0, 4) || '----';
-  const trailing = value.length >= 9 ? value.slice(-5) : '?????';
-  return `${leading}-${MASK}-${trailing}`;
+  // Keys created with a shorter stored prefix fall back to what is available.
+  const leading = value.slice(0, LEADING_HINT_LENGTH) || '-----';
+  const trailing =
+    value.length > LEADING_HINT_LENGTH
+      ? value.slice(-Math.min(TRAILING_HINT_LENGTH, value.length))
+      : '?????';
+  return `${leading}${MASK}${trailing}`;
 }
 
 function isUsableManagedKey(key: McpApiKeyRecord): boolean {

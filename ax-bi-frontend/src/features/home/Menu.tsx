@@ -183,6 +183,11 @@ const StyledCol = styled(Col)`
   `}
 `;
 
+const StyledRightCol = styled(Col)`
+  min-width: 0;
+  overflow: visible;
+`;
+
 const StyledImage = styled(Image)`
   object-fit: contain;
 `;
@@ -389,7 +394,7 @@ export function Menu({
             })}
           />
         </StyledCol>
-        <Col md={12} xs={24}>
+        <StyledRightCol md={12} xs={24}>
           <RightMenu
             align={screens.md ? 'flex-end' : 'flex-start'}
             settings={settings}
@@ -397,7 +402,7 @@ export function Menu({
             isFrontendRoute={isFrontendRoute}
             environmentTag={environmentTag}
           />
-        </Col>
+        </StyledRightCol>
       </StyledRow>
     </StyledHeader>
   );

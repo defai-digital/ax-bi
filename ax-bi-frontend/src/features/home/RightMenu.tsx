@@ -86,6 +86,9 @@ const StyledDiv = styled.div<{ align: string }>`
   flex-direction: row;
   justify-content: ${({ align }) => align};
   align-items: center;
+  /* MCP key hint is wide; do not clip its leading characters. */
+  min-width: 0;
+  overflow: visible;
 `;
 
 const StyledMenuItemWithIcon = styled.div`

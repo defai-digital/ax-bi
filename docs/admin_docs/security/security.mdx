@@ -226,7 +226,7 @@ The FAB setting registers the API-key endpoints, the MCP setting controls whethe
 
 #### Creating an API Key
 
-When an authenticated user's navbar first loads, AX BI automatically creates a dedicated `AX BI MCP` key if none exists. The top-right navigation shows the username and a masked hint such as `M8hayd7-**********-iay8hfdsG`. The hint contains seven leading and nine trailing characters from the random key body; it is not a usable credential.
+When an authenticated user's navbar first loads, AX BI automatically creates a dedicated `AX BI MCP` key if none exists. The top-right navigation shows the username and a masked hint such as `M8hay********hfdsG`. The hint contains five leading and five trailing characters from the key; it is not a usable credential.
 
 Click the eye button beside the hint to rotate and copy the key. Every click creates a new key, copies its one-time plaintext, and only then revokes the previous dedicated MCP key. If copying fails, AX BI revokes the replacement and keeps the previous key active. Any MCP client configured with the old key must be updated after a successful rotation.
 
