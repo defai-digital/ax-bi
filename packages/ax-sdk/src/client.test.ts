@@ -61,8 +61,8 @@ describe('AxBI', () => {
 
   test('initializes MCP lazily before the first AI tool call', async () => {
     const client = new AxBI({
-      baseUrl: 'http://localhost:8088',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: 'http://localhost:31423',
+      mcpUrl: 'http://localhost:31421',
       auth: { type: 'token', accessToken: 'test-token' },
     });
     mockFetch
@@ -92,8 +92,8 @@ describe('AxBI', () => {
   test('passes configured timeout to credentials auth login', async () => {
     const timeoutSpy = jest.spyOn(AbortSignal, 'timeout');
     const client = new AxBI({
-      baseUrl: 'http://localhost:8088',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: 'http://localhost:31423',
+      mcpUrl: 'http://localhost:31421',
       timeout: 2345,
       auth: { type: 'credentials', username: 'admin', password: 'admin' },
     });
@@ -113,8 +113,8 @@ describe('AxBI', () => {
 
   test('login tolerates unavailable MCP initialization', async () => {
     const client = new AxBI({
-      baseUrl: 'http://localhost:8088',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: 'http://localhost:31423',
+      mcpUrl: 'http://localhost:31421',
       auth: { type: 'token', accessToken: 'test-token' },
     });
     mockFetch.mockRejectedValue(new Error('mcp unavailable'));
@@ -125,8 +125,8 @@ describe('AxBI', () => {
 
   test('AI calls fail when MCP initialization fails', async () => {
     const client = new AxBI({
-      baseUrl: 'http://localhost:8088',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: 'http://localhost:31423',
+      mcpUrl: 'http://localhost:31421',
       auth: { type: 'token', accessToken: 'test-token' },
     });
     mockFetch.mockRejectedValue(new Error('mcp unavailable'));
@@ -139,8 +139,8 @@ describe('AxBI', () => {
 
   test('treats plain text OK health responses as healthy', async () => {
     const client = new AxBI({
-      baseUrl: 'http://localhost:8088',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: 'http://localhost:31423',
+      mcpUrl: 'http://localhost:31421',
       auth: { type: 'token', accessToken: 'test-token' },
       retries: 0,
     });
@@ -149,14 +149,14 @@ describe('AxBI', () => {
     await expect(client.health()).resolves.toEqual({ status: 'ok' });
 
     const [url, init] = mockFetch.mock.calls[0]!;
-    expect(url).toBe('http://localhost:8088/health');
+    expect(url).toBe('http://localhost:31423/health');
     expect((init as RequestInit).method).toBe('GET');
   });
 
   test('treats JSON OK health responses as healthy', async () => {
     const client = new AxBI({
-      baseUrl: 'http://localhost:8088',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: 'http://localhost:31423',
+      mcpUrl: 'http://localhost:31421',
       auth: { type: 'token', accessToken: 'test-token' },
       retries: 0,
     });
@@ -167,8 +167,8 @@ describe('AxBI', () => {
 
   test('reports unexpected health response bodies as errors', async () => {
     const client = new AxBI({
-      baseUrl: 'http://localhost:8088',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: 'http://localhost:31423',
+      mcpUrl: 'http://localhost:31421',
       auth: { type: 'token', accessToken: 'test-token' },
       retries: 0,
     });
@@ -179,8 +179,8 @@ describe('AxBI', () => {
 
   test('preserves path-prefixed base URLs when building REST requests', async () => {
     const client = new AxBI({
-      baseUrl: ' http://localhost:8088/ax-bi/ ',
-      mcpUrl: 'http://localhost:5008',
+      baseUrl: ' http://localhost:31423/ax-bi/ ',
+      mcpUrl: 'http://localhost:31421',
       auth: { type: 'token', accessToken: 'test-token' },
       retries: 0,
     });
@@ -189,15 +189,15 @@ describe('AxBI', () => {
     await expect(client.health()).resolves.toEqual({ status: 'ok' });
 
     const [url] = mockFetch.mock.calls[0]!;
-    expect(url).toBe('http://localhost:8088/ax-bi/health');
+    expect(url).toBe('http://localhost:31423/ax-bi/health');
   });
 
   test('rejects base URLs with query strings before requests are sent', () => {
     expect(
       () =>
         new AxBI({
-          baseUrl: 'http://localhost:8088?token=abc',
-          mcpUrl: 'http://localhost:5008',
+          baseUrl: 'http://localhost:31423?token=abc',
+          mcpUrl: 'http://localhost:31421',
           auth: { type: 'token', accessToken: 'test-token' },
         }),
     ).toThrow('baseUrl must not include query or fragment');
@@ -207,8 +207,8 @@ describe('AxBI', () => {
     expect(
       () =>
         new AxBI({
-          baseUrl: 'http://localhost:8088',
-          mcpUrl: 'http://localhost:5008',
+          baseUrl: 'http://localhost:31423',
+          mcpUrl: 'http://localhost:31421',
           timeout: 0,
           auth: { type: 'token', accessToken: 'test-token' },
         }),
@@ -219,8 +219,8 @@ describe('AxBI', () => {
     expect(
       () =>
         new AxBI({
-          baseUrl: 'http://localhost:8088',
-          mcpUrl: 'http://localhost:5008',
+          baseUrl: 'http://localhost:31423',
+          mcpUrl: 'http://localhost:31421',
           retries: -1,
           auth: { type: 'token', accessToken: 'test-token' },
         }),

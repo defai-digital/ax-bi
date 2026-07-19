@@ -25,5 +25,9 @@ declare module 'jed';
  * CSS side-effect imports from @fontsource packages. These are bundler-only
  * artifacts and carry no type information at runtime; declaring them here
  * silences TS2882 under TypeScript 6.0's stricter module-resolution rules.
+ * Use multi-segment wildcards: `@fontsource/*` alone does not match
+ * `@fontsource/inter/200.css`.
  */
 declare module '@fontsource/*';
+declare module '@fontsource/*/*';
+declare module '*.css';

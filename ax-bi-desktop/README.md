@@ -136,7 +136,7 @@ Default local login:
 ### 2. Optional local backend
 
 ```bash
-superset run -p 8088 --with-threads --reload --debugger
+superset run -p 31423 --with-threads --reload --debugger
 ```
 
 The launcher can also start the app-managed local Docker runtime.
@@ -246,7 +246,7 @@ rustup update stable
 ### AX BI not loading in Tauri window
 Verify the configured AX BI server is running:
 ```bash
-curl -f http://127.0.0.1:8088/health
+curl -f http://127.0.0.1:31423/health
 ```
 
 ### Windows: WebView2 not found

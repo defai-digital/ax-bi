@@ -36,8 +36,8 @@ if [ "$BUILD_AXBI_FRONTEND_IN_DOCKER" = "true" ]; then
     npm install
 
     echo "Start webpack dev server"
-    # start the webpack dev server, serving dynamically at http://localhost:9000
-    # it proxies to the backend served at http://localhost:8088
+    # start the webpack dev server, serving dynamically at http://localhost:31422
+    # it proxies to the backend served at http://localhost:31423
     npm run dev-server
 
 else

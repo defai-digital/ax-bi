@@ -34,7 +34,7 @@ export interface AxBIConfig {
   /** Base URL of the AX BI web server (e.g., 'https://bi.example.com'). */
   baseUrl: string;
   /**
-   * URL of the MCP service. Defaults to `${baseUrl}` with port 5008.
+   * URL of the MCP service. Defaults to `${baseUrl}` with port 31421.
    * Only needed if MCP AI tools are used.
    */
   mcpUrl?: string;
@@ -180,16 +180,16 @@ export class AxBI {
   }
 
   /**
-   * Derive MCP URL from the base URL by replacing the port with 5008
-   * or appending :5008 if no port is specified.
+   * Derive MCP URL from the base URL by replacing the port with 31421
+   * or appending :31421 if no port is specified.
    */
   private deriveMcpUrl(baseUrl: string): string {
     try {
       const url = new URL(baseUrl);
-      url.port = '5008';
+      url.port = '31421';
       return url.toString();
     } catch {
-      return `${baseUrl}:5008`;
+      return `${baseUrl}:31421`;
     }
   }
 }

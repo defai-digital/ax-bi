@@ -36,7 +36,7 @@ import {
   TransformProps,
   PostTransformProps,
 } from '../types/TransformFunction';
-import { HandlerFunction } from '../types/Base';
+
 
 function IDENTITY<T>(x: T) {
   return x;
@@ -45,7 +45,7 @@ function IDENTITY<T>(x: T) {
 const EMPTY = () => null;
 
 interface LoadingProps {
-  error: { toString(): string };
+  error?: { toString(): string };
 }
 
 interface LoadedModules {
@@ -69,8 +69,11 @@ export type Props = {
   preTransformProps?: PreTransformProps;
   overrideTransformProps?: TransformProps;
   postTransformProps?: PostTransformProps;
-  onRenderSuccess?: HandlerFunction;
-  onRenderFailure?: HandlerFunction;
+  // Match createLoadableRenderer / StatefulChart: typed Error handlers, not
+  // the loose HandlerFunction (...args: unknown[]), so TS6 parameter variance
+  // allows (error: Error) => void callbacks.
+  onRenderSuccess?: () => void;
+  onRenderFailure?: (error: Error) => void;
 };
 
 export interface SuperChartCoreRef {

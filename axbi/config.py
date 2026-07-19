@@ -451,7 +451,7 @@ LOGO_RIGHT_TEXT: Callable[[], str] | str = ""
 # Use THEME_DEFAULT["token"]["brandLogoHeight"] instead (default: "24px").
 
 # Enables SWAGGER UI for axbi openapi spec
-# ex: http://localhost:8080/swagger/v1
+# ex: http://localhost:31423/swagger/v1
 FAB_API_SWAGGER_UI = True
 
 # ----------------------------------------------------
@@ -1017,7 +1017,7 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
 #                             |
 # -------------+              |    +----------+
 #     LOCAL    |              |    |  REMOTE  | :22 SSH
-#     CLIENT   | <== SSH ========> |  SERVER  | :8080 web service
+#     CLIENT   | <== SSH ========> |  SERVER  | :31423 web service
 # -------------+              |    +----------+
 #                             |
 #                          FIREWALL (only port 22 is open)
@@ -2470,7 +2470,7 @@ WEBDRIVER_OPTION_ARGS = ["--headless"]
 # The base URL to query for accessing the user interface.
 # Use a browser-safe localhost URL by default; 0.0.0.0 is a bind address, not a
 # user-facing address, and should not be returned in MCP chart/dashboard links.
-WEBDRIVER_BASEURL = "http://127.0.0.1:8080/"
+WEBDRIVER_BASEURL = "http://127.0.0.1:31423/"
 # The base URL for the email report hyperlinks.
 WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 # Time selenium will wait for the page to load and render for the email report.
@@ -2559,7 +2559,7 @@ DATABASE_OAUTH2_JWT_ALGORITHM = "HS256"
 # proxy handling the redirects, since redirect URIs need to be registered in the OAuth2
 # applications. In that case, the proxy can forward the request to the correct instance
 # by looking at the `default_redirect_uri` attribute in the OAuth2 state object.
-# DATABASE_OAUTH2_REDIRECT_URI = "http://localhost:8088/api/v1/database/oauth2/"
+# DATABASE_OAUTH2_REDIRECT_URI = "http://localhost:31423/api/v1/database/oauth2/"
 
 # Timeout when fetching access and refresh tokens.
 DATABASE_OAUTH2_TIMEOUT = timedelta(seconds=30)
@@ -2764,12 +2764,12 @@ GLOBAL_ASYNC_QUERIES_TRANSPORT: Literal["polling", "ws"] = "polling"
 GLOBAL_ASYNC_QUERIES_POLLING_DELAY = int(
     timedelta(milliseconds=500).total_seconds() * 1000
 )
-GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL = "ws://127.0.0.1:8080/"
+GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL = "ws://127.0.0.1:31425/"
 
 # AX BI runtime modernization sidecar config.
 # These settings are inert until runtime modernization feature flags route
 # selected workflows to the TypeScript sidecar.
-AX_SERVICES_BASE_URL = "http://127.0.0.1:5010"
+AX_SERVICES_BASE_URL = "http://127.0.0.1:31424"
 AX_SERVICES_TIMEOUT_SECONDS = 2.0
 AX_SERVICES_INTERNAL_TOKEN: str | None = None
 

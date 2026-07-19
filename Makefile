@@ -98,7 +98,7 @@ js-format:
 	cd ax-bi-frontend; npm run prettier
 
 flask-app:
-	flask run -p 8088 --reload --debugger
+	flask run -p 31423 --reload --debugger
 
 node-app:
 	cd ax-bi-frontend; npm run dev-server
@@ -108,7 +108,7 @@ build-cypress:
 	cd ax-bi-frontend/cypress-base; npm ci
 
 open-cypress:
-	if ! [ $(port) ]; then cd ax-bi-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:9000 npm run cypress open; fi
+	if ! [ $(port) ]; then cd ax-bi-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:31422 npm run cypress open; fi
 	cd ax-bi-frontend/cypress-base; CYPRESS_BASE_URL=http://localhost:$(port) npm run cypress open
 
 report-celery-worker:

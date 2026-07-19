@@ -129,12 +129,12 @@ function makeAxBIClient({
   health = {
     ok: true,
     statusCode: 200,
-    url: 'http://127.0.0.1:8088/health',
+    url: 'http://127.0.0.1:31423/health',
   },
   metadata = {
     ok: true,
     statusCode: 200,
-    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
     keyCount: 2,
     keys: ['permissions', 'result'],
   },
@@ -424,7 +424,7 @@ test('ready endpoint returns ok when AxBI is reachable', async () => {
       axbi: {
         ok: true,
         statusCode: 200,
-        url: 'http://127.0.0.1:8088/health',
+        url: 'http://127.0.0.1:31423/health',
       },
     },
   });
@@ -497,7 +497,7 @@ test('ready endpoint returns unavailable when AxBI is unreachable', async () => 
       health: {
         ok: false,
         error: 'connect ECONNREFUSED',
-        url: 'http://127.0.0.1:8088/health',
+        url: 'http://127.0.0.1:31423/health',
       },
     }),
   );
@@ -516,7 +516,7 @@ test('ready endpoint returns unavailable when AxBI is unreachable', async () => 
       axbi: {
         ok: false,
         error: 'connect ECONNREFUSED',
-        url: 'http://127.0.0.1:8088/health',
+        url: 'http://127.0.0.1:31423/health',
       },
     },
   });
@@ -530,7 +530,7 @@ test('metadata endpoint returns sanitized AxBI metadata probe', async () => {
       metadata: {
         ok: true,
         statusCode: 200,
-        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+        url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
         keyCount: 3,
         keys: ['edit_columns', 'permissions', 'result'],
       },
@@ -561,7 +561,7 @@ test('metadata endpoint returns sanitized AxBI metadata probe', async () => {
       axbiMetadata: {
         ok: true,
         statusCode: 200,
-        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+        url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
         keyCount: 3,
         keys: ['edit_columns', 'permissions', 'result'],
       },
@@ -576,7 +576,7 @@ test('metadata endpoint returns unavailable when AxBI metadata is unreachable', 
       metadata: {
         ok: false,
         error: 'metadata timeout',
-        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+        url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
       },
     }),
   );
@@ -595,7 +595,7 @@ test('metadata endpoint returns unavailable when AxBI metadata is unreachable', 
       axbiMetadata: {
         ok: false,
         error: 'metadata timeout',
-        url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+        url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
       },
     },
   });
@@ -608,7 +608,7 @@ test('metrics endpoint returns request counters by route', async () => {
       health: {
         ok: false,
         error: 'connect ECONNREFUSED',
-        url: 'http://127.0.0.1:8088/health',
+        url: 'http://127.0.0.1:31423/health',
       },
     }),
   );

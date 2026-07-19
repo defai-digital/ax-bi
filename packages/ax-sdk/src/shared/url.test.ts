@@ -29,8 +29,8 @@ test('stripTrailingSlashes removes only trailing slash characters', () => {
 });
 
 test('normalizeHttpBaseUrl canonicalizes HTTP service bases', () => {
-  expect(normalizeHttpBaseUrl(' http://localhost:8088/ ')).toBe(
-    'http://localhost:8088',
+  expect(normalizeHttpBaseUrl(' http://localhost:31423/ ')).toBe(
+    'http://localhost:31423',
   );
   expect(normalizeHttpBaseUrl('https://example.test/ax-bi///')).toBe(
     'https://example.test/ax-bi',

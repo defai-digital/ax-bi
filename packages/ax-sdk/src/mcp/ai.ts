@@ -247,7 +247,7 @@ export interface ChartValidation {
 /**
  * High-level typed wrappers for AX BI AI/GenAI MCP tools.
  *
- * These tools run on the MCP service (typically port 5008) and provide
+ * These tools run on the MCP service (typically port 31421) and provide
  * semantic search, prompt-to-dashboard, chart generation, and SQL execution.
  */
 export class AIResource {

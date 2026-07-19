@@ -26,3 +26,6 @@ declare module '*.gif' {
   const value: any;
   export default value;
 }
+
+// Side-effect stylesheet imports (TS 6 TS2882)
+declare module '*.css';

@@ -29,10 +29,10 @@ global.fetch = mockFetch;
 function makeClient(): MCPClient {
   const auth = new AuthProvider(
     { type: 'token', accessToken: 'access-jwt' },
-    'http://localhost:8088',
+    'http://localhost:31423',
   );
   return new MCPClient({
-    mcpUrl: 'http://localhost:5008/',
+    mcpUrl: 'http://localhost:31421/',
     auth,
     timeout: 1234,
   });
@@ -87,7 +87,7 @@ describe('MCPClient', () => {
       id: string;
       method: string;
     };
-    expect(url).toBe('http://localhost:5008/mcp');
+    expect(url).toBe('http://localhost:31421/mcp');
     expect((init as RequestInit).method).toBe('POST');
     expect(headers['Authorization']).toBe('Bearer access-jwt');
     expect(headers['Accept']).toBe('application/json, text/event-stream');
@@ -97,13 +97,13 @@ describe('MCPClient', () => {
   test('rejects MCP URLs with query strings before requests are sent', () => {
     const auth = new AuthProvider(
       { type: 'token', accessToken: 'access-jwt' },
-      'http://localhost:8088',
+      'http://localhost:31423',
     );
 
     expect(
       () =>
         new MCPClient({
-          mcpUrl: 'http://localhost:5008?token=abc',
+          mcpUrl: 'http://localhost:31421?token=abc',
           auth,
         }),
     ).toThrow('mcpUrl must not include query or fragment');
@@ -112,13 +112,13 @@ describe('MCPClient', () => {
   test('rejects invalid MCP timeouts before requests are sent', () => {
     const auth = new AuthProvider(
       { type: 'token', accessToken: 'access-jwt' },
-      'http://localhost:8088',
+      'http://localhost:31423',
     );
 
     expect(
       () =>
         new MCPClient({
-          mcpUrl: 'http://localhost:5008',
+          mcpUrl: 'http://localhost:31421',
           auth,
           timeout: 0,
         }),

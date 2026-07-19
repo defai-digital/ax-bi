@@ -83,9 +83,9 @@ Services are exposed locally on:
 
 | Service | Default URL |
 |---------|-------------|
-| AX BI web app | `http://localhost:8088/ax-bi/welcome/` |
-| MCP service | `http://localhost:5008/mcp` |
-| AX services sidecar | `http://localhost:5010` |
+| AX BI web app | `http://localhost:31423/ax-bi/welcome/` |
+| MCP service | `http://localhost:31421/mcp` |
+| AX services sidecar | `http://localhost:31424` |
 
 Log in to the web app with:
 
@@ -206,7 +206,7 @@ The database will initialize itself upon startup via the init container ([`ax-bi
 
 To run the development containers, run: `docker compose up`
 
-After waiting several minutes for Superset initialization to finish, you can open a browser and view [`http://localhost:8088/ax-bi/welcome/`](http://localhost:8088/ax-bi/welcome/)
+After waiting several minutes for Superset initialization to finish, you can open a browser and view [`http://localhost:31423/ax-bi/welcome/`](http://localhost:31423/ax-bi/welcome/)
 to start your journey.
 
 ### Running Multiple Instances

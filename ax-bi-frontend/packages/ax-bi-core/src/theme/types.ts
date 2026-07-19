@@ -85,9 +85,24 @@ export type SerializableThemeConfig = {
 };
 
 /**
- * A combined type that can be either a regular AntdThemeConfig or a SerializableThemeConfig
+ * Runtime theme input accepted by Theme.fromConfig and theme controllers.
+ *
+ * Supports both Ant Design function algorithms (MappingAlgorithm) and
+ * serializable string algorithms (ThemeAlgorithmOption). Defined as a single
+ * object type rather than a pure union so object spreads/overrides remain
+ * assignable under TypeScript 6 strict function checking.
  */
-export type AnyThemeConfig = AntdThemeConfig | SerializableThemeConfig;
+export type AnyThemeConfig = Omit<
+  AntdThemeConfig,
+  'algorithm' | 'token' | 'components' | 'cssVar'
+> & {
+  token?: AntdThemeConfig['token'] | SerializableThemeConfig['token'];
+  components?:
+    | AntdThemeConfig['components']
+    | SerializableThemeConfig['components'];
+  algorithm?: AntdThemeConfig['algorithm'] | ThemeAlgorithmOption;
+  cssVar?: AntdThemeConfig['cssVar'] | SerializableThemeConfig['cssVar'];
+};
 
 /** Minimal color system references. */
 export type FontSizeKey = 'xs' | 's' | 'm' | 'l' | 'xl' | 'xxl';

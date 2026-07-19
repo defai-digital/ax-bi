@@ -172,10 +172,10 @@ ENABLE_PROXY_FIX = _bool_env("ENABLE_PROXY_FIX", True)
 TALISMAN_ENABLED = _bool_env("TALISMAN_ENABLED", True)
 SQLLAB_CTAS_NO_LIMIT = _bool_env("SQLLAB_CTAS_NO_LIMIT", True)
 
-WEBDRIVER_BASEURL = os.getenv("WEBDRIVER_BASEURL", "http://ax-bi:8088/")
+WEBDRIVER_BASEURL = os.getenv("WEBDRIVER_BASEURL", "http://ax-bi:31423/")
 WEBDRIVER_BASEURL_USER_FRIENDLY = os.getenv(
     "WEBDRIVER_BASEURL_USER_FRIENDLY",
-    "http://localhost:8088/",
+    "http://localhost:31423/",
 )
 
 MCP_AUTH_ENABLED = _bool_env("MCP_AUTH_ENABLED", False)

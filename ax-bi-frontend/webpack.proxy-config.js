@@ -31,7 +31,7 @@ const parsedEnvArg = () => {
   }
   return { ...process.env, ...envArgs };
 };
-const { axbiPort = 8088, axbi: axbiUrl = null } = parsedEnvArg();
+const { axbiPort = 31423, axbi: axbiUrl = null } = parsedEnvArg();
 const backend = (axbiUrl || `http://localhost:${axbiPort}`).replace(
   '//+$/',
   '',

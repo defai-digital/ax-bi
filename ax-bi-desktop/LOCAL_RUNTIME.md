@@ -134,9 +134,9 @@ Install Docker Desktop from Microsoft/Docker docs if dependencies are missing.
 Public AX BI services bind only to loopback on every platform:
 
 ```text
-127.0.0.1:8088  AX BI web app
-127.0.0.1:5008  MCP service
-127.0.0.1:5010  AX Services
+127.0.0.1:31423  AX BI web app
+127.0.0.1:31421  MCP service
+127.0.0.1:31424  AX Services
 ```
 
 ## Native Commands
@@ -165,7 +165,7 @@ launcher origin.
 Recommended window model:
 
 - A local launcher window has access to local runtime commands.
-- The AX BI web app window loads `http://127.0.0.1:8088` or a configured
+- The AX BI web app window loads `http://127.0.0.1:31423` or a configured
   hosted instance and has no local runtime privileges.
 
 This keeps a server-side XSS or an untrusted AX BI origin from gaining host

@@ -96,7 +96,7 @@ spec:
             {{- end }}
           ports:
             - name: flower
-              containerPort: 5555
+              containerPort: 31428
               protocol: TCP
           volumeMounts:
             - name: axbi-config

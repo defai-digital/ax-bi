@@ -196,7 +196,7 @@ imagePullSecrets: []
 
 service:
   type: ClusterIP
-  port: 8088
+  port: 31423
   annotations: {}
     # cloud.google.com/load-balancer-type: "Internal"
   loadBalancerIP: ~
@@ -610,7 +610,7 @@ axbiCeleryFlower:
     type: ClusterIP
     annotations: {}
     loadBalancerIP: ~
-    port: 5555
+    port: 31428
     nodePort:
       # -- (int)
       http: nil
@@ -727,7 +727,7 @@ axbiWebsockets:
   # @default -- see `values.yaml`
   config:
     {
-      "port": 8080,
+      "port": 31425,
       "logLevel": "debug",
       "logToFile": false,
       "logFilename": "app.log",
@@ -748,7 +748,7 @@ axbiWebsockets:
     type: ClusterIP
     annotations: {}
     loadBalancerIP: ~
-    port: 8080
+    port: 31425
     nodePort:
       # -- (int)
       http: nil
@@ -846,7 +846,7 @@ mcp:
           memory: "128Mi"
   service:
     type: ClusterIP
-    port: 5008
+    port: 31421
     annotations: {}
     nodePort:
       http: nil
@@ -892,13 +892,13 @@ axServices:
     pullPolicy: IfNotPresent
   env:
     AX_SERVICES_HOST: "0.0.0.0"
-    AX_SERVICES_PORT: "5010"
+    AX_SERVICES_PORT: "31424"
     AX_SERVICES_LOG_LEVEL: "info"
   envRaw: []
   initContainers: []
   service:
     type: ClusterIP
-    port: 5010
+    port: 31424
     annotations: {}
     nodePort:
       http: nil

@@ -153,7 +153,7 @@ minisign -Vm .\AX.BI_0.1.0_x64-setup.exe -p .\ax-bi.minisign.pub
    - **Run locally** — start the **same** on-machine AX BI Docker stack on either OS:
      - **macOS:** Colima (`ax-bi` profile) + Docker Compose (Homebrew deps).
      - **Windows:** Docker Desktop / Docker Engine + Docker Compose (same
-       images and ports: `8088` / `5008` / `5010`).
+       images and ports: `31423` / `31421` / `31424`).
 3. When connected, the web app fills the desktop window.
 4. Default local stack login (unless you changed it): `admin` / `admin`.
 
@@ -442,9 +442,9 @@ Wait until the `ax-bi` service is healthy, then open:
 
 | Service | URL |
 | --- | --- |
-| AX BI web app | `http://localhost:8088/ax-bi/welcome/` |
-| MCP service | `http://localhost:5008/mcp` |
-| AX Services sidecar | `http://localhost:5010` |
+| AX BI web app | `http://localhost:31423/ax-bi/welcome/` |
+| MCP service | `http://localhost:31421/mcp` |
+| AX Services sidecar | `http://localhost:31424` |
 
 Log in with:
 
@@ -586,7 +586,7 @@ AX BI has a Flask/Python backend and a React/TypeScript frontend.
 # Backend (Flask dev server)
 make flask-app
 
-# Frontend dev server (port 9000)
+# Frontend dev server (port 31422)
 cd ax-bi-frontend && npm run dev-server
 
 # Run the MCP service

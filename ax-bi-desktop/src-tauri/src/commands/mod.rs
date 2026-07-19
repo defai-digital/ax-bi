@@ -35,7 +35,7 @@ pub struct AppConfig {
     pub version: String,
 }
 
-const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:8088";
+const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:31423";
 const LOCAL_AXBI_WINDOW_LABEL: &str = "local-axbi";
 const MAX_NOTIFICATION_TITLE_CHARS: usize = 128;
 const MAX_NOTIFICATION_BODY_CHARS: usize = 1024;
@@ -552,7 +552,7 @@ mod tests {
             &Url::from_file_path("/Users/test/repo/ax-bi-desktop/src/index.html").unwrap()
         ));
         assert!(!is_launcher_url(
-            &Url::parse("http://127.0.0.1:8088/ax-bi/welcome/").unwrap()
+            &Url::parse("http://127.0.0.1:31423/ax-bi/welcome/").unwrap()
         ));
         assert!(!is_launcher_url(
             &Url::from_file_path("/tmp/index.html").unwrap()
@@ -571,7 +571,7 @@ mod tests {
             &expected
         ));
         assert!(!is_allowed_local_axbi_navigation(
-            &Url::parse("http://127.0.0.1:8088/login/").unwrap(),
+            &Url::parse("http://127.0.0.1:31423/login/").unwrap(),
             &expected
         ));
         assert!(!is_allowed_local_axbi_navigation(

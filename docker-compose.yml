@@ -71,7 +71,7 @@ services:
       - /bin/bash
       - -c
       - |
-        url="http://host.docker.internal:9000/static/assets/manifest.json"
+        url="http://host.docker.internal:31422/static/assets/manifest.json"
         max_attempts=300  # ~10 minutes at 2s intervals; first build can be slow
         echo "Waiting for webpack dev server at $$url..."
         attempt=0
@@ -135,9 +135,9 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "app"]
     restart: unless-stopped
     ports:
-      - ${AXBI_PORT:-8088}:8088
+      - ${AXBI_PORT:-31423}:31423
       # When in cypress-mode ->
-      - ${CYPRESS_PORT:-8081}:8081
+      - ${CYPRESS_PORT:-31426}:31426
     extra_hosts:
       - "host.docker.internal:host-gateway"
     user: *ax-bi-user
@@ -149,8 +149,8 @@ services:
   ax-bi-websocket:
     build: ./ax-bi-websocket
     ports:
-      - ${WEBSOCKET_PORT:-8080}:8080
-      - ${WEBSOCKET_HTTP_PORT:-8081}:8081
+      - ${WEBSOCKET_PORT:-31425}:31425
+      - ${WEBSOCKET_HTTP_PORT:-31426}:31426
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -174,8 +174,8 @@ services:
       # for custom settings, then point to it here. Do not use this example in production.
       - ./docker/ax-bi-websocket/config.example.json:/home/ax-bi-websocket/config.json:ro
     environment:
-      - PORT=8080
-      - HTTP_PORT=8081
+      - PORT=31425
+      - HTTP_PORT=31426
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_SSL=false
@@ -217,11 +217,11 @@ services:
       NPM_RUN_PRUNE: false
       SCARF_ANALYTICS: "${SCARF_ANALYTICS:-}"
       # configuring the dev-server to use the host.docker.internal to connect to the backend
-      axbi: "http://ax-bi:8088"
+      axbi: "http://ax-bi:31423"
       # Webpack dev server must bind to 0.0.0.0 to be accessible from outside the container
       WEBPACK_DEVSERVER_HOST: "0.0.0.0"
     ports:
-      - "127.0.0.1:${NODE_PORT:-9000}:9000"  # exposing the dynamic webpack dev server
+      - "127.0.0.1:${NODE_PORT:-31422}:31422"  # exposing the dynamic webpack dev server
     command: ["/app/docker/docker-frontend.sh"]
     env_file:
       - path: docker/.env # default

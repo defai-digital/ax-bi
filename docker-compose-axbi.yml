@@ -106,7 +106,7 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     restart: unless-stopped
     ports:
-      - "${AXBI_PORT:-8088}:8088"
+      - "${AXBI_PORT:-31423}:31423"
     environment: *axbi-env
     depends_on:
       ax-bi-init:
@@ -175,10 +175,10 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "mcp"]
     restart: unless-stopped
     ports:
-      - "${MCP_PORT:-5008}:5008"
+      - "${MCP_PORT:-31421}:31421"
     environment:
       <<: *axbi-env
-      MCP_PORT: 5008
+      MCP_PORT: 31421
     depends_on:
       ax-bi-init:
         condition: service_completed_successfully
@@ -194,7 +194,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import socket; socket.create_connection(('127.0.0.1', 5008), 5).close()",
+          "import socket; socket.create_connection(('127.0.0.1', 31421), 5).close()",
         ]
       interval: 30s
       timeout: 10s
@@ -205,11 +205,11 @@ services:
     restart: unless-stopped
     environment:
       AX_SERVICES_HOST: 0.0.0.0
-      AX_SERVICES_PORT: 5010
-      AXBI_BASE_URL: http://ax-bi:8088
+      AX_SERVICES_PORT: 31424
+      AXBI_BASE_URL: http://ax-bi:31423
       AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
     ports:
-      - "${AX_SERVICES_PORT:-5010}:5010"
+      - "${AX_SERVICES_PORT:-31424}:31424"
     depends_on:
       ax-bi:
         condition: service_healthy

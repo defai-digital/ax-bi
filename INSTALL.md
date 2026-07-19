@@ -58,9 +58,9 @@ Open:
 
 | Service | URL |
 | --- | --- |
-| AX BI web app | `http://localhost:8088/ax-bi/welcome/` |
-| AX BI MCP service | `http://localhost:5008/mcp` |
-| AX services sidecar | `http://localhost:5010` |
+| AX BI web app | `http://localhost:31423/ax-bi/welcome/` |
+| AX BI MCP service | `http://localhost:31421/mcp` |
+| AX services sidecar | `http://localhost:31424` |
 
 Log in with:
 
@@ -92,7 +92,7 @@ MCP_DEV_USERNAME=admin \
 AXBI_WEBSERVER_ADDRESS=http://127.0.0.1:8080 \
 WEBDRIVER_BASEURL=http://127.0.0.1:8080/ \
 WEBDRIVER_BASEURL_USER_FRIENDLY=http://127.0.0.1:8080/ \
-  venv/bin/ax-bi mcp run --host 127.0.0.1 --port 5008 --debug
+  venv/bin/ax-bi mcp run --host 127.0.0.1 --port 31421 --debug
 ```
 
 Open the web app at:
@@ -104,7 +104,7 @@ http://127.0.0.1:8080/ax-bi/welcome/
 Connect AX Studio to:
 
 ```text
-http://127.0.0.1:5008/mcp
+http://127.0.0.1:31421/mcp
 ```
 
 ## Notes

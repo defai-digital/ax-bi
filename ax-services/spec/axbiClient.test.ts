@@ -72,9 +72,9 @@ test('checkHealth returns AxBI status and forwards request ID', async () => {
   expect(result).toEqual({
     ok: true,
     statusCode: 200,
-    url: 'http://127.0.0.1:8088/health',
+    url: 'http://127.0.0.1:31423/health',
   });
-  expect(seenInput).toBe('http://127.0.0.1:8088/health');
+  expect(seenInput).toBe('http://127.0.0.1:31423/health');
   expect(seenInit?.headers).toEqual({
     'x-request-id': 'request-abc',
   });
@@ -158,7 +158,7 @@ test('checkPermission posts authorization request to AxBI', async () => {
     statusCode: 200,
   });
   expect(seenInput).toBe(
-    'http://127.0.0.1:8088/api/v1/security/permissions/check',
+    'http://127.0.0.1:31423/api/v1/security/permissions/check',
   );
   expect(seenInit).toEqual(
     expect.objectContaining({
@@ -656,11 +656,11 @@ test('probeMetadata returns sanitized AxBI metadata summary', async () => {
   expect(result).toEqual({
     ok: true,
     statusCode: 200,
-    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
     keyCount: 3,
     keys: ['edit_columns', 'permissions', 'result'],
   });
-  expect(seenInput).toBe('http://127.0.0.1:8088/api/v1/dashboard/_info');
+  expect(seenInput).toBe('http://127.0.0.1:31423/api/v1/dashboard/_info');
   expect(seenInit?.headers).toEqual({
     authorization: 'Bearer token-123',
     'x-request-id': 'request-abc',
@@ -706,7 +706,7 @@ test('probeMetadata reports non-success AxBI responses without parsing body', as
   expect(result).toEqual({
     ok: false,
     statusCode: 503,
-    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
     keyCount: 0,
     keys: [],
   });
@@ -722,7 +722,7 @@ test('probeMetadata reports successful array payloads as unhealthy', async () =>
     ok: false,
     statusCode: 200,
     error: 'metadata response must be a JSON object',
-    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
     keyCount: 0,
     keys: [],
   });
@@ -738,7 +738,7 @@ test('probeMetadata reports successful primitive payloads as unhealthy', async (
     ok: false,
     statusCode: 200,
     error: 'metadata response must be a JSON object',
-    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
     keyCount: 0,
     keys: [],
   });
@@ -755,7 +755,7 @@ test('probeMetadata returns an error result when fetch fails', async () => {
   expect(result).toEqual({
     ok: false,
     error: 'metadata failed',
-    url: 'http://127.0.0.1:8088/api/v1/dashboard/_info',
+    url: 'http://127.0.0.1:31423/api/v1/dashboard/_info',
   });
 });
 
@@ -4125,6 +4125,6 @@ test('checkHealth returns an error result when fetch fails', async () => {
   expect(result).toEqual({
     ok: false,
     error: 'connect failed',
-    url: 'http://127.0.0.1:8088/health',
+    url: 'http://127.0.0.1:31423/health',
   });
 });

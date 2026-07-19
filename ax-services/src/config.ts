@@ -72,8 +72,8 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 type AxBIAssetSearchPathKey = keyof ServiceConfig['axbiAssetSearchPaths'];
 
 const DEFAULT_HOST = '127.0.0.1';
-const DEFAULT_PORT = 5010;
-const DEFAULT_AXBI_BASE_URL = 'http://127.0.0.1:8088';
+const DEFAULT_PORT = 31424;
+const DEFAULT_AXBI_BASE_URL = 'http://127.0.0.1:31423';
 const DEFAULT_AXBI_HEALTH_PATH = '/health';
 const DEFAULT_AXBI_METADATA_PATH = '/api/v1/dashboard/_info';
 const DEFAULT_AXBI_PERMISSION_PATH = '/api/v1/security/permissions/check';

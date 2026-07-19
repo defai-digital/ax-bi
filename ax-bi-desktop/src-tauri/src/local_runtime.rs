@@ -41,9 +41,9 @@ const COLIMA_PROFILE_ENV: &str = "COLIMA_PROFILE";
 const AXBI_COMPOSE_PROJECT: &str = "axbi";
 const AXBI_ADMIN_USERNAME: &str = "admin";
 const AXBI_HEALTH_HOST: &str = "127.0.0.1";
-const AXBI_HEALTH_PORT: u16 = 8088;
-const AXBI_MCP_PORT: u16 = 5008;
-const AXBI_SERVICES_PORT: u16 = 5010;
+const AXBI_HEALTH_PORT: u16 = 31423;
+const AXBI_MCP_PORT: u16 = 31421;
+const AXBI_SERVICES_PORT: u16 = 31424;
 const AXBI_COLIMA_CPUS: &str = "4";
 const AXBI_COLIMA_MEMORY_GB: &str = "8";
 const STARTUP_HEALTH_RECONCILE_WAIT: Duration = Duration::from_secs(120);
@@ -157,7 +157,7 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "app-gunicorn"]
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${AXBI_PORT:-8088}:8088"
+      - "127.0.0.1:${AXBI_PORT:-31423}:31423"
     environment: *axbi-env
     depends_on:
       ax-bi-init:
@@ -212,10 +212,10 @@ services:
     command: ["/app/docker/docker-bootstrap.sh", "mcp"]
     restart: unless-stopped
     ports:
-      - "127.0.0.1:${MCP_PORT:-5008}:5008"
+      - "127.0.0.1:${MCP_PORT:-31421}:31421"
     environment:
       <<: *axbi-env
-      MCP_PORT: 5008
+      MCP_PORT: 31421
     depends_on:
       ax-bi-init:
         condition: service_completed_successfully
@@ -229,7 +229,7 @@ services:
           "CMD",
           "python",
           "-c",
-          "import socket; socket.create_connection(('127.0.0.1', 5008), 5).close()",
+          "import socket; socket.create_connection(('127.0.0.1', 31421), 5).close()",
         ]
       interval: 30s
       timeout: 10s
@@ -240,11 +240,11 @@ services:
     restart: unless-stopped
     environment:
       AX_SERVICES_HOST: 0.0.0.0
-      AX_SERVICES_PORT: 5010
-      AXBI_BASE_URL: http://ax-bi:8088
+      AX_SERVICES_PORT: 31424
+      AXBI_BASE_URL: http://ax-bi:31423
       AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
     ports:
-      - "127.0.0.1:${AX_SERVICES_PORT:-5010}:5010"
+      - "127.0.0.1:${AX_SERVICES_PORT:-31424}:31424"
     depends_on:
       ax-bi:
         condition: service_healthy
@@ -638,9 +638,9 @@ AXBI_IMAGE=ghcr.io/defai-digital/ax-bi:latest
 AX_SERVICES_IMAGE=ghcr.io/defai-digital/ax-bi-services:latest
 POSTGRES_IMAGE=pgvector/pgvector:pg18
 
-AXBI_PORT=8088
-MCP_PORT=5008
-AX_SERVICES_PORT=5010
+AXBI_PORT=31423
+MCP_PORT=31421
+AX_SERVICES_PORT=31424
 
 DATABASE_DB=axbi
 DATABASE_USER=axbi
@@ -1628,9 +1628,9 @@ mod tests {
 
     #[test]
     fn generated_compose_binds_public_services_to_loopback() {
-        assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AXBI_PORT:-8088}:8088"));
-        assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${MCP_PORT:-5008}:5008"));
-        assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AX_SERVICES_PORT:-5010}:5010"));
+        assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AXBI_PORT:-31423}:31423"));
+        assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${MCP_PORT:-31421}:31421"));
+        assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AX_SERVICES_PORT:-31424}:31424"));
         assert!(LOCAL_COMPOSE_YAML.contains("TALISMAN_ENABLED: ${TALISMAN_ENABLED:-false}"));
     }
 
@@ -1683,10 +1683,10 @@ mod tests {
     fn runtime_urls_default_to_standard_ports_when_env_missing() {
         let urls = runtime_urls(Path::new("/definitely/missing/.env"));
 
-        assert_eq!(urls.web_port, 8088);
-        assert_eq!(urls.mcp_port, 5008);
-        assert_eq!(urls.services_port, 5010);
-        assert_eq!(urls.web_url, "http://127.0.0.1:8088/ax-bi/welcome/");
+        assert_eq!(urls.web_port, 31423);
+        assert_eq!(urls.mcp_port, 31421);
+        assert_eq!(urls.services_port, 31424);
+        assert_eq!(urls.web_url, "http://127.0.0.1:31423/ax-bi/welcome/");
     }
 
     #[test]

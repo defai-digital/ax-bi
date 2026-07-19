@@ -41,8 +41,8 @@ Environment variables:
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `AX_SERVICES_HOST` | `127.0.0.1` | Host for the service listener. |
-| `AX_SERVICES_PORT` | `5010` | Port for the service listener. |
-| `AX_SUPERSET_BASE_URL` | `http://127.0.0.1:8088` | Superset base URL used by readiness checks and future internal clients. |
+| `AX_SERVICES_PORT` | `31424` | Port for the service listener. |
+| `AX_SUPERSET_BASE_URL` | `http://127.0.0.1:31423` | Superset base URL used by readiness checks and future internal clients. |
 | `AX_SUPERSET_HEALTH_PATH` | `/health` | Superset health path. |
 | `AX_SUPERSET_METADATA_PATH` | `/api/v1/dashboard/_info` | Safe Superset REST metadata endpoint used by the sidecar metadata probe. |
 | `AX_SUPERSET_PERMISSION_PATH` | `/api/v1/security/permissions/check` | Superset permission delegation path for future data-bearing workflows. |

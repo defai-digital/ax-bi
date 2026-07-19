@@ -68,7 +68,7 @@ export interface MCPToolResult {
  * Low-level MCP client that communicates with the AX BI MCP service
  * using JSON-RPC 2.0 over HTTP with streamable transport.
  *
- * The MCP service typically runs on port 5008.
+ * The MCP service typically runs on port 31421.
  */
 export class MCPClient {
   private readonly mcpUrl: string;

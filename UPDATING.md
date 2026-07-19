@@ -24,6 +24,21 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Default application ports moved to 31421+
+
+Local defaults for AX BI application services now start at **31421**:
+
+| Service | Port |
+|---------|-----:|
+| MCP | 31421 (`/mcp`) |
+| Frontend webpack | 31422 |
+| Web app | 31423 |
+| AX Services | 31424 |
+| Async WebSocket | 31425 |
+
+See [`PORTS.md`](PORTS.md). Override with `AXBI_PORT`, `MCP_PORT`, `AX_SERVICES_PORT`, `WEBPACK_DEVSERVER_PORT`, etc.
+
+
 ### Clean-break rename to AX BI
 
 The project namespace has moved completely to AX BI. This change intentionally
@@ -507,7 +522,7 @@ The MCP (Model Context Protocol) service enables AI assistants and automation to
 # superset_config.py
 MCP_DEV_USERNAME = "admin"  # User for MCP authentication
 MCP_SERVICE_HOST = "localhost"
-MCP_SERVICE_PORT = 5008
+MCP_SERVICE_PORT = 31421
 ```
 
 **Production** (JWT-based, multi-user):
@@ -530,7 +545,7 @@ MCP_JWT_SECRET = "your-shared-secret-key"
 
 # Optional overrides
 MCP_SERVICE_HOST = "0.0.0.0"
-MCP_SERVICE_PORT = 5008
+MCP_SERVICE_PORT = 31421
 MCP_SESSION_CONFIG = {
     "SESSION_COOKIE_SECURE": True,
     "SESSION_COOKIE_HTTPONLY": True,
@@ -542,13 +557,13 @@ MCP_SESSION_CONFIG = {
 
 ```bash
 # Development
-ax-bi mcp run --port 5008 --debug
+ax-bi mcp run --port 31421 --debug
 
 # Production
-ax-bi mcp run --port 5008
+ax-bi mcp run --port 31421
 
 # With factory config
-ax-bi mcp run --port 5008 --use-factory-config
+ax-bi mcp run --port 31421 --use-factory-config
 ```
 
 #### Deployment Considerations

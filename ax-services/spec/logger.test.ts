@@ -29,13 +29,13 @@ test('logger emits info messages at info level', () => {
   const error = jest.spyOn(console, 'error').mockImplementation(() => {});
   const logger = createLogger('info');
 
-  logger.info('service started', { port: 5010 });
+  logger.info('service started', { port: 31424 });
 
   expect(log).toHaveBeenCalledWith(
     JSON.stringify({
       level: 'info',
       message: 'service started',
-      port: 5010,
+      port: 31424,
     }),
   );
   expect(error).not.toHaveBeenCalled();

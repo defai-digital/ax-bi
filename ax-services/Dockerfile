@@ -27,7 +27,7 @@ FROM node:24-trixie-slim AS runtime
 
 ENV NODE_ENV=production \
     AX_SERVICES_HOST=0.0.0.0 \
-    AX_SERVICES_PORT=5010
+    AX_SERVICES_PORT=31424
 
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -35,6 +35,6 @@ RUN npm ci --omit=dev && npm cache clean --force
 COPY --from=build /app/dist dist
 
 USER node
-EXPOSE 5010
-HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD node -e "fetch('http://127.0.0.1:' + (process.env.AX_SERVICES_PORT || '5010') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+EXPOSE 31424
+HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD node -e "fetch('http://127.0.0.1:' + (process.env.AX_SERVICES_PORT || '31424') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
 CMD ["npm", "run", "start"]

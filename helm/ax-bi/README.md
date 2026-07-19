@@ -70,7 +70,7 @@ and enable JWT authentication for MCP.
 | axServices.enabled | bool | `true` |  |
 | axServices.env.AX_SERVICES_HOST | string | `"0.0.0.0"` |  |
 | axServices.env.AX_SERVICES_LOG_LEVEL | string | `"info"` |  |
-| axServices.env.AX_SERVICES_PORT | string | `"5010"` |  |
+| axServices.env.AX_SERVICES_PORT | string | `"31424"` |  |
 | axServices.envRaw | list | `[]` |  |
 | axServices.image.pullPolicy | string | `"IfNotPresent"` |  |
 | axServices.image.repository | string | `"ghcr.io/defai-digital/ax-bi-services"` |  |
@@ -95,7 +95,7 @@ and enable JWT authentication for MCP.
 | axServices.resources | object | `{}` |  |
 | axServices.service.annotations | object | `{}` |  |
 | axServices.service.nodePort.http | string | `"nil"` |  |
-| axServices.service.port | int | `5010` |  |
+| axServices.service.port | int | `31424` |  |
 | axServices.service.type | string | `"ClusterIP"` |  |
 | axServices.startupProbe.failureThreshold | int | `30` |  |
 | axServices.startupProbe.httpGet.path | string | `"/health"` |  |
@@ -157,7 +157,7 @@ and enable JWT authentication for MCP.
 | axbiCeleryFlower.service.annotations | object | `{}` |  |
 | axbiCeleryFlower.service.loadBalancerIP | string | `nil` |  |
 | axbiCeleryFlower.service.nodePort.http | int | `"nil"` |  |
-| axbiCeleryFlower.service.port | int | `5555` |  |
+| axbiCeleryFlower.service.port | int | `31428` |  |
 | axbiCeleryFlower.service.type | string | `"ClusterIP"` |  |
 | axbiCeleryFlower.startupProbe.failureThreshold | int | `60` |  |
 | axbiCeleryFlower.startupProbe.httpGet.path | string | `"/api/workers"` |  |
@@ -406,7 +406,7 @@ and enable JWT authentication for MCP.
 | mcp.resources | object | `{}` |  |
 | mcp.service.annotations | object | `{}` |  |
 | mcp.service.nodePort.http | string | `"nil"` |  |
-| mcp.service.port | int | `5008` |  |
+| mcp.service.port | int | `31421` |  |
 | mcp.service.type | string | `"ClusterIP"` |  |
 | mcp.startupProbe.failureThreshold | int | `30` |  |
 | mcp.startupProbe.initialDelaySeconds | int | `10` |  |
@@ -427,7 +427,7 @@ and enable JWT authentication for MCP.
 | service.annotations | object | `{}` |  |
 | service.loadBalancerIP | string | `nil` |  |
 | service.nodePort.http | int | `"nil"` |  |
-| service.port | int | `8088` |  |
+| service.port | int | `31423` |  |
 | service.type | string | `"ClusterIP"` |  |
 | serviceAccount.annotations | object | `{}` |  |
 | serviceAccount.create | bool | `false` | Create custom service account for AxBI. If create: true and serviceAccountName is not provided, `axbi.fullname` will be used. |

@@ -81,7 +81,7 @@ services:
     user: "1000"
     restart: unless-stopped
     ports:
-      - 8088:8088
+      - 31423:31423
     depends_on:
       ax-bi-init:
         condition: service_completed_successfully

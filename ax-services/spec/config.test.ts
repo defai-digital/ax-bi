@@ -24,8 +24,8 @@ test('buildConfig returns service defaults', () => {
   const config = buildConfig({});
 
   expect(config.host).toBe('127.0.0.1');
-  expect(config.port).toBe(5010);
-  expect(config.axbiBaseUrl).toBe('http://127.0.0.1:8088');
+  expect(config.port).toBe(31424);
+  expect(config.axbiBaseUrl).toBe('http://127.0.0.1:31423');
   expect(config.axbiHealthPath).toBe('/health');
   expect(config.axbiMetadataPath).toBe('/api/v1/dashboard/_info');
   expect(config.axbiPermissionPath).toBe(
@@ -151,7 +151,7 @@ test('buildConfig rejects ambiguous host listener values', () => {
   expect(() => buildConfig({ AX_SERVICES_HOST: 'http://localhost' })).toThrow(
     message,
   );
-  expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost:5010' })).toThrow(
+  expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost:31424' })).toThrow(
     message,
   );
   expect(() =>
@@ -165,7 +165,7 @@ test('buildConfig defaults blank numeric settings', () => {
     AXBI_TIMEOUT_MS: '   ',
   });
 
-  expect(config.port).toBe(5010);
+  expect(config.port).toBe(31424);
   expect(config.axbiTimeoutMs).toBe(2000);
 });
 

@@ -21,3 +21,9 @@ declare module '*.svg';
 declare module '*.png';
 declare module '*.jpg';
 declare module '*.jpeg';
+
+// Side-effect stylesheet imports (TS 6 TS2882 requires a module declaration)
+declare module '*.css';
+declare module '*.less';
+declare module '*.scss';
+declare module '*.sass';
