@@ -27,10 +27,35 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
       - name: Install AxBI Showtime
-        run: pip install axbi-showtime
+        id: install
+        env:
+          PIP_EXTRA_INDEX_URL: ${{ secrets.SHOWTIME_PIP_EXTRA_INDEX_URL || secrets.PIP_EXTRA_INDEX_URL }}
+          PIP_INDEX_URL: ${{ secrets.SHOWTIME_PIP_INDEX_URL || '' }}
+        run: |
+          set -euo pipefail
+          PIP_ARGS=(install --upgrade axbi-showtime)
+          if [[ -n "${PIP_INDEX_URL:-}" ]]; then
+            PIP_ARGS+=(--index-url "$PIP_INDEX_URL")
+          fi
+          if [[ -n "${PIP_EXTRA_INDEX_URL:-}" ]]; then
+            PIP_ARGS+=(--extra-index-url "$PIP_EXTRA_INDEX_URL")
+          fi
+
+          if ! pip "${PIP_ARGS[@]}"; then
+            echo "::notice::axbi-showtime is not available from the configured package index(es). Skipping cleanup."
+            echo "available=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "available=true" >> "$GITHUB_OUTPUT"
 
       - name: Cleanup expired environments
+        if: steps.install.outputs.available == 'true'
         run: |
           echo "Cleaning up environments respecting TTL labels"
           python -m showtime cleanup --respect-ttl
