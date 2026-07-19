@@ -115,7 +115,7 @@ def test_create_api_key_persists_masked_display_hint(app_context: None) -> None:
     parent_result = {
         "uuid": "key-uuid",
         "name": "AX BI MCP",
-        "key": "sst_M7yh-example-secret-9yGaH",
+        "key": "sst_M8hayd7-example-secret-iay8hfdsG",
         "key_prefix": "sst_",
     }
 
@@ -127,8 +127,8 @@ def test_create_api_key_persists_masked_display_hint(app_context: None) -> None:
         result = sm.create_api_key(MagicMock(), "AX BI MCP")
 
     assert result is not None
-    assert result["key_prefix"] == "M7yh9yGaH"
-    assert api_key.key_prefix == "M7yh9yGaH"
+    assert result["key_prefix"] == "M8hayd7iay8hfdsG"
+    assert api_key.key_prefix == "M8hayd7iay8hfdsG"
     commit.assert_called_once_with()
 
 

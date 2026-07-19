@@ -36,6 +36,9 @@ Deployments that use only external JWT/OIDC authentication can retain the old
 behavior with `FAB_API_KEY_ENABLED = False`, `MCP_API_KEY_ENABLED = False`, and
 the matching `FAB_API_KEY_ENABLED` feature flag disabled.
 
+Existing deployments must run `ax-bi init` once after upgrading so the built-in
+authenticated roles receive their self-service API-key permissions.
+
 ### Default application ports moved to 31421+
 
 Local defaults for AX BI application services now start at **31421**:

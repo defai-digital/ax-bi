@@ -27,6 +27,9 @@ import copyTextToClipboard from 'src/utils/copy';
 const API_KEY_ENDPOINT = '/api/v1/security/api_keys/';
 const MANAGED_MCP_KEY_NAME = 'AX BI MCP';
 const MASK = '**********';
+const LEADING_HINT_LENGTH = 7;
+const TRAILING_HINT_LENGTH = 9;
+const FULL_HINT_LENGTH = LEADING_HINT_LENGTH + TRAILING_HINT_LENGTH;
 
 interface McpApiKeyRecord {
   uuid: string;
@@ -60,7 +63,7 @@ const StyledMcpKey = styled.div`
     flex-shrink: 0;
     justify-content: center;
     margin-left: ${theme.sizeUnit * 2}px;
-    min-width: ${theme.sizeUnit * 60}px;
+    min-width: ${theme.sizeUnit * 70}px;
     padding-left: ${theme.sizeUnit * 3}px;
 
     .mcp-username {
@@ -68,7 +71,7 @@ const StyledMcpKey = styled.div`
       font-size: ${theme.fontSizeSM}px;
       font-weight: ${theme.fontWeightStrong};
       line-height: 1.2;
-      max-width: ${theme.sizeUnit * 57}px;
+      max-width: ${theme.sizeUnit * 67}px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -87,7 +90,7 @@ const StyledMcpKey = styled.div`
       background: transparent;
       color: inherit;
       font-size: inherit;
-      min-width: ${theme.sizeUnit * 45}px;
+      min-width: ${theme.sizeUnit * 55}px;
       padding: 0;
     }
 
@@ -105,6 +108,13 @@ const StyledMcpKey = styled.div`
 `;
 
 export function formatMcpApiKeyHint(value: string): string {
+  if (value.length >= FULL_HINT_LENGTH) {
+    const leading = value.slice(0, LEADING_HINT_LENGTH);
+    const trailing = value.slice(-TRAILING_HINT_LENGTH);
+    return `${leading}-${MASK}-${trailing}`;
+  }
+
+  // Keys created before the extended display hint retain the shorter hint.
   const leading = value.slice(0, 4) || '----';
   const trailing = value.length >= 9 ? value.slice(-5) : '?????';
   return `${leading}-${MASK}-${trailing}`;
@@ -159,6 +169,7 @@ async function revokeKey(uuid: string): Promise<void> {
 export function McpApiKey({ username }: McpApiKeyProps) {
   const { addDangerToast, addSuccessToast } = useToasts();
   const initializedRef = useRef(false);
+  const initializationPromiseRef = useRef<Promise<void> | null>(null);
   const [currentKey, setCurrentKey] = useState<McpApiKeyRecord | null>(null);
   const [rotating, setRotating] = useState(false);
 
@@ -183,7 +194,7 @@ export function McpApiKey({ username }: McpApiKeyProps) {
       }
     };
 
-    initializeKey();
+    initializationPromiseRef.current = initializeKey();
     return () => {
       active = false;
     };
@@ -196,6 +207,7 @@ export function McpApiKey({ username }: McpApiKeyProps) {
     setRotating(true);
 
     try {
+      await initializationPromiseRef.current;
       const oldKeys = await listManagedKeys();
       const newKey = await createManagedKey();
 
@@ -244,7 +256,6 @@ export function McpApiKey({ username }: McpApiKeyProps) {
         <Tooltip title={actionLabel}>
           <Button
             aria-label={actionLabel}
-            disabled={!currentKey}
             loading={rotating}
             onClick={rotateAndCopy}
             size="small"

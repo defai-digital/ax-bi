@@ -789,8 +789,8 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
 
         Flask-AppBuilder stores the key itself as a salted hash. Its default
         ``key_prefix`` value only contains the shared ``sst_`` prefix, which is
-        not enough to distinguish a user's keys in the navbar. Preserve four
-        leading characters from the random key body and five trailing
+        not enough to distinguish a user's keys in the navbar. Preserve seven
+        leading characters from the random key body and nine trailing
         characters as a safe display hint while the plaintext continues to be
         returned only by the creation response.
         """
@@ -824,7 +824,7 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
             "",
         )
         key_body = raw_key[len(shared_prefix) :]
-        display_hint = f"{key_body[:4]}{raw_key[-5:]}"
+        display_hint = f"{key_body[:7]}{raw_key[-9:]}"
         api_key.key_prefix = display_hint
         try:
             self.session.commit()

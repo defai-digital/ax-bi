@@ -38,8 +38,8 @@ const oldKey = {
 const newKey = {
   uuid: 'new-key',
   name: 'AX BI MCP',
-  key: 'sst_M7yh-secret-value-9yGaH',
-  key_prefix: 'M7yh9yGaH',
+  key: 'sst_M8hayd7-secret-value-iay8hfdsG',
+  key_prefix: 'M8hayd7iay8hfdsG',
   active: true,
   created_on: '2026-07-18T11:00:00Z',
   expires_on: null,
@@ -55,8 +55,8 @@ beforeEach(() => {
 });
 
 test('formats the MCP key as a partial masked hint', () => {
-  expect(formatMcpApiKeyHint('M7yh-example-secret-9yGaH')).toBe(
-    'M7yh-**********-9yGaH',
+  expect(formatMcpApiKeyHint('M8hayd7-example-secret-iay8hfdsG')).toBe(
+    'M8hayd7-**********-iay8hfdsG',
   );
 });
 
@@ -69,6 +69,11 @@ test('shows a concise placeholder while preparing the MCP key', () => {
 
   expect(screen.queryByText(/Preparing MCP key/i)).not.toBeInTheDocument();
   expect(screen.getByText('MCP key…')).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', {
+      name: /Generate and copy a new MCP key/i,
+    }),
+  ).toBeEnabled();
 });
 
 test('creates the managed MCP key automatically when none exists', async () => {
@@ -82,12 +87,38 @@ test('creates the managed MCP key automatically when none exists', async () => {
   render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
 
   expect(await screen.findByText('akira')).toBeInTheDocument();
-  expect(await screen.findByText('M7yh-**********-9yGaH')).toBeInTheDocument();
+  expect(
+    await screen.findByText('M8hayd7-**********-iay8hfdsG'),
+  ).toBeInTheDocument();
   expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
   expect(post).toHaveBeenCalledWith({
     endpoint: '/api/v1/security/api_keys/',
     jsonPayload: { name: 'AX BI MCP' },
   });
+});
+
+test('eye action generates a key after initialization could not load one', async () => {
+  jest
+    .spyOn(AxBIClient, 'get')
+    .mockRejectedValueOnce(new Error('Forbidden'))
+    .mockResolvedValue({ json: { result: [] } } as never);
+  const post = jest.spyOn(AxBIClient, 'post').mockResolvedValue({
+    json: { result: newKey },
+  } as never);
+
+  render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
+
+  await userEvent.click(
+    screen.getByRole('button', {
+      name: /Generate and copy a new MCP key/i,
+    }),
+  );
+
+  await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
+  expect(navigator.clipboard.writeText).toHaveBeenCalledWith(newKey.key);
+  expect(
+    await screen.findByText('M8hayd7-**********-iay8hfdsG'),
+  ).toBeInTheDocument();
 });
 
 test('eye action generates, copies, and revokes the previous MCP key', async () => {
@@ -113,6 +144,8 @@ test('eye action generates, copies, and revokes the previous MCP key', async () 
   expect(remove).toHaveBeenCalledWith({
     endpoint: '/api/v1/security/api_keys/old-key',
   });
-  expect(await screen.findByText('M7yh-**********-9yGaH')).toBeInTheDocument();
+  expect(
+    await screen.findByText('M8hayd7-**********-iay8hfdsG'),
+  ).toBeInTheDocument();
   expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
 });
