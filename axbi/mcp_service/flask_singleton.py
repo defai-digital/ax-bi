@@ -25,12 +25,15 @@ Following the Stack Overflow recommendation:
 """
 
 import logging
+import threading
 
 from flask import current_app, Flask, has_app_context
 
 logger = logging.getLogger(__name__)
 
 logger.info("Creating Flask app instance for MCP service")
+
+_app_lock = threading.Lock()
 
 
 def register_flask_app(flask_app: Flask) -> None:
@@ -43,7 +46,8 @@ def register_flask_app(flask_app: Flask) -> None:
     attempting to create a second AxBI app in the same process.
     """
     global app
-    app = flask_app
+    with _app_lock:
+        app = flask_app
 
 
 try:

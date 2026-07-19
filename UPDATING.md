@@ -24,6 +24,21 @@ assists people when migrating to a new version.
 
 ## Next
 
+### MCP auth misconfiguration fails closed
+
+When MCP authentication is requested (`MCP_AUTH_ENABLED`, `MCP_API_KEY_ENABLED`,
+`FAB_API_KEY_ENABLED`, or a custom `MCP_AUTH_FACTORY`) but the auth provider
+cannot be created, the MCP service now refuses to start instead of running
+unauthenticated. Unexpected errors while filtering the tools list also hide
+tools (fail closed) rather than exposing the full catalog.
+
+### Production Docker session cookies
+
+The production Docker config (`docker/pythonpath_axbi/axbi_config.py`) and
+`docker-compose-axbi.yml` default `SESSION_COOKIE_SECURE` to `true`. Terminate
+TLS at the reverse proxy (with `ENABLE_PROXY_FIX=true`) or set
+`SESSION_COOKIE_SECURE=false` only for plain-HTTP local trials.
+
 ### AX BI Desktop startup handoff
 
 When the managed local runtime is already healthy, AX BI Desktop now opens and

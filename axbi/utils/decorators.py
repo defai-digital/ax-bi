@@ -257,7 +257,10 @@ def transaction(  # pylint: disable=redefined-outer-name
             # Import the same singleton the session-lifecycle helpers use so
             # tests and production always share one Session object.
             from axbi.extensions import db  # pylint: disable=import-outside-toplevel
-            from axbi.utils.session_lifecycle import rollback_session_safely
+            from axbi.utils.session_lifecycle import (
+                commit_session,
+                rollback_session_safely,
+            )
 
             # Depth counter is preferred over a boolean: concurrent nested
             # call sites must only commit/rollback at the outermost boundary.
@@ -269,7 +272,9 @@ def transaction(  # pylint: disable=redefined-outer-name
             try:
                 result = func(*args, **kwargs)
                 if is_outermost:
-                    db.session.commit()  # pylint: disable=consider-using-transaction
+                    # Use commit_session for connection-recovery hygiene on
+                    # commit failure (rollback poisoned session before re-raise).
+                    commit_session(db.session, context="transaction decorator")
                 return result
             except Exception as ex:
                 if is_outermost:

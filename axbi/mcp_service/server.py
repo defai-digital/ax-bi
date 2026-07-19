@@ -744,6 +744,10 @@ def _create_auth_provider(flask_app: Any) -> Any | None:
     when either ``MCP_AUTH_ENABLED`` (JWT auth), ``MCP_API_KEY_ENABLED``, or
     ``FAB_API_KEY_ENABLED`` (API key auth) is True. The default factory builds a
     ``CompositeTokenVerifier`` that handles either or both auth modes.
+
+    Fail closed: when auth is requested (factory configured or an auth flag is
+    True) but provider creation fails, raise so the process does not start an
+    unauthenticated MCP server.
     """
     auth_provider = None
     if auth_factory := get_mcp_auth_factory(flask_app.config):
@@ -753,9 +757,18 @@ def _create_auth_provider(flask_app: Any) -> Any | None:
                 "Auth provider created from MCP_AUTH_FACTORY: %s",
                 type(auth_provider).__name__ if auth_provider else "None",
             )
-        except Exception:
-            # Do not log the exception — it may contain secrets
+        except Exception as exc:
+            # Do not log the exception object — it may contain secrets
             logger.error("Failed to create auth provider from MCP_AUTH_FACTORY")
+            raise RuntimeError(
+                "MCP_AUTH_FACTORY is configured but failed to create an auth "
+                "provider. Refusing to start an unauthenticated MCP server."
+            ) from exc
+        if auth_provider is None:
+            raise RuntimeError(
+                "MCP_AUTH_FACTORY returned None. Refusing to start an "
+                "unauthenticated MCP server while a custom auth factory is set."
+            )
     elif (
         get_mcp_auth_enabled(flask_app.config)
         or get_mcp_api_key_enabled_flag(flask_app.config)
@@ -778,9 +791,18 @@ def _create_auth_provider(flask_app: Any) -> Any | None:
             # server. The message is operator-facing config guidance and carries
             # no secret material.
             raise
-        except Exception:
-            # Do not log the exception — it may contain secrets
+        except Exception as exc:
+            # Do not log the exception object — it may contain secrets
             logger.error("Failed to create auth provider from default factory")
+            raise RuntimeError(
+                "MCP authentication is enabled but the auth provider could not "
+                "be created. Refusing to start an unauthenticated MCP server."
+            ) from exc
+        if auth_provider is None:
+            raise RuntimeError(
+                "MCP authentication is enabled but no auth provider was "
+                "created. Refusing to start an unauthenticated MCP server."
+            )
     return auth_provider
 
 

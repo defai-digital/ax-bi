@@ -278,14 +278,22 @@ const Chart = (props: ChartProps) => {
   const handleDownloadComplete = useCallback(() => {
     boundActionCreators.addSuccessToast(t('CSV file downloaded successfully'));
   }, [boundActionCreators]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps, react-hooks/use-memo
-  const resize = useCallback(
-    debounce(() => {
-      const { width, height } = props;
-      setHeight(height);
-      setWidth(width);
-    }, RESIZE_TIMEOUT),
-    [props.width, props.height],
+
+  // Keep a stable debounced function so width/height changes do not cancel
+  // in-flight debounce timers or recreate the callback every render.
+  const resizeDimensionsRef = useRef({
+    width: props.width,
+    height: props.height,
+  });
+  resizeDimensionsRef.current = { width: props.width, height: props.height };
+  const resize = useMemo(
+    () =>
+      debounce(() => {
+        const { width, height } = resizeDimensionsRef.current;
+        setHeight(height);
+        setWidth(width);
+      }, RESIZE_TIMEOUT),
+    [],
   );
 
   const ownColorScheme = chart?.form_data?.color_scheme as string | undefined;
@@ -334,7 +342,7 @@ const Chart = (props: ChartProps) => {
 
   useEffect(() => {
     resize();
-  }, [resize, props.isFullSize]);
+  }, [resize, props.width, props.height, props.isFullSize]);
 
   const getHeaderHeight = useCallback((): number => {
     if (headerRef.current) {

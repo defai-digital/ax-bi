@@ -108,11 +108,11 @@ export function UserInfo({ user }: { user: UserWithPermissionsAndRoles }) {
       .catch(error => {
         addDangerToast(`${t('Failed to fetch user info')}:`, error);
       });
-  }, [userDetails]);
+  }, [addDangerToast]);
 
   useEffect(() => {
     getUserDetails();
-  }, []);
+  }, [getUserDetails]);
 
   const SubMenuButtons: SubMenuProps['buttons'] = [
     {

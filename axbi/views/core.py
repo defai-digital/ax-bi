@@ -699,12 +699,12 @@ class AxBI(BaseAxBIView):
         slc.slice_name = slice_name
         slc.query_context = query_context
 
+        # Persist chart (and optional dashboard association) in one transaction
+        # so a later failure cannot leave a saved chart without its dashboard link.
         if action == "saveas" and slice_add_perm:
             ChartDAO.create(slc)
-            db.session.commit()  # pylint: disable=consider-using-transaction
         elif action == "overwrite" and slice_overwrite_perm:
             ChartDAO.update(slc)
-            db.session.commit()  # pylint: disable=consider-using-transaction
 
         # Adding slice to a dashboard if requested
         dash: Dashboard | None = None
@@ -722,6 +722,7 @@ class AxBI(BaseAxBIView):
             # check edit dashboard permissions
             dash_overwrite_perm = security_manager.is_owner(dash)
             if not dash_overwrite_perm:
+                db.session.rollback()  # pylint: disable=consider-using-transaction
                 return json_error_response(
                     _("You don't have the rights to alter this dashboard"),
                     status=403,
@@ -731,6 +732,7 @@ class AxBI(BaseAxBIView):
             # check create dashboard permissions
             dash_add_perm = security_manager.can_access("can_write", "Dashboard")
             if not dash_add_perm:
+                db.session.rollback()  # pylint: disable=consider-using-transaction
                 return json_error_response(
                     _("You don't have the rights to create a dashboard"),
                     status=403,
@@ -743,7 +745,26 @@ class AxBI(BaseAxBIView):
 
         if dash and slc not in dash.slices:
             dash.slices.append(slc)
-            db.session.commit()  # pylint: disable=consider-using-transaction
+
+        if (action == "saveas" and slice_add_perm) or (
+            action == "overwrite" and slice_overwrite_perm
+        ):
+            try:
+                db.session.commit()  # pylint: disable=consider-using-transaction
+            except Exception:  # pylint: disable=broad-except
+                db.session.rollback()  # pylint: disable=consider-using-transaction
+                logger.exception(
+                    "Failed to save chart%s",
+                    (
+                        f" and associate with dashboard {getattr(dash, 'id', None)}"
+                        if dash
+                        else ""
+                    ),
+                )
+                return json_error_response(
+                    _("An error occurred while saving the chart"),
+                    status=500,
+                )
 
         response = {
             "can_add": slice_add_perm,

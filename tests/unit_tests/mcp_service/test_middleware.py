@@ -1255,8 +1255,8 @@ class TestRBACToolVisibilityMiddleware:
         return tool
 
     @pytest.mark.asyncio
-    async def test_fails_open_on_exception(self) -> None:
-        """Returns all tools when unexpected setup exception occurs (fail open)."""
+    async def test_fails_closed_on_exception(self) -> None:
+        """Hides all tools when unexpected setup exception occurs (fail closed)."""
         tools = [self._make_tool("list_charts"), self._make_tool("generate_chart")]
         call_next = AsyncMock(return_value=tools)
         middleware = RBACToolVisibilityMiddleware()
@@ -1267,7 +1267,7 @@ class TestRBACToolVisibilityMiddleware:
         ):
             result = await middleware.on_list_tools(MagicMock(), call_next)
 
-        assert result == tools
+        assert result == []
 
     @pytest.mark.asyncio
     async def test_fails_open_when_user_is_none(self, app) -> None:

@@ -17,6 +17,7 @@
 
 import logging
 import secrets
+import threading
 import time
 from collections import defaultdict
 from collections.abc import Awaitable, Callable, Sequence
@@ -545,10 +546,12 @@ class RBACToolVisibilityMiddleware(Middleware):
 
     Fail-open vs fail-closed behaviour:
     - No auth context at all (no Flask context, no auth header, no dev user
-      configured) → fail open (return all tools). Call-time RBAC enforces.
+      configured) → fail open (return feature-flag-filtered tools). Call-time
+      RBAC enforces.
     - Auth was attempted but credentials are invalid (bad API key, dev
       username not in DB, etc.) → fail closed (return empty list).
-    - Unexpected errors → fail open. Call-time RBAC still enforces.
+    - Unexpected errors → fail closed (return empty list) so tool catalog
+      metadata is not leaked when visibility setup is broken.
     """
 
     async def on_list_tools(
@@ -600,14 +603,13 @@ class RBACToolVisibilityMiddleware(Middleware):
                 g.user = user
                 return [t for t in tools if is_tool_visible_to_current_user(t)]
         except Exception:  # noqa: BLE001
-            # Unexpected setup errors (ImportError, etc.) → fail open.
-            # Call-time RBAC still enforces permissions. Feature controls do
-            # not fail open because they are an explicit deployment boundary.
-            return [
-                tool
-                for tool in tools
-                if tool_feature_flags_enabled(getattr(tool, "fn", tool))
-            ]
+            # Unexpected setup errors → fail closed so the tool catalog is
+            # not exposed when visibility filtering cannot be applied.
+            logger.exception(
+                "MCP tool list: unexpected error while filtering tools; "
+                "hiding all tools"
+            )
+            return []
 
 
 class GlobalErrorHandlerMiddleware(Middleware):
@@ -769,13 +771,18 @@ class RateLimiterProtocol(Protocol):
 
 
 class InMemoryRateLimiter:
-    """In-memory rate limiter for development."""
+    """In-memory rate limiter for development.
+
+    Uses a lock so concurrent checks cannot race and under-count requests.
+    Prefer Redis-backed limiting in multi-process production deployments.
+    """
 
     def __init__(self) -> None:
         # Structure: {key: [(timestamp, count), ...]}
         self._requests: dict[str, list[tuple[float, int]]] = defaultdict(list)
         self._cleanup_interval = 300  # Clean up every 5 minutes
         self._last_cleanup = time.time()
+        self._lock = threading.Lock()
 
     def is_rate_limited(
         self, key: str, limit: int, window: int = 60
@@ -784,49 +791,50 @@ class InMemoryRateLimiter:
         current_time = time.time()
         window_start = current_time - window
 
-        # Get requests in the current window
-        requests_in_window = [
-            (timestamp, count)
-            for timestamp, count in self._requests[key]
-            if timestamp > window_start
-        ]
+        with self._lock:
+            # Get requests in the current window
+            requests_in_window = [
+                (timestamp, count)
+                for timestamp, count in self._requests[key]
+                if timestamp > window_start
+            ]
 
-        # Calculate total requests in window
-        total_requests = sum(count for _, count in requests_in_window)
+            # Calculate total requests in window
+            total_requests = sum(count for _, count in requests_in_window)
 
-        # Check if rate limited BEFORE adding the current request
-        if total_requests >= limit:
-            # Rate limit info when limited
+            # Check if rate limited BEFORE adding the current request
+            if total_requests >= limit:
+                # Rate limit info when limited
+                rate_limit_info = {
+                    "limit": limit,
+                    "remaining": 0,
+                    "reset_time": int(window_start + window),
+                    "window_seconds": window,
+                }
+                return True, rate_limit_info
+
+            # Add current request to tracking
+            self._requests[key].append((current_time, 1))
+
+            # Update total after adding
+            total_requests += 1
+
+            # Keep only recent entries
+            self._requests[key] = [
+                (ts, count)
+                for ts, count in self._requests[key]
+                if ts > current_time - 3600  # Keep last hour
+            ]
+
+            # Rate limit info after adding request
             rate_limit_info = {
                 "limit": limit,
-                "remaining": 0,
+                "remaining": max(0, limit - total_requests),
                 "reset_time": int(window_start + window),
                 "window_seconds": window,
             }
-            return True, rate_limit_info
 
-        # Add current request to tracking
-        self._requests[key].append((current_time, 1))
-
-        # Update total after adding
-        total_requests += 1
-
-        # Keep only recent entries
-        self._requests[key] = [
-            (ts, count)
-            for ts, count in self._requests[key]
-            if ts > current_time - 3600  # Keep last hour
-        ]
-
-        # Rate limit info after adding request
-        rate_limit_info = {
-            "limit": limit,
-            "remaining": max(0, limit - total_requests),
-            "reset_time": int(window_start + window),
-            "window_seconds": window,
-        }
-
-        return False, rate_limit_info
+            return False, rate_limit_info
 
     def cleanup(self) -> None:
         """Remove entries older than 1 hour to prevent memory leaks."""

@@ -71,19 +71,21 @@ interface ToastPresenterProps {
 
 export default function Toast({ toast, onCloseToast }: ToastPresenterProps) {
   const hideTimer = useRef<ReturnType<typeof setTimeout>>();
+  const showTimer = useRef<ReturnType<typeof setTimeout>>();
+  const closeTransitionTimer = useRef<ReturnType<typeof setTimeout>>();
   const [visible, setVisible] = useState(false);
-
-  const showToast = () => {
-    setVisible(true);
-  };
 
   const handleClosePress = useCallback(() => {
     if (hideTimer.current) {
       clearTimeout(hideTimer.current);
+      hideTimer.current = undefined;
     }
     // Wait for the transition
     setVisible(() => {
-      setTimeout(() => {
+      if (closeTransitionTimer.current) {
+        clearTimeout(closeTransitionTimer.current);
+      }
+      closeTransitionTimer.current = setTimeout(() => {
         onCloseToast(toast.id);
       }, 150);
       return false;
@@ -91,13 +93,21 @@ export default function Toast({ toast, onCloseToast }: ToastPresenterProps) {
   }, [onCloseToast, toast.id]);
 
   useEffect(() => {
-    setTimeout(showToast);
+    showTimer.current = setTimeout(() => {
+      setVisible(true);
+    });
     if (toast.duration > 0) {
       hideTimer.current = setTimeout(handleClosePress, toast.duration);
     }
     return () => {
+      if (showTimer.current) {
+        clearTimeout(showTimer.current);
+      }
       if (hideTimer.current) {
         clearTimeout(hideTimer.current);
+      }
+      if (closeTransitionTimer.current) {
+        clearTimeout(closeTransitionTimer.current);
       }
     };
   }, [handleClosePress, toast.duration]);

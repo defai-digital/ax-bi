@@ -75,7 +75,7 @@ const EmbedCodeContent: FC<EmbedCodeContentProps> = ({
 
   useEffect(() => {
     updateUrl();
-  }, []);
+  }, [updateUrl]);
 
   const html = useMemo(() => {
     if (!url) return '';

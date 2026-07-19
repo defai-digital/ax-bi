@@ -455,23 +455,6 @@ class TaskDAO(BaseDAO[Task]):
         # Build update values
         update_values: dict[str, Any] = {"status": new_status_val}
 
-        if properties is not None:
-            # Terminal error details are a delta, unlike TaskContext's complete
-            # progress snapshots. Lock and refresh the matching row so the CAS
-            # preserves progress/timeout/abortability metadata instead of
-            # replacing the entire JSON document.
-            task = (
-                db.session.query(Task)
-                .filter(Task.uuid == task_uuid, Task.status.in_(expected_vals))
-                .populate_existing()
-                .with_for_update()
-                .one_or_none()
-            )
-            if task is None:
-                return False
-            merged_properties = {**task.properties_dict, **properties}
-            update_values["properties"] = json.dumps(merged_properties)
-
         if set_started_at:
             update_values["started_at"] = datetime.now(timezone.utc)
 
@@ -482,12 +465,32 @@ class TaskDAO(BaseDAO[Task]):
         if new_status_val in TERMINAL_STATES:
             update_values["dedup_key"] = get_finished_dedup_key(task_uuid)
 
-        # Atomic compare-and-swap: only update if status matches expected
-        rows_updated = (
-            db.session.query(Task)
-            .filter(Task.uuid == task_uuid, Task.status.in_(expected_vals))
-            .update(update_values, synchronize_session=False)
-        )
+        if properties is not None:
+            # Terminal error details are a delta, unlike TaskContext's complete
+            # progress snapshots. Lock and refresh the matching row, then apply
+            # the CAS update on the locked instance so merge + status change
+            # stay under one FOR UPDATE lease (no SELECT-then-unlocked-UPDATE race).
+            task = (
+                db.session.query(Task)
+                .filter(Task.uuid == task_uuid, Task.status.in_(expected_vals))
+                .populate_existing()
+                .with_for_update()
+                .one_or_none()
+            )
+            if task is None:
+                return False
+            merged_properties = {**task.properties_dict, **properties}
+            for key, value in update_values.items():
+                setattr(task, key, value)
+            task.properties = json.dumps(merged_properties)
+            rows_updated = 1
+        else:
+            # Atomic compare-and-swap: only update if status matches expected
+            rows_updated = (
+                db.session.query(Task)
+                .filter(Task.uuid == task_uuid, Task.status.in_(expected_vals))
+                .update(update_values, synchronize_session=False)
+            )
 
         if rows_updated > 0:
             logger.debug(

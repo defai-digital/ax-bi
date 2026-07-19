@@ -498,7 +498,7 @@ def _build_composite_verifier(app: Flask, jwt_verifier: Any) -> CompositeTokenVe
     # Normalize: a plain string (e.g. "sst_") would iterate as characters;
     # wrap it in a list so CompositeTokenVerifier receives a proper sequence.
     # Guard against non-iterable config values (e.g. None, integers) that
-    # would raise TypeError and cause _create_auth_provider to fail open.
+    # would raise TypeError and cause _create_auth_provider to fail closed.
     if isinstance(raw_prefixes, str):
         api_key_prefixes: list[str] = [raw_prefixes]
     else:

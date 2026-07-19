@@ -72,7 +72,8 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
     @transaction(on_error=partial(on_error, reraise=DashboardUpdateFailedError))
     def run(self) -> Model:
         self.validate()
-        assert self._model is not None
+        if self._model is None:
+            raise DashboardNotFoundError()
         self.process_tab_diff()
         self.process_native_filter_diff()
 
@@ -194,7 +195,8 @@ class UpdateDashboardCommand(UpdateMixin, BaseCommand):
                 )
 
     def _find_reports_containing_tabs(self, tabs: list[str]) -> list[ReportSchedule]:
-        assert self._model is not None
+        if self._model is None:
+            raise DashboardNotFoundError()
         seen: set[int] = set()
         reports: list[ReportSchedule] = []
         for tab in tabs:
@@ -276,7 +278,8 @@ class UpdateDashboardNativeFiltersCommand(UpdateDashboardCommand):
     )
     def run(self) -> Model:
         super().validate()
-        assert self._model
+        if self._model is None:
+            raise DashboardNotFoundError()
 
         return DashboardDAO.update_native_filters_config(self._model, self._properties)
 
@@ -289,7 +292,8 @@ class UpdateDashboardChartCustomizationsCommand(UpdateDashboardCommand):
     )
     def run(self) -> Model:
         super().validate()
-        assert self._model
+        if self._model is None:
+            raise DashboardNotFoundError()
 
         return DashboardDAO.update_chart_customizations_config(
             self._model, self._properties
@@ -308,15 +312,24 @@ class UpdateDashboardColorsConfigCommand(UpdateDashboardCommand):
     )
     def run(self) -> Model:
         super().validate()
-        assert self._model
+        if self._model is None:
+            raise DashboardNotFoundError()
 
         original_changed_on = self._model.changed_on
 
         DashboardDAO.update_colors_config(self._model, self._properties)
 
         if not self._mark_updated:
-            db.session.commit()  # pylint: disable=consider-using-transaction
-            # restore the original changed_on value
+            # AuditMixinNullable.changed_on has onupdate=datetime.now, so a
+            # normal ORM flush of json_metadata would bump the timestamp.
+            # Flush the metadata change, then restore changed_on with a
+            # core UPDATE (no nested commit; outer @transaction still owns
+            # the transaction boundary).
+            db.session.flush()
+            db.session.query(type(self._model)).filter_by(id=self._model.id).update(
+                {"changed_on": original_changed_on},
+                synchronize_session=False,
+            )
             self._model.changed_on = original_changed_on
 
         return self._model

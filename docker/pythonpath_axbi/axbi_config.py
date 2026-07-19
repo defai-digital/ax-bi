@@ -172,6 +172,9 @@ AI_SEMANTIC_INDEX_HNSW_EF_SEARCH = int(
 )
 
 ENABLE_PROXY_FIX = _bool_env("ENABLE_PROXY_FIX", True)
+# Production compose terminates TLS at the reverse proxy; cookies must only
+# travel over HTTPS once ENABLE_PROXY_FIX is on.
+SESSION_COOKIE_SECURE = _bool_env("SESSION_COOKIE_SECURE", True)
 TALISMAN_ENABLED = _bool_env("TALISMAN_ENABLED", True)
 SQLLAB_CTAS_NO_LIMIT = _bool_env("SQLLAB_CTAS_NO_LIMIT", True)
 
@@ -182,6 +185,9 @@ WEBDRIVER_BASEURL_USER_FRIENDLY = os.getenv(
 )
 
 MCP_AUTH_ENABLED = _bool_env("MCP_AUTH_ENABLED", False)
+# API-key auth is the safer default for Docker production when JWT IdP is not
+# configured yet; operators can disable with MCP_API_KEY_ENABLED=false.
+MCP_API_KEY_ENABLED = _bool_env("MCP_API_KEY_ENABLED", True)
 MCP_DEV_USERNAME = os.getenv("MCP_DEV_USERNAME") or None
 MCP_JWT_ISSUER = os.getenv("MCP_JWT_ISSUER") or None
 MCP_JWT_AUDIENCE = os.getenv("MCP_JWT_AUDIENCE") or None

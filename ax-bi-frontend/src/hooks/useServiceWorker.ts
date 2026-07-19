@@ -70,8 +70,21 @@ export function useServiceWorker(): ServiceWorkerState {
       return undefined;
     }
 
-    let registration: ServiceWorkerRegistration;
+    let registration: ServiceWorkerRegistration | undefined;
     let updateIntervalId: ReturnType<typeof setInterval> | undefined;
+    let installingWorker: ServiceWorker | null = null;
+
+    const handleInstallingStateChange = () => {
+      if (!installingWorker) return;
+      if (installingWorker.state === 'installed') {
+        setIsInstalling(false);
+        if (navigator.serviceWorker.controller) {
+          // New update available
+          setIsUpdateAvailable(true);
+          setWaitingWorker(installingWorker);
+        }
+      }
+    };
 
     const handleUpdate = () => {
       if (!registration) return;
@@ -81,22 +94,31 @@ export function useServiceWorker(): ServiceWorkerState {
 
       if (installing) {
         setIsInstalling(true);
-
-        installing.addEventListener('statechange', () => {
-          if (installing.state === 'installed') {
-            setIsInstalling(false);
-            if (navigator.serviceWorker.controller) {
-              // New update available
-              setIsUpdateAvailable(true);
-              setWaitingWorker(installing);
-            }
-          }
-        });
+        if (installingWorker) {
+          installingWorker.removeEventListener(
+            'statechange',
+            handleInstallingStateChange,
+          );
+        }
+        installingWorker = installing;
+        installing.addEventListener('statechange', handleInstallingStateChange);
       }
 
       if (waiting) {
         setIsUpdateAvailable(true);
         setWaitingWorker(waiting);
+      }
+    };
+
+    const handleControllerChange = () => {
+      // Reload to get the new version
+      window.location.reload();
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'CACHE_CLEARED') {
+        // Cache was cleared, could show notification
+        console.log('Service worker cache cleared');
       }
     };
 
@@ -114,7 +136,7 @@ export function useServiceWorker(): ServiceWorkerState {
         // Check for updates periodically (every hour)
         const UPDATE_CHECK_INTERVAL = 60 * 60 * 1000;
         updateIntervalId = setInterval(() => {
-          registration.update();
+          registration?.update();
         }, UPDATE_CHECK_INTERVAL);
 
         // Listen for new service workers
@@ -126,18 +148,13 @@ export function useServiceWorker(): ServiceWorkerState {
         }
 
         // Listen for controller change (new SW activated)
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          // Reload to get the new version
-          window.location.reload();
-        });
+        navigator.serviceWorker.addEventListener(
+          'controllerchange',
+          handleControllerChange,
+        );
 
         // Listen for messages from service worker
-        navigator.serviceWorker.addEventListener('message', event => {
-          if (event.data?.type === 'CACHE_CLEARED') {
-            // Cache was cleared, could show notification
-            console.log('Service worker cache cleared');
-          }
-        });
+        navigator.serviceWorker.addEventListener('message', handleMessage);
       } catch (error) {
         console.error('Service worker registration failed:', error);
       }
@@ -157,6 +174,18 @@ export function useServiceWorker(): ServiceWorkerState {
       if (registration) {
         registration.removeEventListener('updatefound', handleUpdate);
       }
+      if (installingWorker) {
+        installingWorker.removeEventListener(
+          'statechange',
+          handleInstallingStateChange,
+        );
+      }
+      navigator.serviceWorker.removeEventListener(
+        'controllerchange',
+        handleControllerChange,
+      );
+      navigator.serviceWorker.removeEventListener('message', handleMessage);
+      window.removeEventListener('load', registerServiceWorker);
     };
   }, []);
 
