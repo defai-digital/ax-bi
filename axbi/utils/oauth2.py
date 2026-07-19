@@ -120,6 +120,7 @@ def get_oauth2_access_token(
 
     # since the access token is expired and there's no refresh token, delete the entry
     db.session.delete(token)
+    commit_session(db.session, context="oauth2 expired token delete", soft=True)
 
     return None
 
@@ -154,6 +155,9 @@ def refresh_oauth2_token(
 
         if not token.refresh_token:
             db.session.delete(token)
+            commit_session(
+                db.session, context="oauth2 missing refresh token delete", soft=True
+            )
             return None
 
         try:

@@ -106,8 +106,9 @@ def test_get_oauth2_access_token_base_no_refresh(mocker: MockerFixture) -> None:
     with freeze_time("2024-01-02"):
         assert get_oauth2_access_token({}, 1, 1, db_engine_spec) is None
 
-    # check that token was deleted
+    # check that token was deleted and the delete was committed
     db.session.delete.assert_called_with(token)
+    db.session.commit.assert_called_once()
 
 
 def test_refresh_oauth2_token_deletes_token_on_oauth2_exception(
@@ -342,6 +343,7 @@ def test_refresh_oauth2_token_deletes_when_no_refresh_token_under_lock(
 
     assert result is None
     db.session.delete.assert_called_with(token)
+    db.session.commit.assert_called_once()
     db_engine_spec.get_oauth2_fresh_token.assert_not_called()
 
 
