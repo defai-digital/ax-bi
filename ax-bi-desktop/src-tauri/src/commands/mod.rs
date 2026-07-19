@@ -551,15 +551,22 @@ mod tests {
         assert!(is_launcher_url(
             &Url::parse("http://127.0.0.1:1430/index.html").unwrap()
         ));
-        assert!(is_launcher_url(
-            &Url::from_file_path("/Users/test/repo/ax-bi-desktop/src/index.html").unwrap()
-        ));
+        // Url::from_file_path requires a platform-native absolute path.
+        let launcher_index = if cfg!(windows) {
+            Url::from_file_path(r"C:\Users\test\repo\ax-bi-desktop\src\index.html").unwrap()
+        } else {
+            Url::from_file_path("/Users/test/repo/ax-bi-desktop/src/index.html").unwrap()
+        };
+        assert!(is_launcher_url(&launcher_index));
         assert!(!is_launcher_url(
             &Url::parse("http://127.0.0.1:31423/ax-bi/welcome/").unwrap()
         ));
-        assert!(!is_launcher_url(
-            &Url::from_file_path("/tmp/index.html").unwrap()
-        ));
+        let non_launcher_file = if cfg!(windows) {
+            Url::from_file_path(r"C:\tmp\index.html").unwrap()
+        } else {
+            Url::from_file_path("/tmp/index.html").unwrap()
+        };
+        assert!(!is_launcher_url(&non_launcher_file));
         assert!(!is_launcher_url(
             &Url::parse("https://ax-bi.example.test/index.html").unwrap()
         ));
