@@ -26,7 +26,7 @@ These features live in `ax-bi-desktop/` and require the native app:
 - **Settings drawer** — Local instance, remote connection, theme; runtime logs/deps behind Advanced
 - **Deep links** — `axbi://dashboard/{id}`, `axbi://chart/{id}` open directly in the app
 - **System tray** — Quick access to dashboards and SQL Lab (infrastructure in place)
-- **Cross-platform builds** — macOS, Windows, and Linux via GitHub Actions
+- **Supported release targets** — macOS Apple Silicon (arm64) and Windows x64 via GitHub Actions
 
 ## Architecture
 
@@ -155,7 +155,7 @@ Generated local login:
 ### 2. Optional local backend
 
 ```bash
-superset run -p 31423 --with-threads --reload --debugger
+ax-bi run -p 31423 --with-threads --reload --debugger
 ```
 
 The launcher can also start the app-managed local Docker runtime.
@@ -201,7 +201,7 @@ The CSP in `tauri.conf.json` is permissive for local development. For production
 
 ```
 ax-bi-desktop/
-├── .github/workflows/build.yml   # Cross-platform CI/CD
+├── (CI) ../../.github/workflows/ax-bi-desktop.yml  # PR checks
 ├── src/                          # TypeScript bridge code
 │   └── api.ts                   # Tauri command bindings
 ├── src-tauri/                   # Rust backend
@@ -243,7 +243,8 @@ The command palette includes navigation commands (Dashboards, Charts, SQL Lab, e
 - Hosted or local AX BI web content does not receive local runtime privileges
 - No database credentials are stored in the desktop client
 - Authentication uses the same SSO/OIDC flows as the web app
-- Production builds should be signed (macOS notarization, Windows code signing)
+- Production builds are signed (macOS notarization, Windows Authenticode)
+- Updates ship via Homebrew / new installers / winget when published (no in-app auto-updater yet)
 - CSP must be tightened for production deployments
 
 ## Troubleshooting
@@ -269,162 +270,11 @@ curl -f http://127.0.0.1:31423/health
 ### Windows: WebView2 not found
 WebView2 is included with Windows 10/11, or download from [Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
 
-### Linux: Missing dependencies
-```bash
-sudo apt-get install libwebkit2gtk-4.1-dev libappindicator3-dev
-```
+### Linux desktop shell
+Linux is not a published desktop release target. Server deployments use Docker
+Compose or Helm. WebKit prerequisites only apply if you build the Tauri shell
+from source on Linux for development.
 
 ## License
 
 Apache License 2.0 — See [LICENSE](../LICENSE) for details.
-# AX BI Desktop Client
-
-A thin desktop client for the AX BI data visualization and analytics platform, built with [Tauri](https://tauri.app/).
-
-## Overview
-
-AX BI Desktop provides native desktop integration for the AX BI web application, including:
-
-- **System tray** - Quick access to dashboards and SQL Lab from your system tray
-- **Deep links** - Open `axbi://dashboard/123` or `axbi://chart/456` directly in the app
-- **Native notifications** - Receive desktop notifications for alerts and updates
-- **File associations** - Open CSV, Excel, and Parquet files directly in AX BI
-- **Auto-update** - Automatic updates for the latest features and security patches
-
-## Architecture
-
-The desktop client is a thin shell that loads the AX BI web application. It does **not** bundle the Python backend, database drivers, or any server-side components. The web app remains the source of truth.
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    AX BI Desktop Client                      │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                 Tauri WebView                        │   │
-│  │  ┌─────────────────────────────────────────────┐   │   │
-│  │  │          AX BI Web Application               │   │   │
-│  │  │  (Loaded from https://your-axbi-instance)   │   │   │
-│  │  └─────────────────────────────────────────────┘   │   │
-│  └─────────────────────────────────────────────────────┘   │
-│                                                              │
-│  Native Features:                                           │
-│  • System Tray      • Deep Links      • Notifications       │
-│  • File Handlers    • Auto-Update     • Native Menus        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-## Prerequisites
-
-- **Node.js**: 20.x or later
-- **Rust**: 1.75 or later (via [rustup](https://rustup.rs/))
-- **Platform-specific dependencies**:
-  - **macOS**: Xcode Command Line Tools
-  - **Windows**: WebView2 (included in Windows 10/11)
-  - **Linux**: See [Tauri prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites)
-
-## Development
-
-### Install dependencies
-
-```bash
-cd ax-bi-desktop
-npm install
-```
-
-### Run in development mode
-
-```bash
-npm run dev
-```
-
-This will start the Tauri app in development mode with hot reload.
-
-### Build for production
-
-```bash
-npm run build
-```
-
-This will create a macOS bundle:
-- **macOS app**: `src-tauri/target/release/bundle/macos/`
-
-## Configuration
-
-### Server URL
-
-The desktop client connects to your AX BI server. Configure the server URL:
-
-1. **Environment variable** (recommended for development):
-   ```bash
-   export AXBI_SERVER_URL=https://your-axbi-instance.com
-   ```
-
-2. **Edit `src-tauri/tauri.conf.json`**:
-   ```json
-   {
-     "app": {
-       "windows": [{
-         "url": "https://your-axbi-instance.com"
-       }]
-     }
-   }
-   ```
-
-### Deep Links
-
-The desktop client registers the `axbi://` URL scheme. Supported deep links:
-
-| Deep Link | Action |
-|-----------|--------|
-| `axbi://dashboard/{id}` | Open a specific dashboard |
-| `axbi://chart/{id}` | Open a specific chart |
-| `axbi://explore` | Open the chart builder |
-| `axbi://sqllab` | Open SQL Lab |
-| `axbi://home` | Open the welcome page |
-
-## Project Structure
-
-```
-ax-bi-desktop/
-├── .github/workflows/     # CI/CD workflows
-├── src/                   # TypeScript frontend code
-│   └── api.ts            # Tauri command bindings
-├── src-tauri/            # Rust backend
-│   ├── src/
-│   │   ├── main.rs       # Application entry point
-│   │   ├── commands/     # Tauri commands
-│   │   ├── deep_link.rs  # Deep link handling
-│   │   └── tray.rs       # System tray setup
-│   ├── icons/            # App icons
-│   ├── Cargo.toml        # Rust dependencies
-│   └── tauri.conf.json   # Tauri configuration
-├── package.json          # Node.js dependencies
-└── README.md
-```
-
-## Security Considerations
-
-- The WebView only loads content from trusted, configured origins
-- No direct database credentials are stored in the desktop client
-- Authentication uses the same SSO/OIDC flows as the web app
-- All updates are signed and verified before installation
-
-## Troubleshooting
-
-### macOS: App won't open
-If you see "AX BI is damaged and can't be opened":
-```bash
-xattr -cr "/Applications/AX BI.app"
-```
-
-### Windows: WebView2 not found
-Ensure WebView2 is installed. It's included with Windows 10/11, or download from [Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
-
-### Linux: Missing dependencies
-Install required packages:
-```bash
-sudo apt-get install libwebkit2gtk-4.1-dev libappindicator3-dev
-```
-
-## License
-
-Apache License 2.0 - See [LICENSE](../LICENSE) for details.

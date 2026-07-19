@@ -294,6 +294,9 @@ gh secret set HOMEBREW_TAP_TOKEN -R defai-digital/ax-bi
 ## Release steps (maintainers)
 
 1. Ensure `main` is green for `ax-bi-desktop` checks.
+1b. Confirm GHCR has `ghcr.io/defai-digital/ax-bi:<version>` and
+   `ghcr.io/defai-digital/ax-bi-services:<version>` (from the server image
+   `v*` workflow). Desktop local runtimes pin to these tags in release builds.
 2. Bump version if needed (workflow also runs `set-version.mjs` during build):
 
    ```bash
