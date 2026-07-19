@@ -154,6 +154,7 @@ jobs:
           {
             echo "COMPOSE_PROJECT_NAME=axbi-ci"
             echo "AX_BI_SECRET_KEY=test-secret-key-for-ci-only"
+            echo "AX_SERVICES_INTERNAL_TOKEN=test-internal-token-for-ci-only"
             echo "DATABASE_PASSWORD=axbi"
             echo "ADMIN_PASSWORD=admin"
           } > /tmp/axbi.env
