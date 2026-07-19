@@ -303,7 +303,12 @@ export const routes: Routes = [
     Component: Chart,
   },
   {
-    path: '/dataset/add/',
+    // Match with or without trailing slash so history.push and menu links work
+    path: '/dataset/add/*',
+    Component: DatasetCreation,
+  },
+  {
+    path: '/dataset/add',
     Component: DatasetCreation,
   },
   {
@@ -401,7 +406,14 @@ const frontEndRoutes: Record<string, boolean> = routes
 export const isFrontendRoute = (path?: string): boolean => {
   if (path) {
     const basePath = path.split(/[?#]/)[0]; // strip out query params and link bookmarks
-    return !!frontEndRoutes[basePath];
+    if (frontEndRoutes[basePath]) {
+      return true;
+    }
+    // Accept trailing-slash variants (e.g. /dataset/add vs /dataset/add/)
+    const alt = basePath.endsWith('/')
+      ? basePath.slice(0, -1)
+      : `${basePath}/`;
+    return !!frontEndRoutes[alt];
   }
   return false;
 };

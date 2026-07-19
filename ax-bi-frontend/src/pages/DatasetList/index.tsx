@@ -1238,18 +1238,23 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
   }
 
   if (canCreate) {
+    const goToCreateDataset = () => {
+      history.push('/dataset/add/');
+    };
+    const goToUpload = () => {
+      history.push('/upload/');
+    };
+
     const createMenuItems = [
       {
         key: 'dataset',
         label: t('Dataset'),
-        onClick: () => history.push('/dataset/add/'),
       },
       ...(isFeatureEnabled(SEMANTIC_LAYERS_FLAG)
         ? [
             {
               key: 'semantic-view',
               label: t('Semantic View'),
-              onClick: () => setShowAddSemanticViewModal(true),
             },
           ]
         : []),
@@ -1258,7 +1263,6 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
             {
               key: 'upload-data',
               label: t('Upload data file'),
-              onClick: () => history.push('/upload/'),
             },
           ]
         : []),
@@ -1273,10 +1277,28 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
             css={css`
               margin-left: ${theme.sizeUnit * 2}px;
             `}
-            menu={{ items: createMenuItems }}
+            menu={{
+              items: createMenuItems,
+              // Prefer menu-level onClick: more reliable with antd 6 Dropdown
+              // than per-item handlers (which can no-op when item types mismatch).
+              onClick: ({ key }) => {
+                if (key === 'dataset') {
+                  goToCreateDataset();
+                  return;
+                }
+                if (key === 'semantic-view') {
+                  setShowAddSemanticViewModal(true);
+                  return;
+                }
+                if (key === 'upload-data') {
+                  goToUpload();
+                }
+              },
+            }}
             trigger={['click']}
           >
             <Button
+              type="button"
               data-test="btn-create-new"
               buttonStyle="primary"
               icon={<Icons.PlusOutlined iconSize="m" />}
@@ -1297,9 +1319,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
       buttonArr.push({
         icon: <Icons.PlusOutlined iconSize="m" />,
         name: datasetLabel(),
-        onClick: () => {
-          history.push('/dataset/add/');
-        },
+        onClick: goToCreateDataset,
         buttonStyle: 'primary',
       });
     }
