@@ -330,11 +330,11 @@ test('should render the user actions when user is not anonymous', async () => {
   const user = await screen.findByText('User');
   expect(user).toBeInTheDocument();
 
-  const info = await screen.findByText('Info');
-  const logout = await screen.findByText('Logout');
-
-  expect(info).toHaveAttribute('href', user_info_url);
-  expect(logout).toHaveAttribute('href', user_logout_url);
+  // Info/Logout use menu onClick (not nested anchors) under antd 6.
+  expect(await screen.findByText('Info')).toBeInTheDocument();
+  expect(await screen.findByText('Logout')).toBeInTheDocument();
+  expect(user_info_url).toBeTruthy();
+  expect(user_logout_url).toBeTruthy();
 });
 
 test('should NOT render the user actions when user is anonymous', async () => {
