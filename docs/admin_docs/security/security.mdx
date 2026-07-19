@@ -207,33 +207,30 @@ Once configured, the documentation for additional "Security" endpoints will be v
 
 ### API Key Authentication
 
-Superset supports long-lived API keys for service accounts, CI/CD pipelines, and programmatic integrations (including MCP clients).
+AX BI supports user-bound API keys for MCP clients and other programmatic integrations.
 
 #### Enabling API Key Authentication
 
-API key authentication is **disabled by default**. To turn it on, set the Flask-AppBuilder config value in `superset_config.py` and also enable the matching feature flag so the management UI is exposed:
+API key authentication and the matching management UI are enabled by default. Operators can disable both when an external JWT/OIDC provider is the only supported authentication method:
 
 ```python
-FAB_API_KEY_ENABLED = True
+FAB_API_KEY_ENABLED = False
+MCP_API_KEY_ENABLED = False
 
 FEATURE_FLAGS = {
-    "FAB_API_KEY_ENABLED": True,
+    "FAB_API_KEY_ENABLED": False,
 }
 ```
 
-The config value registers the `ApiKeyApi` blueprint on the backend; the feature flag controls whether the UI for managing keys appears for the user. See the [Feature Flags](/admin-docs/configuration/feature-flags) documentation for more on feature flag configuration.
+The FAB setting registers the API-key endpoints, the MCP setting controls whether MCP accepts those keys, and the feature flag controls the management UI.
 
 #### Creating an API Key
 
-Once enabled, each user manages their own keys from their profile page:
+After an authenticated user's first login, AX BI automatically creates a dedicated `AX BI MCP` key. The top-right navigation shows the username and a masked hint such as `M7yh-**********-9yGaH`.
 
-1. Open the user menu (top-right) and click **Info** to navigate to the User Info page
-2. Expand the **API Keys** section
-3. Click **+ API Key**
-4. Enter a name and (optionally) an expiration date
-5. Copy the generated token — it is shown only once
+Click the eye button beside the hint to rotate and copy the key. Every click creates a new key and revokes the previous dedicated MCP key, so any MCP client configured with the old key must be updated.
 
-Only users with the `can_read` and `can_write` permissions on `ApiKey` (granted by default to Admins) can manage API keys.
+Admin, Alpha, and Gamma users receive the self-service API-key permissions by default. The endpoint always creates, lists, and revokes keys for the authenticated user only. Public users cannot manage keys.
 
 #### Using an API Key
 
@@ -243,7 +240,7 @@ Pass the key as a Bearer token in the `Authorization` header:
 Authorization: Bearer <your-api-key>
 ```
 
-This works for all REST API endpoints and the MCP server. The request is executed with the permissions of the user who created the key.
+The MCP request is executed with the current roles, object ACLs, and row-level security rules of the user who created the key.
 
 #### Use Cases
 

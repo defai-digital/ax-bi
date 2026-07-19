@@ -19,7 +19,7 @@
 
 These tests are intentionally mechanical. They do not prove correctness of
 business logic; they keep known-bad patterns from re-entering hot paths after
-reviews flagged Superset-era Python stability debt.
+reviews flagged legacy Python stability debt.
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ CODE_ROOTS = (
 
 # Paths where silent exception swallowing is accepted (best-effort UI assets,
 # optional integrations). Prefer logging over bare ``pass`` even here.
-ALLOWLIST_SILENT_PASS = frozenset(
+ALLOWLIST_SILENT_PASS: frozenset[str] = frozenset(
     {
         # Empty exception class bodies / ABC stubs use ``pass`` legitimately.
     }
@@ -96,9 +96,9 @@ def test_no_mutable_default_arguments_in_public_api() -> None:
 
 def test_session_lifecycle_module_is_the_shared_boundary() -> None:
     """MCP and app code must share one session recovery implementation."""
-    lifecycle = (
-        REPO_ROOT / "axbi" / "utils" / "session_lifecycle.py"
-    ).read_text(encoding="utf-8")
+    lifecycle = (REPO_ROOT / "axbi" / "utils" / "session_lifecycle.py").read_text(
+        encoding="utf-8"
+    )
     mcp_utils = (
         REPO_ROOT / "axbi" / "mcp_service" / "utils" / "session_utils.py"
     ).read_text(encoding="utf-8")

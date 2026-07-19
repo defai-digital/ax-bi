@@ -69,9 +69,15 @@ def _enable_api_keys(app: AxBIApp) -> Generator[None, None, None]:
     """Enable FAB API key auth and clear MCP_DEV_USERNAME so the API key
     path is exercised instead of falling through to the dev-user fallback."""
     app.config["FAB_API_KEY_ENABLED"] = True
+    old_mcp_api_key = app.config.get("MCP_API_KEY_ENABLED")
+    app.config["MCP_API_KEY_ENABLED"] = True
     old_dev = app.config.pop("MCP_DEV_USERNAME", None)
     yield
     app.config.pop("FAB_API_KEY_ENABLED", None)
+    if old_mcp_api_key is None:
+        app.config.pop("MCP_API_KEY_ENABLED", None)
+    else:
+        app.config["MCP_API_KEY_ENABLED"] = old_mcp_api_key
     if old_dev is not None:
         app.config["MCP_DEV_USERNAME"] = old_dev
 
@@ -79,9 +85,15 @@ def _enable_api_keys(app: AxBIApp) -> Generator[None, None, None]:
 @pytest.fixture
 def _disable_api_keys(app: AxBIApp) -> Generator[None, None, None]:
     app.config["FAB_API_KEY_ENABLED"] = False
+    old_mcp_api_key = app.config.get("MCP_API_KEY_ENABLED")
+    app.config["MCP_API_KEY_ENABLED"] = False
     old_dev = app.config.pop("MCP_DEV_USERNAME", None)
     yield
     app.config.pop("FAB_API_KEY_ENABLED", None)
+    if old_mcp_api_key is None:
+        app.config.pop("MCP_API_KEY_ENABLED", None)
+    else:
+        app.config["MCP_API_KEY_ENABLED"] = old_mcp_api_key
     if old_dev is not None:
         app.config["MCP_DEV_USERNAME"] = old_dev
 

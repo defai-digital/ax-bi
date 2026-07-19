@@ -17,6 +17,8 @@
 
 from unittest.mock import MagicMock, patch
 
+from flask_appbuilder.security.sqla.manager import SecurityManager
+
 from axbi.security.manager import AxBISecurityManager
 
 
@@ -87,15 +89,47 @@ def test_is_gamma_pvm_excludes_export_image(app_context: None) -> None:
     assert sm._is_gamma_pvm(pvm) is False
 
 
-def test_api_key_view_menu_is_admin_only() -> None:
-    """Regression test: 'ApiKey' must be in ADMIN_ONLY_VIEW_MENUS.
+def test_api_key_view_menu_is_self_service_for_authenticated_roles(
+    app_context: None,
+) -> None:
+    """Alpha and Gamma may manage only their own keys; Public may not."""
+    from axbi.extensions import appbuilder
 
-    FAB registers an ApiKeyApi blueprint when FAB_API_KEY_ENABLED=True.
-    Without this guard any Gamma user could reach the API key management
-    endpoints.  A rename or removal of the entry would silently re-open
-    that access hole.
-    """
-    assert "ApiKey" in AxBISecurityManager.ADMIN_ONLY_VIEW_MENUS
+    sm = AxBISecurityManager(appbuilder)
+    pvm = MagicMock()
+    pvm.permission.name = "can_create"
+    pvm.view_menu.name = "ApiKey"
+
+    assert "ApiKey" not in AxBISecurityManager.ADMIN_ONLY_VIEW_MENUS
+    assert sm._is_alpha_pvm(pvm) is True
+    assert sm._is_gamma_pvm(pvm) is True
+    assert sm._is_public_pvm(pvm) is False
+
+
+def test_create_api_key_persists_masked_display_hint(app_context: None) -> None:
+    """The stored hint identifies a key without retaining its plaintext."""
+    from axbi.extensions import appbuilder
+
+    sm = AxBISecurityManager(appbuilder)
+    api_key = MagicMock()
+    parent_result = {
+        "uuid": "key-uuid",
+        "name": "AX BI MCP",
+        "key": "sst_M7yh-example-secret-9yGaH",
+        "key_prefix": "sst_",
+    }
+
+    with (
+        patch.object(SecurityManager, "create_api_key", return_value=parent_result),
+        patch.object(sm, "get_api_key_by_uuid", return_value=api_key),
+        patch.object(sm.session, "commit") as commit,
+    ):
+        result = sm.create_api_key(MagicMock(), "AX BI MCP")
+
+    assert result is not None
+    assert result["key_prefix"] == "sst_9yGaH"
+    assert api_key.key_prefix == "sst_9yGaH"
+    commit.assert_called_once_with()
 
 
 def test_is_gamma_pvm_allows_copy_clipboard(app_context: None) -> None:

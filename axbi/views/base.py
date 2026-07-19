@@ -330,6 +330,8 @@ def menu_data(user: User) -> dict[str, Any]:
             "languages": languages,
             "show_language_picker": len(languages) > 1,
             "user_is_anonymous": user.is_anonymous,
+            "username": None if user.is_anonymous else user.username,
+            "mcp_api_key_enabled": bool(app.config.get("FAB_API_KEY_ENABLED", False)),
             "user_info_url": (
                 None if is_feature_enabled("MENU_HIDE_USER_INFO") else "/user_info/"
             ),

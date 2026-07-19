@@ -25,6 +25,25 @@ The MCP service implements multiple layers of security to ensure safe programmat
 
 ## Authentication
 
+### Default User API Key Authentication
+
+AX BI enables FAB API-key authentication for MCP by default. After the first
+authenticated web login, the navbar creates one dedicated `AX BI MCP` key when
+the user does not already have one. The navbar displays only a non-secret hint.
+Clicking its eye action creates and copies a replacement key, then revokes the
+previous dedicated key.
+
+API keys are stored as salted hashes and are bound to their owner. MCP requests
+must send the key on every request:
+
+```http
+Authorization: Bearer <api-key>
+```
+
+The request uses the owner's current FAB roles, datasource access, object ACLs,
+and RLS rules. Operators using only an external JWT/OIDC provider may set both
+`FAB_API_KEY_ENABLED = False` and `MCP_API_KEY_ENABLED = False`.
+
 ### Current Implementation (Development)
 
 For development and testing, the MCP service uses a simple username-based authentication:
@@ -38,6 +57,7 @@ MCP_DEV_USERNAME = "admin"
 1. The `@mcp_auth_hook` decorator clears any stale `g.user` and calls `get_user_from_request()`
 2. `get_user_from_request()` resolves the user in priority order:
    - **JWT auth context** (per-request ContextVar from MCP SDK) — safest, prevents stale user impersonation
+   - **FAB API key** — validates the key and loads its owner
    - **`MCP_DEV_USERNAME`** from config — for development/single-user deployments
    - **`g.user` fallback** — for external middleware (e.g., Preset's WorkspaceContextMiddleware)
 3. User is queried from database (with roles/groups eagerly loaded) and set as `g.user`
@@ -711,7 +731,7 @@ For compliance audits, maintain a matrix of who can access what:
 Before deploying MCP service to production:
 
 **Authentication**:
-- [ ] `MCP_AUTH_ENABLED = True`
+- [ ] `MCP_API_KEY_ENABLED = True` and/or `MCP_AUTH_ENABLED = True`
 - [ ] JWT issuer, audience, and keys configured
 - [ ] `MCP_DEV_USERNAME` removed or set to `None`
 - [ ] Token expiration enforced (short-lived tokens)

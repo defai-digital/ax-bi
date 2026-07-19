@@ -117,7 +117,7 @@ graph LR
     T3 --> MCP
     MCP --> DB
 
-    MCP -.->|Isolation via| ISO[User authentication JWT or dev user<br/>Flask-AppBuilder RBAC<br/>Dataset access filters<br/>Row-level security]
+    MCP -.->|Isolation via| ISO[User authentication API key, JWT, or dev user<br/>Flask-AppBuilder RBAC<br/>Dataset access filters<br/>Row-level security]
 
     style ISO fill:#f9f,stroke:#333,stroke-width:2px
 ```

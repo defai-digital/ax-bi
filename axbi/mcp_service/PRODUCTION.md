@@ -37,7 +37,7 @@ The following components have been implemented and tested:
 
 The following features are suitable for development but **require configuration for production**:
 
-- ❌ **Authentication**: `MCP_DEV_USERNAME` single-user authentication (replace with JWT)
+- ✅ **Authentication**: User-bound FAB API keys are enabled by default; JWT/OIDC remains available for centralized identity providers
 - ❌ **Logging**: Basic debug logging (implement structured logging)
 - ❌ **Rate Limiting**: No rate limiting implemented (add per-user/per-tool limits)
 - ❌ **Monitoring**: No metrics export (add Prometheus/CloudWatch)
@@ -47,6 +47,15 @@ The following features are suitable for development but **require configuration 
 ## Required for Production
 
 ### 1. Authentication & Authorization
+
+#### Authentication Setup
+
+The default deployment accepts user-bound FAB API keys on the MCP transport.
+Users rotate and copy their dedicated MCP key from the authenticated navbar.
+For centralized identity, configure JWT as described below; both methods may be
+enabled together.
+
+Always remove `MCP_DEV_USERNAME` in production.
 
 #### JWT Authentication Setup
 
@@ -1037,7 +1046,7 @@ aws cloudwatch put-metric-alarm \
 ### Pre-Deployment Checklist
 
 **Configuration**:
-- [ ] `MCP_AUTH_ENABLED = True`
+- [ ] `MCP_API_KEY_ENABLED = True` and/or `MCP_AUTH_ENABLED = True`
 - [ ] JWT issuer, audience, and keys configured
 - [ ] `MCP_DEV_USERNAME` set to `None`
 - [ ] `SESSION_COOKIE_SECURE = True`

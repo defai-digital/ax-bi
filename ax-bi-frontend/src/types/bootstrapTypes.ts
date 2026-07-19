@@ -109,6 +109,8 @@ export interface NavBarProps {
   languages: Languages;
   show_language_picker: boolean;
   user_is_anonymous: boolean;
+  username?: string;
+  mcp_api_key_enabled?: boolean;
   user_info_url: string;
   user_login_url: string;
   user_logout_url: string;

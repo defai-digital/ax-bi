@@ -653,9 +653,10 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # @lifecycle: development
     "DATE_RANGE_TIMESHIFTS_ENABLED": False,
     # Enable API key authentication via FAB SecurityManager
-    # When enabled, users can create/manage API keys in the User Info page
-    # @lifecycle: development
-    "FAB_API_KEY_ENABLED": False,
+    # Users receive a self-service MCP key from the authenticated navbar.
+    # @lifecycle: stable
+    # @category: runtime_config
+    "FAB_API_KEY_ENABLED": True,
     # Enable granular export controls (can_export_data, can_export_image,
     # can_copy_clipboard) instead of the single can_csv permission
     # @lifecycle: development
@@ -2020,8 +2021,11 @@ FAB_ADD_SECURITY_PERMISSION_VIEWS_VIEW = False
 # FAB reads this config directly to register the ApiKeyApi blueprint.
 # The FAB_API_KEY_ENABLED feature flag (in DEFAULT_FEATURE_FLAGS) controls
 # the frontend UI visibility independently.
-FAB_API_KEY_ENABLED = False
+FAB_API_KEY_ENABLED = True
 FAB_API_KEY_PREFIXES = ["sst_"]
+# Require a FAB API key on the MCP transport unless an operator explicitly
+# overrides this setting. JWT authentication can remain enabled alongside it.
+MCP_API_KEY_ENABLED = True
 
 # ---------------------------------------------------------------------------
 # GenAI BI Configuration

@@ -58,12 +58,6 @@
         "description": "Enable AxBI extensions for custom functionality without modifying core"
       },
       {
-        "name": "FAB_API_KEY_ENABLED",
-        "default": false,
-        "lifecycle": "development",
-        "description": "Enable API key authentication via FAB SecurityManager When enabled, users can create/manage API keys in the User Info page"
-      },
-      {
         "name": "GENAI_BI",
         "default": false,
         "lifecycle": "development",
@@ -509,6 +503,13 @@
         "default": false,
         "lifecycle": "stable",
         "description": "Escape HTML in Markdown components (rather than rendering it)",
+        "category": "runtime_config"
+      },
+      {
+        "name": "FAB_API_KEY_ENABLED",
+        "default": true,
+        "lifecycle": "stable",
+        "description": "Enable API key authentication via FAB SecurityManager Users receive a self-service MCP key from the authenticated navbar.",
         "category": "runtime_config"
       },
       {

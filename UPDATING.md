@@ -24,6 +24,18 @@ assists people when migrating to a new version.
 
 ## Next
 
+### User-bound MCP API keys are enabled by default
+
+Authenticated Admin, Alpha, and Gamma users now receive a dedicated MCP API key
+after their first web login. The top-right navigation displays only a masked
+hint. Its eye action rotates and copies a replacement key, revoking the prior
+dedicated key. MCP accepts these keys as Bearer credentials and applies the
+owner's current RBAC, object ACLs, and row-level security rules.
+
+Deployments that use only external JWT/OIDC authentication can retain the old
+behavior with `FAB_API_KEY_ENABLED = False`, `MCP_API_KEY_ENABLED = False`, and
+the matching `FAB_API_KEY_ENABLED` feature flag disabled.
+
 ### Default application ports moved to 31421+
 
 Local defaults for AX BI application services now start at **31421**:

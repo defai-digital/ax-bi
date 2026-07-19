@@ -698,7 +698,11 @@ class TestTruncateOversizedResponse:
         }
         original_description = response["charts"][0]["description"]
 
-        result, was_truncated, notes = truncate_oversized_response(response, 100)
+        # Leave enough room for the recursively truncated item. A 100-token
+        # limit intentionally reaches the final collection-clearing phase,
+        # which would test a different behavior and leave no nested value to
+        # compare for mutation safety.
+        result, was_truncated, notes = truncate_oversized_response(response, 200)
 
         assert was_truncated is True
         assert isinstance(result, dict)

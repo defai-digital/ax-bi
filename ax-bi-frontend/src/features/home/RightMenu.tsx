@@ -33,7 +33,7 @@ import {
   Icons,
   Typography,
 } from '@ax-bi/ui-core/components';
-import type { ItemType, MenuItem } from '@ax-bi/ui-core/components/Menu';
+import type { MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 import { findPermission } from 'src/utils/findPermission';
 import { isEmbedded } from 'src/dashboard/util/isEmbedded';
@@ -55,6 +55,7 @@ import {
   SHELL_OPEN_SETTINGS_MESSAGE_TYPE,
 } from 'src/theme/desktopShell';
 import { resolveSettingsMenuIconKey } from './settingsMenuIcons';
+import { McpApiKey } from './McpApiKey';
 
 /**
  * Navigate from Settings/Create menu items.
@@ -683,6 +684,9 @@ const RightMenu = ({
         disabledOverflow
         items={menuItems}
       />
+      {!navbarRight.user_is_anonymous &&
+        navbarRight.mcp_api_key_enabled &&
+        navbarRight.username && <McpApiKey username={navbarRight.username} />}
     </StyledDiv>
   );
 };

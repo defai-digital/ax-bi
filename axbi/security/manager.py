@@ -22,6 +22,7 @@ import re
 import time
 from collections import defaultdict
 from collections.abc import Callable
+from datetime import datetime
 from math import ceil
 from types import SimpleNamespace
 from typing import Any, cast, NamedTuple, Optional, TYPE_CHECKING
@@ -777,6 +778,50 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
 
         BaseSecurityManager.create_db(self)
 
+    def create_api_key(
+        self,
+        user: Any,
+        name: str,
+        scopes: str | None = None,
+        expires_on: datetime | None = None,
+    ) -> dict[str, Any] | None:
+        """Create an API key and persist only a non-secret display hint.
+
+        Flask-AppBuilder stores the key itself as a salted hash. Its default
+        ``key_prefix`` value only contains the shared ``sst_`` prefix, which is
+        not enough to distinguish a user's keys in the navbar. Preserve four
+        leading and five trailing characters as a safe display hint while the
+        plaintext continues to be returned only by the creation response.
+        """
+        result = super().create_api_key(
+            user=user,
+            name=name,
+            scopes=scopes,
+            expires_on=expires_on,
+        )
+        if not result:
+            return None
+
+        raw_key = result.get("key")
+        key_uuid = result.get("uuid")
+        if not isinstance(raw_key, str) or not isinstance(key_uuid, str):
+            return result
+
+        api_key = self.get_api_key_by_uuid(key_uuid)
+        if api_key is None:
+            return result
+
+        display_hint = f"{raw_key[:4]}{raw_key[-5:]}"
+        api_key.key_prefix = display_hint
+        try:
+            self.session.commit()
+        except Exception:  # noqa: BLE001 - key already exists; keep auth usable
+            self.session.rollback()
+            logger.warning("Could not persist API key display hint", exc_info=True)
+            return result
+        result["key_prefix"] = display_hint
+        return result
+
     USER_MODEL_VIEWS = {
         "RegisterUserModelView",
         "UserDBModelView",
@@ -825,8 +870,6 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
         "PermissionViewMenu",
         "ViewMenu",
         "User",
-        # FAB registers ApiKeyApi when FAB_API_KEY_ENABLED=True
-        "ApiKey",
     } | USER_MODEL_VIEWS
 
     ALPHA_ONLY_VIEW_MENUS = {
@@ -1877,10 +1920,10 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
         self.add_permission_view_menu("can_tag", "Chart")
         self.add_permission_view_menu("can_tag", "Dashboard")
         # FAB registers ApiKeyApi when FAB_API_KEY_ENABLED=True, using
-        # @permission_name("revoke") for the DELETE endpoint. Create it
-        # explicitly here so sync_role_definitions assigns it to Admin even
-        # when create_missing_perms (called later in the same transaction) fails
-        # due to unrelated schema gaps.
+        # @permission_name("revoke") for the DELETE endpoint. Create its
+        # permissions before built-in role synchronization so authenticated
+        # Alpha and Gamma users can manage their own keys. FAB scopes every
+        # list/get/revoke operation to the current user.
         if current_app.config.get("FAB_API_KEY_ENABLED", False):
             for perm in ("can_list", "can_create", "can_get", "can_revoke"):
                 self.add_permission_view_menu(perm, "ApiKey")

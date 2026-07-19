@@ -253,11 +253,7 @@ export function Menu({
     window.location.assign(ensureAppRoot(targetUrl));
   };
 
-  const buildMenuItem = ({
-    label,
-    childs,
-    url,
-  }: MenuObjectProps): MenuItem => {
+  const buildMenuItem = ({ label, childs, url }: MenuObjectProps): MenuItem => {
     if (url) {
       return {
         key: label,
@@ -352,7 +348,7 @@ export function Menu({
       aria-label={t('Main navigation')}
     >
       <StyledRow>
-        <StyledCol md={16} xs={24}>
+        <StyledCol md={12} xs={24}>
           <Tooltip
             id="brand-tooltip"
             placement="bottomLeft"
@@ -393,7 +389,7 @@ export function Menu({
             })}
           />
         </StyledCol>
-        <Col md={8} xs={24}>
+        <Col md={12} xs={24}>
           <RightMenu
             align={screens.md ? 'flex-end' : 'flex-start'}
             settings={settings}
