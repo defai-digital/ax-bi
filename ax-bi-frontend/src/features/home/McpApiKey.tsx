@@ -142,7 +142,7 @@ function createdKeyMetadata(created: CreatedMcpApiKey): McpApiKeyRecord {
   return {
     uuid: created.uuid,
     name: created.name,
-    key_prefix: `${created.key.slice(0, 4)}${created.key.slice(-5)}`,
+    key_prefix: created.key_prefix,
     active: true,
     created_on: created.created_on,
     expires_on: created.expires_on,
@@ -170,8 +170,7 @@ export function McpApiKey({ username }: McpApiKeyProps) {
     const initializeKey = async () => {
       try {
         const [existingKey] = await listManagedKeys();
-        const key =
-          existingKey ?? createdKeyMetadata(await createManagedKey());
+        const key = existingKey ?? createdKeyMetadata(await createManagedKey());
         if (active) {
           setCurrentKey(key);
         }

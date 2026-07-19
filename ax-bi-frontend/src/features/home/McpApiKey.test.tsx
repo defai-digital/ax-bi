@@ -38,8 +38,8 @@ const oldKey = {
 const newKey = {
   uuid: 'new-key',
   name: 'AX BI MCP',
-  key: 'sst_new-secret-value-9yGaH',
-  key_prefix: 'sst_9yGaH',
+  key: 'sst_M7yh-secret-value-9yGaH',
+  key_prefix: 'M7yh9yGaH',
   active: true,
   created_on: '2026-07-18T11:00:00Z',
   expires_on: null,
@@ -71,7 +71,7 @@ test('creates the managed MCP key automatically when none exists', async () => {
   render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
 
   expect(await screen.findByText('akira')).toBeInTheDocument();
-  expect(await screen.findByText('sst_-**********-9yGaH')).toBeInTheDocument();
+  expect(await screen.findByText('M7yh-**********-9yGaH')).toBeInTheDocument();
   expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
   expect(post).toHaveBeenCalledWith({
     endpoint: '/api/v1/security/api_keys/',
@@ -102,6 +102,6 @@ test('eye action generates, copies, and revokes the previous MCP key', async () 
   expect(remove).toHaveBeenCalledWith({
     endpoint: '/api/v1/security/api_keys/old-key',
   });
-  expect(await screen.findByText('sst_-**********-9yGaH')).toBeInTheDocument();
+  expect(await screen.findByText('M7yh-**********-9yGaH')).toBeInTheDocument();
   expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
 });
