@@ -88,7 +88,8 @@ export class ThemeController {
 
   private onChangeCallbacks: Set<(theme: Theme) => void> = new Set();
 
-  private mediaQuery: MediaQueryList;
+  // Assigned in constructor via setMode/system preference wiring.
+  private mediaQuery!: MediaQueryList;
 
   private crudThemeId: string | null = null;
 

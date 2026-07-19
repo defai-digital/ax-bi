@@ -23,7 +23,11 @@ import type { BinaryQueryObjectFilterClause } from '../../query/types/Query';
 import type { ExtraFormData } from '../../query/types/QueryFormData';
 import type { JsonObject } from '../../connection/types';
 
-export type HandlerFunction = (...args: unknown[]) => void;
+// Event-hook bag used across charts. Parameter types are intentionally loose
+// (`any`) so specialized handlers (e.g. context-menu with typed coords/filters)
+// remain assignable under TypeScript 6 strict function variance.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type HandlerFunction = (...args: any[]) => void;
 
 export enum Behavior {
   InteractiveChart = 'INTERACTIVE_CHART',

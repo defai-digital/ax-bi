@@ -322,7 +322,6 @@ const AntdIcons = {
   HistoryOutlined,
   SlackOutlined,
   ApiOutlined,
-  LogoutOutlined,
   SafetyCertificateOutlined,
 } as const;
 
@@ -339,7 +338,9 @@ export const antdEnhancedIcons: Record<
         (props, ref) => (
           <BaseIconComponent
             ref={ref}
-            component={AntdIcons[key as AntdIconNames]}
+            // antd icon components vary across versions; cast for Icon wrapper
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            component={AntdIcons[key as AntdIconNames] as any}
             fileName={key}
             {...props}
           />

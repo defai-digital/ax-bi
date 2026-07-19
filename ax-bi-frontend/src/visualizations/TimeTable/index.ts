@@ -49,7 +49,9 @@ export default class TimeTableChartPlugin extends ChartPlugin {
   constructor() {
     super({
       metadata,
-      transformProps,
+      // Table chart props are more specific than ChartPlugin's default generics
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      transformProps: transformProps as any,
       loadChart: () => import('./TimeTable'),
       controlPanel,
     });

@@ -29,7 +29,10 @@ export type ErrorMessageComponentProps<ExtraType = Record<string, any> | null> =
     closable?: boolean;
   };
 
-export type ErrorMessageComponent = ComponentType<ErrorMessageComponentProps>;
+// Accept specialized extra payloads (DatabaseErrorExtra, etc.). ComponentType
+// is invariant in props under TS6, so the registry value type must use `any`.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type ErrorMessageComponent = ComponentType<ErrorMessageComponentProps<any>>;
 
 export interface ErrorAlertProps {
   errorType?: string; // Strong text on the first line

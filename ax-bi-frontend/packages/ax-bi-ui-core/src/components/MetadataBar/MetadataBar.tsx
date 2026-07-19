@@ -194,7 +194,8 @@ const MetadataBar = ({ items, tooltipPlacement = 'top' }: MetadataBarProps) => {
   }
 
   const onResize = useCallback(
-    (width: number | undefined) => {
+    (payload: { width: number | null }) => {
+      const width = payload.width ?? undefined;
       // Calculates the breakpoint width to collapse the bar.
       // The last item does not have a space, so we subtract SPACE_BETWEEN_ITEMS from the total.
       const breakpoint =

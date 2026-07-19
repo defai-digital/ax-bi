@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ReactElement, useMemo } from 'react';
+import { type ComponentType, type ReactElement, useMemo } from 'react';
 import { formatNumber, formatTime } from '@ax-bi/ui-core';
 import { useTheme } from '@ax-bi/core/theme';
 import { GridRows } from '@visx/grid';
@@ -29,8 +29,6 @@ import {
   Tooltip,
   XYChart,
   buildChartTheme,
-  type SeriesProps,
-  AxisScale,
 } from '@visx/xychart';
 import { extendedDayjs } from '@ax-bi/ui-core/utils/dates';
 import {
@@ -132,12 +130,15 @@ const SparklineCell = ({
   }, [showYAxis, numberFormat, min, max]);
 
   const innerWidth = width - margin.left - margin.right;
-  const xAccessor = (d: { x: number; y: number }) => d.x;
-  const yAccessor = (d: { x: number; y: number }) => d.y;
+  // visx series components use open generic Datum; cast accessors/components
+  // for TS6 parameter variance compatibility.
+  const xAccessor = (d: object) => (d as { x: number; y: number }).x;
+  const yAccessor = (d: object) => (d as { x: number; y: number }).y;
 
   const chartSeriesMap: Record<
     SparkType,
-    (props: SeriesProps<AxisScale, AxisScale, object>) => JSX.Element
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ComponentType<any>
   > = {
     line: LineSeries,
     bar: BarSeries,

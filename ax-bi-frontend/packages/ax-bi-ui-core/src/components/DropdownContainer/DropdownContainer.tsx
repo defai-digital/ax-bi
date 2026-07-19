@@ -19,7 +19,7 @@
 import {
   cloneElement,
   forwardRef,
-  RefObject,
+  type ForwardedRef,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -54,7 +54,7 @@ export const DropdownContainer = forwardRef(
       forceRender,
       style,
     }: DropdownContainerProps,
-    outerRef: RefObject<DropdownRef>,
+    outerRef: ForwardedRef<DropdownRef>,
   ) => {
     const theme = useTheme();
     const { ref, width = 0 } = useResizeDetector<HTMLDivElement>();
@@ -361,7 +361,8 @@ export const DropdownContainer = forwardRef(
 
             <Popover
               styles={{
-                body: {
+                // antd 6 Popover semantic styles use `content` (not `body`)
+                content: {
                   maxHeight: `${MAX_HEIGHT}px`,
                   overflow: showOverflow ? 'auto' : 'visible',
                 },
