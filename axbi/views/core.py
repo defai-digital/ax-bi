@@ -43,7 +43,7 @@ from flask_appbuilder.security.decorators import (
     permission_name,
 )
 from flask_babel import gettext as __, lazy_gettext as _
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import NoResultFound, SQLAlchemyError
 from werkzeug.utils import safe_join
 
 from axbi import (
@@ -94,6 +94,7 @@ from axbi.utils.core import (
     ReservedUrlParameters,
 )
 from axbi.utils.link_redirect import get_safe_redirect_target, relative_redirect
+from axbi.utils.session_lifecycle import commit_session
 from axbi.views.base import (
     api,
     BaseAxBIView,
@@ -688,7 +689,11 @@ class AxBI(BaseAxBIView):
 
         utils.remove_extra_adhoc_filters(form_data)
 
-        assert slc
+        if slc is None:
+            return json_error_response(
+                __("Chart not found or not authorized to modify"),
+                status=404,
+            )
         slc.params = json.dumps(form_data, indent=2, sort_keys=True)
         slc.datasource_name = datasource_name
         slc.viz_type = form_data["viz_type"]
@@ -713,12 +718,23 @@ class AxBI(BaseAxBIView):
         new_dashboard_name = request.args.get("new_dashboard_name")
         if save_to_dashboard_id:
             # Adding the chart to an existing dashboard
-            dash = cast(
-                Dashboard,
-                db.session.query(Dashboard)
-                .filter_by(id=int(save_to_dashboard_id))
-                .one(),
-            )
+            try:
+                dashboard_id = int(save_to_dashboard_id)
+            except (ValueError, TypeError):
+                return json_error_response(
+                    __("Invalid dashboard ID"),
+                    status=400,
+                )
+            try:
+                dash = cast(
+                    Dashboard,
+                    db.session.query(Dashboard).filter_by(id=dashboard_id).one(),
+                )
+            except NoResultFound:
+                return json_error_response(
+                    __("Dashboard %(id)s not found", id=dashboard_id),
+                    status=404,
+                )
             # check edit dashboard permissions
             dash_overwrite_perm = security_manager.is_owner(dash)
             if not dash_overwrite_perm:
@@ -749,10 +765,9 @@ class AxBI(BaseAxBIView):
         if (action == "saveas" and slice_add_perm) or (
             action == "overwrite" and slice_overwrite_perm
         ):
-            try:
-                db.session.commit()  # pylint: disable=consider-using-transaction
-            except Exception:  # pylint: disable=broad-except
-                db.session.rollback()  # pylint: disable=consider-using-transaction
+            if not commit_session(
+                db.session, context="views.save_or_overwrite_slice", soft=True
+            ):
                 logger.exception(
                     "Failed to save chart%s",
                     (

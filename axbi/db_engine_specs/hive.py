@@ -583,7 +583,7 @@ class HiveEngineSpec(PrestoEngineSpec):
         cursor.execute(query, **kwargs)
 
     @classmethod
-    @cache_manager.cache.memoize()
+    @cache_manager.cache.memoize(timeout=3600)
     def get_function_names(cls, database: Database) -> list[str]:
         """
         Get a list of function names that are able to be called on the database.

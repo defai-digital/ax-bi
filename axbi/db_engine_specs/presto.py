@@ -462,7 +462,7 @@ class PrestoBaseEngineSpec(BaseEngineSpec, metaclass=ABCMeta):
         return cost
 
     @classmethod
-    @cache_manager.data_cache.memoize()
+    @cache_manager.data_cache.memoize(timeout=3600)
     def get_function_names(cls, database: Database) -> list[str]:
         """
         Get a list of function names that are able to be called on the database.

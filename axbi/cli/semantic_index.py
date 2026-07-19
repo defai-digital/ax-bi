@@ -26,6 +26,7 @@ from flask.cli import with_appcontext
 
 from axbi.extensions import db
 from axbi.utils import json
+from axbi.utils.session_lifecycle import commit_session
 
 
 @click.group()
@@ -97,13 +98,10 @@ def backfill_datasets(
                 "dry_run": True,
             }
         else:
-            assert service is not None
-            try:
-                summary = service.index_dataset(dataset_id)
-                db.session.commit()
-            except Exception:
-                db.session.rollback()
-                raise
+            if service is None:
+                raise RuntimeError("SemanticIndexService not initialized")
+            summary = service.index_dataset(dataset_id)
+            commit_session(db.session, context="semantic_index.backfill")
             result = {
                 "dataset_id": dataset_id,
                 "documents_seen": summary.documents_seen,

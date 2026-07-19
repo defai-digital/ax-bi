@@ -44,6 +44,7 @@ from axbi.models.core import Database
 from axbi.sql.parse import Table
 from axbi.utils import json
 from axbi.utils.core import DatasourceType
+from axbi.utils.session_lifecycle import commit_session
 from axbi.views.base import api, BaseAxBIView, deprecated, json_error_response
 from axbi.views.datasource.schemas import (
     ExternalMetadataParams,
@@ -142,7 +143,7 @@ class Datasource(BaseAxBIView):
             )
         orm_datasource.update_from_object(datasource_dict)
         data = orm_datasource.data
-        db.session.commit()  # pylint: disable=consider-using-transaction
+        commit_session(db.session, context="datasource.save")
 
         return self.json_response(sanitize_datasource_data(data))
 

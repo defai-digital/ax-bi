@@ -29,6 +29,7 @@ from axbi.connectors.sqla.models import SqlaTable
 from axbi.extensions import cache_manager, db, event_logger, stats_logger_manager
 from axbi.models.cache import CacheKey
 from axbi.utils.fast_cache import delete_fast_cache
+from axbi.utils.session_lifecycle import commit_session
 from axbi.views.base_api import BaseAxBIModelRestApi, statsd_metrics
 
 logger = logging.getLogger(__name__)
@@ -120,7 +121,7 @@ class CacheRestApi(BaseAxBIModelRestApi):
                 )
 
                 db.session.execute(delete_stmt)
-                db.session.commit()  # pylint: disable=consider-using-transaction
+                commit_session(db.session, context="cachekeys.invalidate")
 
                 stats_logger_manager.instance.gauge(
                     "invalidated_cache", len(cache_keys)

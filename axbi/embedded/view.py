@@ -50,10 +50,9 @@ class EmbeddedView(BaseAxBIView):
 
         embedded = EmbeddedDashboardDAO.find_by_id(uuid)
 
-        if not embedded:
+        if embedded is None:
             abort(404)
-
-        assert embedded is not None
+            return None  # unreachable, but satisfies mypy
 
         # validate request referrer in allowed domains
         is_referrer_allowed = not embedded.allowed_domains

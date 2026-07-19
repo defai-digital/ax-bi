@@ -138,6 +138,7 @@ from axbi.utils.screenshots import (
     DEFAULT_DASHBOARD_WINDOW_SIZE,
     ScreenshotCachePayload,
 )
+from axbi.utils.session_lifecycle import commit_session
 from axbi.utils.urls import get_url_path
 from axbi.views.base_api import (
     BaseAxBIModelRestApi,
@@ -2112,7 +2113,7 @@ class DashboardRestApi(CustomTagsOptimizationMixin, BaseAxBIModelRestApi):
                 dashboard,
                 body["allowed_domains"],
             )
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            commit_session(db.session, context="dashboards.set_embedded")
 
             result = self.embedded_response_schema.dump(embedded)
             return self.response(200, result=result)
