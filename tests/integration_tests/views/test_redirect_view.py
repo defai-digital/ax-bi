@@ -48,7 +48,7 @@ class TestRedirectView(AxBITestCase):
             follow_redirects=False,
         )
         assert resp.status_code == 302
-        assert resp.headers["Location"] == "http://localhost:8088/dashboard/1"
+        assert resp.headers["Location"] == "/dashboard/1"
 
     @with_feature_flags(ALERT_REPORTS=True)
     @with_config(REDIRECT_CONFIG)

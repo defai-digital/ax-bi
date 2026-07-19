@@ -22,7 +22,7 @@ from typing import Any, TYPE_CHECKING
 from sqlalchemy import and_, or_
 
 from axbi import db
-from axbi.sql.parse import Table
+from axbi.sql.parse import process_jinja_sql, Table
 
 if TYPE_CHECKING:
     from axbi.models.core import Database
@@ -158,13 +158,9 @@ def collect_rls_predicates_for_sql(
         (kept consistent with what's actually applied at query time).
     :return: List of RLS predicate strings that would be applied
     """
-    from axbi.sql.parse import SQLScript
-
-    parsed_script = SQLScript(sql, engine=database.db_engine_spec.engine)
+    parsed_script = process_jinja_sql(sql, database)
     tables = {
-        table.qualify(catalog=catalog, schema=schema)
-        for statement in parsed_script.statements
-        for table in statement.tables
+        table.qualify(catalog=catalog, schema=schema) for table in parsed_script.tables
     }
     default_catalog = database.get_default_catalog()
     return sorted(

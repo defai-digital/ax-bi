@@ -40,8 +40,8 @@ class TestDatabricksDbEngineSpec(AxBITestCase):
         assert extras == {
             "engine_params": {
                 "connect_args": {
-                    "_user_agent_entry": "AX BI",
-                    "http_headers": [("User-Agent", "AX BI")],
+                    "_user_agent_entry": "AX-BI",
+                    "http_headers": [("User-Agent", "AX-BI")],
                 },
             },
             "metadata_cache_timeout": {},

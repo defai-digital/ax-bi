@@ -24,8 +24,7 @@ from flask_wtf.csrf import same_origin
 from axbi import event_logger, is_feature_enabled
 from axbi.axbi_typing import FlaskResponse
 from axbi.daos.dashboard import EmbeddedDashboardDAO
-from axbi.utils import json
-from axbi.views.base import BaseAxBIView, common_bootstrap_payload
+from axbi.views.base import BaseAxBIView
 
 
 class EmbeddedView(BaseAxBIView):
@@ -90,11 +89,10 @@ class EmbeddedView(BaseAxBIView):
             dashboard_version="v2",
         )
 
-        bootstrap_data = {
+        extra_bootstrap_data = {
             "config": {
                 "GUEST_TOKEN_HEADER_NAME": current_app.config["GUEST_TOKEN_HEADER_NAME"]
             },
-            "common": common_bootstrap_payload(),
             "embedded": {
                 "dashboard_id": embedded.dashboard_id,
                 # The list of domains allowed to embed this dashboard. An empty
@@ -104,10 +102,7 @@ class EmbeddedView(BaseAxBIView):
             },
         }
 
-        return self.render_template(
-            "axbi/spa.html",
+        return self.render_app_template(
+            extra_bootstrap_data=extra_bootstrap_data,
             entry="embedded",
-            bootstrap_data=json.dumps(
-                bootstrap_data, default=json.pessimistic_json_iso_dttm_ser
-            ),
         )

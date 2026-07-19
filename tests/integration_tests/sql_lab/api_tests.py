@@ -262,7 +262,12 @@ class TestSqlLabApi(AxBITestCase):
             return_value=formatter_response
         )
 
-        with mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db:
+        with (
+            mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db,
+            mock.patch(
+                "axbi.commands.sql_lab.estimate.security_manager.raise_for_access"
+            ),
+        ):
             mock_axbi_db.session.get.return_value = db_mock
 
             data = {"database_id": 1, "sql": "SELECT 1"}

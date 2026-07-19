@@ -22,6 +22,7 @@ from flask_appbuilder import expose
 from flask_appbuilder.security.decorators import has_access, has_access_api
 from flask_babel import gettext as __
 from sqlalchemy import and_
+from sqlalchemy.exc import IntegrityError
 
 from axbi import db
 from axbi.axbi_typing import FlaskResponse
@@ -61,9 +62,14 @@ def _load_expanded_value(value: str) -> bool:
 def _handle_mutation_error(ex: Exception) -> FlaskResponse:
     """Rollback and classify legacy SQL Lab tab-state mutation failures."""
     db.session.rollback()
-    if isinstance(ex, (KeyError, ValueError, json.JSONDecodeError)):
+    if isinstance(ex, (IntegrityError, KeyError, ValueError, json.JSONDecodeError)):
         logger.info("Invalid SQL Lab tab-state request: %s", ex)
-        return json_error_response(error_msg_from_exception(ex), 400)
+        message = (
+            __("Invalid SQL Lab tab-state request")
+            if isinstance(ex, IntegrityError)
+            else error_msg_from_exception(ex)
+        )
+        return json_error_response(message, 400)
 
     logger.exception("SQL Lab tab-state mutation failed")
     return json_error_response(__("An unexpected error occurred"), 500)

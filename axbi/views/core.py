@@ -456,7 +456,22 @@ class AxBI(BaseAxBIView):
             url = url._replace(query=parse.urlencode(query, True))
             redirect_url = parse.urlunparse(url)
 
-        return get_safe_redirect_target(redirect_url) or "/"
+        # This redirect is derived solely from the current request. Normalize it
+        # to a relative URL before applying the generic redirect validator so a
+        # proxy or test host that differs from WEBDRIVER_BASEURL cannot turn a
+        # valid Explore handoff into an unexpected redirect to the index page.
+        redirect_parts = parse.urlparse(redirect_url)
+        relative_redirect_url = parse.urlunparse(
+            (
+                "",
+                "",
+                redirect_parts.path,
+                redirect_parts.params,
+                redirect_parts.query,
+                redirect_parts.fragment,
+            )
+        )
+        return get_safe_redirect_target(relative_redirect_url) or "/"
 
     @has_access
     @event_logger.log_this

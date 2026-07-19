@@ -78,7 +78,12 @@ class TestQueryEstimationCommand(AxBITestCase):
         db_mock.db_engine_spec.query_cost_formatter = mock.Mock(return_value=None)
         is_feature_enabled.return_value = False
 
-        with mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db:
+        with (
+            mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db,
+            mock.patch(
+                "axbi.commands.sql_lab.estimate.security_manager.raise_for_access"
+            ),
+        ):
             mock_axbi_db.session.get.return_value = db_mock
             with pytest.raises(AxBIErrorException) as ex_info:
                 command.run()
@@ -102,7 +107,12 @@ class TestQueryEstimationCommand(AxBITestCase):
         db_mock.db_engine_spec.estimate_query_cost = mock.Mock(return_value=100)
         db_mock.db_engine_spec.query_cost_formatter = mock.Mock(return_value=payload)
 
-        with mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db:
+        with (
+            mock.patch("axbi.commands.sql_lab.estimate.db") as mock_axbi_db,
+            mock.patch(
+                "axbi.commands.sql_lab.estimate.security_manager.raise_for_access"
+            ),
+        ):
             mock_axbi_db.session.get.return_value = db_mock
             result = command.run()
             assert result == payload

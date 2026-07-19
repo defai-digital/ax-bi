@@ -218,7 +218,11 @@ psql: error: could not connect to server: Operation timed out
                 mock_database, Table(table=table_name), df, to_sql_kwargs={}
             )
 
-        assert df.to_sql.call_args[1]["dtype"] == {}
+        dtype = df.to_sql.call_args[1]["dtype"]
+        assert isinstance(dtype["id"], NVARCHAR)
+        assert dtype["id"].length == 65535
+        assert isinstance(dtype["value"], NVARCHAR)
+        assert dtype["value"].length == 65535
 
     def test_df_to_sql_with_string_dtype(self):
         mock_database = mock.MagicMock()

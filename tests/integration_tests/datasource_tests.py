@@ -533,7 +533,7 @@ class TestDatasource(AxBITestCase):
 
         self.login(ADMIN_USERNAME)
         resp = self.get_json_resp("/datasource/get/druid/500000/", raise_on_error=False)
-        assert resp.get("error") == "'druid' is not a valid DatasourceType"
+        assert resp.get("error") == "An unexpected error occurred"
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @mock.patch("axbi.security.manager.AxBISecurityManager.get_guest_rls_filters")

@@ -52,12 +52,12 @@ def test_invalidate_cache(invalidate):
 def test_invalidate_existing_cache(invalidate):
     db.session.add(CacheKey(cache_key="cache_key", datasource_uid="3__table"))
     db.session.commit()
-    cache_manager.cache.set("cache_key", "value")
+    cache_manager.data_cache.set("cache_key", "value")
 
     rv = invalidate({"datasource_uids": ["3__table"]})
 
     assert rv.status_code == 201
-    assert cache_manager.cache.get("cache_key") is None  # noqa: E711
+    assert cache_manager.data_cache.get("cache_key") is None  # noqa: E711
     assert (
         not db.session.query(CacheKey).filter(CacheKey.cache_key == "cache_key").first()
     )
@@ -111,10 +111,10 @@ def test_invalidate_existing_caches(invalidate):
     db.session.add(CacheKey(cache_key="cache_keyX", datasource_uid="X__table"))
     db.session.commit()
 
-    cache_manager.cache.set("cache_key1", "value")
-    cache_manager.cache.set("cache_key2", "value")
-    cache_manager.cache.set("cache_key4", "value")
-    cache_manager.cache.set("cache_keyX", "value")
+    cache_manager.data_cache.set("cache_key1", "value")
+    cache_manager.data_cache.set("cache_key2", "value")
+    cache_manager.data_cache.set("cache_key4", "value")
+    cache_manager.data_cache.set("cache_keyX", "value")
 
     rv = invalidate(
         {
@@ -155,10 +155,10 @@ def test_invalidate_existing_caches(invalidate):
     )
 
     assert rv.status_code == 201
-    assert cache_manager.cache.get("cache_key1") is None
-    assert cache_manager.cache.get("cache_key2") is None
-    assert cache_manager.cache.get("cache_key4") is None
-    assert cache_manager.cache.get("cache_keyX") == "value"
+    assert cache_manager.data_cache.get("cache_key1") is None
+    assert cache_manager.data_cache.get("cache_key2") is None
+    assert cache_manager.data_cache.get("cache_key4") is None
+    assert cache_manager.data_cache.get("cache_keyX") == "value"
     assert (
         not db.session.query(CacheKey)
         .filter(CacheKey.cache_key.in_({"cache_key1", "cache_key2", "cache_key4"}))

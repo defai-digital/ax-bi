@@ -20,6 +20,7 @@ from unittest.mock import call, Mock, patch
 from uuid import uuid4
 
 import pytest
+from flask import current_app
 from flask.ctx import AppContext
 from flask_appbuilder.security.sqla.models import User
 from freezegun import freeze_time
@@ -103,6 +104,11 @@ from tests.integration_tests.test_app import app
 pytestmark = pytest.mark.usefixtures(
     "load_world_bank_dashboard_with_slices_module_scope"
 )
+
+
+def _user_friendly_base_url() -> str:
+    """Return the configured report-link base URL without a trailing slash."""
+    return current_app.config["WEBDRIVER_BASEURL_USER_FRIENDLY"].rstrip("/")
 
 
 def get_target_from_report_schedule(report_schedule: ReportSchedule) -> list[str]:
@@ -699,7 +705,8 @@ def test_email_chart_report_schedule_with_cc_bcc(
 
         # assert that the link sent is correct
         assert (
-            '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
+            f'<a href="{_user_friendly_base_url()}'
+            "/explore/?form_data=%7B%22slice_id%22:+"
             f"{create_report_email_chart_with_cc_and_bcc.chart.id}"
             '%7D&force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
@@ -756,7 +763,8 @@ def test_email_chart_report_schedule(
         )
         # assert that the link sent is correct
         assert (
-            '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
+            f'<a href="{_user_friendly_base_url()}'
+            "/explore/?form_data=%7B%22slice_id%22:+"
             f"{create_report_email_chart.chart.id}"
             '%7D&force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
@@ -813,7 +821,8 @@ def test_email_chart_report_schedule_alpha_owner(
 
         # assert that the link sent is correct
         assert (
-            '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
+            f'<a href="{_user_friendly_base_url()}'
+            "/explore/?form_data=%7B%22slice_id%22:+"
             f"{create_report_email_chart_alpha_owner.chart.id}"
             '%7D&force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
@@ -860,7 +869,8 @@ def test_email_chart_report_schedule_force_screenshot(
         )
         # assert that the link sent is correct
         assert (
-            '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
+            f'<a href="{_user_friendly_base_url()}'
+            "/explore/?form_data=%7B%22slice_id%22:+"
             f"{create_report_email_chart_force_screenshot.chart.id}"
             '%7D&force=true">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
@@ -897,7 +907,8 @@ def test_email_chart_alert_schedule(
         notification_targets = get_target_from_report_schedule(create_alert_email_chart)
         # assert that the link sent is correct
         assert (
-            '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
+            f'<a href="{_user_friendly_base_url()}'
+            "/explore/?form_data=%7B%22slice_id%22:+"
             f"{create_alert_email_chart.chart.id}"
             '%7D&force=true">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
@@ -970,7 +981,8 @@ def test_email_chart_report_schedule_with_csv(
         )
         # assert that the link sent is correct
         assert (
-            '<a href="http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+'
+            f'<a href="{_user_friendly_base_url()}'
+            "/explore/?form_data=%7B%22slice_id%22:+"
             f"{create_report_email_chart_with_csv.chart.id}%7D&"
             'force=false">Explore in AX BI</a>' in email_mock.call_args[0][2]
         )
@@ -1706,7 +1718,7 @@ def test_slack_chart_report_schedule_with_text(
             ]
         )
         assert (
-            f"<http://0.0.0.0:8080/explore/?form_data=%7B%22slice_id%22:+{create_report_slack_chart_with_text.chart.id}%7D&force=false|Explore in AxBI>"  # noqa: E501
+            f"<{_user_friendly_base_url()}/explore/?form_data=%7B%22slice_id%22:+{create_report_slack_chart_with_text.chart.id}%7D&force=false|Explore in AxBI>"  # noqa: E501
             in slack_client_mock_class.return_value.chat_postMessage.call_args[1][
                 "text"
             ]
@@ -1910,7 +1922,7 @@ def test_email_dashboard_report_fails_uncaught_exception(
 
     assert_log(ReportState.ERROR, error_message="Uncaught exception")
     assert (
-        '<a href="http://0.0.0.0:8080/ax-bi/dashboard/'
+        f'<a href="{_user_friendly_base_url()}/ax-bi/dashboard/'
         f"{create_report_email_dashboard.dashboard.uuid}/"
         '?force=false">Call to action</a>' in email_mock.call_args[0][2]
     )
