@@ -69,11 +69,10 @@ export type Props = {
   preTransformProps?: PreTransformProps;
   overrideTransformProps?: TransformProps;
   postTransformProps?: PostTransformProps;
-  // Match createLoadableRenderer / StatefulChart: typed Error handlers, not
-  // the loose HandlerFunction (...args: unknown[]), so TS6 parameter variance
-  // allows (error: Error) => void callbacks.
+  // Success is zero-arg; failure may receive error + optional React info.
+  // Loose second param keeps ChartRenderer's error boundary handler assignable.
   onRenderSuccess?: () => void;
-  onRenderFailure?: (error: Error) => void;
+  onRenderFailure?: (error: Error, info?: { componentStack?: string } | null) => void;
 };
 
 export interface SuperChartCoreRef {

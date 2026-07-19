@@ -93,21 +93,22 @@ export const userReducer = (
 
 export const listenerMiddleware = createListenerMiddleware();
 
-const getMiddleware: ConfigureStoreOptions['middleware'] =
-  getDefaultMiddleware =>
-    process.env.REDUX_DEFAULT_MIDDLEWARE
-      ? getDefaultMiddleware({
-          immutableCheck: {
-            warnAfter: 200,
-          },
-          serializableCheck: {
-            // Ignores AbortController instances
-            ignoredActionPaths: [/queryController/g],
-            ignoredPaths: [/queryController/g],
-            warnAfter: 200,
-          },
-        }).concat(listenerMiddleware.middleware, logger, api.middleware)
-      : [listenerMiddleware.middleware, thunk, logger, api.middleware];
+// RTK middleware typing varies across versions; keep runtime concat/array
+// behavior and cast for ConfigureStoreOptions under TypeScript 6.
+const getMiddleware = ((getDefaultMiddleware: any) =>
+  process.env.REDUX_DEFAULT_MIDDLEWARE
+    ? getDefaultMiddleware({
+        immutableCheck: {
+          warnAfter: 200,
+        },
+        serializableCheck: {
+          // Ignores AbortController instances
+          ignoredActionPaths: [/queryController/g],
+          ignoredPaths: [/queryController/g],
+          warnAfter: 200,
+        },
+      }).concat(listenerMiddleware.middleware, logger, api.middleware)
+    : [listenerMiddleware.middleware, thunk, logger, api.middleware]) as ConfigureStoreOptions['middleware'];
 
 // TODO: This reducer is a combination of the Dashboard and Explore reducers.
 // The correct way of handling this is to unify the actions and reducers from both
@@ -161,7 +162,7 @@ const reducers = {
 export function setupStore({
   disableDebugger = false,
   initialState = getInitialState(bootstrapData),
-  rootReducers = reducers,
+  rootReducers = reducers as ConfigureStoreOptions['reducer'],
   ...overrides
 }: {
   disableDebugger?: boolean;

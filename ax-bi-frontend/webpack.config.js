@@ -244,28 +244,30 @@ if (isDevMode && !disableTsChecker) {
     new ForkTsCheckerWebpackPlugin({
       async: true,
       typescript: {
-        build: true,
-        mode: 'write-references',
+        // Product-source-only program: tests/stories are excluded via
+        // tsconfig.webpack.json so they never block the dev overlay.
+        // Full typecheck of tests remains in Jest / pre-commit / CI.
+        configFile: path.resolve(APP_DIR, 'tsconfig.webpack.json'),
+        build: false,
+        mode: 'readonly',
         memoryLimit: TYPESCRIPT_MEMORY_LIMIT,
-        configOverwrite: {
-          compilerOptions: {
-            skipLibCheck: true,
-            incremental: true,
-          },
-          exclude: [
-            'src/**/*.js',
-            'src/**/*.jsx',
-            '**/*.test.*',
-            '**/*.spec.*',
-            '**/*.stories.*',
-            '**/test/**',
-            '**/tests/**',
-            '**/spec/**',
-            '**/stories/**',
-            '**/__tests__/**',
-            '**/__mocks__/**',
-          ],
+        diagnosticOptions: {
+          semantic: true,
+          syntactic: true,
         },
+      },
+      issue: {
+        exclude: [
+          { file: '**/*.test.*' },
+          { file: '**/*.spec.*' },
+          { file: '**/*.stories.*' },
+          { file: '**/test/**' },
+          { file: '**/tests/**' },
+          { file: '**/spec/**' },
+          { file: '**/stories/**' },
+          { file: '**/__tests__/**' },
+          { file: '**/__mocks__/**' },
+        ],
       },
     }),
   );

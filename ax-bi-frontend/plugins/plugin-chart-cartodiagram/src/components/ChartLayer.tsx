@@ -57,9 +57,10 @@ export class ChartLayer extends Layer {
 
   chartBackgroundBorderRadius = 0;
 
-  theme: AxBITheme;
+  // Assigned in constructor from ChartLayerOptions
+  theme!: AxBITheme;
 
-  locale: string;
+  locale!: string;
 
   /**
    * Create a ChartLayer.

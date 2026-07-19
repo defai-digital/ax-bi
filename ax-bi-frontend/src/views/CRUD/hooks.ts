@@ -841,9 +841,12 @@ export function useDatabaseValidation() {
         setIsValidating(false);
         setHasValidated(true);
         return [];
-      } catch (error) {
-        if (typeof error.json === 'function') {
-          return error.json().then(({ errors = [] }) => {
+      } catch (error: unknown) {
+        const err = error as {
+          json?: () => Promise<{ errors?: any[] }>;
+        };
+        if (typeof err.json === 'function') {
+          return err.json().then(({ errors = [] }) => {
             const parsedErrors = errors
               .filter((err: { error_type: string }) => {
                 const allowed = [

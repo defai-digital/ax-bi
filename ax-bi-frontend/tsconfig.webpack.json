@@ -1,0 +1,43 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "declarationDir": null,
+    "noEmit": true,
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/.cache/tsconfig.webpack.tsbuildinfo",
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*",
+    "packages/*/src/**/*",
+    "packages/*/types/**/*",
+    "plugins/*/src/**/*",
+    "plugins/*/types/**/*"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/lib/**",
+    "**/dist/**",
+    "**/esm/**",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx",
+    "**/*.stories.ts",
+    "**/*.stories.tsx",
+    "**/test/**",
+    "**/tests/**",
+    "**/spec/**",
+    "**/stories/**",
+    "**/__tests__/**",
+    "**/__mocks__/**",
+    "spec/**",
+    ".storybook/**",
+    "scripts/**",
+    "cypress-base/**",
+    "playwright/**"
+  ]
+}
