@@ -588,7 +588,7 @@ class SqlLabRestApi(BaseAxBIApi):
 
         try:
             log_params = {
-                "user_agent": cast(str | None, request.headers.get("USER_AGENT"))
+                "user_agent": cast(str | None, request.headers.get("User-Agent"))
             }
             execution_context = SqlJsonExecutionContext(raw_payload)
             command = self._create_sql_json_command(execution_context, log_params)

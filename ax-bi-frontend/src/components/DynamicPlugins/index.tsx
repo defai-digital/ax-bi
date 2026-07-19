@@ -159,11 +159,12 @@ export const DynamicPluginProvider: FC<{ children?: ReactNode }> = ({
           try {
             await import(/* webpackIgnore: true */ plugin.bundle_url);
           } catch (err) {
+            const loadError = err as Error;
             logging.error(
               `Failed to load plugin ${plugin.key} with the following error:`,
-              err.stack,
+              loadError.stack,
             );
-            error = err;
+            error = loadError;
           }
           dispatch({
             type: 'complete',
@@ -173,7 +174,11 @@ export const DynamicPluginProvider: FC<{ children?: ReactNode }> = ({
         }),
       );
     } catch (error) {
-      logging.error('Failed to load dynamic plugins', error.stack || error);
+      const loadError = error as Error;
+      logging.error(
+        'Failed to load dynamic plugins',
+        loadError.stack || loadError,
+      );
     }
   }
 

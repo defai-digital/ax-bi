@@ -74,6 +74,17 @@ configure JWT authentication for MCP before exposing it outside localhost.
 
 ## Local Source Run
 
+Use a single project virtualenv at `./venv` on **Python 3.12+** (not a stray
+`.venv` and not a 3.11 tree). The editor does **not** auto-activate it; load
+it only when you need project tools:
+
+```shell
+make venv              # create if missing; fail if wrong Python version
+# make venv-recreate   # if an old 3.11 venv is present
+source venv/bin/activate
+# or without activating: ./venv/bin/python, ./venv/bin/ax-bi, ./venv/bin/pytest
+```
+
 From a prepared checkout with dependencies installed:
 
 ```shell

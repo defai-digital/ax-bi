@@ -92,7 +92,8 @@ class UpdateDatasetCommand(UpdateMixin, BaseCommand):
     )
     def run(self) -> Model:
         self.validate()
-        assert self._model
+        if self._model is None:
+            raise DatasetNotFoundError()
         return DatasetDAO.update(self._model, attributes=self._properties)
 
     def validate(self) -> None:

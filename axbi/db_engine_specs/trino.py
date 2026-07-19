@@ -51,6 +51,7 @@ from axbi.models.sql_lab import Query
 from axbi.sql.parse import Table
 from axbi.utils import json
 from axbi.utils.core import create_ssl_cert_file, get_user_agent, QuerySource
+from axbi.utils.session_lifecycle import commit_session
 
 if TYPE_CHECKING:
     from axbi.models.core import Database
@@ -324,7 +325,7 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
         if tracking_url := cls.get_tracking_url(cursor):
             query.tracking_url = tracking_url
 
-        db.session.commit()  # pylint: disable=consider-using-transaction
+        commit_session(db.session, context="trino handle_cursor initial", soft=True)
 
         super().handle_cursor(cursor=cursor, query=query)
 
@@ -378,7 +379,7 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
                 needs_commit = True
 
             if needs_commit:
-                db.session.commit()  # pylint: disable=consider-using-transaction
+                commit_session(db.session, context="trino progress polling", soft=True)
 
             time.sleep(poll_interval)
 
@@ -466,7 +467,7 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
     def prepare_cancel_query(cls, query: Query) -> None:
         if QUERY_CANCEL_KEY not in query.extra:
             query.set_extra_json_key(QUERY_EARLY_CANCEL_KEY, True)
-            db.session.commit()  # pylint: disable=consider-using-transaction
+            commit_session(db.session, context="trino early cancel flag", soft=True)
 
     @classmethod
     def cancel_query(cls, cursor: Cursor, query: Query, cancel_query_id: str) -> bool:

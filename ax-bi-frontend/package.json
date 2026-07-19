@@ -82,7 +82,7 @@
     "prune": "rm -rf ./{packages,plugins}/*/{node_modules,lib,esm,tsconfig.tsbuildinfo,package-lock.json} ./.temp_cache",
     "storybook": "cross-env NODE_ENV=development BABEL_ENV=development storybook dev -p 31427",
     "test-storybook": "test-storybook",
-    "test-storybook:ci": "concurrently --kill-others --success first --names \"SB,TEST\" --prefix-colors \"magenta,blue\" \"npx http-server storybook-static --port 31427 --silent\" \"npx wait-on tcp:127.0.0.1:31427 && npm run test-storybook -- --maxWorkers=2\"",
+    "test-storybook:ci": "concurrently --kill-others --success first --names \"SB,TEST\" --prefix-colors \"magenta,blue\" \"npx http-server storybook-static --port 31427 --silent\" \"npx wait-on tcp:127.0.0.1:31427 && npm run test-storybook -- --url http://127.0.0.1:31427 --maxWorkers=2\"",
     "tdd": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" jest --watch",
     "test": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" node scripts/jest.js --silent",
     "test-loud": "cross-env NODE_ENV=test NODE_OPTIONS=\"--max-old-space-size=8192\" node scripts/jest.js",

@@ -1,0 +1,11 @@
+{
+  "typescript.tsdk": "ax-bi-frontend/node_modules/typescript/lib",
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+  "python.defaultInterpreterPath": "${workspaceFolder}/venv/bin/python",
+  "python.terminal.activateEnvironment": false,
+  "python.terminal.activateEnvInCurrentTerminal": false,
+  "python.venvFolders": ["venv"],
+  "python.analysis.exclude": ["**/.venv/**", "**/node_modules/**"]
+}

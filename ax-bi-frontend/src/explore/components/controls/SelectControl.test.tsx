@@ -23,7 +23,6 @@ import {
   render,
   screen,
   userEvent,
-  within,
 } from 'spec/helpers/testing-library';
 import SelectControl, {
   innerGetOptions,

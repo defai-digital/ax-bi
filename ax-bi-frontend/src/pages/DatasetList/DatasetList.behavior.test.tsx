@@ -20,7 +20,6 @@ import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import rison from 'rison';
-import { ComponentType } from 'react';
 import {
   setupMocks,
   renderDatasetList,

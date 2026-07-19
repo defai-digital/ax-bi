@@ -739,13 +739,20 @@ class DeleteMixin:  # pylint: disable=too-few-public-methods
             if self.datamodel.delete(item):
                 self.post_delete(item)
 
-                for pv in pvs:
-                    db.session.delete(pv)
+                try:
+                    for pv in pvs:
+                        db.session.delete(pv)
 
-                if view_menu:
-                    db.session.delete(view_menu)
+                    if view_menu:
+                        db.session.delete(view_menu)
 
-                db.session.commit()  # pylint: disable=consider-using-transaction
+                    db.session.commit()  # pylint: disable=consider-using-transaction
+                except Exception:  # pylint: disable=broad-except
+                    db.session.rollback()  # pylint: disable=consider-using-transaction
+                    logger.exception(
+                        "Failed to clean up permissions after deleting item %s",
+                        primary_key,
+                    )
 
             self.update_redirect()
 

@@ -26,7 +26,7 @@ import {
   ChartCustomizationDivider,
 } from '@ax-bi/ui-core';
 import type { FormInstance } from '@ax-bi/ui-core/components';
-import { useDispatch } from 'react-redux';
+import { useAppDispatch } from 'src/views/store';
 import { updateCascadeParentIds } from 'src/dashboard/actions/nativeFilters';
 import type { FiltersConfigFormHandle } from '../FiltersConfigForm/FiltersConfigForm';
 import {
@@ -104,7 +104,7 @@ export function useModalSaveLogic({
   canBeUsedAsDependency,
   resetForm,
 }: ModalSaveLogicParams): ModalSaveLogic {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   const cleanDeletedParents = useCallback(
     (values: NativeFiltersForm | null) => {
@@ -253,7 +253,10 @@ export function useModalSaveLogic({
         }
       });
 
-      const mergedValues = { ...values, filters: mergedFilters };
+      const mergedValues: { filters: MergedFilterMap } = {
+        ...values,
+        filters: mergedFilters,
+      };
 
       const [updatedFilterConfigMap, modifiedParentFilters] =
         cleanDeletedParents(values);
@@ -306,7 +309,7 @@ export function useModalSaveLogic({
 
       if (hasFilterChanges) {
         const transformedModified = actualChanges.modified
-          .map(id =>
+          .map((id: string) =>
             transformFilterForSave(
               id,
               mergedValues.filters?.[id] || updatedFilterConfigMap[id],

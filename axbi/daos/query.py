@@ -46,7 +46,15 @@ class QueryDAO(BaseDAO[Query]):
         query.set_extra_json_key("columns", columns)
 
     @staticmethod
-    def get_queries_changed_after(last_updated_ms: float | int) -> list[Query]:
+    def get_queries_changed_after(
+        last_updated_ms: float | int, limit: int = 1000
+    ) -> list[Query]:
+        """Fetch queries changed after a timestamp, bounded to prevent OOM.
+
+        :param last_updated_ms: Epoch milliseconds timestamp
+        :param limit: Maximum number of queries to return (default 1000)
+        :returns: List of Query objects, most recent first
+        """
         # UTC date time, same that is stored in the DB.
         last_updated_dt = datetime.fromtimestamp(
             last_updated_ms / 1000, tz=timezone.utc
@@ -55,6 +63,8 @@ class QueryDAO(BaseDAO[Query]):
         return (
             db.session.query(Query)
             .filter(Query.user_id == get_user_id(), Query.changed_on >= last_updated_dt)
+            .order_by(Query.changed_on.desc())
+            .limit(limit)
             .all()
         )
 

@@ -104,7 +104,12 @@ GPT.md
 .npmignore
 .env-axbi.example
 BOUNDARY_REPORT.md
+PORTS.md
+PYTHON_STABILITY.md
+RECOVERY_2.0.x.md
+recovery-2.0.x-triage.md
 values-axbi.yaml
+.python-version
 # ax-bi-desktop is a separate Tauri sub-app
 Cargo.toml
 ax-bi-desktop/*

@@ -41,7 +41,8 @@ class DeleteDatasetColumnCommand(BaseCommand):
     @transaction(on_error=partial(on_error, reraise=DatasetColumnDeleteFailedError))
     def run(self) -> None:
         self.validate()
-        assert self._model
+        if self._model is None:
+            raise DatasetColumnNotFoundError()
         DatasetColumnDAO.delete([self._model])
 
     def validate(self) -> None:

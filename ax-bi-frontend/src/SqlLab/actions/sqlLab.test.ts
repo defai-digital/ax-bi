@@ -601,7 +601,9 @@ describe('async actions', () => {
         {
           throws: {
             message: 'error text',
-            timeout: true,
+            // getClientErrorObject requires a numeric timeout (ms) to emit
+            // FRONTEND_TIMEOUT_ERROR with issue codes 1000/1001.
+            timeout: 1000,
             statusText: 'timeout',
           },
         },

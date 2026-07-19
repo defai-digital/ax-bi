@@ -180,7 +180,12 @@ async def execute_sql(request: ExecuteSqlRequest, ctx: Context) -> ExecuteSqlRes
         database, error_response = await _get_database_or_error(request, ctx)
         if error_response is not None:
             return error_response
-        assert database is not None
+        if database is None:
+            return ExecuteSqlResponse(
+                success=False,
+                error="Database not found",
+                error_type=AxBIErrorType.GENERIC_DB_ENGINE_ERROR.value,
+            )
 
         error_response = await _validate_non_destructive_sql(
             request, ctx, database, sql_preview

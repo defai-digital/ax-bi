@@ -298,6 +298,7 @@ function renderStatus(status) {
     elements.mcpUrl.value = status.mcp_url;
   }
   renderDependencies(status.dependencies);
+  renderRuntimeMeta(status);
   updateLocalPathCopy(status);
   updateButtonState();
   if (biVisible) {
@@ -339,27 +340,30 @@ function updateLocalPathCopy(status) {
       "Some containers are still running. Review logs, stop the runtime, then retry.";
     return;
   }
+  const cpus = status.recommended_cpus || 4;
+  const memoryGb = status.recommended_memory_gb || 8;
+  const resourceNote = `Needs about ${cpus} CPU / ${memoryGb} GiB RAM and multi-GB image downloads.`;
   if (status.can_start_local === false) {
     elements.localPathTitle.textContent = "Install Docker tools";
     elements.localPathDesc.textContent =
       status.platform === "windows"
-        ? "Install Docker Desktop, then start local AX BI from this app."
-        : "Install Colima/Lima/Docker (Homebrew), then start local AX BI.";
+        ? "Install Docker Desktop (winget install -e --id Docker.DockerDesktop), then start local AX BI from this app."
+        : "Install Colima/Lima/Docker (Homebrew cask installs these), then start local AX BI.";
     return;
   }
   if (status.configured) {
     elements.localPathTitle.textContent = "Start local AX BI";
     elements.localPathDesc.textContent =
       status.platform === "windows"
-        ? "Starts Docker Desktop if needed, then the AX BI Compose stack."
-        : "Starts Colima if needed, then the AX BI Compose stack.";
+        ? `Starts Docker Desktop if needed, then the AX BI Compose stack. ${resourceNote}`
+        : `Starts Colima if needed, then the AX BI Compose stack. ${resourceNote}`;
     return;
   }
   elements.localPathTitle.textContent = "Run locally";
   elements.localPathDesc.textContent =
     status.platform === "windows"
-      ? "Start AX BI in Docker on this Windows PC (same images as macOS)."
-      : "Start AX BI in Docker on this Mac (same images as Windows).";
+      ? `Start AX BI in Docker on this Windows PC (same images as macOS). ${resourceNote}`
+      : `Start AX BI in Docker on this Mac (same images as Windows). ${resourceNote}`;
 }
 
 function summaryText(status) {
@@ -398,6 +402,16 @@ function renderDependencies(dependencies) {
     row.append(details, pill);
     elements.dependencies.append(row);
   }
+}
+
+function renderRuntimeMeta(status) {
+  const meta = document.getElementById("runtimeMeta");
+  if (!meta || !status) {
+    return;
+  }
+  const version = status.desktop_version || "—";
+  const image = status.axbi_image || "—";
+  meta.textContent = `Desktop ${version} · ${image}`;
 }
 
 function updateButtonState() {

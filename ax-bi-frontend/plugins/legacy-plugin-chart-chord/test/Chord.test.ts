@@ -45,7 +45,7 @@ test('d3-chord layout accepts d3-array descending comparators without throwing',
   expect(chords.groups).toHaveLength(3);
   expect(chords.length).toBeGreaterThan(0);
   // Groups must carry finite angles so ribbon paths can be drawn.
-  chords.groups.forEach(g => {
+  chords.groups.forEach((g: { startAngle: number; endAngle: number }) => {
     expect(Number.isFinite(g.startAngle)).toBe(true);
     expect(Number.isFinite(g.endAngle)).toBe(true);
     expect(g.endAngle).toBeGreaterThanOrEqual(g.startAngle);

@@ -45,8 +45,7 @@ Use Homebrew for installation, then let the Tauri app manage the local runtime.
 - AX BI Desktop (Authenticode-signed NSIS/MSI from GitHub Releases, or
   `winget install -e --id DEFAI.AXBI` once published — see
   [`packaging/winget/`](packaging/winget/README.md)).
-- Docker Desktop (or any Docker Engine the CLI can reach). Prefer
-  `winget install -e --id Docker.DockerDesktop` on modern Windows.
+- Docker Desktop (or any Docker Engine the CLI can reach). Prefer `winget install -e --id Docker.DockerDesktop` on modern Windows.
 
 The Tauri app should manage:
 
@@ -86,15 +85,22 @@ Desktop displays the local admin username and generated password before opening
 AX BI for the first time. The credentials remain available from **Settings >
 Advanced runtime > Credentials**. Updates preserve existing `.env` credentials.
 Desktop automatically adds newly required generated secrets to an existing
-runtime without rotating valid values. On Unix, `.env` permissions are kept at
-`0600` because the file contains local credentials.
+runtime without rotating valid values. On Unix, `.env` permissions are kept at `0600`. On Windows, Desktop restricts the
+file ACL to the current user (inheritance removed) because it contains local credentials.
 
-The generated Compose stack uses published images:
+The generated Compose stack uses published images managed by Desktop:
 
-- `ghcr.io/defai-digital/ax-bi:latest`
-- `ghcr.io/defai-digital/ax-bi-services:latest`
+- `ghcr.io/defai-digital/ax-bi:<desktop-version>` in **release** builds
+- `ghcr.io/defai-digital/ax-bi-services:<desktop-version>` in **release** builds
+- Debug/dev builds keep the `:latest` tag so local development is not blocked
 
-Release builds should pin these tags to the AX BI Desktop release train.
+On upgrade, Desktop rewrites **managed** image tags (same GHCR repos, including
+previous `:latest` pins) to match the running desktop version. Custom image
+overrides on other registries are left alone.
+
+**Release contract:** publish matching GHCR tags for `ax-bi` and `ax-bi-services`
+(from the existing `v*` docker image workflow) before or with the desktop
+release, so `compose pull` succeeds for pinned versions.
 
 ## Platform Engines
 

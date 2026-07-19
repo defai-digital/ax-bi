@@ -2,8 +2,6 @@
   // This file is not used in compilation. It is here just for a nice editor experience.
   "extends": "@docusaurus/tsconfig",
   "compilerOptions": {
-    "baseUrl": ".",
-    "ignoreDeprecations": "6.0",
     "skipLibCheck": true,
     "noImplicitAny": false,
     "strict": false,
@@ -11,6 +9,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "ignoreDeprecations": "6.0",
     "types": ["@docusaurus/module-type-aliases"],
     "paths": {
       "@ax-bi/ui-core": ["../ax-bi-frontend/packages/ax-bi-ui-core/src"],

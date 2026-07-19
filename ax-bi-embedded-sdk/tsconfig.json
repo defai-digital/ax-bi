@@ -9,7 +9,6 @@
     "target": "es6",
     "lib": ["DOM", "ESNext"],
     "module": "esnext",
-    "baseUrl": ".",
     "paths": {
       "@ax-bi/switchboard": [
         "../ax-bi-frontend/packages/ax-bi-switchboard/src"

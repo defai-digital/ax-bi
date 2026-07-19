@@ -303,11 +303,14 @@ functioning across environments.
 Make sure your machine meets the [OS dependencies](https://superset.apache.org/docs/installation/pypi#os-dependencies) before following these steps.
 You also need to install MySQL.
 
-Ensure that you are using Python version 3.12, then proceed with:
+Ensure that you are using Python version 3.12, then proceed with.
+Use a **single** project env at `./venv` (not `.venv`). Prefer the Makefile so
+the interpreter is always 3.12:
 
 ```bash
 # Create a virtual environment and activate it (recommended)
-python3 -m venv venv # setup a python3 virtualenv
+make venv                    # or: python3.12 -m venv venv
+# make venv-recreate         # if an old/wrong-version venv already exists
 source venv/bin/activate
 
 # Install external dependencies
@@ -339,7 +342,7 @@ Or you can install it via our Makefile
 
 ```bash
 # Create a virtual environment and activate it (recommended)
-$ python3 -m venv venv # setup a python3 virtualenv
+$ make venv                  # requires python3.12 on PATH
 $ source venv/bin/activate
 
 # install pip packages + pre-commit
@@ -363,7 +366,7 @@ If you have made changes to the FAB-managed templates, which are not built the s
 If you add a new requirement or update an existing requirement (per the `install_requires` section in `setup.py`) you must recompile (freeze) the Python dependencies to ensure that for CI, testing, etc. the build is deterministic. This can be achieved via,
 
 ```bash
-python3 -m venv venv
+make venv                    # or: python3.12 -m venv venv
 source venv/bin/activate
 python3 -m pip install -r requirements/development.txt
 ./scripts/uv-pip-compile.sh

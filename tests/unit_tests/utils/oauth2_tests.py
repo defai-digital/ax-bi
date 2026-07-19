@@ -139,7 +139,8 @@ def test_refresh_oauth2_token_deletes_token_on_oauth2_exception(
         refresh_oauth2_token(DUMMY_OAUTH2_CONFIG, 1, 1, db_engine_spec)
 
     db.session.delete.assert_called_with(token)
-    db.session.flush.assert_called_once()
+    # Token deletion is persisted via commit_session (session.commit).
+    db.session.commit.assert_called_once()
 
 
 def test_refresh_oauth2_token_keeps_token_on_other_exception(

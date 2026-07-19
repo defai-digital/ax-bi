@@ -82,6 +82,11 @@ export interface LocalRuntimeStatus {
   admin_username: string;
   admin_password_present: boolean;
   onboarding_required: boolean;
+  desktop_version: string;
+  axbi_image: string;
+  ax_services_image: string;
+  recommended_cpus: number;
+  recommended_memory_gb: number;
 }
 
 export interface LocalRuntimeCommandOutput {
@@ -179,7 +184,12 @@ function isLocalRuntimeStatus(value: unknown): value is LocalRuntimeStatus {
     typeof value['services_url'] === 'string' &&
     typeof value['admin_username'] === 'string' &&
     typeof value['admin_password_present'] === 'boolean' &&
-    typeof value['onboarding_required'] === 'boolean'
+    typeof value['onboarding_required'] === 'boolean' &&
+    typeof value['desktop_version'] === 'string' &&
+    typeof value['axbi_image'] === 'string' &&
+    typeof value['ax_services_image'] === 'string' &&
+    typeof value['recommended_cpus'] === 'number' &&
+    typeof value['recommended_memory_gb'] === 'number'
   );
 }
 

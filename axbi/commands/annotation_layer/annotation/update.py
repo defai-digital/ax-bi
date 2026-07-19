@@ -47,7 +47,8 @@ class UpdateAnnotationCommand(BaseCommand):
     @transaction(on_error=partial(on_error, reraise=AnnotationUpdateFailedError))
     def run(self) -> Model:
         self.validate()
-        assert self._model
+        if self._model is None:
+            raise AnnotationNotFoundError()
         return AnnotationDAO.update(self._model, self._properties)
 
     def validate(self) -> None:

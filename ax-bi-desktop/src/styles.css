@@ -970,3 +970,10 @@ input[readonly] {
     text-align: left;
   }
 }
+
+.runtime-meta {
+  margin: 0.35rem 0 0.75rem;
+  font-size: 0.8rem;
+  opacity: 0.75;
+  word-break: break-all;
+}

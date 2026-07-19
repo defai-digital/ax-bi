@@ -80,10 +80,10 @@ from axbi.utils.core import HeaderDataType, override_user, recipients_string_to_
 from axbi.utils.csv import get_chart_csv_data, get_chart_dataframe
 from axbi.utils.dates import naive_utcnow
 from axbi.utils.decorators import logs_context, transaction
-from axbi.utils.session_lifecycle import commit_session, rollback_session
 from axbi.utils.file import sanitize_title
 from axbi.utils.pdf import build_pdf_from_screenshots
 from axbi.utils.screenshots import ChartScreenshot, DashboardScreenshot
+from axbi.utils.session_lifecycle import commit_session, rollback_session
 from axbi.utils.slack import get_channels_with_search, SlackChannelTypes
 from axbi.utils.urls import get_url_path
 
@@ -616,7 +616,8 @@ class BaseReportState:
             raise ReportScheduleCsvFailedError(
                 f"Failed generating csv {str(ex)}"
             ) from ex
-        assert csv_data is not None
+        if csv_data is None:
+            raise ReportScheduleCsvFailedError()
         return csv_data
 
     def _get_embedded_data(self) -> pd.DataFrame:
@@ -654,7 +655,8 @@ class BaseReportState:
             raise ReportScheduleDataFrameFailedError(
                 f"Failed generating dataframe {str(ex)}"
             ) from ex
-        assert dataframe is not None
+        if dataframe is None:
+            raise ReportScheduleDataFrameFailedError()
         return dataframe
 
     def _update_query_context(self) -> None:

@@ -99,6 +99,11 @@ export default {
 
   webpackFinal: config => ({
     ...config,
+    // Match the main webpack build: optional axbi_text is absent in CI/storybook.
+    ignoreWarnings: [
+      ...(config.ignoreWarnings || []),
+      ...(customConfig.ignoreWarnings || []),
+    ],
     module: {
       ...config.module,
       rules: disableDevModeInRules(customConfig.module.rules),
@@ -111,6 +116,8 @@ export default {
         ...customConfig.resolve?.alias,
         // Shared storybook utilities
         '@storybook-shared': path.join(__dirname, 'shared'),
+        // Optional localization module lives outside the frontend tree; stub it.
+        [path.resolve(__dirname, '../../axbi_text')]: false,
       },
       fallback: {
         tty: false,

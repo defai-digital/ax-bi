@@ -108,12 +108,18 @@ What is already in good shape:
 ## Local environment checklist
 
 ```bash
-# Prefer the Makefile target so the venv is Python 3.12
-make venv
+# One canonical env: ./venv on Python 3.12+ (do not keep a parallel .venv)
+# IDE terminals do not auto-activate; source only when you need project tools
+make venv                 # fails if ./venv is < 3.12
+# make venv-recreate      # wipe and rebuild when the version is wrong
 source venv/bin/activate
+# or: ./venv/bin/pytest …   # no shell activate
+# Optional: remove leftover uv default env that can confuse IDEs
+# rm -rf .venv
 uv pip install -r requirements/development.txt
 uv pip install -e ax-bi-core
 uv pip install -e .
+python scripts/check-env.py --backend
 
 # Focused stability suite
 pytest tests/unit_tests/test_python_stability_guards.py \

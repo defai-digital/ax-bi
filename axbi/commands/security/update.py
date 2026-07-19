@@ -43,7 +43,8 @@ class UpdateRLSRuleCommand(BaseCommand):
     @transaction()
     def run(self) -> Any:
         self.validate()
-        assert self._model
+        if self._model is None:
+            raise RLSRuleNotFoundError()
         return RLSDAO.update(self._model, self._properties)
 
     def validate(self) -> None:

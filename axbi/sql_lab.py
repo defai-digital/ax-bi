@@ -14,7 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-# pylint: disable=consider-using-transaction
+
 import dataclasses
 import logging
 import sys
@@ -68,7 +68,11 @@ from axbi.utils.core import (
 from axbi.utils.dates import now_as_float
 from axbi.utils.decorators import stats_timing
 from axbi.utils.rls import apply_rls
-from axbi.utils.session_lifecycle import commit_session, rollback_session
+from axbi.utils.session_lifecycle import (
+    commit_session,
+    remove_session_safely,
+    rollback_session,
+)
 
 if TYPE_CHECKING:
     from axbi.models.core import Database
@@ -191,7 +195,17 @@ def get_sql_results(  # pylint: disable=too-many-arguments
 ) -> dict[str, Any] | None:
     """Executes the sql query returns the results."""
     with app.test_request_context():
-        with override_user(security_manager.find_user(username)):
+        try:
+            user = security_manager.find_user(username)
+        except Exception:
+            logger.exception(
+                "Query %d: failed to look up user %r, cleaning up session",
+                query_id,
+                username,
+            )
+            remove_session_safely(context="sql_lab find_user cleanup")
+            raise
+        with override_user(user):
             try:
                 return execute_sql_statements(
                     query_id,
@@ -278,7 +292,10 @@ def execute_query(  # pylint: disable=too-many-statements, too-many-locals  # no
                 log_params,
             )
         session = db.session()
-        db.session.commit()
+        # Persist caller-set attributes (e.g. executed_sql from
+        # mutate_sql_based_on_config) so the refresh below reloads the
+        # correct value instead of discarding uncommitted changes.
+        commit_session(db.session, context="sql_lab pre-execute persist", soft=True)
         # Eagerly reload query attributes so no lazy-load triggers a new
         # metadata DB connection during the (potentially long) cursor
         # execution. With NullPool each lazy-load opens a fresh connection
@@ -290,7 +307,7 @@ def execute_query(  # pylint: disable=too-many-statements, too-many-locals  # no
         try:
             db.session.refresh(query)
             _ = query.database
-            db.session.commit()
+            commit_session(db.session, context="sql_lab eager reload", soft=True)
         finally:
             session.expire_on_commit = expire_on_commit
         with event_logger.log_context(
@@ -439,7 +456,7 @@ def execute_sql_statements(  # noqa: C901
     logger.info("Query %s: Set query to 'running'", str(query_id))
     query.status = QueryStatus.RUNNING
     query.start_running_time = now_as_float()
-    db.session.commit()
+    commit_session(db.session, context="sql_lab set running", soft=True)
 
     parsed_script = SQLScript(rendered_query, engine=db_engine_spec.engine)
 
@@ -520,7 +537,7 @@ def execute_sql_statements(  # noqa: C901
         cancel_query_id = db_engine_spec.get_cancel_query_id(cursor, query)
         if cancel_query_id is not None:
             query.set_extra_json_key(QUERY_CANCEL_KEY, cancel_query_id)
-            db.session.commit()
+            commit_session(db.session, context="sql_lab cancel_query_id", soft=True)
 
         block_count = len(blocks)
         result_set = None
@@ -539,7 +556,7 @@ def execute_sql_statements(  # noqa: C901
             )
             logger.info("Query %s: %s", str(query_id), msg)
             query.set_extra_json_key("progress", msg)
-            db.session.commit()
+            commit_session(db.session, context="sql_lab progress update", soft=True)
 
             # Hook to allow environment-specific mutation (usually comments) to the SQL
             query.executed_sql = database.mutate_sql_based_on_config(block)
@@ -665,7 +682,9 @@ def execute_sql_statements(  # noqa: C901
                         "Failed to store query results in the results backend. "
                         "Please try again or contact your administrator."
                     )
-                    db.session.commit()
+                    commit_session(
+                        db.session, context="sql_lab failed status", soft=True
+                    )
                     raise AxBIErrorException(
                         AxBIError(
                             message=__(
@@ -687,7 +706,7 @@ def execute_sql_statements(  # noqa: C901
     # Only set SUCCESS if we didn't already set FAILED above
     if query.status != QueryStatus.FAILED:
         query.status = QueryStatus.SUCCESS
-    db.session.commit()
+    commit_session(db.session, context="sql_lab final status", soft=False)
 
     if return_results:
         # since we're returning results we need to create non-arrow data
