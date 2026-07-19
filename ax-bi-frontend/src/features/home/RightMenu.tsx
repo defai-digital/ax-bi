@@ -32,7 +32,6 @@ import {
   Menu,
   Icons,
   Typography,
-  Modal,
 } from '@ax-bi/ui-core/components';
 import type { ItemType, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { ensureAppRoot } from 'src/utils/pathUtils';
@@ -155,31 +154,11 @@ const RightMenu = ({
   const history = useHistory();
   const commandPalette = useOptionalCommandPalette();
   const isMac = navigator.platform?.toLowerCase().includes('mac') ?? false;
-  const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [desktopShellActive, setDesktopShellActive] = useState(() =>
     isDesktopShellActive(),
   );
   const [desktopShellStatus, setDesktopShellStatus] = useState(() =>
     getDesktopShellStatus(),
-  );
-
-  const aboutLines = useMemo(
-    () =>
-      [
-        navbarRight.show_watermark && t('Powered by AX BI'),
-        navbarRight.version_string &&
-          `${t('Runtime version')}: ${navbarRight.version_string}`,
-        navbarRight.version_sha &&
-          `${t('SHA')}: ${navbarRight.version_sha}`,
-        navbarRight.build_number &&
-          `${t('Build')}: ${navbarRight.build_number}`,
-      ].filter((line): line is string => Boolean(line)),
-    [
-      navbarRight.show_watermark,
-      navbarRight.version_string,
-      navbarRight.version_sha,
-      navbarRight.build_number,
-    ],
   );
 
   useEffect(() => {
@@ -476,43 +455,45 @@ const RightMenu = ({
         });
       }
 
-      // About: version/build identity. "About" itself is a real clickable item
-      // that opens a modal; version lines are also listed so they are visible
-      // when Settings is open (antd 6 group labels alone are not actionable).
-      if (aboutLines.length > 0) {
+      // About: static version/build text only (not a link and not a modal).
+      if (navbarRight.version_string || navbarRight.version_sha) {
         items.push({ type: 'divider', key: 'version-info-divider' });
-
-        const aboutChildren: MenuItem[] = [
-          {
-            key: 'about-open',
-            icon: <Icons.InfoCircleOutlined />,
-            label: t('About AX BI'),
-            onClick: () => setAboutModalOpen(true),
-          },
-          ...aboutLines.map((line, i) => ({
-            key: `about-line-${i}`,
-            disabled: true,
-            label: (
-              <span
-                css={(theme: AxBITheme) => css`
-                  font-size: ${theme.fontSizeSM}px;
-                  color: ${theme.colorTextSecondary};
-                  white-space: pre-wrap;
-                `}
-              >
-                {line}
-              </span>
-            ),
-          })),
-        ];
-
-        const aboutItem: ItemType = {
+        items.push({
           type: 'group',
           label: t('About'),
           key: 'about-section',
-          children: aboutChildren,
-        };
-        items.push(aboutItem);
+          children: [
+            {
+              key: 'about-info',
+              style: { height: 'auto', minHeight: 'auto', cursor: 'default' },
+              label: (
+                <div
+                  css={(theme: AxBITheme) => css`
+                    font-size: ${theme.fontSizeSM}px;
+                    color: ${theme.colorTextSecondary || theme.colorText};
+                    white-space: pre-wrap;
+                    padding: ${theme.sizeUnit}px ${theme.sizeUnit * 2}px;
+                    line-height: 1.5;
+                    pointer-events: none;
+                    user-select: text;
+                  `}
+                >
+                  {[
+                    navbarRight.show_watermark && t('Powered by AX BI'),
+                    navbarRight.version_string &&
+                      `${t('Runtime version')}: ${navbarRight.version_string}`,
+                    navbarRight.version_sha &&
+                      `${t('SHA')}: ${navbarRight.version_sha}`,
+                    navbarRight.build_number &&
+                      `${t('Build')}: ${navbarRight.build_number}`,
+                  ]
+                    .filter(Boolean)
+                    .join('\n')}
+                </div>
+              ),
+            },
+          ],
+        });
       }
 
       // Help group (documentation and bug report links moved from top-level navbar)
@@ -641,38 +622,10 @@ const RightMenu = ({
     handleLogout,
     desktopShellActive,
     desktopShellStatus,
-    aboutLines,
   ]);
 
   return (
     <StyledDiv align={align}>
-      <Modal
-        show={aboutModalOpen}
-        onHide={() => setAboutModalOpen(false)}
-        title={t('About AX BI')}
-        hideFooter
-        responsive
-        name="about-ax-bi"
-      >
-        <div
-          css={(theme: AxBITheme) => css`
-            display: flex;
-            flex-direction: column;
-            gap: ${theme.sizeUnit * 2}px;
-            font-size: ${theme.fontSize}px;
-            color: ${theme.colorText};
-            line-height: 1.6;
-          `}
-        >
-          {aboutLines.length > 0 ? (
-            aboutLines.map(line => (
-              <div key={line}>{line}</div>
-            ))
-          ) : (
-            <div>{t('Powered by AX BI')}</div>
-          )}
-        </div>
-      </Modal>
       <Menu
         css={css`
           display: flex;
