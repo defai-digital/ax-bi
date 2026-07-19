@@ -13,8 +13,10 @@
     "build:debug": "npx tauri build --debug",
     "release:set-version": "node scripts/release/set-version.mjs",
     "release:write-cask": "node scripts/release/write-homebrew-cask.mjs",
+    "release:write-winget": "node scripts/release/write-winget-manifests.mjs",
     "release:minisign": "node scripts/release/minisign-artifacts.mjs",
-    "test:release-signing": "node --test scripts/release/release-signing.test.mjs",
+    "test:release-signing": "node --test scripts/release/release-signing.test.mjs scripts/release/write-winget-manifests.test.mjs",
+    "test:winget-manifests": "node --test scripts/release/write-winget-manifests.test.mjs",
     "release:notarize": "bash scripts/release/notarize-macos.sh"
   },
   "dependencies": {

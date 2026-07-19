@@ -10,6 +10,8 @@ Tauri desktop shell. It follows the same trust model as **AX Studio** and
 4. Detached **minisign** signatures on all assets
 5. Automated Homebrew cask update for
    [defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi)
+6. Generate winget manifests (`DEFAI.AXBI`) from minisign-verified Windows
+   installers and attach `AX.BI_*_winget-manifests.zip` to the release
 
 ## Product naming
 
@@ -58,6 +60,7 @@ tag ax-bi-desktop-vX.Y.Z
   → re-download and verify Apple trust + minisign coverage
   → publish release
   → verify DMG minisign, then push Casks/ax-bi.rb (SHA256 of DMG)
+  → verify Windows installers with minisign, write winget manifests, attach zip
 ```
 
 Workflow file: [`.github/workflows/ax-bi-desktop-release.yml`](../.github/workflows/ax-bi-desktop-release.yml)
@@ -333,7 +336,9 @@ gh secret set HOMEBREW_TAP_TOKEN -R defai-digital/ax-bi
 | `scripts/release/rename-release-assets.mjs` | Normalize `AX BI_*` → `AX.BI_*` asset names |
 | `scripts/release/minisign-artifacts.mjs` | Sign / verify artifacts |
 | `scripts/release/write-homebrew-cask.mjs` | Emit `Casks/ax-bi.rb` for the tap |
+| `scripts/release/write-winget-manifests.mjs` | Emit winget multi-file manifests (`DEFAI.AXBI`) |
 | `packaging/homebrew/Casks/ax-bi.rb.template` | Documented cask shape |
+| `packaging/winget/` | winget manifest templates (`DEFAI.AXBI`) |
 
 ## Windows notes
 
@@ -343,15 +348,31 @@ gh secret set HOMEBREW_TAP_TOKEN -R defai-digital/ax-bi
 - Stable releases fail closed if the Azure signing credentials are absent, a
   signature is invalid, or the signer thumbprint differs from the pinned DEFAI
   certificate.
-- Homebrew is macOS-only; Windows users download from GitHub Releases.
+- **Do not** put the DigiCert PFX in GitHub Actions or treat it as an Apple
+  codesign identity. The PFX is an offline backup of Key Vault `cert-defai`;
+  production signing is AzureSignTool against the vault only.
+- Homebrew is macOS-only. Windows users install from GitHub Releases (signed
+  NSIS/MSI) or, once published, `winget install -e --id DEFAI.AXBI`.
+- winget manifests are **generated in CI** after publish
+  (`prepare-winget-manifests`): minisign-verify NSIS+MSI →
+  `write-winget-manifests.mjs` → attach `AX.BI_*_winget-manifests.zip`.
+  Opening a PR to `microsoft/winget-pkgs` remains a **manual** maintainer step
+  (see [`packaging/winget/README.md`](packaging/winget/README.md)).
+  Skip with workflow input `skip_winget`.
+- For **Run locally**, document Docker Desktop separately
+  (`winget install -e --id Docker.DockerDesktop`). Do not list Docker Desktop as
+  a hard winget package dependency.
 
 ## Trust layers (do not collapse)
 
 | Layer | Protects | Mechanism |
 | --- | --- | --- |
 | Apple notarization | Gatekeeper first launch | Developer ID + notarytool + staple |
+| Windows Authenticode | SmartScreen / publisher trust | DigiCert code signing via Azure Key Vault (`cert-defai`, thumbprint `FC40F110…`) |
 | minisign | Download integrity | Detached `.minisig` on GitHub assets |
 | Homebrew SHA256 | Cask install integrity | `sha256` in `Casks/ax-bi.rb` |
+| winget InstallerSha256 | winget install integrity | SHA-256 in `DEFAI.AXBI.installer.yaml` |
 
-minisign does **not** replace notarization. Homebrew SHA256 does **not** replace
-minisign for non-brew downloaders.
+minisign does **not** replace notarization or Authenticode. Homebrew SHA256 does
+**not** replace minisign for non-brew downloaders. winget SHA-256 does **not**
+replace Authenticode publisher trust.

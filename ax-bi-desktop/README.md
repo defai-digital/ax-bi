@@ -69,12 +69,31 @@ using the standalone DMG:
 brew install colima lima docker docker-compose
 ```
 
-On Windows, install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
-so the Docker CLI and engine are available.
+### Windows user install
+
+1. Download the Authenticode-signed installer from
+   [GitHub Releases](https://github.com/defai-digital/ax-bi/releases)
+   (`AX.BI_*_x64-setup.exe` or `.msi`). Publisher: **DEFAI Private Limited**.
+2. For **Run locally**, install Docker Desktop once:
+
+   ```powershell
+   winget install -e --id Docker.DockerDesktop
+   ```
+
+   Or use [Docker’s Windows installer](https://docs.docker.com/desktop/setup/install/windows-install/).
+3. Open **AX BI** from the Start menu.
+
+When the winget package is published:
+
+```powershell
+winget install -e --id DEFAI.AXBI
+```
+
+Manifest templates: [packaging/winget/](packaging/winget/README.md).
 
 See [LOCAL_RUNTIME.md](LOCAL_RUNTIME.md) for runtime architecture and
-[RELEASE.md](RELEASE.md) for CI/CD, Apple signing, minisign, and Homebrew
-automation (aligned with AX Studio / AX Code Desktop).
+[RELEASE.md](RELEASE.md) for CI/CD, Apple signing, Windows Authenticode (Azure
+Key Vault), minisign, Homebrew, and winget packaging.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

@@ -1,5 +1,6 @@
 # AX BI Desktop release: signed macOS DMG, Windows installers, minisign,
-# GitHub Release, and Homebrew tap update for defai-digital/homebrew-ax-bi.
+# GitHub Release, Homebrew tap update for defai-digital/homebrew-ax-bi, and
+# winget manifest generation (DEFAI.AXBI) attached to the release.
 #
 # Trigger:
 #   git tag ax-bi-desktop-v0.1.0 && git push origin ax-bi-desktop-v0.1.0
@@ -21,6 +22,11 @@ on:
         type: string
       skip_homebrew:
         description: "Skip Homebrew tap update"
+        required: false
+        type: boolean
+        default: false
+      skip_winget:
+        description: "Skip winget manifest generation"
         required: false
         type: boolean
         default: false
@@ -671,3 +677,112 @@ jobs:
           git diff --cached --quiet && echo "No cask changes to commit." && exit 0
           git commit -m "Update ax-bi cask to ${VERSION}"
           git push
+
+  prepare-winget-manifests:
+    needs: [resolve-version, publish-release]
+    if: ${{ github.event.inputs.skip_winget != 'true' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ needs.resolve-version.outputs.version }}
+      TAG: ${{ needs.resolve-version.outputs.tag }}
+    steps:
+      - name: Checkout monorepo scripts
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install minisign and zip
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y minisign zip
+
+      - name: Download and verify Windows installers
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          mkdir -p winget-artifacts
+          # Resolve actual asset names (Tauri MSI may include locale, e.g. x64_en-US.msi).
+          mapfile -t ASSETS < <(
+            gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json assets \
+              --jq '.assets[].name' | sort
+          )
+          NSIS=""
+          MSI=""
+          for name in "${ASSETS[@]}"; do
+            case "$name" in
+              *.minisig) continue ;;
+            esac
+            if [[ "$name" == AX.BI_${VERSION}_*x64*-setup.exe ]]; then
+              NSIS="$name"
+            fi
+            if [[ "$name" == AX.BI_${VERSION}_*x64*.msi ]]; then
+              MSI="$name"
+            fi
+          done
+          if [[ -z "$NSIS" ]]; then
+            echo "::error::No x64 NSIS setup.exe found on release $TAG"
+            printf '%s\n' "${ASSETS[@]}"
+            exit 1
+          fi
+          if [[ -z "$MSI" ]]; then
+            echo "::error::No x64 MSI found on release $TAG"
+            printf '%s\n' "${ASSETS[@]}"
+            exit 1
+          fi
+          echo "NSIS=$NSIS" >> "$GITHUB_ENV"
+          echo "MSI=$MSI" >> "$GITHUB_ENV"
+          for name in "$NSIS" "$MSI"; do
+            curl -fSL --retry 6 --retry-all-errors --retry-delay 10 \
+              -o "winget-artifacts/$name" \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${name}"
+            curl -fSL --retry 6 --retry-all-errors --retry-delay 10 \
+              -o "winget-artifacts/${name}.minisig" \
+              "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${name}.minisig"
+            minisign -V \
+              -p ax-bi-desktop/docs/ax-bi.minisign.pub \
+              -m "winget-artifacts/$name" \
+              -x "winget-artifacts/${name}.minisig"
+          done
+          echo "Verified minisign for $NSIS and $MSI"
+
+      - name: Generate winget manifests
+        run: |
+          set -euo pipefail
+          RELEASE_DATE="$(date -u +%Y-%m-%d)"
+          node ax-bi-desktop/scripts/release/write-winget-manifests.mjs \
+            --version "$VERSION" \
+            --tag "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --artifact-dir winget-artifacts \
+            --out-dir winget-out \
+            --release-date "$RELEASE_DATE"
+          test -f "winget-out/manifests/d/DEFAI/AXBI/${VERSION}/DEFAI.AXBI.yaml"
+          test -f "winget-out/manifests/d/DEFAI/AXBI/${VERSION}/DEFAI.AXBI.installer.yaml"
+          test -f "winget-out/manifests/d/DEFAI/AXBI/${VERSION}/DEFAI.AXBI.locale.en-US.yaml"
+          (
+            cd winget-out
+            zip -r "../AX.BI_${VERSION}_winget-manifests.zip" manifests
+          )
+          ls -la "AX.BI_${VERSION}_winget-manifests.zip"
+          echo "WINGET_ZIP=AX.BI_${VERSION}_winget-manifests.zip" >> "$GITHUB_ENV"
+
+      - name: Upload winget manifests to GitHub release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" "$WINGET_ZIP" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Upload winget workflow artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ax-bi-desktop-winget-${{ needs.resolve-version.outputs.version }}
+          path: |
+            winget-out/manifests/**
+            AX.BI_${{ needs.resolve-version.outputs.version }}_winget-manifests.zip
+          retention-days: 14

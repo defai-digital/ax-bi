@@ -63,8 +63,8 @@ local stack. You do not need to clone this repository for day-to-day use.
 | Platform | Status | Install path |
 | --- | --- | --- |
 | macOS Apple Silicon | Active support | Homebrew cask or GitHub release DMG |
-| Windows x64 | Active support | GitHub release installer (NSIS / MSI) |
-| Windows ARM64 | Active support | GitHub release installer when published; otherwise use the x64 installer |
+| Windows x64 | Active support | Signed NSIS/MSI from GitHub Releases; winget (`DEFAI.AXBI`) when published |
+| Windows ARM64 | Active support | Signed installer when published; otherwise use the x64 installer |
 | Linux servers | Active support | Docker Compose or Helm (self-hosted stack, not a desktop shell) |
 
 ### Install AX BI Desktop
@@ -120,23 +120,69 @@ Prefer not to use Homebrew? Download the notarized macOS DMG from
 
 #### Windows
 
+Product name on Windows is **AX BI** (same as macOS). Installers are
+**Authenticode-signed** by **DEFAI Private Limited** (DigiCert code signing via
+Azure Key Vault). Prefer the signed installer or winget — not curl-based
+bootstrap scripts.
+
+**Recommended: GitHub Releases installer**
+
 1. Open the [latest AX BI release](https://github.com/defai-digital/ax-bi/releases/latest)
    (desktop tags look like `ax-bi-desktop-v*`).
 2. Download the installer for your machine:
-   - **Windows x64 (Intel/AMD):** `AX.BI_<version>_x64-setup.exe` (or the matching `.msi`)
-   - **Windows ARM64:** `AX.BI_<version>_arm64-setup.exe` when present; otherwise use the x64 installer
-3. Run the installer and finish the setup wizard.
+   - **Windows x64 (Intel/AMD):** `AX.BI_<version>_x64-setup.exe` (NSIS) or
+     `AX.BI_<version>_x64.msi`
+   - **Windows ARM64:** `AX.BI_<version>_arm64-setup.exe` / matching `.msi` when
+     present; otherwise use the x64 installer under emulation
+3. Run the installer. The publisher should read **DEFAI Private Limited**.
 4. Open **AX BI** from the Start menu.
 
-Product name on Windows is **AX BI** (same as macOS).
+**winget (when published)**
 
-For **Run locally** on Windows, install [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/)
-and ensure it is running (or startable). AX BI Desktop will prepare Compose
-files under the app data directory, start the stack, and open the local web UI
-the same way as on macOS.
+```powershell
+winget install -e --id DEFAI.AXBI
+```
 
-Integrity check — every stable desktop asset includes a detached minisign
-signature (`.minisig`). Verify with
+Manifest generation and submit steps live in
+[`ax-bi-desktop/packaging/winget/`](https://github.com/defai-digital/ax-bi/tree/main/ax-bi-desktop/packaging/winget).
+Each desktop release attaches `AX.BI_*_winget-manifests.zip` (for maintainers
+to PR into winget-pkgs). Until the package is in the community repository, use
+the GitHub Releases installer above.
+
+**Run locally dependency (Docker Desktop)**
+
+For **Run locally**, install Docker Desktop once and leave it startable. Easiest
+on modern Windows:
+
+```powershell
+winget install -e --id Docker.DockerDesktop
+```
+
+Or follow [Docker Desktop for Windows](https://docs.docker.com/desktop/setup/install/windows-install/).
+AX BI Desktop prepares Compose under the app data directory, starts the stack,
+and opens the local web UI the same way as on macOS. **Connect to server** does
+not require Docker.
+
+**Enterprise / silent MSI**
+
+```powershell
+# Quiet install (elevated shell when required by policy)
+msiexec /i AX.BI_<version>_x64.msi /qn /norestart
+```
+
+**Verify Authenticode (optional)**
+
+```powershell
+Get-AuthenticodeSignature .\AX.BI_<version>_x64-setup.exe |
+  Format-List Status, StatusMessage, SignerCertificate
+
+# Expected DEFAI DigiCert thumbprint (SHA-1, no spaces):
+# FC40F1109912C025E751E804AA9BD1538A2D12EF
+(Get-AuthenticodeSignature .\AX.BI_<version>_x64-setup.exe).SignerCertificate.Thumbprint
+```
+
+**Optional minisign** (extra integrity layer; not required for normal installs).
+Every stable desktop asset includes a detached `.minisig`. Verify with
 [`ax-bi-desktop/docs/ax-bi.minisign.pub`](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-desktop/docs/ax-bi.minisign.pub):
 
 ```powershell
@@ -155,7 +201,9 @@ minisign -Vm .\AX.BI_0.1.0_x64-setup.exe -p .\ax-bi.minisign.pub
      - **Windows:** Docker Desktop / Docker Engine + Docker Compose (same
        images and ports: `31423` / `31421` / `31424`).
 3. When connected, the web app fills the desktop window.
-4. Default local stack login (unless you changed it): `admin` / `admin`.
+4. Local admin login is shown on first **Run locally** (username `admin`; password
+   is generated and kept under **Settings → Advanced runtime → Credentials**).
+   Do not assume a fixed default password.
 
 Deep links such as `axbi://dashboard/{id}` open in the desktop shell on both
 platforms. More detail:
@@ -173,9 +221,10 @@ brew upgrade --cask defai-digital/ax-bi/ax-bi
 
 **Windows**
 
-Download and run the latest installer from
-[GitHub Releases](https://github.com/defai-digital/ax-bi/releases/latest).
-The installer upgrades the existing **AX BI** install.
+- Download and run the latest installer from
+  [GitHub Releases](https://github.com/defai-digital/ax-bi/releases/latest)
+  (upgrades the existing **AX BI** install), or
+- When the winget package is published: `winget upgrade -e --id DEFAI.AXBI`
 
 ### Uninstall
 
@@ -188,8 +237,9 @@ brew untap defai-digital/ax-bi
 
 **Windows**
 
-Use **Settings → Apps → Installed apps → AX BI → Uninstall**, or the uninstaller
-shipped with the NSIS/MSI package.
+Use **Settings → Apps → Installed apps → AX BI → Uninstall**, the uninstaller
+shipped with the NSIS/MSI package, or (when published)
+`winget uninstall -e --id DEFAI.AXBI`.
 
 ### Docker / Kubernetes (servers and shared teams)
 
@@ -546,7 +596,7 @@ Want to add support for your datastore or data engine? Read about the [technical
 | Audience | Recommended path |
 | --- | --- |
 | macOS desktop | **Homebrew** or DMG — see [Get Started → macOS](#macos) |
-| Windows desktop | **NSIS/MSI installer** — see [Get Started → Windows](#windows) |
+| Windows desktop | **Signed NSIS/MSI** (winget when published) — see [Get Started → Windows](#windows) |
 | Shared / always-on server | Docker Compose or Helm |
 | Production | Managed Postgres/Redis, pinned image tags, Helm |
 
@@ -557,9 +607,11 @@ Want to add support for your datastore or data engine? Read about the [technical
   open -a "AX BI"
   ```
 
-- **Windows** — download `AX.BI_*_x64-setup.exe` (or ARM64 when published) from
-  [GitHub Releases](https://github.com/defai-digital/ax-bi/releases/latest) and
-  run the installer.
+- **Windows** — download Authenticode-signed `AX.BI_*_x64-setup.exe` or `.msi`
+  from [GitHub Releases](https://github.com/defai-digital/ax-bi/releases/latest)
+  (publisher **DEFAI Private Limited**). For **Run locally**, install Docker
+  Desktop (`winget install -e --id Docker.DockerDesktop`). winget package
+  templates: [`ax-bi-desktop/packaging/winget/`](https://github.com/defai-digital/ax-bi/tree/main/ax-bi-desktop/packaging/winget).
 
 - **Docker Compose** — for servers and teams (see [Docker Compose](#docker-compose-server--team)):
 

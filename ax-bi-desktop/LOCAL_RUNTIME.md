@@ -42,8 +42,11 @@ Use Homebrew for installation, then let the Tauri app manage the local runtime.
 
 **Windows** expects:
 
-- AX BI Desktop (installer).
-- Docker Desktop (or any Docker Engine the CLI can reach).
+- AX BI Desktop (Authenticode-signed NSIS/MSI from GitHub Releases, or
+  `winget install -e --id DEFAI.AXBI` once published — see
+  [`packaging/winget/`](packaging/winget/README.md)).
+- Docker Desktop (or any Docker Engine the CLI can reach). Prefer
+  `winget install -e --id Docker.DockerDesktop` on modern Windows.
 
 The Tauri app should manage:
 
@@ -208,5 +211,6 @@ brew upgrade --cask defai-digital/ax-bi/ax-bi
 ```
 
 The cask installs **AX BI.app**. Local runtime (Colima + Lima + Compose) is
-managed by the app after install. On Windows, install Docker Desktop once; the
-app manages Compose lifecycle against that engine.
+managed by the app after install. On Windows, install Docker Desktop once
+(`winget install -e --id Docker.DockerDesktop` or Docker’s installer); the app
+manages Compose lifecycle against that engine.
