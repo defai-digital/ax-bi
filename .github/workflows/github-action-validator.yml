@@ -89,3 +89,4 @@ jobs:
           # Run zizmor as a blocking check without requiring code scanning/GHAS
           # support for SARIF upload in forks.
           advanced-security: false
+          version: 1.26.1
