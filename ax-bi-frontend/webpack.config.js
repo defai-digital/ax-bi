@@ -234,11 +234,17 @@ if (!isDevMode) {
 // build: true enables project references so .d.ts files are auto-generated
 // across the monorepo when editing plugins/packages.
 // mode: 'write-references' writes .d.ts output (no manual `npm run plugins:build` needed).
-// Set DISABLE_TS_CHECKER=true to skip this plugin entirely (~2-3 GB savings).
-// Type errors are still caught by pre-commit and CI.
-const disableTsChecker = ['true', '1'].includes(
-  (process.env.DISABLE_TS_CHECKER || '').toLowerCase(),
+//
+// Dev default: TypeScript checker OFF so TS6 debt does not mark the webpack
+// build failed / show "Compiled with problems". Runtime still builds via SWC.
+// Re-enable with ENABLE_TS_CHECKER=true. Explicit DISABLE_TS_CHECKER=true still
+// skips. Type errors remain gated by pre-commit and CI.
+const enableTsChecker = ['true', '1'].includes(
+  (process.env.ENABLE_TS_CHECKER || '').toLowerCase(),
 );
+const disableTsChecker =
+  !enableTsChecker ||
+  ['true', '1'].includes((process.env.DISABLE_TS_CHECKER || '').toLowerCase());
 if (isDevMode && !disableTsChecker) {
   plugins.push(
     new ForkTsCheckerWebpackPlugin({
