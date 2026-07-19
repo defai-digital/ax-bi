@@ -16,7 +16,7 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="22" fill="#35c98d" />
-  <text x="50" y="50" text-anchor="middle" dominant-baseline="central" font-family="'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace" font-weight="700" font-size="48" fill="#1f2434">{&#946;}</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 46">
+  <text x="7" y="23" dominant-baseline="central" font-family="'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace" font-weight="700" font-size="26"><tspan fill="#35c98d">{</tspan><tspan fill="#f5f7fa">&#946;</tspan><tspan fill="#35c98d">}</tspan></text>
+  <text x="60" y="23" dominant-baseline="central" font-family="'Helvetica Neue', Arial, sans-serif" font-weight="700" font-size="23" fill="#f5f7fa">AX-BI</text>
 </svg>

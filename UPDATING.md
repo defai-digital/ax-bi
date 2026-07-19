@@ -24,6 +24,13 @@ assists people when migrating to a new version.
 
 ## Next
 
+### Minisign release signatures
+
+The `scripts/sign.sh` release helper uses minisign instead of GPG. It writes a
+detached `.minisig` signature and a `.sha512` checksum. Local signing defaults
+to `~/signkey/ax.minisign.key` and `~/signkey/ax.pub`; override those paths with
+`AX_MINISIGN_SECRET_KEY` and `AX_MINISIGN_PUBLIC_KEY` when needed.
+
 ### AX Services requires authentication outside loopback deployments
 
 AX Services now validates Bearer credentials on every endpoint except

@@ -135,8 +135,8 @@ and ensure it is running (or startable). AX BI Desktop will prepare Compose
 files under the app data directory, start the stack, and open the local web UI
 the same way as on macOS.
 
-Optional integrity check — every stable desktop asset can include a detached
-minisign signature (`.minisig`). Verify with
+Integrity check — every stable desktop asset includes a detached minisign
+signature (`.minisig`). Verify with
 [`ax-bi-desktop/docs/ax-bi.minisign.pub`](https://github.com/defai-digital/ax-bi/blob/main/ax-bi-desktop/docs/ax-bi.minisign.pub):
 
 ```powershell

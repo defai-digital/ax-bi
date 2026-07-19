@@ -789,10 +789,10 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
 
         Flask-AppBuilder stores the key itself as a salted hash. Its default
         ``key_prefix`` value only contains the shared ``sst_`` prefix, which is
-        not enough to distinguish a user's keys in the navbar. Preserve five
-        leading characters from the random key body and five trailing
-        characters as a safe display hint while the plaintext continues to be
-        returned only by the creation response.
+        not enough to distinguish a user's keys in the navbar. Preserve eight
+        leading and eight trailing characters from the full plaintext key as a
+        safe display hint while the plaintext continues to be returned only by
+        the creation response.
         """
         result = super().create_api_key(
             user=user,
@@ -812,19 +812,10 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
         if api_key is None:
             return result
 
-        configured_prefixes = (
-            current_app.config.get("FAB_API_KEY_PREFIXES", ["sst_"]) or []
-        )
-        shared_prefix = next(
-            (
-                prefix
-                for prefix in configured_prefixes
-                if isinstance(prefix, str) and raw_key.startswith(prefix)
-            ),
-            "",
-        )
-        key_body = raw_key[len(shared_prefix) :]
-        display_hint = f"{key_body[:5]}{raw_key[-5:]}"
+        # Use the full key (including the shared prefix like "sst_") so the
+        # navbar hint matches what the user actually copied. 8+8 fits the
+        # 16-char key_prefix column.
+        display_hint = f"{raw_key[:8]}{raw_key[-8:]}"
         api_key.key_prefix = display_hint
         try:
             self.session.commit()

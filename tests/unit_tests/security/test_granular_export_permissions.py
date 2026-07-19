@@ -127,8 +127,9 @@ def test_create_api_key_persists_masked_display_hint(app_context: None) -> None:
         result = sm.create_api_key(MagicMock(), "AX BI MCP")
 
     assert result is not None
-    assert result["key_prefix"] == "M8hayhfdsG"
-    assert api_key.key_prefix == "M8hayhfdsG"
+    # Full key "sst_M8hayd7-example-secret-iay8hfdsG" → left 8 + right 8.
+    assert result["key_prefix"] == "sst_M8haay8hfdsG"
+    assert api_key.key_prefix == "sst_M8haay8hfdsG"
     commit.assert_called_once_with()
 
 

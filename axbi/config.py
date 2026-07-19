@@ -120,18 +120,20 @@ PACKAGE_JSON_FILE = str(files("axbi") / "static/assets/package.json")
 #     "rel": "icon"
 # },
 FAVICONS = [
-    {"href": "/static/assets/images/favicon.ico"},
+    # The "?v=" suffix busts sticky browser favicon caches after artwork
+    # updates; bump it whenever the favicon files change.
+    {"href": "/static/assets/images/favicon.ico?v=2"},
     {
-        "href": "/static/assets/images/favicon.svg",
+        "href": "/static/assets/images/favicon.svg?v=2",
         "type": "image/svg+xml",
     },
     {
-        "href": "/static/assets/images/favicon-96x96.png",
+        "href": "/static/assets/images/favicon-96x96.png?v=2",
         "sizes": "96x96",
         "type": "image/png",
     },
     {
-        "href": "/static/assets/images/apple-touch-icon.png",
+        "href": "/static/assets/images/apple-touch-icon.png?v=2",
         "rel": "apple-touch-icon",
         "sizes": "180x180",
     },

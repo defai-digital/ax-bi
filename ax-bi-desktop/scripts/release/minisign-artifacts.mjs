@@ -3,9 +3,9 @@
  * Sign (or verify) release artifacts with minisign.
  *
  * Local defaults (macOS):
- *   ~/signkey/ax-bi.minisign.key
- *   ~/signkey/ax-bi.minisign.pub
- *   Keychain account: ax-bi-minisign (optional passphrase)
+ *   ~/signkey/ax.minisign.key (may be a symlink to ax.sec)
+ *   ~/signkey/ax.pub
+ *   Keychain service/account: ax-minisign/ax-release (optional passphrase)
  *
  * CI:
  *   Decode AX_BI_MINISIGN_SECRET_KEY_B64 / PUBLIC_KEY into --key-dir and set
@@ -16,9 +16,11 @@
  */
 
 import { execFileSync, spawnSync } from 'node:child_process'
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const args = new Map()
 const files = []
@@ -47,7 +49,7 @@ for (let index = 2; index < process.argv.length; index += 1) {
 
 function usage() {
   console.error(
-    'usage: node scripts/release/minisign-artifacts.mjs [--key-dir <path>] [--secret-key <path>] [--public-key <path>] [--password-keychain-account <name>] [--verify-only] [--force] <file...>',
+    'usage: node scripts/release/minisign-artifacts.mjs [--key-dir <path>] [--secret-key <path>] [--public-key <path>] [--pinned-public-key <path>] [--password-keychain-service <name>] [--password-keychain-account <name>] [--verify-only] [--force] <file...>',
   )
 }
 
@@ -89,13 +91,18 @@ function resolvePath(value, fallback) {
 const keyDir = resolvePath(args.get('key-dir'), path.join(os.homedir(), 'signkey'))
 const secretKey = resolvePath(
   args.get('secret-key'),
-  path.join(keyDir, 'ax-bi.minisign.key'),
+  path.join(keyDir, 'ax.minisign.key'),
 )
 const publicKey = resolvePath(
   args.get('public-key'),
-  path.join(keyDir, 'ax-bi.minisign.pub'),
+  path.join(keyDir, 'ax.pub'),
 )
-const keychainAccount = args.get('password-keychain-account') ?? 'ax-bi-minisign'
+const pinnedPublicKey = resolvePath(
+  args.get('pinned-public-key'),
+  fileURLToPath(new URL('../../docs/ax-bi.minisign.pub', import.meta.url)),
+)
+const keychainService = args.get('password-keychain-service') ?? 'ax-minisign'
+const keychainAccount = args.get('password-keychain-account') ?? 'ax-release'
 
 if (spawnSync('minisign', ['-v'], { stdio: 'ignore' }).error) {
   fail('minisign is required (brew install minisign)')
@@ -105,8 +112,39 @@ if (!fs.existsSync(publicKey)) {
   fail(`public key not found: ${publicKey}`)
 }
 
+if (!fs.existsSync(pinnedPublicKey)) {
+  fail(`pinned public key not found: ${pinnedPublicKey}`)
+}
+
 if (!verifyOnly && !fs.existsSync(secretKey)) {
   fail(`secret key not found: ${secretKey}`)
+}
+
+if (!verifyOnly && process.platform !== 'win32') {
+  const secretMode = fs.statSync(secretKey).mode & 0o777
+  const keyDirectoryMode = fs.statSync(path.dirname(secretKey)).mode & 0o777
+  if ((secretMode & 0o077) !== 0) {
+    fail(`secret key must not be group/world accessible: ${secretKey}`)
+  }
+  if ((keyDirectoryMode & 0o077) !== 0) {
+    fail(`secret key directory must not be group/world accessible: ${path.dirname(secretKey)}`)
+  }
+}
+
+function publicKeyMaterial(file) {
+  return fs
+    .readFileSync(file, 'utf8')
+    .split(/\r?\n/u)
+    .find(line => line.startsWith('RW'))
+}
+
+const selectedPublicKey = publicKeyMaterial(publicKey)
+const expectedPublicKey = publicKeyMaterial(pinnedPublicKey)
+if (!selectedPublicKey || !expectedPublicKey) {
+  fail('selected or pinned minisign public key is malformed')
+}
+if (selectedPublicKey !== expectedPublicKey) {
+  fail(`public key does not match pinned release key: ${pinnedPublicKey}`)
 }
 
 let password
@@ -119,7 +157,14 @@ if (!verifyOnly) {
   if (!password && process.platform === 'darwin') {
     const result = spawnSync(
       'security',
-      ['find-generic-password', '-a', keychainAccount, '-w'],
+      [
+        'find-generic-password',
+        '-s',
+        keychainService,
+        '-a',
+        keychainAccount,
+        '-w',
+      ],
       { encoding: 'utf8' },
     )
     if (result.status === 0) {
@@ -144,11 +189,16 @@ for (const file of files) {
     }
 
     const signArgs = ['-S', '-s', secretKey, '-m', artifactPath, '-x', signaturePath]
-    const trustedComment = `AX BI release ${path.basename(artifactPath)}`
+    const digest = crypto
+      .createHash('sha256')
+      .update(fs.readFileSync(artifactPath))
+      .digest('hex')
+    const signedAt = new Date().toISOString().replace(/\.\d{3}Z$/u, 'Z')
+    const trustedComment = `AX BI release ${path.basename(artifactPath)} sha256=${digest} signed=${signedAt}`
     signArgs.push('-t', trustedComment)
 
     execFileSync('minisign', signArgs, {
-      stdio: ['pipe', 'inherit', 'inherit'],
+      stdio: password ? ['pipe', 'inherit', 'inherit'] : 'inherit',
       input: password ? `${password}\n` : undefined,
       env: process.env,
     })

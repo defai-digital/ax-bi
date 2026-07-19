@@ -27,8 +27,8 @@ import copyTextToClipboard from 'src/utils/copy';
 const API_KEY_ENDPOINT = '/api/v1/security/api_keys/';
 const MANAGED_MCP_KEY_NAME = 'AX BI MCP';
 const MASK = '********';
-const LEADING_HINT_LENGTH = 5;
-const TRAILING_HINT_LENGTH = 5;
+const LEADING_HINT_LENGTH = 8;
+const TRAILING_HINT_LENGTH = 8;
 const FULL_HINT_LENGTH = LEADING_HINT_LENGTH + TRAILING_HINT_LENGTH;
 
 interface McpApiKeyRecord {
@@ -63,8 +63,8 @@ const StyledMcpKey = styled.div`
     flex-shrink: 0;
     justify-content: center;
     margin-left: ${theme.sizeUnit * 2}px;
-    /* Hint is 18 chars (5 + mask + 5) plus the eye button. */
-    min-width: ${theme.sizeUnit * 70}px;
+    /* Give the key label room so the leading hint is never clipped. */
+    min-width: ${theme.sizeUnit * 100}px;
     overflow: visible;
     padding-left: ${theme.sizeUnit * 3}px;
     width: max-content;
@@ -74,7 +74,7 @@ const StyledMcpKey = styled.div`
       font-size: ${theme.fontSizeSM}px;
       font-weight: ${theme.fontWeightStrong};
       line-height: 1.2;
-      max-width: ${theme.sizeUnit * 67}px;
+      max-width: ${theme.sizeUnit * 97}px;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -87,6 +87,7 @@ const StyledMcpKey = styled.div`
       flex-shrink: 0;
       font-size: ${theme.fontSizeSM}px;
       line-height: 1.2;
+      min-width: ${theme.sizeUnit * 90}px;
       overflow: visible;
       white-space: nowrap;
       width: max-content;
@@ -98,7 +99,7 @@ const StyledMcpKey = styled.div`
       display: inline-block;
       flex-shrink: 0;
       font-size: inherit;
-      min-width: 20ch;
+      min-width: 28ch; /* 8 + mask + 8 */
       overflow: visible;
       padding: 0;
       white-space: nowrap;
@@ -119,8 +120,8 @@ const StyledMcpKey = styled.div`
 `;
 
 export function formatMcpApiKeyHint(value: string): string {
-  // Display as left 5 + mask + right 5. Do not insert separators; only
-  // characters that already appear in the key (including "-") are shown.
+  // value is the stored hint: left 8 + right 8 of the full key (e.g. "sst_e5a7khTpzMxY").
+  // Render as left 8 + mask + right 8. Do not insert extra separators.
   if (value.length >= FULL_HINT_LENGTH) {
     return `${value.slice(0, LEADING_HINT_LENGTH)}${MASK}${value.slice(
       -TRAILING_HINT_LENGTH,

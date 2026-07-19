@@ -55,8 +55,9 @@ tag ax-bi-desktop-vX.Y.Z
   → macOS arm64: codesign + notarytool + staple DMG
   → Windows: Key Vault sign app executable + NSIS/MSI installers
   → minisign all release assets
+  → re-download and verify Apple trust + minisign coverage
   → publish release
-  → push Casks/ax-bi.rb to homebrew-ax-bi (SHA256 of DMG)
+  → verify DMG minisign, then push Casks/ax-bi.rb (SHA256 of DMG)
 ```
 
 Workflow file: [`.github/workflows/ax-bi-desktop-release.yml`](../.github/workflows/ax-bi-desktop-release.yml)
@@ -96,6 +97,32 @@ The release workflow already asserts that the imported identity contains `(N5ZUZ
 
 These names match AX Studio so org-level secrets can be reused when the same
 Developer ID and notary key are shared across DEFAI apps.
+
+### Local Apple signing and notarization
+
+Local builds use the Developer ID Application certificate from the login
+Keychain and the `ax-notary` notarytool profile. Store the notarization
+credential once; omitting `--password` keeps the app-specific password out of
+shell history and prompts for it securely:
+
+```bash
+xcrun notarytool store-credentials ax-notary \
+  --apple-id "<apple-id>" \
+  --team-id "N5ZUZDUJS6"
+```
+
+Build with the Developer ID identity, then submit, staple, and validate the
+DMG. The helper discovers the normal Tauri output path when no path is passed:
+
+```bash
+export APPLE_SIGNING_IDENTITY="Developer ID Application: DEFAI PRIVATE LIMITED (N5ZUZDUJS6)"
+npm run build -- --target aarch64-apple-darwin
+npm run release:notarize
+```
+
+Set `AX_NOTARY_PROFILE` only when using a profile name other than `ax-notary`.
+The Keychain profile contains the notarization credential; a plaintext password
+file is not required by the release scripts.
 
 ### Windows Authenticode signing (Azure Key Vault, fail-closed)
 
@@ -175,21 +202,33 @@ Pinned release public key (also in
 [`docs/ax-bi.minisign.pub`](docs/ax-bi.minisign.pub)):
 
 ```text
-RWQ4HnJ0rpYY0Oa0wt5Itv0ps4n8bkNhGqaOGotNzLnMRDeOr+mCljzk
+RWSlDu++afxCz01OqhYWhfo8+L8pVbSYXJBEb2zoWBuK0WACIzbGVZRO
 ```
 
-Secret key material lives outside the monorepo (`~/signkey/ax-bi.minisign.key`)
-and in GitHub Actions secrets. Do not commit the secret key or password.
+Secret key material lives outside the monorepo. Local signing uses the shared AX
+keypair at `~/signkey/ax.minisign.key` (an optional symlink to `ax.sec`) and
+`~/signkey/ax.pub`. CI uses the same keypair through GitHub Actions secrets. Do
+not commit the secret key or password.
 
 Generate a replacement keypair only when rotating:
 
 ```bash
 mkdir -p ~/signkey && chmod 700 ~/signkey
-minisign -G -s ~/signkey/ax-bi.minisign.key -p ~/signkey/ax-bi.minisign.pub
+minisign -G -s ~/signkey/ax.sec -p ~/signkey/ax.pub
+ln -sfn ax.sec ~/signkey/ax.minisign.key
 # Store passphrase in Keychain (optional local signing):
-security add-generic-password -U -a ax-bi-minisign -s ax-bi-minisign -w
-# CI secret:
-base64 < ~/signkey/ax-bi.minisign.key | pbcopy   # AX_BI_MINISIGN_SECRET_KEY_B64
+security add-generic-password -U -a ax-release -s ax-minisign -w
+```
+
+When rotating the shared key, update all three GitHub Actions secrets together.
+The password command prompts securely when no value is piped to it:
+
+```bash
+base64 < ~/signkey/ax.minisign.key | \
+  gh secret set AX_BI_MINISIGN_SECRET_KEY_B64 -R defai-digital/ax-bi
+gh secret set AX_BI_MINISIGN_PUBLIC_KEY -R defai-digital/ax-bi \
+  < ~/signkey/ax.pub
+gh secret set AX_BI_MINISIGN_PASSWORD -R defai-digital/ax-bi
 ```
 
 Verify a downloaded asset:
@@ -217,7 +256,7 @@ The tap repo is live: [defai-digital/homebrew-ax-bi](https://github.com/defai-di
 | --- | --- |
 | `APPLE_TEAM_ID` | Set (`N5ZUZDUJS6`) |
 | `APPLE_API_ISSUER` / `NOTARY_ISSUER` | Set (`3cdb065e-9d78-451f-8424-e1e6b1547d64`) |
-| `AX_BI_MINISIGN_*` (secret, public, password) | Set; public key in `docs/ax-bi.minisign.pub` |
+| `AX_BI_MINISIGN_*` (secret, public, password) | Must match the shared key pinned in `docs/ax-bi.minisign.pub` |
 | `HOMEBREW_TAP_TOKEN` | Set (write access to `defai-digital/homebrew-ax-bi`) |
 | `AZURE_TENANT_ID` | Set (`0326d2a2-f46c-4673-a165-f49e712d0864`) |
 | `AZURE_CLIENT_ID` | Set (`cbdd6dd3-0c59-43ec-8813-cd5b120eaf4c`) |

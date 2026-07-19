@@ -88,7 +88,8 @@ jobs:
             if [ "$is_draft" = "true" ]; then
               gh release edit "$TAG" --draft=true --prerelease=false --repo "$GITHUB_REPOSITORY"
             else
-              echo "::notice::Release $TAG is already published; later uploads use --clobber."
+              echo "::error::Release $TAG is already published; refusing to replace verified assets."
+              exit 1
             fi
           else
             gh release create "$TAG" \
@@ -107,7 +108,7 @@ jobs:
     env:
       VERSION: ${{ needs.resolve-version.outputs.version }}
       TAG: ${{ needs.resolve-version.outputs.tag }}
-      HAS_APPLE_CERT: ${{ (secrets.APPLE_CERTIFICATE != '' || secrets.CODE_SIGN_P12_BASE64 != '') && (secrets.APPLE_CERTIFICATE_PASSWORD != '' || secrets.CODE_SIGN_P12_PASSWORD != '') }}
+      HAS_APPLE_CERT: ${{ (secrets.APPLE_CERTIFICATE != '' || secrets.CODE_SIGN_P12_BASE64 != '') && (secrets.APPLE_CERTIFICATE_PASSWORD != '' || secrets.CODE_SIGN_P12_PASSWORD != '') && secrets.APPLE_TEAM_ID != '' }}
       HAS_NOTARY: ${{ (secrets.APPLE_API_KEY_B64 != '' || secrets.NOTARIZE_P8_BASE64 != '') && (secrets.APPLE_API_KEY_ID != '' || secrets.NOTARY_KEY_ID != '') && (secrets.APPLE_API_ISSUER != '' || secrets.NOTARY_ISSUER != '') }}
     steps:
       - name: Checkout
@@ -139,7 +140,7 @@ jobs:
         run: |
           echo "::error::Stable macOS releases require Apple Developer ID + notary secrets."
           echo "Set APPLE_CERTIFICATE (or CODE_SIGN_P12_BASE64) + password and"
-          echo "APPLE_API_KEY_B64 (or NOTARIZE_P8_BASE64) + APPLE_API_KEY_ID + APPLE_API_ISSUER."
+          echo "APPLE_TEAM_ID plus APPLE_API_KEY_B64 (or NOTARIZE_P8_BASE64) + APPLE_API_KEY_ID + APPLE_API_ISSUER."
           exit 1
 
       - name: Import Apple certificate
@@ -159,7 +160,7 @@ jobs:
             security find-identity -v -p codesigning || true
             exit 1
           fi
-          if [ -n "${APPLE_TEAM_ID:-}" ] && [[ "$IDENTITY" != *"($APPLE_TEAM_ID)"* ]]; then
+          if [[ "$IDENTITY" != *"($APPLE_TEAM_ID)"* ]]; then
             echo "::error::Developer ID identity does not match APPLE_TEAM_ID."
             echo "identity: $IDENTITY"
             exit 1
@@ -217,7 +218,7 @@ jobs:
             --wait
           xcrun stapler staple "$DMG_PATH"
           xcrun stapler validate "$DMG_PATH"
-          spctl -a -vv -t install "$DMG_PATH" || true
+          spctl --assess --type install --verbose=2 "$DMG_PATH"
           echo "DMG_PATH=$DMG_PATH" >> "$GITHUB_ENV"
 
       - name: Prepare release assets
@@ -266,6 +267,52 @@ jobs:
           name: ax-bi-desktop-macos-${{ needs.resolve-version.outputs.version }}
           path: ${{ env.MACOS_OUT }}/*
           retention-days: 14
+
+  verify-macos-release:
+    needs: [resolve-version, build-macos]
+    runs-on: macos-15
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Download macOS draft asset
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.resolve-version.outputs.tag }}
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          gh release download "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir artifacts \
+            --pattern "AX.BI_${VERSION}_aarch64.dmg"
+
+      - name: Verify Developer ID signature and notarization
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          VERSION: ${{ needs.resolve-version.outputs.version }}
+        run: |
+          set -euo pipefail
+          DMG="artifacts/AX.BI_${VERSION}_aarch64.dmg"
+          MOUNT_POINT="$(mktemp -d)"
+          cleanup() {
+            hdiutil detach "$MOUNT_POINT" -quiet 2>/dev/null || true
+            rm -rf "$MOUNT_POINT"
+          }
+          trap cleanup EXIT
+
+          xcrun stapler validate "$DMG"
+          spctl --assess --type install --verbose=2 "$DMG"
+          hdiutil attach "$DMG" -nobrowse -readonly -mountpoint "$MOUNT_POINT"
+          APP="$MOUNT_POINT/AX BI.app"
+          test -d "$APP"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          SIGNATURE_DETAILS="$(codesign -dv --verbose=4 "$APP" 2>&1)"
+          printf '%s\n' "$SIGNATURE_DETAILS"
+          grep -F "Authority=Developer ID Application: DEFAI PRIVATE LIMITED" <<< "$SIGNATURE_DETAILS"
+          grep -F "TeamIdentifier=${APPLE_TEAM_ID}" <<< "$SIGNATURE_DETAILS"
+          spctl --assess --type execute --verbose=2 "$APP"
 
   build-windows:
     needs: [resolve-version, create-draft-release]
@@ -410,7 +457,7 @@ jobs:
           retention-days: 14
 
   sign-minisign:
-    needs: [resolve-version, build-macos, build-windows]
+    needs: [resolve-version, build-macos, verify-macos-release, build-windows]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -450,21 +497,22 @@ jobs:
           MINISIGN_PASSWORD: ${{ secrets.AX_BI_MINISIGN_PASSWORD }}
         run: |
           set -euo pipefail
-          printf '%s' "$AX_BI_MINISIGN_SECRET_KEY_B64" | base64 --decode > signkey/ax-bi.minisign.key
-          chmod 600 signkey/ax-bi.minisign.key
+          printf '%s' "$AX_BI_MINISIGN_SECRET_KEY_B64" | base64 --decode > signkey/ax.minisign.key
+          chmod 700 signkey
+          chmod 600 signkey/ax.minisign.key
           # Public key file: minisign expects full .pub content or we write key line
           if [[ "$AX_BI_MINISIGN_PUBLIC_KEY" == untrusted* ]]; then
-            printf '%s\n' "$AX_BI_MINISIGN_PUBLIC_KEY" > signkey/ax-bi.minisign.pub
+            printf '%s\n' "$AX_BI_MINISIGN_PUBLIC_KEY" > signkey/ax.pub
           else
             {
               echo "untrusted comment: AX BI minisign public key"
               echo "$AX_BI_MINISIGN_PUBLIC_KEY"
-            } > signkey/ax-bi.minisign.pub
+            } > signkey/ax.pub
           fi
           files=()
           for f in artifacts/*; do
             case "$f" in
-              *.minisig) ;;
+              *.minisig|*/ax-minisign.pub) ;;
               *) files+=("$f") ;;
             esac
           done
@@ -472,16 +520,60 @@ jobs:
             --key-dir signkey \
             --force \
             "${files[@]}"
+          cp ax-bi-desktop/docs/ax-bi.minisign.pub artifacts/ax-minisign.pub
 
       - name: Upload minisign signatures
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release upload "$TAG" artifacts/*.minisig --clobber --repo "$GITHUB_REPOSITORY"
+          gh release upload "$TAG" \
+            artifacts/*.minisig \
+            artifacts/ax-minisign.pub \
+            --clobber \
+            --repo "$GITHUB_REPOSITORY"
+
+  verify-minisign:
+    needs: [resolve-version, sign-minisign]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+
+      - name: Install minisign
+        run: sudo apt-get update && sudo apt-get install -y minisign
+
+      - name: Verify uploaded Minisign coverage and signatures
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ needs.resolve-version.outputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          gh release download "$TAG" --dir artifacts --repo "$GITHUB_REPOSITORY"
+          cmp ax-bi-desktop/docs/ax-bi.minisign.pub artifacts/ax-minisign.pub
+
+          files=()
+          for asset in artifacts/*; do
+            case "$(basename "$asset")" in
+              *.minisig|ax-minisign.pub) continue ;;
+            esac
+            test -f "${asset}.minisig"
+            files+=("$asset")
+          done
+          test "${#files[@]}" -gt 0
+          node ax-bi-desktop/scripts/release/minisign-artifacts.mjs \
+            --verify-only \
+            --public-key ax-bi-desktop/docs/ax-bi.minisign.pub \
+            "${files[@]}"
 
   publish-release:
-    needs: [resolve-version, sign-minisign]
+    needs: [resolve-version, verify-minisign]
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -493,6 +585,11 @@ jobs:
           TAG: ${{ needs.resolve-version.outputs.tag }}
         run: |
           set -euo pipefail
+          is_draft=$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft)
+          if [ "$is_draft" != "true" ]; then
+            echo "::error::Release $TAG is no longer a draft; refusing to publish or mutate it."
+            exit 1
+          fi
           gh release edit "$TAG" --draft=false --repo "$GITHUB_REPOSITORY"
           echo "Published $TAG"
 
@@ -520,12 +617,20 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Download published DMG and compute SHA256
+      - name: Download, verify, and checksum published DMG
         if: ${{ env.HAS_TAP_TOKEN == 'true' }}
         run: |
           set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y minisign
           curl -fSL --retry 6 --retry-all-errors --retry-delay 10 -o release.dmg \
             "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/AX.BI_${VERSION}_aarch64.dmg"
+          curl -fSL --retry 6 --retry-all-errors --retry-delay 10 -o release.dmg.minisig \
+            "https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/AX.BI_${VERSION}_aarch64.dmg.minisig"
+          minisign -V \
+            -p ax-bi-desktop/docs/ax-bi.minisign.pub \
+            -m release.dmg \
+            -x release.dmg.minisig
           DMG_SHA256="$(sha256sum release.dmg | awk '{print $1}')"
           echo "DMG_SHA256=$DMG_SHA256" >> "$GITHUB_ENV"
           echo "sha256=$DMG_SHA256"

@@ -38,8 +38,8 @@ const oldKey = {
 const newKey = {
   uuid: 'new-key',
   name: 'AX BI MCP',
-  key: 'sst_M8hayd7-secret-value-iay8hfdsG',
-  key_prefix: 'M8hayhfdsG',
+  key: 'sst_e5a7eJFm_cjQqWCuVvc_TqZi8Tb2IcGqAuhkhTpzMxY',
+  key_prefix: 'sst_e5a7khTpzMxY',
   active: true,
   created_on: '2026-07-18T11:00:00Z',
   expires_on: null,
@@ -55,9 +55,14 @@ beforeEach(() => {
 });
 
 test('formats the MCP key as a partial masked hint', () => {
-  expect(formatMcpApiKeyHint('M8hayhfdsG')).toBe('M8hay********hfdsG');
-  // Hyphens are only kept when they appear in the source characters.
-  expect(formatMcpApiKeyHint('M8-ayhfd-G')).toBe('M8-ay********hfd-G');
+  // Stored prefix is left 8 + right 8 of the full key (includes "sst_").
+  expect(formatMcpApiKeyHint('sst_e5a7khTpzMxY')).toBe(
+    'sst_e5a7********khTpzMxY',
+  );
+  // Underscores/hyphens are only kept when they appear in the source characters.
+  expect(formatMcpApiKeyHint('ab_cd-efxy-z1_99')).toBe(
+    'ab_cd-ef********xy-z1_99',
+  );
 });
 
 test('shows a concise placeholder while preparing the MCP key', () => {
@@ -87,7 +92,7 @@ test('creates the managed MCP key automatically when none exists', async () => {
   render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
 
   expect(await screen.findByText('akira')).toBeInTheDocument();
-  expect(await screen.findByText('M8hay********hfdsG')).toBeInTheDocument();
+  expect(await screen.findByText('sst_e5a7********khTpzMxY')).toBeInTheDocument();
   expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
   expect(post).toHaveBeenCalledWith({
     endpoint: '/api/v1/security/api_keys/',
@@ -114,7 +119,7 @@ test('eye action generates a key after initialization could not load one', async
 
   await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
   expect(navigator.clipboard.writeText).toHaveBeenCalledWith(newKey.key);
-  expect(await screen.findByText('M8hay********hfdsG')).toBeInTheDocument();
+  expect(await screen.findByText('sst_e5a7********khTpzMxY')).toBeInTheDocument();
 });
 
 test('eye action generates, copies, and revokes the previous MCP key', async () => {
@@ -140,6 +145,6 @@ test('eye action generates, copies, and revokes the previous MCP key', async () 
   expect(remove).toHaveBeenCalledWith({
     endpoint: '/api/v1/security/api_keys/old-key',
   });
-  expect(await screen.findByText('M8hay********hfdsG')).toBeInTheDocument();
+  expect(await screen.findByText('sst_e5a7********khTpzMxY')).toBeInTheDocument();
   expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
 });

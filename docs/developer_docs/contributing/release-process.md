@@ -153,8 +153,8 @@ python setup.py sdist
 # Build wheel
 python setup.py bdist_wheel
 
-# Sign artifacts
-gpg --armor --detach-sig dist/apache-superset-X.Y.Zrc1.tar.gz
+# Sign and verify artifacts with the shared AX minisign key
+./scripts/sign.sh dist/ax-bi-X.Y.Zrc1.tar.gz
 ```
 
 #### Upload to staging
