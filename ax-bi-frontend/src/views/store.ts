@@ -162,7 +162,7 @@ const reducers = {
 export function setupStore({
   disableDebugger = false,
   initialState = getInitialState(bootstrapData),
-  rootReducers = reducers as ConfigureStoreOptions['reducer'],
+  rootReducers = reducers as unknown as ConfigureStoreOptions['reducer'],
   ...overrides
 }: {
   disableDebugger?: boolean;

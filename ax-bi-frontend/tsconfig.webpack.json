@@ -13,9 +13,7 @@
   "include": [
     "src/**/*",
     "packages/*/src/**/*",
-    "packages/*/types/**/*",
-    "plugins/*/src/**/*",
-    "plugins/*/types/**/*"
+    "packages/*/types/**/*"
   ],
   "exclude": [
     "**/node_modules/**",
@@ -38,6 +36,7 @@
     ".storybook/**",
     "scripts/**",
     "cypress-base/**",
-    "playwright/**"
+    "playwright/**",
+    "plugins/**"
   ]
 }

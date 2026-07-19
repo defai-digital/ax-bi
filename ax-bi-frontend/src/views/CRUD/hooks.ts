@@ -305,7 +305,7 @@ export function useSingleViewResource<D extends object = any>(
             });
             return json.result;
           },
-          createErrorHandler((errMsg: Record<string, string[] | string>) => {
+          createErrorHandler((errMsg?: string | Record<string, string[] | string>) => {
             handleErrorMsg(
               t(
                 'An error occurred while fetching %ss: %s',
@@ -346,7 +346,7 @@ export function useSingleViewResource<D extends object = any>(
             });
             return json.id;
           },
-          createErrorHandler((errMsg: Record<string, string[] | string>) => {
+          createErrorHandler((errMsg?: string | Record<string, string[] | string>) => {
             // we did not want toasts for db-connection-ui but did not want to disable it everywhere
             if (!hideToast) {
               handleErrorMsg(
@@ -778,7 +778,7 @@ export const testDatabaseConnection = (
     () => {
       addSuccessToast(t('Connection looks good!'));
     },
-    createErrorHandler((errMsg: Record<string, string[] | string> | string) => {
+    createErrorHandler((errMsg?: string | Record<string, string[] | string>) => {
       handleErrorMsg(t('ERROR: %s', parsedErrorMessage(errMsg)));
     }),
   );

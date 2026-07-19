@@ -257,6 +257,8 @@ if (isDevMode && !disableTsChecker) {
         },
       },
       issue: {
+        // Do not surface plugin-internal TS debt or tests in the browser
+        // overlay. Plugins still transpile via SWC; full typecheck stays in CI.
         exclude: [
           { file: '**/*.test.*' },
           { file: '**/*.spec.*' },
@@ -267,6 +269,7 @@ if (isDevMode && !disableTsChecker) {
           { file: '**/stories/**' },
           { file: '**/__tests__/**' },
           { file: '**/__mocks__/**' },
+          { file: '**/plugins/**' },
         ],
       },
     }),
