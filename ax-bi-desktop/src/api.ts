@@ -71,6 +71,9 @@ export interface LocalRuntimeStatus {
   colima_running: boolean;
   docker_host: string;
   docker_ready: boolean;
+  /** Any service in the managed Compose project is running. */
+  stack_running: boolean;
+  /** The managed AX BI web service is running. */
   axbi_running: boolean;
   axbi_healthy: boolean;
   web_url: string;
@@ -168,6 +171,7 @@ function isLocalRuntimeStatus(value: unknown): value is LocalRuntimeStatus {
     typeof value['colima_running'] === 'boolean' &&
     typeof value['docker_host'] === 'string' &&
     typeof value['docker_ready'] === 'boolean' &&
+    typeof value['stack_running'] === 'boolean' &&
     typeof value['axbi_running'] === 'boolean' &&
     typeof value['axbi_healthy'] === 'boolean' &&
     typeof value['web_url'] === 'string' &&

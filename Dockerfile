@@ -155,7 +155,7 @@ ENV AXBI_HOME="/app/axbi_home" \
     AXBI_ENV="production" \
     FLASK_APP="axbi.app:create_app()" \
     PYTHONPATH="/app/pythonpath" \
-    AXBI_PORT="8088"
+    AXBI_PORT="31423"
 
 # Copy the entrypoints, make them executable in userspace
 COPY --chmod=755 docker/entrypoints /app/docker/entrypoints

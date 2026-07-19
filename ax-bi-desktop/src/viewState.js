@@ -79,6 +79,9 @@ export function summaryText(status) {
   if (status.axbi_running) {
     return "Local AX BI is starting";
   }
+  if (status.stack_running) {
+    return "Local AX BI needs attention — review diagnostics or stop and retry";
+  }
   if (status.local_runtime_supported === false) {
     return "Local Docker runtime is not available on this platform";
   }
@@ -111,6 +114,9 @@ export function shellStatusLabel({ biSource, remoteBiUrl, status } = {}) {
   }
   if (status && status.axbi_running) {
     return "Local · Starting";
+  }
+  if (status && status.stack_running) {
+    return "Local · Needs attention";
   }
   return "Local";
 }

@@ -73,6 +73,7 @@ The native runtime manager writes files under the Tauri app data directory:
 The generated `.env` contains local-only secrets:
 
 - `AX_BI_SECRET_KEY` (random)
+- `AX_SERVICES_INTERNAL_TOKEN` (random, shared only by AX BI and AX Services)
 - `DATABASE_PASSWORD` (random)
 - `ADMIN_PASSWORD` (random, generated when the runtime is first prepared)
 - `COLIMA_PROFILE` (`ax-bi` for new installs; an existing managed `default`
@@ -81,6 +82,9 @@ The generated `.env` contains local-only secrets:
 Desktop displays the local admin username and generated password before opening
 AX BI for the first time. The credentials remain available from **Settings >
 Advanced runtime > Credentials**. Updates preserve existing `.env` credentials.
+Desktop automatically adds newly required generated secrets to an existing
+runtime without rotating valid values. On Unix, `.env` permissions are kept at
+`0600` because the file contains local credentials.
 
 The generated Compose stack uses published images:
 
@@ -139,6 +143,10 @@ Public AX BI services bind only to loopback on every platform:
 127.0.0.1:31424  AX Services
 ```
 
+The host-side values can be changed in the generated `.env`; the web container
+listener remains on internal port `31423` so its mapping and health check cannot
+drift apart.
+
 ## Native Commands
 
 The Tauri native layer exposes typed commands for the launcher UI:
@@ -152,10 +160,11 @@ The Tauri native layer exposes typed commands for the launcher UI:
 - `get_local_runtime_logs`
 - `get_local_admin_credentials`
 
-Status includes `engine_name`, `engine_label`, and `engine_running` (plus
-legacy `colima_*` fields for older clients). Commands call fixed engine +
-Docker Compose flows. They do not expose an arbitrary shell command bridge to
-web content.
+Status includes `engine_name`, `engine_label`, `engine_running`, and
+`stack_running` (plus legacy `colima_*` fields for older clients). A partial
+stack remains stoppable and is shown as needing attention instead of stopped.
+Commands call fixed engine + Docker Compose flows. They do not expose an
+arbitrary shell command bridge to web content.
 
 ## Launcher UI Boundary
 

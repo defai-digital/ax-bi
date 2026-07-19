@@ -128,10 +128,10 @@ The first `cargo` build can take several minutes. When the window opens:
 When local AX BI is healthy, the shell opens the web app full-bleed and shows a
 **Local admin login** toast (also under Settings → Advanced → Credentials).
 
-Default local login:
+Generated local login:
 
 - username: `admin`
-- password: `admin`
+- password: shown on first run and under Settings → Advanced → Credentials
 
 ### 2. Optional local backend
 

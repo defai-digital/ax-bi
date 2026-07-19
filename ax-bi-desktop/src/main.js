@@ -250,11 +250,14 @@ function booleanState(value, yes, no) {
 
 function renderStatus(status) {
   currentStatus = status;
+  const stackRunning = status.stack_running || status.axbi_running;
   const runtime = status.axbi_running
     ? ["Running", "ok"]
-    : status.configured
-      ? ["Stopped", "warn"]
-      : ["Not prepared", "warn"];
+    : stackRunning
+      ? ["Partial", "warn"]
+      : status.configured
+        ? ["Stopped", "warn"]
+        : ["Not prepared", "warn"];
   const engineRunning =
     typeof status.engine_running === "boolean"
       ? status.engine_running
@@ -265,7 +268,9 @@ function renderStatus(status) {
     ? ["Healthy", "ok"]
     : status.axbi_running
       ? ["Starting", "warn"]
-      : ["Offline", "bad"];
+      : stackRunning
+        ? ["Needs attention", "warn"]
+        : ["Offline", "bad"];
 
   setState(elements.runtimeState, runtime[0], runtime[1]);
   if (elements.engineLabel) {
@@ -325,6 +330,12 @@ function updateLocalPathCopy(status) {
     elements.localPathTitle.textContent = "Local AX BI is starting";
     elements.localPathDesc.textContent =
       "Docker containers are coming up. This usually takes a minute.";
+    return;
+  }
+  if (status.stack_running) {
+    elements.localPathTitle.textContent = "Local runtime needs attention";
+    elements.localPathDesc.textContent =
+      "Some containers are still running. Review logs, stop the runtime, then retry.";
     return;
   }
   if (status.can_start_local === false) {
@@ -400,7 +411,8 @@ function updateButtonState() {
     elements.credentials.disabled = !status || !status.admin_password_present;
   }
   if (elements.stop) {
-    elements.stop.disabled = !status || !status.axbi_running;
+    elements.stop.disabled =
+      !status || !(status.stack_running || status.axbi_running);
   }
   if (elements.restart) {
     elements.restart.disabled = !status || !status.configured;

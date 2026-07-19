@@ -139,9 +139,9 @@ Desktop must detect when default ports are occupied before starting or opening A
 
 Required ports:
 
-- AX BI web: default `8088`
-- MCP: default `5008`
-- AX services: default `5010`
+- AX BI web: default `31423`
+- MCP: default `31421`
+- AX services: default `31424`
 
 Acceptance criteria:
 

@@ -26,6 +26,7 @@
 //! augmented PATH so `colima` can find `limactl` and Docker CLIs resolve.
 
 use serde::{Deserialize, Serialize};
+use std::collections::HashSet;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{Read, Write};
@@ -48,6 +49,7 @@ const AXBI_COLIMA_CPUS: &str = "4";
 const AXBI_COLIMA_MEMORY_GB: &str = "8";
 const STARTUP_HEALTH_RECONCILE_WAIT: Duration = Duration::from_secs(120);
 const STARTUP_HEALTH_RECONCILE_POLL: Duration = Duration::from_secs(2);
+const COMPOSE_FAILURE_RECONCILE_WAIT: Duration = Duration::from_secs(10);
 const LOCAL_RUNTIME_DIR: &str = "local-runtime";
 const LOCAL_ENV_FILE: &str = ".env";
 const LOCAL_COMPOSE_FILE: &str = "docker-compose.yml";
@@ -78,7 +80,10 @@ x-axbi-env: &axbi-env
   AXBI_ENV: production
   AXBI_LOAD_EXAMPLES: ${AXBI_LOAD_EXAMPLES:-no}
   AXBI_LOG_LEVEL: ${AXBI_LOG_LEVEL:-info}
+  AXBI_PORT: 31423
   AX_BI_SECRET_KEY: ${AX_BI_SECRET_KEY:?Set AX_BI_SECRET_KEY in .env}
+  AX_SERVICES_BASE_URL: http://ax-services:31424
+  AX_SERVICES_INTERNAL_TOKEN: ${AX_SERVICES_INTERNAL_TOKEN:?Set AX_SERVICES_INTERNAL_TOKEN in .env}
   ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
   DATABASE_DIALECT: ${DATABASE_DIALECT:-postgresql}
   DATABASE_HOST: ${DATABASE_HOST:-db}
@@ -242,6 +247,7 @@ services:
       AX_SERVICES_HOST: 0.0.0.0
       AX_SERVICES_PORT: 31424
       AXBI_BASE_URL: http://ax-bi:31423
+      AX_SERVICES_INTERNAL_TOKEN: ${AX_SERVICES_INTERNAL_TOKEN:?Set AX_SERVICES_INTERNAL_TOKEN in .env}
       AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
     ports:
       - "127.0.0.1:${AX_SERVICES_PORT:-31424}:31424"
@@ -303,6 +309,9 @@ pub struct LocalRuntimeStatus {
     pub colima_running: bool,
     pub docker_host: String,
     pub docker_ready: bool,
+    /// Whether any service in the managed Compose project is running.
+    pub stack_running: bool,
+    /// Whether the managed AX BI web service is running.
     pub axbi_running: bool,
     pub axbi_healthy: bool,
     pub web_url: String,
@@ -380,7 +389,6 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
     log::info!("Reading local runtime dependencies");
     let dependencies = dependencies();
     let urls = runtime_urls(&env_file);
-    let ports = local_runtime_ports(&urls);
     let configured = compose_file.exists() && env_file.exists();
     if configured {
         log::info!("Syncing generated local runtime files");
@@ -395,7 +403,14 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
     log::info!("Checking Docker status");
     let docker_ready = docker_daemon_ready(&docker_host);
     log::info!("Checking Compose service status");
-    let axbi_running = docker_ready && compose_services_running(&runtime_dir)?;
+    let running_services = if docker_ready {
+        compose_running_services(&runtime_dir)?
+    } else {
+        HashSet::new()
+    };
+    let stack_running = !running_services.is_empty();
+    let axbi_running = running_services.contains("ax-bi");
+    let ports = local_runtime_ports(&urls, &running_services);
     log::info!("Checking AX BI HTTP health");
     let axbi_healthy = axbi_running && local_http_healthcheck(urls.web_port);
     let admin_password_present = configured
@@ -431,6 +446,7 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
         colima_running: engine_running,
         docker_host,
         docker_ready,
+        stack_running,
         axbi_running,
         axbi_healthy,
         web_url: urls.web_url,
@@ -452,9 +468,7 @@ pub fn start<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput
     ensure_cli_dependencies()?;
     ensure_required_ports_available(&runtime_dir)?;
     let engine_output = ensure_engine(&runtime_dir)?;
-    let compose_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
-        .map_err(|error| format_compose_error("start", &error))?;
-    wait_for_runtime_health(&runtime_dir)?;
+    let compose_output = start_compose_stack(&runtime_dir)?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -467,7 +481,7 @@ pub fn stop<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutput,
     let runtime_dir = ensure_runtime_files(app)?;
     // Stop should still try even if the engine is flaky; surface compose errors clearly.
     let output = run_docker_compose(&runtime_dir, &["stop"])
-        .map_err(|error| format_compose_error("stop", &error))?;
+        .map_err(|error| format_compose_error("stop", &error, Some(&runtime_dir)))?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -481,11 +495,9 @@ pub fn restart<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutp
     ensure_cli_dependencies()?;
     let engine_output = ensure_engine(&runtime_dir)?;
     let stop_output = run_docker_compose(&runtime_dir, &["stop"])
-        .map_err(|error| format_compose_error("stop", &error))?;
+        .map_err(|error| format_compose_error("stop", &error, Some(&runtime_dir)))?;
     ensure_required_ports_available(&runtime_dir)?;
-    let start_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
-        .map_err(|error| format_compose_error("start", &error))?;
-    wait_for_runtime_health(&runtime_dir)?;
+    let start_output = start_compose_stack(&runtime_dir)?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -504,12 +516,10 @@ pub fn update<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeCommandOutpu
     let runtime_dir = ensure_runtime_files(app)?;
     ensure_cli_dependencies()?;
     let engine_output = ensure_engine(&runtime_dir)?;
-    let pull_output = run_docker_compose(&runtime_dir, &["pull"])
-        .map_err(|error| format_compose_error("pull", &error))?;
     ensure_required_ports_available(&runtime_dir)?;
-    let start_output = run_docker_compose(&runtime_dir, &["up", "-d", "--remove-orphans"])
-        .map_err(|error| format_compose_error("start", &error))?;
-    wait_for_runtime_health(&runtime_dir)?;
+    let pull_output = run_docker_compose(&runtime_dir, &["pull"])
+        .map_err(|error| format_compose_error("pull", &error, Some(&runtime_dir)))?;
+    let start_output = start_compose_stack(&runtime_dir)?;
 
     Ok(LocalRuntimeCommandOutput {
         status: status(app)?,
@@ -596,11 +606,11 @@ fn sync_runtime_files(compose_path: &Path, env_path: &Path) -> Result<(), String
         .map_err(|error| format!("Failed to write local Compose file: {error}"))?;
 
     if !env_path.exists() {
-        fs::write(env_path, build_env_file()?)
-            .map_err(|error| format!("Failed to write local runtime environment: {error}"))?;
+        write_runtime_env(env_path, &build_env_file()?)?;
     } else {
-        ensure_runtime_secret(env_path)?;
+        ensure_runtime_secrets(env_path)?;
         ensure_colima_profile(env_path, compose_path)?;
+        secure_runtime_env_permissions(env_path)?;
     }
 
     Ok(())
@@ -626,12 +636,18 @@ fn onboarding_complete_file(runtime_dir: &Path) -> PathBuf {
 }
 
 fn build_env_file() -> Result<String, String> {
+    let axbi_secret_key = random_hex(48)?;
+    let database_password = random_hex(32)?;
+    let admin_password = random_hex(18)?;
+    let services_internal_token = random_hex(32)?;
+
     Ok(format!(
         r#"COMPOSE_PROJECT_NAME={AXBI_COMPOSE_PROJECT}
 
-AX_BI_SECRET_KEY={}
-DATABASE_PASSWORD={}
-ADMIN_PASSWORD={}
+AX_BI_SECRET_KEY={axbi_secret_key}
+AX_SERVICES_INTERNAL_TOKEN={services_internal_token}
+DATABASE_PASSWORD={database_password}
+ADMIN_PASSWORD={admin_password}
 COLIMA_PROFILE={AXBI_COLIMA_PROFILE}
 
 AXBI_IMAGE=ghcr.io/defai-digital/ax-bi:latest
@@ -674,32 +690,96 @@ MCP_JWT_AUDIENCE=
 MCP_JWKS_URI=
 MCP_REQUIRED_SCOPES=
 "#,
-        random_hex(48)?,
-        random_hex(32)?,
-        random_hex(18)?,
     ))
 }
 
-fn ensure_runtime_secret(path: &Path) -> Result<(), String> {
-    let content = fs::read_to_string(path)
-        .map_err(|error| format!("Failed to read local runtime environment: {error}"))?;
-    if let Some(updated) = ensure_runtime_secret_content(&content)? {
-        fs::write(path, updated)
-            .map_err(|error| format!("Failed to update local runtime environment: {error}"))?;
+/// Write the generated runtime environment and restrict access to its secrets.
+fn write_runtime_env(path: &Path, content: &str) -> Result<(), String> {
+    fs::write(path, content)
+        .map_err(|error| format!("Failed to write local runtime environment: {error}"))?;
+    secure_runtime_env_permissions(path)
+}
+
+/// Limit the runtime environment to its owning user on Unix platforms.
+fn secure_runtime_env_permissions(path: &Path) -> Result<(), String> {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+
+        fs::set_permissions(path, fs::Permissions::from_mode(0o600)).map_err(|error| {
+            format!("Failed to secure local runtime environment permissions: {error}")
+        })?;
     }
     Ok(())
 }
 
-fn ensure_runtime_secret_content(content: &str) -> Result<Option<String>, String> {
-    if read_env_value_from_str(content, "AX_BI_SECRET_KEY").is_some() {
+/// Add or repair generated secrets in an existing runtime environment.
+fn ensure_runtime_secrets(path: &Path) -> Result<(), String> {
+    let content = fs::read_to_string(path)
+        .map_err(|error| format!("Failed to read local runtime environment: {error}"))?;
+    if let Some(updated) = ensure_runtime_secrets_content(&content)? {
+        write_runtime_env(path, &updated)?;
+    }
+    Ok(())
+}
+
+/// Return migrated environment content when any required secret needs repair.
+fn ensure_runtime_secrets_content(content: &str) -> Result<Option<String>, String> {
+    let mut updated = content.to_string();
+    let mut changed = false;
+    for (key, byte_count) in [("AX_BI_SECRET_KEY", 48), ("AX_SERVICES_INTERNAL_TOKEN", 32)] {
+        if let Some(next) = ensure_generated_secret_content(&updated, key, byte_count)? {
+            updated = next;
+            changed = true;
+        }
+    }
+    Ok(changed.then_some(updated))
+}
+
+/// Ensure one environment key has exactly one non-empty generated value.
+fn ensure_generated_secret_content(
+    content: &str,
+    key: &str,
+    byte_count: usize,
+) -> Result<Option<String>, String> {
+    let matching_lines = content
+        .lines()
+        .filter(|line| {
+            line.split_once('=')
+                .map(|(line_key, _)| line_key.trim() == key)
+                .unwrap_or(false)
+        })
+        .count();
+    let existing = content.lines().find_map(|line| {
+        let (line_key, value) = line.split_once('=')?;
+        (line_key.trim() == key && !value.trim().is_empty()).then(|| value.trim().to_string())
+    });
+    if matching_lines == 1 && existing.is_some() {
         return Ok(None);
     }
 
-    let mut updated = content.trim_end().to_string();
+    let value = match existing {
+        Some(value) => value,
+        None => random_hex(byte_count)?,
+    };
+    let mut lines: Vec<&str> = content
+        .lines()
+        .filter(|line| {
+            !line
+                .split_once('=')
+                .map(|(line_key, _)| line_key.trim() == key)
+                .unwrap_or(false)
+        })
+        .collect();
+    while lines.last().is_some_and(|line| line.trim().is_empty()) {
+        lines.pop();
+    }
+
+    let mut updated = lines.join("\n");
     if !updated.is_empty() {
         updated.push('\n');
     }
-    updated.push_str(&format!("AX_BI_SECRET_KEY={}\n", random_hex(48)?));
+    updated.push_str(&format!("{key}={value}\n"));
     Ok(Some(updated))
 }
 
@@ -881,20 +961,70 @@ fn ensure_cli_dependencies() -> Result<(), String> {
     ))
 }
 
-fn format_compose_error(action: &str, error: &str) -> String {
+fn format_compose_error(action: &str, error: &str, runtime_dir: Option<&Path>) -> String {
+    let diagnostics = runtime_dir
+        .map(compose_failure_diagnostics)
+        .unwrap_or_default();
     format!(
         "Failed to {action} the local AX BI Docker stack on {}.\n\
          Engine: {} ({})\n\
-         {}\n\n\
+         {}{}\n\n\
          Tips:\n\
-         - macOS: brew install colima lima docker docker-compose && ensure Colima can start\n\
-         - Windows: install/start Docker Desktop, then retry Run locally\n\
-         - Confirm `docker compose version` works in a terminal",
+         - Open Settings > Advanced runtime to inspect service logs\n\
+         - Stop other applications using the configured AX BI ports, then retry\n\
+         - macOS: confirm Colima is running; Windows: confirm Docker Desktop is running",
         platform_label(),
         RuntimeEngine::current().label(),
         RuntimeEngine::current().name(),
-        error.trim()
+        bounded_output_tail(error, 80, 12_000),
+        diagnostics,
     )
+}
+
+/// Collect bounded service state and logs after a Compose command fails.
+fn compose_failure_diagnostics(runtime_dir: &Path) -> String {
+    let mut diagnostics = String::new();
+    if let Ok(output) = run_docker_compose(runtime_dir, &["ps", "--all"]) {
+        diagnostics.push_str(&format_output(
+            "compose service state",
+            &bounded_output_tail(&join_outputs(&output.stdout, &output.stderr), 80, 8_000),
+        ));
+    }
+    if let Ok(output) = run_docker_compose(
+        runtime_dir,
+        &[
+            "logs",
+            "--no-color",
+            "--tail",
+            "80",
+            "ax-bi-init",
+            "ax-bi",
+            "mcp",
+            "ax-services",
+        ],
+    ) {
+        diagnostics.push_str(&format_output(
+            "recent startup logs",
+            &bounded_output_tail(&join_outputs(&output.stdout, &output.stderr), 160, 16_000),
+        ));
+    }
+    diagnostics
+}
+
+/// Keep the actionable tail of noisy subprocess output within UI-safe bounds.
+fn bounded_output_tail(value: &str, max_lines: usize, max_chars: usize) -> String {
+    let normalized = value.replace('\r', "\n");
+    let lines: Vec<&str> = normalized.lines().collect();
+    let start = lines.len().saturating_sub(max_lines);
+    let mut tail = lines[start..].join("\n");
+    let char_count = tail.chars().count();
+    if char_count > max_chars {
+        tail = tail
+            .chars()
+            .skip(char_count - max_chars)
+            .collect::<String>();
+    }
+    tail.trim().to_string()
 }
 
 fn dependency(
@@ -1126,9 +1256,36 @@ fn run_docker_compose_owned(
     run_command("docker", &arg_refs, Some(runtime_dir), &env_refs)
 }
 
+/// Start Compose and reconcile transient command failures against final health.
+fn start_compose_stack(runtime_dir: &Path) -> Result<CommandOutput, String> {
+    match run_docker_compose(runtime_dir, &["up", "-d", "--remove-orphans"]) {
+        Ok(output) => {
+            wait_for_runtime_health(runtime_dir)
+                .map_err(|error| format_compose_error("start", &error, Some(runtime_dir)))?;
+            Ok(output)
+        }
+        Err(error) => {
+            if wait_for_runtime_health_for(runtime_dir, COMPOSE_FAILURE_RECONCILE_WAIT).is_ok() {
+                return Ok(CommandOutput {
+                    stdout:
+                        "Compose reported a transient startup failure, but AX BI became healthy"
+                            .to_string(),
+                    stderr: bounded_output_tail(&error, 40, 6_000),
+                });
+            }
+            Err(format_compose_error("start", &error, Some(runtime_dir)))
+        }
+    }
+}
+
 fn compose_services_running(runtime_dir: &Path) -> Result<bool, String> {
+    Ok(compose_running_services(runtime_dir)?.contains("ax-bi"))
+}
+
+/// Return the set of running services owned by the managed Compose project.
+fn compose_running_services(runtime_dir: &Path) -> Result<HashSet<String>, String> {
     if !compose_file(runtime_dir).exists() || !env_file(runtime_dir).exists() {
-        return Ok(false);
+        return Ok(HashSet::new());
     }
     let output = run_docker_compose_owned(
         runtime_dir,
@@ -1140,11 +1297,22 @@ fn compose_services_running(runtime_dir: &Path) -> Result<bool, String> {
         ],
     )?;
 
-    Ok(output.stdout.lines().any(|line| line.trim() == "ax-bi"))
+    Ok(output
+        .stdout
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(ToString::to_string)
+        .collect())
 }
 
 fn wait_for_runtime_health(runtime_dir: &Path) -> Result<(), String> {
-    let deadline = Instant::now() + STARTUP_HEALTH_RECONCILE_WAIT;
+    wait_for_runtime_health_for(runtime_dir, STARTUP_HEALTH_RECONCILE_WAIT)
+}
+
+/// Wait up to the supplied timeout for the managed web service to become healthy.
+fn wait_for_runtime_health_for(runtime_dir: &Path, timeout: Duration) -> Result<(), String> {
+    let deadline = Instant::now() + timeout;
     let mut last_ps = String::new();
     let urls = runtime_urls(&env_file(runtime_dir));
 
@@ -1163,32 +1331,54 @@ fn wait_for_runtime_health(runtime_dir: &Path) -> Result<(), String> {
 
     Err(format!(
         "AX BI containers started, but the web app did not become healthy within {} seconds.{}",
-        STARTUP_HEALTH_RECONCILE_WAIT.as_secs(),
+        timeout.as_secs(),
         format_output("compose ps", &last_ps)
     ))
 }
 
-fn local_runtime_ports(urls: &RuntimeUrls) -> Vec<LocalRuntimePort> {
+fn local_runtime_ports(
+    urls: &RuntimeUrls,
+    running_services: &HashSet<String>,
+) -> Vec<LocalRuntimePort> {
     vec![
-        local_runtime_port("AX BI web", urls.web_port, &urls.web_url, true),
-        local_runtime_port("MCP", urls.mcp_port, &urls.mcp_url, false),
-        local_runtime_port("AX services", urls.services_port, &urls.services_url, false),
+        local_runtime_port(
+            "AX BI web",
+            "ax-bi",
+            urls.web_port,
+            &urls.web_url,
+            running_services,
+        ),
+        local_runtime_port("MCP", "mcp", urls.mcp_port, &urls.mcp_url, running_services),
+        local_runtime_port(
+            "AX services",
+            "ax-services",
+            urls.services_port,
+            &urls.services_url,
+            running_services,
+        ),
     ]
 }
 
 fn local_runtime_port(
     name: &str,
+    service: &str,
     port: u16,
     url: &str,
-    check_axbi_health: bool,
+    running_services: &HashSet<String>,
 ) -> LocalRuntimePort {
     let open = tcp_port_open(port);
-    let occupied_by_axbi = if check_axbi_health {
-        open && local_http_healthcheck(port)
-    } else {
-        false
-    };
+    local_runtime_port_from_state(name, port, url, open, running_services.contains(service))
+}
 
+/// Derive port availability from listener and managed-service state.
+fn local_runtime_port_from_state(
+    name: &str,
+    port: u16,
+    url: &str,
+    open: bool,
+    managed_service_running: bool,
+) -> LocalRuntimePort {
+    let occupied_by_axbi = open && managed_service_running;
     LocalRuntimePort {
         name: name.to_string(),
         port,
@@ -1199,12 +1389,9 @@ fn local_runtime_port(
 }
 
 fn ensure_required_ports_available(runtime_dir: &Path) -> Result<(), String> {
-    if compose_services_running(runtime_dir).unwrap_or(false) {
-        return Ok(());
-    }
-
     let urls = runtime_urls(&env_file(runtime_dir));
-    let blocked: Vec<LocalRuntimePort> = local_runtime_ports(&urls)
+    let running_services = compose_running_services(runtime_dir).unwrap_or_default();
+    let blocked: Vec<LocalRuntimePort> = local_runtime_ports(&urls, &running_services)
         .into_iter()
         .filter(|port| !port.available)
         .collect();
@@ -1214,7 +1401,12 @@ fn ensure_required_ports_available(runtime_dir: &Path) -> Result<(), String> {
 
     let details = blocked
         .iter()
-        .map(|port| format!("- {} port {} ({})", port.name, port.port, port.url))
+        .map(|port| {
+            let owner = describe_port_owner(runtime_dir, port.port)
+                .map(|owner| format!(" — {owner}"))
+                .unwrap_or_default();
+            format!("- {} port {} ({}){owner}", port.name, port.port, port.url)
+        })
         .collect::<Vec<_>>()
         .join("\n");
     Err(format!(
@@ -1222,6 +1414,74 @@ fn ensure_required_ports_available(runtime_dir: &Path) -> Result<(), String> {
          Stop the other service or change the AX BI ports in the local runtime settings.",
         details
     ))
+}
+
+/// Identify a Docker container or host process listening on a blocked port.
+fn describe_port_owner(runtime_dir: &Path, port: u16) -> Option<String> {
+    if let Ok(host) = docker_host(&configured_colima_profile(&env_file(runtime_dir))) {
+        let envs = docker_host_envs(&host);
+        let env_refs: Vec<(&str, &str)> = envs
+            .iter()
+            .map(|(key, value)| (key.as_str(), value.as_str()))
+            .collect();
+        let port_filter = format!("publish={port}");
+        if let Ok(output) = run_command(
+            "docker",
+            &[
+                "ps",
+                "--filter",
+                &port_filter,
+                "--format",
+                "{{.Names}} (Docker container {{.ID}})",
+            ],
+            None,
+            &env_refs,
+        ) {
+            if let Some(owner) = first_line(&output.stdout) {
+                return Some(owner);
+            }
+        }
+    }
+    host_port_owner(port)
+}
+
+/// Identify the first host process listening on a TCP port.
+#[cfg(unix)]
+fn host_port_owner(port: u16) -> Option<String> {
+    let port_selector = format!("-iTCP:{port}");
+    let output = run_command(
+        "lsof",
+        &["-nP", &port_selector, "-sTCP:LISTEN", "-Fpc"],
+        None,
+        &[],
+    )
+    .ok()?;
+    parse_lsof_port_owner(&output.stdout)
+}
+
+/// Parse `lsof -Fpc` output into a concise process description.
+#[cfg(unix)]
+fn parse_lsof_port_owner(output: &str) -> Option<String> {
+    let pid = output.lines().find_map(|line| line.strip_prefix('p'))?;
+    let command = output
+        .lines()
+        .find_map(|line| line.strip_prefix('c'))
+        .unwrap_or("process");
+    Some(format!("{command} (PID {pid})"))
+}
+
+/// Identify the first Windows process listening on a TCP port.
+#[cfg(windows)]
+fn host_port_owner(port: u16) -> Option<String> {
+    let output = run_command("netstat", &["-ano", "-p", "TCP"], None, &[]).ok()?;
+    let port_suffix = format!(":{port}");
+    output.stdout.lines().find_map(|line| {
+        let fields: Vec<&str> = line.split_whitespace().collect();
+        (fields.len() >= 5
+            && fields[1].ends_with(&port_suffix)
+            && fields[3].eq_ignore_ascii_case("LISTENING"))
+        .then(|| format!("Windows process PID {}", fields[4]))
+    })
 }
 
 fn tcp_port_open(port: u16) -> bool {
@@ -1370,6 +1630,7 @@ fn known_bin_dirs() -> Vec<PathBuf> {
         dirs.push(PathBuf::from("/opt/homebrew/sbin"));
         dirs.push(PathBuf::from("/usr/local/bin"));
         dirs.push(PathBuf::from("/usr/local/sbin"));
+        dirs.push(PathBuf::from("/usr/sbin"));
     }
 
     #[cfg(target_os = "windows")]
@@ -1434,6 +1695,7 @@ fn known_bin_dirs() -> Vec<PathBuf> {
     {
         dirs.push(PathBuf::from("/usr/local/bin"));
         dirs.push(PathBuf::from("/usr/bin"));
+        dirs.push(PathBuf::from("/usr/sbin"));
         if let Ok(home) = std::env::var("HOME") {
             dirs.push(PathBuf::from(home).join(".local").join("bin"));
         }
@@ -1616,12 +1878,15 @@ fn path_to_string(path: &Path) -> String {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(unix)]
+    use super::parse_lsof_port_owner;
     use super::{
-        augmented_path, build_env_file, configured_colima_profile, docker_host,
-        ensure_runtime_secret_content, platform_id, platform_label, program_filename,
-        read_env_value_from_str, resolve_program, runtime_urls, tail_lines, valid_colima_profile,
-        validate_log_service, RuntimeEngine, AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS,
-        AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
+        augmented_path, bounded_output_tail, build_env_file, configured_colima_profile,
+        docker_host, ensure_runtime_secrets_content, local_runtime_port_from_state, platform_id,
+        platform_label, program_filename, read_env_value_from_str, resolve_program, runtime_urls,
+        secure_runtime_env_permissions, tail_lines, valid_colima_profile, validate_log_service,
+        RuntimeEngine, AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB,
+        AXBI_COLIMA_PROFILE, LOCAL_COMPOSE_YAML, MAX_LOG_TAIL_LINES,
     };
     use std::fs;
     use std::path::Path;
@@ -1632,6 +1897,15 @@ mod tests {
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${MCP_PORT:-31421}:31421"));
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AX_SERVICES_PORT:-31424}:31424"));
         assert!(LOCAL_COMPOSE_YAML.contains("TALISMAN_ENABLED: ${TALISMAN_ENABLED:-false}"));
+        assert!(LOCAL_COMPOSE_YAML.contains("AXBI_PORT: 31423"));
+        assert_eq!(
+            LOCAL_COMPOSE_YAML
+                .matches(
+                    "AX_SERVICES_INTERNAL_TOKEN: ${AX_SERVICES_INTERNAL_TOKEN:?Set AX_SERVICES_INTERNAL_TOKEN in .env}"
+                )
+                .count(),
+            2
+        );
     }
 
     #[test]
@@ -1640,6 +1914,9 @@ mod tests {
 
         assert!(read_env_value_from_str(&env_file, "AX_BI_SECRET_KEY").is_some());
         assert!(read_env_value_from_str(&env_file, "DATABASE_PASSWORD").is_some());
+        let services_token =
+            read_env_value_from_str(&env_file, "AX_SERVICES_INTERNAL_TOKEN").unwrap();
+        assert_eq!(services_token.len(), 64);
         let admin_password = read_env_value_from_str(&env_file, "ADMIN_PASSWORD").unwrap();
         assert_eq!(admin_password.len(), 36);
         assert_ne!(admin_password, "admin");
@@ -1708,14 +1985,89 @@ mod tests {
     }
 
     #[test]
-    fn adds_missing_runtime_secret() {
+    fn adds_missing_runtime_secrets() {
         let env_file = "COMPOSE_PROJECT_NAME=axbi\nADMIN_PASSWORD=admin\n";
-        let updated = ensure_runtime_secret_content(env_file).unwrap().unwrap();
+        let updated = ensure_runtime_secrets_content(env_file).unwrap().unwrap();
 
         assert!(read_env_value_from_str(&updated, "AX_BI_SECRET_KEY").is_some());
+        assert!(read_env_value_from_str(&updated, "AX_SERVICES_INTERNAL_TOKEN").is_some());
         assert_eq!(
             read_env_value_from_str(&updated, "ADMIN_PASSWORD").unwrap(),
             "admin"
+        );
+    }
+
+    #[test]
+    fn preserves_existing_runtime_secrets_and_replaces_empty_values() {
+        let env_file =
+            "AX_BI_SECRET_KEY=existing-secret\nAX_SERVICES_INTERNAL_TOKEN=\nOTHER=value\n";
+        let updated = ensure_runtime_secrets_content(env_file).unwrap().unwrap();
+
+        assert_eq!(
+            read_env_value_from_str(&updated, "AX_BI_SECRET_KEY").unwrap(),
+            "existing-secret"
+        );
+        assert_eq!(
+            read_env_value_from_str(&updated, "AX_SERVICES_INTERNAL_TOKEN")
+                .unwrap()
+                .len(),
+            64
+        );
+        assert_eq!(read_env_value_from_str(&updated, "OTHER").unwrap(), "value");
+        assert!(ensure_runtime_secrets_content(&updated).unwrap().is_none());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn secures_runtime_environment_permissions() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let env_path =
+            std::env::temp_dir().join(format!("axbi-permissions-test-{}.env", std::process::id()));
+        fs::write(&env_path, "AX_BI_SECRET_KEY=test\n").unwrap();
+        fs::set_permissions(&env_path, fs::Permissions::from_mode(0o644)).unwrap();
+
+        secure_runtime_env_permissions(&env_path).unwrap();
+        let mode = fs::metadata(&env_path).unwrap().permissions().mode() & 0o777;
+        let _ = fs::remove_file(&env_path);
+
+        assert_eq!(mode, 0o600);
+    }
+
+    #[test]
+    fn only_managed_compose_services_own_open_runtime_ports() {
+        let external = local_runtime_port_from_state(
+            "AX BI web",
+            31423,
+            "http://127.0.0.1:31423",
+            true,
+            false,
+        );
+        assert!(!external.available);
+        assert!(!external.occupied_by_axbi);
+
+        let managed =
+            local_runtime_port_from_state("AX BI web", 31423, "http://127.0.0.1:31423", true, true);
+        assert!(managed.available);
+        assert!(managed.occupied_by_axbi);
+    }
+
+    #[test]
+    fn compose_errors_keep_the_actionable_tail_bounded() {
+        let noisy = format!("{}\rROOT CAUSE", "pulling layer\r".repeat(200));
+        let tail = bounded_output_tail(&noisy, 10, 200);
+
+        assert!(tail.len() <= 200);
+        assert!(tail.ends_with("ROOT CAUSE"));
+        assert!(tail.lines().count() <= 10);
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn parses_port_owner_from_lsof_machine_output() {
+        assert_eq!(
+            parse_lsof_port_owner("p28162\ncpython3.1\np90428\ncpython3.1\n").unwrap(),
+            "python3.1 (PID 28162)"
         );
     }
 

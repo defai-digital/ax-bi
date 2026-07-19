@@ -20,7 +20,7 @@
 HYPHEN_SYMBOL='-'
 
 exec gunicorn \
-    --bind "${AXBI_BIND_ADDRESS:-0.0.0.0}:${AXBI_PORT:-8088}" \
+    --bind "${AXBI_BIND_ADDRESS:-0.0.0.0}:${AXBI_PORT:-31423}" \
     --access-logfile "${ACCESS_LOG_FILE:-$HYPHEN_SYMBOL}" \
     --error-logfile "${ERROR_LOG_FILE:-$HYPHEN_SYMBOL}" \
     --workers ${SERVER_WORKER_AMOUNT:-1} \

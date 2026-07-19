@@ -91,6 +91,15 @@ test("nextPreferHomeView sticky rules", () => {
 test("summaryText is safe without dependencies array", () => {
   assert.equal(summaryText(null), "Checking local runtime…");
   assert.equal(
+    summaryText({
+      axbi_healthy: false,
+      axbi_running: false,
+      stack_running: true,
+      configured: true,
+    }),
+    "Local AX BI needs attention — review diagnostics or stop and retry",
+  );
+  assert.equal(
     summaryText({ axbi_healthy: true }),
     "Local AX BI is ready",
   );
@@ -130,6 +139,13 @@ test("shellStatusLabel prefers remote host then local health", () => {
       status: { axbi_healthy: true },
     }),
     "Local · Ready",
+  );
+  assert.equal(
+    shellStatusLabel({
+      biSource: "local",
+      status: { stack_running: true },
+    }),
+    "Local · Needs attention",
   );
   assert.equal(shellStatusLabel({ biSource: "local" }), "Local");
 });

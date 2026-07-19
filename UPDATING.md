@@ -24,6 +24,22 @@ assists people when migrating to a new version.
 
 ## Next
 
+### AX BI Desktop local runtime token migration
+
+AX BI Desktop generates and preserves `AX_SERVICES_INTERNAL_TOKEN` for its
+managed local runtime and passes the same value to AX BI and AX Services.
+Existing Desktop environments are migrated automatically; users do not need to
+edit the generated `.env`. On Unix, Desktop also restricts that file to the
+owning user because it contains local credentials.
+
+### Docker web port contract correction
+
+The AX BI container image, web entrypoints, health check, and Compose files now
+use internal port `31423` consistently. `AXBI_PORT` still controls the host-side
+published port, while the container listener remains fixed at `31423` in the
+managed Compose stacks. This corrects deployments that appeared healthy inside
+Docker but returned an empty response through the published host port.
+
 ### Minisign release signatures
 
 The `scripts/sign.sh` release helper uses minisign instead of GPG. It writes a
@@ -35,9 +51,9 @@ to `~/signkey/ax.minisign.key` and `~/signkey/ax.pub`; override those paths with
 
 AX Services now validates Bearer credentials on every endpoint except
 `/health` when `AX_SERVICES_INTERNAL_TOKEN` is configured. A token is required
-when `AX_SERVICES_HOST` binds to a non-loopback address. Configure the same
-secret as `AX_SERVICES_TOKEN` in AX BI and do not publish the sidecar port to
-untrusted networks.
+when `AX_SERVICES_HOST` binds to a non-loopback address. Docker deployments
+configure the same `AX_SERVICES_INTERNAL_TOKEN` value for AX BI and AX Services;
+do not publish the sidecar port to untrusted networks.
 
 Loopback-only development deployments may omit the token.
 
