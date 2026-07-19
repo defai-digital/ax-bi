@@ -27,11 +27,15 @@ export default {
 
 const dataSource = ['Item 1', 'Item 2', 'Item 3'];
 
-export const InteractiveList = (args: ListProps<any>) => (
+// Use string item type (not `any`) so antd List's rowKey stays
+// `((item) => Key) | keyof T` and does not collapse to free-form `string`.
+type StoryListProps = Omit<ListProps<string>, 'dataSource' | 'renderItem'>;
+
+export const InteractiveList = (args: StoryListProps) => (
   <List
     {...args}
     dataSource={dataSource}
-    renderItem={item => <List.Item>{item}</List.Item>}
+    renderItem={(item: string) => <List.Item>{item}</List.Item>}
   />
 );
 
@@ -84,11 +88,11 @@ InteractiveList.parameters = {
   },
 };
 
-export const InteractiveListWithPagination = (args: ListProps<any>) => (
+export const InteractiveListWithPagination = (args: StoryListProps) => (
   <List
     {...args}
     dataSource={dataSource}
-    renderItem={item => <List.Item>{item}</List.Item>}
+    renderItem={(item: string) => <List.Item>{item}</List.Item>}
     pagination={{ pageSize: 2 }}
   />
 );
