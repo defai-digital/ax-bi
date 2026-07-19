@@ -19,7 +19,6 @@
 import {
   cloneElement,
   forwardRef,
-  type ForwardedRef,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -39,23 +38,25 @@ import { DropdownContainerProps, DropdownItem, DropdownRef } from './types';
 
 const MAX_HEIGHT = 500;
 
-export const DropdownContainer = forwardRef(
-  (
-    {
-      items,
-      onOverflowingStateChange,
-      dropdownContent,
-      dropdownRef,
-      dropdownStyle = {},
-      dropdownTriggerCount,
-      dropdownTriggerIcon,
-      dropdownTriggerText = t('More'),
-      dropdownTriggerTooltip = null,
-      forceRender,
-      style,
-    }: DropdownContainerProps,
-    outerRef: ForwardedRef<DropdownRef>,
-  ) => {
+export const DropdownContainer = forwardRef<
+  DropdownRef,
+  DropdownContainerProps
+>(function DropdownContainer(
+  {
+    items,
+    onOverflowingStateChange,
+    dropdownContent,
+    dropdownRef,
+    dropdownStyle = {},
+    dropdownTriggerCount,
+    dropdownTriggerIcon,
+    dropdownTriggerText = t('More'),
+    dropdownTriggerTooltip = null,
+    forceRender,
+    style,
+  },
+  outerRef,
+) {
     const theme = useTheme();
     const { ref, width = 0 } = useResizeDetector<HTMLDivElement>();
     const previousWidth = usePrevious(width) || 0;
@@ -420,5 +421,4 @@ export const DropdownContainer = forwardRef(
         )}
       </div>
     );
-  },
-);
+});
