@@ -343,10 +343,10 @@ test('should NOT render the user actions when user is anonymous', async () => {
   expect(screen.queryByText('User')).not.toBeInTheDocument();
 });
 
-test('should render the About section and version_string, sha or build_number when available', async () => {
+test('should render the About section with runtime version when available', async () => {
   const {
     data: {
-      navbar_right: { version_sha, version_string, build_number },
+      navbar_right: { version_string, build_number },
     },
   } = mockedProps;
 
@@ -354,16 +354,11 @@ test('should render the About section and version_string, sha or build_number wh
   userEvent.hover(screen.getByText('Settings'));
   const about = await screen.findByText('About');
 
-  // The version information is rendered as combined text in a single element
-  // Use getAllByText to get all matching elements and check the first one
+  // Version text is combined in one element; SHA is intentionally omitted.
   const versionTexts = await screen.findAllByText(
     (_, element) =>
       element?.textContent?.includes(`Runtime version: ${version_string}`) ??
       false,
-  );
-  const shaTexts = await screen.findAllByText(
-    (_, element) =>
-      element?.textContent?.includes(`SHA: ${version_sha}`) ?? false,
   );
   const buildTexts = await screen.findAllByText(
     (_, element) =>
@@ -372,8 +367,8 @@ test('should render the About section and version_string, sha or build_number wh
 
   expect(about).toBeInTheDocument();
   expect(versionTexts[0]).toBeInTheDocument();
-  expect(shaTexts[0]).toBeInTheDocument();
   expect(buildTexts[0]).toBeInTheDocument();
+  expect(screen.queryByText(/SHA:/)).not.toBeInTheDocument();
 });
 
 test('should render the Documentation link inside Settings when available', async () => {

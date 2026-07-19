@@ -455,8 +455,9 @@ const RightMenu = ({
         });
       }
 
-      // About: static version/build text only (not a link and not a modal).
-      if (navbarRight.version_string || navbarRight.version_sha) {
+      // About: static product/version text only (not a link and not a modal).
+      // Omit git SHA — not meaningful for end users in Settings.
+      if (navbarRight.version_string || navbarRight.build_number) {
         items.push({ type: 'divider', key: 'version-info-divider' });
         items.push({
           type: 'group',
@@ -482,8 +483,6 @@ const RightMenu = ({
                     navbarRight.show_watermark && t('Powered by AX BI'),
                     navbarRight.version_string &&
                       `${t('Runtime version')}: ${navbarRight.version_string}`,
-                    navbarRight.version_sha &&
-                      `${t('SHA')}: ${navbarRight.version_sha}`,
                     navbarRight.build_number &&
                       `${t('Build')}: ${navbarRight.build_number}`,
                   ]
