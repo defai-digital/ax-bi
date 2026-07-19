@@ -387,11 +387,13 @@ const RightMenu = ({
           userItems.push({
             key: 'info',
             icon: <Icons.InfoCircleOutlined />,
-            label: (
-              <Typography.Link href={ensureAppRoot(navbarRight.user_info_url)}>
-                {t('Info')}
-              </Typography.Link>
-            ),
+            label: t('Info'),
+            onClick: () =>
+              navigateMenuUrl(
+                navbarRight.user_info_url,
+                history,
+                isFrontendRoute,
+              ),
           });
         }
         const showLogout =
@@ -401,14 +403,14 @@ const RightMenu = ({
           userItems.push({
             key: 'logout',
             icon: <Icons.LogoutOutlined />,
-            label: (
-              <Typography.Link
-                href={ensureAppRoot(navbarRight.user_logout_url)}
-              >
-                {t('Logout')}
-              </Typography.Link>
-            ),
-            onClick: handleLogout,
+            label: t('Logout'),
+            onClick: () => {
+              handleLogout();
+              // Full navigation so the server session ends cleanly
+              window.location.assign(
+                ensureAppRoot(navbarRight.user_logout_url || '/logout/'),
+              );
+            },
           });
         }
 
