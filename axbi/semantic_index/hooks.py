@@ -86,15 +86,47 @@ def _queue_reindex(target: Any, dataset_id: int | None) -> None:
 
 
 def _on_dataset_change(_mapper: Mapper, connection: Connection, target: Any) -> None:
-    """Handle SqlaTable insert/update: invalidate now, refresh after commit."""
+    """Handle SqlaTable insert/update: invalidate now, refresh after commit.
+
+    On insert the primary key is normally available in ``after_insert``. If it
+    is still ``None`` (edge-case identity assignment), skip stale-marking (new
+    datasets have no documents yet) and rely on ``_after_flush`` to queue the
+    reindex once the identity is populated.
+    """
 
     try:
-        _mark_stale(connection, target.id)
-        _queue_reindex(target, target.id)
+        dataset_id = getattr(target, "id", None)
+        if dataset_id is None:
+            return
+        _mark_stale(connection, dataset_id)
+        _queue_reindex(target, dataset_id)
     except Exception:  # pylint: disable=broad-except
         logger.warning(
             "Semantic index change hook failed for dataset %s",
             getattr(target, "id", None),
+            exc_info=True,
+        )
+
+
+def _after_flush(session: Session, _flush_context: Any) -> None:
+    """Queue reindex for newly inserted datasets once their IDs are assigned.
+
+    Complements ``after_insert`` so a missing identity during the mapper event
+    cannot leave a new dataset permanently unindexed.
+    """
+
+    # pylint: disable=import-outside-toplevel
+    from axbi.connectors.sqla.models import SqlaTable
+
+    try:
+        for obj in session.new:
+            if isinstance(obj, SqlaTable):
+                dataset_id = getattr(obj, "id", None)
+                if dataset_id is not None:
+                    _pending_ids(session).add(dataset_id)
+    except Exception:  # pylint: disable=broad-except
+        logger.warning(
+            "Semantic index after_flush hook failed",
             exc_info=True,
         )
 
@@ -184,6 +216,7 @@ def register_semantic_index_listeners() -> None:
         sqla.event.listen(model, "after_update", _on_child_change)
         sqla.event.listen(model, "after_delete", _on_child_change)
 
+    sqla.event.listen(db.session, "after_flush", _after_flush)
     sqla.event.listen(db.session, "after_commit", _after_commit)
     sqla.event.listen(db.session, "after_rollback", _after_rollback)
 
@@ -204,5 +237,6 @@ def clear_semantic_index_listeners() -> None:
         sqla.event.remove(model, "after_update", _on_child_change)
         sqla.event.remove(model, "after_delete", _on_child_change)
 
+    sqla.event.remove(db.session, "after_flush", _after_flush)
     sqla.event.remove(db.session, "after_commit", _after_commit)
     sqla.event.remove(db.session, "after_rollback", _after_rollback)

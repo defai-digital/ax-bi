@@ -60,13 +60,29 @@ class QueryDAO(BaseDAO[Query]):
 
     @staticmethod
     def stop_query(client_id: str) -> None:
+        """Stop a running query.
+
+        Owners may stop their own queries. Admins may stop any user's query
+        so a runaway query cannot be left uncancellable.
+        """
+        # pylint: disable=import-outside-toplevel
+        from axbi import security_manager
+
         query = (
-            db.session.query(Query)
-            .filter(Query.client_id == client_id, Query.user_id == get_user_id())
-            .one_or_none()
+            db.session.query(Query).filter(Query.client_id == client_id).one_or_none()
         )
         if not query:
             raise QueryNotFoundException(f"Query with client_id {client_id} not found")
+
+        # Owners may stop their own queries. Only consult is_admin when the
+        # caller is not the owner, so request-less unit tests without g.user
+        # still work for owner/unassigned queries.
+        if query.user_id is not None and query.user_id != get_user_id():
+            if not security_manager.is_admin():
+                # Do not reveal whether the query exists to non-owners.
+                raise QueryNotFoundException(
+                    f"Query with client_id {client_id} not found"
+                )
 
         if query.status in [
             QueryStatus.FAILED,

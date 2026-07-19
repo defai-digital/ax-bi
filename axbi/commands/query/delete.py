@@ -17,13 +17,18 @@
 import logging
 from functools import partial
 
+from flask import g
+
+from axbi import security_manager
 from axbi.commands.base import BaseCommand
 from axbi.commands.query.exceptions import (
     SavedQueryDeleteFailedError,
+    SavedQueryForbiddenError,
     SavedQueryNotFoundError,
 )
 from axbi.daos.query import SavedQueryDAO
 from axbi.models.sql_lab import SavedQuery
+from axbi.utils.core import get_user_id
 from axbi.utils.decorators import on_error, transaction
 
 logger = logging.getLogger(__name__)
@@ -41,7 +46,25 @@ class DeleteSavedQueryCommand(BaseCommand):
         SavedQueryDAO.delete(self._models)
 
     def validate(self) -> None:
-        # Validate/populate model exists
+        # Validate/populate model exists (DAO base filter scopes to the caller)
         self._models = SavedQueryDAO.find_by_ids(self._model_ids)
         if not self._models or len(self._models) != len(self._model_ids):
             raise SavedQueryNotFoundError()
+
+        # Defense in depth: require ownership (or admin) even if base filter
+        # is skipped by a future caller.
+        if security_manager.is_admin():
+            return
+
+        current_user_id = get_user_id()
+        current_user = getattr(g, "user", None)
+        for model in self._models:
+            is_owner = (
+                current_user is not None and model.created_by == current_user
+            ) or (
+                model.user_id is not None
+                and current_user_id is not None
+                and model.user_id == current_user_id
+            )
+            if not is_owner:
+                raise SavedQueryForbiddenError()

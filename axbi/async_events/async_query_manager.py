@@ -77,11 +77,16 @@ def parse_event(event_data: tuple[str, dict[str, Any]]) -> dict[str, Any]:
 
 
 def increment_id(entry_id: str) -> str:
-    # redis stream IDs are in this format: '1607477697866-0'
+    """Increment a Redis stream ID past ``entry_id``.
+
+    Redis stream IDs use the form ``{milliseconds_time}-{sequence}``. The
+    sequence component can grow beyond a single digit under load, so only the
+    full sequence integer (after the final ``-``) may be incremented.
+    """
     try:
-        prefix, last = entry_id[:-1], int(entry_id[-1])
-        return prefix + str(last + 1)
-    except Exception:  # pylint: disable=broad-except
+        timestamp, sequence = entry_id.rsplit("-", 1)
+        return f"{timestamp}-{int(sequence) + 1}"
+    except (TypeError, ValueError):
         return entry_id
 
 

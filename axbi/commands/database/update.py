@@ -91,12 +91,12 @@ class UpdateDatabaseCommand(BaseCommand):
 
         new_catalog = database.get_default_catalog()
 
-        # update assets when the database catalog changes, if the database was not
-        # configured with multi-catalog support; if it was enabled or is enabled in the
-        # update we don't update the assets
-        if (
-            force_update
-            or new_catalog != original_catalog
+        # Update assets when the catalog changed (or could not be read before the
+        # update) and multi-catalog support is not enabled on either side.
+        # Parentheses make operator precedence explicit: force_update alone is
+        # enough; otherwise require a catalog change without multi-catalog.
+        if force_update or (
+            new_catalog != original_catalog
             and not self._model.allow_multi_catalog
             and not database.allow_multi_catalog
         ):

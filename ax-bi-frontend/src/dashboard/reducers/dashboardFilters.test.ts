@@ -150,4 +150,24 @@ describe('dashboardFilters reducer', () => {
     // might be changed.
     expect(activeDashboardFilters.buildActiveFilters).toHaveBeenCalled();
   });
+
+  test('UPDATE_DASHBOARD_FILTERS_SCOPE ignores unknown chart ids', () => {
+    (activeDashboardFilters as Record<string, unknown>).buildActiveFilters =
+      jest.fn();
+    const next = dashboardFiltersReducer(
+      dashboardFilters as unknown as Parameters<
+        typeof dashboardFiltersReducer
+      >[0],
+      {
+        type: UPDATE_DASHBOARD_FILTERS_SCOPE,
+        scopes: {
+          '99999_region': { scope: ['ROOT_ID'], immune: [] },
+        },
+      },
+    );
+    // Existing filters unchanged; no throw on missing chart entry.
+    expect(next[filterId]).toEqual(dashboardFilters[filterId]);
+    expect(next['99999']).toBeUndefined();
+    expect(activeDashboardFilters.buildActiveFilters).toHaveBeenCalled();
+  });
 });

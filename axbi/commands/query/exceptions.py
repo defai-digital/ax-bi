@@ -66,6 +66,10 @@ class SavedQueryDeleteFailedError(DeleteFailedError):
     message = _("Saved queries could not be deleted.")
 
 
+class SavedQueryForbiddenError(ForbiddenError):
+    message = _("Changing this saved query is forbidden")
+
+
 class SavedQueryNotFoundError(CommandException):
     message = _("Saved query not found.")
 

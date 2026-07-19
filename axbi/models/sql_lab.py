@@ -54,6 +54,7 @@ from sqlalchemy.sql.elements import ColumnElement, literal_column
 
 from axbi import security_manager
 from axbi.axbi_typing import DatasetColumnData, ExplorableData, QueryObjectDict
+from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
 from axbi.exceptions import (
     AxBIException,
     AxBIParseError,
@@ -77,6 +78,7 @@ from axbi.utils import json
 from axbi.utils.core import (
     GenericDataType,
     get_column_name,
+    get_user_id,
     LongText,
     MediumText,
     QueryStatus,
@@ -322,10 +324,26 @@ class Query(
         set, keeping the table set aligned with execution even though the
         original ``template_params`` are not persisted on the query record.
 
+        In addition to dataset/database access, non-admin callers must own the
+        query (or hold ``all_query_access``). Dataset access alone must not
+        allow reading another user's stored SQL Lab results via a leaked
+        ``results_key`` / ``client_id``.
+
         :raises AxBISecurityException: If the user cannot access the resource
         """
 
         security_manager.raise_for_access(query=self, force_dataset_match=True)
+
+        if security_manager.is_admin() or security_manager.can_access_all_queries():
+            return
+        if self.user_id is not None and self.user_id != get_user_id():
+            raise AxBISecurityException(
+                AxBIError(
+                    error_type=AxBIErrorType.QUERY_SECURITY_ACCESS_ERROR,
+                    message=__("You don't have access to this query"),
+                    level=ErrorLevel.ERROR,
+                )
+            )
 
     @property
     def db_engine_spec(

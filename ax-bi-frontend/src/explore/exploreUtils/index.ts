@@ -217,9 +217,10 @@ export function getExploreUrl({
     return null;
   }
 
-  // label_colors should not pollute the URL
-  // eslint-disable-next-line no-param-reassign
-  delete formData.label_colors;
+  // Clone before stripping fields so callers keep their original formData
+  // (e.g. embedded charts must retain label_colors).
+  const formDataForUrl = { ...formData };
+  delete formDataForUrl.label_colors;
 
   let uri = relative
     ? new URI('/')
@@ -234,7 +235,7 @@ export function getExploreUrl({
 
   // Building the querystring (search) part of the URI
   const search = uri.search(true) as Record<string, string>;
-  const { slice_id, extra_filters, adhoc_filters, viz_type } = formData;
+  const { slice_id, extra_filters, adhoc_filters, viz_type } = formDataForUrl;
   if (slice_id) {
     const form_data: Record<string, unknown> = { slice_id };
     if (method === 'GET') {

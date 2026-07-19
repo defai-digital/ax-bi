@@ -156,8 +156,14 @@ export default function dashboardFiltersReducer(
         const [filterKey, { scope, immune }] = entry as [string, FilterScope];
         const { chartId, column } = getChartIdAndColumnFromFilterKey(filterKey);
         const chartIdStr = String(chartId);
+        const existing = map[chartIdStr];
+        // Newly added charts may not yet have a filter entry; skip rather than
+        // throwing when spreading undefined scopes.
+        if (!existing) {
+          return map;
+        }
         const scopes = {
-          ...map[chartIdStr].scopes,
+          ...existing.scopes,
           [column]: {
             scope,
             immune,
@@ -166,7 +172,7 @@ export default function dashboardFiltersReducer(
         return {
           ...map,
           [chartIdStr]: {
-            ...map[chartIdStr],
+            ...existing,
             scopes,
           },
         };

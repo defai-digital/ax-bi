@@ -24,6 +24,7 @@ from unittest.mock import MagicMock, patch
 from axbi.semantic_index import hooks
 from axbi.semantic_index.hooks import (
     _after_commit,
+    _after_flush,
     _after_rollback,
     _on_child_change,
     _on_dataset_change,
@@ -48,6 +49,39 @@ def test_dataset_change_marks_stale_and_queues() -> None:
     assert connection.execute.call_count == 1
     # Dataset queued for post-commit reindex.
     assert session.info[_PENDING_KEY] == {42}
+
+
+def test_dataset_change_skips_when_id_missing() -> None:
+    """Inserts without an identity yet must not crash or mark stale blindly."""
+    connection = MagicMock()
+    target = SimpleNamespace(id=None)
+    session = _fake_session()
+
+    with patch.object(hooks, "object_session", return_value=session):
+        _on_dataset_change(MagicMock(), connection, target)
+
+    connection.execute.assert_not_called()
+    assert _PENDING_KEY not in session.info
+
+
+def test_after_flush_queues_new_datasets_with_ids() -> None:
+    """after_flush recovers inserts whose mapper event saw a null identity."""
+    session = _fake_session()
+    session.new = [
+        SimpleNamespace(id=55),  # not a SqlaTable
+    ]
+
+    class _FakeTable:
+        """Stand-in that isinstance-matches via patch of SqlaTable."""
+
+        def __init__(self, dataset_id: int | None) -> None:
+            self.id = dataset_id
+
+    with patch("axbi.connectors.sqla.models.SqlaTable", _FakeTable):
+        session.new = [_FakeTable(77), _FakeTable(None), SimpleNamespace(id=1)]
+        _after_flush(session, MagicMock())
+
+    assert session.info[_PENDING_KEY] == {77}
 
 
 def test_dataset_delete_removes_docs_and_cancels_pending() -> None:

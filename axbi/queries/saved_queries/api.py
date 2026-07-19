@@ -33,6 +33,7 @@ from axbi.commands.importers.v1.utils import get_contents_from_bundle
 from axbi.commands.query.delete import DeleteSavedQueryCommand
 from axbi.commands.query.exceptions import (
     SavedQueryDeleteFailedError,
+    SavedQueryForbiddenError,
     SavedQueryNotFoundError,
 )
 from axbi.commands.query.export import ExportSavedQueriesCommand
@@ -248,6 +249,8 @@ class SavedQueryRestApi(BaseAxBIModelRestApi):
             )
         except SavedQueryNotFoundError:
             return self.response_404()
+        except SavedQueryForbiddenError as ex:
+            return self.response_403(message=str(ex))
         except SavedQueryDeleteFailedError as ex:
             return self.response_422(message=str(ex))
 

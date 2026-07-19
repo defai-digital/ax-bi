@@ -28,6 +28,7 @@ from axbi.async_events.async_query_manager import (
     AsyncQueryJobException,
     AsyncQueryManager,
     AsyncQueryTokenException,
+    increment_id,
     parse_event,
 )
 from axbi.async_events.cache_backend import (
@@ -63,6 +64,25 @@ def test_parse_event_merges_json_object_payload():
 def test_parse_event_rejects_non_object_payload():
     with raises(AsyncQueryJobException):
         parse_event(("1-0", {"data": "[]"}))
+
+
+@mark.parametrize(
+    ("entry_id", "expected"),
+    [
+        ("1607477697866-0", "1607477697866-1"),
+        ("1607477697866-9", "1607477697866-10"),
+        ("1607477697866-10", "1607477697866-11"),
+        ("1607477697866-99", "1607477697866-100"),
+        ("42-1000", "42-1001"),
+    ],
+)
+def test_increment_id_handles_multi_digit_sequences(entry_id: str, expected: str):
+    assert increment_id(entry_id) == expected
+
+
+def test_increment_id_returns_input_on_malformed_id():
+    assert increment_id("not-a-stream-id-x") == "not-a-stream-id-x"
+    assert increment_id("nope") == "nope"
 
 
 @mark.parametrize(

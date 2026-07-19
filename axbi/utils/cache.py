@@ -73,33 +73,48 @@ def set_and_log_cache(
     # Skip caching if timeout is CACHE_DISABLED_TIMEOUT (no caching requested)
     if timeout == CACHE_DISABLED_TIMEOUT:
         return
+
+    # Keep cache backend writes and metadata DB inserts independent so a
+    # failure in one path cannot prevent the other (or leave untracked keys).
+    cache_set_ok = False
     try:
         dttm = datetime.now(timezone.utc).isoformat().split(".")[0]
         value = {**cache_value, "dttm": dttm}
         cache_instance.set(cache_key, value, timeout=timeout)
+        cache_set_ok = True
         stats_logger = app.config["STATS_LOGGER"]
         stats_logger.incr("set_cache_key")
 
-        # Log cache key details for debugging
         logger.debug(
             "CACHE SET - Key: %s, Datasource: %s, Timeout: %s",
             cache_key,
             datasource_uid,
             timeout,
         )
+    except Exception as ex:  # pylint: disable=broad-except
+        # cache.set can fail if the backend is down, the key is too large, etc.
+        logger.warning("Could not cache key %s", cache_key)
+        logger.exception(ex)
 
-        if datasource_uid and app.config["STORE_CACHE_KEYS_IN_METADATA_DB"]:
+    if (
+        cache_set_ok
+        and datasource_uid
+        and app.config["STORE_CACHE_KEYS_IN_METADATA_DB"]
+    ):
+        try:
             ck = CacheKey(
                 cache_key=cache_key,
                 cache_timeout=cache_timeout,
                 datasource_uid=datasource_uid,
             )
             db.session.add(ck)
-    except Exception as ex:  # pylint: disable=broad-except
-        # cache.set call can fail if the backend is down or if
-        # the key is too large or whatever other reasons
-        logger.warning("Could not cache key %s", cache_key)
-        logger.exception(ex)
+        except Exception as ex:  # pylint: disable=broad-except
+            logger.warning(
+                "Could not persist cache key metadata for %s (datasource %s)",
+                cache_key,
+                datasource_uid,
+            )
+            logger.exception(ex)
 
 
 # If a user sets `max_age` to 0, for long the browser should cache the

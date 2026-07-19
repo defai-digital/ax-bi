@@ -22,6 +22,7 @@ import { t } from '@ax-bi/core/translation';
 import {
   makeApi,
   getClientErrorObject,
+  AxBIClient,
   ChartCustomization,
   ChartCustomizationDivider,
   ColumnOption,
@@ -240,6 +241,30 @@ export function loadChartCustomizationData(
     }
 
     dispatch(setChartCustomizationDataLoading(itemId, true));
+    try {
+      const endpoint = `/api/v1/datasource/table/${encodeURIComponent(
+        datasetId,
+      )}/column/${encodeURIComponent(actualColumnName)}/values/`;
+      const { json } = await AxBIClient.get({ endpoint });
+      const values: unknown[] = Array.isArray(json?.result) ? json.result : [];
+      const data: ColumnOption[] = values.map(value => {
+        const label = value == null ? '' : String(value);
+        return { label, value: label };
+      });
+      dispatch(setChartCustomizationData(itemId, data));
+    } catch (error) {
+      const errorObject = await getClientErrorObject(error);
+      dispatch(
+        addDangerToast(
+          errorObject.error ||
+            errorObject.message ||
+            t('Failed to load chart customization values'),
+        ),
+      );
+      dispatch(setChartCustomizationData(itemId, []));
+    } finally {
+      dispatch(setChartCustomizationDataLoading(itemId, false));
+    }
   };
 }
 
