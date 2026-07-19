@@ -26,7 +26,7 @@ import { getUrlParam, isUrlExternal } from 'src/utils/urlUtils';
 import { MainNav, MenuItem } from '@ax-bi/ui-core/components/Menu';
 import { Tooltip, Grid, Row, Col, Image } from '@ax-bi/ui-core/components';
 import { GenericLink } from 'src/components';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { Icons } from '@ax-bi/ui-core/components/Icons';
 import { Typography } from '@ax-bi/ui-core/components/Typography';
 import { useUiConfig } from 'src/components/UiConfigContext';
@@ -37,6 +37,7 @@ import {
   MenuData,
 } from 'src/types/bootstrapTypes';
 import { datasetsLabel } from 'src/features/semanticLayers/label';
+import { useHistory } from 'src/hooks/useAppHistory';
 import RightMenu from './RightMenu';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
 import { simplifyMenuData, flattenChilds } from './simplifyMenu';
@@ -201,6 +202,7 @@ export function Menu({
   const screens = useBreakpoint();
   const uiConfig = useUiConfig();
   const theme = useTheme();
+  const history = useHistory();
 
   enum Paths {
     Explore = '/explore',
@@ -237,31 +239,30 @@ export function Menu({
   const standalone = getUrlParam(URL_PARAMS.standalone);
   if (standalone || uiConfig.hideNav) return <></>;
 
+  const goTo = (targetUrl?: string) => {
+    if (!targetUrl) {
+      return;
+    }
+    // Prefer SPA navigation when this path is a registered frontend route.
+    // Bootstrap menu items rarely set child.isFrontendRoute, so always use
+    // the isFrontendRoute() helper from routes rather than the server flag.
+    if (isFrontendRoute(targetUrl)) {
+      history.push(targetUrl);
+      return;
+    }
+    window.location.assign(ensureAppRoot(targetUrl));
+  };
+
   const buildMenuItem = ({
     label,
     childs,
     url,
-    isFrontendRoute,
   }: MenuObjectProps): MenuItem => {
-    if (url && isFrontendRoute) {
-      return {
-        key: label,
-        label: (
-          <NavLink
-            role="button"
-            to={url}
-            className={({ isActive }) => (isActive ? 'is-active' : undefined)}
-          >
-            {label}
-          </NavLink>
-        ),
-      };
-    }
-
     if (url) {
       return {
         key: label,
-        label: <Typography.Link href={url}>{label}</Typography.Link>,
+        label,
+        onClick: () => goTo(url),
       };
     }
 
@@ -273,17 +274,8 @@ export function Menu({
         Object.assign(child, { label: t(child.label) });
         childItems.push({
           key: `${child.label}`,
-          label: child.isFrontendRoute ? (
-            <NavLink
-              to={child.url || ''}
-              end
-              className={({ isActive }) => (isActive ? 'is-active' : undefined)}
-            >
-              {child.label}
-            </NavLink>
-          ) : (
-            <Typography.Link href={child.url}>{child.label}</Typography.Link>
-          ),
+          label: child.label,
+          onClick: () => goTo(child.url),
         });
       }
     });

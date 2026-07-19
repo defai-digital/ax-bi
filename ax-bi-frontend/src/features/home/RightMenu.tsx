@@ -18,7 +18,6 @@
  */
 import { FC, PureComponent, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { t } from '@ax-bi/core/translation';
 import {
   getExtensionsRegistry,
@@ -42,6 +41,7 @@ import { RootState } from 'src/dashboard/types';
 import { useThemeContext } from 'src/theme/ThemeProvider';
 import { useThemeMenuItems } from 'src/hooks/useThemeMenuItems';
 import { useOptionalCommandPalette } from 'src/components/CommandPalette';
+import { useHistory } from 'src/hooks/useAppHistory';
 import { useLanguageMenuItems } from './LanguagePicker';
 import { RightMenuProps } from './types';
 import { NAVBAR_MENU_POPUP_OFFSET } from './commonMenuData';
@@ -55,6 +55,27 @@ import {
   SHELL_OPEN_SETTINGS_MESSAGE_TYPE,
 } from 'src/theme/desktopShell';
 import { resolveSettingsMenuIconKey } from './settingsMenuIcons';
+
+/**
+ * Navigate from Settings/Create menu items.
+ * Prefer menu item onClick over nested <Link>/<a> labels: antd 6 Menu
+ * swallows nested anchor clicks in submenus, which made Settings links dead.
+ */
+function navigateMenuUrl(
+  url: string | undefined,
+  history: ReturnType<typeof useHistory>,
+  isFrontendRoute?: (path?: string) => boolean,
+) {
+  if (!url) {
+    return;
+  }
+  if (isFrontendRoute?.(url)) {
+    history.push(url);
+    return;
+  }
+  // Backend / external pages: full navigation
+  window.location.assign(ensureAppRoot(url));
+}
 
 const extensionsRegistry = getExtensionsRegistry();
 
@@ -130,6 +151,7 @@ const RightMenu = ({
   environmentTag,
 }: RightMenuProps) => {
   const theme = useTheme();
+  const history = useHistory();
   const commandPalette = useOptionalCommandPalette();
   const isMac = navigator.platform?.toLowerCase().includes('mac') ?? false;
   const [desktopShellActive, setDesktopShellActive] = useState(() =>
@@ -219,40 +241,41 @@ const RightMenu = ({
       if (!navbarRight.user_is_anonymous) {
         const chartItem: MenuItem = {
           key: 'create-chart',
-          label: (
-            <Link
-              to={
-                Number.isInteger(dashboardId)
-                  ? `/chart/add?dashboard_id=${dashboardId}`
-                  : '/chart/add'
-              }
-            >
-              {t('Chart')}
-            </Link>
-          ),
+          label: t('Chart'),
           icon: <Icons.BarChartOutlined />,
+          onClick: () =>
+            navigateMenuUrl(
+              Number.isInteger(dashboardId)
+                ? `/chart/add?dashboard_id=${dashboardId}`
+                : '/chart/add',
+              history,
+              isFrontendRoute,
+            ),
         };
         const dashboardItem: MenuItem = {
           key: 'create-dashboard',
-          label: (
-            <Typography.Link href="/dashboard/new/">
-              {t('Dashboard')}
-            </Typography.Link>
-          ),
+          label: t('Dashboard'),
           icon: <Icons.DashboardOutlined />,
+          onClick: () =>
+            // Full assign matches other "new dashboard" entry points
+            window.location.assign(ensureAppRoot('/dashboard/new/')),
         };
         const uploadItem: MenuItem | null =
           canUploadData && localFileUploadEnabled
             ? {
                 key: 'create-upload-data',
-                label: <Link to="/upload/">{t('Upload data')}</Link>,
+                label: t('Upload data'),
                 icon: <Icons.UploadOutlined />,
+                onClick: () =>
+                  navigateMenuUrl('/upload/', history, isFrontendRoute),
               }
             : null;
         const sqlItem: MenuItem = {
           key: 'create-sql',
-          label: <Link to="/sqllab?new=true">{t('SQL query')}</Link>,
+          label: t('SQL query'),
           icon: <Icons.ConsoleSqlOutlined />,
+          onClick: () =>
+            navigateMenuUrl('/sqllab?new=true', history, isFrontendRoute),
         };
 
         // Simplified mode: consumer create paths first; SQL last inside the
@@ -304,20 +327,9 @@ const RightMenu = ({
             sectionItems.push({
               key: child.label,
               icon: IconComp ? <IconComp /> : undefined,
-              label: isFrontendRoute(child.url) ? (
-                <Link to={child.url || ''}>{menuItemDisplay}</Link>
-              ) : (
-                <Typography.Link
-                  href={child.url || ''}
-                  css={css`
-                    display: flex;
-                    align-items: center;
-                    line-height: ${theme.sizeUnit * 10}px;
-                  `}
-                >
-                  {menuItemDisplay}
-                </Typography.Link>
-              ),
+              label: menuItemDisplay,
+              onClick: () =>
+                navigateMenuUrl(child.url, history, isFrontendRoute),
             });
           }
         });
@@ -569,9 +581,10 @@ const RightMenu = ({
     if (canUploadData && localFileUploadEnabled) {
       items.push({
         key: 'upload-data',
-        label: <Link to="/upload/">{t('Upload data')}</Link>,
+        label: t('Upload data'),
         icon: <Icons.UploadOutlined />,
         className: 'primary-upload-action',
+        onClick: () => navigateMenuUrl('/upload/', history, isFrontendRoute),
       });
     }
 
@@ -599,6 +612,7 @@ const RightMenu = ({
     languageMenuItem,
     settings,
     isFrontendRoute,
+    history,
     theme,
     environmentTag,
     handleLogout,

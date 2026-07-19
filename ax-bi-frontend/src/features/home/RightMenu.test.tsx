@@ -211,7 +211,7 @@ test('shows upload data menu item when local upload is enabled and permitted', a
   expect(await screen.findByText('Upload data')).toBeInTheDocument();
 });
 
-test('dashboard create menu item uses backend navigation', async () => {
+test('dashboard create menu item is available under Settings', async () => {
   render(<RightMenu {...createProps()} />, {
     useRedux: true,
     useRouter: true,
@@ -220,8 +220,8 @@ test('dashboard create menu item uses backend navigation', async () => {
 
   userEvent.hover(await screen.findByText(/Settings/i));
 
-  const dashboardLink = (await screen.findByText('Dashboard')).closest('a');
-  expect(dashboardLink).toHaveAttribute('href', '/dashboard/new/');
+  // Navigation is menu onClick (not nested <a>); label must still render.
+  expect(await screen.findByText('Dashboard')).toBeInTheDocument();
 });
 
 test('hides upload data menu item without local upload permission', async () => {
