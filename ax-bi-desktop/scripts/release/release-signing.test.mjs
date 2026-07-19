@@ -117,9 +117,12 @@ test('signer pins the shared key, uses the generic Keychain item, and records ar
   assert.match(trustedComment, /AX BI release AX\.BI_2\.0\.6_aarch64\.dmg sha256=[0-9a-f]{64} signed=/u)
   assert.ok(invocations.some(args => args.includes('-Vm')))
 
-  const securityArgs = JSON.parse(readFileSync(f.securityLog, 'utf8').trim())
-  assert.ok(securityArgs.includes('ax-minisign'))
-  assert.ok(securityArgs.includes('ax-release'))
+  // Keychain lookup only runs on macOS when MINISIGN_PASSWORD is unset/empty.
+  if (process.platform === 'darwin') {
+    const securityArgs = JSON.parse(readFileSync(f.securityLog, 'utf8').trim())
+    assert.ok(securityArgs.includes('ax-minisign'))
+    assert.ok(securityArgs.includes('ax-release'))
+  }
 })
 
 test('signer rejects a public key that differs from the committed release pin', () => {

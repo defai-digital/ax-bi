@@ -950,7 +950,11 @@ fn ensure_managed_image_tags_content(content: &str) -> Option<String> {
     let mut changed = false;
 
     for (key, desired, repo) in [
-        (AXBI_IMAGE_ENV, desired_axbi.as_str(), MANAGED_AXBI_IMAGE_REPO),
+        (
+            AXBI_IMAGE_ENV,
+            desired_axbi.as_str(),
+            MANAGED_AXBI_IMAGE_REPO,
+        ),
         (
             AX_SERVICES_IMAGE_ENV,
             desired_services.as_str(),
@@ -968,7 +972,8 @@ fn ensure_managed_image_tags_content(content: &str) -> Option<String> {
         changed = true;
     }
 
-    let current_version = read_env_value_from_str(&updated, AXBI_DESKTOP_VERSION_ENV).unwrap_or_default();
+    let current_version =
+        read_env_value_from_str(&updated, AXBI_DESKTOP_VERSION_ENV).unwrap_or_default();
     if current_version != desired_version {
         updated = upsert_env_key_content(&updated, AXBI_DESKTOP_VERSION_ENV, &desired_version);
         changed = true;
@@ -2136,17 +2141,18 @@ fn path_to_string(path: &Path) -> String {
 mod tests {
     #[cfg(unix)]
     use super::parse_lsof_port_owner;
+    #[cfg(unix)]
+    use super::secure_runtime_env_permissions;
     use super::{
         augmented_path, bounded_output_tail, build_env_file, colima_config_resources_sufficient,
-        configured_colima_profile, default_axbi_image, default_ax_services_image, desktop_version,
+        configured_colima_profile, default_ax_services_image, default_axbi_image, desktop_version,
         docker_host, ensure_managed_image_tags_content, ensure_runtime_secrets_content,
         is_managed_image_ref, local_runtime_port_from_state, managed_image_tag, platform_id,
         platform_label, program_filename, read_env_value_from_str, resolve_program, runtime_urls,
-        secure_runtime_env_permissions, tail_lines, valid_colima_profile, validate_log_service,
-        RuntimeEngine, AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB,
-        AXBI_COLIMA_PROFILE, AXBI_DESKTOP_VERSION_ENV, AXBI_IMAGE_ENV, AX_SERVICES_IMAGE_ENV,
-        LOCAL_COMPOSE_YAML, MANAGED_AXBI_IMAGE_REPO, MANAGED_AX_SERVICES_IMAGE_REPO,
-        MAX_LOG_TAIL_LINES,
+        tail_lines, valid_colima_profile, validate_log_service, RuntimeEngine, AXBI_ADMIN_USERNAME,
+        AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE, AXBI_DESKTOP_VERSION_ENV,
+        AXBI_IMAGE_ENV, AX_SERVICES_IMAGE_ENV, LOCAL_COMPOSE_YAML, MANAGED_AXBI_IMAGE_REPO,
+        MANAGED_AX_SERVICES_IMAGE_REPO, MAX_LOG_TAIL_LINES,
     };
     use std::fs;
     use std::path::Path;
@@ -2244,7 +2250,8 @@ mod tests {
             desktop_version()
         );
 
-        let custom = "AXBI_IMAGE=ghcr.io/other/ax-bi:custom\nAX_SERVICES_IMAGE=ghcr.io/other/svc:custom\n";
+        let custom =
+            "AXBI_IMAGE=ghcr.io/other/ax-bi:custom\nAX_SERVICES_IMAGE=ghcr.io/other/svc:custom\n";
         let maybe = ensure_managed_image_tags_content(custom);
         // Desktop version key may still be added; images must remain custom.
         if let Some(updated) = maybe {

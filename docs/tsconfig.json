@@ -9,6 +9,7 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "ignoreDeprecations": "6.0",
     "types": ["@docusaurus/module-type-aliases"],
     "paths": {
       "@ax-bi/ui-core": ["../ax-bi-frontend/packages/ax-bi-ui-core/src"],

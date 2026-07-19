@@ -40,7 +40,7 @@ def app():
 def test_external_link_is_rewritten(app: Flask) -> None:
     html = '<a href="https://evil.com/page">Click</a>'
     result = process_html_links(html)
-    assert "axbi.example.com/redirect/?url=https%3A%2F%2Fevil.com%2Fpage" in result
+    assert "ax-bi.example.com/redirect/?url=https%3A%2F%2Fevil.com%2Fpage" in result
     assert "evil.com/page" not in result.split("url=")[0]
 
 
@@ -73,7 +73,7 @@ def test_multiple_links(app: Flask) -> None:
     )
     result = process_html_links(html)
     assert result.count("/redirect/?url=") == 2
-    assert "axbi.example.com/x" in result
+    assert "ax-bi.example.com/x" in result
 
 
 def test_disabled_via_config(app: Flask) -> None:

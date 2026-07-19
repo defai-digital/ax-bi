@@ -483,6 +483,9 @@ class TaskDAO(BaseDAO[Task]):
             for key, value in update_values.items():
                 setattr(task, key, value)
             task.properties = json.dumps(merged_properties)
+            # Flush under the FOR UPDATE lease so callers that refresh() see
+            # the merged properties (ORM dirty state alone is not enough).
+            db.session.flush()
             rows_updated = 1
         else:
             # Atomic compare-and-swap: only update if status matches expected
