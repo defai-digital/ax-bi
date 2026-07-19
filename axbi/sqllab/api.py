@@ -275,6 +275,15 @@ class SqlLabRestApi(BaseAxBIApi):
                     if template_params:
                         template_params = _load_template_params(template_params)
                         if template_params:
+                            # Some template macros execute database queries while
+                            # rendering, so authorize the selected database and SQL
+                            # before constructing the template processor.
+                            security_manager.raise_for_access(
+                                database=database,
+                                sql=sql,
+                                template_params=template_params,
+                                force_dataset_match=True,
+                            )
                             template_processor = get_template_processor(
                                 database=database
                             )

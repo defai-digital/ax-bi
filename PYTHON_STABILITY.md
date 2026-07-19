@@ -69,6 +69,22 @@ What is already in good shape:
 - Unit tests cover soft/hard commit failure recovery and structural guards
   ban raw `db.session.commit()` on those hot paths.
 
+### Phase 1.1 — Security and state-machine hardening
+
+- SQL Lab cost estimation authorizes the referenced SQL with strict dataset
+  matching; formatting authorizes template-backed database access before Jinja
+  macros can execute.
+- Virtual-dataset RLS application and RLS cache-key collection fail closed.
+- Legacy SQL Lab error persistence uses session-lifecycle helpers, and long
+  query execution changes `expire_on_commit` on the concrete session.
+- GTF terminal transitions merge task properties under a row lock, flush
+  throttled progress first, synchronize ORM state after compare-and-swap, and
+  serialize abort/timeout detection across threads.
+- Distributed locks carry per-acquisition owner tokens and release with
+  compare-and-delete semantics.
+- Sidecar deployments require inbound bearer authentication on non-loopback
+  listeners; Docker Compose keeps the sidecar private to the service network.
+
 ### Phase 2 — SQLAlchemy 2 style migration (incremental)
 
 - Replace `session.query(Model)` with `select(Model)` / `session.scalars` in

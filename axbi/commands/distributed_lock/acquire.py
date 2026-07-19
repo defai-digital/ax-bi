@@ -62,9 +62,12 @@ class AcquireDistributedLock(BaseDistributedLockCommand):
         namespace: str,
         params: dict[str, Any] | None = None,
         ttl_seconds: int | None = None,
+        *,
+        owner_token: str,
     ) -> None:
         super().__init__(namespace, params)
         self.ttl_seconds = ttl_seconds or get_default_lock_ttl()
+        self.owner_token = owner_token
 
     def run(self) -> None:
         if (redis_client := get_redis_client()) is not None:
@@ -79,7 +82,7 @@ class AcquireDistributedLock(BaseDistributedLockCommand):
             # Returns True if lock acquired, None if already exists
             acquired = redis_client.set(
                 self.redis_lock_key,
-                "1",
+                self.owner_token,
                 nx=True,
                 ex=self.ttl_seconds,
             )
@@ -119,7 +122,7 @@ class AcquireDistributedLock(BaseDistributedLockCommand):
         # Create entry - unique constraint will raise if lock already exists
         KeyValueDAO.create_entry(
             resource=KeyValueResource.LOCK,
-            value={"value": True},
+            value={"value": self.owner_token},
             codec=self.codec,
             key=self.key,
             expires_on=naive_utcnow() + timedelta(seconds=self.ttl_seconds),

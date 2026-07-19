@@ -42,6 +42,7 @@ from axbi.sqllab.exceptions import (
 from axbi.sqllab.execution_context_convertor import ExecutionContextConvertor
 from axbi.sqllab.limiting_factor import LimitingFactor
 from axbi.utils.decorators import transaction
+from axbi.utils.session_lifecycle import commit_session
 
 if TYPE_CHECKING:
     from axbi.daos.database import DatabaseDAO
@@ -160,6 +161,12 @@ class ExecuteSqlCommand(BaseCommand):
             )
         except Exception:
             self._query_dao.update(query, {"status": QueryStatus.FAILED})
+            if not commit_session(
+                db.session,
+                context=f"sql_lab execute failure query_id={query.id}",
+                soft=True,
+            ):
+                logger.error("Failed to persist FAILED status for query %s", query.id)
             raise
 
     def _get_the_query_db(self) -> Database:

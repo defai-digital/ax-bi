@@ -55,6 +55,24 @@ describe('getBootstrapData and helpers', () => {
       const bootstrapData = getBootstrapData();
       expect(bootstrapData).toEqual(customData);
     });
+
+    test('should fall back when #app contains malformed bootstrap data', async () => {
+      document.body.innerHTML =
+        '<div id="app" data-bootstrap="{invalid"></div>';
+      const consoleError = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+
+      jest.resetModules();
+      const { default: getBootstrapData } = await import('./getBootstrapData');
+
+      expect(getBootstrapData()).toEqual(DEFAULT_BOOTSTRAP_DATA);
+      expect(consoleError).toHaveBeenCalledWith(
+        'Failed to parse bootstrap data:',
+        expect.any(SyntaxError),
+      );
+      consoleError.mockRestore();
+    });
   });
 
   // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks

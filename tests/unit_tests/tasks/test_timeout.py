@@ -343,7 +343,9 @@ class TestTimeoutTrigger:
             mock_logger.warning.assert_called()
             warning_call = mock_logger.warning.call_args
             assert "no abort handler" in warning_call[0][0].lower()
-            assert ctx._timeout_triggered
+            # A non-abortable task keeps running and remains eligible for the
+            # normal SUCCESS transition when its function returns.
+            assert not ctx._timeout_triggered
             assert not ctx._abort_detected  # No abort since no handler
 
             # Cleanup

@@ -79,13 +79,15 @@ class ChartWarmUpCacheCommand(BaseCommand):
             form_data["extra_filters"] = self._get_dashboard_filters(chart.id)
 
         g.form_data = form_data
-        payload = get_viz(
-            datasource_type=chart.datasource.type,
-            datasource_id=chart.datasource.id,
-            form_data=form_data,
-            force=True,
-        ).get_payload()
-        delattr(g, "form_data")
+        try:
+            payload = get_viz(
+                datasource_type=chart.datasource.type,
+                datasource_id=chart.datasource.id,
+                form_data=form_data,
+                force=True,
+            ).get_payload()
+        finally:
+            delattr(g, "form_data")
 
         if not isinstance(payload, dict) or "status" not in payload:
             raise ChartInvalidError("Chart warm-up returned an unexpected payload")

@@ -24,6 +24,16 @@ assists people when migrating to a new version.
 
 ## Next
 
+### AX Services requires authentication outside loopback deployments
+
+AX Services now validates Bearer credentials on every endpoint except
+`/health` when `AX_SERVICES_INTERNAL_TOKEN` is configured. A token is required
+when `AX_SERVICES_HOST` binds to a non-loopback address. Configure the same
+secret as `AX_SERVICES_TOKEN` in AX BI and do not publish the sidecar port to
+untrusted networks.
+
+Loopback-only development deployments may omit the token.
+
 ### User-bound MCP API keys are enabled by default
 
 Authenticated Admin, Alpha, and Gamma users now receive a dedicated MCP API key

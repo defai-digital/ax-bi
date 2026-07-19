@@ -58,6 +58,17 @@ def _load_expanded_value(value: str) -> bool:
     return payload
 
 
+def _handle_mutation_error(ex: Exception) -> FlaskResponse:
+    """Rollback and classify legacy SQL Lab tab-state mutation failures."""
+    db.session.rollback()
+    if isinstance(ex, (KeyError, ValueError, json.JSONDecodeError)):
+        logger.info("Invalid SQL Lab tab-state request: %s", ex)
+        return json_error_response(error_msg_from_exception(ex), 400)
+
+    logger.exception("SQL Lab tab-state mutation failed")
+    return json_error_response(__("An unexpected error occurred"), 500)
+
+
 class TabStateView(BaseAxBIView):
     @has_access_api
     @expose("/", methods=("POST",))
@@ -88,8 +99,7 @@ class TabStateView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps({"id": tab_state.id}))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
     @has_access_api
     @expose("/<int:tab_state_id>", methods=("DELETE",))
@@ -110,8 +120,7 @@ class TabStateView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps("OK"))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
     @has_access_api
     @expose("/<int:tab_state_id>", methods=("GET",))
@@ -147,8 +156,7 @@ class TabStateView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps(tab_state_id))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
     @has_access_api
     @expose("<int:tab_state_id>", methods=("PUT",))
@@ -165,8 +173,7 @@ class TabStateView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps(tab_state_id))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
     @has_access_api
     @expose("<int:tab_state_id>/migrate_query", methods=("POST",))
@@ -185,8 +192,7 @@ class TabStateView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps(tab_state_id))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
     @has_access_api
     @expose("<int:tab_state_id>/query/<client_id>", methods=("DELETE",))
@@ -223,8 +229,7 @@ class TabStateView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps("OK"))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
 
 class TableSchemaView(BaseAxBIView):
@@ -260,8 +265,7 @@ class TableSchemaView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps({"id": table_schema.id}))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
     @has_access_api
     @expose("/<int:table_schema_id>", methods=("DELETE",))
@@ -283,8 +287,7 @@ class TableSchemaView(BaseAxBIView):
             db.session.commit()
             return json_success(json.dumps("OK"))
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)
 
     @has_access_api
     @expose("/<int:table_schema_id>/expanded", methods=("POST",))
@@ -308,5 +311,4 @@ class TableSchemaView(BaseAxBIView):
             response = json.dumps({"id": table_schema_id, "expanded": payload})
             return json_success(response)
         except Exception as ex:  # pylint: disable=broad-except
-            db.session.rollback()
-            return json_error_response(error_msg_from_exception(ex), 400)
+            return _handle_mutation_error(ex)

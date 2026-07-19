@@ -54,9 +54,19 @@ def DistributedLock(  # noqa: N802
     from axbi.commands.distributed_lock.release import ReleaseDistributedLock
 
     key = get_key(namespace, **kwargs)
+    owner_token = uuid.uuid4().hex
 
-    AcquireDistributedLock(namespace, kwargs, ttl_seconds).run()
+    AcquireDistributedLock(
+        namespace,
+        kwargs,
+        ttl_seconds,
+        owner_token=owner_token,
+    ).run()
     try:
         yield key
     finally:
-        ReleaseDistributedLock(namespace, kwargs).run()
+        ReleaseDistributedLock(
+            namespace,
+            kwargs,
+            owner_token=owner_token,
+        ).run()

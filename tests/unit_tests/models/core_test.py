@@ -690,9 +690,12 @@ def test_engine_cache_evicted_on_update_and_delete(mocker: MockerFixture) -> Non
     # Seed the cache with two entries for database id=1 and one for id=2.
     with _ENGINE_CACHE_LOCK:
         _ENGINE_CACHE.clear()
-        _ENGINE_CACHE[(1, "postgresql://old-host/db", "")] = MagicMock()
-        _ENGINE_CACHE[(1, "postgresql://new-host/db", "")] = MagicMock()
-        _ENGINE_CACHE[(2, "postgresql://other/db", "")] = MagicMock()
+        old_engine = MagicMock()
+        new_engine = MagicMock()
+        other_engine = MagicMock()
+        _ENGINE_CACHE[(1, "postgresql://old-host/db", "")] = old_engine
+        _ENGINE_CACHE[(1, "postgresql://new-host/db", "")] = new_engine
+        _ENGINE_CACHE[(2, "postgresql://other/db", "")] = other_engine
 
     db_instance = MagicMock()
     db_instance.id = 1
@@ -701,6 +704,9 @@ def test_engine_cache_evicted_on_update_and_delete(mocker: MockerFixture) -> Non
     # Both id=1 entries gone; id=2 entry untouched.
     assert not any(k[0] == 1 for k in _ENGINE_CACHE)
     assert any(k[0] == 2 for k in _ENGINE_CACHE)
+    old_engine.dispose.assert_called_once_with()
+    new_engine.dispose.assert_called_once_with()
+    other_engine.dispose.assert_not_called()
 
 
 def test_get_sqla_engine_user_impersonation(mocker: MockerFixture) -> None:

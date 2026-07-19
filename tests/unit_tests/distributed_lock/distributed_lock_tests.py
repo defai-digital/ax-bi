@@ -19,7 +19,7 @@
 
 from typing import Any
 from unittest.mock import MagicMock, patch
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 from freezegun import freeze_time
@@ -30,12 +30,10 @@ import axbi.commands.distributed_lock.acquire as acquire_module
 import axbi.commands.distributed_lock.release as release_module
 from axbi import db
 from axbi.distributed_lock import DistributedLock
-from axbi.distributed_lock.types import LockValue
 from axbi.distributed_lock.utils import get_key
 from axbi.exceptions import AcquireDistributedLockFailedException
 from axbi.key_value.types import JsonKeyValueCodec
 
-LOCK_VALUE: LockValue = {"value": True}
 MAIN_KEY = get_key("ns", a=1, b=2)
 OTHER_KEY = get_key("ns2", a=1, b=2)
 
@@ -80,7 +78,9 @@ def test_distributed_lock_kv_happy_path() -> None:
 
             with DistributedLock("ns", a=1, b=2) as key:
                 assert key == MAIN_KEY
-                assert _get_lock(key, session) == LOCK_VALUE
+                lock_value = _get_lock(key, session)
+                assert isinstance(lock_value["value"], str)
+                assert lock_value["value"]
                 assert _get_lock(OTHER_KEY, session) is None
 
                 with pytest.raises(AcquireDistributedLockFailedException):
@@ -108,11 +108,51 @@ def test_distributed_lock_kv_expired() -> None:
         with freeze_time("2021-01-01"):
             assert _get_lock(MAIN_KEY, session) is None
             with DistributedLock("ns", a=1, b=2):
-                assert _get_lock(MAIN_KEY, session) == LOCK_VALUE
+                lock_value = _get_lock(MAIN_KEY, session)
+                assert isinstance(lock_value["value"], str)
+                assert lock_value["value"]
                 with freeze_time("2022-01-01"):
                     assert _get_lock(MAIN_KEY, session) is None
 
             assert _get_lock(MAIN_KEY, session) is None
+
+
+def test_stale_kv_owner_cannot_release_reacquired_lock() -> None:
+    """A holder that outlives its TTL must not delete its successor's lock."""
+    owner_a = uuid4().hex
+    owner_b = uuid4().hex
+    with (
+        patch.object(acquire_module, "get_redis_client", return_value=None),
+        patch.object(release_module, "get_redis_client", return_value=None),
+    ):
+        with freeze_time("2021-01-01"):
+            acquire_module.AcquireDistributedLock(
+                "ns",
+                {"a": 1, "b": 2},
+                ttl_seconds=30,
+                owner_token=owner_a,
+            ).run()
+
+        with freeze_time("2021-01-02"):
+            acquire_module.AcquireDistributedLock(
+                "ns",
+                {"a": 1, "b": 2},
+                ttl_seconds=30,
+                owner_token=owner_b,
+            ).run()
+            release_module.ReleaseDistributedLock(
+                "ns",
+                {"a": 1, "b": 2},
+                owner_token=owner_a,
+            ).run()
+
+            assert _get_lock(MAIN_KEY, db.session) == {"value": owner_b}
+
+            release_module.ReleaseDistributedLock(
+                "ns",
+                {"a": 1, "b": 2},
+                owner_token=owner_b,
+            ).run()
 
 
 def test_distributed_lock_uses_redis_when_configured() -> None:
@@ -133,8 +173,8 @@ def test_distributed_lock_uses_redis_when_configured() -> None:
             assert call_args.kwargs["nx"] is True
             assert "ex" in call_args.kwargs
 
-        # Verify DELETE was called on exit
-        mock_redis.delete.assert_called_once()
+        # Release is compare-and-delete so an expired/reacquired lock is safe.
+        mock_redis.eval.assert_called_once()
 
 
 def test_distributed_lock_redis_already_taken() -> None:
@@ -205,7 +245,9 @@ def test_distributed_lock_fallback_to_kv_when_redis_not_configured() -> None:
             with DistributedLock("test_fallback", key="value") as lock_key:
                 assert lock_key == test_key
                 # Verify lock exists in KV store
-                assert _get_lock(test_key, session) == LOCK_VALUE
+                lock_value = _get_lock(test_key, session)
+                assert isinstance(lock_value["value"], str)
+                assert lock_value["value"]
 
             # Lock should be released
             assert _get_lock(test_key, session) is None

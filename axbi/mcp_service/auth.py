@@ -151,6 +151,7 @@ _METHOD_TO_REQUIRED_SCOPE = {
     "read": "axbi:read",
     "write": "axbi:write",
     "delete": "axbi:write",
+    "upload": "axbi:write",
     # SQL execution (execute_sql, get_chart_sql) runs arbitrary queries and is
     # treated as a write-class privileged operation for scope purposes.
     "execute_sql_query": "axbi:write",
@@ -176,6 +177,18 @@ def _get_token_scopes() -> set[str] | None:
         return None
 
     if access_token is None:
+        return None
+
+    claims = getattr(access_token, "claims", None)
+    if (
+        getattr(access_token, "client_id", None) == "api_key"
+        and isinstance(claims, dict)
+        and claims.get(API_KEY_PASSTHROUGH_CLAIM) is True
+    ):
+        # FAB API keys inherit the owner's RBAC permissions but do not carry
+        # OAuth scopes. CompositeTokenVerifier copies required transport scopes
+        # solely so FastMCP admits the request; do not re-interpret those as a
+        # restricted JWT grant at the tool authorization layer.
         return None
 
     scopes = getattr(access_token, "scopes", None)

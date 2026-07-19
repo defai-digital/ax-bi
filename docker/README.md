@@ -49,6 +49,7 @@ Edit `docker/.env-axbi` and fill:
 AX_BI_SECRET_KEY=<generated secret>
 DATABASE_PASSWORD=<generated database password>
 ADMIN_PASSWORD=<admin login password>
+AX_SERVICES_INTERNAL_TOKEN=<generated sidecar bearer token>
 ```
 
 Generate each secret value with:
@@ -85,7 +86,9 @@ Services are exposed locally on:
 |---------|-------------|
 | AX BI web app | `http://localhost:31423/ax-bi/welcome/` |
 | MCP service | `http://localhost:31421/mcp` |
-| AX services sidecar | `http://localhost:31424` |
+
+The AX services sidecar listens on port 31424 inside the Compose network and
+requires `AX_SERVICES_INTERNAL_TOKEN`; it is not published on the host.
 
 Log in to the web app with:
 

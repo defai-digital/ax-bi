@@ -38,26 +38,30 @@ npm run dev-server
 
 Environment variables:
 
-| Variable | Default | Purpose |
-| --- | --- | --- |
-| `AX_SERVICES_HOST` | `127.0.0.1` | Host for the service listener. |
-| `AX_SERVICES_PORT` | `31424` | Port for the service listener. |
-| `AX_SUPERSET_BASE_URL` | `http://127.0.0.1:31423` | Superset base URL used by readiness checks and future internal clients. |
-| `AX_SUPERSET_HEALTH_PATH` | `/health` | Superset health path. |
-| `AX_SUPERSET_METADATA_PATH` | `/api/v1/dashboard/_info` | Safe Superset REST metadata endpoint used by the sidecar metadata probe. |
-| `AX_SUPERSET_PERMISSION_PATH` | `/api/v1/security/permissions/check` | Superset permission delegation path for future data-bearing workflows. |
-| `AX_SUPERSET_ANNOTATION_LAYER_LIST_PATH` | `/api/v1/annotation_layer/` | Superset annotation layer list endpoint for TypeScript annotation layer listing. |
-| `AX_SUPERSET_CHART_LIST_PATH` | `/api/v1/chart/` | Superset chart list endpoint for TypeScript asset search and chart listing. |
-| `AX_SUPERSET_DASHBOARD_LIST_PATH` | `/api/v1/dashboard/` | Superset dashboard list endpoint for TypeScript asset search and dashboard listing. |
-| `AX_SUPERSET_DATABASE_LIST_PATH` | `/api/v1/database/` | Superset database list endpoint for TypeScript database listing. |
-| `AX_SUPERSET_DATASET_LIST_PATH` | `/api/v1/dataset/` | Superset dataset list endpoint for TypeScript asset search and dataset listing. |
-| `AX_SUPERSET_REPORT_LIST_PATH` | `/api/v1/report/` | Superset report list endpoint for TypeScript report listing. |
-| `AX_SUPERSET_SAVED_QUERY_LIST_PATH` | `/api/v1/saved_query/` | Superset saved query list endpoint for TypeScript saved query listing. |
-| `AX_SUPERSET_TAG_LIST_PATH` | `/api/v1/tag/` | Superset tag list endpoint for TypeScript tag listing. |
-| `AX_SUPERSET_TASK_LIST_PATH` | `/api/v1/task/` | Superset task list endpoint for TypeScript task listing. |
-| `AX_SUPERSET_TIMEOUT_MS` | `2000` | Superset connectivity timeout in milliseconds. |
-| `AX_SUPERSET_INTERNAL_TOKEN` | unset | Optional bearer token for internal Superset calls. |
-| `AX_SERVICES_LOG_LEVEL` | `info` | Structured log level. |
+| Variable                          | Default                              | Purpose                                                                                       |
+| --------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
+| `AX_SERVICES_HOST`                | `127.0.0.1`                          | Host for the service listener.                                                                |
+| `AX_SERVICES_PORT`                | `31424`                              | Port for the service listener.                                                                |
+| `AX_SERVICES_INTERNAL_TOKEN`      | unset                                | Inbound bearer token. Required for non-loopback listeners; `/health` remains unauthenticated. |
+| `AXBI_BASE_URL`                   | `http://127.0.0.1:31423`             | AX BI base URL used by readiness checks and internal clients.                                 |
+| `AXBI_HEALTH_PATH`                | `/health`                            | AX BI health path.                                                                            |
+| `AXBI_METADATA_PATH`              | `/api/v1/dashboard/_info`            | Safe AX BI REST metadata endpoint used by the sidecar metadata probe.                         |
+| `AXBI_PERMISSION_PATH`            | `/api/v1/security/permissions/check` | AX BI permission delegation path for data-bearing workflows.                                  |
+| `AXBI_ANNOTATION_LAYER_LIST_PATH` | `/api/v1/annotation_layer/`          | AX BI annotation layer list endpoint.                                                         |
+| `AXBI_CHART_LIST_PATH`            | `/api/v1/chart/`                     | AX BI chart list endpoint.                                                                    |
+| `AXBI_DASHBOARD_LIST_PATH`        | `/api/v1/dashboard/`                 | AX BI dashboard list endpoint.                                                                |
+| `AXBI_DATABASE_LIST_PATH`         | `/api/v1/database/`                  | AX BI database list endpoint.                                                                 |
+| `AXBI_DATASET_LIST_PATH`          | `/api/v1/dataset/`                   | AX BI dataset list endpoint.                                                                  |
+| `AXBI_QUERY_LIST_PATH`            | `/api/v1/query/`                     | AX BI query list endpoint.                                                                    |
+| `AXBI_REPORT_LIST_PATH`           | `/api/v1/report/`                    | AX BI report list endpoint.                                                                   |
+| `AXBI_ROLE_LIST_PATH`             | `/api/v1/role/`                      | AX BI role list endpoint.                                                                     |
+| `AXBI_RLS_LIST_PATH`              | `/api/v1/rowlevelsecurity/`          | AX BI row-level security list endpoint.                                                       |
+| `AXBI_SAVED_QUERY_LIST_PATH`      | `/api/v1/saved_query/`               | AX BI saved query list endpoint.                                                              |
+| `AXBI_TAG_LIST_PATH`              | `/api/v1/tag/`                       | AX BI tag list endpoint.                                                                      |
+| `AXBI_TASK_LIST_PATH`             | `/api/v1/task/`                      | AX BI task list endpoint.                                                                     |
+| `AXBI_TIMEOUT_MS`                 | `2000`                               | AX BI connectivity timeout in milliseconds.                                                   |
+| `AXBI_INTERNAL_TOKEN`             | unset                                | Optional bearer token for calls from the sidecar to AX BI.                                    |
+| `AX_SERVICES_LOG_LEVEL`           | `info`                               | Structured log level.                                                                         |
 
 ## Runtime Contract
 

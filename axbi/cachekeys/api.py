@@ -28,6 +28,7 @@ from axbi.cachekeys.schemas import CacheInvalidationRequestSchema
 from axbi.connectors.sqla.models import SqlaTable
 from axbi.extensions import cache_manager, db, event_logger, stats_logger_manager
 from axbi.models.cache import CacheKey
+from axbi.utils.fast_cache import delete_fast_cache
 from axbi.views.base_api import BaseAxBIModelRestApi, statsd_metrics
 
 logger = logging.getLogger(__name__)
@@ -103,7 +104,8 @@ class CacheRestApi(BaseAxBIModelRestApi):
         )
         cache_keys = [c.cache_key for c in cache_key_objs]
         if cache_key_objs:
-            all_keys_deleted = cache_manager.cache.delete_many(*cache_keys)
+            all_keys_deleted = cache_manager.data_cache.delete_many(*cache_keys)
+            delete_fast_cache(cache_keys)
 
             if not all_keys_deleted:
                 # expected behavior as keys may expire and cache is not a

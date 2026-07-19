@@ -68,6 +68,7 @@ from axbi.utils.core import (
 from axbi.utils.dates import now_as_float
 from axbi.utils.decorators import stats_timing
 from axbi.utils.rls import apply_rls
+from axbi.utils.session_lifecycle import commit_session, rollback_session
 
 if TYPE_CHECKING:
     from axbi.models.core import Database
@@ -120,7 +121,17 @@ def handle_query_error(
     if errors:
         query.set_extra_json_key("errors", errors_payload)
 
-    db.session.commit()
+    if not commit_session(
+        db.session,
+        context=(
+            f"legacy sql_lab handle_query_error query_id={getattr(query, 'id', None)}"
+        ),
+        soft=True,
+    ):
+        logger.error(
+            "Failed to persist FAILED status for query id=%s",
+            getattr(query, "id", None),
+        )
     payload.update({"status": query.status, "error": msg, "errors": errors_payload})
     if troubleshooting_link := app.config["TROUBLESHOOTING_LINK"]:
         payload["link"] = troubleshooting_link
@@ -266,6 +277,7 @@ def execute_query(  # pylint: disable=too-many-statements, too-many-locals  # no
                 security_manager,
                 log_params,
             )
+        session = db.session()
         db.session.commit()
         # Eagerly reload query attributes so no lazy-load triggers a new
         # metadata DB connection during the (potentially long) cursor
@@ -273,13 +285,14 @@ def execute_query(  # pylint: disable=too-many-statements, too-many-locals  # no
         # that stays idle for the query duration; if the query runs longer
         # than the DB's idle_in_transaction_session_timeout the connection
         # is killed, leaving the query stuck in "running" state forever.
-        db.session.expire_on_commit = False
+        expire_on_commit = session.expire_on_commit
+        session.expire_on_commit = False
         try:
             db.session.refresh(query)
             _ = query.database
             db.session.commit()
         finally:
-            db.session.expire_on_commit = True
+            session.expire_on_commit = expire_on_commit
         with event_logger.log_context(
             action="execute_sql",
             database=database,
@@ -324,9 +337,23 @@ def execute_query(  # pylint: disable=too-many-statements, too-many-locals  # no
     except Exception as ex:
         # query is stopped in another thread/worker
         # stopping raises expected exceptions which we should skip
-        db.session.refresh(query)
-        if query.status == QueryStatus.STOPPED:
-            raise SqlLabQueryStoppedException() from ex
+        rollback_session(
+            db.session,
+            context=(
+                f"legacy sql_lab execute_query query_id={getattr(query, 'id', None)}"
+            ),
+        )
+        try:
+            db.session.refresh(query)
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Could not refresh query %s while handling an execution error",
+                getattr(query, "id", None),
+                exc_info=True,
+            )
+        else:
+            if query.status == QueryStatus.STOPPED:
+                raise SqlLabQueryStoppedException() from ex
 
         logger.debug("Query %d: %s", query.id, ex)
         raise SqlLabException(db_engine_spec.extract_error_message(ex)) from ex

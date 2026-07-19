@@ -41,6 +41,7 @@ export interface ServiceConfig {
   };
   axbiTimeoutMs: number;
   axbiInternalToken: string | undefined;
+  inboundToken: string | undefined;
   logLevel: LogLevel;
 }
 
@@ -65,6 +66,7 @@ type EnvironmentVariable =
   | 'AXBI_TASK_LIST_PATH'
   | 'AXBI_TIMEOUT_MS'
   | 'AXBI_INTERNAL_TOKEN'
+  | 'AX_SERVICES_INTERNAL_TOKEN'
   | 'AX_SERVICES_LOG_LEVEL';
 
 type Environment = Partial<Record<EnvironmentVariable, string | undefined>>;
@@ -309,15 +311,16 @@ function validatePathSegments(value: string, name: string): void {
   }
 }
 
-function normalizeOptionalSecret(value: string | undefined): string | undefined {
+function normalizeOptionalSecret(
+  value: string | undefined,
+  name: 'AXBI_INTERNAL_TOKEN' | 'AX_SERVICES_INTERNAL_TOKEN',
+): string | undefined {
   const trimmed = value?.trim();
   if (trimmed === '' || trimmed === undefined) {
     return undefined;
   }
   if (/[\u0000-\u001f\u007f]/.test(trimmed)) {
-    throw new Error(
-      'AXBI_INTERNAL_TOKEN must not contain control characters',
-    );
+    throw new Error(`${name} must not contain control characters`);
   }
 
   return trimmed;
@@ -351,7 +354,7 @@ function buildAxBIAssetSearchPaths(
 }
 
 export function buildConfig(env: Environment = process.env): ServiceConfig {
-  return {
+  const config: ServiceConfig = {
     host: normalizeHost(env.AX_SERVICES_HOST),
     port: parsePort(env.AX_SERVICES_PORT),
     axbiBaseUrl: normalizeAxBIBaseUrl(
@@ -376,7 +379,29 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
     axbiTimeoutMs: parseAxBITimeout(env.AXBI_TIMEOUT_MS),
     axbiInternalToken: normalizeOptionalSecret(
       env.AXBI_INTERNAL_TOKEN,
+      'AXBI_INTERNAL_TOKEN',
+    ),
+    inboundToken: normalizeOptionalSecret(
+      env.AX_SERVICES_INTERNAL_TOKEN,
+      'AX_SERVICES_INTERNAL_TOKEN',
     ),
     logLevel: normalizeLogLevel(env.AX_SERVICES_LOG_LEVEL),
   };
+
+  if (!isLoopbackHost(config.host) && config.inboundToken === undefined) {
+    throw new Error(
+      'AX_SERVICES_INTERNAL_TOKEN is required when AX_SERVICES_HOST is not loopback',
+    );
+  }
+
+  return config;
+}
+
+function isLoopbackHost(host: string): boolean {
+  const normalized = host.toLowerCase();
+  return (
+    normalized === 'localhost' ||
+    normalized === '::1' ||
+    /^127(?:\.\d{1,3}){3}$/.test(normalized)
+  );
 }

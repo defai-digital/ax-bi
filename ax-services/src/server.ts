@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { randomUUID } from 'crypto';
+import { randomUUID, timingSafeEqual } from 'crypto';
 
 import Fastify, { FastifyInstance } from 'fastify';
 
@@ -137,6 +137,22 @@ type ContractRouteHandler<Body, Reply> = (
   requestId: string,
 ) => Promise<Reply>;
 
+function hasValidBearerToken(
+  authorization: string | undefined,
+  expectedToken: string,
+): boolean {
+  const prefix = 'Bearer ';
+  if (authorization === undefined || !authorization.startsWith(prefix)) {
+    return false;
+  }
+
+  const supplied = Buffer.from(authorization.slice(prefix.length), 'utf8');
+  const expected = Buffer.from(expectedToken, 'utf8');
+  return (
+    supplied.length === expected.length && timingSafeEqual(supplied, expected)
+  );
+}
+
 function runtimeVersion(): string {
   const version = process.env['npm_package_version']?.trim();
 
@@ -171,6 +187,14 @@ export function buildServer(
   server.addHook('onRequest', async (request, reply) => {
     reply.header('x-request-id', request.id);
     metrics.startRequest(request);
+
+    if (
+      config.inboundToken !== undefined &&
+      request.url.split('?', 1)[0] !== '/health' &&
+      !hasValidBearerToken(request.headers.authorization, config.inboundToken)
+    ) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
   });
 
   server.addHook('onResponse', async (request, reply) => {

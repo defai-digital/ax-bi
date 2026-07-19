@@ -28,21 +28,40 @@ from axbi.commands.distributed_lock.base import (
     BaseDistributedLockCommand,
     get_redis_client,
 )
-from axbi.daos.key_value import KeyValueDAO
 from axbi.exceptions import ReleaseDistributedLockFailedException
+from axbi.extensions import db
 from axbi.key_value.exceptions import KeyValueDeleteFailedError
+from axbi.key_value.models import KeyValueEntry
+from axbi.key_value.utils import get_filter
 from axbi.utils.decorators import on_error, transaction
 
 logger = logging.getLogger(__name__)
+
+_COMPARE_AND_DELETE = """
+if redis.call('get', KEYS[1]) == ARGV[1] then
+  return redis.call('del', KEYS[1])
+end
+return 0
+"""
 
 
 class ReleaseDistributedLock(BaseDistributedLockCommand):
     """
     Release a distributed lock with automatic backend selection.
 
-    Uses Redis DELETE when DISTRIBUTED_COORDINATION_CONFIG is configured,
-    otherwise deletes from KeyValue table.
+    Uses an owner-checked Redis Lua script when distributed coordination is
+    configured, otherwise locks and checks the KeyValue row before deleting it.
     """
+
+    def __init__(
+        self,
+        namespace: str,
+        params: dict[str, Any] | None = None,
+        *,
+        owner_token: str,
+    ) -> None:
+        super().__init__(namespace, params)
+        self.owner_token = owner_token
 
     def run(self) -> None:
         if (redis_client := get_redis_client()) is not None:
@@ -51,10 +70,21 @@ class ReleaseDistributedLock(BaseDistributedLockCommand):
             self._release_kv()
 
     def _release_redis(self, redis_client: Any) -> None:
-        """Release lock using Redis DELETE."""
+        """Release a Redis lock only when this acquisition still owns it."""
         try:
-            redis_client.delete(self.redis_lock_key)
-            logger.debug("Released Redis lock: %s", self.redis_lock_key)
+            released = redis_client.eval(
+                _COMPARE_AND_DELETE,
+                1,
+                self.redis_lock_key,
+                self.owner_token,
+            )
+            if released:
+                logger.debug("Released Redis lock: %s", self.redis_lock_key)
+            else:
+                logger.debug(
+                    "Skipped release for Redis lock no longer owned: %s",
+                    self.redis_lock_key,
+                )
         except redis.RedisError as ex:
             # Log warning but don't raise - TTL will handle cleanup
             logger.warning(
@@ -75,9 +105,26 @@ class ReleaseDistributedLock(BaseDistributedLockCommand):
     )
     def _release_kv(self) -> None:
         """Release lock using KeyValue table (database)."""
-        KeyValueDAO.delete_entry(self.resource, self.key)
-        logger.debug(
-            "Released KV lock: namespace=%s key=%s",
-            self.namespace,
-            self.key,
+        entry = (
+            db.session.query(KeyValueEntry)
+            .filter_by(**get_filter(self.resource, self.key))
+            .with_for_update()
+            .one_or_none()
         )
+        if (
+            entry is not None
+            and not entry.is_expired()
+            and self.codec.decode(entry.value) == {"value": self.owner_token}
+        ):
+            db.session.delete(entry)
+            logger.debug(
+                "Released KV lock: namespace=%s key=%s",
+                self.namespace,
+                self.key,
+            )
+        else:
+            logger.debug(
+                "Skipped release for KV lock no longer owned: namespace=%s key=%s",
+                self.namespace,
+                self.key,
+            )

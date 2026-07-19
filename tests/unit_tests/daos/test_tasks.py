@@ -456,6 +456,36 @@ def test_conditional_status_update_non_terminal_state_keeps_dedup_key(
     assert task.started_at is not None
 
 
+def test_conditional_status_update_merges_properties(
+    session_with_task: Session,
+) -> None:
+    """Terminal diagnostics preserve progress and execution metadata."""
+    from axbi.daos.tasks import TaskDAO
+
+    task = create_task(
+        session_with_task,
+        task_uuid=TASK_UUID,
+        task_key="status-properties-merge",
+        status=TaskStatus.IN_PROGRESS,
+        properties={"progress_percent": 0.5, "is_abortable": True},
+    )
+
+    result = TaskDAO.conditional_status_update(
+        task_uuid=TASK_UUID,
+        new_status=TaskStatus.FAILURE,
+        expected_status=TaskStatus.IN_PROGRESS,
+        properties={"error_message": "execution failed"},
+    )
+
+    assert result is True
+    session_with_task.refresh(task)
+    assert task.properties_dict == {
+        "progress_percent": 0.5,
+        "is_abortable": True,
+        "error_message": "execution failed",
+    }
+
+
 @pytest.mark.parametrize(
     "terminal_state",
     [

@@ -49,6 +49,8 @@ x-axbi-env: &axbi-env
   AI_SEMANTIC_EMBEDDING_ENDPOINT: ${AI_SEMANTIC_EMBEDDING_ENDPOINT:-http://host.docker.internal:8099/embed}
   AI_SEMANTIC_EMBEDDING_MODEL: ${AI_SEMANTIC_EMBEDDING_MODEL:-Qwen/Qwen3-Embedding-0.6B}
   AI_SEMANTIC_EMBEDDING_DIMENSIONS: ${AI_SEMANTIC_EMBEDDING_DIMENSIONS:-1024}
+  AX_SERVICES_BASE_URL: http://ax-services:31424
+  AX_SERVICES_INTERNAL_TOKEN: ${AX_SERVICES_INTERNAL_TOKEN:?Set AX_SERVICES_INTERNAL_TOKEN in docker/.env-axbi}
 
 services:
   redis:
@@ -207,9 +209,8 @@ services:
       AX_SERVICES_HOST: 0.0.0.0
       AX_SERVICES_PORT: 31424
       AXBI_BASE_URL: http://ax-bi:31423
+      AX_SERVICES_INTERNAL_TOKEN: ${AX_SERVICES_INTERNAL_TOKEN:?Set AX_SERVICES_INTERNAL_TOKEN in docker/.env-axbi}
       AX_SERVICES_LOG_LEVEL: ${AX_SERVICES_LOG_LEVEL:-info}
-    ports:
-      - "${AX_SERVICES_PORT:-31424}:31424"
     depends_on:
       ax-bi:
         condition: service_healthy

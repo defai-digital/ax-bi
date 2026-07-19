@@ -35,6 +35,8 @@ from axbi.sql_lab import (
     execute_query,
     execute_sql_statements,
     get_sql_results,
+    handle_query_error,
+    SqlLabException,
 )
 from axbi.utils.rls import apply_rls, get_predicates_for_table
 from tests.conftest import with_config
@@ -68,6 +70,78 @@ def test_execute_query(mocker: MockerFixture, app: None) -> None:
         query,
     )
     AxBIResultSet.assert_called_with([(42,)], cursor.description, db_engine_spec)
+
+
+def test_execute_query_updates_concrete_session_expiration_setting(
+    mocker: MockerFixture, app: None
+) -> None:
+    """Long-running execution disables expiration on the concrete Session."""
+    query = MagicMock()
+    query.executed_sql = "SELECT 42 AS answer"
+    query.limit = 1
+    query.database.db_engine_spec.fetch_data.return_value = [(42,)]
+    cursor = MagicMock()
+
+    scoped_session = mocker.patch("axbi.sql_lab.db.session")
+    concrete_session = MagicMock()
+    concrete_session.expire_on_commit = True
+    scoped_session.return_value = concrete_session
+
+    def assert_expiration_disabled(_: object) -> None:
+        assert concrete_session.expire_on_commit is False
+
+    scoped_session.refresh.side_effect = assert_expiration_disabled
+    mocker.patch("axbi.sql_lab.AxBIResultSet")
+
+    execute_query(query, cursor=cursor, log_params={})
+
+    assert concrete_session.expire_on_commit is True
+    assert "expire_on_commit" not in vars(scoped_session)
+
+
+def test_handle_query_error_softens_metadata_commit_failure(
+    mocker: MockerFixture, app: None
+) -> None:
+    """A failed metadata write must not replace the original SQL error."""
+    query = MagicMock()
+    query.id = 17
+    query.end_time = None
+    query.database.db_engine_spec.extract_errors.return_value = []
+    session = mocker.patch("axbi.sql_lab.db.session")
+    session.commit.side_effect = RuntimeError("metadata unavailable")
+
+    payload = handle_query_error(RuntimeError("original SQL error"), query)
+
+    assert payload["error"] == "original SQL error"
+    session.rollback.assert_called_once_with()
+
+
+def test_execute_query_preserves_original_error_when_refresh_fails(
+    mocker: MockerFixture, app: None
+) -> None:
+    """Session recovery failures must not mask the database execution error."""
+    query = MagicMock()
+    query.id = 23
+    query.executed_sql = "SELECT broken"
+    query.limit = 1
+    query.database.db_engine_spec.execute_with_cursor.side_effect = RuntimeError(
+        "original execution failure"
+    )
+    query.database.db_engine_spec.extract_error_message.return_value = (
+        "original execution failure"
+    )
+    cursor = MagicMock()
+
+    session = mocker.patch("axbi.sql_lab.db.session")
+    concrete_session = MagicMock()
+    concrete_session.expire_on_commit = True
+    session.return_value = concrete_session
+    session.refresh.side_effect = [None, RuntimeError("refresh failed")]
+
+    with pytest.raises(SqlLabException, match="original execution failure"):
+        execute_query(query, cursor=cursor, log_params={})
+
+    session.rollback.assert_called_once_with()
 
 
 @with_config(

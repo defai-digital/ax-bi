@@ -93,6 +93,11 @@ const config = buildConfig({
   AX_SERVICES_LOG_LEVEL: 'silent',
 });
 
+const authenticatedConfig = buildConfig({
+  AX_SERVICES_LOG_LEVEL: 'silent',
+  AX_SERVICES_INTERNAL_TOKEN: 'inbound-token-123',
+});
+
 function emptyListResponse<
   TContractVersion extends string,
   TFields extends object,
@@ -681,7 +686,37 @@ test('metrics endpoint aggregates unmatched routes under one key', async () => {
   });
   expect(Object.keys(routes)).not.toContain('GET /another-missing');
   expect(Object.keys(routes)).not.toContain('GET /missing?token=first');
-  expect(Object.keys(routes)).not.toContain('GET /another-missing?token=second');
+  expect(Object.keys(routes)).not.toContain(
+    'GET /another-missing?token=second',
+  );
+});
+
+test('configured inbound token protects every endpoint except health', async () => {
+  const server = buildServer(authenticatedConfig, makeAxBIClient());
+
+  const healthResponse = await server.inject({
+    method: 'GET',
+    url: '/health',
+  });
+  const missingTokenResponse = await server.inject({
+    method: 'GET',
+    url: '/metrics',
+  });
+  const wrongTokenResponse = await server.inject({
+    method: 'GET',
+    url: '/metrics',
+    headers: { authorization: 'Bearer wrong-token' },
+  });
+  const authorizedResponse = await server.inject({
+    method: 'GET',
+    url: '/metrics',
+    headers: { authorization: 'Bearer inbound-token-123' },
+  });
+
+  expect(healthResponse.statusCode).toBe(200);
+  expect(missingTokenResponse.statusCode).toBe(401);
+  expect(wrongTokenResponse.statusCode).toBe(401);
+  expect(authorizedResponse.statusCode).toBe(200);
 });
 
 test('asset search endpoint delegates to AxBI client', async () => {

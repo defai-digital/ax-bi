@@ -239,7 +239,7 @@ export async function createStarterDashboard(
       AxBIClient.put({
         endpoint: `/api/v1/chart/${chartId}`,
         jsonPayload: { dashboards: [dashboardId] },
-      }).catch(() => undefined),
+      }),
     ),
   );
 

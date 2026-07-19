@@ -160,27 +160,22 @@ def collect_rls_predicates_for_sql(
     """
     from axbi.sql.parse import SQLScript
 
-    try:
-        parsed_script = SQLScript(sql, engine=database.db_engine_spec.engine)
-        tables = {
-            table.qualify(catalog=catalog, schema=schema)
-            for statement in parsed_script.statements
-            for table in statement.tables
+    parsed_script = SQLScript(sql, engine=database.db_engine_spec.engine)
+    tables = {
+        table.qualify(catalog=catalog, schema=schema)
+        for statement in parsed_script.statements
+        for table in statement.tables
+    }
+    default_catalog = database.get_default_catalog()
+    return sorted(
+        {
+            predicate
+            for table in tables
+            for predicate in get_predicates_for_table(
+                table,
+                database,
+                default_catalog,
+                exclude_dataset_id=exclude_dataset_id,
+            )
         }
-        default_catalog = database.get_default_catalog()
-        return sorted(
-            {
-                predicate
-                for table in tables
-                for predicate in get_predicates_for_table(
-                    table,
-                    database,
-                    default_catalog,
-                    exclude_dataset_id=exclude_dataset_id,
-                )
-            }
-        )
-    except Exception:
-        # If we can't parse the SQL, return empty list
-        # This ensures RLS application failure doesn't break caching
-        return []
+    )

@@ -3306,3 +3306,30 @@ def test_process_sql_expression_no_gate_when_denylists_empty(
         template_processor=None,
     )
     assert result is not None
+
+
+def test_virtual_dataset_from_clause_fails_closed_when_rls_application_fails(
+    mocker: MockerFixture,
+) -> None:
+    """A virtual dataset must never execute its original SQL after an RLS error."""
+    from axbi.models.helpers import ExploreMixin
+
+    dataset = MagicMock()
+    dataset.get_rendered_sql.return_value = "SELECT * FROM sensitive_table"
+    dataset.database.get_default_schema.return_value = "public"
+    dataset.database.db_engine_spec.engine = "postgresql"
+    dataset.catalog = None
+    dataset.schema = "public"
+    dataset.id = 7
+
+    parsed_script = MagicMock()
+    parsed_script.has_mutation.return_value = False
+    parsed_script.statements = [MagicMock()]
+    mocker.patch("axbi.models.helpers.SQLScript", return_value=parsed_script)
+    mocker.patch(
+        "axbi.models.helpers.apply_rls",
+        side_effect=RuntimeError("RLS metadata unavailable"),
+    )
+
+    with pytest.raises(RuntimeError, match="RLS metadata unavailable"):
+        ExploreMixin.get_from_clause(dataset)

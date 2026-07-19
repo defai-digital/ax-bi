@@ -17,6 +17,7 @@
 from unittest import mock
 
 import pytest
+from celery.exceptions import SoftTimeLimitExceeded
 from flask_babel import lazy_gettext as _
 
 from axbi.commands.chart.exceptions import ChartDataQueryFailedError
@@ -59,6 +60,32 @@ def test_load_chart_data_into_cache_with_error(
 
     mock_async_query_manager.update_job.assert_called_once_with(
         job_metadata, "error", errors=expected_errors
+    )
+
+
+@mock.patch("axbi.tasks.async_queries.security_manager")
+@mock.patch("axbi.tasks.async_queries.async_query_manager")
+@mock.patch("axbi.tasks.async_queries.ChartDataQueryContextSchema")
+def test_load_chart_data_timeout_updates_async_job(
+    mock_query_context_schema_cls, mock_async_query_manager, mock_security_manager
+):
+    """A soft timeout publishes an error so websocket clients stop waiting."""
+    from axbi.tasks.async_queries import load_chart_data_into_cache
+
+    job_metadata = {"user_id": 1}
+    mock_security_manager.get_user_by_id.return_value = mock.MagicMock()
+    mock_async_query_manager.STATUS_ERROR = "error"
+    mock_query_context_schema_cls.return_value.load.side_effect = (
+        SoftTimeLimitExceeded()
+    )
+
+    with pytest.raises(SoftTimeLimitExceeded):
+        load_chart_data_into_cache(job_metadata, {})
+
+    mock_async_query_manager.update_job.assert_called_once_with(
+        job_metadata,
+        "error",
+        errors=["Query timed out"],
     )
 
 

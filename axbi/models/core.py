@@ -1445,10 +1445,23 @@ def _evict_engine_cache(
     """
     if target.id is None:
         return
+    engines = []
     with _ENGINE_CACHE_LOCK:
         stale = [k for k in _ENGINE_CACHE if k[0] == target.id]
         for k in stale:
-            _ENGINE_CACHE.pop(k, None)
+            if engine := _ENGINE_CACHE.pop(k, None):
+                engines.append(engine)
+
+    # Pool disposal may perform driver cleanup, so do it after releasing the
+    # cache lock. Deduplicate engines in case multiple cache keys share one.
+    for engine in {id(engine): engine for engine in engines}.values():
+        try:
+            engine.dispose()
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Failed to dispose an evicted database engine",
+                exc_info=True,
+            )
 
 
 sqla.event.listen(Database, "after_update", _evict_engine_cache)

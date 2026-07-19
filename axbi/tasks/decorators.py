@@ -27,6 +27,7 @@ from axbi_core.tasks.types import TaskOptions, TaskScope, TaskStatus
 
 from axbi import is_feature_enabled
 from axbi.commands.tasks.exceptions import GlobalTaskFrameworkDisabledError
+from axbi.extensions import db
 from axbi.tasks.ambient_context import use_context
 from axbi.tasks.constants import TERMINAL_STATES
 from axbi.tasks.context import TaskContext
@@ -444,8 +445,9 @@ class TaskWrapper(Generic[P]):
             refreshed = TaskDAO.find_one_or_none(uuid=task_uuid)
             return refreshed if refreshed else task
 
-        # Update cached status (no DB read needed - we just wrote IN_PROGRESS)
-        task.status = TaskStatus.IN_PROGRESS.value
+        # Synchronize the identity-mapped object after the CAS. Mutating its status
+        # locally would create an unguarded autoflush that could overwrite ABORTING.
+        db.session.refresh(task)
 
         # Build context with the updated task entity
         ctx = TaskContext(task)
@@ -466,6 +468,9 @@ class TaskWrapper(Generic[P]):
             # Execute with ambient context
             with use_context(ctx):
                 self.func(*args, **kwargs)
+
+            ctx.mark_execution_completed()
+            ctx.flush_pending_updates()
 
             # Determine terminal status based on abort detection
             # Use atomic conditional updates to prevent overwriting concurrent abort
@@ -524,12 +529,14 @@ class TaskWrapper(Generic[P]):
             return final_task if final_task else task
 
         except Exception as ex:
+            ctx.mark_execution_completed()
+            ctx.flush_pending_updates()
             # Atomic transition to FAILURE (only if still IN_PROGRESS)
             InternalStatusTransitionCommand(
                 task_uuid=task_uuid,
                 new_status=TaskStatus.FAILURE,
                 expected_status=[TaskStatus.IN_PROGRESS, TaskStatus.ABORTING],
-                properties={"error_message": str(ex)},
+                properties=ctx.properties_snapshot(error_message=str(ex)),
                 set_ended_at=True,
             ).run()
 

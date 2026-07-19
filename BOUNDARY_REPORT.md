@@ -57,6 +57,14 @@ The low-risk boundary cleanup pass is complete. Completed work included:
   uses strict, connection-aware removal before user resolution, while error
   paths attempt rollback and removal independently without masking the primary
   failure. MCP tool modules no longer mutate scoped sessions directly.
+- Closing reviewed authorization and deployment seams: SQL cost estimation and
+  Jinja formatting use SQL-aware access checks, RLS paths fail closed, FAB API
+  keys remain RBAC-governed rather than inheriting synthetic transport scopes,
+  and the TypeScript sidecar authenticates every non-health route when exposed
+  beyond loopback.
+- Hardening the GTF state machine around atomic transitions, property merging,
+  timeout/abort races, terminal cleanup reporting, and distributed-lock
+  ownership.
 
 ## Deferred Boundary Areas
 

@@ -28,9 +28,7 @@ test('buildConfig returns service defaults', () => {
   expect(config.axbiBaseUrl).toBe('http://127.0.0.1:31423');
   expect(config.axbiHealthPath).toBe('/health');
   expect(config.axbiMetadataPath).toBe('/api/v1/dashboard/_info');
-  expect(config.axbiPermissionPath).toBe(
-    '/api/v1/security/permissions/check',
-  );
+  expect(config.axbiPermissionPath).toBe('/api/v1/security/permissions/check');
   expect(config.axbiAssetSearchPaths).toEqual({
     annotationLayer: '/api/v1/annotation_layer/',
     chart: '/api/v1/chart/',
@@ -47,6 +45,7 @@ test('buildConfig returns service defaults', () => {
   });
   expect(config.axbiTimeoutMs).toBe(2000);
   expect(config.axbiInternalToken).toBeUndefined();
+  expect(config.inboundToken).toBeUndefined();
   expect(config.logLevel).toBe('info');
 });
 
@@ -72,6 +71,7 @@ test('buildConfig reads environment overrides', () => {
     AXBI_TASK_LIST_PATH: 'tasks',
     AXBI_TIMEOUT_MS: '1500',
     AXBI_INTERNAL_TOKEN: '  token-123  ',
+    AX_SERVICES_INTERNAL_TOKEN: '  inbound-token-123  ',
     AX_SERVICES_LOG_LEVEL: ' DEBUG ',
   });
 
@@ -97,6 +97,7 @@ test('buildConfig reads environment overrides', () => {
   });
   expect(config.axbiTimeoutMs).toBe(1500);
   expect(config.axbiInternalToken).toBe('token-123');
+  expect(config.inboundToken).toBe('inbound-token-123');
   expect(config.logLevel).toBe('debug');
 });
 
@@ -129,14 +130,19 @@ test('buildConfig defaults blank host and log level values', () => {
 });
 
 test('buildConfig accepts hostnames and IP listener addresses', () => {
-  expect(buildConfig({ AX_SERVICES_HOST: ' service.internal ' }).host).toBe(
-    'service.internal',
-  );
+  expect(
+    buildConfig({
+      AX_SERVICES_HOST: ' service.internal ',
+      AX_SERVICES_INTERNAL_TOKEN: 'inbound-token-123',
+    }).host,
+  ).toBe('service.internal');
   expect(buildConfig({ AX_SERVICES_HOST: '::1' }).host).toBe('::1');
 });
 
 test('buildConfig rejects host values with whitespace or control characters', () => {
-  expect(() => buildConfig({ AX_SERVICES_HOST: '127.0.0.1 localhost' })).toThrow(
+  expect(() =>
+    buildConfig({ AX_SERVICES_HOST: '127.0.0.1 localhost' }),
+  ).toThrow(
     'AX_SERVICES_HOST must not contain whitespace or control characters',
   );
   expect(() => buildConfig({ AX_SERVICES_HOST: 'localhost\nready' })).toThrow(
@@ -191,9 +197,9 @@ test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AXBI_TIMEOUT_MS: '1000.5' })).toThrow(
     'AXBI_TIMEOUT_MS must be a positive integer',
   );
-  expect(() =>
-    buildConfig({ AXBI_TIMEOUT_MS: '2147483648' }),
-  ).toThrow('AXBI_TIMEOUT_MS must be between 1 and 2147483647');
+  expect(() => buildConfig({ AXBI_TIMEOUT_MS: '2147483648' })).toThrow(
+    'AXBI_TIMEOUT_MS must be between 1 and 2147483647',
+  );
 });
 
 test('buildConfig accepts maximum supported AxBI timeout', () => {
@@ -212,6 +218,24 @@ test('buildConfig rejects internal tokens with control characters', () => {
   expect(() =>
     buildConfig({ AXBI_INTERNAL_TOKEN: 'token-123\nX-Other: value' }),
   ).toThrow('AXBI_INTERNAL_TOKEN must not contain control characters');
+  expect(() =>
+    buildConfig({
+      AX_SERVICES_INTERNAL_TOKEN: 'token-123\nX-Other: value',
+    }),
+  ).toThrow('AX_SERVICES_INTERNAL_TOKEN must not contain control characters');
+});
+
+test('buildConfig requires inbound auth for non-loopback listeners', () => {
+  expect(() => buildConfig({ AX_SERVICES_HOST: '0.0.0.0' })).toThrow(
+    'AX_SERVICES_INTERNAL_TOKEN is required when AX_SERVICES_HOST is not loopback',
+  );
+
+  expect(
+    buildConfig({
+      AX_SERVICES_HOST: '0.0.0.0',
+      AX_SERVICES_INTERNAL_TOKEN: 'inbound-token-123',
+    }).inboundToken,
+  ).toBe('inbound-token-123');
 });
 
 test('buildConfig rejects invalid AxBI URL', () => {
@@ -221,17 +245,15 @@ test('buildConfig rejects invalid AxBI URL', () => {
   expect(() => buildConfig({ AXBI_BASE_URL: 'http:dashboard' })).toThrow(
     'AXBI_BASE_URL must be a valid HTTP(S) URL',
   );
-  expect(() =>
-    buildConfig({ AXBI_BASE_URL: 'https:/dashboard' }),
-  ).toThrow('AXBI_BASE_URL must be a valid HTTP(S) URL');
+  expect(() => buildConfig({ AXBI_BASE_URL: 'https:/dashboard' })).toThrow(
+    'AXBI_BASE_URL must be a valid HTTP(S) URL',
+  );
 });
 
 test('buildConfig rejects unsupported AxBI URL protocols', () => {
   expect(() =>
     buildConfig({ AXBI_BASE_URL: 'ftp://ax-bi.example.test' }),
-  ).toThrow(
-    'AXBI_BASE_URL must be a valid HTTP(S) URL',
-  );
+  ).toThrow('AXBI_BASE_URL must be a valid HTTP(S) URL');
 });
 
 test('buildConfig rejects AxBI base URLs with query or fragment', () => {
@@ -285,52 +307,48 @@ test('buildConfig rejects ambiguous AxBI path overrides', () => {
   expect(() =>
     buildConfig({ AXBI_HEALTH_PATH: '/health?verbose=true' }),
   ).toThrow(message);
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/health#ready' }),
-  ).toThrow(message);
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/health#ready' })).toThrow(
+    message,
+  );
   expect(() =>
     buildConfig({ AXBI_HEALTH_PATH: String.raw`api\v1\health` }),
   ).toThrow(message);
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/health\nready' }),
-  ).toThrow(message);
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/health ready' }),
-  ).toThrow(message);
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/health\nready' })).toThrow(
+    message,
+  );
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/health ready' })).toThrow(
+    message,
+  );
 });
 
 test('buildConfig rejects AxBI path overrides with dot segments', () => {
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/../health' }),
-  ).toThrow('AXBI_HEALTH_PATH must not contain dot path segments');
-  expect(() =>
-    buildConfig({ AXBI_CHART_LIST_PATH: 'api/./v1/chart' }),
-  ).toThrow('AXBI_CHART_LIST_PATH must not contain dot path segments');
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/../health' })).toThrow(
+    'AXBI_HEALTH_PATH must not contain dot path segments',
+  );
+  expect(() => buildConfig({ AXBI_CHART_LIST_PATH: 'api/./v1/chart' })).toThrow(
+    'AXBI_CHART_LIST_PATH must not contain dot path segments',
+  );
   expect(() =>
     buildConfig({ AXBI_METADATA_PATH: 'api/%2e%2e/dashboard/_info' }),
   ).toThrow('AXBI_METADATA_PATH must not contain dot path segments');
 });
 
 test('buildConfig rejects ambiguous percent-encoded AxBI path overrides', () => {
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/api%2fhealth' }),
-  ).toThrow('AXBI_HEALTH_PATH must not contain encoded path separators');
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/api%5chealth' }),
-  ).toThrow('AXBI_HEALTH_PATH must not contain encoded path separators');
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/api%20health' }),
-  ).toThrow(
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/api%2fhealth' })).toThrow(
+    'AXBI_HEALTH_PATH must not contain encoded path separators',
+  );
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/api%5chealth' })).toThrow(
+    'AXBI_HEALTH_PATH must not contain encoded path separators',
+  );
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/api%20health' })).toThrow(
     'AXBI_HEALTH_PATH must not contain whitespace or control characters',
   );
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/api%00health' }),
-  ).toThrow(
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/api%00health' })).toThrow(
     'AXBI_HEALTH_PATH must not contain whitespace or control characters',
   );
-  expect(() =>
-    buildConfig({ AXBI_HEALTH_PATH: '/api/%zz/health' }),
-  ).toThrow('AXBI_HEALTH_PATH must contain valid percent-encoding');
+  expect(() => buildConfig({ AXBI_HEALTH_PATH: '/api/%zz/health' })).toThrow(
+    'AXBI_HEALTH_PATH must contain valid percent-encoding',
+  );
 });
 
 test('buildConfig rejects unsupported log levels', () => {

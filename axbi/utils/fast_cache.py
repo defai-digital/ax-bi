@@ -143,3 +143,21 @@ def get_fast_cache(key: str) -> str | None:
     except Exception:  # pylint: disable=broad-except
         logger.warning("Fast cache: failed to read key %s", full_key, exc_info=True)
         return None
+
+
+def delete_fast_cache(keys: list[str]) -> None:
+    """Delete fast-cache entries corresponding to chart data cache keys."""
+    if not current_app.config.get("FAST_CACHE_ENABLED", False) or not keys:
+        return
+
+    prefix = current_app.config.get("FAST_CACHE_KEY_PREFIX", "fc:")
+    full_keys = [f"{prefix}{key}" for key in keys if key]
+    if not full_keys:
+        return
+
+    try:
+        redis_client = _get_redis_client()
+        if redis_client is not None:
+            redis_client.delete(*full_keys)
+    except Exception:  # pylint: disable=broad-except
+        logger.warning("Fast cache: failed to delete keys", exc_info=True)

@@ -25,9 +25,16 @@ export default function getBootstrapData(): BootstrapData {
   if (cachedBootstrapData === null) {
     const appContainer = document.getElementById('app');
     const dataBootstrap = appContainer?.getAttribute('data-bootstrap');
-    cachedBootstrapData = dataBootstrap
-      ? JSON.parse(dataBootstrap)
-      : DEFAULT_BOOTSTRAP_DATA;
+    if (dataBootstrap) {
+      try {
+        cachedBootstrapData = JSON.parse(dataBootstrap);
+      } catch (error) {
+        console.error('Failed to parse bootstrap data:', error);
+        cachedBootstrapData = DEFAULT_BOOTSTRAP_DATA;
+      }
+    } else {
+      cachedBootstrapData = DEFAULT_BOOTSTRAP_DATA;
+    }
   }
   // Add a fallback to ensure the returned value is always of type BootstrapData
   return cachedBootstrapData ?? DEFAULT_BOOTSTRAP_DATA;

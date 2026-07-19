@@ -121,7 +121,7 @@ def handle_api_exception(
             )
         except (exc.IntegrityError, exc.DatabaseError, exc.DataError) as ex:
             logger.exception(ex)
-            return json_error_response(utils.error_msg_from_exception(ex), status=422)
+            return json_error_response("A database error occurred", status=422)
         except Exception as ex:  # pylint: disable=broad-except
             logger.exception(ex)
             return json_error_response("An unexpected error occurred")
@@ -226,7 +226,7 @@ def set_app_error_handlers(app: Flask) -> None:  # noqa: C901
         return json_error_response(
             [
                 AxBIError(
-                    message=utils.error_msg_from_exception(ex),
+                    message="An unexpected error occurred",
                     error_type=AxBIErrorType.GENERIC_BACKEND_ERROR,
                     level=ErrorLevel.ERROR,
                 ),

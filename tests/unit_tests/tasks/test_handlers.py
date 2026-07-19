@@ -16,6 +16,7 @@
 # under the License.
 """Unit tests for GTF handlers (abort, cleanup) and related Task model behavior."""
 
+import threading
 import time
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, Mock, patch
@@ -675,3 +676,49 @@ class TestCleanupHandlers:
         task_context._run_cleanup()
 
         assert call_count == 1  # Still 1, not 2
+
+
+def test_concurrent_abort_notifications_run_handlers_once(task_context) -> None:
+    """Redis and timeout notifications racing must not duplicate cleanup work."""
+    calls = 0
+    calls_lock = threading.Lock()
+    start = threading.Barrier(3)
+
+    def handler() -> None:
+        nonlocal calls
+        with calls_lock:
+            calls += 1
+
+    task_context._abort_handlers.append(handler)
+
+    def notify() -> None:
+        start.wait()
+        task_context._on_abort_detected()
+
+    threads = [threading.Thread(target=notify) for _ in range(2)]
+    for thread in threads:
+        thread.start()
+    start.wait()
+    for thread in threads:
+        thread.join()
+
+    assert calls == 1
+
+
+def test_cleanup_failure_preserves_terminal_status(
+    task_context, mock_task, mock_update_command
+) -> None:
+    """Cleanup diagnostics must not rewrite SUCCESS as FAILURE."""
+    mock_task.status = TaskStatus.SUCCESS.value
+    mock_task.properties_dict = {}
+    task_context._handler_failures = [
+        ("cleanup", RuntimeError("cleanup failed"), "traceback")
+    ]
+
+    task_context._write_handler_failures_to_db()
+
+    assert mock_update_command.call_args.kwargs["status"] is None
+    assert (
+        mock_update_command.call_args.kwargs["properties"]["error_message"]
+        == "Cleanup handler failed: cleanup failed"
+    )

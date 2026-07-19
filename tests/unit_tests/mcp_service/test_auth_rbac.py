@@ -418,6 +418,39 @@ def test_scope_falls_back_to_rbac_when_no_jwt_context(app_context) -> None:
     assert result is True
 
 
+def test_api_key_transport_scopes_fall_back_to_rbac(app_context) -> None:
+    """Synthetic FastMCP scopes on FAB API keys must not restrict write tools."""
+    from axbi.mcp_service.composite_token_verifier import API_KEY_PASSTHROUGH_CLAIM
+
+    g.user = MagicMock(username="editor")
+    func = _make_tool_func(class_perm="Chart", method_perm="write")
+    token = MagicMock()
+    token.client_id = "api_key"
+    token.claims = {API_KEY_PASSTHROUGH_CLAIM: True}
+    token.scopes = ["axbi:read"]
+
+    with (
+        patch("axbi.mcp_service.auth.current_user_can_access", return_value=True),
+        patch(
+            "fastmcp.server.dependencies.get_access_token",
+            return_value=token,
+        ),
+    ):
+        assert check_tool_permission(func) is True
+
+
+def test_upload_scope_requires_write_scope(app_context) -> None:
+    """Upload tools use the same write-class scope policy as mutations."""
+    g.user = MagicMock(username="editor")
+    func = _make_tool_func(class_perm="File", method_perm="upload")
+
+    with patch("axbi.mcp_service.auth.current_user_can_access", return_value=True):
+        with _patch_token_scopes(["axbi:read"]):
+            assert check_tool_permission(func) is False
+        with _patch_token_scopes(["axbi:write"]):
+            assert check_tool_permission(func) is True
+
+
 def test_scope_read_denied_when_token_lacks_read_scope(app_context) -> None:
     """A read tool is denied when the token only carries an unrelated scope."""
     g.user = MagicMock(username="viewer")

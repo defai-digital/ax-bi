@@ -77,7 +77,18 @@ class QueryEstimationCommand(BaseCommand):
                 ),
                 status=404,
             )
-        security_manager.raise_for_access(database=self._database)
+        # Cost estimation must use the same table-level authorization contract
+        # as SQL execution. A bare ``database=`` argument does not identify the
+        # data referenced by the statement and cannot preserve dataset-only
+        # grants for SQL Lab users.
+        security_manager.raise_for_access(
+            database=self._database,
+            sql=self._sql,
+            catalog=self._catalog,
+            schema=self._schema or None,
+            template_params=self._template_params,
+            force_dataset_match=True,
+        )
 
     def _apply_sql_security(self, sql: str) -> str:
         """Run the disallowed-function/table, DML and RLS controls against the

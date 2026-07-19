@@ -336,3 +336,4 @@ def sync_database_permissions_task(
                 database_id,
                 exc_info=True,
             )
+            raise

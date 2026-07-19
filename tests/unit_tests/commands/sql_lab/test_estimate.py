@@ -94,7 +94,12 @@ def test_validate_raises_when_database_access_denied(
         command.validate()
 
     mock_security_manager.raise_for_access.assert_called_once_with(
-        database=mock_database
+        database=mock_database,
+        sql="SELECT 1",
+        catalog=None,
+        schema=None,
+        template_params={},
+        force_dataset_match=True,
     )
 
 
@@ -118,7 +123,12 @@ def test_validate_succeeds_for_authorised_user(
     command.validate()  # must not raise
 
     mock_security_manager.raise_for_access.assert_called_once_with(
-        database=mock_database
+        database=mock_database,
+        sql="SELECT 1",
+        catalog=None,
+        schema=None,
+        template_params={},
+        force_dataset_match=True,
     )
 
 
@@ -144,6 +154,8 @@ def test_raise_for_access_called_with_correct_database(
 
     call_kwargs = mock_security_manager.raise_for_access.call_args.kwargs
     assert call_kwargs["database"] is mock_database
+    assert call_kwargs["sql"] == "SELECT 1"
+    assert call_kwargs["force_dataset_match"] is True
 
 
 # ---------------------------------------------------------------------------

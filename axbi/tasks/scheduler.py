@@ -37,7 +37,7 @@ from axbi.commands.sql_lab.query import QueryPruneCommand
 from axbi.commands.tasks.prune import TaskPruneCommand
 from axbi.daos.report import ReportScheduleDAO
 from axbi.daos.tasks import TaskDAO
-from axbi.extensions import celery_app
+from axbi.extensions import celery_app, db
 from axbi.key_value.commands.prune import KeyValuePruneCommand
 from axbi.stats_logger import BaseStatsLogger
 from axbi.tasks.ambient_context import use_context
@@ -295,8 +295,9 @@ def execute_task(  # noqa: C901
             "task_uuid": task_uuid,
         }
 
-    # Update cached status (no DB read needed - we just wrote IN_PROGRESS)
-    task.status = TaskStatus.IN_PROGRESS.value
+    # Synchronize the identity-mapped object after the CAS. Mutating its status
+    # locally would create an unguarded autoflush that could overwrite ABORTING.
+    db.session.refresh(task)
 
     # Build context from task (includes user who created the task)
     ctx = TaskContext(task)
@@ -328,6 +329,7 @@ def execute_task(  # noqa: C901
 
         # Mark execution as completed to prevent late abort handlers
         ctx.mark_execution_completed()
+        ctx.flush_pending_updates()
 
         # Determine terminal status based on abort detection
         # Use atomic conditional updates to prevent overwriting concurrent abort
@@ -361,13 +363,14 @@ def execute_task(  # noqa: C901
     except Exception as ex:
         # Mark execution as completed to prevent late abort handlers
         ctx.mark_execution_completed()
+        ctx.flush_pending_updates()
 
         # Atomic transition to FAILURE (only if still IN_PROGRESS or ABORTING)
         InternalStatusTransitionCommand(
             task_uuid=native_uuid,
             new_status=TaskStatus.FAILURE,
             expected_status=[TaskStatus.IN_PROGRESS, TaskStatus.ABORTING],
-            properties={"error_message": str(ex)},
+            properties=ctx.properties_snapshot(error_message=str(ex)),
             set_ended_at=True,
         ).run()
 

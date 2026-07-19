@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { VizType } from '@ax-bi/ui-core';
-import { planStarterCharts } from './starterDashboard';
+import { AxBIClient, VizType } from '@ax-bi/ui-core';
+import { createStarterDashboard, planStarterCharts } from './starterDashboard';
 
 test('plans big number and table at minimum', () => {
   const plans = planStarterCharts({
@@ -40,4 +40,29 @@ test('uses time series when no dimensions', () => {
     columns: [{ column_name: 'ts', is_dttm: true }],
   });
   expect(plans.some(p => p.viz_type === VizType.Line)).toBe(true);
+});
+
+test('rejects when a created chart cannot be linked to the dashboard', async () => {
+  jest.spyOn(AxBIClient, 'get').mockResolvedValueOnce({
+    json: {
+      result: {
+        id: 7,
+        table_name: 'orders',
+        metrics: [{ metric_name: 'count' }],
+        columns: [],
+      },
+    },
+  } as never);
+  jest
+    .spyOn(AxBIClient, 'post')
+    .mockResolvedValueOnce({ json: { id: 11 } } as never)
+    .mockResolvedValueOnce({ json: { id: 12 } } as never)
+    .mockResolvedValueOnce({ json: { id: 21 } } as never);
+  jest
+    .spyOn(AxBIClient, 'put')
+    .mockResolvedValueOnce({ json: {} } as never)
+    .mockRejectedValueOnce(new Error('chart link failed'))
+    .mockResolvedValueOnce({ json: {} } as never);
+
+  await expect(createStarterDashboard(7)).rejects.toThrow('chart link failed');
 });

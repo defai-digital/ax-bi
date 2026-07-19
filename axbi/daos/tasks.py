@@ -230,9 +230,21 @@ class TaskDAO(BaseDAO[Task]):
 
         # PENDING: Go directly to ABORTED
         if task.status == TaskStatus.PENDING.value:
-            task.set_status(TaskStatus.ABORTED)
-            logger.info("Aborted pending task: %s (scope: %s)", task_uuid, task.scope)
-            return task
+            if cls.conditional_status_update(
+                task_uuid,
+                new_status=TaskStatus.ABORTED,
+                expected_status=TaskStatus.PENDING,
+                set_ended_at=True,
+            ):
+                db.session.refresh(task)
+                logger.info(
+                    "Aborted pending task: %s (scope: %s)", task_uuid, task.scope
+                )
+                return task
+
+            # The executor won the pickup race. Re-read and apply the
+            # IN_PROGRESS abortability rules to the state that actually won.
+            db.session.refresh(task)
 
         # IN_PROGRESS: Check if abortable
         if task.status == TaskStatus.IN_PROGRESS.value:
@@ -242,9 +254,17 @@ class TaskDAO(BaseDAO[Task]):
                     "an abort handler (is_abortable is not true)"
                 )
 
-            # Transition to ABORTING (not ABORTED yet)
-            task.set_status(TaskStatus.ABORTING)
-            db.session.merge(task)
+            # Transition to ABORTING (not ABORTED yet) with a CAS so a terminal
+            # executor update cannot be overwritten by a stale cancellation.
+            if not cls.conditional_status_update(
+                task_uuid,
+                new_status=TaskStatus.ABORTING,
+                expected_status=TaskStatus.IN_PROGRESS,
+            ):
+                db.session.refresh(task)
+                return task if task.status == TaskStatus.ABORTING.value else None
+
+            db.session.refresh(task)
             logger.info("Set task %s to ABORTING (scope: %s)", task_uuid, task.scope)
 
             # NOTE: publish_abort is NOT called here - caller handles it after commit
@@ -436,7 +456,21 @@ class TaskDAO(BaseDAO[Task]):
         update_values: dict[str, Any] = {"status": new_status_val}
 
         if properties is not None:
-            update_values["properties"] = json.dumps(properties)
+            # Terminal error details are a delta, unlike TaskContext's complete
+            # progress snapshots. Lock and refresh the matching row so the CAS
+            # preserves progress/timeout/abortability metadata instead of
+            # replacing the entire JSON document.
+            task = (
+                db.session.query(Task)
+                .filter(Task.uuid == task_uuid, Task.status.in_(expected_vals))
+                .populate_existing()
+                .with_for_update()
+                .one_or_none()
+            )
+            if task is None:
+                return False
+            merged_properties = {**task.properties_dict, **properties}
+            update_values["properties"] = json.dumps(merged_properties)
 
         if set_started_at:
             update_values["started_at"] = datetime.now(timezone.utc)

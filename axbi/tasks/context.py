@@ -31,7 +31,7 @@ from axbi_core.tasks.types import (
 from flask import current_app
 
 from axbi.stats_logger import BaseStatsLogger
-from axbi.tasks.constants import ABORT_STATES
+from axbi.tasks.constants import ABORT_STATES, TERMINAL_STATES
 from axbi.tasks.utils import progress_update
 
 if TYPE_CHECKING:
@@ -71,6 +71,7 @@ class TaskContext(CoreTaskContext):
         self._abort_detected = False
         self._abort_handlers_completed = False  # Track if all abort handlers finished
         self._execution_completed = False  # Set by executor after task work completes
+        self._state_lock = threading.Lock()
 
         # Collected handler failures for unified reporting
         self._handler_failures: list[TaskContext.HandlerFailure] = []
@@ -272,6 +273,20 @@ class TaskContext(CoreTaskContext):
             self._deferred_flush_timer.cancel()
             self._deferred_flush_timer = None
 
+    def flush_pending_updates(self) -> None:
+        """Persist pending progress before a terminal status transition."""
+        with self._throttle_lock:
+            self._cancel_deferred_flush_timer()
+            if self._has_pending_updates:
+                self._write_to_db()
+                self._last_db_write_time = time.time()
+                self._has_pending_updates = False
+
+    def properties_snapshot(self, **updates: Any) -> TaskProperties:
+        """Return a complete properties snapshot with terminal updates merged."""
+        with self._throttle_lock:
+            return cast(TaskProperties, {**self._properties_cache, **updates})
+
     def on_cleanup(self, handler: Callable[[], None]) -> Callable[[], None]:
         """
         Register a cleanup handler that runs when the task ends.
@@ -367,19 +382,20 @@ class TaskContext(CoreTaskContext):
 
         Triggers all registered abort handlers.
         """
-        if self._abort_detected:
-            return  # Already handled
+        with self._state_lock:
+            if self._abort_detected:
+                return  # Already handled
 
-        # Check if task execution has already completed (late abort race).
-        # Executor sets _execution_completed after task work finishes.
-        if self._execution_completed:
-            logger.info(
-                "Abort detected for task %s but execution already completed",
-                self._task_uuid,
-            )
-            return
+            # Check if task execution has already completed (late abort race).
+            # Executor sets _execution_completed after task work finishes.
+            if self._execution_completed:
+                logger.info(
+                    "Abort detected for task %s but execution already completed",
+                    self._task_uuid,
+                )
+                return
 
-        self._abort_detected = True
+            self._abort_detected = True
         logger.info("Abort detected for task %s", self._task_uuid)
         self._trigger_abort_handlers()
 
@@ -392,7 +408,8 @@ class TaskContext(CoreTaskContext):
         handlers when the task work has already finished. Cleanup handlers
         still run after this is set.
         """
-        self._execution_completed = True
+        with self._state_lock:
+            self._execution_completed = True
 
     def start_abort_polling(self, interval: float | None = None) -> None:
         """
@@ -477,8 +494,21 @@ class TaskContext(CoreTaskContext):
 
         if self._app:
             with self._app.app_context():
-                # Check if task already has an error (preserve original context)
-                task = self._task
+                # Re-fetch so terminal status and error details are not read from
+                # the executor's stale identity-mapped task object.
+                from axbi.daos.tasks import TaskDAO
+
+                task = TaskDAO.find_one_or_none(
+                    skip_base_filter=True,
+                    uuid=self._task_uuid,
+                )
+                if task is None:
+                    logger.warning(
+                        "Could not record handler failures for missing task %s",
+                        self._task_uuid,
+                    )
+                    self._handler_failures = []
+                    return
                 original_error = task.properties_dict.get("error_message")
                 original_type = task.properties_dict.get("exception_type")
                 original_trace = task.properties_dict.get("stack_trace")
@@ -507,7 +537,11 @@ class TaskContext(CoreTaskContext):
                 # Update task with combined error info
                 UpdateTaskCommand(
                     self._task_uuid,
-                    status=TaskStatus.FAILURE.value,
+                    status=(
+                        None
+                        if task.status in TERMINAL_STATES
+                        else TaskStatus.FAILURE.value
+                    ),
                     properties={
                         "error_message": error_msg,
                         "exception_type": exception_type,
@@ -538,10 +572,13 @@ class TaskContext(CoreTaskContext):
             return  # Already started
 
         def on_timeout() -> None:
-            if self._abort_detected:
-                return  # Already aborting
+            with self._state_lock:
+                if self._abort_detected or self._execution_completed:
+                    return
 
-            self._timeout_triggered = True
+                is_abortable = self._properties_cache.get("is_abortable") is True
+                if is_abortable:
+                    self._timeout_triggered = True
 
             # Check if task has abort handler (requires app context)
             if not self._app:
@@ -554,8 +591,7 @@ class TaskContext(CoreTaskContext):
             with self._app.app_context():
                 from axbi.commands.tasks.update import UpdateTaskCommand
 
-                task = self._task
-                if task.properties_dict.get("is_abortable", False):
+                if is_abortable:
                     logger.info(
                         "Timeout reached for task %s after %d seconds - "
                         "transitioning to ABORTING and triggering abort handlers",
@@ -605,7 +641,8 @@ class TaskContext(CoreTaskContext):
     @property
     def timeout_triggered(self) -> bool:
         """Check if the timeout was triggered."""
-        return self._timeout_triggered
+        with self._state_lock:
+            return self._timeout_triggered
 
     @property
     def abort_handlers_completed(self) -> bool:
@@ -625,11 +662,7 @@ class TaskContext(CoreTaskContext):
         as a unified error record at the end.
         """
         # Flush any pending throttled updates before cleanup
-        with self._throttle_lock:
-            self._cancel_deferred_flush_timer()
-            if self._has_pending_updates:
-                self._write_to_db()
-                self._has_pending_updates = False
+        self.flush_pending_updates()
 
         # Stop abort listener and timeout timer
         self.stop_abort_polling()
