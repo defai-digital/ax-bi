@@ -36,6 +36,7 @@ Built by [DEFAI Digital](https://github.com/defai-digital).
 [![Built on Apache Superset](https://img.shields.io/badge/built%20on-Apache%20Superset-20A6C9.svg)](https://superset.apache.org)
 [![MCP-native](https://img.shields.io/badge/MCP-native-6E56CF.svg)](#mcp-native-genai-bi)
 [![Maintained by DEFAI](https://img.shields.io/badge/maintained%20by-DEFAI%20Private%20Limited-0A0A0A.svg)](#about-defai)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/mKepvPnmu7)
 
 ### Index
 
@@ -700,6 +701,6 @@ AX BI is distributed under the [Apache License 2.0](https://github.com/defai-dig
 
 **AX BI** is developed and maintained by **DEFAI Private Limited**.
 
-<!-- TODO: add DEFAI website, contact email, and support channel once finalized. -->
+<!-- TODO: add DEFAI website and contact email once finalized. -->
 - Website: _coming soon_
-- Support: _coming soon_
+- Support: [Discord](https://discord.gg/mKepvPnmu7)
