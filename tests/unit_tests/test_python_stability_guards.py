@@ -155,6 +155,32 @@ def test_celery_sql_unhandled_error_resets_session() -> None:
     assert "error_sqllab_unhandled" in celery_task
 
 
+def test_kv_distributed_lock_uses_independent_session() -> None:
+    """KV lock acquire/release must not nest under the request unit of work."""
+    acquire = (
+        REPO_ROOT / "axbi" / "commands" / "distributed_lock" / "acquire.py"
+    ).read_text(encoding="utf-8")
+    release = (
+        REPO_ROOT / "axbi" / "commands" / "distributed_lock" / "release.py"
+    ).read_text(encoding="utf-8")
+    assert "independent_kv_session" in acquire
+    assert "independent_kv_session" in release
+    # Nested @transaction would hide the lock until the outer boundary commits.
+    # Match the decorator form, not docstring mentions of ``@transaction``.
+    decorator = re.compile(r"^\s*@transaction\b", re.MULTILINE)
+    assert decorator.search(acquire) is None
+    assert decorator.search(release) is None
+
+
+def test_gtf_abort_listener_recovers_instead_of_breaking() -> None:
+    """Abort listeners must keep watching after transient metadata errors."""
+    manager = (REPO_ROOT / "axbi" / "tasks" / "manager.py").read_text(encoding="utf-8")
+    assert "_recover_abort_listener_session" in manager
+    assert "reset_session_safely" in manager
+    context = (REPO_ROOT / "axbi" / "tasks" / "context.py").read_text(encoding="utf-8")
+    assert "_claim_abort_handlers" in context
+
+
 def test_transaction_decorator_uses_depth_and_safe_rollback() -> None:
     """Outer commit boundary and safe rollback must stay wired."""
     decorators = (REPO_ROOT / "axbi" / "utils" / "decorators.py").read_text(

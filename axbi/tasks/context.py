@@ -376,26 +376,35 @@ class TaskContext(CoreTaskContext):
             app=self._app,
         )
 
+    def _claim_abort_handlers(self, *, allow_after_execution: bool) -> bool:
+        """
+        Atomically claim the right to run abort handlers.
+
+        Returns True exactly once across concurrent listener/cleanup paths.
+        When ``allow_after_execution`` is False (listener path), a late abort
+        after the main work finished is ignored so handlers do not run twice
+        with the cleanup path.
+        """
+        with self._state_lock:
+            if self._abort_detected:
+                return False
+            if self._execution_completed and not allow_after_execution:
+                logger.info(
+                    "Abort detected for task %s but execution already completed",
+                    self._task_uuid,
+                )
+                return False
+            self._abort_detected = True
+            return True
+
     def _on_abort_detected(self) -> None:
         """
         Callback invoked by TaskManager when abort is detected.
 
         Triggers all registered abort handlers.
         """
-        with self._state_lock:
-            if self._abort_detected:
-                return  # Already handled
-
-            # Check if task execution has already completed (late abort race).
-            # Executor sets _execution_completed after task work finishes.
-            if self._execution_completed:
-                logger.info(
-                    "Abort detected for task %s but execution already completed",
-                    self._task_uuid,
-                )
-                return
-
-            self._abort_detected = True
+        if not self._claim_abort_handlers(allow_after_execution=False):
+            return
         logger.info("Abort detected for task %s", self._task_uuid)
         self._trigger_abort_handlers()
 
@@ -669,18 +678,29 @@ class TaskContext(CoreTaskContext):
         self.stop_timeout_timer()
 
         # If aborting/aborted but handlers haven't run yet, run them now
-        # (This catches the case where task ended before listener detected abort)
+        # (This catches the case where task ended before listener detected abort).
+        # Claim under _state_lock so a racing listener cannot double-run handlers.
+        def _maybe_run_missed_abort_handlers() -> None:
+            task = self._task
+            if task.status in ABORT_STATES and self._claim_abort_handlers(
+                allow_after_execution=True
+            ):
+                self._trigger_abort_handlers()
+
         if self._app:
             with self._app.app_context():
-                task = self._task
-                if task.status in ABORT_STATES and not self._abort_detected:
-                    self._trigger_abort_handlers()
+                try:
+                    _maybe_run_missed_abort_handlers()
+                except Exception as ex:
+                    logger.warning(
+                        "Could not check abort status during cleanup for task %s: %s",
+                        self._task_uuid,
+                        str(ex),
+                    )
         else:
             # Fallback without app context
             try:
-                task = self._task
-                if task.status in ABORT_STATES and not self._abort_detected:
-                    self._trigger_abort_handlers()
+                _maybe_run_missed_abort_handlers()
             except Exception as ex:
                 logger.warning(
                     "Could not check abort status during cleanup for task %s: %s",

@@ -18,7 +18,6 @@
 from __future__ import annotations
 
 import logging
-from functools import partial
 from typing import Any
 
 import redis
@@ -28,12 +27,10 @@ from axbi.commands.distributed_lock.base import (
     BaseDistributedLockCommand,
     get_redis_client,
 )
+from axbi.commands.distributed_lock.kv_session import independent_kv_session
 from axbi.exceptions import ReleaseDistributedLockFailedException
-from axbi.extensions import db
-from axbi.key_value.exceptions import KeyValueDeleteFailedError
 from axbi.key_value.models import KeyValueEntry
 from axbi.key_value.utils import get_filter
-from axbi.utils.decorators import on_error, transaction
 
 logger = logging.getLogger(__name__)
 
@@ -51,6 +48,9 @@ class ReleaseDistributedLock(BaseDistributedLockCommand):
 
     Uses an owner-checked Redis Lua script when distributed coordination is
     configured, otherwise locks and checks the KeyValue row before deleting it.
+
+    The KV backend uses an independent short-lived session so release is durable
+    immediately even when nested under an outer ``@transaction``.
     """
 
     def __init__(
@@ -93,38 +93,35 @@ class ReleaseDistributedLock(BaseDistributedLockCommand):
                 ex,
             )
 
-    @transaction(
-        on_error=partial(
-            on_error,
-            catches=(
-                KeyValueDeleteFailedError,
-                SQLAlchemyError,
-            ),
-            reraise=ReleaseDistributedLockFailedException,
-        ),
-    )
     def _release_kv(self) -> None:
         """Release lock using KeyValue table (database)."""
-        entry = (
-            db.session.query(KeyValueEntry)
-            .filter_by(**get_filter(self.resource, self.key))
-            .with_for_update()
-            .one_or_none()
-        )
-        if (
-            entry is not None
-            and not entry.is_expired()
-            and self.codec.decode(entry.value) == {"value": self.owner_token}
-        ):
-            db.session.delete(entry)
-            logger.debug(
-                "Released KV lock: namespace=%s key=%s",
-                self.namespace,
-                self.key,
-            )
-        else:
-            logger.debug(
-                "Skipped release for KV lock no longer owned: namespace=%s key=%s",
-                self.namespace,
-                self.key,
-            )
+        try:
+            with independent_kv_session() as session:
+                entry = (
+                    session.query(KeyValueEntry)
+                    .filter_by(**get_filter(self.resource, self.key))
+                    .with_for_update()
+                    .one_or_none()
+                )
+                if (
+                    entry is not None
+                    and not entry.is_expired()
+                    and self.codec.decode(entry.value) == {"value": self.owner_token}
+                ):
+                    session.delete(entry)
+                    logger.debug(
+                        "Released KV lock: namespace=%s key=%s",
+                        self.namespace,
+                        self.key,
+                    )
+                else:
+                    logger.debug(
+                        "Skipped release for KV lock no longer owned: "
+                        "namespace=%s key=%s",
+                        self.namespace,
+                        self.key,
+                    )
+        except SQLAlchemyError as ex:
+            raise ReleaseDistributedLockFailedException(
+                f"KV lock release failed: {ex}"
+            ) from ex
