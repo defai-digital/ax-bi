@@ -2273,8 +2273,13 @@ ChartPreviewContent = Annotated[
 ]
 
 
-class GenerateChartResponse(SanitizeOptionalErrorMixin):
-    """Comprehensive chart creation response with rich metadata."""
+class GenerateChartResponse(BaseModel):
+    """Comprehensive chart creation response with rich metadata.
+
+    ``error`` is a structured :class:`ChartGenerationError` (``MCPBaseError``),
+    not a plain string — do not use ``SanitizeOptionalErrorMixin`` here.
+    Message/details redaction is handled by ``MCPBaseError`` validators.
+    """
 
     # Core chart information
     chart: ChartInfo | None = Field(None, description="Complete chart metadata")

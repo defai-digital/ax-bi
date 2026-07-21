@@ -76,3 +76,32 @@ def test_create_report_response_error_field_redacts_table() -> None:
     assert resp.error is not None
     assert "confidential_payroll" not in resp.error
     assert "REDACTED" in resp.error or "Validation" in resp.error
+
+
+def test_generate_chart_response_preserves_structured_error_type() -> None:
+    """GenerateChartResponse.error is ChartGenerationError, not a plain string.
+
+    Must not apply SanitizeOptionalErrorMixin (which would coerce dict → str).
+    MCPBaseError still redacts SQL in message/details.
+    """
+    from axbi.mcp_service.chart.schemas import GenerateChartResponse
+    from axbi.mcp_service.common.error_schemas import ChartGenerationError
+
+    payload = {
+        "success": False,
+        "error": {
+            "error_type": "ValidationError",
+            "message": "query failed: SELECT ssn FROM secret_employees WHERE 1=1",
+            "details": "table confidential_payroll missing column ssn",
+        },
+    }
+    resp = GenerateChartResponse.model_validate(payload)
+    assert isinstance(resp.error, ChartGenerationError)
+    assert not isinstance(resp.error, str)
+    assert "ssn" not in resp.error.message.lower() or "REDACTED" in resp.error.message
+    assert "secret_employees" not in resp.error.message
+    assert "confidential_payroll" not in (resp.error.details or "")
+    # Nested envelope stays structured on dump
+    dumped = resp.model_dump()
+    assert isinstance(dumped["error"], dict)
+    assert dumped["error"]["error_type"] == "ValidationError"
