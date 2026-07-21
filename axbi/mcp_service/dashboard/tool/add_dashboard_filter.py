@@ -31,6 +31,7 @@ from fastmcp import Context
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import SQLAlchemyError
 
+from axbi.mcp_service.common.error_schemas import SanitizeOptionalErrorMixin
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
 from axbi.mcp_service.utils.session_utils import rollback_session_safely
 from axbi.mcp_service.utils.url_utils import get_axbi_base_url
@@ -91,7 +92,7 @@ class AddDashboardFilterRequest(BaseModel):
     )
 
 
-class AddDashboardFilterResponse(BaseModel):
+class AddDashboardFilterResponse(SanitizeOptionalErrorMixin):
     """Response schema for add_dashboard_filter."""
 
     dashboard_id: int | None = Field(default=None)

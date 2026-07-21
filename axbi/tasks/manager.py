@@ -468,6 +468,31 @@ class TaskManager:
         else:
             callback()
 
+    @staticmethod
+    def _recover_abort_listener_session(
+        app: Any,
+        source: str,
+        task_uuid: UUID,
+    ) -> None:
+        """Reset a poisoned metadata session so abort polling can continue."""
+        # pylint: disable=import-outside-toplevel
+        from axbi.utils.session_lifecycle import reset_session_safely
+
+        context = f"abort {source} listener recovery task={task_uuid}"
+        try:
+            if app:
+                with app.app_context():
+                    reset_session_safely(context=context)
+            else:
+                reset_session_safely(context=context)
+        except Exception:  # noqa: BLE001
+            logger.warning(
+                "Failed to recover session for abort %s on task %s",
+                source,
+                task_uuid,
+                exc_info=True,
+            )
+
     @classmethod
     def _check_abort_status(cls, task_uuid: UUID) -> bool:
         """
@@ -527,15 +552,17 @@ class TaskManager:
                         source,
                         task_uuid,
                     )
-                else:
-                    logger.error(
-                        "Error in abort %s for task %s: %s",
-                        source,
-                        task_uuid,
-                        str(ex),
-                        exc_info=True,
-                    )
-                break
+                    break
+                logger.error(
+                    "Error in abort %s for task %s: %s",
+                    source,
+                    task_uuid,
+                    str(ex),
+                    exc_info=True,
+                )
+                # Transient I/O glitch while still running: recover and keep listening.
+                cls._recover_abort_listener_session(app, source, task_uuid)
+                stop_event.wait(timeout=interval)
 
             except Exception as ex:
                 # Check if stop was requested - if so, this may be expected
@@ -546,15 +573,18 @@ class TaskManager:
                         task_uuid,
                         ex,
                     )
-                else:
-                    logger.error(
-                        "Error in abort %s for task %s: %s",
-                        source,
-                        task_uuid,
-                        str(ex),
-                        exc_info=True,
-                    )
-                break
+                    break
+                logger.error(
+                    "Error in abort %s for task %s: %s",
+                    source,
+                    task_uuid,
+                    str(ex),
+                    exc_info=True,
+                )
+                # Transient metadata-DB errors must not permanently disable abort
+                # detection for this task. Reset the scoped session and back off.
+                cls._recover_abort_listener_session(app, source, task_uuid)
+                stop_event.wait(timeout=interval)
 
     @classmethod
     def _listen_pubsub(

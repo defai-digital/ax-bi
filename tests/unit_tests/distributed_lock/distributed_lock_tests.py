@@ -155,6 +155,42 @@ def test_stale_kv_owner_cannot_release_reacquired_lock() -> None:
             ).run()
 
 
+def test_kv_lock_visible_under_outer_transaction() -> None:
+    """
+    KV locks must commit independently of an outer @transaction unit of work.
+
+    Without an independent session, nested @transaction on acquire left the
+    lock row uncommitted until the outer boundary finished — concurrent
+    workers then hit the unique key instead of seeing the lock.
+    """
+    from flask import g
+
+    from axbi.utils.decorators import transaction
+
+    other = _get_other_session()
+    observed: dict[str, Any] = {}
+
+    with (
+        patch.object(acquire_module, "get_redis_client", return_value=None),
+        patch.object(release_module, "get_redis_client", return_value=None),
+    ):
+
+        @transaction()
+        def hold_lock_inside_outer_unit_of_work() -> None:
+            # Outer unit of work is open; depth > 0 once nested code runs.
+            assert int(getattr(g, "transaction_depth", 0) or 0) >= 1
+            with DistributedLock("ns-outer", a=1, b=2) as key:
+                observed["key"] = key
+                # Another connection must see the committed lock row now.
+                observed["while_held"] = _get_lock(key, other)
+
+        hold_lock_inside_outer_unit_of_work()
+
+    assert observed["while_held"] is not None
+    assert isinstance(observed["while_held"]["value"], str)
+    assert _get_lock(observed["key"], other) is None
+
+
 def test_distributed_lock_uses_redis_when_configured() -> None:
     """Test that DistributedLock uses Redis backend when configured."""
     mock_redis = MagicMock()

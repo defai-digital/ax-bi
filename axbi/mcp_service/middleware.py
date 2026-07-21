@@ -716,9 +716,15 @@ class GlobalErrorHandlerMiddleware(Middleware):
                 f"You don't have access to this resource."
             ) from error
         elif isinstance(error, ValueError):
-            # Value/parameter errors from tool code
+            # Value/parameter errors from tool code — redact SQL/schema details
+            # pylint: disable=import-outside-toplevel
+            from axbi.mcp_service.utils.error_sanitization import (
+                _sanitize_validation_error,
+            )
+
             raise ToolError(
-                f"Invalid parameter in {tool_name}: {str(error)}"
+                f"Invalid parameter in {tool_name}: "
+                f"{_sanitize_validation_error(error, log_original=False)}"
             ) from error
         elif isinstance(error, ObjectNotFoundError | CommandInvalidError):
             # AxBI command: not found (404) or validation (422)

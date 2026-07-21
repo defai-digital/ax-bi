@@ -19,6 +19,11 @@
 #
 HYPHEN_SYMBOL='-'
 
+# Defaults below are for local trial only (1 worker × 20 threads). Production
+# should raise SERVER_WORKER_AMOUNT (≥2), use Redis cache/celery, and enable
+# GLOBAL_ASYNC_QUERIES for long warehouse SQL so /health is not blocked.
+# See axbi/config.py notes under CeleryConfig / CACHE_CONFIG.
+
 exec gunicorn \
     --bind "${AXBI_BIND_ADDRESS:-0.0.0.0}:${AXBI_PORT:-31423}" \
     --access-logfile "${ACCESS_LOG_FILE:-$HYPHEN_SYMBOL}" \

@@ -29,6 +29,7 @@ from pydantic import (
     ValidationInfo,
 )
 
+from axbi.mcp_service.common.error_schemas import SanitizeOptionalErrorMixin
 from axbi.mcp_service.utils.sanitization import sanitize_for_llm_context
 
 
@@ -175,7 +176,7 @@ class StatementInfo(BaseModel):
         return sanitize_for_llm_context(v, field_path=("executed_sql",))
 
 
-class ExecuteSqlResponse(BaseModel):
+class ExecuteSqlResponse(SanitizeOptionalErrorMixin):
     """Response schema for SQL execution results."""
 
     success: bool = Field(..., description="Whether query executed successfully")
@@ -338,7 +339,7 @@ class OpenSqlLabRequest(BaseModel):
         return stripped or None
 
 
-class SqlLabResponse(_SchemaFieldNormalizer):
+class SqlLabResponse(SanitizeOptionalErrorMixin, _SchemaFieldNormalizer):
     """Response schema for SQL Lab URL generation."""
 
     model_config = ConfigDict(populate_by_name=True)

@@ -321,10 +321,15 @@ export const fetchRangeFromStream = async ({
  * Utilizes a blocking connection to Redis to wait for data to
  * be returned from the stream.
  */
+/** Initial delay after a Redis stream read error (ms). Doubles up to max. */
+const STREAM_ERROR_BACKOFF_MS_INITIAL = 100;
+const STREAM_ERROR_BACKOFF_MS_MAX = 30_000;
+
 export const subscribeToGlobalStream = async (
   stream: string,
   listener: ListenerFunction,
 ) => {
+  let errorBackoffMs = STREAM_ERROR_BACKOFF_MS_INITIAL;
   /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
   while (true) {
     try {
@@ -351,9 +356,18 @@ export const subscribeToGlobalStream = async (
       // a concurrent batch and interleave out-of-order sends to clients.
       await listener(results as StreamResult[]);
       setLastFirehoseId(results[length - 1][0]);
+      // Successful read: reset backoff so the next error starts short again.
+      errorBackoffMs = STREAM_ERROR_BACKOFF_MS_INITIAL;
     } catch (e) {
+      // Persistent Redis failures must not spin a tight CPU/log loop.
       logger.error(e);
-      continue;
+      await new Promise(resolve => {
+        setTimeout(resolve, errorBackoffMs);
+      });
+      errorBackoffMs = Math.min(
+        errorBackoffMs * 2,
+        STREAM_ERROR_BACKOFF_MS_MAX,
+      );
     }
   }
 };
@@ -687,9 +701,12 @@ if (startServer) {
     opts.httpCorsOrigins.length > 0
       ? opts.httpCorsOrigins
       : opts.allowedOrigins;
+  // Never reflect arbitrary Origin with credentials when no allow-list is
+  // configured — that combination is browser-exploitable. Empty lists mean
+  // same-origin only (disable CORS reflection).
   fastify.register(cors, {
-    origin: corsOrigins.length > 0 ? corsOrigins : true,
-    credentials: true,
+    origin: corsOrigins.length > 0 ? corsOrigins : false,
+    credentials: corsOrigins.length > 0,
   });
   registerRoutes(fastify);
 

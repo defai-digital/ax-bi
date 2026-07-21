@@ -1663,6 +1663,9 @@ def override_user(user: User | None, force: bool = True) -> Iterator[Any]:
     current user (which may be undefined) to different one, execute some SQLAlchemy
     tasks et al. and then revert back to the original one.
 
+    Always restores ``g.user`` (or clears it) in ``finally`` so an exception in the
+    wrapped block cannot leave the request/worker with a stale override user.
+
     :param user: The override user
     :param force: Whether to override the current user if set
     """
@@ -1671,14 +1674,18 @@ def override_user(user: User | None, force: bool = True) -> Iterator[Any]:
         if force or g.user is None:
             current = g.user
             g.user = user
-            yield
-            g.user = current
+            try:
+                yield
+            finally:
+                g.user = current
         else:
             yield
     else:
         g.user = user
-        yield
-        delattr(g, "user")
+        try:
+            yield
+        finally:
+            delattr(g, "user")
 
 
 def parse_ssl_cert(certificate: str) -> Certificate:

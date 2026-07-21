@@ -1608,8 +1608,15 @@ class BaseEngineSpec:  # pylint: disable=too-many-public-methods
                 cursor, query
             )
             if cancel_query_id is not None:
+                # Persist early so stop-query can cancel while handle_cursor runs.
+                # pylint: disable=import-outside-toplevel
+                from axbi.utils.session_lifecycle import commit_session
+
                 query.set_extra_json_key(QUERY_CANCEL_KEY, cancel_query_id)
-                db.session.commit()
+                commit_session(
+                    db.session,
+                    context=f"async cancel_query_id query_id={query.id}",
+                )
         logger.debug("Query %d: Handling cursor", query.id)
         cls.handle_cursor(cursor, query)
 

@@ -29,6 +29,7 @@ from fastmcp import Context
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import SQLAlchemyError
 
+from axbi.mcp_service.common.error_schemas import SanitizeOptionalErrorMixin
 from axbi.mcp_service.utils.logging_utils import mcp_event_log_context
 from axbi.mcp_service.utils.session_utils import rollback_session_safely
 
@@ -120,7 +121,7 @@ class CreateReportRequest(BaseModel):
     )
 
 
-class CreateReportResponse(BaseModel):
+class CreateReportResponse(SanitizeOptionalErrorMixin):
     """Response schema for create_report."""
 
     report: dict[str, Any] | None = Field(

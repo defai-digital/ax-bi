@@ -83,6 +83,162 @@ class QueryContextProcessor:
     cache_type: ClassVar[str] = "df"
     enforce_numerical_metrics: ClassVar[bool] = True
 
+    # Single-flight wait budget must cover multi-second warehouse queries so
+    # concurrent cache misses poll instead of stampeding. Keep under lock TTL.
+    _CHART_DATA_LOCK_TTL_SECONDS: ClassVar[int] = 120
+    _CHART_DATA_WAIT_MAX_SECONDS: ClassVar[float] = 90.0
+    _CHART_DATA_WAIT_POLL_SECONDS: ClassVar[float] = 0.25
+    _CHART_DATA_WAIT_POLL_MAX_SECONDS: ClassVar[float] = 2.0
+
+    def _read_chart_data_cache(
+        self, cache_key: str, force_cached: bool | None
+    ) -> QueryCacheManager:
+        return QueryCacheManager.get(
+            key=cache_key,
+            region=CacheRegion.DATA,
+            force_query=False,
+            force_cached=force_cached,
+        )
+
+    def _compute_and_store_chart_data(
+        self,
+        *,
+        query_obj: QueryObject,
+        cache: QueryCacheManager,
+        cache_key: str,
+        force_query: bool,
+        timeout: int | None,
+    ) -> None:
+        query_result = self.get_query_result(query_obj)
+        annotation_data = self.get_annotation_data(query_obj)
+        cache.set_query_result(
+            key=cache_key,
+            query_result=query_result,
+            annotation_data=annotation_data,
+            force_query=force_query,
+            timeout=timeout,
+            datasource_uid=self._qc_datasource.uid,
+            region=CacheRegion.DATA,
+        )
+
+    def _single_flight_chart_data(
+        self,
+        *,
+        query_obj: QueryObject,
+        cache: QueryCacheManager,
+        cache_key: str,
+        force_query: bool,
+        force_cached: bool | None,
+        timeout: int | None,
+    ) -> QueryCacheManager:
+        """Acquire lock or wait/poll until another worker fills the cache."""
+        # pylint: disable=import-outside-toplevel
+        import time
+
+        from axbi.distributed_lock import DistributedLock
+        from axbi.exceptions import AcquireDistributedLockFailedException
+
+        deadline = time.monotonic() + self._CHART_DATA_WAIT_MAX_SECONDS
+        poll_seconds = self._CHART_DATA_WAIT_POLL_SECONDS
+
+        while True:
+            try:
+                with DistributedLock(
+                    "chart_data_cache",
+                    key=cache_key,
+                    ttl_seconds=self._CHART_DATA_LOCK_TTL_SECONDS,
+                ):
+                    refreshed = self._read_chart_data_cache(cache_key, force_cached)
+                    if refreshed.is_loaded:
+                        return refreshed
+                    self._compute_and_store_chart_data(
+                        query_obj=query_obj,
+                        cache=cache,
+                        cache_key=cache_key,
+                        force_query=force_query,
+                        timeout=timeout,
+                    )
+                    return cache
+            except AcquireDistributedLockFailedException:
+                # Another worker holds the lock (likely computing). Poll cache
+                # and re-try lock until warm or the wait budget expires.
+                if time.monotonic() >= deadline:
+                    refreshed = self._read_chart_data_cache(cache_key, force_cached)
+                    if refreshed.is_loaded:
+                        return refreshed
+                    logger.warning(
+                        "Chart-data single-flight wait budget exhausted for key %s; "
+                        "recomputing without lock",
+                        cache_key,
+                    )
+                    self._compute_and_store_chart_data(
+                        query_obj=query_obj,
+                        cache=cache,
+                        cache_key=cache_key,
+                        force_query=force_query,
+                        timeout=timeout,
+                    )
+                    return cache
+
+                time.sleep(poll_seconds)
+                refreshed = self._read_chart_data_cache(cache_key, force_cached)
+                if refreshed.is_loaded:
+                    return refreshed
+                poll_seconds = min(
+                    poll_seconds * 1.5,
+                    self._CHART_DATA_WAIT_POLL_MAX_SECONDS,
+                )
+
+    def _load_or_compute_query_cache(
+        self,
+        *,
+        query_obj: QueryObject,
+        cache: QueryCacheManager,
+        cache_key: str,
+        force_query: bool,
+        force_cached: bool | None,
+        timeout: int | None,
+    ) -> QueryCacheManager:
+        """Compute chart data with single-flight lock on cache miss.
+
+        Concurrent misses for the same key share one warehouse re-exec via
+        :class:`~axbi.distributed_lock.DistributedLock`. Waiters poll the cache
+        (and re-try the lock) until warm or a deadline near the lock TTL, and
+        only last-resort recompute after the wait budget so multi-second
+        queries do not stampede.
+        """
+        if invalid_columns := [
+            col
+            for col in get_column_names_from_columns(query_obj.columns)
+            + get_column_names_from_metrics(query_obj.metrics or [])
+            if (col not in self._qc_datasource.column_names and col != DTTM_ALIAS)
+        ]:
+            raise QueryObjectValidationError(
+                _(
+                    "Columns missing in dataset: %(invalid_columns)s",
+                    invalid_columns=invalid_columns,
+                )
+            )
+
+        if force_query:
+            self._compute_and_store_chart_data(
+                query_obj=query_obj,
+                cache=cache,
+                cache_key=cache_key,
+                force_query=force_query,
+                timeout=timeout,
+            )
+            return cache
+
+        return self._single_flight_chart_data(
+            query_obj=query_obj,
+            cache=cache,
+            cache_key=cache_key,
+            force_query=force_query,
+            force_cached=force_cached,
+            timeout=timeout,
+        )
+
     def get_df_payload(
         self, query_obj: QueryObject, force_cached: bool | None = False
     ) -> dict[str, Any]:
@@ -116,32 +272,13 @@ class QueryContextProcessor:
 
         if query_obj and cache_key and not cache.is_loaded:
             try:
-                if invalid_columns := [
-                    col
-                    for col in get_column_names_from_columns(query_obj.columns)
-                    + get_column_names_from_metrics(query_obj.metrics or [])
-                    if (
-                        col not in self._qc_datasource.column_names
-                        and col != DTTM_ALIAS
-                    )
-                ]:
-                    raise QueryObjectValidationError(
-                        _(
-                            "Columns missing in dataset: %(invalid_columns)s",
-                            invalid_columns=invalid_columns,
-                        )
-                    )
-
-                query_result = self.get_query_result(query_obj)
-                annotation_data = self.get_annotation_data(query_obj)
-                cache.set_query_result(
-                    key=cache_key,
-                    query_result=query_result,
-                    annotation_data=annotation_data,
+                cache = self._load_or_compute_query_cache(
+                    query_obj=query_obj,
+                    cache=cache,
+                    cache_key=cache_key,
                     force_query=force_query,
+                    force_cached=force_cached,
                     timeout=timeout,
-                    datasource_uid=self._qc_datasource.uid,
-                    region=CacheRegion.DATA,
                 )
             except QueryObjectValidationError as ex:
                 cache.error_message = str(ex)

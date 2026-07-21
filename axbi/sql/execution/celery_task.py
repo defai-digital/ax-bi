@@ -55,7 +55,7 @@ from axbi.utils import json
 from axbi.utils.core import override_user, zlib_compress
 from axbi.utils.dates import now_as_float
 from axbi.utils.decorators import stats_timing
-from axbi.utils.session_lifecycle import commit_session
+from axbi.utils.session_lifecycle import commit_session, reset_session_safely
 
 logger = logging.getLogger(__name__)
 
@@ -367,8 +367,27 @@ def execute_sql_task(
                 logger.exception("Query %d: %s", query_id, ex)
                 stats_logger = app.config["STATS_LOGGER"]
                 stats_logger.incr("error_sqllab_unhandled")
-                query = _get_query(query_id=query_id)
-                return _handle_query_error(ex, query)
+                # The original failure may have left the metadata-DB session
+                # poisoned (e.g. connection drop). Recover before re-querying
+                # so FAILED status can still be persisted.
+                reset_session_safely(
+                    context=f"sql celery unhandled error recovery query_id={query_id}"
+                )
+                try:
+                    query = _get_query(query_id=query_id)
+                    return _handle_query_error(ex, query)
+                except Exception as recovery_ex:  # noqa: BLE001
+                    logger.error(
+                        "Query %d: failed to record error after session recovery: %s",
+                        query_id,
+                        recovery_ex,
+                        exc_info=True,
+                    )
+                    return {
+                        "status": QueryStatus.FAILED.value,
+                        "error": str(ex),
+                        "errors": [],
+                    }
 
 
 def _make_check_stopped_fn(query: Query) -> Any:

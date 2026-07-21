@@ -54,15 +54,38 @@ def sanitize_error_text(value: None) -> None: ...
 
 
 def sanitize_error_text(value: str | None) -> str | None:
-    """Wrap prompt-facing MCP error text as untrusted LLM context data."""
+    """Redact disclosure-prone details, then wrap as untrusted LLM context.
+
+    Applies SQL/schema redaction via ``_sanitize_validation_error`` before
+    delimiter-wrapping so tool error-schema responses do not leak table names
+    or SQL fragments to the LLM.
+    """
     if value is None:
         return None
-    return sanitize_for_llm_context(value, field_path=("error",))
+    # pylint: disable=import-outside-toplevel
+    from axbi.mcp_service.utils.error_sanitization import _sanitize_validation_error
+
+    redacted = _sanitize_validation_error(Exception(value), log_original=False)
+    return sanitize_for_llm_context(redacted, field_path=("error",))
 
 
 def sanitize_prompt_value(value: Any) -> Any:
     """Wrap every string leaf in prompt-facing structured error context."""
     return sanitize_for_llm_context(value, excluded_field_names=frozenset())
+
+
+class SanitizeOptionalErrorMixin(BaseModel):
+    """Redact optional ``error`` fields on success-shaped MCP tool responses.
+
+    Many mutate tools return a success schema with ``error: str | None`` instead
+    of raising into middleware / ``MCPResourceError``. Without this mixin those
+    paths leaked raw ``str(e)`` (SQL fragments, table names) to the LLM.
+    """
+
+    @field_validator("error", check_fields=False)
+    @classmethod
+    def _sanitize_optional_error_field(cls, value: str | None) -> str | None:
+        return sanitize_error_text(value)
 
 
 class MCPResourceError(BaseModel):

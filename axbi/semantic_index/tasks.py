@@ -42,6 +42,7 @@ def reindex_dataset_semantic_documents(dataset_id: int) -> None:
     from axbi.semantic_index.embedding import EmbeddingProviderError
     from axbi.semantic_index.repository import SemanticIndexRepository
     from axbi.semantic_index.service import SemanticIndexService
+    from axbi.utils.session_lifecycle import commit_session, rollback_session
 
     if not is_feature_enabled("GENAI_SEMANTIC_INDEX"):
         return
@@ -52,7 +53,10 @@ def reindex_dataset_semantic_documents(dataset_id: int) -> None:
     if dataset is None:
         # The dataset was deleted before the task ran; drop any orphaned docs.
         SemanticIndexRepository().delete_dataset_documents(dataset_id)
-        db.session.commit()
+        commit_session(
+            db.session,
+            context=f"semantic_index delete orphan docs dataset_id={dataset_id}",
+        )
         return
 
     try:
@@ -68,7 +72,10 @@ def reindex_dataset_semantic_documents(dataset_id: int) -> None:
 
     try:
         summary = service.index_dataset(dataset_id)
-        db.session.commit()
+        commit_session(
+            db.session,
+            context=f"semantic_index reindex dataset_id={dataset_id}",
+        )
         logger.info(
             "Reindexed dataset %s: %s/%s semantic documents written",
             dataset_id,
@@ -76,5 +83,8 @@ def reindex_dataset_semantic_documents(dataset_id: int) -> None:
             summary.documents_seen,
         )
     except Exception:
-        db.session.rollback()
+        rollback_session(
+            db.session,
+            context=f"semantic_index reindex failure dataset_id={dataset_id}",
+        )
         logger.exception("Semantic reindex failed for dataset %s", dataset_id)

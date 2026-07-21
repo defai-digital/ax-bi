@@ -295,6 +295,9 @@ SQLALCHEMY_DATABASE_URI = (
 #                connection errors after DB restarts or network blips)
 # pool_recycle:  Recycle connections after 1 hour to avoid server-side
 #                idle timeouts (MySQL default is 8h, some cloud DBs shorter)
+# Production: set pool_size / max_overflow relative to gunicorn threads
+# (or use async SQL so fewer concurrent metadata connections are needed).
+# Example for 2 workers × 10 threads: pool_size=10, max_overflow=20.
 SQLALCHEMY_ENGINE_OPTIONS: dict[str, Any] = {
     "pool_pre_ping": True,
     "pool_recycle": 3600,
@@ -1426,10 +1429,13 @@ UPLOAD_MAX_FILE_SIZE_BYTES: int | None = 100 * 1024 * 1024
 # each cache config.
 CACHE_DEFAULT_TIMEOUT = int(timedelta(days=1).total_seconds())
 
-# Default cache for AxBI objects
+# Default cache for AxBI objects.
+# TRIAL ONLY: NullCache means every request recomputes. Production should use
+# Redis (or similar) for CACHE_CONFIG and DATA_CACHE_CONFIG.
 CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
 
 # Cache for datasource metadata and query results
+# TRIAL ONLY: NullCache disables chart-data caching (see CACHE_CONFIG note).
 DATA_CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
 
 # Fast Data API Gateway cache configuration.
@@ -1735,9 +1741,21 @@ DASHBOARD_LIST_CUSTOM_TAGS_ONLY: bool = False
 # celery beat triggered it, see https://github.com/celery/celery/issues/6974 for details
 CELERY_BEAT_SCHEDULER_EXPIRES = timedelta(weeks=1)
 
-# Default celery config is to use SQLA as a broker, in a production setting
-# you'll want to use a proper broker as specified here:
+# Default celery config is to use SQLA as a broker for local trial only.
+# Production MUST use Redis/RabbitMQ (and a real result backend) — see
+# docs and docker/README. SQLite brokers poll and do not scale under load.
 # https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html
+#
+# TRIAL DEFAULTS (not production):
+# - GLOBAL_ASYNC_QUERIES=False → warehouse SQL can run on web threads
+# - CACHE_CONFIG / DATA_CACHE_CONFIG = NullCache → every chart re-queries
+# - Celery broker/result = SQLite; worker concurrency often 2
+# - gunicorn defaults: 1 worker × 20 threads (see docker/entrypoints/run-server.sh)
+# - SQLALCHEMY_ENGINE_OPTIONS has no pool_size; size relative to thread count
+# - prune_logs / prune_query beat jobs are commented out — enable in production
+# For a supported baseline: Redis cache + Redis celery broker, workers ≥ 2,
+# GLOBAL_ASYNC_QUERIES=True when using long warehouse queries, and a pool
+# sized for (workers × threads) or async workers.
 
 
 class CeleryConfig:  # pylint: disable=too-few-public-methods

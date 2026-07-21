@@ -116,6 +116,12 @@ def test_sql_execution_and_report_hot_paths_use_commit_session() -> None:
         REPO_ROOT / "axbi" / "sql" / "execution" / "celery_task.py",
         REPO_ROOT / "axbi" / "sql" / "execution" / "executor.py",
         REPO_ROOT / "axbi" / "commands" / "report" / "execute.py",
+        # Phase-1 leftover sweep (stability review 2026-07-21).
+        REPO_ROOT / "axbi" / "extensions" / "metastore_cache.py",
+        REPO_ROOT / "axbi" / "commands" / "sql_lab" / "execute.py",
+        REPO_ROOT / "axbi" / "key_value" / "commands" / "prune.py",
+        REPO_ROOT / "axbi" / "commands" / "prune.py",
+        REPO_ROOT / "axbi" / "semantic_index" / "tasks.py",
     )
     for path in hot_paths:
         contents = path.read_text(encoding="utf-8")
@@ -127,6 +133,90 @@ def test_sql_execution_and_report_hot_paths_use_commit_session() -> None:
                 raise AssertionError(
                     f"{_relative(path)}:{line_no}: raw db.session.commit()"
                 )
+
+
+def test_override_user_restores_on_exception() -> None:
+    """override_user must use try/finally so g.user cannot stick after errors."""
+    core_utils = (REPO_ROOT / "axbi" / "utils" / "core.py").read_text(encoding="utf-8")
+    # Narrow to the override_user function body.
+    start = core_utils.index("def override_user(")
+    end = core_utils.index("\ndef ", start + 1)
+    body = core_utils[start:end]
+    assert "try:" in body
+    assert "finally:" in body
+
+
+def test_celery_sql_unhandled_error_resets_session() -> None:
+    """Unhandled SQL celery failures must recover the metadata session first."""
+    celery_task = (
+        REPO_ROOT / "axbi" / "sql" / "execution" / "celery_task.py"
+    ).read_text(encoding="utf-8")
+    assert "reset_session_safely" in celery_task
+    assert "error_sqllab_unhandled" in celery_task
+
+
+def test_kv_distributed_lock_uses_independent_session() -> None:
+    """KV lock acquire/release must not nest under the request unit of work."""
+    acquire = (
+        REPO_ROOT / "axbi" / "commands" / "distributed_lock" / "acquire.py"
+    ).read_text(encoding="utf-8")
+    release = (
+        REPO_ROOT / "axbi" / "commands" / "distributed_lock" / "release.py"
+    ).read_text(encoding="utf-8")
+    assert "independent_kv_session" in acquire
+    assert "independent_kv_session" in release
+    # Nested @transaction would hide the lock until the outer boundary commits.
+    # Match the decorator form, not docstring mentions of ``@transaction``.
+    decorator = re.compile(r"^\s*@transaction\b", re.MULTILINE)
+    assert decorator.search(acquire) is None
+    assert decorator.search(release) is None
+
+
+def test_gtf_abort_listener_recovers_instead_of_breaking() -> None:
+    """Abort listeners must keep watching after transient metadata errors."""
+    manager = (REPO_ROOT / "axbi" / "tasks" / "manager.py").read_text(encoding="utf-8")
+    assert "_recover_abort_listener_session" in manager
+    assert "reset_session_safely" in manager
+    context = (REPO_ROOT / "axbi" / "tasks" / "context.py").read_text(encoding="utf-8")
+    assert "_claim_abort_handlers" in context
+
+
+def test_websocket_stream_reader_has_error_backoff() -> None:
+    """Redis stream reader must back off on errors (no tight catch→continue)."""
+    ws = (REPO_ROOT / "ax-bi-websocket" / "src" / "index.ts").read_text(
+        encoding="utf-8"
+    )
+    assert "STREAM_ERROR_BACKOFF_MS" in ws
+    assert "errorBackoffMs" in ws
+    # CORS must not reflect any origin with credentials when lists are empty.
+    assert "origin: corsOrigins.length > 0 ? corsOrigins : false" in ws
+
+
+def test_chart_data_path_uses_single_flight_lock() -> None:
+    """Chart-data cache miss path must single-flight warehouse recompute."""
+    qcp = (REPO_ROOT / "axbi" / "common" / "query_context_processor.py").read_text(
+        encoding="utf-8"
+    )
+    assert "DistributedLock" in qcp
+    assert "chart_data_cache" in qcp
+    # Waiters must poll until warm (or wait budget), not recompute after one sleep.
+    assert "_CHART_DATA_WAIT_MAX_SECONDS" in qcp
+    assert "wait budget exhausted" in qcp
+
+
+def test_trino_execute_thread_is_joined() -> None:
+    trino = (REPO_ROOT / "axbi" / "db_engine_specs" / "trino.py").read_text(
+        encoding="utf-8"
+    )
+    assert "daemon=True" in trino
+    assert "execute_thread.join" in trino
+
+
+def test_playwright_browser_manager_has_launch_lock() -> None:
+    webdriver = (REPO_ROOT / "axbi" / "utils" / "webdriver.py").read_text(
+        encoding="utf-8"
+    )
+    assert "_launch_lock" in webdriver
 
 
 def test_transaction_decorator_uses_depth_and_safe_rollback() -> None:

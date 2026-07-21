@@ -41,6 +41,7 @@ from axbi.commands.ai.audit import RecordAIEvaluationRunCommand
 from axbi.mcp_service.ai.schemas import (
     PromptToDashboardRequest,
 )
+from axbi.mcp_service.common.error_schemas import SanitizeOptionalErrorMixin
 from axbi.mcp_service.privacy import (
     requires_data_model_metadata_access,
     user_can_view_data_model_metadata,
@@ -119,7 +120,7 @@ class EvaluateAIAnswerRequest(BaseModel):
     )
 
 
-class EvaluateAIAnswerResponse(BaseModel):
+class EvaluateAIAnswerResponse(SanitizeOptionalErrorMixin):
     """Response schema for evaluate_ai_answer."""
 
     eval_id: str = Field(default="", description="Unique evaluation run ID.")

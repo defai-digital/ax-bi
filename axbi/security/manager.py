@@ -1111,11 +1111,12 @@ class AxBISecurityManager(  # pylint: disable=too-many-public-methods
                 from axbi.security.session_invalidation import (
                     invalidate_user_sessions,
                 )
+                from axbi.utils.session_lifecycle import commit_session
 
                 invalidate_user_sessions(
                     db.session.connection(), user_id, round_up=False
                 )
-                db.session.commit()
+                commit_session(db.session, context="logout session invalidation")
             except Exception:  # noqa: BLE001  # pylint: disable=broad-except
                 logger.warning(
                     "Failed to invalidate user sessions on logout", exc_info=True

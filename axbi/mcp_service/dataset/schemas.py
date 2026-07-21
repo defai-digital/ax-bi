@@ -43,7 +43,10 @@ from axbi.mcp_service.common.cache_schemas import (
     OwnedByMeMixin,
     QueryCacheControl,
 )
-from axbi.mcp_service.common.error_schemas import MCPResourceError
+from axbi.mcp_service.common.error_schemas import (
+    MCPResourceError,
+    SanitizeOptionalErrorMixin,
+)
 from axbi.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from axbi.mcp_service.privacy import filter_user_directory_fields
 from axbi.mcp_service.system.schemas import (
@@ -572,7 +575,7 @@ class UploadFilesRequest(BaseModel):
         return v
 
 
-class FileUploadResult(BaseModel):
+class FileUploadResult(SanitizeOptionalErrorMixin):
     """Result for a single file in a batch upload."""
 
     filename: str = Field(..., description="Original filename")
@@ -668,7 +671,7 @@ class CreateVirtualDatasetRequest(BaseModel):
         return v.strip()
 
 
-class CreateVirtualDatasetResponse(BaseModel):
+class CreateVirtualDatasetResponse(SanitizeOptionalErrorMixin):
     """Response schema for create_virtual_dataset."""
 
     id: int | None = Field(

@@ -53,6 +53,7 @@ from axbi.mcp_service.common.cache_schemas import (
 from axbi.mcp_service.common.error_schemas import (
     ChartGenerationError,
     MCPBaseError,
+    SanitizeOptionalErrorMixin,
 )
 from axbi.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from axbi.mcp_service.system.schemas import (
@@ -2273,7 +2274,12 @@ ChartPreviewContent = Annotated[
 
 
 class GenerateChartResponse(BaseModel):
-    """Comprehensive chart creation response with rich metadata."""
+    """Comprehensive chart creation response with rich metadata.
+
+    ``error`` is a structured :class:`ChartGenerationError` (``MCPBaseError``),
+    not a plain string — do not use ``SanitizeOptionalErrorMixin`` here.
+    Message/details redaction is handled by ``MCPBaseError`` validators.
+    """
 
     # Core chart information
     chart: ChartInfo | None = Field(None, description="Complete chart metadata")
@@ -2402,7 +2408,7 @@ class GetChartSqlRequest(BaseModel):
         return self
 
 
-class ChartSql(BaseModel):
+class ChartSql(SanitizeOptionalErrorMixin):
     """Response containing the rendered SQL for a chart."""
 
     chart_id: int | None = Field(None, description="Chart ID (null for unsaved charts)")

@@ -19,26 +19,25 @@ from __future__ import annotations
 
 import logging
 from datetime import timedelta
-from functools import partial
 from typing import Any
 
 import redis
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 from axbi.commands.distributed_lock.base import (
     BaseDistributedLockCommand,
     get_default_lock_ttl,
     get_redis_client,
 )
-from axbi.daos.key_value import KeyValueDAO
-from axbi.exceptions import AcquireDistributedLockFailedException
-from axbi.key_value.exceptions import (
-    KeyValueCodecEncodeException,
-    KeyValueUpsertFailedError,
+from axbi.commands.distributed_lock.kv_session import (
+    create_lock_entry,
+    delete_expired_lock_entries,
+    independent_kv_session,
 )
+from axbi.exceptions import AcquireDistributedLockFailedException
 from axbi.key_value.types import KeyValueResource
+from axbi.utils.core import get_user_id
 from axbi.utils.dates import naive_utcnow
-from axbi.utils.decorators import on_error, transaction
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +48,10 @@ class AcquireDistributedLock(BaseDistributedLockCommand):
 
     Uses Redis SET NX EX when DISTRIBUTED_COORDINATION_CONFIG is configured,
     otherwise falls back to KeyValue table.
+
+    The KV backend uses an independent short-lived session so the lock row is
+    committed immediately and visible to other processes even when the caller
+    is already inside an outer ``@transaction`` unit of work.
 
     Raises AcquireDistributedLockFailedException if:
     - Lock is already held by another process
@@ -103,30 +106,42 @@ class AcquireDistributedLock(BaseDistributedLockCommand):
                 f"Redis lock failed: {ex}"
             ) from ex
 
-    @transaction(
-        on_error=partial(
-            on_error,
-            catches=(
-                KeyValueCodecEncodeException,
-                KeyValueUpsertFailedError,
-                SQLAlchemyError,
-            ),
-            reraise=AcquireDistributedLockFailedException,
-        ),
-    )
     def _acquire_kv(self) -> None:
-        """Acquire lock using KeyValue table (database)."""
-        # Delete expired entries first to prevent stale locks from blocking
-        KeyValueDAO.delete_expired_entries(self.resource)
+        """Acquire lock using KeyValue table (database).
 
-        # Create entry - unique constraint will raise if lock already exists
-        KeyValueDAO.create_entry(
-            resource=KeyValueResource.LOCK,
-            value={"value": self.owner_token},
-            codec=self.codec,
-            key=self.key,
-            expires_on=naive_utcnow() + timedelta(seconds=self.ttl_seconds),
-        )
+        Uses an independent session so the lock is durable before this method
+        returns, regardless of any outer ``@transaction`` depth on ``db.session``.
+        """
+        try:
+            encoded = self.codec.encode({"value": self.owner_token})
+        except Exception as ex:
+            raise AcquireDistributedLockFailedException(
+                "Unable to encode lock value"
+            ) from ex
+
+        try:
+            with independent_kv_session() as session:
+                # Delete expired entries first to prevent stale locks from blocking
+                delete_expired_lock_entries(session, self.resource.value)
+
+                # Create entry - unique constraint will raise if lock already exists
+                create_lock_entry(
+                    session,
+                    resource_value=KeyValueResource.LOCK.value,
+                    key=self.key,
+                    encoded_value=encoded,
+                    expires_on=naive_utcnow() + timedelta(seconds=self.ttl_seconds),
+                    created_by_fk=get_user_id(),
+                )
+        except IntegrityError as ex:
+            logger.debug(
+                "KV lock already taken: namespace=%s key=%s",
+                self.namespace,
+                self.key,
+            )
+            raise AcquireDistributedLockFailedException("Lock already taken") from ex
+        except SQLAlchemyError as ex:
+            raise AcquireDistributedLockFailedException(f"KV lock failed: {ex}") from ex
 
         logger.debug(
             "Acquired KV lock: namespace=%s key=%s (TTL=%ds)",

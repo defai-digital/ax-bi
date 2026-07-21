@@ -68,6 +68,36 @@ def _redact_sql_select(error_str: str, error_str_upper: str) -> str:
     return error_str
 
 
+def _redact_sql_from_relation(error_str: str) -> str:
+    """Redact table/relation names after FROM / relation keywords."""
+    # FROM schema.table / FROM "table" / relation "table"
+    patterns = [
+        (
+            r"\bFROM\s+([`\"']?[\w.]+[`\"']?(?:\s*,\s*[`\"']?[\w.]+[`\"']?)*)",
+            "FROM [REDACTED]",
+        ),
+        (
+            r"\bJOIN\s+([`\"']?[\w.]+[`\"']?)",
+            "JOIN [REDACTED]",
+        ),
+        (
+            r"\brelation\s+([`\"']?[\w.]+[`\"']?)",
+            "relation [REDACTED]",
+        ),
+        (
+            r"\bINTO\s+([`\"']?[\w.]+[`\"']?)",
+            "INTO [REDACTED]",
+        ),
+        (
+            r"\bUPDATE\s+([`\"']?[\w.]+[`\"']?)",
+            "UPDATE [REDACTED]",
+        ),
+    ]
+    for pattern, replacement in patterns:
+        error_str = re.sub(pattern, replacement, error_str, flags=re.IGNORECASE)
+    return error_str
+
+
 def _redact_sql_where(error_str: str, error_str_upper: str) -> str:
     """Redact WHERE clause content to prevent data disclosure."""
     if "WHERE" not in error_str_upper:
@@ -154,6 +184,7 @@ def _sanitize_validation_error(error: Exception, log_original: bool = True) -> s
     # SECURITY FIX: SQL sanitization without ReDoS-vulnerable patterns
     error_str_upper = error_str.upper()
     error_str = _redact_sql_select(error_str, error_str_upper)
+    error_str = _redact_sql_from_relation(error_str)
     error_str_upper = error_str.upper()
     error_str = _redact_sql_where(error_str, error_str_upper)
 

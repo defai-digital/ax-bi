@@ -135,21 +135,28 @@ class _PlaywrightBrowserManager:
     so a single browser instance per process is safe and avoids the overhead
     of launching/destroying Chromium on every screenshot task. Each task
     creates a lightweight, isolated browser context instead of a full browser.
+
+    A process-local lock also serializes launch under ``--pool=threads`` so
+    concurrent tasks cannot double-launch and leak browser processes.
     """
 
     def __init__(self) -> None:
+        import threading
+
         self._playwright: Any = None
         self._browser: Any = None
+        self._launch_lock = threading.Lock()
 
     def get_browser(self, browser_args: list[str]) -> Any:
         """Return a reusable browser, creating one if needed."""
-        if self._browser is not None and self._browser.is_connected():
-            return self._browser
+        with self._launch_lock:
+            if self._browser is not None and self._browser.is_connected():
+                return self._browser
 
-        self._cleanup()
-        self._playwright = sync_playwright().start()
-        self._browser = self._playwright.chromium.launch(args=browser_args)
-        return self._browser
+            self._cleanup()
+            self._playwright = sync_playwright().start()
+            self._browser = self._playwright.chromium.launch(args=browser_args)
+            return self._browser
 
     def _cleanup(self) -> None:
         if self._browser is not None:

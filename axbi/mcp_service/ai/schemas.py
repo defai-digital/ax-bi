@@ -28,6 +28,7 @@ from typing import Any, cast, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from axbi.mcp_service.common.error_schemas import SanitizeOptionalErrorMixin
 from axbi.mcp_service.utils.sanitization import escape_llm_context_delimiters
 
 
@@ -483,7 +484,7 @@ class ComposeDashboardRequest(BaseModel):
     )
 
 
-class ComposeDashboardResponse(BaseModel):
+class ComposeDashboardResponse(SanitizeOptionalErrorMixin):
     """Response schema for compose_dashboard."""
 
     dashboard: dict[str, Any] | None = Field(
@@ -718,7 +719,7 @@ class WorkflowStepStatus(BaseModel):
     duration_ms: int = Field(default=0)
 
 
-class PromptToDashboardResponse(BaseModel):
+class PromptToDashboardResponse(SanitizeOptionalErrorMixin):
     """Response schema for prompt_to_dashboard single-call orchestrator."""
 
     dashboard: dict[str, Any] | None = Field(
