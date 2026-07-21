@@ -116,6 +116,12 @@ def test_sql_execution_and_report_hot_paths_use_commit_session() -> None:
         REPO_ROOT / "axbi" / "sql" / "execution" / "celery_task.py",
         REPO_ROOT / "axbi" / "sql" / "execution" / "executor.py",
         REPO_ROOT / "axbi" / "commands" / "report" / "execute.py",
+        # Phase-1 leftover sweep (stability review 2026-07-21).
+        REPO_ROOT / "axbi" / "extensions" / "metastore_cache.py",
+        REPO_ROOT / "axbi" / "commands" / "sql_lab" / "execute.py",
+        REPO_ROOT / "axbi" / "key_value" / "commands" / "prune.py",
+        REPO_ROOT / "axbi" / "commands" / "prune.py",
+        REPO_ROOT / "axbi" / "semantic_index" / "tasks.py",
     )
     for path in hot_paths:
         contents = path.read_text(encoding="utf-8")
@@ -127,6 +133,26 @@ def test_sql_execution_and_report_hot_paths_use_commit_session() -> None:
                 raise AssertionError(
                     f"{_relative(path)}:{line_no}: raw db.session.commit()"
                 )
+
+
+def test_override_user_restores_on_exception() -> None:
+    """override_user must use try/finally so g.user cannot stick after errors."""
+    core_utils = (REPO_ROOT / "axbi" / "utils" / "core.py").read_text(encoding="utf-8")
+    # Narrow to the override_user function body.
+    start = core_utils.index("def override_user(")
+    end = core_utils.index("\ndef ", start + 1)
+    body = core_utils[start:end]
+    assert "try:" in body
+    assert "finally:" in body
+
+
+def test_celery_sql_unhandled_error_resets_session() -> None:
+    """Unhandled SQL celery failures must recover the metadata session first."""
+    celery_task = (
+        REPO_ROOT / "axbi" / "sql" / "execution" / "celery_task.py"
+    ).read_text(encoding="utf-8")
+    assert "reset_session_safely" in celery_task
+    assert "error_sqllab_unhandled" in celery_task
 
 
 def test_transaction_decorator_uses_depth_and_safe_rollback() -> None:

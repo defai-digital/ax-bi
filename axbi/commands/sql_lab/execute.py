@@ -209,7 +209,10 @@ class ExecuteSqlCommand(BaseCommand):
                 "Please contact an administrator for further assistance or try again.",
             ) from ex
 
-        db.session.commit()  # pylint: disable=consider-using-transaction
+        # Must commit before the async Celery worker reads this row under
+        # READ COMMITTED. commit_session rolls back on failure so the scoped
+        # session is not left poisoned for the rest of the request.
+        commit_session(db.session, context="sql_lab _save_new_query")
 
     def _validate_access(
         self, query: Query, template_params: dict[str, Any] | None = None

@@ -80,20 +80,31 @@ class AxBIMetastoreCache(BaseCache):
     def set(self, key: str, value: Any, timeout: int | None = None) -> bool:
         # pylint: disable=import-outside-toplevel
         from axbi.daos.key_value import KeyValueDAO
+        from axbi.utils.session_lifecycle import commit_session, rollback_session
 
-        KeyValueDAO.upsert_entry(
-            resource=RESOURCE,
-            key=self.get_key(key),
-            value=value,
-            codec=self.codec,
-            expires_on=self._get_expiry(timeout),
-        )
-        db.session.commit()  # pylint: disable=consider-using-transaction
-        return True
+        try:
+            KeyValueDAO.upsert_entry(
+                resource=RESOURCE,
+                key=self.get_key(key),
+                value=value,
+                codec=self.codec,
+                expires_on=self._get_expiry(timeout),
+            )
+            # Soft commit: Flask-Caching callers treat False as "not stored".
+            # Always roll back on failure so the scoped session is not poisoned.
+            return commit_session(
+                db.session,
+                context="metastore_cache.set",
+                soft=True,
+            )
+        except (SQLAlchemyError, KeyValueCreateFailedError):
+            rollback_session(db.session, context="metastore_cache.set")
+            return False
 
     def add(self, key: str, value: Any, timeout: int | None = None) -> bool:
         # pylint: disable=import-outside-toplevel
         from axbi.daos.key_value import KeyValueDAO
+        from axbi.utils.session_lifecycle import commit_session, rollback_session
 
         try:
             KeyValueDAO.delete_expired_entries(RESOURCE)
@@ -104,10 +115,13 @@ class AxBIMetastoreCache(BaseCache):
                 key=self.get_key(key),
                 expires_on=self._get_expiry(timeout),
             )
-            db.session.commit()  # pylint: disable=consider-using-transaction
-            return True
+            return commit_session(
+                db.session,
+                context="metastore_cache.add",
+                soft=True,
+            )
         except (SQLAlchemyError, KeyValueCreateFailedError):
-            db.session.rollback()  # pylint: disable=consider-using-transaction
+            rollback_session(db.session, context="metastore_cache.add")
             return False
 
     def get(self, key: str) -> Any:

@@ -1003,7 +1003,7 @@ def test_execute_sql_task_unhandled_exception(
     app_context: None,
     mock_query: MagicMock,
 ) -> None:
-    """Test execute_sql_task handles unhandled exceptions (covers lines 347-352)."""
+    """Test execute_sql_task recovers the session then records FAILED status."""
     from axbi.sql.execution.celery_task import execute_sql_task
 
     # Mock _get_query to succeed first time (for override_user), then return mock_query
@@ -1014,11 +1014,45 @@ def test_execute_sql_task_unhandled_exception(
     )
     mocker.patch("axbi.sql.execution.celery_task.db.session")
     mocker.patch("axbi.sql.execution.celery_task.security_manager")
+    mock_reset = mocker.patch(
+        "axbi.sql.execution.celery_task.reset_session_safely",
+        return_value=True,
+    )
     mocker.patch.dict(current_app.config, {"STATS_LOGGER": MagicMock()})
 
     result = execute_sql_task(123, "SELECT * FROM users")
 
     assert result["status"] == QueryStatusEnum.FAILED
+    mock_reset.assert_called_once()
+
+
+def test_execute_sql_task_unhandled_exception_recovery_failure(
+    mocker: MockerFixture,
+    app_context: None,
+) -> None:
+    """If re-query fails after reset, still return a FAILED payload."""
+    from axbi.sql.execution.celery_task import execute_sql_task
+
+    mocker.patch(
+        "axbi.sql.execution.celery_task._execute_sql_statements",
+        side_effect=Exception("Unexpected error"),
+    )
+    mocker.patch(
+        "axbi.sql.execution.celery_task._get_query",
+        side_effect=Exception("metadata db still down"),
+    )
+    mocker.patch("axbi.sql.execution.celery_task.db.session")
+    mocker.patch("axbi.sql.execution.celery_task.security_manager")
+    mocker.patch(
+        "axbi.sql.execution.celery_task.reset_session_safely",
+        return_value=True,
+    )
+    mocker.patch.dict(current_app.config, {"STATS_LOGGER": MagicMock()})
+
+    result = execute_sql_task(123, "SELECT * FROM users")
+
+    assert result["status"] == QueryStatusEnum.FAILED
+    assert "Unexpected error" in result["error"]
 
 
 def test_execute_sql_task_success_final_commit(

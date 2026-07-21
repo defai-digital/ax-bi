@@ -23,6 +23,7 @@ from typing import Any
 import sqlalchemy as sa
 
 from axbi import db
+from axbi.utils.session_lifecycle import commit_session
 
 SQLITE_MAX_IN_CLAUSE_BATCH_SIZE = 999
 
@@ -50,7 +51,7 @@ def delete_model_ids_in_batches(
         total_deleted += result.rowcount
 
         # Commit each batch so a later failure does not roll back prior work.
-        db.session.commit()
+        commit_session(db.session, context=f"prune {table_name} batch")
 
         percentage_complete = (total_deleted / total_rows) * 100
         if percentage_complete >= next_logging_threshold:

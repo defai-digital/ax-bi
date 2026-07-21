@@ -25,6 +25,7 @@ from axbi import db
 from axbi.commands.base import BaseCommand
 from axbi.key_value.models import KeyValueEntry
 from axbi.utils.dates import naive_utcnow
+from axbi.utils.session_lifecycle import commit_session
 
 logger = logging.getLogger(__name__)
 
@@ -118,7 +119,7 @@ class KeyValuePruneCommand(BaseCommand):
 
             # Explicitly commit the transaction so that, if an error occurs, the
             # records deleted so far are committed
-            db.session.commit()
+            commit_session(db.session, context="key_value prune batch")
 
             # Log the number of deleted records every 1% increase in progress
             percentage_complete = (total_deleted / total_rows) * 100
