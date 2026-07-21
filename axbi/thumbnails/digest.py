@@ -122,6 +122,18 @@ def get_dashboard_digest(dashboard: Dashboard) -> str | None:
     return hash_from_str(unique_string)
 
 
+def get_chart_list_digest(chart: Slice) -> str:
+    """
+    Cheap cache-busting digest for chart list serialization.
+
+    Avoids per-row ``find_user`` and RLS rendering that made list pages
+    issue 100+ extra metadata queries. The thumbnail endpoint still uses
+    :func:`get_chart_digest` and redirects when the digests differ.
+    """
+    changed = getattr(chart, "changed_on", None)
+    return hash_from_str(f"{chart.id}\n{chart.params or ''}\n{changed}")
+
+
 def get_chart_digest(chart: Slice) -> str | None:
     try:
         executor_type, executor = get_executor(

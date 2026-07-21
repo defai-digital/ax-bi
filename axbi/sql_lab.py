@@ -104,10 +104,10 @@ def handle_query_error(
     msg = f"{prefix_message} {str(ex)}".strip()
     query.error_message = msg
     query.tmp_table_name = None
-    query.status = QueryStatus.FAILED
-    # TODO: re-enable this after updating the frontend to properly display timeout status  # noqa: E501
-    # if query.status != QueryStatus.TIMED_OUT:
-    #   query.status = QueryStatus.FAILED
+    # Preserve TIMED_OUT when already set by the soft-timeout path so clients
+    # can distinguish timeouts from generic failures.
+    if query.status != QueryStatus.TIMED_OUT:
+        query.status = QueryStatus.FAILED
     if not query.end_time:
         query.end_time = now_as_float()
 

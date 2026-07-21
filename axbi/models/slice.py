@@ -47,7 +47,7 @@ from axbi.legacy import update_time_range
 from axbi.models.helpers import AuditMixinNullable, ImportExportMixin, json_to_dict
 from axbi.tasks.thumbnails import cache_chart_thumbnail
 from axbi.tasks.utils import get_current_user
-from axbi.thumbnails.digest import get_chart_digest
+from axbi.thumbnails.digest import get_chart_digest, get_chart_list_digest
 from axbi.utils import core as utils, json
 from axbi.viz import BaseViz, viz_types
 
@@ -249,12 +249,16 @@ class Slice(  # pylint: disable=too-many-public-methods
     def thumbnail_url(self) -> str | None:
         """
         Returns a thumbnail URL with a HEX digest. We want to avoid browser cache
-        if the dashboard has changed
-        """
-        if digest := self.digest:
-            return f"/api/v1/chart/{self.id}/thumbnail/{digest}/"
+        if the dashboard has changed.
 
-        return None
+        When the THUMBNAILS feature flag is off, return None without computing a
+        digest (avoids N+1 user/RLS work on chart list). When on, use a cheap
+        list digest; the thumbnail endpoint redirects if the full digest differs.
+        """
+        if not is_feature_enabled("THUMBNAILS"):
+            return None
+        digest = get_chart_list_digest(self)
+        return f"/api/v1/chart/{self.id}/thumbnail/{digest}/"
 
     @property
     def json_data(self) -> str:

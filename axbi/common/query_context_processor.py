@@ -83,6 +83,90 @@ class QueryContextProcessor:
     cache_type: ClassVar[str] = "df"
     enforce_numerical_metrics: ClassVar[bool] = True
 
+    def _load_or_compute_query_cache(
+        self,
+        *,
+        query_obj: QueryObject,
+        cache: QueryCacheManager,
+        cache_key: str,
+        force_query: bool,
+        force_cached: bool | None,
+        timeout: int | None,
+    ) -> QueryCacheManager:
+        """Compute chart data with single-flight lock on cache miss.
+
+        Concurrent misses for the same key share one warehouse re-exec via
+        :class:`~axbi.distributed_lock.DistributedLock`. Callers that force a
+        recompute skip locking.
+        """
+        # pylint: disable=import-outside-toplevel
+        import time
+
+        from axbi.distributed_lock import DistributedLock
+        from axbi.exceptions import AcquireDistributedLockFailedException
+
+        if invalid_columns := [
+            col
+            for col in get_column_names_from_columns(query_obj.columns)
+            + get_column_names_from_metrics(query_obj.metrics or [])
+            if (col not in self._qc_datasource.column_names and col != DTTM_ALIAS)
+        ]:
+            raise QueryObjectValidationError(
+                _(
+                    "Columns missing in dataset: %(invalid_columns)s",
+                    invalid_columns=invalid_columns,
+                )
+            )
+
+        def _compute_and_store() -> None:
+            query_result = self.get_query_result(query_obj)
+            annotation_data = self.get_annotation_data(query_obj)
+            cache.set_query_result(
+                key=cache_key,
+                query_result=query_result,
+                annotation_data=annotation_data,
+                force_query=force_query,
+                timeout=timeout,
+                datasource_uid=self._qc_datasource.uid,
+                region=CacheRegion.DATA,
+            )
+
+        if force_query:
+            _compute_and_store()
+            return cache
+
+        try:
+            with DistributedLock(
+                "chart_data_cache",
+                key=cache_key,
+                ttl_seconds=120,
+            ):
+                # Double-check after lock: another worker may have filled cache.
+                refreshed = QueryCacheManager.get(
+                    key=cache_key,
+                    region=CacheRegion.DATA,
+                    force_query=False,
+                    force_cached=force_cached,
+                )
+                if refreshed.is_loaded:
+                    return refreshed
+                _compute_and_store()
+                return cache
+        except AcquireDistributedLockFailedException:
+            # Another worker is computing. Brief wait, re-read; if still cold,
+            # compute once so the client is not stuck.
+            time.sleep(0.25)
+            refreshed = QueryCacheManager.get(
+                key=cache_key,
+                region=CacheRegion.DATA,
+                force_query=False,
+                force_cached=force_cached,
+            )
+            if refreshed.is_loaded:
+                return refreshed
+            _compute_and_store()
+            return cache
+
     def get_df_payload(
         self, query_obj: QueryObject, force_cached: bool | None = False
     ) -> dict[str, Any]:
@@ -116,32 +200,13 @@ class QueryContextProcessor:
 
         if query_obj and cache_key and not cache.is_loaded:
             try:
-                if invalid_columns := [
-                    col
-                    for col in get_column_names_from_columns(query_obj.columns)
-                    + get_column_names_from_metrics(query_obj.metrics or [])
-                    if (
-                        col not in self._qc_datasource.column_names
-                        and col != DTTM_ALIAS
-                    )
-                ]:
-                    raise QueryObjectValidationError(
-                        _(
-                            "Columns missing in dataset: %(invalid_columns)s",
-                            invalid_columns=invalid_columns,
-                        )
-                    )
-
-                query_result = self.get_query_result(query_obj)
-                annotation_data = self.get_annotation_data(query_obj)
-                cache.set_query_result(
-                    key=cache_key,
-                    query_result=query_result,
-                    annotation_data=annotation_data,
+                cache = self._load_or_compute_query_cache(
+                    query_obj=query_obj,
+                    cache=cache,
+                    cache_key=cache_key,
                     force_query=force_query,
+                    force_cached=force_cached,
                     timeout=timeout,
-                    datasource_uid=self._qc_datasource.uid,
-                    region=CacheRegion.DATA,
                 )
             except QueryObjectValidationError as ex:
                 cache.error_message = str(ex)

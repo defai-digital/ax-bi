@@ -181,6 +181,41 @@ def test_gtf_abort_listener_recovers_instead_of_breaking() -> None:
     assert "_claim_abort_handlers" in context
 
 
+def test_websocket_stream_reader_has_error_backoff() -> None:
+    """Redis stream reader must back off on errors (no tight catch→continue)."""
+    ws = (REPO_ROOT / "ax-bi-websocket" / "src" / "index.ts").read_text(
+        encoding="utf-8"
+    )
+    assert "STREAM_ERROR_BACKOFF_MS" in ws
+    assert "errorBackoffMs" in ws
+    # CORS must not reflect any origin with credentials when lists are empty.
+    assert "origin: corsOrigins.length > 0 ? corsOrigins : false" in ws
+
+
+def test_chart_data_path_uses_single_flight_lock() -> None:
+    """Chart-data cache miss path must single-flight warehouse recompute."""
+    qcp = (REPO_ROOT / "axbi" / "common" / "query_context_processor.py").read_text(
+        encoding="utf-8"
+    )
+    assert "DistributedLock" in qcp
+    assert "chart_data_cache" in qcp
+
+
+def test_trino_execute_thread_is_joined() -> None:
+    trino = (REPO_ROOT / "axbi" / "db_engine_specs" / "trino.py").read_text(
+        encoding="utf-8"
+    )
+    assert "daemon=True" in trino
+    assert "execute_thread.join" in trino
+
+
+def test_playwright_browser_manager_has_launch_lock() -> None:
+    webdriver = (REPO_ROOT / "axbi" / "utils" / "webdriver.py").read_text(
+        encoding="utf-8"
+    )
+    assert "_launch_lock" in webdriver
+
+
 def test_transaction_decorator_uses_depth_and_safe_rollback() -> None:
     """Outer commit boundary and safe rollback must stay wired."""
     decorators = (REPO_ROOT / "axbi" / "utils" / "decorators.py").read_text(

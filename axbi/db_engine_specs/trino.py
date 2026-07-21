@@ -437,26 +437,52 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
                 app._get_current_object(),  # pylint: disable=protected-access
                 g._get_current_object(),  # pylint: disable=protected-access
             ),
+            # Daemon so a leaked worker cannot pin the process after the
+            # request ends; we still join below for normal completion.
+            daemon=True,
         )
         execute_thread.start()
 
-        # Wait for the thread to start before continuing
-        time.sleep(0.1)
-        # Wait for a query ID to be available before handling the cursor, as
-        # it's required by that method; it may never become available on error.
-        while not cursor.query_id and not execute_event.is_set():
+        try:
+            # Wait for the thread to start before continuing
             time.sleep(0.1)
+            # Wait for a query ID to be available before handling the cursor, as
+            # it's required by that method; it may never become available on error.
+            while not cursor.query_id and not execute_event.is_set():
+                time.sleep(0.1)
 
-        # Pass additional attributes to check whether an error occurred in the
-        # execute thread running in parallel while updating progress through the cursor.
-        cursor._execute_result = execute_result
-        cursor._execute_event = execute_event
-        logger.debug("Query %d: Handling cursor", query_id)
-        cls.handle_cursor(cursor, query)
+            # Pass additional attributes to check whether an error occurred in the
+            # execute thread running in parallel while updating progress through
+            # the cursor.
+            cursor._execute_result = execute_result
+            cursor._execute_event = execute_event
+            logger.debug("Query %d: Handling cursor", query_id)
+            cls.handle_cursor(cursor, query)
 
-        # Block until the query completes; same behaviour as the client itself
-        logger.debug("Query %d: Waiting for query to complete", query_id)
-        execute_event.wait()
+            # Block until the query completes; same behaviour as the client itself
+            logger.debug("Query %d: Waiting for query to complete", query_id)
+            execute_event.wait()
+        except Exception:
+            # handle_cursor (or polling) failed: attempt warehouse cancel and
+            # do not leave the execute thread unreaped forever.
+            try:
+                if cancel_id := getattr(cursor, "query_id", None):
+                    cls.cancel_query(cursor, query, str(cancel_id))
+            except Exception:  # pylint: disable=broad-except  # noqa: BLE001
+                logger.warning(
+                    "Query %d: failed to cancel Trino query after handle_cursor error",
+                    query_id,
+                    exc_info=True,
+                )
+            raise
+        finally:
+            # Bound the join so a stuck warehouse query cannot hang teardown.
+            execute_thread.join(timeout=5.0)
+            if execute_thread.is_alive():
+                logger.warning(
+                    "Query %d: Trino execute thread still alive after join timeout",
+                    query_id,
+                )
 
         # Unfortunately we'll mangle the stack trace due to the thread, but
         # throwing the original exception allows mapping database errors as normal
