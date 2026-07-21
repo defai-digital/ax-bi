@@ -92,11 +92,42 @@ const StyledDiv = styled.div<{ align: string }>`
 `;
 
 const StyledMenuItemWithIcon = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
+  ${({ theme }) => css`
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: ${theme.sizeUnit * 2}px;
+    width: 100%;
+    min-width: 0;
+
+    .settings-menu-item-label {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  `}
 `;
+
+function resolveSettingsMenuLabel({
+  label,
+  name,
+  url,
+}: {
+  label?: string;
+  name?: string;
+  url?: string;
+}) {
+  const explicitLabel = label?.trim() || name?.trim();
+  if (explicitLabel) {
+    return explicitLabel;
+  }
+  if (/row.?level|rowlevelsecurity|rls/i.test(url || '')) {
+    return t('Row Level Security');
+  }
+  return '';
+}
 
 // Span (not button): Ant Design Menu items already provide the interactive
 // host; nesting a <button> inside a menuitem is invalid HTML and double-fires.
@@ -312,24 +343,27 @@ const RightMenu = ({
 
         section.childs?.forEach(child => {
           if (typeof child !== 'string') {
+            const childLabel = resolveSettingsMenuLabel(child);
             const menuItemDisplay = RightMenuItemIconExtension ? (
               <StyledMenuItemWithIcon>
-                {child.label}
-                <RightMenuItemIconExtension menuChild={child} />
+                <span className="settings-menu-item-label">{childLabel}</span>
+                <RightMenuItemIconExtension
+                  menuChild={{ ...child, label: childLabel }}
+                />
               </StyledMenuItemWithIcon>
             ) : (
-              child.label
+              childLabel
             );
 
             const iconKey = resolveSettingsMenuIconKey({
               name: child.name,
-              label: child.label,
+              label: childLabel,
               url: child.url,
             });
             const IconComp = iconKey ? Icons[iconKey] : undefined;
 
             sectionItems.push({
-              key: child.label,
+              key: `${section.label}-${child.name || child.url || childLabel}`,
               icon: IconComp ? <IconComp /> : undefined,
               label: menuItemDisplay,
               onClick: () =>

@@ -176,6 +176,13 @@ const mockedProps = {
             url: '/users/list/',
             index: 1,
           },
+          {
+            name: 'Row Level Security',
+            icon: 'fa-lock',
+            label: 'Row Level Security',
+            url: '/rowlevelsecurity/list/',
+            index: 2,
+          },
         ],
       },
     ],
@@ -309,6 +316,7 @@ test('should render the Settings dropdown child menu items', async () => {
   userEvent.hover(screen.getByText('Settings'));
   // Labels are plain text; navigation is via menu item onClick (antd 6 safe).
   expect(await screen.findByText('List Users')).toBeInTheDocument();
+  expect(await screen.findByText('Row Level Security')).toBeInTheDocument();
   expect(settings[0].childs[0].url).toBeTruthy();
 });
 

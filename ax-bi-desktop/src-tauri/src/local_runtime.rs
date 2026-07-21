@@ -104,6 +104,7 @@ x-axbi-env: &axbi-env
   REDIS_HOST: redis
   REDIS_PORT: 6379
   ENABLE_PROXY_FIX: ${ENABLE_PROXY_FIX:-true}
+  SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
   TALISMAN_ENABLED: ${TALISMAN_ENABLED:-false}
   MCP_AUTH_ENABLED: ${MCP_AUTH_ENABLED:-false}
   MCP_DEV_USERNAME: ${MCP_DEV_USERNAME:-admin}
@@ -780,6 +781,7 @@ LOCAL_DB_PATH=/app/axbi_home/uploads/local_files.duckdb
 AXBI_LOAD_EXAMPLES=no
 AXBI_LOG_LEVEL=info
 ENABLE_PROXY_FIX=true
+SESSION_COOKIE_SECURE=false
 TALISMAN_ENABLED=false
 
 GENAI_SEMANTIC_INDEX=false
@@ -2163,6 +2165,10 @@ mod tests {
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${MCP_PORT:-31421}:31421"));
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AX_SERVICES_PORT:-31424}:31424"));
         assert!(LOCAL_COMPOSE_YAML.contains("TALISMAN_ENABLED: ${TALISMAN_ENABLED:-false}"));
+        assert!(
+            LOCAL_COMPOSE_YAML
+                .contains("SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}")
+        );
         assert!(LOCAL_COMPOSE_YAML.contains("AXBI_PORT: 31423"));
         assert_eq!(
             LOCAL_COMPOSE_YAML
@@ -2192,6 +2198,10 @@ mod tests {
         );
         assert_eq!(
             read_env_value_from_str(&env_file, "TALISMAN_ENABLED").unwrap(),
+            "false"
+        );
+        assert_eq!(
+            read_env_value_from_str(&env_file, "SESSION_COOKIE_SECURE").unwrap(),
             "false"
         );
         assert_eq!(

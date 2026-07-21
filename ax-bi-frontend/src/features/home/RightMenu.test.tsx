@@ -365,6 +365,10 @@ test('settings menu items render icons for known destinations', async () => {
           name: 'Themes',
           url: '/theme/list/',
         },
+        {
+          label: '',
+          url: '/rowlevelsecurity/list/',
+        },
       ],
     },
   ];
@@ -376,9 +380,11 @@ test('settings menu items render icons for known destinations', async () => {
 
   userEvent.hover(await screen.findByText(/Settings/i));
   expect(await screen.findByText('Databases')).toBeInTheDocument();
+  expect(await screen.findByText('Row Level Security')).toBeInTheDocument();
   // Icons render as anticon spans with aria-label from ant-design icon name
   expect(document.querySelector('[aria-label="database"]')).toBeTruthy();
   expect(document.querySelector('[aria-label="bg-colors"]')).toBeTruthy();
+  expect(document.querySelector('[aria-label="lock"]')).toBeTruthy();
   expect(document.querySelector('[aria-label="info-circle"]')).toBeTruthy();
   expect(document.querySelector('[aria-label="logout"]')).toBeTruthy();
 });
