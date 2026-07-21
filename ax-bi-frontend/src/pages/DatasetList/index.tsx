@@ -195,9 +195,19 @@ interface DatasetListProps {
   };
 }
 
-type RelatedObjects = {
+type RelatedDashboard = {
+  id: Key | null | undefined;
+  title: string;
+};
+
+type RelatedChart = {
+  id: Key | null | undefined;
+  slice_name: string;
+};
+
+type RelatedObjects<T> = {
   count: number;
-  result: Array<Record<string, unknown>>;
+  result: T[];
 };
 
 const DatasetList: FunctionComponent<DatasetListProps> = ({
@@ -484,8 +494,8 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
 
   const [datasetCurrentlyDeleting, setDatasetCurrentlyDeleting] = useState<
     | (Dataset & {
-        charts: RelatedObjects;
-        dashboards: RelatedObjects;
+        charts: RelatedObjects<RelatedChart>;
+        dashboards: RelatedObjects<RelatedDashboard>;
       })
     | null
   >(null);
@@ -1298,7 +1308,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
             trigger={['click']}
           >
             <Button
-              type="button"
+              htmlType="button"
               data-test="btn-create-new"
               buttonStyle="primary"
               icon={<Icons.PlusOutlined iconSize="m" />}
@@ -1459,10 +1469,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
                       0,
                       10,
                     )}
-                    renderItem={(result: {
-                      id: Key | null | undefined;
-                      title: string;
-                    }) => (
+                    renderItem={(result: RelatedDashboard) => (
                       <List.Item key={result.id} compact>
                         <List.Item.Meta
                           avatar={<span>•</span>}
@@ -1502,10 +1509,7 @@ const DatasetList: FunctionComponent<DatasetListProps> = ({
                       0,
                       10,
                     )}
-                    renderItem={(result: {
-                      id: Key | null | undefined;
-                      slice_name: string;
-                    }) => (
+                    renderItem={(result: RelatedChart) => (
                       <List.Item key={result.id} compact>
                         <List.Item.Meta
                           avatar={<span>•</span>}
