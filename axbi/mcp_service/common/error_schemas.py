@@ -74,6 +74,20 @@ def sanitize_prompt_value(value: Any) -> Any:
     return sanitize_for_llm_context(value, excluded_field_names=frozenset())
 
 
+class SanitizeOptionalErrorMixin(BaseModel):
+    """Redact optional ``error`` fields on success-shaped MCP tool responses.
+
+    Many mutate tools return a success schema with ``error: str | None`` instead
+    of raising into middleware / ``MCPResourceError``. Without this mixin those
+    paths leaked raw ``str(e)`` (SQL fragments, table names) to the LLM.
+    """
+
+    @field_validator("error", check_fields=False)
+    @classmethod
+    def _sanitize_optional_error_field(cls, value: str | None) -> str | None:
+        return sanitize_error_text(value)
+
+
 class MCPResourceError(BaseModel):
     """Shared base for domain-specific MCP resource error responses.
 

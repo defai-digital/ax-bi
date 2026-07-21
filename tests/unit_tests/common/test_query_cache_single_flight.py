@@ -19,6 +19,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
+from datetime import timedelta
 from unittest.mock import MagicMock
 
 import pandas as pd
@@ -37,19 +38,23 @@ def _make_processor() -> QueryContextProcessor:
     qc.datasource = MagicMock()
     qc.datasource.uid = "ds-1"
     qc.datasource.column_names = ["a"]
-    proc = QueryContextProcessor(qc)
-    return proc
+    return QueryContextProcessor(qc)
+
+
+def _query_obj() -> MagicMock:
+    query_obj = MagicMock()
+    query_obj.columns = []
+    query_obj.metrics = []
+    query_obj.filter = []
+    query_obj.validate = MagicMock()
+    return query_obj
 
 
 def test_get_df_payload_uses_distributed_lock_on_cache_miss(
     mocker: MockerFixture, app_context: None
 ) -> None:
     proc = _make_processor()
-    query_obj = MagicMock()
-    query_obj.columns = []
-    query_obj.metrics = []
-    query_obj.filter = []
-    query_obj.validate = MagicMock()
+    query_obj = _query_obj()
 
     cold = QueryCacheManager(status=QueryStatus.PENDING, is_loaded=False)
     warm = QueryCacheManager(
@@ -81,7 +86,6 @@ def test_get_df_payload_uses_distributed_lock_on_cache_miss(
         side_effect=lambda *a, **k: fake_lock(),
     )
 
-    # After lock, second get returns warm so compute is skipped
     payload = proc.get_df_payload(query_obj)
     assert lock_entered["n"] == 1
     compute.assert_not_called()
@@ -90,19 +94,67 @@ def test_get_df_payload_uses_distributed_lock_on_cache_miss(
     assert payload["status"] == QueryStatus.SUCCESS
 
 
-def test_get_df_payload_recomputes_when_lock_busy_and_still_cold(
+def test_waiter_polls_until_warm_without_recompute(
     mocker: MockerFixture, app_context: None
 ) -> None:
+    """Second waiter must NOT recompute when the lock holder fills cache mid-wait."""
     proc = _make_processor()
-    query_obj = MagicMock()
-    query_obj.columns = []
-    query_obj.metrics = []
-    query_obj.filter = []
-    query_obj.validate = MagicMock()
+    # Short poll/wait so the test stays fast; still multi-step poll path.
+    mocker.patch.object(QueryContextProcessor, "_CHART_DATA_WAIT_MAX_SECONDS", 5.0)
+    mocker.patch.object(QueryContextProcessor, "_CHART_DATA_WAIT_POLL_SECONDS", 0.01)
+    mocker.patch.object(
+        QueryContextProcessor, "_CHART_DATA_WAIT_POLL_MAX_SECONDS", 0.02
+    )
 
+    query_obj = _query_obj()
+    cold = QueryCacheManager(status=QueryStatus.PENDING, is_loaded=False)
+    warm = QueryCacheManager(
+        df=pd.DataFrame({"a": [1]}),
+        status=QueryStatus.SUCCESS,
+        is_loaded=True,
+        is_cached=True,
+    )
+
+    mocker.patch.object(proc, "query_cache_key", return_value="ck-wait")
+    mocker.patch.object(proc, "get_cache_timeout", return_value=60)
+
+    # Initial cold miss in get_df_payload, then waiter polls: cold, cold, warm.
+    get_mock = mocker.patch(
+        "axbi.common.query_context_processor.QueryCacheManager.get",
+        side_effect=[cold, cold, cold, warm],
+    )
+    compute = mocker.patch.object(proc, "get_query_result")
+    mocker.patch.object(proc, "get_annotation_data", return_value={})
+    mocker.patch.object(QueryCacheManager, "set_query_result")
+    mocker.patch(
+        "axbi.distributed_lock.DistributedLock",
+        side_effect=AcquireDistributedLockFailedException("taken"),
+    )
+    sleep_mock = mocker.patch("time.sleep")
+
+    payload = proc.get_df_payload(query_obj)
+
+    compute.assert_not_called()
+    assert sleep_mock.call_count >= 1
+    assert get_mock.call_count >= 3
+    assert payload["status"] == QueryStatus.SUCCESS
+
+
+def test_waiter_last_resort_recomputes_only_after_wait_budget(
+    mocker: MockerFixture, app_context: None
+) -> None:
+    """Unlocked recompute only after wait budget; not after a single short sleep."""
+    proc = _make_processor()
+    mocker.patch.object(QueryContextProcessor, "_CHART_DATA_WAIT_MAX_SECONDS", 0.05)
+    mocker.patch.object(QueryContextProcessor, "_CHART_DATA_WAIT_POLL_SECONDS", 0.02)
+    mocker.patch.object(
+        QueryContextProcessor, "_CHART_DATA_WAIT_POLL_MAX_SECONDS", 0.02
+    )
+
+    query_obj = _query_obj()
     cold = QueryCacheManager(status=QueryStatus.PENDING, is_loaded=False)
 
-    mocker.patch.object(proc, "query_cache_key", return_value="ck-2")
+    mocker.patch.object(proc, "query_cache_key", return_value="ck-timeout")
     mocker.patch.object(proc, "get_cache_timeout", return_value=60)
     mocker.patch(
         "axbi.common.query_context_processor.QueryCacheManager.get",
@@ -112,8 +164,10 @@ def test_get_df_payload_recomputes_when_lock_busy_and_still_cold(
         "axbi.distributed_lock.DistributedLock",
         side_effect=AcquireDistributedLockFailedException("taken"),
     )
+    # Advance monotonic past the wait budget after a few polls.
+    times = iter([0.0, 0.0, 0.03, 0.06, 0.06, 0.06])
+    mocker.patch("time.monotonic", side_effect=lambda: next(times, 1.0))
     mocker.patch("time.sleep")
-    from datetime import timedelta
 
     qr = QueryResult(
         query="SELECT 1",
@@ -125,6 +179,5 @@ def test_get_df_payload_recomputes_when_lock_busy_and_still_cold(
     mocker.patch.object(proc, "get_annotation_data", return_value={})
     mocker.patch.object(QueryCacheManager, "set_query_result")
 
-    # Should not raise; fallback compute path runs
     proc.get_df_payload(query_obj)
     compute_mock.assert_called()

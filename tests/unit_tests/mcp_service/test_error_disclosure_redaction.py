@@ -52,3 +52,27 @@ def test_mcp_resource_error_create_redacts_sql() -> None:
     )
     assert "ssn" not in err.error.lower() or "REDACTED" in err.error
     assert "SELECT" in err.error.upper() or "REDACTED" in err.error
+
+
+def test_compose_dashboard_response_error_field_redacts_sql() -> None:
+    """Success-schema tools with optional error must not pass raw str(e)."""
+    from axbi.mcp_service.ai.schemas import ComposeDashboardResponse
+
+    raw = "Failed to create dashboard: SELECT password FROM secret_users WHERE 1=1"
+    resp = ComposeDashboardResponse(error=raw)
+    assert resp.error is not None
+    assert "password" not in resp.error.lower()
+    assert "secret_users" not in resp.error
+    dumped = resp.model_dump()
+    assert "secret_users" not in (dumped.get("error") or "")
+    assert "REDACTED" in resp.error
+
+
+def test_create_report_response_error_field_redacts_table() -> None:
+    from axbi.mcp_service.report.tool.create_report import CreateReportResponse
+
+    raw = "Failed: table confidential_payroll not found"
+    resp = CreateReportResponse(error=raw)
+    assert resp.error is not None
+    assert "confidential_payroll" not in resp.error
+    assert "REDACTED" in resp.error or "Validation" in resp.error

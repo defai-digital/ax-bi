@@ -199,6 +199,9 @@ def test_chart_data_path_uses_single_flight_lock() -> None:
     )
     assert "DistributedLock" in qcp
     assert "chart_data_cache" in qcp
+    # Waiters must poll until warm (or wait budget), not recompute after one sleep.
+    assert "_CHART_DATA_WAIT_MAX_SECONDS" in qcp
+    assert "wait budget exhausted" in qcp
 
 
 def test_trino_execute_thread_is_joined() -> None:

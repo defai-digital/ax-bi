@@ -92,6 +92,7 @@ from axbi.mcp_service.common.cache_schemas import (
 from axbi.mcp_service.common.error_schemas import (
     MCPResourceError,
     sanitize_error_text,
+    SanitizeOptionalErrorMixin,
 )
 from axbi.mcp_service.constants import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from axbi.mcp_service.privacy import user_can_view_data_model_metadata
@@ -536,7 +537,7 @@ class AddChartToDashboardRequest(BaseModel):
     )
 
 
-class AddChartToDashboardResponse(BaseModel):
+class AddChartToDashboardResponse(SanitizeOptionalErrorMixin):
     """Response schema for adding chart to dashboard."""
 
     dashboard: DashboardInfo | None = Field(
@@ -663,7 +664,7 @@ class GenerateDashboardRequest(BaseModel):
         )
 
 
-class GenerateDashboardResponse(BaseModel):
+class GenerateDashboardResponse(SanitizeOptionalErrorMixin):
     """Response schema for dashboard generation."""
 
     dashboard: DashboardInfo | None = Field(
