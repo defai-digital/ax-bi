@@ -33,6 +33,7 @@ from axbi.extensions import db, security_manager
 from axbi.models.slice import Slice
 from axbi.utils import json
 from axbi.utils.core import error_msg_from_exception, QueryObjectFilterClause
+from axbi.utils.form_data import get_dashboard_extra_filters, get_form_data
 from axbi.utils.viz_helpers import get_viz
 from axbi.viz import viz_types
 
@@ -65,10 +66,6 @@ class ChartWarmUpCacheCommand(BaseCommand):
             ):
                 raise ChartInvalidError("Extra filters must be a list of objects")
             return filters
-
-        # Lazy import: dashboard filter helper still lives under views; avoid
-        # a module-level Command → views dependency (layering boundary).
-        from axbi.views.utils import get_dashboard_extra_filters
 
         return get_dashboard_extra_filters(chart_id, self._dashboard_id)
 
@@ -137,9 +134,6 @@ class ChartWarmUpCacheCommand(BaseCommand):
         chart_id = chart.id
 
         try:
-            # Lazy import keeps command layer free of module-level views deps.
-            from axbi.views.utils import get_form_data
-
             form_data = get_form_data(chart_id, use_slice_data=True)[0]
 
             if form_data.get("viz_type") in viz_types:

@@ -49,9 +49,20 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _async_query_soft_time_limit() -> int:
-    """Read soft time limit at task-bind time so config overrides apply."""
+def get_async_query_soft_time_limit() -> int:
+    """Return ``SQLLAB_ASYNC_TIME_LIMIT_SEC`` for Celery soft_time_limit.
+
+    Read at call/init time (not module import) so config overrides apply.
+    """
     return int(current_app.config["SQLLAB_ASYNC_TIME_LIMIT_SEC"])
+
+
+def bind_async_query_soft_time_limits() -> None:
+    """Re-bind task soft_time_limit attributes from current app config."""
+    limit = get_async_query_soft_time_limit()
+    load_chart_data_into_cache.soft_time_limit = limit
+    load_explore_json_into_cache.soft_time_limit = limit
+    logger.debug("Bound async query soft_time_limit=%s from config", limit)
 
 
 def set_form_data(form_data: dict[str, Any]) -> None:
@@ -95,13 +106,7 @@ def _get_viz_errors(payload: dict[str, Any]) -> list[Any]:
     return ["Visualization returned an error"]
 
 
-@celery_app.task(
-    name="load_chart_data_into_cache",
-    # Match default SQLLAB_ASYNC_TIME_LIMIT_SEC (6h). Not read at import so
-    # app config overrides applied later still win when tasks are re-bound via
-    # Celery annotations; body also consults config for logging/guards.
-    soft_time_limit=21600,
-)
+@celery_app.task(name="load_chart_data_into_cache")
 def load_chart_data_into_cache(
     job_metadata: dict[str, Any],
     form_data: dict[str, Any],
@@ -146,10 +151,7 @@ def load_chart_data_into_cache(
             raise
 
 
-@celery_app.task(
-    name="load_explore_json_into_cache",
-    soft_time_limit=21600,  # match SQLLAB_ASYNC_TIME_LIMIT_SEC default (6h)
-)
+@celery_app.task(name="load_explore_json_into_cache")
 def load_explore_json_into_cache(  # pylint: disable=too-many-locals
     job_metadata: dict[str, Any],
     form_data: dict[str, Any],

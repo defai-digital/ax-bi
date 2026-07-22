@@ -155,13 +155,10 @@ def clear_bootstrap_cache(
     _connection: sqla.engine.Connection,
     _target: Theme,
 ) -> None:
-    from axbi.extensions import cache_manager
-    from axbi.views.base import cached_common_bootstrap_data
+    # Non-views helper: models must not import axbi.views (layering boundary).
+    from axbi.utils.bootstrap_cache import clear_common_bootstrap_cache
 
-    try:
-        cache_manager.cache.delete_memoized(cached_common_bootstrap_data)
-    except Exception as ex:  # pylint: disable=broad-except
-        logger.warning("Failed to clear theme bootstrap cache: %s", ex)
+    clear_common_bootstrap_cache()
 
 
 class ConfigurationMethod(StrEnum):

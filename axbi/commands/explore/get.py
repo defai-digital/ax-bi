@@ -39,12 +39,9 @@ from axbi.explore.exceptions import WrongEndpointError
 from axbi.explore.permalink.exceptions import ExplorePermalinkGetFailedError
 from axbi.extensions import security_manager
 from axbi.utils import core as utils
-from axbi.views.utils import (
-    get_datasource_info,
-    get_form_data,
-    loads_request_json,
-    sanitize_datasource_data,
-)
+from axbi.utils.form_data import get_form_data, loads_request_json
+from axbi.utils.viz_helpers import get_datasource_info
+from axbi.views.utils import sanitize_datasource_data
 
 logger = logging.getLogger(__name__)
 

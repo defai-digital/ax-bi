@@ -186,12 +186,16 @@ class AsyncQueryManager:
 
         # pylint: disable=import-outside-toplevel
         from axbi.tasks.async_queries import (
+            bind_async_query_soft_time_limits,
             load_chart_data_into_cache,
             load_explore_json_into_cache,
         )
 
         self._load_chart_data_into_cache_job = load_chart_data_into_cache
         self._load_explore_json_into_cache_job = load_explore_json_into_cache
+        # Wire soft_time_limit from SQLLAB_ASYNC_TIME_LIMIT_SEC so config
+        # overrides applied after import take effect (not a frozen decorator value).
+        bind_async_query_soft_time_limits()
 
     def register_request_handlers(self, app: Flask) -> None:
         @app.after_request
@@ -264,7 +268,8 @@ class AsyncQueryManager:
         from axbi import security_manager
 
         job_metadata = self.init_job(channel_id, user_id)
-        self._load_explore_json_into_cache_job.delay(
+        self._enqueue_async_query_job(
+            self._load_explore_json_into_cache_job,
             {**job_metadata, "guest_token": guest_user.guest_token}
             if (guest_user := security_manager.get_current_guest_user_if_guest())
             else job_metadata,
@@ -288,13 +293,33 @@ class AsyncQueryManager:
         # this way we can keep the cache key consistent between sync and async command
         # so that it can be looked up consistently
         job_metadata = self.init_job(channel_id, user_id)
-        self._load_chart_data_into_cache_job.delay(
+        self._enqueue_async_query_job(
+            self._load_chart_data_into_cache_job,
             {**job_metadata, "guest_token": guest_user.guest_token}
             if (guest_user := security_manager.get_current_guest_user_if_guest())
             else job_metadata,
             form_data,
         )
         return job_metadata
+
+    @staticmethod
+    def _enqueue_async_query_job(task: Any, *args: Any) -> None:
+        """Enqueue with soft_time_limit from current config (not decorator freeze)."""
+        # pylint: disable=import-outside-toplevel
+        from flask import current_app
+
+        from axbi.tasks.async_queries import get_async_query_soft_time_limit
+
+        soft_time_limit = get_async_query_soft_time_limit()
+        # Keep task attribute in sync for workers that inspect task.soft_time_limit
+        task.soft_time_limit = soft_time_limit
+        task.apply_async(args=args, soft_time_limit=soft_time_limit)
+        logger.debug(
+            "Enqueued %s with soft_time_limit=%s (config=%s)",
+            getattr(task, "name", task),
+            soft_time_limit,
+            current_app.config.get("SQLLAB_ASYNC_TIME_LIMIT_SEC"),
+        )
 
     def read_events(
         self, channel: str, last_id: str | None

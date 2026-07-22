@@ -45,8 +45,8 @@ logger = logging.getLogger(__name__)
 # Import Playwright install message; availability is lazy (do not probe at import).
 try:
     from axbi.utils.webdriver import (
-        PLAYWRIGHT_INSTALL_MESSAGE,
         is_playwright_available as _is_playwright_available,
+        PLAYWRIGHT_INSTALL_MESSAGE,
     )
 except ImportError:
     PLAYWRIGHT_INSTALL_MESSAGE = "Playwright module not found"

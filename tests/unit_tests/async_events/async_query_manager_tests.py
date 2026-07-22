@@ -220,7 +220,9 @@ def test_submit_chart_data_job_as_guest_user(
         form_data={},
     )
 
-    job_mock.delay.assert_called_once_with(
+    job_mock.apply_async.assert_called_once()
+    call_kwargs = job_mock.apply_async.call_args.kwargs
+    assert call_kwargs["args"] == (
         {
             "channel_id": "test_channel_id",
             "errors": [],
@@ -235,6 +237,7 @@ def test_submit_chart_data_job_as_guest_user(
         },
         {},
     )
+    assert "soft_time_limit" in call_kwargs
 
     assert "guest_token" not in job_meta
     job_mock.reset_mock()  # Reset the mock for the next iteration
@@ -265,7 +268,9 @@ def test_submit_explore_json_job_as_guest_user(
         response_type="json",
     )
 
-    job_mock.delay.assert_called_once_with(
+    job_mock.apply_async.assert_called_once()
+    call_kwargs = job_mock.apply_async.call_args.kwargs
+    assert call_kwargs["args"] == (
         {
             "channel_id": "test_channel_id",
             "errors": [],
@@ -282,5 +287,6 @@ def test_submit_explore_json_job_as_guest_user(
         "json",
         False,
     )
+    assert "soft_time_limit" in call_kwargs
 
     assert "guest_token" not in job_meta

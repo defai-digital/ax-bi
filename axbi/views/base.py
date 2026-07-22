@@ -575,6 +575,15 @@ def cached_common_bootstrap_data(  # pylint: disable=unused-argument
     return bootstrap_data
 
 
+# Register after definition so models can clear the memoize cache without
+# importing this views module (API → Command → DAO → Model boundary).
+from axbi.utils.bootstrap_cache import (  # noqa: E402
+    register_common_bootstrap_cache_fn,
+)
+
+register_common_bootstrap_cache_fn(cached_common_bootstrap_data)
+
+
 def common_bootstrap_payload() -> dict[str, Any]:
     locale = get_locale()
     # Convert locale to string for proper cache key hashing
