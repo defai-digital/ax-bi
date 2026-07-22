@@ -154,7 +154,7 @@ For a local single-user trial, you may set `MCP_DEV_USERNAME=admin` in
 ### Configuration
 
 The AX BI Docker image includes
-[`./docker/pythonpath_axbi/superset_config.py`](./pythonpath_axbi/superset_config.py),
+[`./docker/pythonpath_axbi/axbi_config.py`](./pythonpath_axbi/axbi_config.py),
 an environment-driven configuration for Docker deployments.
 
 ### Local Development Stack
@@ -175,14 +175,14 @@ To override environment variables locally, create a `./docker/.env-local` file (
 
 ##### Python Configuration
 
-In order to override configuration settings locally, simply make a copy of [`./docker/pythonpath_dev/superset_config_local.example`](./pythonpath_dev/superset_config_local.example)
-into `./docker/pythonpath_dev/superset_config_docker.py` (git-ignored) and fill in your overrides.
+In order to override configuration settings locally, simply make a copy of [`./docker/pythonpath_dev/axbi_config_local.example`](./pythonpath_dev/axbi_config_local.example)
+into `./docker/pythonpath_dev/axbi_config_docker.py` (git-ignored) and fill in your overrides.
 
 ##### WebSocket Configuration
 
-To customize the WebSocket server configuration, create `./docker/superset-websocket/config.json` (git-ignored) based on [`./docker/superset-websocket/config.example.json`](./superset-websocket/config.example.json).
+To customize the WebSocket server configuration, create `./docker/ax-bi-websocket/config.json` (git-ignored) based on [`./docker/ax-bi-websocket/config.example.json`](./ax-bi-websocket/config.example.json).
 
-Then update the `superset-websocket`.`volumes` config to mount it.
+Then update the `ax-bi-websocket`.`volumes` config to mount it.
 
 ##### Docker Compose Overrides
 

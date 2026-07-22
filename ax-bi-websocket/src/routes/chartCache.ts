@@ -40,6 +40,13 @@ interface ChartCacheParams {
   cacheKey: string;
 }
 
+declare module 'fastify' {
+  interface FastifyRequest {
+    /** Channel id extracted from the JWT cookie, when auth succeeds. */
+    jwtChannelId?: string;
+  }
+}
+
 const hasInvalidCacheKeyCharacter = (cacheKey: string): boolean =>
   [...cacheKey].some(char => /\s/.test(char) || char.charCodeAt(0) <= 31);
 
@@ -76,6 +83,7 @@ const validateJwtCookie = (request: FastifyRequest): string | null => {
 
 /**
  * Pre-handler hook that validates the JWT cookie for protected routes.
+ * Binds the channel id onto the request for downstream handlers/metrics.
  * Returns 401 if the JWT is missing or invalid.
  */
 const jwtAuthPreHandler = async (
@@ -92,7 +100,9 @@ const jwtAuthPreHandler = async (
   if (!channelId) {
     fastCacheStatsd.increment('fast_cache_auth_failed');
     reply.status(401).send({ error: 'Authentication required' });
+    return;
   }
+  request.jwtChannelId = channelId;
 };
 
 /**
@@ -106,7 +116,8 @@ const jwtAuthPreHandler = async (
  *   - Content-Type: application/json (on HIT)
  *
  * On cache miss, returns 404 so the frontend can fall back to the
- * Python API for a fresh query.
+ * Python API for a fresh query. The cache key is intentionally not
+ * echoed in the response body.
  */
 const handleGetChartCache = async (
   request: FastifyRequest<{ Params: ChartCacheParams }>,
@@ -122,6 +133,15 @@ const handleGetChartCache = async (
 
   fastCacheStatsd.increment('fast_cache_request');
 
+  // Channel binding: require a validated JWT channel (set by preHandler).
+  // Cache keys are currently global (backend-written); channel id is used for
+  // auth gate + metrics rather than key namespacing.
+  if (!request.jwtChannelId) {
+    fastCacheStatsd.increment('fast_cache_auth_failed');
+    reply.status(401).send({ error: 'Authentication required' });
+    return;
+  }
+
   const value = await getChartCache(cacheKey);
 
   if (value) {
@@ -135,9 +155,9 @@ const handleGetChartCache = async (
   }
 
   fastCacheStatsd.increment('fast_cache_not_found');
+  // Do not echo cacheKey — avoids reflecting untrusted path params.
   reply.status(404).header('X-Cache', 'MISS').send({
     error: 'Cache miss',
-    cacheKey,
   });
 };
 
@@ -156,6 +176,11 @@ const handleHeadChartCache = async (
 
   if (!isValidCacheKey(cacheKey)) {
     reply.status(400).send();
+    return;
+  }
+
+  if (!request.jwtChannelId) {
+    reply.status(401).send();
     return;
   }
 

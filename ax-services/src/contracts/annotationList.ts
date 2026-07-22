@@ -83,7 +83,8 @@ export const annotationListResponseSchema = buildListResponseSchema({
   itemSchema: annotationListItemSchema,
   middleRequired: ['layerId'],
   middleProperties: {
-    layerId: { type: 'integer', minimum: 0 },
+    // Request requires >= 1; response layerId is never emitted as 0.
+    layerId: { type: 'integer', minimum: 1 },
   },
 });
 

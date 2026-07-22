@@ -201,7 +201,7 @@
       },
       "layerId": {
         "type": "integer",
-        "minimum": 0
+        "minimum": 1
       },
       "columnsRequested": {
         "type": "array",

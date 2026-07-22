@@ -25,6 +25,9 @@ RUN npm run build
 
 FROM node:24-trixie-slim AS runtime
 
+# AX_SERVICES_HOST defaults to 0.0.0.0 in this image, so non-loopback
+# listeners require AX_SERVICES_INTERNAL_TOKEN at runtime. The process
+# exits on startup if the token is missing (see buildConfig).
 ENV NODE_ENV=production \
     AX_SERVICES_HOST=0.0.0.0 \
     AX_SERVICES_PORT=31424
@@ -37,4 +40,5 @@ COPY --from=build /app/dist dist
 USER node
 EXPOSE 31424
 HEALTHCHECK --interval=30s --timeout=10s --retries=5 CMD node -e "fetch('http://127.0.0.1:' + (process.env.AX_SERVICES_PORT || '31424') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
-CMD ["npm", "run", "start"]
+# Use node directly as PID 1 so SIGTERM/SIGINT reach the process for graceful shutdown.
+CMD ["node", "dist/index.js"]

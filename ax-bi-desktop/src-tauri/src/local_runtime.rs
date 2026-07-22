@@ -32,7 +32,8 @@ use std::fs;
 use std::io::{Read, Write};
 use std::net::{SocketAddr, TcpStream, ToSocketAddrs};
 use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::process::{Command, Stdio};
+use std::sync::mpsc;
 use std::sync::OnceLock;
 use std::thread;
 use std::time::{Duration, Instant};
@@ -48,6 +49,9 @@ const AXBI_MCP_PORT: u16 = 31421;
 const AXBI_SERVICES_PORT: u16 = 31424;
 const AXBI_COLIMA_CPUS: &str = "4";
 const AXBI_COLIMA_MEMORY_GB: &str = "8";
+/// Hard ceiling for docker/colima/netstat subprocesses so hung daemons cannot
+/// pin the desktop process forever.
+const COMMAND_TIMEOUT: Duration = Duration::from_secs(300);
 const MANAGED_AXBI_IMAGE_REPO: &str = "ghcr.io/defai-digital/ax-bi";
 const MANAGED_AX_SERVICES_IMAGE_REPO: &str = "ghcr.io/defai-digital/ax-bi-services";
 const AXBI_DESKTOP_VERSION_ENV: &str = "AXBI_DESKTOP_VERSION";
@@ -407,11 +411,9 @@ pub fn status<R: Runtime>(app: &AppHandle<R>) -> Result<LocalRuntimeStatus, Stri
     log::info!("Reading local runtime dependencies");
     let dependencies = dependencies();
     let urls = runtime_urls(&env_file);
+    // Status is intentionally read-only: never rewrite compose/.env here.
+    // Mutations happen in prepare/start/restart/update via ensure_runtime_files.
     let configured = compose_file.exists() && env_file.exists();
-    if configured {
-        log::info!("Syncing generated local runtime files");
-        sync_runtime_files(&compose_file, &env_file)?;
-    }
 
     let engine = RuntimeEngine::current();
     let colima_profile = configured_colima_profile(&env_file);
@@ -663,8 +665,7 @@ fn ensure_runtime_files<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, Strin
 }
 
 fn sync_runtime_files(compose_path: &Path, env_path: &Path) -> Result<(), String> {
-    fs::write(compose_path, LOCAL_COMPOSE_YAML)
-        .map_err(|error| format!("Failed to write local Compose file: {error}"))?;
+    write_file_if_changed(compose_path, LOCAL_COMPOSE_YAML, "local Compose file")?;
 
     if !env_path.exists() {
         write_runtime_env(env_path, &build_env_file()?)?;
@@ -676,6 +677,47 @@ fn sync_runtime_files(compose_path: &Path, env_path: &Path) -> Result<(), String
     }
 
     Ok(())
+}
+
+/// Write `content` only when the on-disk bytes differ, via temp file + rename.
+fn write_file_if_changed(path: &Path, content: &str, label: &str) -> Result<(), String> {
+    if path.exists() {
+        match fs::read_to_string(path) {
+            Ok(existing) if existing == content => return Ok(()),
+            Ok(_) | Err(_) => {}
+        }
+    }
+
+    atomic_write(path, content, label)
+}
+
+/// Atomically replace `path` with `content` (write temp sibling, then rename).
+fn atomic_write(path: &Path, content: &str, label: &str) -> Result<(), String> {
+    let parent = path.parent().unwrap_or_else(|| Path::new("."));
+    fs::create_dir_all(parent)
+        .map_err(|error| format!("Failed to create parent for {label}: {error}"))?;
+
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("runtime.tmp");
+    let temp_path = parent.join(format!(
+        ".{file_name}.{}.tmp",
+        std::process::id()
+    ));
+
+    let write_result = (|| {
+        fs::write(&temp_path, content)
+            .map_err(|error| format!("Failed to write temporary {label}: {error}"))?;
+        fs::rename(&temp_path, path)
+            .map_err(|error| format!("Failed to publish {label}: {error}"))?;
+        Ok(())
+    })();
+
+    if write_result.is_err() {
+        let _ = fs::remove_file(&temp_path);
+    }
+    write_result
 }
 
 fn runtime_dir<R: Runtime>(app: &AppHandle<R>) -> Result<PathBuf, String> {
@@ -804,8 +846,7 @@ MCP_REQUIRED_SCOPES=
 
 /// Write the generated runtime environment and restrict access to its secrets.
 fn write_runtime_env(path: &Path, content: &str) -> Result<(), String> {
-    fs::write(path, content)
-        .map_err(|error| format!("Failed to write local runtime environment: {error}"))?;
+    atomic_write(path, content, "local runtime environment")?;
     secure_runtime_env_permissions(path)
 }
 
@@ -847,7 +888,16 @@ fn secure_runtime_env_permissions_windows(path: &Path) -> Result<(), String> {
         ));
     }
 
-    let username = std::env::var("USERNAME").unwrap_or_else(|_| "%USERNAME%".to_string());
+    let username = std::env::var("USERNAME").map_err(|_| {
+        "USERNAME environment variable is unset; cannot restrict runtime env ACLs on Windows"
+            .to_string()
+    })?;
+    if username.trim().is_empty() || username.contains('%') {
+        return Err(
+            "USERNAME environment variable is invalid; cannot restrict runtime env ACLs on Windows"
+                .to_string(),
+        );
+    }
     let grant = format!("{username}:F");
     let grant_out = Command::new("icacls")
         .args([path_str, "/grant:r", &grant])
@@ -1793,21 +1843,67 @@ fn run_command(
     cwd: Option<&Path>,
     envs: &[(&str, &str)],
 ) -> Result<CommandOutput, String> {
+    run_command_with_timeout(program, args, cwd, envs, COMMAND_TIMEOUT)
+}
+
+fn run_command_with_timeout(
+    program: &str,
+    args: &[&str],
+    cwd: Option<&Path>,
+    envs: &[(&str, &str)],
+    timeout: Duration,
+) -> Result<CommandOutput, String> {
     let program_path = resolve_program(program);
     let mut command = Command::new(&program_path);
     command.args(args.iter().map(OsStr::new));
     if let Some(cwd) = cwd {
         command.current_dir(cwd);
     }
+    command.stdin(Stdio::null());
+    command.stdout(Stdio::piped());
+    command.stderr(Stdio::piped());
     configure_subprocess(&mut command);
     apply_env_pairs(&mut command, envs);
 
-    let output = command.output().map_err(|error| {
+    let child = command.spawn().map_err(|error| {
         format!(
             "Failed to run {program} (resolved as {}): {error}",
             program_path.display()
         )
     })?;
+    let pid = child.id();
+
+    let (tx, rx) = mpsc::channel();
+    thread::spawn(move || {
+        let result = child.wait_with_output();
+        let _ = tx.send(result);
+    });
+
+    let output = match rx.recv_timeout(timeout) {
+        Ok(Ok(output)) => output,
+        Ok(Err(error)) => {
+            return Err(format!(
+                "Failed to run {program} (resolved as {}): {error}",
+                program_path.display()
+            ));
+        }
+        Err(mpsc::RecvTimeoutError::Timeout) => {
+            kill_process_tree(pid);
+            // Drain the waiter so the OS reaps the process.
+            let _ = rx.recv_timeout(Duration::from_secs(2));
+            return Err(format!(
+                "{program} timed out after {}s and was terminated",
+                timeout.as_secs()
+            ));
+        }
+        Err(mpsc::RecvTimeoutError::Disconnected) => {
+            kill_process_tree(pid);
+            return Err(format!(
+                "Failed to run {program}: subprocess waiter disconnected"
+            ));
+        }
+    };
+
     let stdout = String::from_utf8_lossy(&output.stdout).to_string();
     let stderr = String::from_utf8_lossy(&output.stderr).to_string();
 
@@ -1821,6 +1917,37 @@ fn run_command(
     }
 
     Ok(CommandOutput { stdout, stderr })
+}
+
+/// Best-effort kill of a hung subprocess (and children on Windows).
+fn kill_process_tree(pid: u32) {
+    if pid == 0 {
+        return;
+    }
+
+    #[cfg(unix)]
+    {
+        let _ = Command::new("kill")
+            .args(["-TERM", &pid.to_string()])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+        thread::sleep(Duration::from_millis(200));
+        let _ = Command::new("kill")
+            .args(["-KILL", &pid.to_string()])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+    }
+
+    #[cfg(windows)]
+    {
+        let _ = Command::new("taskkill")
+            .args(["/PID", &pid.to_string(), "/T", "/F"])
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+    }
 }
 
 /// Shared subprocess setup for GUI apps: fixed PATH + no console flash on Windows.
@@ -2117,13 +2244,30 @@ fn read_env_value(path: &Path, key: &str) -> Result<Option<String>, String> {
 
 fn read_env_value_from_str(content: &str, key: &str) -> Option<String> {
     content.lines().find_map(|line| {
-        let (line_key, line_value) = line.split_once('=')?;
+        let trimmed_line = line.trim();
+        if trimmed_line.is_empty() || trimmed_line.starts_with('#') {
+            return None;
+        }
+        let (line_key, line_value) = trimmed_line.split_once('=')?;
         if line_key.trim() == key {
-            Some(line_value.trim().to_string())
+            Some(strip_env_value_quotes(line_value.trim()).to_string())
         } else {
             None
         }
     })
+}
+
+/// Strip a single pair of matching surrounding quotes from an env value.
+fn strip_env_value_quotes(value: &str) -> &str {
+    let bytes = value.as_bytes();
+    if bytes.len() >= 2 {
+        let first = bytes[0];
+        let last = bytes[bytes.len() - 1];
+        if (first == b'"' && last == b'"') || (first == b'\'' && last == b'\'') {
+            return &value[1..value.len() - 1];
+        }
+    }
+    value
 }
 
 fn join_outputs(first: &str, second: &str) -> String {
@@ -2146,18 +2290,20 @@ mod tests {
     #[cfg(unix)]
     use super::secure_runtime_env_permissions;
     use super::{
-        augmented_path, bounded_output_tail, build_env_file, colima_config_resources_sufficient,
-        configured_colima_profile, default_ax_services_image, default_axbi_image, desktop_version,
-        docker_host, ensure_managed_image_tags_content, ensure_runtime_secrets_content,
-        is_managed_image_ref, local_runtime_port_from_state, managed_image_tag, platform_id,
-        platform_label, program_filename, read_env_value_from_str, resolve_program, runtime_urls,
-        tail_lines, valid_colima_profile, validate_log_service, RuntimeEngine, AXBI_ADMIN_USERNAME,
-        AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE, AXBI_DESKTOP_VERSION_ENV,
-        AXBI_IMAGE_ENV, AX_SERVICES_IMAGE_ENV, LOCAL_COMPOSE_YAML, MANAGED_AXBI_IMAGE_REPO,
-        MANAGED_AX_SERVICES_IMAGE_REPO, MAX_LOG_TAIL_LINES,
+        atomic_write, augmented_path, bounded_output_tail, build_env_file,
+        colima_config_resources_sufficient, configured_colima_profile, default_ax_services_image,
+        default_axbi_image, desktop_version, docker_host, ensure_managed_image_tags_content,
+        ensure_runtime_secrets_content, is_managed_image_ref, local_runtime_port_from_state,
+        managed_image_tag, platform_id, platform_label, program_filename, read_env_value_from_str,
+        resolve_program, run_command_with_timeout, runtime_urls, strip_env_value_quotes, tail_lines,
+        valid_colima_profile, validate_log_service, write_file_if_changed, RuntimeEngine,
+        AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE,
+        AXBI_DESKTOP_VERSION_ENV, AXBI_IMAGE_ENV, AX_SERVICES_IMAGE_ENV, LOCAL_COMPOSE_YAML,
+        MANAGED_AXBI_IMAGE_REPO, MANAGED_AX_SERVICES_IMAGE_REPO, MAX_LOG_TAIL_LINES,
     };
     use std::fs;
     use std::path::Path;
+    use std::time::Duration;
 
     #[test]
     fn generated_compose_binds_public_services_to_loopback() {
@@ -2496,5 +2642,67 @@ mod tests {
         ));
         assert!(!platform_id().is_empty());
         assert!(!platform_label().is_empty());
+    }
+
+    #[test]
+    fn strips_surrounding_quotes_from_env_values() {
+        assert_eq!(strip_env_value_quotes(r#""hello""#), "hello");
+        assert_eq!(strip_env_value_quotes("'hello'"), "hello");
+        assert_eq!(strip_env_value_quotes("hello"), "hello");
+        assert_eq!(strip_env_value_quotes(r#""partial"#), r#""partial"#);
+        assert_eq!(
+            read_env_value_from_str("ADMIN_PASSWORD=\"s3cret\"\n", "ADMIN_PASSWORD").unwrap(),
+            "s3cret"
+        );
+        assert_eq!(
+            read_env_value_from_str("ADMIN_PASSWORD='s3cret'\n", "ADMIN_PASSWORD").unwrap(),
+            "s3cret"
+        );
+    }
+
+    #[test]
+    fn atomic_write_and_write_if_changed_are_idempotent() {
+        let path = std::env::temp_dir().join(format!(
+            "axbi-atomic-write-test-{}.yml",
+            std::process::id()
+        ));
+        let _ = fs::remove_file(&path);
+
+        write_file_if_changed(&path, "one\n", "test file").unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "one\n");
+
+        // Unchanged content must not rewrite (still succeeds).
+        write_file_if_changed(&path, "one\n", "test file").unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "one\n");
+
+        write_file_if_changed(&path, "two\n", "test file").unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "two\n");
+
+        atomic_write(&path, "three\n", "test file").unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "three\n");
+
+        let _ = fs::remove_file(&path);
+    }
+
+    #[test]
+    fn run_command_times_out_and_kills_hung_process() {
+        let (program, args): (&str, &[&str]) = if cfg!(windows) {
+            ("ping", &["127.0.0.1", "-n", "30"])
+        } else {
+            ("sleep", &["30"])
+        };
+
+        let started = std::time::Instant::now();
+        let error = run_command_with_timeout(program, args, None, &[], Duration::from_secs(1))
+            .expect_err("hung command should time out");
+        assert!(
+            error.contains("timed out"),
+            "unexpected error message: {error}"
+        );
+        assert!(
+            started.elapsed() < Duration::from_secs(10),
+            "timeout watchdog took too long: {:?}",
+            started.elapsed()
+        );
     }
 }

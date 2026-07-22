@@ -16,10 +16,52 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import type { FastifyInstance } from 'fastify';
+
 import { buildConfig } from './config';
-import { createLogger } from './logger';
+import { createLogger, type ServiceLogger } from './logger';
 import { buildServer } from './server';
 import { AxBIClient } from './axbiClient';
+
+let shuttingDown = false;
+
+function installProcessHandlers(logger: ServiceLogger): void {
+  process.on('unhandledRejection', (reason: unknown) => {
+    logger.error('Unhandled promise rejection', { error: reason });
+    process.exit(1);
+  });
+  process.on('uncaughtException', (error: unknown) => {
+    logger.error('Uncaught exception', { error });
+    process.exit(1);
+  });
+}
+
+function installShutdownHandlers(
+  logger: ServiceLogger,
+  server: FastifyInstance,
+): void {
+  const shutdown = async (signal: string): Promise<void> => {
+    if (shuttingDown) {
+      return;
+    }
+    shuttingDown = true;
+    logger.info(`Received ${signal}, shutting down gracefully`);
+    try {
+      await server.close();
+      process.exit(0);
+    } catch (error) {
+      logger.error('Error during graceful shutdown', { error });
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGTERM', () => {
+    void shutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void shutdown('SIGINT');
+  });
+}
 
 export async function start(): Promise<void> {
   let logger = createLogger('error');
@@ -27,6 +69,8 @@ export async function start(): Promise<void> {
   try {
     const config = buildConfig();
     logger = createLogger(config.logLevel);
+    installProcessHandlers(logger);
+
     const axbiClient = new AxBIClient(config);
     const server = buildServer(config, axbiClient);
 
@@ -35,9 +79,11 @@ export async function start(): Promise<void> {
       host: config.host,
       port: config.port,
     });
+
+    installShutdownHandlers(logger, server);
   } catch (error) {
     logger.error('ax-services failed to start', { error });
-    process.exitCode = 1;
+    process.exit(1);
   }
 }
 

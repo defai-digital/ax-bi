@@ -229,8 +229,9 @@ function renderBiView() {
     return;
   }
 
+  // Remote servers open in an unprivileged WebviewWindow (not biFrame).
   if (biSource === "remote" && remoteBiUrl) {
-    showBiFrame(remoteBiUrl);
+    showHome(`Connected to ${remoteBiUrl}`, { sticky: true });
     return;
   }
 
@@ -845,7 +846,7 @@ function goHome() {
   closeSettings();
 }
 
-function connectToServer(event) {
+async function connectToServer(event) {
   event.preventDefault();
   const value = elements.serverUrl.value.trim();
   try {
@@ -859,7 +860,12 @@ function connectToServer(event) {
     remoteBiUrl = url.toString();
     biSource = "remote";
     writeStoredRemoteUrl(remoteBiUrl);
-    showBiFrame(remoteBiUrl);
+    // Security: never load remote AX BI inside the privileged launcher iframe
+    // (biFrame). Remote content opens in an unprivileged WebviewWindow so it
+    // cannot invoke local-runtime IPC (credentials, docker, etc.).
+    await invoke("open_remote_axbi_window", { url: remoteBiUrl });
+    preferHomeView = true;
+    showHome(`Connected to ${remoteBiUrl}`);
     closeSettings();
     setActivity("Connected", "ok");
   } catch (error) {
@@ -962,27 +968,33 @@ function wireEvents() {
     });
   });
   elements.prepare.addEventListener("click", () => {
-    runAction("Preparing local runtime", "prepare_local_runtime");
+    runAction("Preparing local runtime", "prepare_local_runtime").catch(
+      () => {},
+    );
   });
   elements.start.addEventListener("click", () => {
-    runAction("Starting local AX BI", "start_local_runtime", pollUntilHealthy);
+    runAction(
+      "Starting local AX BI",
+      "start_local_runtime",
+      pollUntilHealthy,
+    ).catch(() => {});
   });
   elements.stop.addEventListener("click", () => {
-    runAction("Stopping local AX BI", "stop_local_runtime");
+    runAction("Stopping local AX BI", "stop_local_runtime").catch(() => {});
   });
   elements.restart.addEventListener("click", () => {
     runAction(
       "Restarting local AX BI",
       "restart_local_runtime",
       pollUntilHealthy,
-    );
+    ).catch(() => {});
   });
   elements.update.addEventListener("click", () => {
     runAction(
       "Updating local AX BI images",
       "update_local_runtime",
       pollUntilHealthy,
-    );
+    ).catch(() => {});
   });
   elements.credentials.addEventListener("click", showCredentials);
   elements.copyCredentials?.addEventListener("click", copyCredentialsToClipboard);
@@ -1001,7 +1013,11 @@ function wireEvents() {
   });
   document
     .getElementById("connectForm")
-    .addEventListener("submit", connectToServer);
+    .addEventListener("submit", (event) => {
+      connectToServer(event).catch((error) => {
+        setActivity(errorMessage(error), "bad");
+      });
+    });
 
   window.addEventListener("message", handleWebMessage);
   window

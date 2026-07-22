@@ -22,7 +22,7 @@ under the License.
 By default tests will be run using the Postgres container defined at the `docker compose` file (`docker-compose.yml`) on the root of the repo,
 so prior to using this script make sure to launch the dev containers.
 
-You can use a different DB backend by defining `SUPERSET__SQLALCHEMY_DATABASE_URI` env var.
+You can use a different DB backend by defining `AXBI__SQLALCHEMY_DATABASE_URI` env var.
 
 This script will not install any dependencies for you, so you must be on an already set virtualenv
 
@@ -34,7 +34,7 @@ To show all supported switches:
 scripts/tests/run.sh --help
 ```
 
-From the superset repo root directory:
+From the ax-bi repo root directory:
 
 - Example run all tests:
 

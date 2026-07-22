@@ -21,7 +21,12 @@ export type Params = {
   port: MessagePort;
   name?: string;
   debug?: boolean;
+  /** Default timeout (ms) for get() calls. 0 / undefined = no timeout. */
+  timeoutMs?: number;
 };
+
+/** Default get() timeout when none is configured (30s). */
+export const DEFAULT_GET_TIMEOUT_MS = 30_000;
 
 // Each message we send on the channel specifies an action we want the other side to cooperate with.
 enum Actions {
@@ -99,6 +104,9 @@ export class Switchboard {
 
   debugMode = false;
 
+  /** Default timeout for get() in ms. 0 disables the timeout. */
+  defaultTimeoutMs = DEFAULT_GET_TIMEOUT_MS;
+
   private isInitialised = false;
 
   constructor(params?: Params) {
@@ -114,11 +122,17 @@ export class Switchboard {
       return;
     }
 
-    const { port, name = 'switchboard', debug = false } = params;
+    const {
+      port,
+      name = 'switchboard',
+      debug = false,
+      timeoutMs = DEFAULT_GET_TIMEOUT_MS,
+    } = params;
 
     this.port = port;
     this.name = name;
     this.debugMode = debug;
+    this.defaultTimeoutMs = timeoutMs;
 
     port.addEventListener('message', async event => {
       this.log('message received', event);
@@ -195,9 +209,15 @@ export class Switchboard {
    *
    * @param method the name of the method to call
    * @param args arguments that will be supplied. Must be serializable, no functions or other nonsense.
+   * @param timeoutMs optional per-call timeout override (ms). Falls back to
+   *   the instance defaultTimeoutMs. Pass 0 to disable.
    * @returns whatever is returned from the method
    */
-  get<T = unknown>(method: string, args: unknown = undefined): Promise<T> {
+  get<T = unknown>(
+    method: string,
+    args: unknown = undefined,
+    timeoutMs?: number,
+  ): Promise<T> {
     return new Promise((resolve, reject) => {
       if (!this.isInitialised) {
         reject(new Error('Switchboard not initialised'));
@@ -206,11 +226,24 @@ export class Switchboard {
       // In order to "call a method" on the other side of the port,
       // we will send a message with a unique id
       const messageId = this.getNewMessageId();
+      let settled = false;
+      const effectiveTimeout =
+        timeoutMs !== undefined ? timeoutMs : this.defaultTimeoutMs;
+
+      const cleanup = () => {
+        this.port.removeEventListener('message', listener);
+        if (timeoutId !== undefined) {
+          clearTimeout(timeoutId);
+        }
+      };
+
       // attach a new listener to our port, and remove it when we get a response
       const listener = (event: MessageEvent) => {
         const message = event.data;
         if (message.messageId !== messageId) return;
-        this.port.removeEventListener('message', listener);
+        if (settled) return;
+        settled = true;
+        cleanup();
         if (isReply(message)) {
           resolve(message.result);
         } else {
@@ -220,6 +253,21 @@ export class Switchboard {
           reject(new Error(errStr));
         }
       };
+
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      if (effectiveTimeout > 0) {
+        timeoutId = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(
+            new Error(
+              `[${this.name}] Method "${method}" timed out after ${effectiveTimeout}ms`,
+            ),
+          );
+        }, effectiveTimeout);
+      }
+
       this.port.addEventListener('message', listener);
       this.port.start();
       const message: GetMessage = {

@@ -117,27 +117,44 @@ class WebDriverPool:
                 "max_pool_size": self.max_pool_size,
             }
 
-    def _create_driver(
+    def _create_driver(  # noqa: C901
         self, window_size: WindowSize, user_id: int | None = None
     ) -> PooledWebDriver:
         """Create a new WebDriver instance with timeout protection"""
         driver = None
         old_handler = None
+        # SIGALRM only works on the main thread; worker threads raise ValueError.
+        use_sigalrm = threading.current_thread() is threading.main_thread()
+        creation_deadline: float | None = None
 
         try:
-            # SECURITY FIX: Set up timeout protection for driver creation
-            old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-            signal.alarm(self.creation_timeout_seconds)
+            if use_sigalrm:
+                # SECURITY FIX: Set up timeout protection for driver creation
+                old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+                signal.alarm(self.creation_timeout_seconds)
+            else:
+                # Thread-based path: enforce wall-clock deadline after create().
+                creation_deadline = time.monotonic() + self.creation_timeout_seconds
+                logger.debug(
+                    "WebDriver creation timeout using wall-clock deadline "
+                    "(non-main thread; SIGALRM unavailable)"
+                )
 
             driver_type = get_webdriver_type()
             selenium_driver = WebDriverSelenium(driver_type, window_size)
 
             # Create the actual WebDriver with timeout protection
             driver = selenium_driver.create()
+            if creation_deadline is not None and time.monotonic() > creation_deadline:
+                raise WebDriverCreationError(
+                    f"WebDriver creation timed out after "
+                    f"{self.creation_timeout_seconds} seconds"
+                )
             driver.set_window_size(*window_size)
 
             # Clear the alarm - creation successful
-            signal.alarm(0)
+            if use_sigalrm:
+                signal.alarm(0)
 
             pooled_driver = PooledWebDriver(
                 driver=driver,
@@ -165,7 +182,10 @@ class WebDriverPool:
                     driver.quit()
                 except Exception:
                     logger.debug("Failed to cleanup driver during timeout")
-            raise Exception("WebDriver creation timed out") from None
+            raise WebDriverCreationError(
+                f"WebDriver creation timed out after "
+                f"{self.creation_timeout_seconds} seconds"
+            ) from None
 
         except Exception as e:
             logger.error("Failed to create WebDriver: %s", e)
@@ -178,9 +198,10 @@ class WebDriverPool:
 
         finally:
             # Restore original signal handler and clear alarm
-            signal.alarm(0)
-            if old_handler is not None:
-                signal.signal(signal.SIGALRM, old_handler)
+            if use_sigalrm:
+                signal.alarm(0)
+                if old_handler is not None:
+                    signal.signal(signal.SIGALRM, old_handler)
 
     def _is_driver_valid(self, pooled_driver: PooledWebDriver) -> bool:
         """Check if a pooled driver is still valid for use"""

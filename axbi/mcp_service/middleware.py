@@ -825,12 +825,25 @@ class InMemoryRateLimiter:
             # Update total after adding
             total_requests += 1
 
-            # Keep only recent entries
+            # Keep only recent entries for this key
             self._requests[key] = [
                 (ts, count)
                 for ts, count in self._requests[key]
                 if ts > current_time - 3600  # Keep last hour
             ]
+
+            # Periodic eviction of keys whose newest entry is outside retention
+            # so unique API keys cannot leak memory in long-lived processes.
+            if current_time - self._last_cleanup >= self._cleanup_interval:
+                retention_start = current_time - 3600
+                stale_keys = [
+                    k
+                    for k, entries in self._requests.items()
+                    if not entries or entries[-1][0] <= retention_start
+                ]
+                for stale_key in stale_keys:
+                    del self._requests[stale_key]
+                self._last_cleanup = current_time
 
             # Rate limit info after adding request
             rate_limit_info = {

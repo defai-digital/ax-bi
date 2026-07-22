@@ -122,6 +122,9 @@ class SynchronousSqlJsonExecutor(SqlJsonExecutorBase):
         rendered_query: str,
         log_params: dict[str, Any] | None,
     ) -> SqlResults | None:
+        # NOTE: ``utils.timeout`` (SIGALRM / interrupt_main) is main-thread only
+        # and a no-op under threaded workers. Prefer engine/socket statement
+        # timeouts on Database.connect_args where the driver supports them.
         with utils.timeout(
             seconds=self._timeout_duration_in_seconds,
             error_message=self._get_timeout_error_msg(),

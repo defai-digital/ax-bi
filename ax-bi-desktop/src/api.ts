@@ -18,7 +18,18 @@
  */
 
 /**
- * Type definitions for the AX BI Desktop Client Tauri API
+ * Typed Tauri IPC layer for the AX BI Desktop launcher.
+ *
+ * This module is the intended future surface for all native invokes (status,
+ * prepare/start/stop, credentials, open local/remote windows). The shipped
+ * launcher UI currently lives in plain `main.js` (no bundler), which talks to
+ * `__TAURI_INTERNALS__.invoke` directly; keep these wrappers and runtime
+ * assertions in sync with `src-tauri/src/commands` so TypeScript consumers and
+ * future UI wiring share one validated contract.
+ *
+ * Security note: remote AX BI must be opened via `openRemoteAxbiWindow` (an
+ * unprivileged WebviewWindow). Never load untrusted remote content into the
+ * privileged launcher document/iframe — that would inherit local-runtime IPC.
  */
 
 import { invoke } from '@tauri-apps/api/core';
@@ -351,4 +362,11 @@ export async function getLocalAdminCredentials(): Promise<LocalAdminCredentials>
  */
 export async function openLocalAxbiWindow(): Promise<void> {
   return invoke('open_local_axbi_window');
+}
+
+/**
+ * Open a remote AX BI server in an unprivileged WebviewWindow (no local-runtime IPC).
+ */
+export async function openRemoteAxbiWindow(url: string): Promise<void> {
+  return invoke('open_remote_axbi_window', { url });
 }

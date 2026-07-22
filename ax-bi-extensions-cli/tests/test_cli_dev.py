@@ -378,12 +378,14 @@ def test_frontend_change_handler_init():
         "/path/to/frontend/dist/file.js",
         "/path/to/frontend/dist/assets/style.css",
         r"C:\path\to\frontend\dist\file.js",
+        "/path/to/frontend/node_modules/pkg/index.js",
+        r"C:\path\to\frontend\node_modules\pkg\index.js",
     ],
 )
 def test_frontend_change_handler_ignores_dist_changes(source_path):
-    """Test FrontendChangeHandler ignores changes in dist directory."""
+    """Test FrontendChangeHandler ignores changes in dist/node_modules."""
     mock_trigger = Mock()
-    handler = FrontendChangeHandler(trigger_build=mock_trigger)
+    handler = FrontendChangeHandler(trigger_build=mock_trigger, debounce_seconds=0)
 
     # Create mock event with dist path
     mock_event = Mock()
@@ -409,7 +411,7 @@ def test_frontend_change_handler_ignores_dist_changes(source_path):
 def test_frontend_change_handler_triggers_on_source_changes(source_path):
     """Test FrontendChangeHandler triggers build on source changes."""
     mock_trigger = Mock()
-    handler = FrontendChangeHandler(trigger_build=mock_trigger)
+    handler = FrontendChangeHandler(trigger_build=mock_trigger, debounce_seconds=0)
 
     # Create mock event with source path
     mock_event = Mock()
@@ -419,6 +421,31 @@ def test_frontend_change_handler_triggers_on_source_changes(source_path):
 
     # Should trigger build for source changes
     mock_trigger.assert_called_once()
+
+
+@pytest.mark.unit
+def test_frontend_change_handler_debounces_and_skips_running_build():
+    """Debounce and skip while a build is already running."""
+    mock_trigger = Mock()
+    running = {"value": False}
+    handler = FrontendChangeHandler(
+        trigger_build=mock_trigger,
+        debounce_seconds=60,
+        is_build_running=lambda: running["value"],
+    )
+    mock_event = Mock()
+    mock_event.src_path = "/path/to/frontend/src/a.tsx"
+
+    handler.on_any_event(mock_event)
+    handler.on_any_event(mock_event)
+    mock_trigger.assert_called_once()
+
+    mock_trigger.reset_mock()
+    running["value"] = True
+    # Force debounce window open by rewinding last trigger.
+    handler._last_trigger_at = 0.0
+    handler.on_any_event(mock_event)
+    mock_trigger.assert_not_called()
 
 
 # Dev Utility Functions Tests

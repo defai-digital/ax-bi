@@ -42,7 +42,7 @@ Environment variables:
 | --------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------- |
 | `AX_SERVICES_HOST`                | `127.0.0.1`                          | Host for the service listener.                                                                |
 | `AX_SERVICES_PORT`                | `31424`                              | Port for the service listener.                                                                |
-| `AX_SERVICES_INTERNAL_TOKEN`      | unset                                | Inbound bearer token. Required for non-loopback listeners; `/health` remains unauthenticated. |
+| `AX_SERVICES_INTERNAL_TOKEN`      | unset                                | Inbound bearer token. Required for non-loopback listeners (including Docker's default `0.0.0.0`); `/health` remains unauthenticated. Process exits on startup if missing when host is not loopback. |
 | `AXBI_BASE_URL`                   | `http://127.0.0.1:31423`             | AX BI base URL used by readiness checks and internal clients.                                 |
 | `AXBI_HEALTH_PATH`                | `/health`                            | AX BI health path.                                                                            |
 | `AXBI_METADATA_PATH`              | `/api/v1/dashboard/_info`            | Safe AX BI REST metadata endpoint used by the sidecar metadata probe.                         |
@@ -59,7 +59,7 @@ Environment variables:
 | `AXBI_SAVED_QUERY_LIST_PATH`      | `/api/v1/saved_query/`               | AX BI saved query list endpoint.                                                              |
 | `AXBI_TAG_LIST_PATH`              | `/api/v1/tag/`                       | AX BI tag list endpoint.                                                                      |
 | `AXBI_TASK_LIST_PATH`             | `/api/v1/task/`                      | AX BI task list endpoint.                                                                     |
-| `AXBI_TIMEOUT_MS`                 | `2000`                               | AX BI connectivity timeout in milliseconds.                                                   |
+| `AXBI_TIMEOUT_MS`                 | `2000`                               | AX BI connectivity timeout in milliseconds (max `120000`). Python `AX_SERVICES_TIMEOUT_SECONDS` must be strictly greater. |
 | `AXBI_INTERNAL_TOKEN`             | unset                                | Optional bearer token for calls from the sidecar to AX BI.                                    |
 | `AX_SERVICES_LOG_LEVEL`           | `info`                               | Structured log level.                                                                         |
 

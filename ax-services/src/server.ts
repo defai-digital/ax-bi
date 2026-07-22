@@ -20,7 +20,7 @@ import { randomUUID, timingSafeEqual } from 'crypto';
 
 import Fastify, { FastifyInstance } from 'fastify';
 
-import { ServiceConfig } from './config';
+import { isLoopbackHost, ServiceConfig } from './config';
 import { normalizeRequestIdHeader } from './requestId';
 import {
   AnnotationListRequest,
@@ -210,16 +210,23 @@ export function buildServer(
         },
       },
     },
-    async (): Promise<HealthResponseContract> => ({
-      contractVersion: RUNTIME_CONTRACT_VERSION,
-      service: 'ax-services',
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      version: runtimeVersion(),
-      nodeVersion: process.version,
-      platform: process.platform,
-      uptimeSeconds: Number(process.hrtime.bigint() - serviceStartTime) / 1e9,
-    }),
+    async (): Promise<HealthResponseContract> => {
+      // Reduce host fingerprinting on non-loopback listeners: omit node/platform.
+      const health: HealthResponseContract = {
+        contractVersion: RUNTIME_CONTRACT_VERSION,
+        service: 'ax-services',
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        version: runtimeVersion(),
+        uptimeSeconds:
+          Number(process.hrtime.bigint() - serviceStartTime) / 1e9,
+      };
+      if (isLoopbackHost(config.host)) {
+        health.nodeVersion = process.version;
+        health.platform = process.platform;
+      }
+      return health;
+    },
   );
 
   server.get(

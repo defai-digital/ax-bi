@@ -22,6 +22,7 @@ from flask_appbuilder.api import safe
 from flask_appbuilder.models.sqla.interface import SQLAInterface
 from flask_appbuilder.security.decorators import protect
 from marshmallow.exceptions import ValidationError
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from axbi.cachekeys.schemas import CacheInvalidationRequestSchema
@@ -98,10 +99,15 @@ class CacheRestApi(BaseAxBIModelRestApi):
             if ds_obj:
                 datasource_uids.add(ds_obj.uid)
 
-        cache_key_objs = (
-            db.session.query(CacheKey)
-            .filter(CacheKey.datasource_uid.in_(datasource_uids))
-            .all()
+        if not datasource_uids:
+            return self.response_400(
+                message="No matching datasources found for cache invalidation"
+            )
+
+        cache_key_objs = list(
+            db.session.scalars(
+                select(CacheKey).where(CacheKey.datasource_uid.in_(datasource_uids))
+            ).all()
         )
         cache_keys = [c.cache_key for c in cache_key_objs]
         if cache_key_objs:

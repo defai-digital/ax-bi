@@ -20,8 +20,11 @@
   "jwtAlgorithms": ["HS256"],
   "jwtSecret": "CHANGE-ME",
   "jwtCookieName": "async-token",
-  "allowedOrigins": [],
+  "allowedOrigins": ["https://ax-bi.example.com"],
+  "maxSocketBufferBytes": 1048576,
+  "maxTotalConnections": 10000,
+  "maxConnectionsPerChannel": 10,
   "fastCacheEnabled": true,
   "fastCacheKeyPrefix": "fc:",
-  "httpCorsOrigins": []
+  "httpCorsOrigins": ["https://ax-bi.example.com"]
 }

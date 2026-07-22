@@ -135,9 +135,13 @@ export const useDownloadScreenshot = (
             window.URL.revokeObjectURL(url);
           })
           .catch(err => {
+            // Always rethrow so the retry counter advances for every failure
+            // (404 "not ready" and hard errors alike). Swallowing non-404
+            // errors previously left the promise resolved and polling endless.
             if ((err as AxBIApiError).status === 404) {
               throw new Error('Image not ready');
             }
+            throw err;
           });
 
       const fetchImageWithRetry = (cacheKey: string) => {
@@ -153,6 +157,10 @@ export const useDownloadScreenshot = (
         checkImageReady(cacheKey)
           .catch(() => {
             retries += 1;
+            if (retries >= MAX_RETRIES) {
+              stopIntervals('failure');
+              logging.error('Max retries reached');
+            }
           })
           .finally(() => {
             isFetching = false;

@@ -121,6 +121,26 @@ describe('asyncEvent middleware', () => {
       asyncEvent.init(config);
     });
 
+    test('rejects when max wait is exceeded before an event arrives', async () => {
+      jest.useFakeTimers();
+      fetchMock.clearHistory().removeRoutes();
+      // Never return a matching event so the wait times out.
+      fetchMock.get(EVENTS_ENDPOINT, {
+        status: 200,
+        body: { result: [] },
+      });
+      asyncEvent.init({
+        ...config,
+        GLOBAL_ASYNC_QUERIES_MAX_WAIT_MS: 200,
+      });
+
+      const promise = asyncEvent.waitForAsyncData(asyncPendingEvent);
+      const assertion = expect(promise).rejects.toThrow(/timed out/i);
+      await jest.advanceTimersByTimeAsync(250);
+      await assertion;
+      jest.useRealTimers();
+    });
+
     test('resolves with chart data on event done status', async () => {
       const actualResolved =
         await asyncEvent.waitForAsyncData(asyncPendingEvent);

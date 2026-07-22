@@ -803,12 +803,24 @@ class SigalrmTimeout:
 
 
 class TimerTimeout:
+    """Timeout via ``_thread.interrupt_main``.
+
+    **Main-thread only.** ``interrupt_main`` raises ``KeyboardInterrupt`` in the
+    process main thread, not the worker that entered the context. Prefer
+    database/driver statement timeouts for query work under threaded servers.
+    """
+
     def __init__(self, seconds: int = 1, error_message: str = "Timeout") -> None:
         self.seconds = seconds
         self.error_message = error_message
         self.timer = threading.Timer(seconds, _thread.interrupt_main)
 
     def __enter__(self) -> None:
+        if threading.current_thread() is not threading.main_thread():
+            logger.warning(
+                "TimerTimeout is ineffective off the main thread "
+                "(interrupt_main targets the main thread); prefer DB statement timeouts"
+            )
         self.timer.start()
 
     def __exit__(  # pylint: disable=redefined-outer-name,redefined-builtin
@@ -824,7 +836,10 @@ class TimerTimeout:
             )
 
 
-# Windows has no support for SIGALRM, so we use the timer based timeout
+# Windows has no support for SIGALRM, so we use the timer based timeout.
+# NOTE: Both SigalrmTimeout and TimerTimeout only work reliably on the main
+# thread. Under threaded WSGI/async workers, prefer engine-level statement
+# timeouts / socket timeouts rather than process signal timeouts.
 timeout: type[TimerTimeout] | type[SigalrmTimeout] = (
     TimerTimeout if platform.system() == "Windows" else SigalrmTimeout
 )

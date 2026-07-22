@@ -177,3 +177,26 @@ test('triggers only one download when multiple successful responses race', async
   jest.clearAllTimers();
   jest.useRealTimers();
 });
+
+test('non-404 GET failures still advance the retry counter', async () => {
+  jest.useFakeTimers();
+  mockPostSuccess();
+
+  // Hard error (500) — previously swallowed so retries never incremented.
+  (AxBIClient.get as jest.Mock).mockRejectedValue({ status: 500 });
+
+  await triggerDownload();
+
+  // Each interval tick should issue another GET because the previous
+  // rejection completes and clears isFetching, and increments retries.
+  await act(async () => {
+    jest.advanceTimersByTime(RETRY_INTERVAL * 3);
+    await flushPromises();
+  });
+
+  // Immediate attempt + 3 interval ticks.
+  expect(AxBIClient.get.mock.calls.length).toBeGreaterThanOrEqual(2);
+
+  jest.clearAllTimers();
+  jest.useRealTimers();
+});

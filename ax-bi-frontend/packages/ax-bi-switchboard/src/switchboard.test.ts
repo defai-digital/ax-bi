@@ -301,6 +301,42 @@ describe('comms', () => {
         'Unexpected response message',
       );
     });
+
+    test('rejects when the configured timeout elapses', async () => {
+      jest.useFakeTimers();
+      const channel = new MessageChannel();
+      // Never reply — the other side is intentionally silent.
+      const ours = new Switchboard({
+        port: channel.port1,
+        name: 'ours',
+        timeoutMs: 100,
+      });
+      const promise = ours.get('neverReplies');
+      // Attach rejection handler before advancing timers to avoid unhandled rejection.
+      const assertion = expect(promise).rejects.toThrow(
+        '[ours] Method "neverReplies" timed out after 100ms',
+      );
+      await jest.advanceTimersByTimeAsync(100);
+      await assertion;
+      jest.useRealTimers();
+    });
+
+    test('per-call timeoutMs overrides the instance default', async () => {
+      jest.useFakeTimers();
+      const channel = new MessageChannel();
+      const ours = new Switchboard({
+        port: channel.port1,
+        name: 'ours',
+        timeoutMs: 10_000,
+      });
+      const promise = ours.get('slow', undefined, 50);
+      const assertion = expect(promise).rejects.toThrow(
+        '[ours] Method "slow" timed out after 50ms',
+      );
+      await jest.advanceTimersByTimeAsync(50);
+      await assertion;
+      jest.useRealTimers();
+    });
   });
 
   test('logs in debug mode', async () => {

@@ -129,7 +129,8 @@ class CreateCustomTagWithRelationshipsCommand(CreateMixin, BaseCommand):
 
             # Validate object type
             if not object_type:
-                exceptions.append(TagInvalidError(f"invalid object type {object_type}"))
+                # Use raw obj_type — object_type is None in this branch.
+                exceptions.append(TagInvalidError(f"invalid object type {obj_type!r}"))
                 continue
 
             try:

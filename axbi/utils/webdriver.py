@@ -125,7 +125,25 @@ def check_playwright_availability() -> bool:
         return False
 
 
-PLAYWRIGHT_AVAILABLE = check_playwright_availability()
+# Lazy: import-time probe can launch Chromium and must not run during CLI/migration.
+# Callers should use ``is_playwright_available()``; ``PLAYWRIGHT_AVAILABLE`` is a
+# module-level cache populated on first probe (still a real bool once set).
+_playwright_available: bool | None = None
+
+
+def is_playwright_available() -> bool:
+    """Cached Playwright availability; evaluated on first use only."""
+    global _playwright_available  # noqa: PLW0603
+    if _playwright_available is None:
+        _playwright_available = check_playwright_availability()
+    return _playwright_available
+
+
+def __getattr__(name: str) -> Any:
+    """Expose PLAYWRIGHT_AVAILABLE as a lazy module attribute (real bool)."""
+    if name == "PLAYWRIGHT_AVAILABLE":
+        return is_playwright_available()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 class _PlaywrightBrowserManager:
@@ -183,14 +201,15 @@ def validate_webdriver_config() -> dict[str, Any]:
     """
     from axbi import feature_flag_manager
 
+    available = is_playwright_available()
     return {
         "selenium_available": True,  # Always available as required dependency
-        "playwright_available": PLAYWRIGHT_AVAILABLE,
+        "playwright_available": available,
         "playwright_feature_enabled": feature_flag_manager.is_feature_enabled(
             "PLAYWRIGHT_REPORTS_AND_THUMBNAILS"
         ),
         "recommended_action": (
-            PLAYWRIGHT_INSTALL_MESSAGE if not PLAYWRIGHT_AVAILABLE else None
+            PLAYWRIGHT_INSTALL_MESSAGE if not available else None
         ),
     }
 
@@ -283,7 +302,7 @@ class WebDriverPlaywright(WebDriverProxy):
     def get_screenshot(  # pylint: disable=too-many-locals, too-many-statements  # noqa: C901
         self, url: str, element_name: str, user: User | None = None
     ) -> bytes | None:
-        if not PLAYWRIGHT_AVAILABLE:
+        if not is_playwright_available():
             logger.info(
                 "Playwright not available - falling back to Selenium. "
                 "Note: WebGL/Canvas charts may not render correctly with Selenium. "

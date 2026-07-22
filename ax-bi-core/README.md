@@ -71,6 +71,10 @@ class DatasetReferencesAPI(RestApi):
 from superset_core.tasks.decorators import task
 from superset_core.tasks.types import TaskScope
 
+@task  # bare form is supported; @task() and @task(name=..., scope=...) also work
+def generate_thumbnail(chart_id: int) -> None:
+    # ... task implementation
+
 @task(name="generate_report", scope=TaskScope.SHARED)
 def generate_report(chart_id: int) -> None:
     # ... task implementation

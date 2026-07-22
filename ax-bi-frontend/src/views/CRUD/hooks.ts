@@ -148,6 +148,18 @@ export function useListViewResource<D extends object = any>(
   );
 
   const lastFetchDataConfigRef = useRef<FetchDataConfig | null>(null);
+  // Guards against out-of-order responses and setState after unmount.
+  const fetchRequestIdRef = useRef(0);
+  const isMountedRef = useRef(true);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      // Invalidate any in-flight fetch so its resolution is ignored.
+      fetchRequestIdRef.current += 1;
+    };
+  }, []);
 
   const fetchData = useCallback(
     ({
@@ -163,6 +175,7 @@ export function useListViewResource<D extends object = any>(
         sortBy,
       };
       lastFetchDataConfigRef.current = config;
+      const requestId = ++fetchRequestIdRef.current;
       // set loading state, cache the last config for refreshing data.
       updateState({
         lastFetchDataConfig: config,
@@ -196,23 +209,41 @@ export function useListViewResource<D extends object = any>(
       })
         .then(
           ({ json = {} }) => {
+            if (
+              !isMountedRef.current ||
+              requestId !== fetchRequestIdRef.current
+            ) {
+              return;
+            }
             updateState({
               collection: json.result,
               count: json.count,
               lastFetched: new Date().toISOString(),
             });
           },
-          createErrorHandler(errMsg =>
+          createErrorHandler(errMsg => {
+            if (
+              !isMountedRef.current ||
+              requestId !== fetchRequestIdRef.current
+            ) {
+              return;
+            }
             handleErrorMsg(
               t(
                 'An error occurred while fetching %ss: %s',
                 resourceLabel,
                 errMsg,
               ),
-            ),
-          ),
+            );
+          }),
         )
         .finally(() => {
+          if (
+            !isMountedRef.current ||
+            requestId !== fetchRequestIdRef.current
+          ) {
+            return;
+          }
           updateState({ loading: false });
         });
     },

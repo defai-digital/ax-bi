@@ -121,9 +121,9 @@ def test_metadata_calls_ax_services_metadata_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"dependencies": {"axbiMetadata": {"ok": True}}}
     session.get.assert_called_once_with(
-        "http://127.0.0.1:5010/metadata",
+        "http://127.0.0.1:31424/metadata",
         headers={"x-request-id": "request-metadata"},
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -139,9 +139,9 @@ def test_metrics_calls_ax_services_metrics_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"requests": {"total": 3}}
     session.get.assert_called_once_with(
-        "http://127.0.0.1:5010/metrics",
+        "http://127.0.0.1:31424/metrics",
         headers={"x-request-id": "request-metrics"},
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -166,7 +166,7 @@ def test_asset_search_posts_to_ax_services_asset_search_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"assets": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/assets/search",
+        "http://127.0.0.1:31424/mcp/assets/search",
         json={
             "contractVersion": "asset-search.v1",
             "query": "sales",
@@ -178,7 +178,7 @@ def test_asset_search_posts_to_ax_services_asset_search_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-search",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -206,7 +206,7 @@ def test_list_dashboards_posts_to_ax_services_dashboard_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"dashboards": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/dashboards/list",
+        "http://127.0.0.1:31424/mcp/dashboards/list",
         json={
             "contractVersion": "dashboard-list.v1",
             "filters": [],
@@ -221,7 +221,7 @@ def test_list_dashboards_posts_to_ax_services_dashboard_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-dashboards",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -249,7 +249,7 @@ def test_list_charts_posts_to_ax_services_chart_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"charts": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/charts/list",
+        "http://127.0.0.1:31424/mcp/charts/list",
         json={
             "contractVersion": "chart-list.v1",
             "filters": [],
@@ -264,7 +264,7 @@ def test_list_charts_posts_to_ax_services_chart_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-charts",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -291,7 +291,7 @@ def test_list_databases_posts_to_ax_services_database_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"databases": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/databases/list",
+        "http://127.0.0.1:31424/mcp/databases/list",
         json={
             "contractVersion": "database-list.v1",
             "filters": [],
@@ -305,7 +305,7 @@ def test_list_databases_posts_to_ax_services_database_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-databases",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -333,7 +333,7 @@ def test_list_datasets_posts_to_ax_services_dataset_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"datasets": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/datasets/list",
+        "http://127.0.0.1:31424/mcp/datasets/list",
         json={
             "contractVersion": "dataset-list.v1",
             "filters": [],
@@ -348,7 +348,7 @@ def test_list_datasets_posts_to_ax_services_dataset_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-datasets",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -376,7 +376,7 @@ def test_list_annotation_layers_posts_to_ax_services_annotation_layer_endpoint()
     assert result.ok is True
     assert result.payload == {"annotationLayers": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/annotation-layers/list",
+        "http://127.0.0.1:31424/mcp/annotation-layers/list",
         json={
             "contractVersion": "annotation-layer-list.v1",
             "filters": [],
@@ -389,7 +389,7 @@ def test_list_annotation_layers_posts_to_ax_services_annotation_layer_endpoint()
             "content-type": "application/json",
             "x-request-id": "request-annotation-layers",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -416,7 +416,7 @@ def test_list_annotations_posts_to_ax_services_annotation_list_endpoint() -> Non
     assert result.ok is True
     assert result.payload == {"annotations": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/annotations/list",
+        "http://127.0.0.1:31424/mcp/annotations/list",
         json={
             "contractVersion": "annotation-list.v1",
             "layerId": 5,
@@ -430,7 +430,7 @@ def test_list_annotations_posts_to_ax_services_annotation_list_endpoint() -> Non
             "content-type": "application/json",
             "x-request-id": "request-annotations",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -456,7 +456,7 @@ def test_list_queries_posts_to_ax_services_query_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"queries": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/queries/list",
+        "http://127.0.0.1:31424/mcp/queries/list",
         json={
             "contractVersion": "query-list.v1",
             "filters": [],
@@ -469,7 +469,7 @@ def test_list_queries_posts_to_ax_services_query_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-queries",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -495,7 +495,7 @@ def test_list_saved_queries_posts_to_ax_services_saved_query_list_endpoint() -> 
     assert result.ok is True
     assert result.payload == {"savedQueries": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/saved-queries/list",
+        "http://127.0.0.1:31424/mcp/saved-queries/list",
         json={
             "contractVersion": "saved-query-list.v1",
             "filters": [],
@@ -508,7 +508,7 @@ def test_list_saved_queries_posts_to_ax_services_saved_query_list_endpoint() -> 
             "content-type": "application/json",
             "x-request-id": "request-saved-queries",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -534,7 +534,7 @@ def test_list_tags_posts_to_ax_services_tag_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"tags": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/tags/list",
+        "http://127.0.0.1:31424/mcp/tags/list",
         json={
             "contractVersion": "tag-list.v1",
             "filters": [],
@@ -547,7 +547,7 @@ def test_list_tags_posts_to_ax_services_tag_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-tags",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -573,7 +573,7 @@ def test_list_reports_posts_to_ax_services_report_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"reports": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/reports/list",
+        "http://127.0.0.1:31424/mcp/reports/list",
         json={
             "contractVersion": "report-list.v1",
             "filters": [],
@@ -586,7 +586,7 @@ def test_list_reports_posts_to_ax_services_report_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-reports",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -612,7 +612,7 @@ def test_list_roles_posts_to_ax_services_role_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"roles": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/roles/list",
+        "http://127.0.0.1:31424/mcp/roles/list",
         json={
             "contractVersion": "role-list.v1",
             "filters": [],
@@ -625,7 +625,7 @@ def test_list_roles_posts_to_ax_services_role_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-roles",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -651,7 +651,7 @@ def test_list_rls_filters_posts_to_ax_services_rls_filter_list_endpoint() -> Non
     assert result.ok is True
     assert result.payload == {"rlsFilters": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/rls-filters/list",
+        "http://127.0.0.1:31424/mcp/rls-filters/list",
         json={
             "contractVersion": "rls-list.v1",
             "filters": [],
@@ -664,7 +664,7 @@ def test_list_rls_filters_posts_to_ax_services_rls_filter_list_endpoint() -> Non
             "content-type": "application/json",
             "x-request-id": "request-rls",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -690,7 +690,7 @@ def test_list_tasks_posts_to_ax_services_task_list_endpoint() -> None:
     assert result.ok is True
     assert result.payload == {"tasks": []}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/mcp/tasks/list",
+        "http://127.0.0.1:31424/mcp/tasks/list",
         json={
             "contractVersion": "task-list.v1",
             "filters": [],
@@ -703,7 +703,7 @@ def test_list_tasks_posts_to_ax_services_task_list_endpoint() -> None:
             "content-type": "application/json",
             "x-request-id": "request-tasks",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 
@@ -723,13 +723,13 @@ def test_post_json_sends_payload() -> None:
     assert result.ok is True
     assert result.payload == {"accepted": True}
     session.post.assert_called_once_with(
-        "http://127.0.0.1:5010/runtime/v1/candidate",
+        "http://127.0.0.1:31424/runtime/v1/candidate",
         json={"operation": "plan_dashboard"},
         headers={
             "content-type": "application/json",
             "x-request-id": "request-abc",
         },
-        timeout=2.0,
+        timeout=5.0,
     )
 
 

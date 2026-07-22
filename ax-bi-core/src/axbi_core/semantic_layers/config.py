@@ -41,15 +41,19 @@ def build_configuration_schema(
     """
     schema = config_class.model_json_schema()
 
-    # Pydantic sorts properties alphabetically; restore model field order
+    # Pydantic sorts properties alphabetically; restore model field order,
+    # then append any schema keys not present on the model (e.g. extras).
+    properties = schema.get("properties") or {}
     field_order = [
         field.alias or name for name, field in config_class.model_fields.items()
     ]
-    schema["properties"] = {
-        key: schema["properties"][key]
-        for key in field_order
-        if key in schema["properties"]
+    ordered: dict[str, Any] = {
+        key: properties[key] for key in field_order if key in properties
     }
+    for key, value in properties.items():
+        if key not in ordered:
+            ordered[key] = value
+    schema["properties"] = ordered
 
     if configuration is None:
         for prop_schema in schema["properties"].values():

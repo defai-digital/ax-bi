@@ -2110,9 +2110,12 @@ class DatabaseRestApi(BaseAxBIModelRestApi):
             )
         except AxBIException as ex:
             return self.response(ex.status, message=ex.message)
-        except Exception as ex:
+        except Exception:
+            # Scrub driver/SQL internals from the client response (fail closed).
             logger.exception("Auto upload failed")
-            return self.response_400(message=str(ex))
+            return self.response_400(
+                message="Upload failed. Check server logs for details."
+            )
 
     @expose("/<int:pk>/function_names/", methods=("GET",))
     @protect()

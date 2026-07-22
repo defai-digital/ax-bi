@@ -53,14 +53,41 @@ fi
 command -v xcrun >/dev/null 2>&1 || fail "xcrun is required"
 
 if [[ -z "$DMG_PATH" ]]; then
+  candidates=()
   for bundle_dir in \
     "${DESKTOP_DIR}/src-tauri/target/aarch64-apple-darwin/release/bundle/dmg" \
+    "${DESKTOP_DIR}/src-tauri/target/x86_64-apple-darwin/release/bundle/dmg" \
     "${DESKTOP_DIR}/src-tauri/target/release/bundle/dmg"; do
     if [[ -d "$bundle_dir" ]]; then
-      DMG_PATH="$(find "$bundle_dir" -maxdepth 1 -name '*.dmg' -print -quit)"
-      [[ -z "$DMG_PATH" ]] || break
+      while IFS= read -r -d '' dmg; do
+        candidates+=("$dmg")
+      done < <(find "$bundle_dir" -maxdepth 1 -name '*.dmg' -print0 2>/dev/null)
     fi
   done
+
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    fail "no Tauri DMG found; pass its path explicitly"
+  fi
+
+  # Prefer the newest DMG by mtime when multiple exist.
+  newest=""
+  newest_mtime=0
+  for dmg in "${candidates[@]}"; do
+    mtime="$(stat -f '%m' "$dmg" 2>/dev/null || stat -c '%Y' "$dmg" 2>/dev/null || echo 0)"
+    if [[ "$mtime" -ge "$newest_mtime" ]]; then
+      newest_mtime="$mtime"
+      newest="$dmg"
+    fi
+  done
+  DMG_PATH="$newest"
+
+  if [[ ${#candidates[@]} -gt 1 ]]; then
+    echo "Multiple DMGs found; selecting newest by mtime:"
+    for dmg in "${candidates[@]}"; do
+      echo "  - $dmg"
+    done
+    echo "Using: $DMG_PATH"
+  fi
 fi
 
 [[ -n "$DMG_PATH" ]] || fail "no Tauri DMG found; pass its path explicitly"

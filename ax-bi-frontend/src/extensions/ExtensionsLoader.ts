@@ -22,6 +22,9 @@ import type { common as core } from '@ax-bi/core';
 
 type Extension = core.Extension;
 
+/** Max time to wait for a remote entry script to load. */
+const REMOTE_ENTRY_LOAD_TIMEOUT_MS = 30_000;
+
 /**
  * Loads extension modules via webpack module federation.
  *
@@ -74,6 +77,8 @@ class ExtensionsLoader {
         logging.info('Extensions initialized successfully.');
       } catch (error) {
         logging.error('Error setting up extensions:', error);
+        // Allow a subsequent call to retry after a hard failure.
+        this.initializationPromise = null;
       }
     })();
     return this.initializationPromise;
@@ -107,13 +112,40 @@ class ExtensionsLoader {
   private async loadModule(extension: Extension): Promise<void> {
     const { remoteEntry, id } = extension;
 
-    // Load the remote entry script
+    // Load the remote entry script with a timeout and always remove the
+    // script element afterwards (success or failure).
     await new Promise<void>((resolve, reject) => {
       const element = document.createElement('script');
       element.src = remoteEntry;
       element.type = 'text/javascript';
       element.async = true;
-      element.onload = () => resolve();
+
+      let settled = false;
+      const cleanup = () => {
+        if (element.parentNode) {
+          element.parentNode.removeChild(element);
+        }
+      };
+
+      const settle = (fn: () => void) => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timeoutId);
+        cleanup();
+        fn();
+      };
+
+      const timeoutId = window.setTimeout(() => {
+        settle(() =>
+          reject(
+            new Error(
+              `Timed out loading remote entry after ${REMOTE_ENTRY_LOAD_TIMEOUT_MS}ms: ${remoteEntry}`,
+            ),
+          ),
+        );
+      }, REMOTE_ENTRY_LOAD_TIMEOUT_MS);
+
+      element.onload = () => settle(() => resolve());
       element.onerror = (
         event: Event | string,
         source?: string,
@@ -132,7 +164,7 @@ class ExtensionsLoader {
           errorDetails.length > 0 ? `\n${errorDetails.join(', ')}` : '';
         const errorMessage = `Failed to load remote entry: ${remoteEntry}${detailsStr}`;
 
-        return reject(new Error(errorMessage));
+        settle(() => reject(new Error(errorMessage)));
       };
 
       document.head.appendChild(element);

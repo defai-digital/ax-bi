@@ -82,11 +82,13 @@ function defaultConfig(): ConfigType {
     gcChannelsIntervalMs: 120 * 1000,
     // 0 disables the per-socket send-buffer cap; set a positive byte value to
     // opt in to terminating clients whose outbound buffer grows beyond it.
+    // Production: prefer a positive value (see config.example.json).
     maxSocketBufferBytes: 0,
     // Number of stream events to process before yielding to the event loop.
     // 0 disables yielding (process the whole batch synchronously).
     eventYieldBatchSize: 100,
     // 0 disables the limit (unlimited); set a positive value to opt in.
+    // Production: prefer a positive value (see config.example.json).
     maxConnectionsPerChannel: 0,
     maxTotalConnections: 0,
     // Fast Data API Gateway
@@ -122,11 +124,11 @@ function configFromFile(): Partial<ConfigType> {
 }
 
 const isPresent = (s: string) => /\S+/.test(s);
-const toNumber = Number;
 
 // Parse a non-negative numeric env override, ignoring malformed input.
 // Returns the fallback (and logs a warning) when the value is not a finite
-// number >= 0, so a misconfiguration can't silently disable the feature.
+// number >= 0, so a misconfiguration can't silently disable the feature or
+// yield NaN for ports/timeouts.
 function toNonNegativeNumber(val: string, fallback: number): number {
   const parsed = Number(val);
   if (!Number.isFinite(parsed) || parsed < 0) {
@@ -138,6 +140,7 @@ function toNonNegativeNumber(val: string, fallback: number): number {
   }
   return parsed;
 }
+
 const toBoolean = (s: string) => s.toLowerCase() === 'true';
 const toStringArray = (s: string) =>
   s
@@ -147,25 +150,41 @@ const toStringArray = (s: string) =>
 
 function applyEnvOverrides(config: ConfigType): ConfigType {
   const envVarConfigSetter: { [envVar: string]: (val: string) => void } = {
-    PORT: val => (config.port = toNumber(val)),
-    HTTP_PORT: val => (config.httpPort = toNumber(val)),
+    PORT: val => (config.port = toNonNegativeNumber(val, config.port)),
+    HTTP_PORT: val =>
+      (config.httpPort = toNonNegativeNumber(val, config.httpPort)),
     LOG_LEVEL: val => (config.logLevel = val),
     LOG_TO_FILE: val => (config.logToFile = toBoolean(val)),
     LOG_FILENAME: val => (config.logFilename = val),
     REDIS_STREAM_PREFIX: val => (config.redisStreamPrefix = val),
     REDIS_STREAM_READ_COUNT: val =>
-      (config.redisStreamReadCount = toNumber(val)),
+      (config.redisStreamReadCount = toNonNegativeNumber(
+        val,
+        config.redisStreamReadCount,
+      )),
     REDIS_STREAM_READ_BLOCK_MS: val =>
-      (config.redisStreamReadBlockMs = toNumber(val)),
+      (config.redisStreamReadBlockMs = toNonNegativeNumber(
+        val,
+        config.redisStreamReadBlockMs,
+      )),
     JWT_SECRET: val => (config.jwtSecret = val),
     JWT_COOKIE_NAME: val => (config.jwtCookieName = val),
     ALLOWED_ORIGINS: val => (config.allowedOrigins = toStringArray(val)),
     SOCKET_RESPONSE_TIMEOUT_MS: val =>
-      (config.socketResponseTimeoutMs = toNumber(val)),
+      (config.socketResponseTimeoutMs = toNonNegativeNumber(
+        val,
+        config.socketResponseTimeoutMs,
+      )),
     PING_SOCKETS_INTERVAL_MS: val =>
-      (config.pingSocketsIntervalMs = toNumber(val)),
+      (config.pingSocketsIntervalMs = toNonNegativeNumber(
+        val,
+        config.pingSocketsIntervalMs,
+      )),
     GC_CHANNELS_INTERVAL_MS: val =>
-      (config.gcChannelsIntervalMs = toNumber(val)),
+      (config.gcChannelsIntervalMs = toNonNegativeNumber(
+        val,
+        config.gcChannelsIntervalMs,
+      )),
     MAX_SOCKET_BUFFER_BYTES: val =>
       (config.maxSocketBufferBytes = toNonNegativeNumber(
         val,
@@ -177,16 +196,26 @@ function applyEnvOverrides(config: ConfigType): ConfigType {
         config.eventYieldBatchSize,
       )),
     MAX_CONNECTIONS_PER_CHANNEL: val =>
-      (config.maxConnectionsPerChannel = toNumber(val)),
-    MAX_TOTAL_CONNECTIONS: val => (config.maxTotalConnections = toNumber(val)),
+      (config.maxConnectionsPerChannel = toNonNegativeNumber(
+        val,
+        config.maxConnectionsPerChannel,
+      )),
+    MAX_TOTAL_CONNECTIONS: val =>
+      (config.maxTotalConnections = toNonNegativeNumber(
+        val,
+        config.maxTotalConnections,
+      )),
     REDIS_HOST: val => (config.redis.host = val),
-    REDIS_PORT: val => (config.redis.port = toNumber(val)),
+    REDIS_PORT: val =>
+      (config.redis.port = toNonNegativeNumber(val, config.redis.port)),
     REDIS_PASSWORD: val => (config.redis.password = val),
     REDIS_USERNAME: val => (config.redis.username = val),
-    REDIS_DB: val => (config.redis.db = toNumber(val)),
+    REDIS_DB: val =>
+      (config.redis.db = toNonNegativeNumber(val, config.redis.db)),
     REDIS_SSL: val => (config.redis.ssl = toBoolean(val)),
     STATSD_HOST: val => (config.statsd.host = val),
-    STATSD_PORT: val => (config.statsd.port = toNumber(val)),
+    STATSD_PORT: val =>
+      (config.statsd.port = toNonNegativeNumber(val, config.statsd.port)),
     STATSD_GLOBAL_TAGS: val => (config.statsd.globalTags = toStringArray(val)),
     FAST_CACHE_ENABLED: val => (config.fastCacheEnabled = toBoolean(val)),
     FAST_CACHE_KEY_PREFIX: val => (config.fastCacheKeyPrefix = val),

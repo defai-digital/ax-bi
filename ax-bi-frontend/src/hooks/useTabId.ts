@@ -38,22 +38,18 @@ export function useTabId() {
   }
 
   useEffect(() => {
-    if (typeof BroadcastChannel === 'undefined') {
+    // Only open a BroadcastChannel when both the API and storage are
+    // available; otherwise fall back to a one-off nanoid without leaking
+    // an unused channel (and without needing a close on the early return).
+    if (typeof BroadcastChannel === 'undefined' || !isStorageAvailable()) {
       if (!tabId) {
         setTabId(nanoid());
       }
-      return;
+      return undefined;
     }
 
     const channel: StrictBroadcastChannel<TabIdChannelMessage> =
       new BroadcastChannel(TAB_ID_CHANNEL_NAME);
-
-    if (!isStorageAvailable()) {
-      if (!tabId) {
-        setTabId(nanoid());
-      }
-      return;
-    }
 
     const updateTabId = () => {
       let lastTabId;

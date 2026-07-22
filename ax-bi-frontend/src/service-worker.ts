@@ -62,11 +62,9 @@ declare const self: ServiceWorkerGlobal;
 // Cache configuration
 const CACHE_VERSION = 'axbi-cache-v1';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
-const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 
 // Cache limits
 const MAX_STATIC_ENTRIES = 100;
-const MAX_DYNAMIC_ENTRIES = 50;
 
 // Static assets to precache (will be populated by webpack)
 const PRECACHE_URLS: string[] = [];
@@ -148,60 +146,28 @@ async function staleWhileRevalidate(
 }
 
 /**
- * Network-first strategy for HTML shell/navigation requests.
- */
-async function networkFirst(
-  request: Request,
-  cacheName: string,
-  maxEntries: number,
-  maxAge: number,
-): Promise<Response> {
-  const cache = await caches.open(cacheName);
-
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      cache.put(request, response.clone());
-      trimCache(cacheName, maxEntries);
-    }
-    return response;
-  } catch {
-    const cachedResponse = await cache.match(request);
-    if (cachedResponse) {
-      if (maxAge === Infinity) {
-        return cachedResponse;
-      }
-
-      const dateHeader = cachedResponse.headers.get('date');
-      if (dateHeader) {
-        const cachedTime = new Date(dateHeader).getTime();
-        if (Date.now() - cachedTime < maxAge) {
-          return cachedResponse;
-        }
-      }
-    }
-
-    return new Response('', {
-      status: 503,
-      statusText: 'Service Unavailable',
-    });
-  }
-}
-
-/**
- * Network-only strategy for API requests.
+ * Network-only strategy for API and navigation requests.
  *
- * Runtime metadata changes after uploads, chart saves, and dashboard edits.
- * Serving cached API responses can leave Explore with stale columns/metrics.
+ * - API: runtime metadata changes after uploads/saves; cache would be stale.
+ * - HTML navigations: authenticated pages embed user bootstrap JSON, so they
+ *   must never be served from cache (would leak another user's shell).
  */
 async function networkOnly(request: Request): Promise<Response> {
   try {
     return await fetch(request);
   } catch {
-    return new Response(JSON.stringify({ error: 'Network error' }), {
+    // Prefer JSON body for API-shaped requests; plain 503 for navigations.
+    const acceptsJson = request.headers.get('accept')?.includes('application/json');
+    if (acceptsJson || matchesPatterns(new URL(request.url).pathname, API_PATTERNS)) {
+      return new Response(JSON.stringify({ error: 'Network error' }), {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    return new Response('', {
       status: 503,
       statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'application/json' },
     });
   }
 }
@@ -211,7 +177,7 @@ async function networkOnly(request: Request): Promise<Response> {
  */
 async function cleanupOldCaches(): Promise<void> {
   const cacheNames = await caches.keys();
-  const currentCaches = [STATIC_CACHE, DYNAMIC_CACHE];
+  const currentCaches = [STATIC_CACHE];
 
   await Promise.all(
     cacheNames
@@ -260,11 +226,14 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // HTML navigation requests - network first
-  if (request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      networkFirst(request, DYNAMIC_CACHE, MAX_DYNAMIC_ENTRIES, Infinity),
-    );
+  // HTML navigation requests: network-only. Authenticated pages embed
+  // user bootstrap JSON; caching them (even network-first with a long
+  // maxAge) risks serving another user's session shell offline/stale.
+  if (
+    request.mode === 'navigate' ||
+    request.headers.get('accept')?.includes('text/html')
+  ) {
+    event.respondWith(networkOnly(request));
     return;
   }
 

@@ -30,6 +30,8 @@ jest.mock('ioredis', () => {
     exists: mockRedisExists,
     on: mockRedisOn,
     quit: jest.fn<() => Promise<void>>().mockResolvedValue(undefined),
+    disconnect: jest.fn(),
+    ping: jest.fn<() => Promise<string>>().mockResolvedValue('PONG'),
   }));
 });
 

@@ -16,16 +16,16 @@ KIND, either express or implied.  See the License for the
 specific language governing permissions and limitations
 under the License.
 -->
-# Superset WebSocket Server
+# AX BI WebSocket Server
 
-A Node.js WebSocket server for sending async event data to the Superset web application frontend.
+A Node.js WebSocket server for sending async event data to the AX BI web application frontend.
 
 ## Requirements
 
-- Node.js 12+ (not tested with older versions)
+- Node.js 24+ (see `engines` in `package.json`)
 - Redis 5+
 
-To use this feature, Superset needs to be configured to enable global async queries and to use WebSockets as the transport (see below).
+To use this feature, AX BI needs to be configured to enable global async queries and to use WebSockets as the transport (see below).
 
 ## Architecture
 
@@ -88,7 +88,7 @@ the JWT cookie uses `SameSite=None`.
 
 ## Superset Configuration
 
-Configure the Superset Flask app to enable global async queries (in `superset_config.py`):
+Configure the AX BI Flask app to enable global async queries (in `axbi_config.py`):
 
 Enable the `GLOBAL_ASYNC_QUERIES` feature flag:
 
@@ -164,4 +164,10 @@ HEAD /health
 
 ## Containerization
 
-*TODO: containerize websocket server*
+The WebSocket server ships with a multi-stage `Dockerfile` (node:24-alpine,
+non-root user). Build and run it with:
+
+```bash
+docker build -t ax-bi-websocket .
+docker run -p 8080:8080 ax-bi-websocket
+```

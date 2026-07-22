@@ -22,16 +22,17 @@ import { start } from '../src/index';
 
 test('start handles invalid configuration without rejecting', async () => {
   const previousPort = process.env['AX_SERVICES_PORT'];
-  const previousExitCode = process.exitCode;
   const error = jest.spyOn(console, 'error').mockImplementation(() => {});
+  const exit = jest
+    .spyOn(process, 'exit')
+    .mockImplementation((() => undefined) as never);
 
   try {
     process.env['AX_SERVICES_PORT'] = 'not-a-port';
-    process.exitCode = undefined;
 
     await expect(start()).resolves.toBeUndefined();
 
-    expect(process.exitCode).toBe(1);
+    expect(exit).toHaveBeenCalledWith(1);
     expect(error).toHaveBeenCalledTimes(1);
     const logged = JSON.parse(String(error.mock.calls[0]?.[0])) as Record<
       string,
@@ -49,7 +50,7 @@ test('start handles invalid configuration without rejecting', async () => {
     } else {
       process.env['AX_SERVICES_PORT'] = previousPort;
     }
-    process.exitCode = previousExitCode;
     error.mockRestore();
+    exit.mockRestore();
   }
 });

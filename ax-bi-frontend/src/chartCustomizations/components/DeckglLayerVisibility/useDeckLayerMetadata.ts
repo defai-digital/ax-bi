@@ -42,8 +42,10 @@ export const useDeckLayerMetadata = (
     if (!sliceIds || sliceIds.length === 0) {
       setLayers([]);
       setIsLoading(false);
-      return;
+      return undefined;
     }
+
+    let cancelled = false;
 
     const fetchMetadata = async () => {
       setIsLoading(true);
@@ -58,6 +60,8 @@ export const useDeckLayerMetadata = (
 
         const response = await AxBIClient.get({ endpoint });
 
+        if (cancelled) return;
+
         const slices: SliceResponse[] = response.json.result || [];
 
         const layerInfos: LayerInfo[] = slices.map(slice => ({
@@ -68,6 +72,7 @@ export const useDeckLayerMetadata = (
 
         setLayers(layerInfos);
       } catch (err) {
+        if (cancelled) return;
         setError(err instanceof Error ? err.message : 'Unknown error');
 
         const fallbackLayers = sliceIds.map(id => ({
@@ -77,11 +82,17 @@ export const useDeckLayerMetadata = (
         }));
         setLayers(fallbackLayers);
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchMetadata();
+
+    return () => {
+      cancelled = true;
+    };
   }, [sliceIds.join(',')]);
 
   return { layers, isLoading, error };

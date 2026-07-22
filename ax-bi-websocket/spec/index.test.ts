@@ -548,10 +548,16 @@ describe('server', () => {
     test('invalid JWT', async () => {
       const invalidToken = jwt.sign({ channel: channelId }, 'invalid secret');
       const request = getRequest(invalidToken, 'http://localhost');
+      const terminateSpy = jest.spyOn(ws, 'terminate');
 
+      // Auth failures are handled inside wsConnection (no throw) and the
+      // socket is terminated rather than registered.
       expect(() => {
         server.wsConnection(ws, request);
-      }).toThrow();
+      }).not.toThrow();
+      expect(trackClientSpy).not.toHaveBeenCalled();
+      expect(terminateSpy).toHaveBeenCalled();
+      terminateSpy.mockRestore();
     });
 
     test('valid JWT, no lastId', async () => {

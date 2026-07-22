@@ -37,6 +37,8 @@ pub struct AppConfig {
 
 const DEFAULT_SERVER_URL: &str = "http://127.0.0.1:31423";
 const LOCAL_AXBI_WINDOW_LABEL: &str = "local-axbi";
+/// Separate unprivileged window for remote AX BI servers (no local-runtime IPC).
+const REMOTE_AXBI_WINDOW_LABEL: &str = "remote-axbi";
 const MAX_NOTIFICATION_TITLE_CHARS: usize = 128;
 const MAX_NOTIFICATION_BODY_CHARS: usize = 1024;
 
@@ -198,7 +200,7 @@ fn is_launcher_url(url: &Url) -> bool {
     url.scheme() == "file" && file_url_is_launcher_index(url)
 }
 
-fn is_allowed_local_axbi_navigation(candidate: &Url, expected: &Url) -> bool {
+fn is_allowed_axbi_navigation(candidate: &Url, expected: &Url) -> bool {
     if candidate.as_str() == "about:blank" {
         return true;
     }
@@ -206,6 +208,16 @@ fn is_allowed_local_axbi_navigation(candidate: &Url, expected: &Url) -> bool {
     candidate.scheme() == expected.scheme()
         && candidate.host_str() == expected.host_str()
         && candidate.port_or_known_default() == expected.port_or_known_default()
+}
+
+fn is_allowed_local_axbi_navigation(candidate: &Url, expected: &Url) -> bool {
+    is_allowed_axbi_navigation(candidate, expected)
+}
+
+fn same_axbi_origin(left: &Url, right: &Url) -> bool {
+    left.scheme() == right.scheme()
+        && left.host_str() == right.host_str()
+        && left.port_or_known_default() == right.port_or_known_default()
 }
 
 fn validate_local_axbi_url(url: &Url) -> Result<(), String> {
@@ -217,6 +229,31 @@ fn validate_local_axbi_url(url: &Url) -> Result<(), String> {
         );
     }
     Ok(())
+}
+
+fn validate_remote_axbi_url(url: &Url) -> Result<(), String> {
+    if url.scheme() != "http" && url.scheme() != "https" {
+        return Err("Remote AX BI must use HTTP(S)".to_string());
+    }
+    if url.host_str().is_none() {
+        return Err("Remote AX BI URL must include a host".to_string());
+    }
+    if !url.username().is_empty() || url.password().is_some() {
+        return Err("Remote AX BI URL must not include credentials".to_string());
+    }
+    Ok(())
+}
+
+/// Run long local-runtime work off the async runtime so docker subprocesses
+/// do not stall other Tauri IPC handlers.
+async fn run_blocking_local<T, F>(work: F) -> Result<T, String>
+where
+    T: Send + 'static,
+    F: FnOnce() -> Result<T, String> + Send + 'static,
+{
+    tauri::async_runtime::spawn_blocking(work)
+        .await
+        .map_err(|error| format!("Local runtime task failed: {error}"))?
 }
 
 fn file_url_is_launcher_index(url: &Url) -> bool {
@@ -279,7 +316,7 @@ pub async fn get_local_runtime_status<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeStatus, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::status(&app)
+    run_blocking_local(move || local_runtime::status(&app)).await
 }
 
 #[tauri::command]
@@ -288,7 +325,7 @@ pub async fn prepare_local_runtime<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeStatus, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::prepare(&app)
+    run_blocking_local(move || local_runtime::prepare(&app)).await
 }
 
 #[tauri::command]
@@ -297,7 +334,7 @@ pub async fn start_local_runtime<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::start(&app)
+    run_blocking_local(move || local_runtime::start(&app)).await
 }
 
 #[tauri::command]
@@ -306,7 +343,7 @@ pub async fn stop_local_runtime<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::stop(&app)
+    run_blocking_local(move || local_runtime::stop(&app)).await
 }
 
 #[tauri::command]
@@ -315,7 +352,7 @@ pub async fn restart_local_runtime<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::restart(&app)
+    run_blocking_local(move || local_runtime::restart(&app)).await
 }
 
 #[tauri::command]
@@ -324,7 +361,7 @@ pub async fn update_local_runtime<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalRuntimeCommandOutput, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::update(&app)
+    run_blocking_local(move || local_runtime::update(&app)).await
 }
 
 #[tauri::command]
@@ -335,7 +372,7 @@ pub async fn get_local_runtime_logs<R: Runtime>(
     tail: Option<u16>,
 ) -> Result<String, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::logs(&app, service, tail)
+    run_blocking_local(move || local_runtime::logs(&app, service, tail)).await
 }
 
 #[tauri::command]
@@ -344,7 +381,7 @@ pub async fn get_local_admin_credentials<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<local_runtime::LocalAdminCredentials, String> {
     ensure_launcher_window(&window)?;
-    local_runtime::credentials(&app)
+    run_blocking_local(move || local_runtime::credentials(&app)).await
 }
 
 #[tauri::command]
@@ -353,26 +390,40 @@ pub async fn open_local_axbi_window<R: Runtime>(
     window: WebviewWindow<R>,
 ) -> Result<(), String> {
     ensure_launcher_window(&window)?;
-    let web_url = local_runtime::healthy_web_url(&app)?;
+    let app_for_url = app.clone();
+    let web_url =
+        run_blocking_local(move || local_runtime::healthy_web_url(&app_for_url)).await?;
     let url =
         Url::parse(&web_url).map_err(|error| format!("Local AX BI URL is invalid: {error}"))?;
     validate_local_axbi_url(&url)?;
 
+    // Rebuild when origin/port changed so on_navigation's expected_url is not stale.
     if let Some(existing) = app.get_webview_window(LOCAL_AXBI_WINDOW_LABEL) {
+        let current_url = existing.url().ok();
+        let same_origin = current_url
+            .as_ref()
+            .is_some_and(|current| same_axbi_origin(current, &url));
+        if same_origin {
+            existing
+                .navigate(url)
+                .map_err(|error| format!("Failed to navigate local AX BI window: {error}"))?;
+            existing
+                .show()
+                .map_err(|error| format!("Failed to show local AX BI window: {error}"))?;
+            existing
+                .set_focus()
+                .map_err(|error| format!("Failed to focus local AX BI window: {error}"))?;
+            let app_for_onboarding = app.clone();
+            run_blocking_local(move || local_runtime::complete_admin_onboarding(&app_for_onboarding))
+                .await?;
+            window
+                .hide()
+                .map_err(|error| format!("Failed to hide AX BI launcher: {error}"))?;
+            return Ok(());
+        }
         existing
-            .navigate(url)
-            .map_err(|error| format!("Failed to navigate local AX BI window: {error}"))?;
-        existing
-            .show()
-            .map_err(|error| format!("Failed to show local AX BI window: {error}"))?;
-        existing
-            .set_focus()
-            .map_err(|error| format!("Failed to focus local AX BI window: {error}"))?;
-        local_runtime::complete_admin_onboarding(&app)?;
-        window
-            .hide()
-            .map_err(|error| format!("Failed to hide AX BI launcher: {error}"))?;
-        return Ok(());
+            .close()
+            .map_err(|error| format!("Failed to close stale local AX BI window: {error}"))?;
     }
 
     let expected_url = url.clone();
@@ -410,18 +461,83 @@ pub async fn open_local_axbi_window<R: Runtime>(
         .set_focus()
         .map_err(|error| format!("Failed to focus local AX BI window: {error}"))?;
 
-    local_runtime::complete_admin_onboarding(&app)?;
+    let app_for_onboarding = app.clone();
+    run_blocking_local(move || local_runtime::complete_admin_onboarding(&app_for_onboarding))
+        .await?;
     window
         .hide()
         .map_err(|error| format!("Failed to hide AX BI launcher: {error}"))?;
     Ok(())
 }
 
+/// Open a remote AX BI server in an unprivileged WebviewWindow.
+///
+/// Remote content must never run inside the launcher webview (or an iframe of
+/// it): that would inherit Tauri IPC and could call privileged local-runtime
+/// commands such as `get_local_admin_credentials`.
+#[tauri::command]
+pub async fn open_remote_axbi_window<R: Runtime>(
+    app: AppHandle<R>,
+    window: WebviewWindow<R>,
+    url: String,
+) -> Result<(), String> {
+    ensure_launcher_window(&window)?;
+    let normalized = normalize_server_url(&url)?;
+    let parsed =
+        Url::parse(&normalized).map_err(|error| format!("Remote AX BI URL is invalid: {error}"))?;
+    validate_remote_axbi_url(&parsed)?;
+
+    if let Some(existing) = app.get_webview_window(REMOTE_AXBI_WINDOW_LABEL) {
+        let current_url = existing.url().ok();
+        let same_origin = current_url
+            .as_ref()
+            .is_some_and(|current| same_axbi_origin(current, &parsed));
+        if same_origin {
+            existing
+                .navigate(parsed)
+                .map_err(|error| format!("Failed to navigate remote AX BI window: {error}"))?;
+            existing
+                .show()
+                .map_err(|error| format!("Failed to show remote AX BI window: {error}"))?;
+            existing
+                .set_focus()
+                .map_err(|error| format!("Failed to focus remote AX BI window: {error}"))?;
+            return Ok(());
+        }
+        existing
+            .close()
+            .map_err(|error| format!("Failed to close stale remote AX BI window: {error}"))?;
+    }
+
+    let expected_url = parsed.clone();
+    let remote_window = WebviewWindowBuilder::new(
+        &app,
+        REMOTE_AXBI_WINDOW_LABEL,
+        WebviewUrl::External(parsed),
+    )
+    .title("AX BI (Remote)")
+    .inner_size(1400.0, 900.0)
+    .min_inner_size(800.0, 600.0)
+    .center()
+    .on_navigation(move |candidate| is_allowed_axbi_navigation(candidate, &expected_url))
+    .build()
+    .map_err(|error| format!("Failed to open remote AX BI window: {error}"))?;
+
+    remote_window
+        .show()
+        .map_err(|error| format!("Failed to show remote AX BI window: {error}"))?;
+    remote_window
+        .set_focus()
+        .map_err(|error| format!("Failed to focus remote AX BI window: {error}"))?;
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::{
-        is_allowed_local_axbi_navigation, is_launcher_url, normalize_server_url,
-        validate_local_axbi_url, validate_notification_input, DEFAULT_SERVER_URL,
+        is_allowed_local_axbi_navigation, is_launcher_url, normalize_server_url, same_axbi_origin,
+        validate_local_axbi_url, validate_notification_input, validate_remote_axbi_url,
+        DEFAULT_SERVER_URL,
     };
     use url::Url;
 
@@ -592,5 +708,31 @@ mod tests {
             &Url::parse("https://127.0.0.1:18088/ax-bi/welcome/").unwrap()
         )
         .is_err());
+    }
+
+    #[test]
+    fn remote_axbi_urls_reject_credentials_and_non_http() {
+        assert!(validate_remote_axbi_url(
+            &Url::parse("https://ax-bi.example.test/login/").unwrap()
+        )
+        .is_ok());
+        assert!(validate_remote_axbi_url(
+            &Url::parse("http://ax-bi.example.test/").unwrap()
+        )
+        .is_ok());
+        assert!(validate_remote_axbi_url(
+            &Url::parse("https://user:pass@ax-bi.example.test/").unwrap()
+        )
+        .is_err());
+        assert!(validate_remote_axbi_url(&Url::parse("file:///tmp/x").unwrap()).is_err());
+    }
+
+    #[test]
+    fn same_origin_detects_port_changes() {
+        let a = Url::parse("http://127.0.0.1:31423/ax-bi/welcome/").unwrap();
+        let b = Url::parse("http://127.0.0.1:18088/ax-bi/welcome/").unwrap();
+        let c = Url::parse("http://127.0.0.1:31423/login/").unwrap();
+        assert!(!same_axbi_origin(&a, &b));
+        assert!(same_axbi_origin(&a, &c));
     }
 }

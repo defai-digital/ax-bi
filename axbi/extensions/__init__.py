@@ -70,12 +70,32 @@ from axbi.utils.feature_flag_manager import FeatureFlagManager
 from axbi.utils.machine_auth import MachineAuthProviderFactory
 from axbi.utils.profiler import AxBIProfiler
 
-# Apply MariaDB DDL fix early in the import chain
+# Apply MariaDB DDL fix early in the import chain. Fail closed when the
+# SQLAlchemy dialect is MariaDB/MySQL (missing patch can corrupt schema DDL);
+# tolerate failures for unrelated dialects / import-time environments.
 try:
     apply_mariadb_ddl_fix()
 except Exception as ex:
+    dialect_name = ""
+    try:
+        from flask import current_app
+
+        uri = current_app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        dialect_name = str(uri).split(":", 1)[0].lower()
+    except Exception:  # noqa: BLE001
+        dialect_name = ""
+
+    if dialect_name in {"mysql", "mariadb"} or "mariadb" in dialect_name:
+        logging.exception(
+            "Applying MariaDB DDL fix failed under %s dialect; aborting startup",
+            dialect_name or "unknown",
+        )
+        raise
     logging.exception(
-        "Applying MariaDB DDL fix failed; continuing without patch: %s", ex
+        "Applying MariaDB DDL fix failed; continuing without patch "
+        "(dialect=%s): %s",
+        dialect_name or "unknown",
+        ex,
     )
 
 

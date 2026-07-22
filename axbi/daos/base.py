@@ -585,14 +585,33 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
                 raise
         return query
 
+    # Optional explicit public contract for MCP/filter UIs. When set, only these
+    # columns are exposed — model refactors no longer silently change the API.
+    # Values are operator lists (same shape as TYPE_OPERATOR_MAP entries).
+    filterable_columns_allowlist: dict[str, list[Any]] | None = None
+
     @classmethod
-    def get_filterable_columns_and_operators(cls) -> dict[str, list[str]]:
+    def get_filterable_columns_and_operators(  # noqa: C901
+        cls,
+    ) -> dict[str, list[str]]:
         """
         Returns a dict mapping filterable columns (including hybrid/computed fields if
         present) to their supported operators. Used by MCP tools to dynamically expose
-        filter options. Custom fields supported by the DAO but not present on the model
-        should be documented here.
+        filter options.
+
+        Prefer setting ``filterable_columns_allowlist`` on concrete DAOs so the public
+        filter contract is explicit rather than reflected from SQLAlchemy mapper
+        internals.
         """
+        if cls.filterable_columns_allowlist is not None:
+            filterable = dict(cls.filterable_columns_allowlist)
+            result: dict[str, list[str]] = {}
+            for name, ops in filterable.items():
+                result[name] = [
+                    op.value if isinstance(op, ColumnOperatorEnum) else str(op)
+                    for op in ops
+                ]
+            return result
 
         mapper = inspect(cls.model_cls)
         columns = {c.key: c for c in mapper.columns}

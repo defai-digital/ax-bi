@@ -45,6 +45,7 @@ class _ScanState(Enum):
     BRACKET = "bracket"
     LINE_COMMENT = "line_comment"
     BLOCK_COMMENT = "block_comment"
+    DOLLAR_QUOTE = "dollar_quote"
 
 
 def rust_sql_kernel_available() -> bool:
@@ -67,6 +68,24 @@ def normalize_sql_whitespace(sql: str, use_rust: bool | None = None) -> str:
     return _normalize_sql_whitespace_python(sql)
 
 
+def _is_dollar_tag_char(char: str) -> bool:
+    # PostgreSQL dollar-quote tags are ASCII [A-Za-z0-9_]; match Rust kernel.
+    return char.isascii() and (char.isalnum() or char == "_")
+
+
+def _parse_dollar_quote_opener(sql: str, index: int) -> tuple[str, int] | None:
+    """Parse `$tag$` opener at *index*. Return ``(tag, index_after)`` or None."""
+
+    if index >= len(sql) or sql[index] != "$":
+        return None
+    cursor = index + 1
+    while cursor < len(sql) and _is_dollar_tag_char(sql[cursor]):
+        cursor += 1
+    if cursor < len(sql) and sql[cursor] == "$":
+        return sql[index + 1 : cursor], cursor + 1
+    return None
+
+
 def _normalize_sql_whitespace_python(sql: str) -> str:  # noqa: C901
     """Python compatibility implementation for the Rust SQL whitespace kernel."""
 
@@ -74,6 +93,8 @@ def _normalize_sql_whitespace_python(sql: str) -> str:  # noqa: C901
     index = 0
     state = _ScanState.DEFAULT
     pending_space = False
+    block_depth = 0
+    dollar_tag = ""
 
     def peek() -> str | None:
         return sql[index + 1] if index + 1 < len(sql) else None
@@ -111,27 +132,46 @@ def _normalize_sql_whitespace_python(sql: str) -> str:  # noqa: C901
             elif char == "/" and next_char == "*":
                 output.extend((char, next_char))
                 state = _ScanState.BLOCK_COMMENT
+                block_depth = 1
                 index += 1
+            elif char == "$":
+                parsed = _parse_dollar_quote_opener(sql, index)
+                if parsed is not None:
+                    tag, after = parsed
+                    output.append(sql[index:after])
+                    dollar_tag = tag
+                    state = _ScanState.DOLLAR_QUOTE
+                    index = after - 1  # loop will +1
+                else:
+                    output.append(char)
             else:
                 output.append(char)
 
         elif state == _ScanState.SINGLE_QUOTE:
-            output.append(char)
-            if char == "'":
-                if next_char == "'":
-                    output.append(next_char)
-                    index += 1
-                else:
-                    state = _ScanState.DEFAULT
+            if char == "\\" and next_char is not None:
+                output.extend((char, next_char))
+                index += 1
+            else:
+                output.append(char)
+                if char == "'":
+                    if next_char == "'":
+                        output.append(next_char)
+                        index += 1
+                    else:
+                        state = _ScanState.DEFAULT
 
         elif state == _ScanState.DOUBLE_QUOTE:
-            output.append(char)
-            if char == '"':
-                if next_char == '"':
-                    output.append(next_char)
-                    index += 1
-                else:
-                    state = _ScanState.DEFAULT
+            if char == "\\" and next_char is not None:
+                output.extend((char, next_char))
+                index += 1
+            else:
+                output.append(char)
+                if char == '"':
+                    if next_char == '"':
+                        output.append(next_char)
+                        index += 1
+                    else:
+                        state = _ScanState.DEFAULT
 
         elif state == _ScanState.BACKTICK:
             output.append(char)
@@ -145,7 +185,11 @@ def _normalize_sql_whitespace_python(sql: str) -> str:  # noqa: C901
         elif state == _ScanState.BRACKET:
             output.append(char)
             if char == "]":
-                state = _ScanState.DEFAULT
+                if next_char == "]":
+                    output.append(next_char)
+                    index += 1
+                else:
+                    state = _ScanState.DEFAULT
 
         elif state == _ScanState.LINE_COMMENT:
             output.append(char)
@@ -153,11 +197,29 @@ def _normalize_sql_whitespace_python(sql: str) -> str:  # noqa: C901
                 state = _ScanState.DEFAULT
 
         elif state == _ScanState.BLOCK_COMMENT:
-            output.append(char)
-            if char == "*" and next_char == "/":
-                output.append(next_char)
-                state = _ScanState.DEFAULT
+            if char == "/" and next_char == "*":
+                output.extend((char, next_char))
+                block_depth += 1
                 index += 1
+            elif char == "*" and next_char == "/":
+                output.extend((char, next_char))
+                block_depth -= 1
+                if block_depth <= 0:
+                    state = _ScanState.DEFAULT
+                    block_depth = 0
+                index += 1
+            else:
+                output.append(char)
+
+        elif state == _ScanState.DOLLAR_QUOTE:
+            closer = f"${dollar_tag}$"
+            if sql.startswith(closer, index):
+                output.append(closer)
+                index += len(closer) - 1
+                state = _ScanState.DEFAULT
+                dollar_tag = ""
+            else:
+                output.append(char)
 
         index += 1
 

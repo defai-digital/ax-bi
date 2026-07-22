@@ -300,8 +300,6 @@ test('health response schema is stable', () => {
       'status',
       'timestamp',
       'version',
-      'nodeVersion',
-      'platform',
       'uptimeSeconds',
     ],
     additionalProperties: false,

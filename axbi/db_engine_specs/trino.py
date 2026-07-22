@@ -384,7 +384,42 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
             time.sleep(poll_interval)
 
     @classmethod
-    def execute_with_cursor(
+    def _query_id_poll_timeout_seconds(cls, query: Query) -> float:
+        """Bound waiting for Trino to surface a query_id on the cursor.
+
+        Prefer the query's configured timeout, then SQL Lab defaults, then a
+        hard ceiling so a hung client cannot pin a request worker forever.
+        """
+        candidates: list[float] = []
+        for attr in ("timeout", "query_timeout"):
+            value = getattr(query, attr, None)
+            if value is not None:
+                try:
+                    candidates.append(float(value))
+                except (TypeError, ValueError):
+                    pass
+        try:
+            candidates.append(float(app.config.get("SQLLAB_TIMEOUT", 30)))
+        except (TypeError, ValueError, RuntimeError):
+            logger.debug(
+                "SQLLAB_TIMEOUT not usable for Trino poll bound",
+                exc_info=True,
+            )
+        try:
+            candidates.append(
+                float(app.config.get("SQLLAB_ASYNC_TIME_LIMIT_SEC", 600))
+            )
+        except (TypeError, ValueError, RuntimeError):
+            logger.debug(
+                "SQLLAB_ASYNC_TIME_LIMIT_SEC not usable for Trino poll bound",
+                exc_info=True,
+            )
+        positive = [c for c in candidates if c and c > 0]
+        # Cap at 10 minutes for the pre-query_id poll only (not full execution).
+        return min(positive) if positive else 60.0
+
+    @classmethod
+    def execute_with_cursor(  # noqa: C901
         cls,
         cursor: Cursor,
         sql: str,
@@ -448,7 +483,14 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
             time.sleep(0.1)
             # Wait for a query ID to be available before handling the cursor, as
             # it's required by that method; it may never become available on error.
+            # Bound the poll so a hung Trino client cannot pin the request worker.
+            poll_timeout = cls._query_id_poll_timeout_seconds(query)
+            poll_deadline = time.monotonic() + poll_timeout
             while not cursor.query_id and not execute_event.is_set():
+                if time.monotonic() >= poll_deadline:
+                    raise TimeoutError(
+                        f"Timed out waiting for Trino query_id after {poll_timeout}s"
+                    )
                 time.sleep(0.1)
 
             # Pass additional attributes to check whether an error occurred in the

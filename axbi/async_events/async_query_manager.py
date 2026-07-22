@@ -76,18 +76,35 @@ def parse_event(event_data: tuple[str, dict[str, Any]]) -> dict[str, Any]:
     return {"id": event_id, **payload}
 
 
+class InvalidAsyncEventIdError(ValueError):
+    """Raised when a Redis stream ID is not of the form ``{ms}-{seq}``."""
+
+
 def increment_id(entry_id: str) -> str:
     """Increment a Redis stream ID past ``entry_id``.
 
     Redis stream IDs use the form ``{milliseconds_time}-{sequence}``. The
     sequence component can grow beyond a single digit under load, so only the
     full sequence integer (after the final ``-``) may be incremented.
+
+    Raises:
+        InvalidAsyncEventIdError: if ``entry_id`` is not a valid stream ID.
     """
     try:
         timestamp, sequence = entry_id.rsplit("-", 1)
+        # Require pure-digit timestamp and sequence so garbage IDs are rejected
+        # rather than silently re-delivered (e.g. ``not-a-stream-id-x``).
+        if not timestamp.isdigit() or not sequence.isdigit():
+            raise InvalidAsyncEventIdError(
+                f"Invalid async event stream id: {entry_id!r}"
+            )
         return f"{timestamp}-{int(sequence) + 1}"
-    except (TypeError, ValueError):
-        return entry_id
+    except (TypeError, ValueError, AttributeError) as ex:
+        if isinstance(ex, InvalidAsyncEventIdError):
+            raise
+        raise InvalidAsyncEventIdError(
+            f"Invalid async event stream id: {entry_id!r}"
+        ) from ex
 
 
 def get_cache_backend(
@@ -287,23 +304,74 @@ class AsyncQueryManager:
 
         stream_name = f"{self._stream_prefix}{channel}"
         start_id = increment_id(last_id) if last_id else "-"
-        results = self._cache.xrange(stream_name, start_id, "+", self.MAX_EVENT_COUNT)
+        try:
+            results = self._cache.xrange(
+                stream_name, start_id, "+", self.MAX_EVENT_COUNT
+            )
+        except Exception as ex:  # noqa: BLE001
+            # Redis outages should be retriable rather than 500-ing every poll.
+            logger.warning(
+                "Redis stream read failed for channel %s: %s",
+                channel,
+                ex,
+                exc_info=True,
+            )
+            raise AsyncQueryJobException(
+                "Async event stream temporarily unavailable"
+            ) from ex
+
         # Decode bytes to strings, decode_responses is not supported at RedisCache and RedisSentinelCache  # noqa: E501
         if isinstance(self._cache, RedisSentinelCacheBackend | RedisCacheBackend):
-            decoded_results = [
-                (
-                    event_id.decode("utf-8"),
-                    {
-                        key.decode("utf-8"): value.decode("utf-8")
-                        for key, value in event_data.items()
-                    },
+            decoded_results: list[tuple[str, dict[str, Any]]] = []
+            for event_id, event_data in results or []:
+                try:
+                    decoded_results.append(
+                        (
+                            event_id.decode("utf-8")
+                            if isinstance(event_id, bytes)
+                            else str(event_id),
+                            {
+                                (
+                                    key.decode("utf-8")
+                                    if isinstance(key, bytes)
+                                    else str(key)
+                                ): (
+                                    value.decode("utf-8")
+                                    if isinstance(value, bytes)
+                                    else value
+                                )
+                                for key, value in event_data.items()
+                            },
+                        )
+                    )
+                except Exception:  # noqa: BLE001
+                    # Skip poisoned stream entries so last_id can advance past them.
+                    logger.warning(
+                        "Skipping malformed Redis stream entry on channel %s: %r",
+                        channel,
+                        event_id,
+                        exc_info=True,
+                    )
+            return self._parse_events_skip_bad(decoded_results)
+
+        return self._parse_events_skip_bad(list(results or []))
+
+    @staticmethod
+    def _parse_events_skip_bad(
+        results: list[tuple[str, dict[str, Any]]],
+    ) -> list[dict[str, Any] | None]:
+        """Parse stream entries, skipping malformed payloads so the feed advances."""
+        parsed: list[dict[str, Any] | None] = []
+        for entry in results:
+            try:
+                parsed.append(parse_event(entry))
+            except AsyncQueryJobException:
+                logger.warning(
+                    "Skipping unparseable async event entry id=%r",
+                    entry[0] if entry else None,
+                    exc_info=True,
                 )
-                for event_id, event_data in results
-            ]
-            return (
-                [] if not decoded_results else list(map(parse_event, decoded_results))
-            )
-        return [] if not results else list(map(parse_event, results))
+        return parsed
 
     def update_job(
         self, job_metadata: dict[str, Any], status: str, **kwargs: Any

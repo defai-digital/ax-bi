@@ -80,9 +80,13 @@ def test_increment_id_handles_multi_digit_sequences(entry_id: str, expected: str
     assert increment_id(entry_id) == expected
 
 
-def test_increment_id_returns_input_on_malformed_id():
-    assert increment_id("not-a-stream-id-x") == "not-a-stream-id-x"
-    assert increment_id("nope") == "nope"
+def test_increment_id_raises_on_malformed_id():
+    from axbi.async_events.async_query_manager import InvalidAsyncEventIdError
+
+    with raises(InvalidAsyncEventIdError):
+        increment_id("not-a-stream-id-x")
+    with raises(InvalidAsyncEventIdError):
+        increment_id("nope")
 
 
 @mark.parametrize(

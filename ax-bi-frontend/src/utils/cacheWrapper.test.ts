@@ -83,4 +83,34 @@ describe('cacheWrapper', () => {
       expect(fn).toHaveBeenCalledTimes(1);
     });
   });
+
+  // eslint-disable-next-line no-restricted-globals -- TODO: Migrate from describe blocks
+  describe('rejected promises', () => {
+    test('deletes the cache entry when the wrapped promise rejects', async () => {
+      const cache = new Map<string, any>();
+      const asyncFn = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('fail'))
+        .mockResolvedValueOnce('ok');
+      const wrapped = cacheWrapper(asyncFn, cache);
+
+      await expect(wrapped(1, 2)).rejects.toThrow('fail');
+      // Let the rejection handler clear the entry.
+      await Promise.resolve();
+      expect(cache.has(JSON.stringify([1, 2]))).toBe(false);
+
+      await expect(wrapped(1, 2)).resolves.toBe('ok');
+      expect(asyncFn).toHaveBeenCalledTimes(2);
+    });
+
+    test('keeps successful promises in the cache', async () => {
+      const cache = new Map<string, any>();
+      const asyncFn = jest.fn().mockResolvedValue('ok');
+      const wrapped = cacheWrapper(asyncFn, cache);
+
+      await expect(wrapped(1, 2)).resolves.toBe('ok');
+      await expect(wrapped(1, 2)).resolves.toBe('ok');
+      expect(asyncFn).toHaveBeenCalledTimes(1);
+    });
+  });
 });

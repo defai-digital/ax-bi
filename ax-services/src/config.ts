@@ -94,7 +94,9 @@ const DEFAULT_AXBI_TASK_LIST_PATH = '/api/v1/task/';
 const DEFAULT_AXBI_TIMEOUT_MS = 2000;
 const DEFAULT_LOG_LEVEL: LogLevel = 'info';
 const MAX_PORT = 65535;
-const MAX_AXBI_TIMEOUT_MS = 2_147_483_647;
+// Cap upstream AxBI call budgets so a mis-set env var cannot hang the sidecar.
+// Python AxServicesClient.timeout_seconds must be strictly greater than this.
+const MAX_AXBI_TIMEOUT_MS = 120_000;
 const HOSTNAME_PATTERN =
   /^(?=.{1,253}$)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)*[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?$/;
 const LOG_LEVELS = new Set<LogLevel>([
@@ -251,7 +253,9 @@ function normalizeAxBIBaseUrl(value: string): string {
     if (url.search !== '' || url.hash !== '') {
       throw new Error('query or fragment not allowed');
     }
-    return url.toString().replace(/\/$/, '');
+    // Strip every trailing slash so path-join remains consistent for
+    // callers that append absolute paths like `/api/v1/...`.
+    return url.toString().replace(/\/+$/, '');
   } catch (error) {
     throw new Error('AXBI_BASE_URL must be a valid HTTP(S) URL', {
       cause: error,
@@ -397,7 +401,7 @@ export function buildConfig(env: Environment = process.env): ServiceConfig {
   return config;
 }
 
-function isLoopbackHost(host: string): boolean {
+export function isLoopbackHost(host: string): boolean {
   const normalized = host.toLowerCase();
   return (
     normalized === 'localhost' ||

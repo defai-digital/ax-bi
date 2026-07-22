@@ -42,15 +42,27 @@ from axbi.utils.webdriver import (
 
 logger = logging.getLogger(__name__)
 
-# Import Playwright availability and install message
+# Import Playwright install message; availability is lazy (do not probe at import).
 try:
     from axbi.utils.webdriver import (
-        PLAYWRIGHT_AVAILABLE,
         PLAYWRIGHT_INSTALL_MESSAGE,
+        is_playwright_available as _is_playwright_available,
     )
 except ImportError:
-    PLAYWRIGHT_AVAILABLE = False
     PLAYWRIGHT_INSTALL_MESSAGE = "Playwright module not found"
+
+    def _is_playwright_available() -> bool:
+        return False
+
+
+# Patchable stand-in for tests; call-sites use is_playwright_available() so we do
+# not force a Chromium probe at module import.
+def is_playwright_available() -> bool:
+    # Prefer an explicit module-level override when tests set PLAYWRIGHT_AVAILABLE.
+    override = globals().get("PLAYWRIGHT_AVAILABLE", None)
+    if isinstance(override, bool):
+        return override
+    return _is_playwright_available()
 
 
 DEFAULT_SCREENSHOT_WINDOW_SIZE = 800, 600
@@ -213,7 +225,7 @@ class BaseScreenshot:
         window_size = window_size or self.window_size
         if feature_flag_manager.is_feature_enabled("PLAYWRIGHT_REPORTS_AND_THUMBNAILS"):
             # Try to use Playwright if available (supports WebGL/DeckGL, unlike Cypress)
-            if PLAYWRIGHT_AVAILABLE:
+            if is_playwright_available():  # respects PLAYWRIGHT_AVAILABLE test patches
                 return WebDriverPlaywright(self.driver_type, window_size)
 
             # Playwright not available, falling back to Selenium

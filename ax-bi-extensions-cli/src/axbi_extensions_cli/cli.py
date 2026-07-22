@@ -146,7 +146,17 @@ def validate_npm() -> ValidatedNpmExecutable:
             [npm_command, "-v"],  # noqa: S607
             capture_output=True,
             text=True,
+            timeout=30,
         )
+    except subprocess.TimeoutExpired:
+        click.secho(
+            "❌ Timed out running `npm -v` (30s).",
+            err=True,
+            fg="red",
+        )
+        sys.exit(1)
+
+    try:
         if result.returncode != 0:
             click.secho(
                 f"❌ Failed to run `npm -v`: {result.stderr.strip()}",
@@ -1451,10 +1461,39 @@ def read_input_text(path: Path, label: str) -> str | None:
     return content
 
 
+# SPDX-ish license identifiers: letters, digits, dots, hyphens, plus, and
+# common expression tokens (WITH, OR, AND, parentheses, spaces).
+_SPDX_LICENSE_RE = re.compile(
+    r"^[A-Za-z0-9][A-Za-z0-9.+ \-()]*$"
+)
+
+
+def validate_spdx_like_license(license_: str) -> str:
+    """
+    Restrict license strings written into pyproject.toml / package.json.
+
+    Accepts common SPDX identifiers and simple expressions (e.g. Apache-2.0,
+    MIT, BSD-3-Clause, LicenseRef-Proprietary). Rejects quotes, newlines, and
+    other characters that would break TOML/JSON templates.
+    """
+    value = license_.strip()
+    if not value:
+        raise click.ClickException("License must not be empty.")
+    if len(value) > 128:
+        raise click.ClickException("License must be at most 128 characters.")
+    if not _SPDX_LICENSE_RE.fullmatch(value):
+        raise click.ClickException(
+            "License must be an SPDX-like identifier "
+            "(letters, digits, '.', '+', '-', spaces, parentheses only)."
+        )
+    return value
+
+
 def validate_initial_extension_config(
     names: ExtensionNames, version: str, license_: str
 ) -> None:
     """Validate the metadata that init writes to extension.json."""
+    license_ = validate_spdx_like_license(license_)
     try:
         ExtensionConfig.model_validate(
             {
@@ -2078,13 +2117,31 @@ def verify_bundle_archive_contents(
 
 
 class FrontendChangeHandler(FileSystemEventHandler):
-    def __init__(self, trigger_build: Callable[[], None]):
+    """Watch frontend sources; debounce rebuilds and skip noisy paths."""
+
+    def __init__(
+        self,
+        trigger_build: Callable[[], None],
+        *,
+        debounce_seconds: float = 0.5,
+        is_build_running: Callable[[], bool] | None = None,
+    ):
         self.trigger_build = trigger_build
+        self.debounce_seconds = debounce_seconds
+        self.is_build_running = is_build_running or (lambda: False)
+        self._last_trigger_at = 0.0
 
     def on_any_event(self, event: Any) -> None:
-        if is_frontend_dist_path(event.src_path):
+        src_path = getattr(event, "src_path", "") or ""
+        if should_ignore_frontend_watch_path(src_path):
             return
-        click.secho(f"🔁 Frontend change detected: {event.src_path}", fg="yellow")
+        if self.is_build_running():
+            return
+        now = time.monotonic()
+        if now - self._last_trigger_at < self.debounce_seconds:
+            return
+        self._last_trigger_at = now
+        click.secho(f"🔁 Frontend change detected: {src_path}", fg="yellow")
         self.trigger_build()
 
 
@@ -2095,6 +2152,23 @@ def is_frontend_dist_path(path: str) -> bool:
         part == "frontend" and index + 1 < len(parts) and parts[index + 1] == "dist"
         for index, part in enumerate(parts)
     )
+
+
+def is_node_modules_path(path: str) -> bool:
+    """Return whether a watched path is inside node_modules."""
+    return "node_modules" in split_path_parts(path)
+
+
+def should_ignore_frontend_watch_path(path: str) -> bool:
+    """Ignore dist/node_modules noise and temporary editor files."""
+    if not path:
+        return True
+    if is_frontend_dist_path(path) or is_node_modules_path(path):
+        return True
+    name = Path(path).name
+    if name.endswith(("~", ".swp", ".swo", ".tmp")) or name.startswith("."):
+        return True
+    return False
 
 
 @click.group(help="CLI for validating and bundling AxBI extensions.")
@@ -2308,6 +2382,12 @@ def update(version_opt: str | None, license_opt: str | None) -> None:
     # Resolve license: prompt if flag used without value
     if license_opt == "__prompt__":
         license_opt = click.prompt("License", default=extension.license or "")
+    if license_opt and license_opt != extension.license:
+        try:
+            license_opt = validate_spdx_like_license(license_opt)
+        except click.ClickException as ex:
+            click.secho(f"❌ {ex.message}", err=True, fg="red")
+            sys.exit(1)
     target_license = (
         license_opt
         if license_opt and license_opt != extension.license
@@ -2824,7 +2904,8 @@ def bundle(ctx: click.Context, output: Path | None) -> None:
                     identity,
                     f"bundle entry {arcname}",
                 )
-                zipf.write(file, arcname)
+                # Zip entries must use POSIX paths; Path objects break on Windows.
+                zipf.write(file, arcname.as_posix())
 
         verify_bundle_archive_contents(temp_path, bundle_entries, resolved_dist_dir)
         current_temp_identity = get_read_path_identity(temp_path)
@@ -2891,17 +2972,34 @@ def dev(ctx: click.Context) -> None:
     manifest = build_manifest(cwd, remote_entry)
     write_manifest(cwd, manifest)
 
+    build_in_progress = False
+
     def frontend_watcher() -> None:
-        if (
-            optional_directory_exists(frontend_dir, "frontend")
-            and (remote_entry := rebuild_frontend(cwd, frontend_dir)) is not None
-        ):
-            manifest = build_manifest(cwd, remote_entry)
-            write_manifest(cwd, manifest)
+        nonlocal build_in_progress
+        if build_in_progress:
+            return
+        if not optional_directory_exists(frontend_dir, "frontend"):
+            return
+        build_in_progress = True
+        try:
+            remote_entry = rebuild_frontend(cwd, frontend_dir)
+            if remote_entry is not None:
+                manifest = build_manifest(cwd, remote_entry)
+                write_manifest(cwd, manifest)
+        finally:
+            build_in_progress = False
 
     def backend_watcher() -> None:
-        if optional_directory_exists(backend_dir, "backend"):
+        nonlocal build_in_progress
+        if build_in_progress:
+            return
+        if not optional_directory_exists(backend_dir, "backend"):
+            return
+        build_in_progress = True
+        try:
             rebuild_backend(cwd)
+        finally:
+            build_in_progress = False
 
     # Build watch message based on existing directories
     watch_targets: list[tuple[str, Path, PathIdentity, NodeIdentity]] = []
@@ -2941,11 +3039,25 @@ def dev(ctx: click.Context) -> None:
             expected_parent_identity=directory_parent_identity,
         )
         if label == "frontend":
-            frontend_handler = FrontendChangeHandler(trigger_build=frontend_watcher)
+            frontend_handler = FrontendChangeHandler(
+                trigger_build=frontend_watcher,
+                is_build_running=lambda: build_in_progress,
+            )
             observer.schedule(frontend_handler, str(directory), recursive=True)
         else:
             backend_handler = FileSystemEventHandler()
-            backend_handler.on_any_event = lambda event: backend_watcher()
+
+            def _on_backend_event(event: Any) -> None:
+                src_path = getattr(event, "src_path", "") or ""
+                if is_node_modules_path(src_path) or should_ignore_frontend_watch_path(
+                    src_path
+                ):
+                    return
+                if build_in_progress:
+                    return
+                backend_watcher()
+
+            backend_handler.on_any_event = _on_backend_event
             observer.schedule(backend_handler, str(directory), recursive=True)
 
     if watch_dirs:

@@ -17,6 +17,12 @@
  * under the License.
  */
 
+/**
+ * Wraps a function with an in-memory cache keyed by its arguments.
+ *
+ * When the wrapped function returns a Promise that rejects, the cache entry is
+ * deleted so the next call retries instead of permanently caching the failure.
+ */
 export const cacheWrapper =
   <T extends Array<any>, U>(
     fn: (...args: T) => U,
@@ -30,5 +36,13 @@ export const cacheWrapper =
     }
     const result = fn(...args);
     cache.set(key, result);
+    // Drop rejected promises so subsequent callers can retry.
+    if (result != null && typeof (result as any).then === 'function') {
+      (result as unknown as Promise<unknown>).catch(() => {
+        if (cache.get(key) === result) {
+          cache.delete(key);
+        }
+      });
+    }
     return result;
   };

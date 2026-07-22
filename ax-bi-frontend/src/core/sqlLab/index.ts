@@ -627,13 +627,24 @@ const executeQuery: typeof sqlLabApi.executeQuery = async options => {
     updateTabState = !qe.selectedText;
   }
 
-  // Merge template parameters
-  const templateParams = options?.templateParameters
-    ? JSON.stringify({
-        ...JSON.parse(qe.templateParams || '{}'),
-        ...options.templateParameters,
-      })
-    : qe.templateParams;
+  // Merge template parameters (tolerate invalid JSON in qe.templateParams)
+  let templateParams = qe.templateParams;
+  if (options?.templateParameters) {
+    let existing: Record<string, unknown> = {};
+    try {
+      existing = JSON.parse(qe.templateParams || '{}') as Record<
+        string,
+        unknown
+      >;
+    } catch {
+      // Keep empty base if stored templateParams is not valid JSON.
+      existing = {};
+    }
+    templateParams = JSON.stringify({
+      ...existing,
+      ...options.templateParameters,
+    });
+  }
 
   const queryId = nanoid(11);
 

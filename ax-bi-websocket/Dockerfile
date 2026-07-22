@@ -48,4 +48,6 @@ RUN npm ci --omit=dev
 # Don't run as root!
 USER node
 
-CMD [ "npm", "start" ]
+# Use node directly as PID 1 so SIGTERM/SIGINT reach the process for graceful shutdown.
+# Equivalent to `npm start` which runs `node dist/index.js start`.
+CMD [ "node", "dist/index.js", "start" ]

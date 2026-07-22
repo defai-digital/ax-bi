@@ -142,7 +142,7 @@ class TaskContext(CoreTaskContext):
 
         return self._task
 
-    def update_task(
+    def update_task(  # noqa: C901
         self,
         progress: float | int | tuple[int, int] | None = None,
         payload: dict[str, object] | None = None,
@@ -165,13 +165,12 @@ class TaskContext(CoreTaskContext):
         :param payload: Payload data to merge (dict), or None to leave unchanged
         """
         has_updates = False
+        progress_props: dict[str, Any] | None = None
 
-        # Handle progress updates - always update in-memory cache
+        # Validate progress outside the lock (pure CPU, no shared mutation)
         if progress is not None:
             progress_props = progress_update(progress)
             if progress_props:
-                # Merge progress into cached properties
-                self._properties_cache.update(progress_props)
                 has_updates = True
             else:
                 # Invalid progress format - progress_update returns empty dict
@@ -182,10 +181,7 @@ class TaskContext(CoreTaskContext):
                     progress,
                 )
 
-        # Handle payload updates - always update in-memory cache
         if payload is not None:
-            # Merge payload into cached payload
-            self._payload_cache.update(payload)
             has_updates = True
 
         if not has_updates:
@@ -194,13 +190,21 @@ class TaskContext(CoreTaskContext):
         # Get throttle interval from config
         throttle_interval = current_app.config["TASK_PROGRESS_UPDATE_THROTTLE_INTERVAL"]
 
-        # If throttling is disabled (0), write immediately
-        if throttle_interval <= 0:
-            self._write_to_db()
-            return
-
-        # Apply throttling with deferred flush
+        # Merge caches under the same lock used by the deferred-flush timer so a
+        # concurrent dict resize cannot raise "dictionary changed size during
+        # iteration" in the timer thread.
         with self._throttle_lock:
+            if progress_props:
+                self._properties_cache.update(progress_props)
+            if payload is not None:
+                self._payload_cache.update(payload)
+
+            # If throttling is disabled (0), write immediately
+            if throttle_interval <= 0:
+                self._write_to_db()
+                return
+
+            # Apply throttling with deferred flush
             now = time.time()
 
             if self._last_db_write_time is None:
@@ -256,7 +260,10 @@ class TaskContext(CoreTaskContext):
         with self._throttle_lock:
             self._deferred_flush_timer = None
 
-            if self._has_pending_updates:
+            if not self._has_pending_updates:
+                return
+
+            try:
                 # Need app context for DB operations in timer thread
                 if self._app:
                     with self._app.app_context():
@@ -266,6 +273,27 @@ class TaskContext(CoreTaskContext):
 
                 self._last_db_write_time = time.time()
                 self._has_pending_updates = False
+            except Exception:
+                # Keep pending state so the next update_task() or flush can retry.
+                # Without this, a transient DB error kills the daemon timer and
+                # progress writes go silently stale.
+                logger.exception(
+                    "Deferred flush failed for task %s; will retry on next update",
+                    self._task_uuid,
+                )
+                self._has_pending_updates = True
+                try:
+                    throttle_interval = current_app.config[
+                        "TASK_PROGRESS_UPDATE_THROTTLE_INTERVAL"
+                    ]
+                except Exception:  # noqa: BLE001
+                    throttle_interval = 1.0
+                if throttle_interval and throttle_interval > 0:
+                    self._deferred_flush_timer = threading.Timer(
+                        float(throttle_interval), self._deferred_flush
+                    )
+                    self._deferred_flush_timer.daemon = True
+                    self._deferred_flush_timer.start()
 
     def _cancel_deferred_flush_timer(self) -> None:
         """Cancel the deferred flush timer if running."""

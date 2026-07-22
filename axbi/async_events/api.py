@@ -21,7 +21,11 @@ from flask_appbuilder import expose
 from flask_appbuilder.api import safe
 from flask_appbuilder.security.decorators import permission_name, protect
 
-from axbi.async_events.async_query_manager import AsyncQueryTokenException
+from axbi.async_events.async_query_manager import (
+    AsyncQueryJobException,
+    AsyncQueryTokenException,
+    InvalidAsyncEventIdError,
+)
 from axbi.extensions import async_query_manager, event_logger
 from axbi.views.base_api import BaseAxBIApi, statsd_metrics
 
@@ -97,5 +101,10 @@ class AsyncEventsRestApi(BaseAxBIApi):
 
         except AsyncQueryTokenException:
             return self.response_401()
+        except InvalidAsyncEventIdError as ex:
+            return self.response_400(message=str(ex))
+        except AsyncQueryJobException as ex:
+            # Retriable stream/backend issues (e.g. Redis outage)
+            return self.response(503, message=str(ex))
 
         return self.response(200, result=events)

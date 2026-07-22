@@ -89,16 +89,42 @@ const appCandidates = [
   path.join(bundleDir, 'macos', 'AX BI.app'),
   path.join(bundleDir, 'AX BI.app'),
 ]
+
+function detectAppleArch(bundleRoot, appPath) {
+  // Prefer arch token from sibling DMG/app names, then path segments, then host.
+  for (const source of mappings) {
+    const base = path.basename(source)
+    const match = base.match(/_(aarch64|x86_64|universal)(?:\.|$)/i)
+    if (match) {
+      return match[1].toLowerCase()
+    }
+  }
+  const pathMatch = `${bundleRoot}${path.sep}${appPath}`.match(
+    /(aarch64|x86_64|universal)/i,
+  )
+  if (pathMatch) {
+    return pathMatch[1].toLowerCase()
+  }
+  if (process.arch === 'arm64') {
+    return 'aarch64'
+  }
+  if (process.arch === 'x64') {
+    return 'x86_64'
+  }
+  return process.arch
+}
+
 for (const appPath of appCandidates) {
   if (fs.existsSync(appPath)) {
-    const zipName = `AX.BI_${version}_aarch64.app.zip`
+    const arch = detectAppleArch(bundleDir, appPath)
+    const zipName = `AX.BI_${version}_${arch}.app.zip`
     const zipPath = path.join(outDir, zipName)
     // Caller on macOS should prefer ditto/zip; we only note the path.
     fs.writeFileSync(
       path.join(outDir, 'app-bundle.path'),
       `${appPath}\n${zipPath}\n`,
     )
-    console.log(`app bundle noted: ${appPath}`)
+    console.log(`app bundle noted: ${appPath} (arch=${arch})`)
     break
   }
 }

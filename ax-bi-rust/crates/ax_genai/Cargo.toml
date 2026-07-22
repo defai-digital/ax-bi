@@ -29,4 +29,4 @@ crate-type = ["cdylib", "rlib"]
 extension-module = ["pyo3/extension-module"]
 
 [dependencies]
-pyo3 = { version = "0.27.2" }
+pyo3 = { workspace = true }

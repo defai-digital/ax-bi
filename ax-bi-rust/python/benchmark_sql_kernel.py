@@ -21,10 +21,13 @@ from __future__ import annotations
 import argparse
 import json  # noqa: TID251
 from collections.abc import Callable
-from enum import Enum
 from pathlib import Path
 from timeit import default_timer
 from typing import Any
+
+from axbi.runtime_modernization.rust_sql import (
+    _normalize_sql_whitespace_python as normalize_sql_whitespace_python,
+)
 
 SAMPLE_SQL = """
 WITH recent_orders AS (
@@ -40,118 +43,6 @@ WHERE r.total > 100
 ORDER BY r.total DESC
 LIMIT 100
 """
-
-
-class ScanState(Enum):
-    """State machine states for the Python compatibility baseline."""
-
-    DEFAULT = "default"
-    SINGLE_QUOTE = "single_quote"
-    DOUBLE_QUOTE = "double_quote"
-    BACKTICK = "backtick"
-    BRACKET = "bracket"
-    LINE_COMMENT = "line_comment"
-    BLOCK_COMMENT = "block_comment"
-
-
-def normalize_sql_whitespace_python(sql: str) -> str:  # noqa: C901
-    """Collapse whitespace outside SQL strings, quoted identifiers, and comments."""
-
-    output: list[str] = []
-    index = 0
-    state = ScanState.DEFAULT
-    pending_space = False
-
-    def peek() -> str | None:
-        return sql[index + 1] if index + 1 < len(sql) else None
-
-    while index < len(sql):
-        char = sql[index]
-        next_char = peek()
-
-        if state == ScanState.DEFAULT:
-            if char.isspace():
-                pending_space = bool(output)
-                index += 1
-                continue
-
-            if pending_space and (not output or output[-1] != " "):
-                output.append(" ")
-            pending_space = False
-
-            if char == "'":
-                output.append(char)
-                state = ScanState.SINGLE_QUOTE
-            elif char == '"':
-                output.append(char)
-                state = ScanState.DOUBLE_QUOTE
-            elif char == "`":
-                output.append(char)
-                state = ScanState.BACKTICK
-            elif char == "[":
-                output.append(char)
-                state = ScanState.BRACKET
-            elif char == "-" and next_char == "-":
-                output.extend((char, next_char))
-                state = ScanState.LINE_COMMENT
-                index += 1
-            elif char == "/" and next_char == "*":
-                output.extend((char, next_char))
-                state = ScanState.BLOCK_COMMENT
-                index += 1
-            else:
-                output.append(char)
-
-        elif state == ScanState.SINGLE_QUOTE:
-            output.append(char)
-            if char == "'":
-                if next_char == "'":
-                    output.append(next_char)
-                    index += 1
-                else:
-                    state = ScanState.DEFAULT
-
-        elif state == ScanState.DOUBLE_QUOTE:
-            output.append(char)
-            if char == '"':
-                if next_char == '"':
-                    output.append(next_char)
-                    index += 1
-                else:
-                    state = ScanState.DEFAULT
-
-        elif state == ScanState.BACKTICK:
-            output.append(char)
-            if char == "`":
-                if next_char == "`":
-                    output.append(next_char)
-                    index += 1
-                else:
-                    state = ScanState.DEFAULT
-
-        elif state == ScanState.BRACKET:
-            output.append(char)
-            if char == "]":
-                state = ScanState.DEFAULT
-
-        elif state == ScanState.LINE_COMMENT:
-            output.append(char)
-            if char == "\n":
-                state = ScanState.DEFAULT
-
-        elif state == ScanState.BLOCK_COMMENT:
-            output.append(char)
-            if char == "*" and next_char == "/":
-                output.append(next_char)
-                state = ScanState.DEFAULT
-                index += 1
-
-        index += 1
-
-    if output and output[-1] == " ":
-        output.pop()
-
-    return "".join(output)
 
 
 def build_benchmark_report(

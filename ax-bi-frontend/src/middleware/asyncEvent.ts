@@ -58,10 +58,13 @@ const LOCALSTORAGE_KEY = 'last_async_event_id';
 const POLLING_URL = '/api/v1/async_event/';
 const MAX_RETRIES = 6;
 const RETRY_DELAY = 100;
+// Default max wait for an async job before rejecting (5 minutes).
+const DEFAULT_MAX_WAIT_MS = 5 * 60 * 1000;
 
 let config: AppConfig;
 let transport: string;
 let pollingDelayMs: number;
+let maxWaitMs: number;
 let pollingTimeoutId: number;
 let listenersByJobId: Map<string, ListenerFn>;
 let retriesByJobId: Map<string, number>;
@@ -97,28 +100,48 @@ const fetchCachedData = async (
 export const waitForAsyncData = async (asyncResponse: AsyncEvent) =>
   new Promise((resolve, reject) => {
     const jobId = asyncResponse.job_id;
+    let settled = false;
+
+    const timeoutId = window.setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      removeListener(jobId);
+      reject(
+        new Error(
+          `Async event timed out after ${maxWaitMs ?? DEFAULT_MAX_WAIT_MS}ms for job_id ${jobId}`,
+        ),
+      );
+    }, maxWaitMs ?? DEFAULT_MAX_WAIT_MS);
+
+    const settle = (fn: (value: any) => void, value: any) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timeoutId);
+      removeListener(jobId);
+      fn(value);
+    };
+
     const listener = async (asyncEvent: AsyncEvent) => {
       switch (asyncEvent.status) {
         case JOB_STATUS.DONE: {
           let { data, status } = await fetchCachedData(asyncEvent); // eslint-disable-line prefer-const
           data = ensureIsArray(data);
           if (status === 'success') {
-            resolve(data);
+            settle(resolve, data);
           } else {
-            reject(data);
+            settle(reject, data);
           }
           break;
         }
         case JOB_STATUS.ERROR: {
           const err = parseErrorJson(asyncEvent);
-          reject(err);
+          settle(reject, err);
           break;
         }
         default: {
           logging.warn('received event with status', asyncEvent.status);
         }
       }
-      removeListener(jobId);
     };
     addListener(jobId, listener);
   });
@@ -190,21 +213,52 @@ const wsConnectMaxRetries = 6;
 const wsConnectErrorDelay = 2500;
 let wsConnectRetries = 0;
 let wsConnectTimeout: any;
-let ws: WebSocket;
+let ws: WebSocket | null = null;
+// Bumped on every connect/close so stale close handlers never reconnect.
+let wsGeneration = 0;
+
+const closeWebSocket = (): void => {
+  if (wsConnectTimeout) {
+    clearTimeout(wsConnectTimeout);
+    wsConnectTimeout = undefined;
+  }
+  wsGeneration += 1;
+  if (ws) {
+    const socket = ws;
+    ws = null;
+    try {
+      if (socket.readyState < 2) {
+        socket.close();
+      }
+    } catch (err) {
+      logging.warn('Error closing WebSocket', err);
+    }
+  }
+  wsConnectRetries = 0;
+};
 
 const wsConnect = (): void => {
+  // Ensure any previous socket is fully torn down before opening a new one.
+  closeWebSocket();
+
   let url = config.GLOBAL_ASYNC_QUERIES_WEBSOCKET_URL;
   if (lastReceivedEventId) url += `?last_id=${lastReceivedEventId}`;
-  ws = new WebSocket(url);
+  const generation = wsGeneration;
+  const socket = new WebSocket(url);
+  ws = socket;
 
-  ws.addEventListener('open', () => {
+  socket.addEventListener('open', () => {
+    if (generation !== wsGeneration || ws !== socket) return;
     logging.log('WebSocket connected');
     clearTimeout(wsConnectTimeout);
     wsConnectRetries = 0;
   });
 
-  ws.addEventListener('close', () => {
+  socket.addEventListener('close', () => {
+    // Only reconnect if this is still the active generation (not closed by re-init).
+    if (generation !== wsGeneration || ws !== socket) return;
     wsConnectTimeout = setTimeout(() => {
+      if (generation !== wsGeneration) return;
       wsConnectRetries += 1;
       if (wsConnectRetries <= wsConnectMaxRetries) {
         wsConnect();
@@ -215,12 +269,14 @@ const wsConnect = (): void => {
     }, wsConnectErrorDelay);
   });
 
-  ws.addEventListener('error', () => {
+  socket.addEventListener('error', () => {
+    if (generation !== wsGeneration || ws !== socket) return;
     // https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/readyState
-    if (ws.readyState < 2) ws.close();
+    if (socket.readyState < 2) socket.close();
   });
 
-  ws.addEventListener('message', async event => {
+  socket.addEventListener('message', async event => {
+    if (generation !== wsGeneration || ws !== socket) return;
     let events: AsyncEvent[] = [];
     try {
       events = [JSON.parse(event.data)];
@@ -234,6 +290,8 @@ const wsConnect = (): void => {
 export const init = (appConfig?: AppConfig) => {
   if (!isFeatureEnabled(FeatureFlag.GlobalAsyncQueries)) return;
   if (pollingTimeoutId) clearTimeout(pollingTimeoutId);
+  // Tear down any existing WS before re-initializing (avoids leaking sockets).
+  closeWebSocket();
 
   listenersByJobId = new Map();
   retriesByJobId = new Map();
@@ -242,6 +300,8 @@ export const init = (appConfig?: AppConfig) => {
   config = appConfig || getBootstrapData().common.conf;
   transport = config.GLOBAL_ASYNC_QUERIES_TRANSPORT || TRANSPORT_POLLING;
   pollingDelayMs = config.GLOBAL_ASYNC_QUERIES_POLLING_DELAY || 500;
+  maxWaitMs =
+    config.GLOBAL_ASYNC_QUERIES_MAX_WAIT_MS || DEFAULT_MAX_WAIT_MS;
 
   try {
     lastReceivedEventId = localStorage.getItem(LOCALSTORAGE_KEY);

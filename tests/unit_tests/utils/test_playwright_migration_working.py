@@ -24,7 +24,7 @@ from unittest.mock import MagicMock, patch
 
 from axbi.utils.webdriver import (
     _PlaywrightBrowserManager,
-    PLAYWRIGHT_AVAILABLE,
+    is_playwright_available,
     validate_webdriver_config,
 )
 
@@ -33,8 +33,8 @@ class TestPlaywrightMigrationCore:
     """Core tests that demonstrate working Playwright migration functionality."""
 
     def test_playwright_available_is_boolean(self):
-        """Test that PLAYWRIGHT_AVAILABLE is always a boolean."""
-        assert isinstance(PLAYWRIGHT_AVAILABLE, bool)
+        """Test that is_playwright_available always returns a boolean (lazy)."""
+        assert isinstance(is_playwright_available(), bool)
 
     @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
     def test_validate_webdriver_config_structure(self, mock_feature_flag):
@@ -64,9 +64,9 @@ class TestPlaywrightMigrationCore:
         # Selenium should always be available
         assert result["selenium_available"] is True
 
-    @patch("axbi.utils.webdriver.PLAYWRIGHT_AVAILABLE", False)
+    @patch("axbi.utils.webdriver.is_playwright_available", return_value=False)
     @patch("axbi.utils.webdriver.logger")
-    def test_webdriver_playwright_fallback_logging(self, mock_logger):
+    def test_webdriver_playwright_fallback_logging(self, mock_logger, _mock_avail):
         """Test that WebDriverPlaywright logs fallback correctly."""
         from axbi.utils.webdriver import WebDriverPlaywright
 

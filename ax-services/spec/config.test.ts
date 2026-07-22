@@ -197,15 +197,15 @@ test('buildConfig rejects invalid numeric settings', () => {
   expect(() => buildConfig({ AXBI_TIMEOUT_MS: '1000.5' })).toThrow(
     'AXBI_TIMEOUT_MS must be a positive integer',
   );
-  expect(() => buildConfig({ AXBI_TIMEOUT_MS: '2147483648' })).toThrow(
-    'AXBI_TIMEOUT_MS must be between 1 and 2147483647',
+  expect(() => buildConfig({ AXBI_TIMEOUT_MS: '120001' })).toThrow(
+    'AXBI_TIMEOUT_MS must be between 1 and 120000',
   );
 });
 
 test('buildConfig accepts maximum supported AxBI timeout', () => {
-  const config = buildConfig({ AXBI_TIMEOUT_MS: '2147483647' });
+  const config = buildConfig({ AXBI_TIMEOUT_MS: '120000' });
 
-  expect(config.axbiTimeoutMs).toBe(2147483647);
+  expect(config.axbiTimeoutMs).toBe(120000);
 });
 
 test('buildConfig treats blank optional token as absent', () => {

@@ -29,14 +29,12 @@ from flask_appbuilder.security.sqla.models import User
 from flask_babel import _
 from sqlalchemy.exc import NoResultFound
 
-from axbi import appbuilder, dataframe, db, result_set, viz
+from axbi import appbuilder, dataframe, db, result_set
 from axbi.axbi_typing import (
     ExplorableData,
     FlaskResponse,
-    FormData,
 )
 from axbi.common.db_query_status import QueryStatus
-from axbi.daos.datasource import DatasourceDAO
 from axbi.errors import AxBIError, AxBIErrorType, ErrorLevel
 from axbi.exceptions import (
     AxBIException,
@@ -52,9 +50,7 @@ from axbi.models.helpers import json_to_dict
 from axbi.models.slice import Slice
 from axbi.models.sql_lab import Query
 from axbi.utils import json
-from axbi.utils.core import DatasourceType
 from axbi.utils.decorators import stats_timing
-from axbi.viz import BaseViz
 
 logger = logging.getLogger(__name__)
 stats_logger = app.config["STATS_LOGGER"]
@@ -175,22 +171,9 @@ def get_permissions(
     return roles_permissions, transformed_permissions
 
 
-def get_viz(
-    form_data: FormData,
-    datasource_type: str,
-    datasource_id: int,
-    force: bool = False,
-    force_cached: bool = False,
-) -> BaseViz:
-    viz_type = form_data.get("viz_type", "table")
-    datasource = DatasourceDAO.get_datasource(
-        DatasourceType(datasource_type),
-        datasource_id,
-    )
-    viz_obj = viz.viz_types[viz_type](
-        datasource, form_data=form_data, force=force, force_cached=force_cached
-    )
-    return viz_obj
+# Re-export from utils so views callers keep working; non-views layers should
+# import from axbi.utils.viz_helpers (avoids Command/Task → views inversion).
+from axbi.utils.viz_helpers import get_datasource_info, get_viz  # noqa: E402, F401
 
 
 def loads_request_json(request_json_data: str) -> dict[Any, Any]:
@@ -302,47 +285,6 @@ def add_sqllab_custom_filters(form_data: dict[Any, Any]) -> Any:
                             form_data.update({"filters": valid_filters})
     except (TypeError, json.JSONDecodeError):
         data = {}
-
-
-def get_datasource_info(
-    datasource_id: int | None, datasource_type: str | None, form_data: FormData
-) -> tuple[int, str | None]:
-    """
-    Compatibility layer for handling of datasource info
-
-    datasource_id & datasource_type used to be passed in the URL
-    directory, now they should come as part of the form_data,
-
-    This function allows supporting both without duplicating code
-
-    :param datasource_id: The datasource ID
-    :param datasource_type: The datasource type
-    :param form_data: The URL form data
-    :returns: The datasource ID and type
-    :raises AxBIException: If the datasource no longer exists
-    """
-
-    raw_datasource_id: Any = datasource_id
-    if isinstance(datasource := form_data.get("datasource"), str):
-        parts = datasource.split("__")
-        if len(parts) == 2:
-            raw_datasource_id, datasource_type = parts
-        # The case where the datasource has been deleted
-        if raw_datasource_id == "None":
-            raw_datasource_id = None
-
-    if not raw_datasource_id:
-        raise AxBIException(
-            _("The dataset associated with this chart no longer exists")
-        )
-
-    try:
-        datasource_id = int(raw_datasource_id)
-    except (TypeError, ValueError) as ex:
-        raise AxBIException(
-            _("The dataset associated with this chart no longer exists")
-        ) from ex
-    return datasource_id, datasource_type
 
 
 def _deserialize_json_results_payload(payload: bytes | str) -> dict[str, Any]:

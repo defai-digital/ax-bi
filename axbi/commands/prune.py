@@ -68,9 +68,19 @@ def delete_model_ids_in_batches(
     minutes, seconds = divmod(elapsed_time, 60)
     formatted_time = f"{int(minutes):02}:{int(seconds):02}"
     logger.info(
-        "Pruning complete: %s rows deleted in %s",
+        "Pruning complete: selected=%s deleted=%s from %s in %s "
+        "(deleted may be less than selected if a batch failed mid-run)",
+        f"{total_rows:,}",
         f"{total_deleted:,}",
+        table_name,
         formatted_time,
     )
+    if total_deleted < total_rows:
+        logger.warning(
+            "Prune of %s finished with deleted (%s) < selected (%s)",
+            table_name,
+            f"{total_deleted:,}",
+            f"{total_rows:,}",
+        )
 
     return total_deleted

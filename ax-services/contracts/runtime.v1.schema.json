@@ -8,8 +8,6 @@
       "status",
       "timestamp",
       "version",
-      "nodeVersion",
-      "platform",
       "uptimeSeconds"
     ],
     "additionalProperties": false,

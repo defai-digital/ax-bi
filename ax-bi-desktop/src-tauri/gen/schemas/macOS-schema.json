@@ -387,6 +387,18 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Basic launcher shell commands (config, navigation, notifications).",
+          "type": "string",
+          "const": "allow-app-shell",
+          "markdownDescription": "Basic launcher shell commands (config, navigation, notifications)."
+        },
+        {
+          "description": "Privileged local Docker runtime control. Grant only to the launcher window.",
+          "type": "string",
+          "const": "allow-local-runtime",
+          "markdownDescription": "Privileged local Docker runtime control. Grant only to the launcher window."
+        },
+        {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
           "type": "string",
           "const": "core:default",

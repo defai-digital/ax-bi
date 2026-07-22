@@ -62,9 +62,17 @@ class AbortListener:
         self._thread = thread
         self._stop_event = stop_event
         self._pubsub = pubsub
+        # Flag the callback path checks so a late abort after stop() is ignored.
+        self._stopped = False
+
+    @property
+    def stopped(self) -> bool:
+        """True after :meth:`stop` has been called."""
+        return self._stopped
 
     def stop(self) -> None:
         """Stop the abort listener."""
+        self._stopped = True
         self._stop_event.set()
 
         # Close pub/sub subscription if active
@@ -531,6 +539,15 @@ class TaskManager:
         while not stop_event.is_set():
             try:
                 if check_fn():
+                    # stop() may have been called between check and here — do not
+                    # invoke the abort callback after the caller cancelled listening.
+                    if stop_event.is_set():
+                        logger.debug(
+                            "Abort %s for task %s ignored; listener already stopped",
+                            source,
+                            task_uuid,
+                        )
+                        break
                     logger.info(
                         "Abort detected via %s for task %s",
                         source,

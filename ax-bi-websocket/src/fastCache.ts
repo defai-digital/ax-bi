@@ -16,11 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import Redis, { RedisOptions } from 'ioredis';
+import Redis from 'ioredis';
 import StatsD from 'hot-shots';
-import { checkServerIdentity, PeerCertificate } from 'tls';
 import { createLogger } from './logger';
-import { buildConfig, RedisConfig } from './config';
+import { buildConfig } from './config';
+import { buildRedisOpts } from './redisOpts';
 
 const opts = buildConfig();
 
@@ -37,38 +37,6 @@ const statsd = new StatsD({
     logger.error(e);
   },
 });
-
-/**
- * Build Redis connection options from the fast-cache config.
- * Duplicated from index.ts to avoid circular imports.
- */
-const buildFastCacheRedisOpts = (baseConfig: RedisConfig): RedisOptions => {
-  const redisOpts: RedisOptions = {
-    port: baseConfig.port,
-    host: baseConfig.host,
-    db: baseConfig.db,
-  };
-
-  if (baseConfig.password !== '') {
-    redisOpts.username = baseConfig.username;
-    redisOpts.password = baseConfig.password;
-  }
-
-  if (baseConfig.ssl) {
-    redisOpts.tls = {
-      checkServerIdentity: (
-        hostname: string,
-        cert: PeerCertificate,
-      ): Error | undefined => {
-        if (baseConfig.validateHostname) {
-          return checkServerIdentity(hostname, cert);
-        }
-      },
-    };
-  }
-
-  return redisOpts;
-};
 
 let fastCacheRedis: Redis | null = null;
 
@@ -87,7 +55,7 @@ export const initFastCacheRedis = (): Redis | null => {
     return fastCacheRedis;
   }
 
-  const redisOpts = buildFastCacheRedisOpts(opts.redis);
+  const redisOpts = buildRedisOpts(opts.redis);
   fastCacheRedis = new Redis({
     ...redisOpts,
     enableReadyCheck: true,
@@ -117,6 +85,24 @@ export const getFastCacheRedis = (): Redis | null => {
     return initFastCacheRedis();
   }
   return fastCacheRedis;
+};
+
+/**
+ * Lightweight readiness probe against the fast-cache Redis connection.
+ * Returns false when the feature is disabled or the PING fails.
+ */
+export const pingFastCacheRedis = async (): Promise<boolean> => {
+  const redis = getFastCacheRedis();
+  if (!redis) {
+    return false;
+  }
+  try {
+    const reply = await redis.ping();
+    return reply === 'PONG';
+  } catch (err) {
+    logger.error(`Fast cache Redis PING failed: ${err}`);
+    return false;
+  }
 };
 
 /**
@@ -176,7 +162,11 @@ export const hasChartCache = async (cacheKey: string): Promise<boolean> => {
  */
 export const closeFastCacheRedis = async (): Promise<void> => {
   if (fastCacheRedis) {
-    await fastCacheRedis.quit();
+    try {
+      await fastCacheRedis.quit();
+    } catch {
+      fastCacheRedis.disconnect();
+    }
     fastCacheRedis = null;
     logger.info('Fast cache Redis connection closed');
   }
@@ -184,9 +174,17 @@ export const closeFastCacheRedis = async (): Promise<void> => {
 
 /**
  * Reset the fast-cache Redis connection (for testing).
+ * Disconnects any live client before clearing the module reference.
  */
 export const resetFastCacheRedis = (): void => {
-  fastCacheRedis = null;
+  if (fastCacheRedis) {
+    try {
+      fastCacheRedis.disconnect();
+    } catch {
+      // Best-effort cleanup for tests.
+    }
+    fastCacheRedis = null;
+  }
 };
 
 // Export opts and statsd for use by route handlers that need them

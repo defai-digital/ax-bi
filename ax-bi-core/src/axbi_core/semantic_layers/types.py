@@ -153,8 +153,16 @@ class PredicateType(enum.Enum):
     HAVING = "HAVING"
 
 
-@dataclass(frozen=True, order=True)
+@dataclass(frozen=True)
 class Filter:
+    """
+    Semantic filter predicate.
+
+    Not ordered: ``value`` is a mixed union (including frozensets of mixed
+    types) that cannot provide a total order, so ``order=True`` would raise
+    TypeError on comparisons between heterogeneous instances.
+    """
+
     type: PredicateType
     column: Dimension | Metric | None
     operator: Operator

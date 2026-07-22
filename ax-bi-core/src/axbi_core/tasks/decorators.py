@@ -30,16 +30,31 @@ R = TypeVar("R")
 
 
 def task(
+    func: Callable[P, R] | None = None,
+    /,
+    *,
     name: str | None = None,
     scope: TaskScope = TaskScope.PRIVATE,
     timeout: int | None = None,
-) -> Callable[[Callable[P, R]], TaskWrapper[P]]:
+) -> Callable[[Callable[P, R]], TaskWrapper[P]] | TaskWrapper[P]:
     """
     Decorator to register a task.
 
     Host implementations will replace this function during initialization
     with a concrete implementation providing actual functionality.
 
+    Supports bare usage and factory usage:
+
+        @task
+        def my_task(): ...
+
+        @task()
+        def my_task(): ...
+
+        @task(name="generate_report", scope=TaskScope.SHARED)
+        def my_task(): ...
+
+    :param func: Function to decorate when used as ``@task`` (bare).
     :param name: Optional unique task name (e.g., "axbi.generate_thumbnail").
                  If not provided, uses the function name as the task name.
     :param scope: Task scope (TaskScope.PRIVATE, SHARED, or SYSTEM).
@@ -47,7 +62,7 @@ def task(
     :param timeout: Optional timeout in seconds. When the timeout is reached,
                     abort handlers are triggered if registered. Can be overridden
                     at call time via TaskOptions(timeout=...).
-    :returns: TaskWrapper with .schedule() method
+    :returns: TaskWrapper (bare ``@task``) or a decorator factory (``@task()``).
 
     Note:
         Both direct calls and .schedule() return Task, regardless of the
@@ -58,11 +73,16 @@ def task(
         from axbi_core.tasks.decorators import task, get_context
         from axbi_core.tasks.types import TaskScope
 
-        # Private task (default scope)
+        # Private task (default scope) — bare decorator
         @task
         def generate_thumbnail(chart_id: int) -> None:
             ctx = get_context()
             # ... task implementation
+
+        # Equivalent with parentheses
+        @task()
+        def generate_thumbnail_alt(chart_id: int) -> None:
+            ctx = get_context()
 
         # Named task with shared scope
         @task(name="generate_report", scope=TaskScope.SHARED)
@@ -100,6 +120,10 @@ def task(
         # Direct call for sync execution (blocks until task is complete)
         task = generate_chart_thumbnail(chart_id=123)  # Also returns Task
     """
+    # Signature matches the host replacement (axbi.tasks.decorators.task):
+    # bare @task and @task(...) both work. The stub body is replaced at init.
+    if func is not None and not callable(func):
+        raise TypeError("task decorator first positional argument must be callable")
     raise NotImplementedError("Function will be replaced during initialization")
 
 

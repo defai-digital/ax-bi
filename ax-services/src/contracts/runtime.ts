@@ -86,8 +86,10 @@ export interface HealthResponseContract {
   status: 'ok';
   timestamp: string;
   version: string;
-  nodeVersion: string;
-  platform: string;
+  /** Included only for loopback listeners to limit host fingerprinting. */
+  nodeVersion?: string;
+  /** Included only for loopback listeners to limit host fingerprinting. */
+  platform?: string;
   uptimeSeconds: number;
 }
 
@@ -181,8 +183,6 @@ export const healthResponseSchema = {
     'status',
     'timestamp',
     'version',
-    'nodeVersion',
-    'platform',
     'uptimeSeconds',
   ],
   additionalProperties: false,

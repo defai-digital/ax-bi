@@ -1,0 +1,15 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "main-launcher",
+  "description": "Privileged AX BI launcher only. Local-runtime IPC must never be granted to remote-axbi or local-axbi windows.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "shell:allow-open",
+    "notification:default",
+    "deep-link:default",
+    "store:default",
+    "allow-app-shell",
+    "allow-local-runtime"
+  ]
+}

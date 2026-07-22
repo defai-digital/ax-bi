@@ -40,6 +40,10 @@ function normalizeToOrigin(domain: string): string {
   }
 }
 
+// Warn once per page load when allowed domains are unrestricted, so
+// operators notice the open configuration without spamming the console.
+let warnedEmptyAllowedDomains = false;
+
 /**
  * Validates the origin of an incoming postMessage event against the dashboard's
  * configured allowed domains.
@@ -54,6 +58,13 @@ export function isMessageOriginAllowed(
   allowedDomains?: string[],
 ): boolean {
   if (!allowedDomains || allowedDomains.length === 0) {
+    if (!warnedEmptyAllowedDomains) {
+      warnedEmptyAllowedDomains = true;
+      // eslint-disable-next-line no-console
+      console.warn(
+        '[axbi] embedded allowed_domains is empty; accepting messages from any origin. Configure allowed_domains to restrict embed hosts.',
+      );
+    }
     return true;
   }
   if (allowedDomains.some(domain => normalizeToOrigin(domain) === origin)) {

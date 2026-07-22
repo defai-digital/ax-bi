@@ -108,6 +108,9 @@ export class ThemeController {
   // Track loaded font URLs to avoid duplicate injections
   private loadedFontUrls: Set<string> = new Set();
 
+  // Monotonic counter so stale setCrudTheme resolutions are ignored.
+  private crudThemeRequestId = 0;
+
   private initialMode: ThemeMode | undefined;
 
   constructor({
@@ -395,12 +398,19 @@ export class ThemeController {
    * @param themeId - The ID of the CRUD theme to apply
    */
   public async setCrudTheme(themeId: string | null): Promise<void> {
+    // Capture a request id so a slower earlier fetch cannot overwrite a
+    // more recent setCrudTheme call (or a clear).
+    const requestId = ++this.crudThemeRequestId;
     this.crudThemeId = themeId;
 
     if (themeId) {
       this.storage.setItem(STORAGE_KEYS.CRUD_THEME_ID, themeId);
       try {
         const themeConfig = await this.fetchCrudTheme(themeId);
+        // Ignore stale resolutions from superseded requests.
+        if (requestId !== this.crudThemeRequestId) {
+          return;
+        }
         if (themeConfig) {
           // Cache the dashboard theme but don't apply it globally
           this.dashboardCrudTheme = themeConfig;
@@ -408,6 +418,9 @@ export class ThemeController {
           this.notifyListeners();
         }
       } catch (error) {
+        if (requestId !== this.crudThemeRequestId) {
+          return;
+        }
         console.error('Failed to load CRUD theme:', error);
         this.dashboardCrudTheme = null;
         this.notifyListeners();

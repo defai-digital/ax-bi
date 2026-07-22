@@ -17,22 +17,34 @@
  * under the License.
  */
 import { FastifyInstance } from 'fastify';
-import { activeSocketCount } from '../index';
+import { activeSocketCount } from '../state';
+import { pingFastCacheRedis, fastCacheOpts } from '../fastCache';
 
 /**
  * Enhanced health/readiness endpoint that reports WebSocket connection count
- * and fast-cache gateway status in addition to basic liveness.
+ * and a lightweight Redis readiness probe (when fast-cache is enabled).
  */
 export const registerHealthRoutes = (app: FastifyInstance): void => {
-  app.get('/health', async () => {
-    return {
-      status: 'ok',
+  app.get('/health', async (_request, reply) => {
+    let redisOk: boolean | null = null;
+    if (fastCacheOpts.fastCacheEnabled) {
+      redisOk = await pingFastCacheRedis();
+    }
+
+    const body = {
+      status: redisOk === false ? 'degraded' : 'ok',
       activeConnections: activeSocketCount(),
+      redis: redisOk === null ? 'disabled' : redisOk ? 'ok' : 'unavailable',
       timestamp: new Date().toISOString(),
     };
+
+    // Still return 200 for liveness when Redis is down so orchestrators that
+    // only check /health for process liveness don't thrash restarts; readiness
+    // can be inferred from the redis field / degraded status.
+    return reply.status(200).send(body);
   });
 
-  app.head('/health', async (request, reply) => {
+  app.head('/health', async (_request, reply) => {
     reply.status(200).send();
   });
 };

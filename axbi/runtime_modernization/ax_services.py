@@ -20,12 +20,20 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from types import TracebackType
+from typing import Any, Self
 
 import requests
 
-DEFAULT_AX_SERVICES_BASE_URL = "http://127.0.0.1:5010"
-DEFAULT_AX_SERVICES_TIMEOUT_SECONDS = 2.0
+# Default must match ax-services DEFAULT_PORT (31424), not the legacy 5010.
+DEFAULT_AX_SERVICES_BASE_URL = "http://127.0.0.1:31424"
+# Must be strictly greater than ax-services AXBI_TIMEOUT_MS (default 2000ms)
+# so nested budgets remain ordered: Python total > sidecar upstream budget.
+DEFAULT_AX_SERVICES_TIMEOUT_SECONDS = 5.0
+
+# Module-level shared session reused across AxServicesClient instances that
+# do not inject their own Session. Avoids creating a Session per tool call.
+_SHARED_SESSION = requests.Session()
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,7 +73,13 @@ class AxServicesResponse:
 
 
 class AxServicesClient:
-    """Small HTTP client for runtime-modernization sidecar calls."""
+    """Small HTTP client for runtime-modernization sidecar calls.
+
+    By default reuses a process-wide ``requests.Session`` so MCP tools and
+    other call sites do not leak a new Session per invocation. Pass an
+    explicit ``session`` (and use :meth:`close` / the context manager) when
+    the caller needs an isolated connection pool.
+    """
 
     def __init__(
         self,
@@ -73,7 +87,33 @@ class AxServicesClient:
         session: requests.Session | None = None,
     ) -> None:
         self._config = config
-        self._session = session or requests.Session()
+        if session is not None:
+            self._session = session
+            self._owns_session = False
+        else:
+            self._session = _SHARED_SESSION
+            self._owns_session = False
+
+    def close(self) -> None:
+        """Close the underlying session when this client owns it.
+
+        No-op for the shared default session or an injected session owned by
+        the caller.
+        """
+
+        if self._owns_session:
+            self._session.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        self.close()
 
     def health(self, request_id: str | None = None) -> AxServicesResponse:
         """Call the sidecar health endpoint."""

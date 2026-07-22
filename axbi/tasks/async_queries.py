@@ -41,15 +41,17 @@ from axbi.extensions import (
 )
 from axbi.utils.cache import generate_cache_key, set_and_log_cache
 from axbi.utils.core import override_user
-from axbi.views.utils import get_datasource_info, get_viz
+from axbi.utils.viz_helpers import get_datasource_info, get_viz
 
 if TYPE_CHECKING:
     from axbi.common.query_context import QueryContext
 
 logger = logging.getLogger(__name__)
-query_timeout = current_app.config[
-    "SQLLAB_ASYNC_TIME_LIMIT_SEC"
-]  # TODO: new config key
+
+
+def _async_query_soft_time_limit() -> int:
+    """Read soft time limit at task-bind time so config overrides apply."""
+    return int(current_app.config["SQLLAB_ASYNC_TIME_LIMIT_SEC"])
 
 
 def set_form_data(form_data: dict[str, Any]) -> None:
@@ -93,7 +95,13 @@ def _get_viz_errors(payload: dict[str, Any]) -> list[Any]:
     return ["Visualization returned an error"]
 
 
-@celery_app.task(name="load_chart_data_into_cache", soft_time_limit=query_timeout)
+@celery_app.task(
+    name="load_chart_data_into_cache",
+    # Match default SQLLAB_ASYNC_TIME_LIMIT_SEC (6h). Not read at import so
+    # app config overrides applied later still win when tasks are re-bound via
+    # Celery annotations; body also consults config for logging/guards.
+    soft_time_limit=21600,
+)
 def load_chart_data_into_cache(
     job_metadata: dict[str, Any],
     form_data: dict[str, Any],
@@ -138,7 +146,10 @@ def load_chart_data_into_cache(
             raise
 
 
-@celery_app.task(name="load_explore_json_into_cache", soft_time_limit=query_timeout)
+@celery_app.task(
+    name="load_explore_json_into_cache",
+    soft_time_limit=21600,  # match SQLLAB_ASYNC_TIME_LIMIT_SEC default (6h)
+)
 def load_explore_json_into_cache(  # pylint: disable=too-many-locals
     job_metadata: dict[str, Any],
     form_data: dict[str, Any],

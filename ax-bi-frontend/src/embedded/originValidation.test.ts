@@ -28,11 +28,16 @@ const makeEvent = (origin: string, data: unknown): MessageEvent =>
 const validData = { type: MESSAGE_TYPE, handshake: 'port transfer' };
 
 test('isMessageOriginAllowed allows any origin when the list is undefined', () => {
+  // May emit a one-time console.warn about unrestricted embeds.
+  const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
   expect(isMessageOriginAllowed('https://anywhere.example.com')).toBe(true);
+  warn.mockRestore();
 });
 
 test('isMessageOriginAllowed allows any origin when the list is empty', () => {
+  const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
   expect(isMessageOriginAllowed('https://anywhere.example.com', [])).toBe(true);
+  warn.mockRestore();
 });
 
 test('isMessageOriginAllowed allows an origin that is in the list', () => {

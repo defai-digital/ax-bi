@@ -192,9 +192,11 @@ def refresh_oauth2_token(
             return None
 
         token.access_token = token_response["access_token"]
-        token.access_token_expiration = datetime.now() + timedelta(
-            seconds=token_response["expires_in"]
-        )
+        # Use naive UTC to match JWT expiry comparisons (timezone.utc, then
+        # strip tzinfo) and avoid skew on non-UTC hosts with local datetime.now().
+        token.access_token_expiration = datetime.now(tz=timezone.utc).replace(
+            tzinfo=None
+        ) + timedelta(seconds=token_response["expires_in"])
         # Support single-use refresh tokens
         if new_refresh_token := token_response.get("refresh_token"):
             token.refresh_token = new_refresh_token

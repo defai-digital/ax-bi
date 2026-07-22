@@ -17,29 +17,29 @@ specific language governing permissions and limitations
 under the License.
 -->
 
-[![Version](https://img.shields.io/npm/v/%40superset-ui%2Fembedded-sdk?style=flat)](https://www.npmjs.com/package/@ax-bi/embedded-sdk)
-[![Libraries.io](https://img.shields.io/librariesio/release/npm/%40superset-ui%2Fembedded-sdk?style=flat)](https://libraries.io/npm/@superset-ui%2Fembedded-sdk)
+[![Version](https://img.shields.io/npm/v/%40ax-bi%2Fembedded-sdk?style=flat)](https://www.npmjs.com/package/@ax-bi/embedded-sdk)
+[![Libraries.io](https://img.shields.io/librariesio/release/npm/%40ax-bi%2Fembedded-sdk?style=flat)](https://libraries.io/npm/@ax-bi%2Fembedded-sdk)
 
-# Superset Embedded SDK
+# AX BI Embedded SDK
 
-The Superset Embedded SDK mounts Superset dashboards inside your application with
+The AX BI Embedded SDK mounts AX BI dashboards inside your application with
 an iframe and a guest-token based authentication flow.
 
-Use it when you want users to view a Superset dashboard from your product without
-signing in to Superset directly. Your application remains responsible for
-authenticating the user, requesting or minting a Superset guest token, and passing
+Use it when you want users to view an AX BI dashboard from your product without
+signing in to AX BI directly. Your application remains responsible for
+authenticating the user, requesting or minting an AX BI guest token, and passing
 that token to the SDK.
 
 ## Quick Start
 
-### 1. Enable Embedded Superset
+### 1. Enable Embedded AX BI
 
-In your Superset configuration:
+In your AX BI configuration (`axbi_config.py`):
 
-- Enable the `EMBEDDED_SUPERSET` feature flag.
+- Enable the `EMBEDDED_AXBI` feature flag.
 - Set a strong `GUEST_TOKEN_JWT_SECRET`.
 - Configure `GUEST_TOKEN_JWT_AUDIENCE` if you mint guest tokens outside the
-  Superset API.
+  AX BI API.
 - Make sure the dashboard's embedded settings allow the host application domain.
 
 ### 2. Install the SDK
@@ -66,9 +66,9 @@ npm link @ax-bi/embedded-sdk
 import { embedDashboard } from '@ax-bi/embedded-sdk';
 
 const embeddedDashboard = await embedDashboard({
-  id: 'abc123', // given by the Superset embedding UI
-  supersetDomain: 'https://superset.example.com',
-  mountPoint: document.getElementById('my-superset-container')!,
+  id: 'abc123', // given by the AX BI embedding UI
+  axbiDomain: 'https://axbi.example.com',
+  mountPoint: document.getElementById('my-axbi-container')!,
   fetchGuestToken: () => fetchGuestTokenFromBackend(),
   dashboardUiConfig: {
     hideTitle: true,
@@ -103,8 +103,8 @@ You can load the SDK from a CDN. The package exposes
 <script>
   axbiEmbeddedSdk.embedDashboard({
     id: 'abc123',
-    supersetDomain: 'https://superset.example.com',
-    mountPoint: document.getElementById('my-superset-container'),
+    axbiDomain: 'https://axbi.example.com',
+    mountPoint: document.getElementById('my-axbi-container'),
     fetchGuestToken: () => fetchGuestTokenFromBackend(),
   });
 </script>
@@ -112,18 +112,18 @@ You can load the SDK from a CDN. The package exposes
 
 ## Guest Token Flow
 
-Embedded resources use guest tokens to grant limited Superset access to users
+Embedded resources use guest tokens to grant limited AX BI access to users
 authenticated by your application. Your frontend supplies the SDK with a
-`fetchGuestToken` function. That function should call your backend, not Superset
-directly, so your Superset credentials and token-signing secrets stay server-side.
+`fetchGuestToken` function. That function should call your backend, not AX BI
+directly, so your AX BI credentials and token-signing secrets stay server-side.
 
 The SDK sends the guest token into the embedded iframe and refreshes it before it
 expires. If a refresh call fails, the SDK retries. If `fetchGuestToken` never
 settles, the SDK times it out after 30 seconds by default.
 
-### Requesting a Guest Token from Superset
+### Requesting a Guest Token from AX BI
 
-From your backend, send a `POST` request to Superset's
+From your backend, send a `POST` request to AX BI's
 `/security/guest_token` endpoint. The caller must be authenticated with the
 `can_grant_guest_token` permission.
 
@@ -151,8 +151,8 @@ Example `POST /security/guest_token` payload:
 
 ### Minting a Guest Token Directly
 
-You can also mint a guest token in your backend without calling the Superset API.
-Use the same `GUEST_TOKEN_JWT_SECRET` configured in Superset. If you set
+You can also mint a guest token in your backend without calling the AX BI API.
+Use the same `GUEST_TOKEN_JWT_SECRET` configured in AX BI. If you set
 `GUEST_TOKEN_JWT_AUDIENCE`, the JWT `aud` claim must match it.
 
 ```json
@@ -176,7 +176,7 @@ Use the same `GUEST_TOKEN_JWT_SECRET` configured in Superset. If you set
 }
 ```
 
-Matching Superset configuration:
+Matching AX BI configuration:
 
 ```python
 GUEST_TOKEN_JWT_AUDIENCE = "superset"
@@ -188,8 +188,8 @@ GUEST_TOKEN_JWT_AUDIENCE = "superset"
 
 | Parameter | Type | Required | Description |
 | --------- | ---- | -------- | ----------- |
-| `id` | `string` | Yes | Dashboard embed ID from Superset's embedding UI. |
-| `supersetDomain` | `string` | Yes | Superset origin, including protocol. Example: `https://superset.example.com`. |
+| `id` | `string` | Yes | Dashboard embed ID from AX BI's embedding UI. |
+| `axbiDomain` | `string` | Yes | AX BI origin, including protocol. Example: `https://axbi.example.com`. |
 | `mountPoint` | `HTMLElement` | Yes | Container element that will be replaced with the embedded iframe. |
 | `fetchGuestToken` | `() => Promise<string>` | Yes | Host callback that returns a valid guest token. |
 | `dashboardUiConfig` | `UiConfigType` | No | Dashboard display options and URL parameters. |
@@ -250,8 +250,8 @@ Use the `themeMode` URL parameter to control the embedded dashboard's initial co
 ```ts
 embedDashboard({
   id: 'abc123',
-  supersetDomain: 'https://superset.example.com',
-  mountPoint: document.getElementById('my-superset-container')!,
+  axbiDomain: 'https://axbi.example.com',
+  mountPoint: document.getElementById('my-axbi-container')!,
   fetchGuestToken: () => fetchGuestTokenFromBackend(),
   dashboardUiConfig: {
     urlParams: {
@@ -265,7 +265,7 @@ The supported values are:
 
 | Value     | Behaviour                                                 |
 | --------- | --------------------------------------------------------- |
-| `default` | Light theme (Superset default)                            |
+| `default` | Light theme (AX BI default)                              |
 | `dark`    | Dark theme                                                |
 | `system`  | Follows the user's OS preference (`prefers-color-scheme`) |
 
@@ -311,8 +311,8 @@ Common permissions you might need:
 
 ### Referrer Policy
 
-Superset validates the host domain for embedded dashboards using the `Referer`
-header. If your host app applies a restrictive referrer policy, Superset may not
+AX BI validates the host domain for embedded dashboards using the `Referer`
+header. If your host app applies a restrictive referrer policy, AX BI may not
 receive the header it needs.
 
 Set `referrerPolicy` when the host page policy would otherwise omit the
@@ -327,15 +327,15 @@ embedDashboard({
 
 ## Permalink URLs
 
-When users click share buttons inside an embedded dashboard, Superset generates
-permalinks using Superset's domain. Use `resolvePermalinkUrl` to map those links
+When users click share buttons inside an embedded dashboard, AX BI generates
+permalinks using AX BI's domain. Use `resolvePermalinkUrl` to map those links
 to your application's domain.
 
 ```ts
 embedDashboard({
   id: 'abc123',
-  supersetDomain: 'https://superset.example.com',
-  mountPoint: document.getElementById('my-superset-container')!,
+  axbiDomain: 'https://axbi.example.com',
+  mountPoint: document.getElementById('my-axbi-container')!,
   fetchGuestToken: () => fetchGuestTokenFromBackend(),
   resolvePermalinkUrl: ({ key }) => {
     return `https://my-app.com/analytics/share/${key}`;
@@ -350,8 +350,8 @@ const permalinkKey = routeParams.key;
 
 embedDashboard({
   id: 'abc123',
-  supersetDomain: 'https://superset.example.com',
-  mountPoint: document.getElementById('my-superset-container')!,
+  axbiDomain: 'https://axbi.example.com',
+  mountPoint: document.getElementById('my-axbi-container')!,
   fetchGuestToken: () => fetchGuestTokenFromBackend(),
   resolvePermalinkUrl: ({ key }) => `https://my-app.com/analytics/share/${key}`,
   dashboardUiConfig: {
@@ -382,8 +382,8 @@ npm run build
 
 | Symptom | Check |
 | ------- | ----- |
-| The iframe loads a Superset error page | Confirm `EMBEDDED_SUPERSET` is enabled and the dashboard is configured for embedding. |
-| The dashboard is rejected by domain validation | Confirm the host app domain is allowed in Superset and the iframe sends a `Referer` header. |
+| The iframe loads an AX BI error page | Confirm `EMBEDDED_AXBI` is enabled and the dashboard is configured for embedding. |
+| The dashboard is rejected by domain validation | Confirm the host app domain is allowed in AX BI and the iframe sends a `Referer` header. |
 | The iframe stays blank | Confirm `fetchGuestToken` resolves to a valid guest token and watch the browser console with `debug: true`. |
 | The session expires | Confirm guest tokens have a valid `exp` claim and `fetchGuestToken` can refresh them. |
 | Clipboard or fullscreen features fail | Add the needed feature to `iframeAllowExtras`. |

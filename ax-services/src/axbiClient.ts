@@ -262,7 +262,74 @@ const MAX_ASSET_DESCRIPTION_LENGTH = 1024;
 const MAX_ASSET_LIST_VALUE_LENGTH = 128;
 const MAX_METADATA_KEYS = 100;
 const MAX_METADATA_KEY_LENGTH = 128;
+// Cap AxBI response bodies so a runaway upstream cannot OOM the sidecar.
+const MAX_RESPONSE_BODY_BYTES = 10 * 1024 * 1024;
 const CONTROL_CHARACTER_PATTERN = /[\u0000-\u001f\u007f]/g;
+
+/**
+ * Read a fetch Response as JSON while enforcing a hard byte cap.
+ * Checks Content-Length when present, then streams the body so oversized
+ * payloads are rejected before full materialization.
+ */
+async function readJsonResponse(response: Response): Promise<unknown> {
+  const contentLengthHeader = response.headers.get('content-length');
+  if (contentLengthHeader !== null && contentLengthHeader !== '') {
+    const contentLength = Number(contentLengthHeader);
+    if (
+      Number.isFinite(contentLength) &&
+      contentLength > MAX_RESPONSE_BODY_BYTES
+    ) {
+      throw new Error(
+        `AxBI response body exceeds ${MAX_RESPONSE_BODY_BYTES} byte limit`,
+      );
+    }
+  }
+
+  if (response.body === null) {
+    const text = await response.text();
+    if (text.length > MAX_RESPONSE_BODY_BYTES) {
+      throw new Error(
+        `AxBI response body exceeds ${MAX_RESPONSE_BODY_BYTES} byte limit`,
+      );
+    }
+    return text.length === 0 ? null : (JSON.parse(text) as unknown);
+  }
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      if (value === undefined) {
+        continue;
+      }
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_RESPONSE_BODY_BYTES) {
+        throw new Error(
+          `AxBI response body exceeds ${MAX_RESPONSE_BODY_BYTES} byte limit`,
+        );
+      }
+      chunks.push(value);
+    }
+  } finally {
+    try {
+      reader.releaseLock();
+    } catch {
+      // Reader may already be released after cancel/error; ignore.
+    }
+  }
+
+  const merged = Buffer.concat(chunks.map(chunk => Buffer.from(chunk)));
+  if (merged.length === 0) {
+    return null;
+  }
+  return JSON.parse(merged.toString('utf8')) as unknown;
+}
 
 export class AxBIClient implements AxBIDependencyClient {
   private readonly healthUrl: string;
@@ -335,7 +402,7 @@ export class AxBIClient implements AxBIDependencyClient {
         };
       }
 
-      const payload = (await response.json()) as unknown;
+      const payload = await readJsonResponse(response);
       if (!isRecord(payload)) {
         return {
           ok: false,
@@ -544,7 +611,7 @@ export class AxBIClient implements AxBIDependencyClient {
         };
       }
 
-      const payload = (await response.json()) as unknown;
+      const payload = await readJsonResponse(response);
       if (
         !isRecord(payload) ||
         payload['contractVersion'] !== AUTHORIZATION_CONTRACT_VERSION
@@ -808,7 +875,7 @@ export class AxBIClient implements AxBIDependencyClient {
         ]);
       }
 
-      return onPayload((await response.json()) as unknown);
+      return onPayload(await readJsonResponse(response));
     } catch (error) {
       return emptyResult([
         `${operationLabel} failed: ${externalErrorMessage(error)}`,
@@ -2367,7 +2434,9 @@ function listResponseMetadata(
     pageSize: request.pageSize,
     totalPages,
     hasNext: request.page < totalPages,
-    hasPrevious: totalPages > 0 && request.page > 1,
+    // hasPrevious tracks client page position, not whether totalPages is known.
+    // An out-of-range page (e.g. page 2 of 0) still has a previous page.
+    hasPrevious: request.page > 1,
     columnsRequested,
     columnsLoaded,
     warnings,
@@ -2598,6 +2667,10 @@ function withFallbackListPagination<T extends ListPaginationRequest>(
   } as unknown as T;
 }
 
+// Defensive runtime validators below intentionally mirror Fastify JSON-schema
+// contracts (see contracts/*RequestSchema). Edge schema rejects bad requests
+// at the HTTP boundary; these guards keep AxBIClient safe when called in-process
+// or when schema coverage lags a field. Full consolidation is deferred (MS5).
 function invalidListRequestResponse<
   TRequest extends ListPaginationRequest,
   TResponse,
@@ -2658,7 +2731,8 @@ function withFallbackAnnotationLayerId(request: unknown): AnnotationListRequest 
   const record = isRecord(request) ? request : {};
   return {
     ...withFallbackListPagination<AnnotationListRequest>(record),
-    layerId: isNonNegativeInteger(record['layerId']) ? record['layerId'] : 0,
+    // Request schema requires layerId >= 1; never emit 0 as a fallback.
+    layerId: isPositiveInteger(record['layerId']) ? record['layerId'] : 1,
   } as AnnotationListRequest;
 }
 

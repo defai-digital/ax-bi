@@ -23,16 +23,36 @@ import WebSocket, { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
 import jwt, { Algorithm } from 'jsonwebtoken';
 import { parseCookie } from 'cookie';
-import Redis, { RedisOptions } from 'ioredis';
+import Redis from 'ioredis';
 import StatsD from 'hot-shots';
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 
 import { createLogger } from './logger';
-import { buildConfig, RedisConfig } from './config';
-import { checkServerIdentity, PeerCertificate } from 'tls';
+import { buildConfig } from './config';
+import { buildRedisOpts } from './redisOpts';
 import { registerRoutes } from './routes';
 import { initFastCacheRedis, closeFastCacheRedis } from './fastCache';
+import {
+  activeChannelSocketCount,
+  activeSocketCount,
+  channels,
+  isSocketActive,
+  resetRegistries,
+  SOCKET_ACTIVE_STATES,
+  sockets,
+  type SocketInstance,
+} from './state';
+
+// Re-export registry helpers for tests and external consumers.
+export {
+  activeChannelSocketCount,
+  activeSocketCount,
+  channels,
+  isSocketActive,
+  sockets,
+  type SocketInstance,
+};
 
 export type StreamResult = [
   recordId: string,
@@ -67,15 +87,6 @@ interface FetchRangeFromStreamParams {
   startId: string;
   endId: string;
   listener: ListenerFunction;
-}
-export interface SocketInstance {
-  ws: WebSocket;
-  channel: string;
-  pongTs: number;
-}
-
-interface ChannelValue {
-  sockets: Array<string>;
 }
 
 const environment = process.env.NODE_ENV;
@@ -112,55 +123,43 @@ if (startServer && opts.jwtSecret.startsWith('CHANGE-ME')) {
   );
 }
 
-export const buildRedisOpts = (baseConfig: RedisConfig) => {
-  const redisOpts: RedisOptions = {
-    port: baseConfig.port,
-    host: baseConfig.host,
-    db: baseConfig.db,
-  };
+if (
+  startServer &&
+  (!opts.allowedOrigins || opts.allowedOrigins.length === 0)
+) {
+  logger.warn(
+    'allowedOrigins is empty: WebSocket Origin checks are disabled. ' +
+      'Set allowedOrigins (or ALLOWED_ORIGINS) in production to mitigate CSWSH.',
+  );
+}
 
-  const passwd = baseConfig.password;
-  if (passwd !== '') {
-    redisOpts.username = baseConfig.username;
-    redisOpts.password = baseConfig.password;
-  }
-
-  if (baseConfig.ssl) {
-    redisOpts.tls = {
-      checkServerIdentity: (
-        hostname: string,
-        cert: PeerCertificate,
-      ): Error | undefined => {
-        // Note, the cert chain will have been verified already. the role of this method is to
-        // validate that at least one of the SAN's (or subject) of the server's cert matches the provided hostname
-        if (baseConfig.validateHostname) {
-          return checkServerIdentity(hostname, cert);
-        }
-      },
-    };
-  }
-
-  return redisOpts;
-};
+// Re-export shared Redis option builder for tests/backward compatibility.
+export { buildRedisOpts };
 
 // initialize servers
+// Blocking XREAD connection for the global firehose.
 const redis = new Redis(buildRedisOpts(opts.redis));
 redis.on('error', (err: Error) => {
   logger.error(`Redis connection error: ${err.message}`);
 });
+
+// Dedicated non-blocking connection for XRANGE catch-up (client reconnect).
+// Sharing the blocking XREAD connection would stall catch-up while blocked.
+const redisRange = new Redis(buildRedisOpts(opts.redis));
+redisRange.on('error', (err: Error) => {
+  logger.error(`Redis range connection error: ${err.message}`);
+});
+
 const httpServer = http.createServer();
 export const wss = new WebSocketServer({
   noServer: true,
   clientTracking: false,
 });
 
-const SOCKET_ACTIVE_STATES: number[] = [WebSocket.OPEN, WebSocket.CONNECTING];
 const GLOBAL_EVENT_STREAM_NAME = `${opts.redisStreamPrefix}full`;
 const DEFAULT_STREAM_LAST_ID = '$';
 
-// initialize internal registries
-export let channels: Record<string, ChannelValue> = {};
-export let sockets: Record<string, SocketInstance> = {};
+// initialize internal registries (live state lives in ./state)
 let lastFirehoseId: string = DEFAULT_STREAM_LAST_ID;
 
 export const setLastFirehoseId = (id: string): void => {
@@ -170,34 +169,6 @@ export const setLastFirehoseId = (id: string): void => {
 // WebSocket close code used when a connection is refused because a configured
 // connection limit has been reached (1013 = "Try Again Later").
 const CONNECTION_LIMIT_CLOSE_CODE = 1013;
-
-/**
- * Returns whether the socket with the given id is currently active, i.e. it is
- * still registered and its underlying connection is in an active readyState.
- *
- * Closed sockets are only removed from the registries asynchronously (via the
- * `checkSockets`/`cleanChannel` GC routines), so connection-limit checks must
- * filter on live socket state rather than trusting the raw registry sizes.
- */
-export const isSocketActive = (socketId: string): boolean => {
-  const socketInstance = sockets[socketId];
-  return (
-    !!socketInstance &&
-    SOCKET_ACTIVE_STATES.includes(socketInstance.ws.readyState)
-  );
-};
-
-/**
- * Counts the sockets in the global registry that are still active.
- */
-export const activeSocketCount = (): number =>
-  Object.keys(sockets).filter(isSocketActive).length;
-
-/**
- * Counts the active sockets currently registered on the given channel.
- */
-export const activeChannelSocketCount = (channel: string): number =>
-  channels[channel]?.sockets.filter(isSocketActive).length ?? 0;
 
 /**
  * Determines whether accepting a new connection on the given channel would
@@ -299,6 +270,14 @@ export const sendToChannel = (channel: string, value: EventValue): void => {
 /**
  * Reads a range of events from a channel-specific Redis event stream.
  * Invoked in the client re-connection flow.
+ *
+ * Uses a dedicated Redis connection (redisRange) so XRANGE catch-up never
+ * contends with the blocking XREAD on the firehose connection.
+ *
+ * Delivery semantics (SIP-39 / reconnect catch-up): at-least-once. Events in
+ * the requested range are re-sent to every socket currently on the channel.
+ * Clients must tolerate duplicates; a full exactly-once redesign is out of
+ * scope.
  */
 export const fetchRangeFromStream = async ({
   sessionId,
@@ -308,7 +287,7 @@ export const fetchRangeFromStream = async ({
 }: FetchRangeFromStreamParams) => {
   const streamName = `${opts.redisStreamPrefix}${sessionId}`;
   try {
-    const reply = await redis.xrange(streamName, startId, endId);
+    const reply = await redisRange.xrange(streamName, startId, endId);
     if (!reply || !reply.length) return;
     await listener(reply as StreamResult[]);
   } catch (e) {
@@ -457,7 +436,23 @@ export const incrementId = (id: string): string => {
  * WebSocket `connection` event handler, called via wss
  */
 export const wsConnection = (ws: WebSocket, request: http.IncomingMessage) => {
-  const channel: string = readChannelId(request);
+  let channel: string;
+  try {
+    channel = readChannelId(request);
+  } catch (err) {
+    // JWT may have become invalid between upgrade and connection, or the
+    // connection path was invoked without a prior upgrade check (tests).
+    statsd.increment('ws_connection_auth_failed');
+    logger.warn(
+      `Rejecting WebSocket connection: ${(err as Error).message}`,
+    );
+    try {
+      ws.terminate();
+    } catch (terminateErr) {
+      logger.debug(`Error terminating socket after auth failure: ${terminateErr}`);
+    }
+    return;
+  }
 
   // Refuse the connection if a configured connection limit has been reached,
   // before tracking it against the internal registries.
@@ -475,7 +470,9 @@ export const wsConnection = (ws: WebSocket, request: http.IncomingMessage) => {
   const socketId = trackClient(channel, socketInstance);
   logger.debug(`socket ${socketId} connected on channel ${channel}`);
 
-  // reconnection logic
+  // reconnection logic — at-least-once replay of the missed range (SIP-39).
+  // Events may be delivered more than once across reconnects; clients should
+  // de-dupe by event id if exactly-once presentation is required.
   const lastId = getLastId(request);
   if (lastId) {
     // fetch range of events from lastId to most recent event received on
@@ -613,14 +610,33 @@ export const checkSockets = () => {
       logger.debug(
         `terminating unresponsive socket: ${socketId}, channel: ${socketInstance.channel}`,
       );
-      socketInstance.ws.terminate();
+      try {
+        socketInstance.ws.terminate();
+      } catch (err) {
+        logger.debug(`Error terminating unresponsive socket ${socketId}: ${err}`);
+      }
       isActive = false;
     } else if (!SOCKET_ACTIVE_STATES.includes(socketInstance.ws.readyState)) {
       isActive = false;
     }
 
     if (isActive) {
-      socketInstance.ws.ping(socketId);
+      try {
+        socketInstance.ws.ping(socketId);
+      } catch (err) {
+        statsd.increment('ws_client_ping_error');
+        logger.debug(`Error pinging socket ${socketId}: ${err}`);
+        try {
+          socketInstance.ws.terminate();
+        } catch (terminateErr) {
+          logger.debug(
+            `Error terminating socket after ping failure ${socketId}: ${terminateErr}`,
+          );
+        }
+        delete sockets[socketId];
+        logger.debug(`forgetting socket ${socketId} after ping failure`);
+        continue;
+      }
     } else {
       delete sockets[socketId];
       logger.debug(`forgetting socket ${socketId}`);
@@ -650,16 +666,22 @@ export const cleanChannel = (channel: string) => {
   }
 };
 
-const MAX_FASTIFY_BODY_LIMIT_BYTES = Number.MAX_SAFE_INTEGER;
+// Chart data payloads can be large but unbounded body parsing is unsafe.
+// 50 MiB is well above typical chart JSON while still bounding memory use.
+const MAX_FASTIFY_BODY_LIMIT_BYTES = 50 * 1024 * 1024;
 
 // Fastify HTTP API server (Fast Data API Gateway)
 const fastify = Fastify({
   logger: false,
-  // Chart data payloads can be large; Fastify requires a positive integer.
   bodyLimit: MAX_FASTIFY_BODY_LIMIT_BYTES,
 });
 
 export const getFastify = (): ReturnType<typeof Fastify> => fastify;
+
+const SHUTDOWN_TIMEOUT_MS = 10_000;
+let pingInterval: ReturnType<typeof setInterval> | undefined;
+let gcInterval: ReturnType<typeof setInterval> | undefined;
+let shuttingDown = false;
 
 // server startup
 
@@ -671,11 +693,13 @@ if (startServer) {
     // Normalize the reason defensively: a raw template interpolation throws on
     // a Symbol (or other exotic value), which would crash this last-resort
     // handler. `inspect` safely stringifies any value.
+    statsd.increment('ws_unhandled_rejection');
     logger.error(`Unhandled promise rejection: ${inspect(reason)}`);
   });
   process.on('uncaughtException', (err: unknown) => {
     // JavaScript can throw non-Error values (including null), so guard the
     // shape before dereferencing instead of assuming an Error is present.
+    statsd.increment('ws_uncaught_exception');
     const detail =
       err instanceof Error ? (err.stack ?? err.message) : inspect(err);
     logger.error(`Uncaught exception: ${detail}`);
@@ -725,30 +749,91 @@ if (startServer) {
   subscribeToGlobalStream(GLOBAL_EVENT_STREAM_NAME, processStreamResults);
 
   // init garbage collection routines
-  setInterval(checkSockets, opts.pingSocketsIntervalMs);
-  setInterval(function gc() {
+  pingInterval = setInterval(checkSockets, opts.pingSocketsIntervalMs);
+  gcInterval = setInterval(function gc() {
     // clean all channels
     for (const channel in channels) {
       cleanChannel(channel);
     }
   }, opts.gcChannelsIntervalMs);
 
-  // Graceful shutdown
+  // Graceful shutdown with a hard timeout so a stuck close cannot hang forever.
   const shutdown = async (signal: string) => {
+    if (shuttingDown) {
+      return;
+    }
+    shuttingDown = true;
     logger.info(`Received ${signal}, shutting down gracefully`);
-    await closeFastCacheRedis();
-    await fastify.close();
-    httpServer.close();
-    process.exit(0);
+
+    if (pingInterval !== undefined) {
+      clearInterval(pingInterval);
+      pingInterval = undefined;
+    }
+    if (gcInterval !== undefined) {
+      clearInterval(gcInterval);
+      gcInterval = undefined;
+    }
+
+    const forceExit = setTimeout(() => {
+      logger.error(
+        `Graceful shutdown exceeded ${SHUTDOWN_TIMEOUT_MS}ms; forcing exit`,
+      );
+      process.exit(1);
+    }, SHUTDOWN_TIMEOUT_MS);
+    // Do not keep the process alive solely for the force-exit timer.
+    forceExit.unref?.();
+
+    try {
+      // Stop accepting new WebSocket upgrades / HTTP on the raw server.
+      await new Promise<void>(resolve => {
+        httpServer.close(() => resolve());
+        // close() may not call back if already closed
+        setTimeout(resolve, 1000).unref?.();
+      });
+
+      // Terminate remaining sockets so wss can drain.
+      for (const socketId of Object.keys(sockets)) {
+        try {
+          sockets[socketId]?.ws.terminate();
+        } catch {
+          // best-effort
+        }
+      }
+
+      await closeFastCacheRedis();
+
+      try {
+        await redis.quit();
+      } catch {
+        redis.disconnect();
+      }
+      try {
+        await redisRange.quit();
+      } catch {
+        redisRange.disconnect();
+      }
+
+      await fastify.close();
+      logger.info('Shutdown complete');
+      clearTimeout(forceExit);
+      process.exit(0);
+    } catch (err) {
+      logger.error(`Error during graceful shutdown: ${inspect(err)}`);
+      clearTimeout(forceExit);
+      process.exit(1);
+    }
   };
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => {
+    void shutdown('SIGTERM');
+  });
+  process.on('SIGINT', () => {
+    void shutdown('SIGINT');
+  });
 }
 
 // test utilities
 
 export const resetState = () => {
-  channels = {};
-  sockets = {};
+  resetRegistries();
   lastFirehoseId = DEFAULT_STREAM_LAST_ID;
 };

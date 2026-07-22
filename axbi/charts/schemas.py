@@ -103,7 +103,13 @@ def validate_prophet_periods(value: int) -> None:
 #
 # RISON/JSON schemas for query parameters
 #
-get_delete_ids_schema = {"type": "array", "items": {"type": "integer"}}
+# Cap bulk delete size to avoid unbounded find_by_ids + delete in one transaction.
+MAX_BULK_DELETE_IDS = 1000
+get_delete_ids_schema = {
+    "type": "array",
+    "items": {"type": "integer"},
+    "maxItems": MAX_BULK_DELETE_IDS,
+}
 
 width_height_schema = {
     "type": "array",

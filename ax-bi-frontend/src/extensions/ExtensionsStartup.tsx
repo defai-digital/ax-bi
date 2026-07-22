@@ -59,8 +59,9 @@ const ExtensionsStartup: React.FC<{ children?: React.ReactNode }> = ({
   useEffect(() => {
     if (userId == null) return;
 
-    // Provide the implementations for @ax-bi/core
-    window.axbi = {
+    // Provide the implementations for @ax-bi/core. Freeze so extensions
+    // cannot mutate the shared API surface after assignment.
+    window.axbi = Object.freeze({
       ...axbiCore,
       authentication,
       core,
@@ -70,7 +71,7 @@ const ExtensionsStartup: React.FC<{ children?: React.ReactNode }> = ({
       menus,
       sqlLab,
       views,
-    };
+    });
 
     if (isFeatureEnabled(FeatureFlag.EnableExtensions)) {
       ExtensionsLoader.getInstance().initializeExtensions();
