@@ -2166,8 +2166,7 @@ mod tests {
         assert!(LOCAL_COMPOSE_YAML.contains("127.0.0.1:${AX_SERVICES_PORT:-31424}:31424"));
         assert!(LOCAL_COMPOSE_YAML.contains("TALISMAN_ENABLED: ${TALISMAN_ENABLED:-false}"));
         assert!(
-            LOCAL_COMPOSE_YAML
-                .contains("SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}")
+            LOCAL_COMPOSE_YAML.contains("SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}")
         );
         assert!(LOCAL_COMPOSE_YAML.contains("AXBI_PORT: 31423"));
         assert_eq!(
