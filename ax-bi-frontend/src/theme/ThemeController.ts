@@ -400,7 +400,8 @@ export class ThemeController {
   public async setCrudTheme(themeId: string | null): Promise<void> {
     // Capture a request id so a slower earlier fetch cannot overwrite a
     // more recent setCrudTheme call (or a clear).
-    const requestId = ++this.crudThemeRequestId;
+    this.crudThemeRequestId += 1;
+    const requestId = this.crudThemeRequestId;
     this.crudThemeId = themeId;
 
     if (themeId) {

@@ -399,7 +399,7 @@ def test_get_dashboard_extra_filters_ignores_non_object_metadata() -> None:
     dashboard = Dashboard(id=1, json_metadata="[]", position_json="{}")
     dashboard.slices = [Slice(id=10)]
 
-    with patch("axbi.views.utils.db") as mock_db:
+    with patch("axbi.utils.form_data.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=10, dashboard_id=1) == []
@@ -420,7 +420,7 @@ def test_get_dashboard_extra_filters_ignores_non_object_filter_params() -> None:
     dashboard.slices = [Slice(id=20)]
     filter_slice = Slice(id=10, params="[]")
 
-    with patch("axbi.views.utils.db") as mock_db:
+    with patch("axbi.utils.form_data.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard, filter_slice)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == [
@@ -442,7 +442,7 @@ def test_get_dashboard_extra_filters_ignores_stale_scope_layout_node() -> None:
     )
     dashboard.slices = [Slice(id=20)]
 
-    with patch("axbi.views.utils.db") as mock_db:
+    with patch("axbi.utils.form_data.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
@@ -464,7 +464,7 @@ def test_get_dashboard_extra_filters_ignores_non_object_default_filter_columns()
     )
     dashboard.slices = [Slice(id=20)]
 
-    with patch("axbi.views.utils.db") as mock_db:
+    with patch("axbi.utils.form_data.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []
@@ -484,7 +484,7 @@ def test_get_dashboard_extra_filters_ignores_malformed_explicit_scope() -> None:
     )
     dashboard.slices = [Slice(id=20)]
 
-    with patch("axbi.views.utils.db") as mock_db:
+    with patch("axbi.utils.form_data.db") as mock_db:
         _mock_dashboard_extra_filter_queries(mock_db, dashboard)
 
         assert get_dashboard_extra_filters(slice_id=20, dashboard_id=1) == []

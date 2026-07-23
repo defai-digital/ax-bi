@@ -63,7 +63,11 @@ if make_url(SQLALCHEMY_DATABASE_URI).get_backend_name() == "sqlite":
     # single-writer lock. Give writers a generous busy timeout so they wait for
     # the lock to be released instead of failing immediately with
     # "sqlite3.OperationalError: database is locked".
-    SQLALCHEMY_ENGINE_OPTIONS = {"connect_args": {"timeout": 60}}
+    # check_same_thread=False is required because GTF abort listeners and
+    # deferred progress flushes use background threads against the metadata DB.
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "connect_args": {"timeout": 60, "check_same_thread": False}
+    }
 
 # Speeding up the tests.integration_tests.
 PRESTO_POLL_INTERVAL = 0.1
@@ -119,6 +123,17 @@ DATA_CACHE_CONFIG = {
     **CACHE_CONFIG,
     "CACHE_DEFAULT_TIMEOUT": int(timedelta(seconds=30).total_seconds()),
     "CACHE_KEY_PREFIX": "axbi_data_cache",
+}
+
+# Prefer Redis for distributed locks / GTF coordination in integration tests.
+# SQLite metadata cannot host concurrent KV lock writers under an open
+# @transaction (single-writer), which is the GTF submit/cancel pattern.
+REDIS_COORDINATION_DB = os.environ.get("REDIS_COORDINATION_DB", 5)  # noqa: F405
+DISTRIBUTED_COORDINATION_CONFIG = {
+    "CACHE_TYPE": "RedisCache",
+    "CACHE_REDIS_HOST": REDIS_HOST,
+    "CACHE_REDIS_PORT": int(REDIS_PORT),
+    "CACHE_REDIS_DB": int(REDIS_COORDINATION_DB),
 }
 
 FILTER_STATE_CACHE_CONFIG = {

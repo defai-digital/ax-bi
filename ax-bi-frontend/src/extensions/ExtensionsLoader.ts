@@ -121,6 +121,7 @@ class ExtensionsLoader {
       element.async = true;
 
       let settled = false;
+      let timeoutId: number | undefined;
       const cleanup = () => {
         if (element.parentNode) {
           element.parentNode.removeChild(element);
@@ -130,12 +131,14 @@ class ExtensionsLoader {
       const settle = (fn: () => void) => {
         if (settled) return;
         settled = true;
-        window.clearTimeout(timeoutId);
+        if (timeoutId !== undefined) {
+          window.clearTimeout(timeoutId);
+        }
         cleanup();
         fn();
       };
 
-      const timeoutId = window.setTimeout(() => {
+      timeoutId = window.setTimeout(() => {
         settle(() =>
           reject(
             new Error(
