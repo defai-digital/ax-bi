@@ -21,6 +21,11 @@ immediately. Using the request-scoped ``db.session`` under a nested
 ``@transaction`` would leave the lock row uncommitted until the outer unit
 of work finishes — concurrent workers then race on the unique key instead of
 joining cleanly. A short-lived session commits only the lock mutation.
+
+SQLite is single-writer: an independent connection cannot commit while the
+request session holds an open write transaction (e.g. ``task_lock`` nested
+under ``@transaction`` after DAO writes). For concurrent SQLite workers,
+configure Redis ``DISTRIBUTED_COORDINATION_CONFIG`` instead of KV locks.
 """
 
 from __future__ import annotations
@@ -38,43 +43,11 @@ def independent_kv_session() -> Iterator[Session]:
 
     Binds to the same engine as the app scoped session so locks land in the
     same metadata database, but never shares the request unit of work.
-
-    SQLite is single-writer: a second connection cannot commit while the
-    request session holds an open write transaction (common when
-    ``task_lock`` is nested under ``@transaction`` after DAO writes). When
-    that happens, fall back to a SAVEPOINT on the request session so lock
-    release/acquire can still complete in-process. Multi-process lock
-    durability is not achievable under SQLite's single-writer model; use
-    Redis ``DISTRIBUTED_COORDINATION_CONFIG`` for concurrent SQLite workers.
     """
     # pylint: disable=import-outside-toplevel
     from axbi.extensions import db
 
-    # Resolve the real Session: flask-sqlalchemy's scoped_session proxy does not
-    # expose every Session API (e.g. in_transaction) as a direct attribute.
-    request_session: Session = db.session()
-    bind = request_session.get_bind()
-    use_request_session = False
-    if bind.dialect.name == "sqlite":
-        # If the request session already has a write in flight, an independent
-        # connection will hit "database is locked". Detect pending ORM state
-        # (and an open transaction) as a proxy for that situation.
-        in_tx = bool(request_session.in_transaction())
-        has_pending = bool(
-            request_session.new or request_session.dirty or request_session.deleted
-        )
-        use_request_session = in_tx and has_pending
-
-    if use_request_session:
-        nested = request_session.begin_nested()
-        try:
-            yield request_session
-            nested.commit()
-        except Exception:
-            nested.rollback()
-            raise
-        return
-
+    bind = db.session.get_bind()
     session: Session = sessionmaker(bind=bind)()
     try:
         yield session

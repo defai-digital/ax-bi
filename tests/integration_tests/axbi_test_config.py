@@ -125,6 +125,19 @@ DATA_CACHE_CONFIG = {
     "CACHE_KEY_PREFIX": "axbi_data_cache",
 }
 
+# Opt-in Redis coordination for real integration test runs only.
+# tests/conftest.py imports this app into the unit-test process; enabling Redis
+# coordination there makes DistributedLock hit localhost:6379 and fail without a
+# Redis service. Set AXBI_ENABLE_TEST_COORDINATION=1 in the integration workflow.
+if os.environ.get("AXBI_ENABLE_TEST_COORDINATION") == "1":  # noqa: F405
+    REDIS_COORDINATION_DB = os.environ.get("REDIS_COORDINATION_DB", 5)  # noqa: F405
+    DISTRIBUTED_COORDINATION_CONFIG = {
+        "CACHE_TYPE": "RedisCache",
+        "CACHE_REDIS_HOST": REDIS_HOST,
+        "CACHE_REDIS_PORT": int(REDIS_PORT),
+        "CACHE_REDIS_DB": int(REDIS_COORDINATION_DB),
+    }
+
 FILTER_STATE_CACHE_CONFIG = {
     "CACHE_TYPE": "SimpleCache",
     "CACHE_THRESHOLD": math.inf,

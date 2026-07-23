@@ -191,37 +191,6 @@ def test_kv_lock_visible_under_outer_transaction() -> None:
     assert _get_lock(observed["key"], other) is None
 
 
-def test_kv_lock_release_after_outer_write_on_sqlite() -> None:
-    """
-    GTF submit pattern: acquire lock, write via request session, then release.
-
-    On SQLite a second connection cannot commit while the request session
-    holds an open write transaction. Release must still succeed (via the
-    request-session SAVEPOINT fallback) without raising database-is-locked.
-    """
-    from axbi.key_value.models import KeyValueEntry
-    from axbi.key_value.types import KeyValueResource
-    from axbi.utils.decorators import transaction
-
-    with (
-        patch.object(acquire_module, "get_redis_client", return_value=None),
-        patch.object(release_module, "get_redis_client", return_value=None),
-    ):
-
-        @transaction()
-        def create_under_lock() -> None:
-            with DistributedLock("ns-write", a=9, b=9):
-                # Pending write on the request session (as TaskDAO.create_task does).
-                entry = KeyValueEntry(
-                    resource=KeyValueResource.APP.value,
-                    value=b"payload",
-                )
-                db.session.add(entry)
-                db.session.flush()
-
-        create_under_lock()  # must not raise on lock release
-
-
 def test_distributed_lock_uses_redis_when_configured() -> None:
     """Test that DistributedLock uses Redis backend when configured."""
     mock_redis = MagicMock()

@@ -49,6 +49,7 @@ jobs:
     env:
       PYTHONPATH: ${{ github.workspace }}
       AXBI_CONFIG: tests.integration_tests.axbi_test_config
+      AXBI_ENABLE_TEST_COORDINATION: "1"
       REDIS_PORT: 16379
       AXBI__SQLALCHEMY_DATABASE_URI: |
         mysql+mysqldb://axbi:axbi@127.0.0.1:13306/axbi?charset=utf8mb4&binary_prefix=true
@@ -139,6 +140,7 @@ jobs:
     env:
       PYTHONPATH: ${{ github.workspace }}
       AXBI_CONFIG: tests.integration_tests.axbi_test_config
+      AXBI_ENABLE_TEST_COORDINATION: "1"
       REDIS_PORT: 16379
       AXBI__SQLALCHEMY_DATABASE_URI: postgresql+psycopg2://axbi:axbi@127.0.0.1:15432/axbi
     services:
@@ -196,6 +198,7 @@ jobs:
     env:
       PYTHONPATH: ${{ github.workspace }}
       AXBI_CONFIG: tests.integration_tests.axbi_test_config
+      AXBI_ENABLE_TEST_COORDINATION: "1"
       REDIS_PORT: 16379
       AXBI__SQLALCHEMY_DATABASE_URI: |
         sqlite:///${{ github.workspace }}/.temp/ax-bi.db?check_same_thread=true
