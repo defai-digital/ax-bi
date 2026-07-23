@@ -123,10 +123,7 @@ if (startServer && opts.jwtSecret.startsWith('CHANGE-ME')) {
   );
 }
 
-if (
-  startServer &&
-  (!opts.allowedOrigins || opts.allowedOrigins.length === 0)
-) {
+if (startServer && (!opts.allowedOrigins || opts.allowedOrigins.length === 0)) {
   logger.warn(
     'allowedOrigins is empty: WebSocket Origin checks are disabled. ' +
       'Set allowedOrigins (or ALLOWED_ORIGINS) in production to mitigate CSWSH.',
@@ -443,13 +440,13 @@ export const wsConnection = (ws: WebSocket, request: http.IncomingMessage) => {
     // JWT may have become invalid between upgrade and connection, or the
     // connection path was invoked without a prior upgrade check (tests).
     statsd.increment('ws_connection_auth_failed');
-    logger.warn(
-      `Rejecting WebSocket connection: ${(err as Error).message}`,
-    );
+    logger.warn(`Rejecting WebSocket connection: ${(err as Error).message}`);
     try {
       ws.terminate();
     } catch (terminateErr) {
-      logger.debug(`Error terminating socket after auth failure: ${terminateErr}`);
+      logger.debug(
+        `Error terminating socket after auth failure: ${terminateErr}`,
+      );
     }
     return;
   }
@@ -613,7 +610,9 @@ export const checkSockets = () => {
       try {
         socketInstance.ws.terminate();
       } catch (err) {
-        logger.debug(`Error terminating unresponsive socket ${socketId}: ${err}`);
+        logger.debug(
+          `Error terminating unresponsive socket ${socketId}: ${err}`,
+        );
       }
       isActive = false;
     } else if (!SOCKET_ACTIVE_STATES.includes(socketInstance.ws.readyState)) {

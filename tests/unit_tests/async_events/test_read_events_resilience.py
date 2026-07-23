@@ -37,9 +37,7 @@ def _mgr_with_cache(cache: MagicMock) -> AsyncQueryManager:
 
 
 def test_read_events_skips_malformed_payload() -> None:
-    cache = MagicMock()
-    # Make isinstance checks treat this as RedisCacheBackend
-    cache.__class__ = RedisCacheBackend  # type: ignore[misc]
+    cache = MagicMock(spec=RedisCacheBackend)
     cache.xrange.return_value = [
         (b"1-0", {b"data": b'{"status": "done"}'}),
         (b"1-1", {b"data": b"not-json"}),
@@ -49,13 +47,14 @@ def test_read_events_skips_malformed_payload() -> None:
 
     events = mgr.read_events("chan", None)
     assert len(events) == 2
+    assert events[0] is not None
     assert events[0]["status"] == "done"
+    assert events[1] is not None
     assert events[1]["status"] == "error"
 
 
 def test_read_events_maps_redis_error() -> None:
-    cache = MagicMock()
-    cache.__class__ = RedisCacheBackend  # type: ignore[misc]
+    cache = MagicMock(spec=RedisCacheBackend)
     cache.xrange.side_effect = ConnectionError("redis down")
     mgr = _mgr_with_cache(cache)
 

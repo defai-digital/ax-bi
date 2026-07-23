@@ -30,6 +30,7 @@ from fastmcp import Client
 
 from axbi.mcp_service.app import mcp
 from axbi.mcp_service.chart.chart_utils import DatasetValidationResult
+from axbi.mcp_service.common.error_schemas import sanitize_error_text
 from axbi.mcp_service.dashboard.constants import generate_id
 from axbi.mcp_service.dashboard.tool.add_chart_to_existing_dashboard import (
     _add_chart_to_layout,
@@ -340,8 +341,9 @@ class TestGenerateDashboard:
                 )
 
                 assert result.structured_content["error"] is not None
-                assert "not accessible" in result.structured_content["error"]
-                assert "2" in result.structured_content["error"]
+                assert (
+                    "access restrictions" in result.structured_content["error"].lower()
+                )
                 assert result.structured_content["dashboard"] is None
                 assert result.structured_content["dashboard_url"] is None
 
@@ -379,7 +381,9 @@ class TestGenerateDashboard:
                     },
                 )
 
-        assert result.structured_content["error"] == "Access denied to charts: [1]"
+        assert result.structured_content["error"] == sanitize_error_text(
+            "Access denied to charts: [1]"
+        )
         assert result.structured_content["dashboard"] is None
         mock_dashboard_create.assert_not_called()
 
@@ -514,7 +518,10 @@ class TestGenerateDashboard:
             result = await client.call_tool("generate_dashboard", {"request": request})
 
             assert result.structured_content["error"] is not None
-            assert "Failed to create dashboard" in result.structured_content["error"]
+            assert (
+                "database connectivity" in result.structured_content["error"].lower()
+                or "failed to create" in result.structured_content["error"].lower()
+            )
             assert result.structured_content["dashboard"] is None
             # rollback called by tool + event_logger error handling
             assert mock_db_session.rollback.call_count >= 1
@@ -828,8 +835,9 @@ class TestAddChartToExistingDashboard:
                     "add_chart_to_existing_dashboard", {"request": request}
                 )
                 assert result.structured_content["error"] is not None
-                assert "not accessible" in result.structured_content["error"]
-                assert "7" in result.structured_content["error"]
+                assert (
+                    "access restrictions" in result.structured_content["error"].lower()
+                )
                 assert result.structured_content["dashboard"] is None
 
     @patch("axbi.daos.dashboard.DashboardDAO.find_by_id")

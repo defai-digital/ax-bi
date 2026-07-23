@@ -92,8 +92,7 @@ except Exception as ex:
         )
         raise
     logging.exception(
-        "Applying MariaDB DDL fix failed; continuing without patch "
-        "(dialect=%s): %s",
+        "Applying MariaDB DDL fix failed; continuing without patch (dialect=%s): %s",
         dialect_name or "unknown",
         ex,
     )

@@ -230,15 +230,21 @@ export class Switchboard {
       const effectiveTimeout =
         timeoutMs !== undefined ? timeoutMs : this.defaultTimeoutMs;
 
+      // Declare before cleanup so no-use-before-define is satisfied.
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
+      let listener: ((event: MessageEvent) => void) | undefined;
+
       const cleanup = () => {
-        this.port.removeEventListener('message', listener);
+        if (listener) {
+          this.port.removeEventListener('message', listener);
+        }
         if (timeoutId !== undefined) {
           clearTimeout(timeoutId);
         }
       };
 
       // attach a new listener to our port, and remove it when we get a response
-      const listener = (event: MessageEvent) => {
+      listener = (event: MessageEvent) => {
         const message = event.data;
         if (message.messageId !== messageId) return;
         if (settled) return;
@@ -254,7 +260,6 @@ export class Switchboard {
         }
       };
 
-      let timeoutId: ReturnType<typeof setTimeout> | undefined;
       if (effectiveTimeout > 0) {
         timeoutId = setTimeout(() => {
           if (settled) return;
@@ -319,8 +324,9 @@ export class Switchboard {
   }
 
   private getNewMessageId() {
-    // eslint-disable-next-line no-plusplus
-    return `m_${this.name}_${this.incrementor++}`;
+    const id = this.incrementor;
+    this.incrementor += 1;
+    return `m_${this.name}_${id}`;
   }
 }
 

@@ -391,8 +391,7 @@ pub async fn open_local_axbi_window<R: Runtime>(
 ) -> Result<(), String> {
     ensure_launcher_window(&window)?;
     let app_for_url = app.clone();
-    let web_url =
-        run_blocking_local(move || local_runtime::healthy_web_url(&app_for_url)).await?;
+    let web_url = run_blocking_local(move || local_runtime::healthy_web_url(&app_for_url)).await?;
     let url =
         Url::parse(&web_url).map_err(|error| format!("Local AX BI URL is invalid: {error}"))?;
     validate_local_axbi_url(&url)?;
@@ -414,8 +413,10 @@ pub async fn open_local_axbi_window<R: Runtime>(
                 .set_focus()
                 .map_err(|error| format!("Failed to focus local AX BI window: {error}"))?;
             let app_for_onboarding = app.clone();
-            run_blocking_local(move || local_runtime::complete_admin_onboarding(&app_for_onboarding))
-                .await?;
+            run_blocking_local(move || {
+                local_runtime::complete_admin_onboarding(&app_for_onboarding)
+            })
+            .await?;
             window
                 .hide()
                 .map_err(|error| format!("Failed to hide AX BI launcher: {error}"))?;
@@ -510,18 +511,15 @@ pub async fn open_remote_axbi_window<R: Runtime>(
     }
 
     let expected_url = parsed.clone();
-    let remote_window = WebviewWindowBuilder::new(
-        &app,
-        REMOTE_AXBI_WINDOW_LABEL,
-        WebviewUrl::External(parsed),
-    )
-    .title("AX BI (Remote)")
-    .inner_size(1400.0, 900.0)
-    .min_inner_size(800.0, 600.0)
-    .center()
-    .on_navigation(move |candidate| is_allowed_axbi_navigation(candidate, &expected_url))
-    .build()
-    .map_err(|error| format!("Failed to open remote AX BI window: {error}"))?;
+    let remote_window =
+        WebviewWindowBuilder::new(&app, REMOTE_AXBI_WINDOW_LABEL, WebviewUrl::External(parsed))
+            .title("AX BI (Remote)")
+            .inner_size(1400.0, 900.0)
+            .min_inner_size(800.0, 600.0)
+            .center()
+            .on_navigation(move |candidate| is_allowed_axbi_navigation(candidate, &expected_url))
+            .build()
+            .map_err(|error| format!("Failed to open remote AX BI window: {error}"))?;
 
     remote_window
         .show()
@@ -716,10 +714,9 @@ mod tests {
             &Url::parse("https://ax-bi.example.test/login/").unwrap()
         )
         .is_ok());
-        assert!(validate_remote_axbi_url(
-            &Url::parse("http://ax-bi.example.test/").unwrap()
-        )
-        .is_ok());
+        assert!(
+            validate_remote_axbi_url(&Url::parse("http://ax-bi.example.test/").unwrap()).is_ok()
+        );
         assert!(validate_remote_axbi_url(
             &Url::parse("https://user:pass@ax-bi.example.test/").unwrap()
         )

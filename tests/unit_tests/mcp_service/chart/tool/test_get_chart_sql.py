@@ -1159,4 +1159,4 @@ class TestGetChartSqlTool:
 
             data = result.structured_content.get("result", result.structured_content)
             assert data["error_type"] == "DatasetNotAccessible"
-            assert "Access denied" in data["error"]
+            assert "access restrictions" in data["error"].lower()

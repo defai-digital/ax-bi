@@ -1254,7 +1254,7 @@ class TestChartDataCommandValidation:
             # AxBISecurityException is caught by the broad except and
             # returned as a ChartError
             assert isinstance(result, ChartError)
-            assert "Access denied" in result.error
+            assert "access restrictions" in result.error.lower()
             mock_command.run.assert_not_called()
 
     def test_compile_chart_calls_validate_before_run(self):

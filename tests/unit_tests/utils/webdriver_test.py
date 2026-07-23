@@ -470,7 +470,7 @@ class TestPlaywrightMigrationSupport:
         assert result["playwright_feature_enabled"] is False
 
     @patch("axbi.extensions.feature_flag_manager.is_feature_enabled")
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=False)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: False)
     def test_validate_webdriver_config_playwright_unavailable(self, mock_feature_flag):
         """Test validate_webdriver_config when Playwright not available."""
         mock_feature_flag.return_value = True
@@ -486,7 +486,7 @@ class TestPlaywrightMigrationSupport:
 class TestWebDriverPlaywrightFallback:
     """Test WebDriverPlaywright fallback behavior when unavailable."""
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=False)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: False)
     @patch("axbi.utils.webdriver.logger")
     def test_get_screenshot_returns_none_when_unavailable(self, mock_logger, mock_app):
         """Test WebDriverPlaywright.get_screenshot returns None when unavailable."""
@@ -507,7 +507,7 @@ class TestWebDriverPlaywrightFallback:
         # Check the substituted parameter
         assert mock_logger.info.call_args[0][1] == PLAYWRIGHT_INSTALL_MESSAGE
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver._browser_manager")
     @patch("axbi.utils.webdriver.app")
     def test_get_screenshot_works_when_available(self, mock_app, mock_browser_manager):
@@ -557,7 +557,7 @@ class TestWebDriverPlaywrightFallback:
             "http://example.com", wait_until="networkidle"
         )
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver._browser_manager")
     @patch("axbi.utils.webdriver.logger")
     def test_get_screenshot_handles_playwright_timeout(
@@ -645,7 +645,7 @@ class TestWebDriverConstantsWithImportError:
 class TestWebDriverPlaywrightErrorHandling:
     """Test error handling in WebDriverPlaywright methods."""
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver.sync_playwright")
     @patch("axbi.utils.webdriver.logger")
     def test_find_unexpected_errors_handles_playwright_error(
@@ -664,7 +664,7 @@ class TestWebDriverPlaywrightErrorHandling:
             "Failed to capture unexpected errors"
         )
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver.sync_playwright")
     @patch("axbi.utils.webdriver.logger")
     def test_find_unexpected_errors_processes_alerts(
@@ -696,7 +696,7 @@ class TestWebDriverPlaywrightErrorHandling:
         mock_button.click.assert_called_once()
         mock_close_button.click.assert_called_once()
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver._browser_manager")
     @patch("axbi.utils.webdriver.app")
     def test_uses_wait_for_function_to_detect_spinners(
@@ -745,7 +745,7 @@ class TestWebDriverPlaywrightErrorHandling:
         ]
         assert loading_locator_calls == []
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver._browser_manager")
     @patch("axbi.utils.webdriver.logger")
     @patch("axbi.utils.webdriver.app")
@@ -797,7 +797,7 @@ class TestWebDriverPlaywrightErrorHandling:
             60,
         )
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver._browser_manager")
     @patch("axbi.utils.webdriver.logger")
     def test_get_screenshot_raises_on_element_wait_timeout(
@@ -857,7 +857,7 @@ class TestWebDriverPlaywrightErrorHandling:
             "Timed out requesting url %s", "http://example.com"
         )
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver._browser_manager")
     @patch("axbi.utils.webdriver.logger")
     def test_missing_element_for_dashboard_height_falls_back_without_crashing(
@@ -940,7 +940,7 @@ class TestWebDriverPlaywrightErrorHandling:
             "http://example.com",
         )
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=True)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: True)
     @patch("axbi.utils.webdriver._browser_manager")
     @patch("axbi.utils.webdriver.logger")
     @patch("axbi.utils.webdriver.take_tiled_screenshot")

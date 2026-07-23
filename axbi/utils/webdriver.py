@@ -208,9 +208,7 @@ def validate_webdriver_config() -> dict[str, Any]:
         "playwright_feature_enabled": feature_flag_manager.is_feature_enabled(
             "PLAYWRIGHT_REPORTS_AND_THUMBNAILS"
         ),
-        "recommended_action": (
-            PLAYWRIGHT_INSTALL_MESSAGE if not available else None
-        ),
+        "recommended_action": (PLAYWRIGHT_INSTALL_MESSAGE if not available else None),
     }
 
 

@@ -300,8 +300,7 @@ export const init = (appConfig?: AppConfig) => {
   config = appConfig || getBootstrapData().common.conf;
   transport = config.GLOBAL_ASYNC_QUERIES_TRANSPORT || TRANSPORT_POLLING;
   pollingDelayMs = config.GLOBAL_ASYNC_QUERIES_POLLING_DELAY || 500;
-  maxWaitMs =
-    config.GLOBAL_ASYNC_QUERIES_MAX_WAIT_MS || DEFAULT_MAX_WAIT_MS;
+  maxWaitMs = config.GLOBAL_ASYNC_QUERIES_MAX_WAIT_MS || DEFAULT_MAX_WAIT_MS;
 
   try {
     lastReceivedEventId = localStorage.getItem(LOCALSTORAGE_KEY);

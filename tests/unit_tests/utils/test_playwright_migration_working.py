@@ -64,9 +64,9 @@ class TestPlaywrightMigrationCore:
         # Selenium should always be available
         assert result["selenium_available"] is True
 
-    @patch("axbi.utils.webdriver.is_playwright_available", return_value=False)
+    @patch("axbi.utils.webdriver.is_playwright_available", new=lambda *a, **k: False)
     @patch("axbi.utils.webdriver.logger")
-    def test_webdriver_playwright_fallback_logging(self, mock_logger, _mock_avail):
+    def test_webdriver_playwright_fallback_logging(self, mock_logger):
         """Test that WebDriverPlaywright logs fallback correctly."""
         from axbi.utils.webdriver import WebDriverPlaywright
 

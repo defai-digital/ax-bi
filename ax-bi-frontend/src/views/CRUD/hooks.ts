@@ -62,8 +62,11 @@ interface ListViewResourceState<D extends object = any> {
 }
 
 const parsedErrorMessage = (
-  errorMessage: Record<string, string[] | string> | string,
+  errorMessage?: Record<string, string[] | string> | string,
 ) => {
+  if (errorMessage == null) {
+    return '';
+  }
   if (typeof errorMessage === 'string') {
     return errorMessage;
   }
@@ -175,7 +178,8 @@ export function useListViewResource<D extends object = any>(
         sortBy,
       };
       lastFetchDataConfigRef.current = config;
-      const requestId = ++fetchRequestIdRef.current;
+      fetchRequestIdRef.current += 1;
+      const requestId = fetchRequestIdRef.current;
       // set loading state, cache the last config for refreshing data.
       updateState({
         lastFetchDataConfig: config,
@@ -336,19 +340,21 @@ export function useSingleViewResource<D extends object = any>(
             });
             return json.result;
           },
-          createErrorHandler((errMsg?: string | Record<string, string[] | string>) => {
-            handleErrorMsg(
-              t(
-                'An error occurred while fetching %ss: %s',
-                resourceLabel,
-                parsedErrorMessage(errMsg),
-              ),
-            );
+          createErrorHandler(
+            (errMsg?: string | Record<string, string[] | string>) => {
+              handleErrorMsg(
+                t(
+                  'An error occurred while fetching %ss: %s',
+                  resourceLabel,
+                  parsedErrorMessage(errMsg),
+                ),
+              );
 
-            updateState({
-              error: errMsg,
-            });
-          }),
+              updateState({
+                error: errMsg,
+              });
+            },
+          ),
         )
         .finally(() => {
           updateState({ loading: false });
@@ -377,22 +383,24 @@ export function useSingleViewResource<D extends object = any>(
             });
             return json.id;
           },
-          createErrorHandler((errMsg?: string | Record<string, string[] | string>) => {
-            // we did not want toasts for db-connection-ui but did not want to disable it everywhere
-            if (!hideToast) {
-              handleErrorMsg(
-                t(
-                  'An error occurred while creating %ss: %s',
-                  resourceLabel,
-                  parsedErrorMessage(errMsg),
-                ),
-              );
-            }
+          createErrorHandler(
+            (errMsg?: string | Record<string, string[] | string>) => {
+              // we did not want toasts for db-connection-ui but did not want to disable it everywhere
+              if (!hideToast) {
+                handleErrorMsg(
+                  t(
+                    'An error occurred while creating %ss: %s',
+                    resourceLabel,
+                    parsedErrorMessage(errMsg),
+                  ),
+                );
+              }
 
-            updateState({
-              error: errMsg,
-            });
-          }),
+              updateState({
+                error: errMsg,
+              });
+            },
+          ),
         )
         .finally(() => {
           updateState({ loading: false });
@@ -809,9 +817,11 @@ export const testDatabaseConnection = (
     () => {
       addSuccessToast(t('Connection looks good!'));
     },
-    createErrorHandler((errMsg?: string | Record<string, string[] | string>) => {
-      handleErrorMsg(t('ERROR: %s', parsedErrorMessage(errMsg)));
-    }),
+    createErrorHandler(
+      (errMsg?: string | Record<string, string[] | string>) => {
+        handleErrorMsg(t('ERROR: %s', parsedErrorMessage(errMsg)));
+      },
+    ),
   );
 };
 

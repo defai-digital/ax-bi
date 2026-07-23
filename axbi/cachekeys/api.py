@@ -52,7 +52,7 @@ class CacheRestApi(BaseAxBIModelRestApi):
     @safe
     @statsd_metrics
     @event_logger.log_this_with_context(log_to_statsd=False)
-    def invalidate(self) -> Response:
+    def invalidate(self) -> Response:  # noqa: C901
         """
         Take a list of datasources, find and invalidate the associated cache records
         and remove the database records.
@@ -99,10 +99,15 @@ class CacheRestApi(BaseAxBIModelRestApi):
             if ds_obj:
                 datasource_uids.add(ds_obj.uid)
 
+        # Empty input is a successful no-op (clients may POST empty lists).
+        # Only reject when non-empty datasource names were provided but none resolved.
         if not datasource_uids:
-            return self.response_400(
-                message="No matching datasources found for cache invalidation"
-            )
+            requested_names = datasources.get("datasources") or []
+            if requested_names:
+                return self.response_400(
+                    message="No matching datasources found for cache invalidation"
+                )
+            return self.response(201)
 
         cache_key_objs = list(
             db.session.scalars(

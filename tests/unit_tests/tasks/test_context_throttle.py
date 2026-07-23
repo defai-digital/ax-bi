@@ -24,8 +24,6 @@ import uuid
 from typing import Any
 from unittest.mock import MagicMock
 
-import pytest
-
 from axbi.tasks.context import TaskContext
 
 
@@ -89,9 +87,7 @@ class TestUpdateTaskLockScope:
 
 
 class TestDeferredFlushResilience:
-    def test_deferred_flush_swallows_db_error_and_keeps_pending(
-        self, app: Any
-    ) -> None:
+    def test_deferred_flush_swallows_db_error_and_keeps_pending(self, app: Any) -> None:
         with app.app_context():
             app.config["TASK_PROGRESS_UPDATE_THROTTLE_INTERVAL"] = 0.05
             ctx, write = _make_context()

@@ -1686,22 +1686,19 @@ def test_clear_bootstrap_cache_logs_warning_on_failure(
     exception — callers (SQLAlchemy event dispatch) should be unaffected.
     """
     from axbi.models.core import clear_bootstrap_cache
+    from axbi.utils import bootstrap_cache as bootstrap_cache_mod
 
-    # Patch cache_manager so delete_memoized raises
+    # Patch cache_manager so delete_memoized raises (imported inside helper).
     mock_cache = mocker.MagicMock()
     mock_cache.delete_memoized.side_effect = RuntimeError("Redis unavailable")
-
-    mock_cache_manager = mocker.patch("axbi.models.core.cache_manager")
+    mock_cache_manager = mocker.patch("axbi.extensions.cache_manager")
     mock_cache_manager.cache = mock_cache
 
-    # Patch cached_common_bootstrap_data so the local import inside
-    # clear_bootstrap_cache resolves to our mock.
-    mocker.patch(
-        "axbi.views.base.cached_common_bootstrap_data",
-        new=mocker.MagicMock(__name__="cached_common_bootstrap_data"),
-    )
+    # Register a bootstrap function so clear path is exercised.
+    fake_fn = mocker.MagicMock(__name__="cached_common_bootstrap_data")
+    bootstrap_cache_mod.register_common_bootstrap_cache_fn(fake_fn)
 
-    mock_logger = mocker.patch("axbi.models.core.logger")
+    mock_logger = mocker.patch("axbi.utils.bootstrap_cache.logger")
 
     # Should not raise even though delete_memoized raises
     clear_bootstrap_cache(
@@ -1713,7 +1710,7 @@ def test_clear_bootstrap_cache_logs_warning_on_failure(
     # Verify logger.warning was called with the correct message format
     mock_logger.warning.assert_called_once()
     call_args = mock_logger.warning.call_args
-    assert call_args[0][0] == "Failed to clear theme bootstrap cache: %s"
+    assert call_args[0][0] == "Failed to clear common bootstrap cache: %s"
 
 
 def test_execute_sql_preserves_line_comments_single_statement(

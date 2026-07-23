@@ -26,6 +26,7 @@ from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 from urllib.parse import parse_qs, urlsplit
 
+from axbi.mcp_service.common.error_schemas import sanitize_error_text
 from axbi.mcp_service.sql_lab.schemas import OpenSqlLabRequest
 from axbi.mcp_service.utils.sanitization import sanitize_for_llm_context
 
@@ -318,10 +319,10 @@ class TestOpenSqlLabWithContext:
                 "Missing database",
                 field_path=("title",),
             )
-            assert response.error == sanitize_for_llm_context(
+            assert response.error == sanitize_error_text(
                 "Database with ID 404 not found."
-                " Use list_databases to get valid database IDs.",
-                field_path=("error",),
+                " Use list_databases to get valid database IDs."
             )
+
         finally:
             _restore_modules(saved_modules)

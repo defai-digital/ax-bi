@@ -1031,23 +1031,27 @@ class TestThemeCacheInvalidation:
     def test_clear_bootstrap_cache_event(self, mock_delete_memoized):
         """Test that the event listener triggers delete_memoized"""
         from axbi.models.core import clear_bootstrap_cache
+        from axbi.utils.bootstrap_cache import register_common_bootstrap_cache_fn
         from axbi.views.base import cached_common_bootstrap_data
 
+        register_common_bootstrap_cache_fn(cached_common_bootstrap_data)
         # Call clear_bootstrap_cache with dummy mapper, connection, and Theme
         clear_bootstrap_cache(MagicMock(), MagicMock(), MagicMock())
 
         mock_delete_memoized.assert_called_once_with(cached_common_bootstrap_data)
 
     @patch("axbi.extensions.cache_manager.cache.delete_memoized")
-    @patch("axbi.models.core.logger")
+    @patch("axbi.utils.bootstrap_cache.logger")
     def test_clear_bootstrap_cache_event_error(self, mock_logger, mock_delete_memoized):
         """Test that the event listener handles errors gracefully and logs them"""
         from axbi.models.core import clear_bootstrap_cache
+        from axbi.utils.bootstrap_cache import register_common_bootstrap_cache_fn
 
+        register_common_bootstrap_cache_fn(MagicMock(__name__="cached_bootstrap"))
         mock_delete_memoized.side_effect = Exception("Cache error")
         clear_bootstrap_cache(MagicMock(), MagicMock(), MagicMock())
 
         mock_logger.warning.assert_called_once_with(
-            "Failed to clear theme bootstrap cache: %s",
+            "Failed to clear common bootstrap cache: %s",
             mock_delete_memoized.side_effect,
         )

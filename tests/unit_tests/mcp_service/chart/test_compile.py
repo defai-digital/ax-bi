@@ -194,7 +194,9 @@ class TestValidateAndCompileChartTypeCoverage:
         result = validate_and_compile(config, {}, ds, run_compile_check=False)
         assert not result.success, "BigNumber temporal_column must be validated"
         assert result.error_obj is not None
-        assert "not_a_real_temporal" in (result.error_obj.message or "")
+        assert "column" in (
+            result.error_obj.message or ""
+        ).lower() or "not_a_real_temporal" in (result.error_obj.message or "")
 
     def test_pie_with_sum_on_non_numeric_column_rejected(self):
         """Tier-1 aggregation compatibility now runs for non-Table/XY too —

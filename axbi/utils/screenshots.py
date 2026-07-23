@@ -55,13 +55,15 @@ except ImportError:
         return False
 
 
-# Patchable stand-in for tests; call-sites use is_playwright_available() so we do
-# not force a Chromium probe at module import.
+# Patchable stand-in for tests (`@patch("...PLAYWRIGHT_AVAILABLE", True)`).
+# When None, availability is resolved lazily via webdriver.is_playwright_available().
+PLAYWRIGHT_AVAILABLE: bool | None = None
+
+
 def is_playwright_available() -> bool:
-    # Prefer an explicit module-level override when tests set PLAYWRIGHT_AVAILABLE.
-    override = globals().get("PLAYWRIGHT_AVAILABLE", None)
-    if isinstance(override, bool):
-        return override
+    """Return Playwright availability, honoring test patches of PLAYWRIGHT_AVAILABLE."""
+    if isinstance(PLAYWRIGHT_AVAILABLE, bool):
+        return PLAYWRIGHT_AVAILABLE
     return _is_playwright_available()
 
 

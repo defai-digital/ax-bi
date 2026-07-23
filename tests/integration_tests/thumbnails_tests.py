@@ -241,9 +241,17 @@ class TestThumbnails(AxBITestCase):
         Thumbnails: Chart thumbnail disabled
         """
         self.login(ADMIN_USERNAME)
-        _, thumbnail_url = self._get_id_and_thumbnail_url(CHART_URL)
-        rv = self.client.get(thumbnail_url)
-        assert rv.status_code == 404
+        # When THUMBNAILS is off, chart detail omits a thumbnail URL (None)
+        # so clients do not hit the endpoint or pay digest computation cost.
+        rv = self.client.get(CHART_URL)
+        assert rv.status_code == 200
+        chart_id = json.loads(rv.data.decode("utf-8"))["result"][0]["id"]
+        detail = self.client.get(f"{CHART_URL}{chart_id}")
+        assert detail.status_code == 200
+        thumbnail_url = json.loads(detail.data.decode("utf-8"))["result"].get(
+            "thumbnail_url"
+        )
+        assert thumbnail_url in (None, "")
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(THUMBNAILS=True)
@@ -342,13 +350,24 @@ class TestThumbnails(AxBITestCase):
             ) as mock_adjust_string,
         ):
             mock_adjust_string.return_value = self.digest_return_value
-            _, thumbnail_url = self._get_id_and_thumbnail_url(CHART_URL)
-            assert self.digest_hash in thumbnail_url
-            assert mock_adjust_string.call_args[0][1] == ExecutorType.FIXED_USER
-            assert mock_adjust_string.call_args[0][2] == ADMIN_USERNAME
-
+            chart_id, thumbnail_url = self._get_id_and_thumbnail_url(CHART_URL)
+            # List/detail URLs use a cheap list digest; full digests (executor +
+            # RLS) are computed on the thumbnail endpoint and may redirect.
+            assert thumbnail_url is not None
+            assert f"/api/v1/chart/{chart_id}/thumbnail/" in thumbnail_url
             rv = self.client.get(thumbnail_url)
-            assert rv.status_code == 202
+            # 202 = async job accepted, 302 = redirect from list digest to full digest
+            assert rv.status_code in (202, 302)
+            if rv.status_code == 302:
+                assert self.digest_hash in rv.headers["Location"]
+                assert mock_adjust_string.call_args[0][1] == ExecutorType.FIXED_USER
+                assert mock_adjust_string.call_args[0][2] == ADMIN_USERNAME
+                rv = self.client.get(rv.headers["Location"])
+                assert rv.status_code == 202
+            else:
+                assert mock_adjust_string.called
+                assert mock_adjust_string.call_args[0][1] == ExecutorType.FIXED_USER
+                assert mock_adjust_string.call_args[0][2] == ADMIN_USERNAME
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(THUMBNAILS=True)
@@ -370,13 +389,21 @@ class TestThumbnails(AxBITestCase):
             ) as mock_adjust_string,
         ):
             mock_adjust_string.return_value = self.digest_return_value
-            _, thumbnail_url = self._get_id_and_thumbnail_url(CHART_URL)
-            assert self.digest_hash in thumbnail_url
-            assert mock_adjust_string.call_args[0][1] == ExecutorType.CURRENT_USER
-            assert mock_adjust_string.call_args[0][2] == username
-
+            chart_id, thumbnail_url = self._get_id_and_thumbnail_url(CHART_URL)
+            assert thumbnail_url is not None
+            assert f"/api/v1/chart/{chart_id}/thumbnail/" in thumbnail_url
             rv = self.client.get(thumbnail_url)
-            assert rv.status_code == 202
+            assert rv.status_code in (202, 302)
+            if rv.status_code == 302:
+                assert self.digest_hash in rv.headers["Location"]
+                assert mock_adjust_string.call_args[0][1] == ExecutorType.CURRENT_USER
+                assert mock_adjust_string.call_args[0][2] == username
+                rv = self.client.get(rv.headers["Location"])
+                assert rv.status_code == 202
+            else:
+                assert mock_adjust_string.called
+                assert mock_adjust_string.call_args[0][1] == ExecutorType.CURRENT_USER
+                assert mock_adjust_string.call_args[0][2] == username
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(THUMBNAILS=True)
@@ -405,7 +432,11 @@ class TestThumbnails(AxBITestCase):
             id_, thumbnail_url = self._get_id_and_thumbnail_url(CHART_URL)
             rv = self.client.get(f"api/v1/chart/{id_}/thumbnail/1234/")
             assert rv.status_code == 302
-            assert rv.headers["Location"] == thumbnail_url
+            # Redirect target uses the full chart.digest (executor/RLS aware),
+            # which may differ from the cheap list digest in thumbnail_url.
+            assert f"/api/v1/chart/{id_}/thumbnail/" in rv.headers["Location"]
+            assert rv.headers["Location"].endswith("/")
+            assert "1234" not in rv.headers["Location"]
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @with_feature_flags(THUMBNAILS=True)
@@ -438,6 +469,9 @@ class TestThumbnails(AxBITestCase):
             self.login(ADMIN_USERNAME)
             id_, thumbnail_url = self._get_id_and_thumbnail_url(CHART_URL)
             rv = self.client.get(thumbnail_url)
+            # List digest may 302 to the full digest URL before serving cache.
+            if rv.status_code == 302:
+                rv = self.client.get(rv.headers["Location"])
             assert rv.status_code == 200
             assert rv.data == self.mock_image
 

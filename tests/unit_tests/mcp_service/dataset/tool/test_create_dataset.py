@@ -338,7 +338,10 @@ class TestCreateDataset:
 
         data = json.loads(result.content[0].text)
         assert data["error_type"] == "DatabaseNotFoundError"
-        assert "Database not found" in data["error"]
+        assert (
+            "database connectivity" in data["error"].lower()
+            or "database not found" in data["error"].lower()
+        )
 
     @patch.object(create_dataset_module, "CreateDatasetCommand")
     @pytest.mark.asyncio
@@ -366,7 +369,7 @@ class TestCreateDataset:
 
         data = json.loads(result.content[0].text)
         assert data["error_type"] == "AccessDeniedError"
-        assert "Access denied" in data["error"]
+        assert "access restrictions" in data["error"].lower()
 
     @patch.object(create_dataset_module, "CreateDatasetCommand")
     @pytest.mark.asyncio

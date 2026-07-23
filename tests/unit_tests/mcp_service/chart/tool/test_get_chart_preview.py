@@ -1383,4 +1383,8 @@ class TestDetachedInstanceError:
 
         data = json.loads(response.content[0].text)
         assert data["error_type"] == "InternalError"
-        assert "session" in data["error"].lower() or "retry" in data["error"].lower()
+        assert (
+            "database connectivity" in data["error"].lower()
+            or "session" in data["error"].lower()
+            or "retry" in data["error"].lower()
+        )

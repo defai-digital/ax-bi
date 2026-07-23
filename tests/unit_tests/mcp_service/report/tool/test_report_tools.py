@@ -624,7 +624,7 @@ async def test_get_report_info_exception_returns_internal_error(mock_find, mcp_s
         )
         data = json.loads(result.content[0].text)
         assert data["error_type"] == "InternalError"
-        assert "DB connection lost" in data["error"]
+        assert "database connectivity" in data["error"].lower()
 
 
 def test_report_error_create_classmethod():

@@ -604,14 +604,14 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         internals.
         """
         if cls.filterable_columns_allowlist is not None:
-            filterable = dict(cls.filterable_columns_allowlist)
-            result: dict[str, list[str]] = {}
-            for name, ops in filterable.items():
-                result[name] = [
+            allowlist = dict(cls.filterable_columns_allowlist)
+            allowlist_result: dict[str, list[str]] = {}
+            for name, ops in allowlist.items():
+                allowlist_result[name] = [
                     op.value if isinstance(op, ColumnOperatorEnum) else str(op)
                     for op in ops
                 ]
-            return result
+            return allowlist_result
 
         mapper = inspect(cls.model_cls)
         columns = {c.key: c for c in mapper.columns}
@@ -625,19 +625,19 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
         # custom_fields = {"tags": ["eq", "in_", "like"], ...}
         custom_fields: dict[str, list[str]] = {}
 
-        filterable: dict[str, Any] = {}
+        filterable_cols: dict[str, Any] = {}
         for name, col in columns.items():
             if isinstance(col.type, sa.String | sa.Text):
-                filterable[name] = TYPE_OPERATOR_MAP["string"]
+                filterable_cols[name] = TYPE_OPERATOR_MAP["string"]
             elif isinstance(col.type, sa.Boolean):
-                filterable[name] = TYPE_OPERATOR_MAP["boolean"]
+                filterable_cols[name] = TYPE_OPERATOR_MAP["boolean"]
             elif isinstance(col.type, sa.Integer | sa.Float | sa.Numeric):
-                filterable[name] = TYPE_OPERATOR_MAP["number"]
+                filterable_cols[name] = TYPE_OPERATOR_MAP["number"]
             elif isinstance(col.type, sa.DateTime | sa.Date | sa.Time):
-                filterable[name] = TYPE_OPERATOR_MAP["datetime"]
+                filterable_cols[name] = TYPE_OPERATOR_MAP["datetime"]
             else:
                 # Fallback to eq/ne/null
-                filterable[name] = [
+                filterable_cols[name] = [
                     ColumnOperatorEnum.eq,
                     ColumnOperatorEnum.ne,
                     ColumnOperatorEnum.is_null,
@@ -645,13 +645,13 @@ class BaseDAO(CoreBaseDAO[T], Generic[T]):
                 ]
         # Add hybrid properties as string fields by default
         for name in hybrids:
-            filterable[name] = TYPE_OPERATOR_MAP["string"]
+            filterable_cols[name] = TYPE_OPERATOR_MAP["string"]
         # Add custom fields
-        filterable.update(custom_fields)
+        filterable_cols.update(custom_fields)
 
         # Convert enum values to strings for the return type
         result: dict[str, list[str]] = {}
-        for key, operators in filterable.items():
+        for key, operators in filterable_cols.items():
             if isinstance(operators, list):
                 # Convert enums to strings
                 result[key] = [

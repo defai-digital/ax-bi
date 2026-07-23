@@ -90,6 +90,9 @@ from axbi.mcp_service.ai.schemas import (  # noqa: E402
     ComposeDashboardRequest,
     DashboardPlanFull,
 )
+from axbi.mcp_service.common.error_schemas import (  # noqa: E402
+    sanitize_error_text,
+)
 from axbi.utils import json  # noqa: E402
 
 # ---------------------------------------------------------------------------
@@ -218,7 +221,7 @@ async def test_compose_dashboard_maps_command_errors(
     response = await compose_dashboard(_compose_request([7]), context)
 
     assert response["dashboard"] is None
-    assert response["error"] == expected_message
+    assert response["error"] == sanitize_error_text(expected_message)
 
 
 # ---------------------------------------------------------------------------

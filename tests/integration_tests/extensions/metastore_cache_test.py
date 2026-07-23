@@ -16,7 +16,6 @@
 # under the License.
 from __future__ import annotations
 
-from contextlib import nullcontext
 from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
@@ -141,12 +140,12 @@ def test_codec(
     # Clean up any existing keys first to ensure idempotency
     cache.delete(FIRST_KEY)
 
-    cm = (
-        pytest.raises(type(expected_result))
-        if isinstance(expected_result, Exception)
-        else nullcontext()
-    )
-    with cm:
+    if isinstance(expected_result, Exception):
+        # Metastore cache swallows codec/SQL errors and returns False so
+        # Flask-Caching callers treat the write as a miss rather than raising.
+        assert cache.set(FIRST_KEY, input_) is False
+        assert cache.get(FIRST_KEY) is None
+    else:
         cache.set(FIRST_KEY, input_)
         assert cache.get(FIRST_KEY) == expected_result
 

@@ -75,9 +75,7 @@ const STATIC_ASSET_PATTERNS = [
   /\.(?:png|jpg|jpeg|gif|svg|ico|webp)$/,
 ];
 
-const API_PATTERNS = [
-  /\/api\/v1\//,
-];
+const API_PATTERNS = [/\/api\/v1\//];
 
 // Routes that should never be cached
 const NO_CACHE_PATTERNS = [
@@ -157,8 +155,13 @@ async function networkOnly(request: Request): Promise<Response> {
     return await fetch(request);
   } catch {
     // Prefer JSON body for API-shaped requests; plain 503 for navigations.
-    const acceptsJson = request.headers.get('accept')?.includes('application/json');
-    if (acceptsJson || matchesPatterns(new URL(request.url).pathname, API_PATTERNS)) {
+    const acceptsJson = request.headers
+      .get('accept')
+      ?.includes('application/json');
+    if (
+      acceptsJson ||
+      matchesPatterns(new URL(request.url).pathname, API_PATTERNS)
+    ) {
       return new Response(JSON.stringify({ error: 'Network error' }), {
         status: 503,
         statusText: 'Service Unavailable',

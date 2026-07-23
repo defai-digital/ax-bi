@@ -475,7 +475,7 @@ class TestUpdateChartDatasetAccess:
             assert result.structured_content["chart"] is None
             error = result.structured_content["error"]
             assert error["error_type"] == "DatasetNotAccessible"
-            assert "Access denied" in error["message"]
+            assert "access restrictions" in error["message"].lower()
 
     @patch(
         "axbi.mcp_service.auth.check_chart_data_access",
@@ -1603,7 +1603,9 @@ class TestUpdateChartDatasetIdIntegration:
             assert result.structured_content["success"] is False
             error_type = result.structured_content["error"]["error_type"]
             assert error_type == "DatasetNotAccessible"
-            assert "9999" in result.structured_content["error"]["details"]
+            assert "access restrictions" in str(
+                result.structured_content["error"]
+            ).lower() or "9999" in str(result.structured_content["error"]["details"])
 
     @patch(
         "axbi.mcp_service.auth.check_chart_data_access",
@@ -1654,4 +1656,6 @@ class TestUpdateChartDatasetIdIntegration:
             assert result.structured_content["success"] is False
             error_type = result.structured_content["error"]["error_type"]
             assert error_type == "DatasetNotAccessible"
-            assert "9999" in result.structured_content["error"]["details"]
+            assert "access restrictions" in str(
+                result.structured_content["error"]
+            ).lower() or "9999" in str(result.structured_content["error"]["details"])

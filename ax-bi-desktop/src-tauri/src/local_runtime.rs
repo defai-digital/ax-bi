@@ -701,10 +701,7 @@ fn atomic_write(path: &Path, content: &str, label: &str) -> Result<(), String> {
         .file_name()
         .and_then(|name| name.to_str())
         .unwrap_or("runtime.tmp");
-    let temp_path = parent.join(format!(
-        ".{file_name}.{}.tmp",
-        std::process::id()
-    ));
+    let temp_path = parent.join(format!(".{file_name}.{}.tmp", std::process::id()));
 
     let write_result = (|| {
         fs::write(&temp_path, content)
@@ -2295,11 +2292,12 @@ mod tests {
         default_axbi_image, desktop_version, docker_host, ensure_managed_image_tags_content,
         ensure_runtime_secrets_content, is_managed_image_ref, local_runtime_port_from_state,
         managed_image_tag, platform_id, platform_label, program_filename, read_env_value_from_str,
-        resolve_program, run_command_with_timeout, runtime_urls, strip_env_value_quotes, tail_lines,
-        valid_colima_profile, validate_log_service, write_file_if_changed, RuntimeEngine,
-        AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB, AXBI_COLIMA_PROFILE,
-        AXBI_DESKTOP_VERSION_ENV, AXBI_IMAGE_ENV, AX_SERVICES_IMAGE_ENV, LOCAL_COMPOSE_YAML,
-        MANAGED_AXBI_IMAGE_REPO, MANAGED_AX_SERVICES_IMAGE_REPO, MAX_LOG_TAIL_LINES,
+        resolve_program, run_command_with_timeout, runtime_urls, strip_env_value_quotes,
+        tail_lines, valid_colima_profile, validate_log_service, write_file_if_changed,
+        RuntimeEngine, AXBI_ADMIN_USERNAME, AXBI_COLIMA_CPUS, AXBI_COLIMA_MEMORY_GB,
+        AXBI_COLIMA_PROFILE, AXBI_DESKTOP_VERSION_ENV, AXBI_IMAGE_ENV, AX_SERVICES_IMAGE_ENV,
+        LOCAL_COMPOSE_YAML, MANAGED_AXBI_IMAGE_REPO, MANAGED_AX_SERVICES_IMAGE_REPO,
+        MAX_LOG_TAIL_LINES,
     };
     use std::fs;
     use std::path::Path;
@@ -2662,10 +2660,8 @@ mod tests {
 
     #[test]
     fn atomic_write_and_write_if_changed_are_idempotent() {
-        let path = std::env::temp_dir().join(format!(
-            "axbi-atomic-write-test-{}.yml",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("axbi-atomic-write-test-{}.yml", std::process::id()));
         let _ = fs::remove_file(&path);
 
         write_file_if_changed(&path, "one\n", "test file").unwrap();

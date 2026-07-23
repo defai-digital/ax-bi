@@ -27,6 +27,8 @@ from unittest.mock import MagicMock
 import pytest
 from pydantic import ValidationError
 
+from axbi.mcp_service.common.error_schemas import sanitize_error_text
+
 # ---------------------------------------------------------------------------
 # Decorator passthrough
 # ---------------------------------------------------------------------------
@@ -143,7 +145,7 @@ class TestUpdateDashboardResponse:
 
     def test_with_error(self) -> None:
         resp = UpdateDashboardResponse(error="Dashboard not found")
-        assert resp.error == "Dashboard not found"
+        assert resp.error == sanitize_error_text("Dashboard not found")
         assert resp.dashboard is None
 
     def test_with_success(self) -> None:

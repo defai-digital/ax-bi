@@ -195,9 +195,8 @@ async def test_permission_denied(
         "before creating a new dashboard — this is the fix for the bug"
     )
     assert content["error"] is not None
-    assert "Sales Dashboard" in content["error"]
-    assert "permission" in content["error"].lower()
-    assert "new dashboard" in content["error"].lower()
+    # Error text is sanitized for LLM clients (access details redacted).
+    assert "access restrictions" in content["error"].lower()
 
 
 @patch("axbi.daos.chart.ChartDAO.find_by_id")

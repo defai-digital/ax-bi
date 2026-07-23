@@ -384,7 +384,7 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
             time.sleep(poll_interval)
 
     @classmethod
-    def _query_id_poll_timeout_seconds(cls, query: Query) -> float:
+    def _query_id_poll_timeout_seconds(cls, query: Query | Any) -> float:
         """Bound waiting for Trino to surface a query_id on the cursor.
 
         Prefer the query's configured timeout, then SQL Lab defaults, then a
@@ -406,9 +406,7 @@ class TrinoEngineSpec(PrestoBaseEngineSpec):
                 exc_info=True,
             )
         try:
-            candidates.append(
-                float(app.config.get("SQLLAB_ASYNC_TIME_LIMIT_SEC", 600))
-            )
+            candidates.append(float(app.config.get("SQLLAB_ASYNC_TIME_LIMIT_SEC", 600)))
         except (TypeError, ValueError, RuntimeError):
             logger.debug(
                 "SQLLAB_ASYNC_TIME_LIMIT_SEC not usable for Trino poll bound",
