@@ -249,6 +249,10 @@ class CacheManager:
 
         config = app.config.get("DISTRIBUTED_COORDINATION_CONFIG")
         if not config:
+            # Clear any prior backend so re-init under a config without
+            # coordination does not keep a stale Redis client from another app
+            # (e.g. integration test_app imported into the unit-test process).
+            self._distributed_coordination = None
             return
 
         cache_type = config.get("CACHE_TYPE")
@@ -259,6 +263,7 @@ class CacheManager:
                 config
             )
         else:
+            self._distributed_coordination = None
             logger.warning(
                 "Unsupported CACHE_TYPE for DISTRIBUTED_COORDINATION_CONFIG: %s. "
                 "Use 'RedisCache' or 'RedisSentinelCache'.",
