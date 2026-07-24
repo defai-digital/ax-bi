@@ -85,10 +85,11 @@ def test_get_oauth2_access_token_base_refresh(mocker: MockerFixture) -> None:
     with freeze_time("2024-01-02"):
         assert get_oauth2_access_token({}, 1, 1, db_engine_spec) == "new-token"
 
-    # check that token was updated
+    # check that token was updated and persisted
     assert token.access_token == "new-token"  # noqa: S105
     assert token.access_token_expiration == datetime(2024, 1, 2, 1)
     db.session.add.assert_called_with(token)
+    db.session.commit.assert_called()
 
 
 def test_get_oauth2_access_token_base_no_refresh(mocker: MockerFixture) -> None:
@@ -227,6 +228,7 @@ def test_refresh_oauth2_token_updates_refresh_token(
     assert token.access_token_expiration == datetime(2024, 1, 1, 1)
     assert token.refresh_token == "new-refresh-token"  # noqa: S105
     db.session.add.assert_called_with(token)
+    db.session.commit.assert_called()
 
 
 def test_refresh_oauth2_token_keeps_refresh_token(
@@ -256,6 +258,7 @@ def test_refresh_oauth2_token_keeps_refresh_token(
     assert token.access_token == "new-access-token"  # noqa: S105
     assert token.refresh_token == "original-refresh-token"  # noqa: S105
     db.session.add.assert_called_with(token)
+    db.session.commit.assert_called()
 
 
 def test_refresh_oauth2_token_refreshes_when_access_token_expired_under_lock(

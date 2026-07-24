@@ -36,6 +36,7 @@ from axbi import db
 from axbi.axbi_typing import OAuth2ClientConfig, OAuth2State
 from axbi.distributed_lock import DistributedLock
 from axbi.exceptions import AcquireDistributedLockFailedException, OAuth2Error
+from axbi.utils.dates import naive_utcnow
 from axbi.utils.session_lifecycle import commit_session
 
 if TYPE_CHECKING:
@@ -112,7 +113,7 @@ def get_oauth2_access_token(
     if token is None:
         return None
 
-    if token.access_token and datetime.now() < token.access_token_expiration:
+    if token.access_token and naive_utcnow() < token.access_token_expiration:
         return token.access_token
 
     if token.refresh_token:
@@ -150,7 +151,7 @@ def refresh_oauth2_token(
         if token is None:
             return None
 
-        if token.access_token and datetime.now() < token.access_token_expiration:
+        if token.access_token and naive_utcnow() < token.access_token_expiration:
             return token.access_token
 
         if not token.refresh_token:
@@ -192,16 +193,18 @@ def refresh_oauth2_token(
             return None
 
         token.access_token = token_response["access_token"]
-        # Use naive UTC to match JWT expiry comparisons (timezone.utc, then
-        # strip tzinfo) and avoid skew on non-UTC hosts with local datetime.now().
-        token.access_token_expiration = datetime.now(tz=timezone.utc).replace(
-            tzinfo=None
-        ) + timedelta(seconds=token_response["expires_in"])
+        # Naive UTC must match validity checks (naive_utcnow) and initial mint.
+        token.access_token_expiration = naive_utcnow() + timedelta(
+            seconds=token_response["expires_in"]
+        )
         # Support single-use refresh tokens
         if new_refresh_token := token_response.get("refresh_token"):
             token.refresh_token = new_refresh_token
 
         db.session.add(token)
+        # Persist before releasing the lock so other workers see the fresh
+        # access/refresh tokens (critical for single-use refresh tokens).
+        commit_session(db.session, context="oauth2 token refresh", soft=True)
 
     return token.access_token
 

@@ -306,6 +306,46 @@ class TestCreateSmartLayout:
         # And that row is different from the big_number row
         assert chart2["parents"][2] != bn_chart["parents"][2]
 
+    def test_big_number_kpi_uses_caller_order_not_id_order(self) -> None:
+        """KPI full-width treatment follows list order, not chart primary key."""
+        charts = [
+            _make_chart(12, viz_type="big_number_total"),
+            _make_chart(3, viz_type="echarts_timeseries_line"),
+        ]
+        layout = _create_smart_layout(charts, plan=None)
+
+        bn_chart = layout["CHART-12"]
+        assert bn_chart["meta"]["height"] == 30
+        bn_col = layout[bn_chart["parents"][-1]]
+        assert bn_col["meta"]["width"] == GRID_COLUMN_COUNT
+
+        # Non-KPI chart should keep the default chart height.
+        line_chart = layout["CHART-3"]
+        assert line_chart["meta"]["height"] == _CHART_HEIGHT
+
+    def test_between_narrative_inserted_once_between_rows(self) -> None:
+        """position=between inserts once between chart rows, not after every row."""
+        charts = [
+            _make_chart(1, viz_type="echarts_timeseries_line"),
+            _make_chart(2, viz_type="echarts_timeseries_bar"),
+            _make_chart(3, viz_type="table"),
+            _make_chart(4, viz_type="pie"),
+        ]
+        narrative_blocks = [
+            {"content": "Mid-section analysis", "position": "between"},
+        ]
+        layout = _create_smart_layout(
+            charts, plan=None, narrative_blocks=narrative_blocks
+        )
+
+        markdown_keys = [k for k in layout if k.startswith("MARKDOWN-")]
+        assert len(markdown_keys) == 1
+        assert layout[markdown_keys[0]]["meta"]["code"] == "Mid-section analysis"
+
+        # Two chart rows (2+2) with one between markdown row in the grid.
+        grid_children = layout["GRID_ID"]["children"]
+        assert len(grid_children) == 3
+
     def test_chart_height(self) -> None:
         """Standard charts should use _CHART_HEIGHT."""
         charts = [_make_chart(1)]

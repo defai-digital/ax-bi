@@ -79,11 +79,13 @@ def test_redis_limiter_anchors_ttl_once_and_does_not_extend() -> None:
     cache = _FakeCache()
     limiter = _make_redis_limiter(cache)
 
-    for _ in range(3):
-        limiter.is_rate_limited("user:1:t", limit=10, window=60)
+    # Bucket start: remaining wall-clock TTL equals the full window.
+    with patch("axbi.mcp_service.middleware.time.time", return_value=60.0):
+        for _ in range(3):
+            limiter.is_rate_limited("user:1:t", limit=10, window=60)
 
-    # A single bucket key holds the counter, and its TTL equals the window —
-    # anchored once on creation, never re-set to a later expiry.
+    # A single bucket key holds the counter, and its TTL is the remaining
+    # window — anchored once on creation, never extended past the boundary.
     assert len(cache.store) == 1
     (only_key,) = cache.store
     assert cache.store[only_key] == 3
@@ -108,6 +110,24 @@ def test_redis_limiter_falls_back_when_no_atomic_inc() -> None:
 
     results = [limiter.is_rate_limited("k", limit=2, window=60) for _ in range(3)]
     assert [is_limited for is_limited, _ in results] == [False, False, True]
+
+
+def test_redis_limiter_fallback_uses_remaining_window_ttl() -> None:
+    """Non-atomic fallback must not re-anchor a full window on every hit."""
+    cache = _FakeCache()
+    cache.inc = MagicMock(side_effect=NotImplementedError)  # type: ignore[method-assign]
+    limiter = _make_redis_limiter(cache)
+
+    # Fixed wall clock so remaining TTL is deterministic within a bucket.
+    with patch("axbi.mcp_service.middleware.time.time", return_value=100.0):
+        for _ in range(3):
+            limiter.is_rate_limited("k", limit=10, window=60)
+
+    assert len(cache.store) == 1
+    (only_key,) = cache.store
+    assert cache.store[only_key] == 3
+    # bucket = floor(100/60)=1, reset_time=120, remaining_ttl=20
+    assert cache.timeouts[only_key] == 20
 
 
 def test_in_memory_limiter_sliding_window() -> None:

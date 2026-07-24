@@ -73,10 +73,11 @@ class CreateDashboardFromChartsCommand(BaseCommand):
             self._chart_ids,
             skip_base_filter=True,
         )
-        self._charts = sorted(charts, key=lambda chart: chart.id)
-        missing_ids = set(self._chart_ids) - {chart.id for chart in self._charts}
-        if missing_ids:
+        # Preserve caller chart_ids order (layout treats first chart as KPI header).
+        charts_by_id = {chart.id: chart for chart in charts}
+        if missing_ids := set(self._chart_ids) - charts_by_id.keys():
             raise DashboardChartsNotFoundError(missing_ids)
+        self._charts = [charts_by_id[chart_id] for chart_id in self._chart_ids]
 
         denied_ids = {
             chart.id

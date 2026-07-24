@@ -15,7 +15,7 @@
 # specific language governing permissions and limitations
 # under the License.
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from functools import partial
 from typing import cast
 from uuid import UUID
@@ -29,6 +29,7 @@ from axbi.databases.schemas import OAuth2ProviderResponseSchema
 from axbi.exceptions import OAuth2Error
 from axbi.key_value.types import JsonKeyValueCodec, KeyValueResource
 from axbi.models.core import Database, DatabaseUserOAuth2Tokens
+from axbi.utils.dates import naive_utcnow
 from axbi.utils.decorators import on_error, transaction
 from axbi.utils.oauth2 import decode_oauth2_state
 
@@ -84,8 +85,8 @@ class OAuth2StoreTokenCommand(BaseCommand):
         ):
             DatabaseUserOAuth2TokensDAO.delete([existing])
 
-        # store tokens
-        expiration = datetime.now() + timedelta(seconds=token_response["expires_in"])
+        # store tokens (naive UTC to match refresh/validity checks)
+        expiration = naive_utcnow() + timedelta(seconds=token_response["expires_in"])
         return DatabaseUserOAuth2TokensDAO.create(
             attributes={
                 "user_id": self._state["user_id"],

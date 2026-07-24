@@ -1278,7 +1278,13 @@ def test_purge_oauth2_tokens(session: Session) -> None:
         email="adoe@example.org",
         username="adoe",
     )
-    session.add(user)
+    other_user = User(
+        first_name="Bob",
+        last_name="Roe",
+        email="broe@example.org",
+        username="broe",
+    )
+    session.add_all([user, other_user])
     session.flush()
 
     database1 = Database(database_name="my_oauth2_db", sqlalchemy_uri="sqlite://")
@@ -1294,6 +1300,14 @@ def test_purge_oauth2_tokens(session: Session) -> None:
             access_token_expiration=datetime(2023, 1, 1),
             refresh_token="my_refresh_token",  # noqa: S106
         ),
+        # Second personal token for the same database (must also be purged).
+        DatabaseUserOAuth2Tokens(
+            user_id=other_user.id,
+            database_id=database1.id,
+            access_token="my_second_access_token",  # noqa: S106
+            access_token_expiration=datetime(2023, 6, 1),
+            refresh_token="my_second_refresh_token",  # noqa: S106
+        ),
         DatabaseUserOAuth2Tokens(
             user_id=user.id,
             database_id=database2.id,
@@ -1305,11 +1319,17 @@ def test_purge_oauth2_tokens(session: Session) -> None:
     session.add_all(tokens)
     session.flush()
 
-    assert len(session.query(DatabaseUserOAuth2Tokens).all()) == 2
+    assert len(session.query(DatabaseUserOAuth2Tokens).all()) == 3
+    assert (
+        session.query(DatabaseUserOAuth2Tokens)
+        .filter_by(database_id=database1.id)
+        .count()
+        == 2
+    )
 
     token = (
         session.query(DatabaseUserOAuth2Tokens)
-        .filter_by(database_id=database1.id)
+        .filter_by(database_id=database1.id, user_id=user.id)
         .one()
     )
     assert token.user_id == user.id
@@ -1320,13 +1340,13 @@ def test_purge_oauth2_tokens(session: Session) -> None:
 
     database1.purge_oauth2_tokens()
 
-    # confirm token was deleted
-    token = (
+    # confirm all tokens for database1 were deleted
+    assert (
         session.query(DatabaseUserOAuth2Tokens)
         .filter_by(database_id=database1.id)
-        .one_or_none()
+        .count()
+        == 0
     )
-    assert token is None
 
     # make sure other DB tokens weren't deleted
     token = (

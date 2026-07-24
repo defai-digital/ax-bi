@@ -932,17 +932,20 @@ class RedisRateLimiter:
             "window_seconds": window,
         }
 
-    def _increment_window_counter(self, full_key: str, window: int) -> int:
+    def _increment_window_counter(self, full_key: str, remaining_ttl: int) -> int:
         """Atomically increment the per-window counter and return its value.
 
-        ``add`` anchors the TTL to the window the first time the bucket is seen
-        (a no-op once it exists); ``inc`` then atomically bumps the counter
-        without touching the TTL, so the window expires at its boundary rather
-        than being extended on every call. Falls back to a best-effort get/set
-        when the backend lacks an atomic ``inc``.
+        ``add`` anchors the TTL to the remaining window the first time the
+        bucket is seen (a no-op once it exists); ``inc`` then atomically bumps
+        the counter without touching the TTL, so the window expires at its
+        boundary rather than being extended on every call. Falls back to a
+        best-effort get/set when the backend lacks an atomic ``inc``. The
+        fallback re-applies only the remaining wall-clock window TTL so steady
+        traffic cannot keep a limited key limited forever.
         """
+        ttl = max(1, remaining_ttl)
         # Anchor the window TTL exactly once for this bucket.
-        self._cache.add(full_key, 0, timeout=window)
+        self._cache.add(full_key, 0, timeout=ttl)
         new_count: int | None = None
         # ``inc`` is an atomic backend operation (Redis INCRBY) that not every
         # cache backend exposes; resolve it dynamically and fall back when it is
@@ -955,9 +958,15 @@ class RedisRateLimiter:
                 new_count = None
         if new_count is None:
             # Backend without atomic inc (or the bucket expired between add and
-            # inc): best-effort non-atomic increment.
-            new_count = int(self._cache.get(full_key) or 0) + 1
-            self._cache.set(full_key, new_count, timeout=window)
+            # inc): best-effort non-atomic increment. Use remaining wall-clock
+            # TTL rather than a full new window so expiry stays at the bucket
+            # boundary.
+            current = self._cache.get(full_key)
+            if current is None:
+                self._cache.set(full_key, 1, timeout=ttl)
+                return 1
+            new_count = int(current) + 1
+            self._cache.set(full_key, new_count, timeout=ttl)
         return int(new_count)
 
     def is_rate_limited(
@@ -968,9 +977,10 @@ class RedisRateLimiter:
         bucket = int(current_time // window)
         full_key = f"{self._prefix}{key}:{bucket}"
         reset_time = (bucket + 1) * window
+        remaining_ttl = max(1, int(reset_time - current_time))
 
         try:
-            count = self._increment_window_counter(full_key, window)
+            count = self._increment_window_counter(full_key, remaining_ttl)
         except Exception as e:
             logger.warning("Redis rate limiter error: %s, allowing request", e)
             return self._allow(limit, window)

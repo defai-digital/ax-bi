@@ -250,8 +250,9 @@ def _create_smart_layout(  # noqa: C901
             "type": "ROW",
         }
 
-        # Insert "between" narrative blocks after each row of charts
-        if narrative_blocks:
+        # Insert "between" narrative blocks only between chart rows, not after
+        # the last row (and not once per remaining row for the same block).
+        if narrative_blocks and idx < len(chart_objects):
             for nb in narrative_blocks:
                 if nb.get("position") == "between":
                     _add_markdown_row(layout, row_ids, nb.get("content", ""))
@@ -351,15 +352,16 @@ async def _compose_dashboard(  # noqa: C901
     try:
         # Validate charts exist and are accessible
         with mcp_event_log_context(action="mcp.compose_dashboard.validate_charts"):
-            chart_objects = sorted(
-                ChartDAO.find_by_ids(
+            # Preserve request.chart_ids order so layout KPI placement and visual
+            # order match the plan (do not re-sort by primary key).
+            charts_by_id = {
+                chart.id: chart
+                for chart in ChartDAO.find_by_ids(
                     request.chart_ids,
                     skip_base_filter=True,
-                ),
-                key=lambda chart: chart.id,
-            )
-            found_ids = {c.id for c in chart_objects}
-            missing = set(request.chart_ids) - found_ids
+                )
+            }
+            missing = set(request.chart_ids) - charts_by_id.keys()
             if missing:
                 return ComposeDashboardResponse(
                     error=f"Charts not found: {sorted(missing)}",
@@ -367,6 +369,7 @@ async def _compose_dashboard(  # noqa: C901
                         "Some chart IDs were not found. Only found charts were used."
                     ],
                 ).model_dump()
+            chart_objects = [charts_by_id[chart_id] for chart_id in request.chart_ids]
 
             # Class-level Dashboard permission is not enough to attach a chart.
             # Every chart must also be backed by a datasource the current

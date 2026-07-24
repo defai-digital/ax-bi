@@ -95,9 +95,10 @@ def test_create_dashboard_from_charts_requeries_and_attaches_same_session_models
     )
     create.assert_called_once_with(attributes=properties)
     find_owner.assert_called_once_with(17)
-    assert dashboard.slices == [first, second]
+    # Chart order follows chart_ids ([2, 1]), not primary-key sort.
+    assert dashboard.slices == [second, first]
     assert dashboard.owners == [owner]
-    assert command.charts == [first, second]
+    assert command.charts == [second, first]
 
 
 def test_create_dashboard_from_charts_rejects_missing_chart_ids(
