@@ -31513,20 +31513,22 @@ const SHARED_BASHLIB = path_1.default.resolve(__dirname, '../src/scripts/bashlib
 function runCommand(cmd, extraBashlib) {
     return __awaiter(this, void 0, void 0, function* () {
         const script = [
-            'source "$1"',
-            'if [[ -n "$2" ]]; then',
-            '  source "$2"',
+            'source "$AXBI_CACHED_DEPENDENCIES_SHARED_BASHLIB"',
+            'if [[ -n "$AXBI_CACHED_DEPENDENCIES_EXTRA_BASHLIB" ]]; then',
+            '  source "$AXBI_CACHED_DEPENDENCIES_EXTRA_BASHLIB"',
             'fi',
             cmd,
         ].join('\n');
+        const environment = {};
+        for (const [name, value] of Object.entries(process.env)) {
+            if (value !== undefined) {
+                environment[name] = value;
+            }
+        }
+        environment.AXBI_CACHED_DEPENDENCIES_SHARED_BASHLIB = SHARED_BASHLIB;
+        environment.AXBI_CACHED_DEPENDENCIES_EXTRA_BASHLIB = extraBashlib;
         try {
-            yield (0, exec_1.exec)('bash', [
-                '-c',
-                script,
-                'axbi-cached-dependencies',
-                SHARED_BASHLIB,
-                extraBashlib,
-            ]);
+            yield (0, exec_1.exec)('bash', ['-c', script], { env: environment });
         }
         catch (error) {
             core.setFailed(error instanceof Error ? error.message : String(error));
