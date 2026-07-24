@@ -217,6 +217,7 @@ class InvalidPostProcessingError(AxBIException):
 
 class CacheLoadError(AxBIException):
     status = 404
+    message = "Cached data not found"
 
 
 class QueryClauseValidationException(AxBIException):
