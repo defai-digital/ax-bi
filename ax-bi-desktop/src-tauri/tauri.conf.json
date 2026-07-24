@@ -1,6 +1,6 @@
 {
   "productName": "AX BI",
-  "version": "2.2.1",
+  "version": "2.2.2",
   "identifier": "com.axbi.desktop",
   "build": {
     "frontendDist": "../src",
