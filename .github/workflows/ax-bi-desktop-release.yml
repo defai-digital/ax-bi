@@ -688,6 +688,7 @@ jobs:
     env:
       VERSION: ${{ needs.resolve-version.outputs.version }}
       TAG: ${{ needs.resolve-version.outputs.tag }}
+      HAS_MINISIGN: ${{ secrets.AX_BI_MINISIGN_SECRET_KEY_B64 != '' && secrets.AX_BI_MINISIGN_PUBLIC_KEY != '' && secrets.AX_BI_MINISIGN_PASSWORD != '' }}
     steps:
       - name: Checkout monorepo scripts
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -699,6 +700,12 @@ jobs:
           set -euo pipefail
           sudo apt-get update
           sudo apt-get install -y minisign zip
+
+      - name: Require minisign secrets for winget archive
+        if: ${{ env.HAS_MINISIGN != 'true' }}
+        run: |
+          echo "::error::Stable winget archives require AX_BI_MINISIGN_SECRET_KEY_B64, AX_BI_MINISIGN_PUBLIC_KEY, and AX_BI_MINISIGN_PASSWORD."
+          exit 1
 
       - name: Download and verify Windows installers
         env:
@@ -771,12 +778,41 @@ jobs:
           ls -la "AX.BI_${VERSION}_winget-manifests.zip"
           echo "WINGET_ZIP=AX.BI_${VERSION}_winget-manifests.zip" >> "$GITHUB_ENV"
 
-      - name: Upload winget manifests to GitHub release
+      - name: Sign and verify winget manifest archive
+        env:
+          AX_BI_MINISIGN_SECRET_KEY_B64: ${{ secrets.AX_BI_MINISIGN_SECRET_KEY_B64 }}
+          AX_BI_MINISIGN_PUBLIC_KEY: ${{ secrets.AX_BI_MINISIGN_PUBLIC_KEY }}
+          MINISIGN_PASSWORD: ${{ secrets.AX_BI_MINISIGN_PASSWORD }}
+        run: |
+          set -euo pipefail
+          mkdir -p signkey
+          chmod 700 signkey
+          printf '%s' "$AX_BI_MINISIGN_SECRET_KEY_B64" | base64 --decode > signkey/ax.minisign.key
+          chmod 600 signkey/ax.minisign.key
+          if [[ "$AX_BI_MINISIGN_PUBLIC_KEY" == untrusted* ]]; then
+            printf '%s\n' "$AX_BI_MINISIGN_PUBLIC_KEY" > signkey/ax.pub
+          else
+            {
+              echo "untrusted comment: AX BI minisign public key"
+              echo "$AX_BI_MINISIGN_PUBLIC_KEY"
+            } > signkey/ax.pub
+          fi
+          node ax-bi-desktop/scripts/release/minisign-artifacts.mjs \
+            --key-dir signkey \
+            --force \
+            "$WINGET_ZIP"
+          test -f "${WINGET_ZIP}.minisig"
+
+      - name: Upload signed winget manifests to GitHub release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          gh release upload "$TAG" "$WINGET_ZIP" --clobber --repo "$GITHUB_REPOSITORY"
+          gh release upload "$TAG" \
+            "$WINGET_ZIP" \
+            "${WINGET_ZIP}.minisig" \
+            --clobber \
+            --repo "$GITHUB_REPOSITORY"
 
       - name: Upload winget workflow artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -785,4 +821,5 @@ jobs:
           path: |
             winget-out/manifests/**
             AX.BI_${{ needs.resolve-version.outputs.version }}_winget-manifests.zip
+            AX.BI_${{ needs.resolve-version.outputs.version }}_winget-manifests.zip.minisig
           retention-days: 14

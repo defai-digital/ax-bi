@@ -198,6 +198,7 @@ test('manual signer enforces the same pin and trusted-comment contract', () => {
 test('release workflow fails closed before publishing or trusting a Homebrew checksum', () => {
   const text = readFileSync(workflow, 'utf8')
   const homebrewJob = text.match(/  update-homebrew-tap:[\s\S]*$/u)?.[0] ?? ''
+  const wingetJob = text.match(/  prepare-winget-manifests:[\s\S]*$/u)?.[0] ?? ''
 
   assert.match(text, /secrets\.APPLE_TEAM_ID != ''/u)
   assert.ok(text.includes('verify-macos-release:'))
@@ -214,6 +215,11 @@ test('release workflow fails closed before publishing or trusting a Homebrew che
   assert.ok(homebrewJob.includes('release.dmg.minisig'))
   assert.ok(homebrewJob.includes('-p ax-bi-desktop/docs/ax-bi.minisign.pub'))
   assert.ok(homebrewJob.indexOf('minisign -V') < homebrewJob.indexOf('DMG_SHA256='))
+  assert.ok(wingetJob.includes('Require minisign secrets for winget archive'))
+  assert.ok(wingetJob.includes('Sign and verify winget manifest archive'))
+  assert.ok(wingetJob.includes('scripts/release/minisign-artifacts.mjs'))
+  assert.ok(wingetJob.includes('"${WINGET_ZIP}.minisig"'))
+  assert.ok(wingetJob.includes('AX.BI_${{ needs.resolve-version.outputs.version }}_winget-manifests.zip.minisig'))
 
   const localNotarizer = readFileSync(
     path.join(desktopRoot, 'scripts', 'release', 'notarize-macos.sh'),

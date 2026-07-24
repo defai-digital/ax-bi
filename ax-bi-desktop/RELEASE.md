@@ -11,7 +11,8 @@ Tauri desktop shell. It follows the same trust model as **AX Studio** and
 5. Automated Homebrew cask update for
    [defai-digital/homebrew-ax-bi](https://github.com/defai-digital/homebrew-ax-bi)
 6. Generate winget manifests (`DEFAI.AXBI`) from minisign-verified Windows
-   installers and attach `AX.BI_*_winget-manifests.zip` to the release
+   installers, minisign the archive, and attach
+   `AX.BI_*_winget-manifests.zip{,.minisig}` to the release
 
 ## Product naming
 
@@ -60,7 +61,7 @@ tag ax-bi-desktop-vX.Y.Z
   → re-download and verify Apple trust + minisign coverage
   → publish release
   → verify DMG minisign, then push Casks/ax-bi.rb (SHA256 of DMG)
-  → verify Windows installers with minisign, write winget manifests, attach zip
+  → verify Windows installers with minisign, write winget manifests, sign + attach zip
 ```
 
 Workflow file: [`.github/workflows/ax-bi-desktop-release.yml`](../.github/workflows/ax-bi-desktop-release.yml)
@@ -358,7 +359,8 @@ gh secret set HOMEBREW_TAP_TOKEN -R defai-digital/ax-bi
   NSIS/MSI) or, once published, `winget install -e --id DEFAI.AXBI`.
 - winget manifests are **generated in CI** after publish
   (`prepare-winget-manifests`): minisign-verify NSIS+MSI →
-  `write-winget-manifests.mjs` → attach `AX.BI_*_winget-manifests.zip`.
+  `write-winget-manifests.mjs` → minisign and attach
+  `AX.BI_*_winget-manifests.zip{,.minisig}`.
   Opening a PR to `microsoft/winget-pkgs` remains a **manual** maintainer step
   (see [`packaging/winget/README.md`](packaging/winget/README.md)).
   Skip with workflow input `skip_winget`.
