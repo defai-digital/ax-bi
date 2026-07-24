@@ -38,7 +38,71 @@ a hosted AX BI server. Engine/Docker status, logs, and prepare/stop/update
 controls live under
 **Settings → Advanced runtime**.
 
-## Recommended User Install
+## Install and first use
+
+AX BI Desktop is a window for an AX BI server. After installing it, choose one
+of these paths:
+
+| If you want to… | Choose in AX BI Desktop | What you need |
+| --- | --- | --- |
+| Use your organisation's existing AX BI deployment | **Connect to server** | The server address from your administrator, such as `https://bi.example.com` |
+| Run AX BI on your own Windows PC | **Run locally** | Docker Desktop installed and running |
+
+You do not need to clone this repository, install Python, or use a terminal to
+use the released desktop app.
+
+### Windows
+
+1. Download the signed Windows installer from
+   [GitHub Releases](https://github.com/defai-digital/ax-bi/releases). Choose
+   either `AX.BI_*_x64-setup.exe` (recommended) or the `.msi` installer.
+2. Open the downloaded file and follow the Windows installer prompts. Verify
+   that the publisher is **DEFAI Private Limited** if Windows displays a
+   publisher prompt.
+3. Open **AX BI** from the Start menu.
+4. On the welcome screen, select one of the following:
+
+   - **Connect to server:** enter the complete address supplied by your AX BI
+     administrator, including `https://`, then select **Connect**. Sign in with
+     your usual AX BI account.
+   - **Run locally:** install Docker Desktop once, start Docker Desktop, then
+     select **Run locally**. AX BI downloads and starts its local services; the
+     first start can take a few minutes. When the login screen opens, use the
+     generated local admin credentials shown by AX BI.
+
+To install Docker Desktop for a local instance, run this in PowerShell, or use
+[Docker's Windows installer](https://docs.docker.com/desktop/setup/install/windows-install/):
+
+```powershell
+winget install -e --id Docker.DockerDesktop
+```
+
+If Docker is already installed but AX BI cannot start locally, open Docker
+Desktop and wait until it reports that the engine is running, then return to AX
+BI and try again. For a hosted server, Docker is not needed.
+
+### macOS
+
+Install AX BI with Homebrew:
+
+```bash
+brew install --cask defai-digital/ax-bi/ax-bi
+```
+
+Open **AX BI** from Applications and choose **Connect to server** or **Run
+locally** on the welcome screen. The local path manages its required runtime;
+the hosted-server path only needs the server address and your usual account.
+
+### After setup
+
+- To return to the welcome screen or change the server, open **Settings →
+  Desktop home**.
+- To view the generated credentials for a local instance, use **Settings →
+  Advanced → Credentials**.
+- The desktop app remembers a server address you entered, but it does not
+  automatically reconnect to it when launched.
+
+## Packaging and release details
 
 macOS app name (Dock / Applications / menu bar): **AX BI** (`AX BI.app`).
 Windows product name: **AX BI** (same Tauri `productName`).
@@ -68,20 +132,6 @@ using the standalone DMG:
 ```bash
 brew install colima lima docker docker-compose
 ```
-
-### Windows user install
-
-1. Download the Authenticode-signed installer from
-   [GitHub Releases](https://github.com/defai-digital/ax-bi/releases)
-   (`AX.BI_*_x64-setup.exe` or `.msi`). Publisher: **DEFAI Private Limited**.
-2. For **Run locally**, install Docker Desktop once:
-
-   ```powershell
-   winget install -e --id Docker.DockerDesktop
-   ```
-
-   Or use [Docker’s Windows installer](https://docs.docker.com/desktop/setup/install/windows-install/).
-3. Open **AX BI** from the Start menu.
 
 When the winget package is published:
 
