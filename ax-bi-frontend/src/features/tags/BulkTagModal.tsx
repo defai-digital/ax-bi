@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { useState, useEffect, FC } from 'react';
+import { useState, FC } from 'react';
 import { ModalTitleWithIcon } from 'src/components/ModalTitleWithIcon';
 import { t } from '@ax-bi/core/translation';
 import { AxBIClient } from '@ax-bi/ui-core';
@@ -55,7 +55,6 @@ const BulkTagModal: FC<BulkTagModalProps> = ({
   addSuccessToast,
   addDangerToast,
 }) => {
-  useEffect(() => {}, []);
   const [tags, setTags] = useState<TaggableResourceOption[]>([]);
 
   const onSave = async () => {
