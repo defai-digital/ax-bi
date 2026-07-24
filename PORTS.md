@@ -14,6 +14,17 @@ Infrastructure defaults (Postgres, Redis) stay on their standard ports.
 | **31427** | Storybook | `http://127.0.0.1:31427` |
 | **31428** | Celery Flower (optional) | Helm / Flower UI |
 
+The MCP URL is not the AX BI web URL. Desktop clients must use
+`http://127.0.0.1:31421/mcp`, not the `/ax-bi/welcome/` page on port 31423
+(or the previous web port 8088). In local/single-process mode, `/mcp` accepts
+both streamable HTTP and legacy HTTP+SSE clients; legacy SSE posts its follow-up
+messages to `/messages`. Multi-pod deployments use streamable HTTP because
+legacy SSE session queues are process-local.
+
+Bearer API keys are deployment-specific. Generate the key in the web app backed
+by the same database as the MCP process; a key from another AX BI installation
+will be rejected with HTTP 401.
+
 ## Infrastructure (unchanged)
 
 | Port | Service |

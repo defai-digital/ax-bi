@@ -72,8 +72,8 @@ docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 ```
 
 **That's it!** ✨
-- AX BI is running at http://localhost:8088
-- MCP service is running at http://localhost:5008
+- AX BI is running at http://localhost:31423
+- MCP service is running at http://localhost:31421/mcp
 - Now configure Claude Desktop (see Step 2 below)
 
 #### What Docker Compose does:
@@ -86,7 +86,7 @@ docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 #### Customizing ports:
 ```bash
 # Use different ports if defaults are in use
-AXBI_PORT=8089 MCP_PORT=5009 AX_SERVICES_PORT=5011 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
+AXBI_PORT=32423 MCP_PORT=32421 docker compose --env-file docker/.env-axbi -f docker-compose-axbi.yml up -d
 ```
 
 ### Option 2: Manual Setup
@@ -165,7 +165,18 @@ Access AxBI at http://localhost:9001 (login: admin/admin)
 
 ### For Docker Setup
 
-Since the MCP service runs inside Docker on port 5008, you need to connect Claude Desktop to the HTTP endpoint:
+The Compose stack publishes the MCP service at
+`http://127.0.0.1:31421/mcp`. This is distinct from the AX BI web app at
+`http://127.0.0.1:31423/ax-bi/welcome/`.
+
+AX Studio and LM Studio should both use the MCP URL, never the welcome URL.
+In local/single-process mode, the endpoint supports modern streamable HTTP and
+legacy HTTP+SSE clients. Multi-pod deployments use streamable HTTP because
+legacy SSE session queues are process-local.
+Generate the bearer API key in this same AX BI deployment; API keys do not
+transfer between installations or databases.
+
+To connect Claude Desktop, add the HTTP endpoint:
 
 Add this to your Claude Desktop config file:
 

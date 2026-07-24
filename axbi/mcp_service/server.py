@@ -872,6 +872,66 @@ def _build_starlette_middleware(
     ]
 
 
+def _route_signature(route: Any) -> tuple[type[Any], str | None, frozenset[str]]:
+    """Return the stable parts of a Starlette route used for de-duplication."""
+    return (
+        type(route),
+        getattr(route, "path", None),
+        frozenset(getattr(route, "methods", None) or ()),
+    )
+
+
+def _create_http_transport_app(
+    mcp_instance: Any,
+    *,
+    event_store: Any | None,
+    middleware: list[Any],
+) -> Any:
+    """Create one ASGI app supporting streamable HTTP and legacy SSE.
+
+    Modern clients use POST/DELETE on ``/mcp`` (streamable HTTP). Some desktop
+    clients still initiate the deprecated HTTP+SSE transport with GET
+    ``/mcp`` and then POST messages to ``/messages``. FastMCP creates separate
+    Starlette applications for these transports, but their routes use
+    complementary HTTP methods and can safely coexist.
+
+    Legacy SSE session queues are process-local. When a Redis EventStore is
+    configured for multi-pod streamable HTTP, do not advertise SSE: its
+    follow-up ``/messages`` request could land on a different pod without
+    mandatory load-balancer affinity.
+
+    The streamable-HTTP application remains the sole lifespan owner. This
+    starts FastMCP and its streamable session manager exactly once; the SSE
+    route closures reuse that initialized server.
+    """
+    streamable_app = mcp_instance.http_app(
+        path="/mcp",
+        transport="streamable-http",
+        event_store=event_store,
+        stateless_http=True,
+        middleware=middleware,
+    )
+    if event_store is not None:
+        streamable_app.state.legacy_sse_enabled = False
+        return streamable_app
+
+    legacy_sse_app = mcp_instance.http_app(
+        path="/mcp",
+        transport="sse",
+        middleware=middleware,
+    )
+
+    existing_routes = {_route_signature(route) for route in streamable_app.routes}
+    for route in legacy_sse_app.routes:
+        signature = _route_signature(route)
+        if signature not in existing_routes:
+            streamable_app.routes.append(route)
+            existing_routes.add(signature)
+
+    streamable_app.state.legacy_sse_enabled = True
+    return streamable_app
+
+
 def run_server(  # noqa: C901
     host: str = "127.0.0.1",
     port: int = 5008,
@@ -881,7 +941,7 @@ def run_server(  # noqa: C901
 ) -> None:
     """
     Run the MCP service server with FastMCP endpoints.
-    Uses streamable-http transport for HTTP server mode.
+    Uses streamable HTTP, plus legacy SSE compatibility in single-pod mode.
 
     For multi-pod deployments, configure MCP_EVENT_STORE_CONFIG with Redis URL
     to share session state across pods.
@@ -972,25 +1032,16 @@ def run_server(  # noqa: C901
             logging.info("Starting FastMCP on %s:%s", host, port)
 
             if event_store is not None:
-                # Multi-pod: Use http_app with Redis EventStore, run with uvicorn
                 logging.info("Running in multi-pod mode with Redis EventStore")
-                app = mcp_instance.http_app(
-                    transport="streamable-http",
-                    event_store=event_store,
-                    stateless_http=True,
-                    middleware=starlette_middleware,
-                )
-                uvicorn.run(app, host=host, port=port)
             else:
-                # Single-pod mode: Use built-in run() with in-memory sessions
                 logging.info("Running in single-pod mode with in-memory sessions")
-                mcp_instance.run(
-                    transport="streamable-http",
-                    host=host,
-                    port=port,
-                    stateless_http=True,
-                    middleware=starlette_middleware,
-                )
+
+            app = _create_http_transport_app(
+                mcp_instance,
+                event_store=event_store,
+                middleware=starlette_middleware,
+            )
+            uvicorn.run(app, host=host, port=port)
         except Exception as e:
             logging.error("FastMCP failed: %s", e)
             os.environ.pop(env_key, None)

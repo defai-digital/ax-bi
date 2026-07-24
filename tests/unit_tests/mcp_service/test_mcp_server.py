@@ -15,11 +15,239 @@
 # specific language governing permissions and limitations
 # under the License.
 
-"""Tests for MCP server EventStore creation."""
+"""Tests for MCP server transport and EventStore creation."""
 
+import asyncio
+import contextlib
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
+import httpx
 import pytest
+from fastmcp import FastMCP
+from fastmcp.server.auth.providers.jwt import StaticTokenVerifier
+from starlette.routing import Mount, Route
+
+
+async def _endpoint() -> None:
+    """Minimal Starlette endpoint used to construct route fixtures."""
+
+
+def test_http_transport_app_combines_streamable_http_and_legacy_sse() -> None:
+    """GET SSE and POST streamable HTTP routes coexist on /mcp."""
+    from axbi.mcp_service.server import _create_http_transport_app
+
+    streamable_app = MagicMock()
+    streamable_app.routes = [
+        Route("/mcp", _endpoint, methods=["POST", "DELETE"]),
+        Route("/health", _endpoint, methods=["GET"]),
+    ]
+    legacy_sse_app = MagicMock()
+    legacy_sse_app.routes = [
+        Route("/mcp", _endpoint, methods=["GET"]),
+        Mount("/messages", app=MagicMock()),
+        Route("/health", _endpoint, methods=["GET"]),
+    ]
+    mcp_instance = MagicMock()
+    mcp_instance.http_app.side_effect = [streamable_app, legacy_sse_app]
+    middleware = [MagicMock()]
+
+    result = _create_http_transport_app(
+        mcp_instance,
+        event_store=None,
+        middleware=middleware,
+    )
+
+    assert result is streamable_app
+    assert [
+        (route.path, frozenset(getattr(route, "methods", None) or ()))
+        for route in result.routes
+    ] == [
+        ("/mcp", frozenset({"POST", "DELETE"})),
+        ("/health", frozenset({"GET", "HEAD"})),
+        ("/mcp", frozenset({"GET", "HEAD"})),
+        ("/messages", frozenset()),
+    ]
+    assert result.state.legacy_sse_enabled is True
+    assert mcp_instance.http_app.call_args_list == [
+        (
+            (),
+            {
+                "path": "/mcp",
+                "transport": "streamable-http",
+                "event_store": None,
+                "stateless_http": True,
+                "middleware": middleware,
+            },
+        ),
+        (
+            (),
+            {
+                "path": "/mcp",
+                "transport": "sse",
+                "middleware": middleware,
+            },
+        ),
+    ]
+
+
+def test_http_transport_app_disables_process_local_sse_with_event_store() -> None:
+    """Multi-pod mode does not expose an SSE session that cannot cross pods."""
+    from axbi.mcp_service.server import _create_http_transport_app
+
+    streamable_app = MagicMock()
+    streamable_app.routes = [
+        Route("/mcp", _endpoint, methods=["POST", "DELETE"]),
+    ]
+    mcp_instance = MagicMock()
+    mcp_instance.http_app.return_value = streamable_app
+    event_store = MagicMock()
+
+    result = _create_http_transport_app(
+        mcp_instance,
+        event_store=event_store,
+        middleware=[],
+    )
+
+    assert result is streamable_app
+    assert result.state.legacy_sse_enabled is False
+    mcp_instance.http_app.assert_called_once_with(
+        path="/mcp",
+        transport="streamable-http",
+        event_store=event_store,
+        stateless_http=True,
+        middleware=[],
+    )
+
+
+def test_http_transport_app_uses_streamable_lifespan_owner() -> None:
+    """The combined app is the streamable app, so FastMCP starts only once."""
+    from axbi.mcp_service.server import _create_http_transport_app
+
+    streamable_app = MagicMock()
+    streamable_app.routes = []
+    legacy_sse_app = MagicMock()
+    legacy_sse_app.routes = []
+    mcp_instance = MagicMock()
+    mcp_instance.http_app.side_effect = [streamable_app, legacy_sse_app]
+
+    result = _create_http_transport_app(
+        mcp_instance,
+        event_store=None,
+        middleware=[],
+    )
+
+    assert result is streamable_app
+
+
+@pytest.mark.asyncio
+async def test_legacy_sse_get_starts_event_stream() -> None:
+    """An authenticated legacy GET /mcp handshake starts an SSE response."""
+    from axbi.mcp_service.server import _create_http_transport_app
+
+    auth = StaticTokenVerifier(
+        tokens={
+            "test-token": {
+                "client_id": "transport-test",
+                "scopes": [],
+            }
+        }
+    )
+    mcp_instance = FastMCP("dual-transport-test", auth=auth)
+    app = _create_http_transport_app(
+        mcp_instance,
+        event_store=None,
+        middleware=[],
+    )
+    response_started = asyncio.Event()
+    sent_messages: list[dict[str, Any]] = []
+
+    async def receive() -> dict[str, Any]:
+        await asyncio.Future()
+        raise AssertionError("unreachable")
+
+    async def send(message: dict[str, Any]) -> None:
+        sent_messages.append(message)
+        if message["type"] == "http.response.start":
+            response_started.set()
+
+    scope: dict[str, Any] = {
+        "type": "http",
+        "asgi": {"version": "3.0"},
+        "http_version": "1.1",
+        "method": "GET",
+        "scheme": "http",
+        "path": "/mcp",
+        "raw_path": b"/mcp",
+        "query_string": b"",
+        "root_path": "",
+        "headers": [
+            (b"accept", b"text/event-stream"),
+            (b"authorization", b"Bearer test-token"),
+        ],
+        "client": ("127.0.0.1", 12345),
+        "server": ("127.0.0.1", 31421),
+    }
+
+    async with app.router.lifespan_context(app):
+        request_task = asyncio.create_task(app(scope, receive, send))
+        try:
+            await asyncio.wait_for(response_started.wait(), timeout=1)
+        finally:
+            request_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await request_task
+
+    start = next(
+        message for message in sent_messages if message["type"] == "http.response.start"
+    )
+    assert start["status"] == 200
+    headers = dict(cast(list[tuple[bytes, bytes]], start["headers"]))
+    assert headers[b"content-type"].startswith(b"text/event-stream")
+
+
+@pytest.mark.asyncio
+async def test_streamable_http_initialize_still_uses_post() -> None:
+    """Adding the SSE GET route does not displace streamable HTTP POST."""
+    from axbi.mcp_service.server import _create_http_transport_app
+
+    mcp_instance = FastMCP("dual-transport-test")
+    app = _create_http_transport_app(
+        mcp_instance,
+        event_store=None,
+        middleware=[],
+    )
+    transport = httpx.ASGITransport(app=app)
+
+    async with app.router.lifespan_context(app):
+        async with httpx.AsyncClient(
+            transport=transport,
+            base_url="http://127.0.0.1:31421",
+        ) as client:
+            response = await client.post(
+                "/mcp",
+                headers={
+                    "Accept": "application/json, text/event-stream",
+                    "Content-Type": "application/json",
+                },
+                json={
+                    "jsonrpc": "2.0",
+                    "id": 1,
+                    "method": "initialize",
+                    "params": {
+                        "protocolVersion": "2025-03-26",
+                        "capabilities": {},
+                        "clientInfo": {
+                            "name": "transport-test",
+                            "version": "1.0",
+                        },
+                    },
+                },
+            )
+
+    assert response.status_code == 200
+    assert response.headers["content-type"].startswith("text/event-stream")
+    assert '"serverInfo":{"name":"dual-transport-test"' in response.text
 
 
 def test_create_event_store_returns_none_when_no_redis_url():

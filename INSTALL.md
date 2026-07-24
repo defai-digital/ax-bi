@@ -118,6 +118,11 @@ Connect AX Studio to:
 http://127.0.0.1:31421/mcp
 ```
 
+Use that same MCP URL for LM Studio. Do not enter the AX BI welcome URL: it is
+an HTML web page, not an MCP endpoint. Generate and copy the MCP key from this
+same AX BI deployment; keys from a different installation or keys replaced
+from another browser tab are invalid.
+
 ## Notes
 
 - The application route prefix is `/ax-bi`; no former-name redirect is

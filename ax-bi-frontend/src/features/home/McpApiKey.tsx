@@ -200,9 +200,8 @@ export function McpApiKey({ username }: McpApiKeyProps) {
     const initializeKey = async () => {
       try {
         const [existingKey] = await listManagedKeys();
-        const key = existingKey ?? createdKeyMetadata(await createManagedKey());
         if (active) {
-          setCurrentKey(key);
+          setCurrentKey(existingKey ?? null);
         }
       } catch {
         if (active) {
@@ -255,9 +254,9 @@ export function McpApiKey({ username }: McpApiKeyProps) {
     }
   };
 
-  const actionLabel = t(
-    'Generate and copy a new MCP key. The previous key will stop working.',
-  );
+  const actionLabel = currentKey
+    ? t('Replace and copy the MCP key. The current key will stop working.')
+    : t('Generate and copy an MCP key.');
 
   return (
     <StyledMcpKey data-test="mcp-api-key">
@@ -268,7 +267,7 @@ export function McpApiKey({ username }: McpApiKeyProps) {
         <code data-test="mcp-api-key-hint">
           {currentKey
             ? formatMcpApiKeyHint(currentKey.key_prefix)
-            : t('MCP key…')}
+            : t('No MCP key')}
         </code>
         <Tooltip title={actionLabel}>
           <Button
@@ -277,7 +276,7 @@ export function McpApiKey({ username }: McpApiKeyProps) {
             onClick={rotateAndCopy}
             size="small"
             type="text"
-            icon={<Icons.EyeOutlined iconSize="s" />}
+            icon={<Icons.KeyOutlined iconSize="s" />}
           />
         </Tooltip>
       </span>

@@ -65,7 +65,7 @@ test('formats the MCP key as a partial masked hint', () => {
   );
 });
 
-test('shows a concise placeholder while preparing the MCP key', () => {
+test('shows the no-key state while the MCP key request is pending', () => {
   jest
     .spyOn(AxBIClient, 'get')
     .mockImplementation(() => new Promise(() => undefined) as never);
@@ -73,34 +73,28 @@ test('shows a concise placeholder while preparing the MCP key', () => {
   render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
 
   expect(screen.queryByText(/Preparing MCP key/i)).not.toBeInTheDocument();
-  expect(screen.getByText('MCP key…')).toBeInTheDocument();
+  expect(screen.getByText('No MCP key')).toBeInTheDocument();
   expect(
     screen.getByRole('button', {
-      name: /Generate and copy a new MCP key/i,
+      name: /Generate and copy an MCP key/i,
     }),
   ).toBeEnabled();
 });
 
-test('creates the managed MCP key automatically when none exists', async () => {
+test('does not create a secret that cannot be shown when none exists', async () => {
   jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [] },
   } as never);
-  const post = jest.spyOn(AxBIClient, 'post').mockResolvedValue({
-    json: { result: newKey },
-  } as never);
+  const post = jest.spyOn(AxBIClient, 'post');
 
   render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
 
   expect(await screen.findByText('akira')).toBeInTheDocument();
-  expect(await screen.findByText('sst_e5a7********khTpzMxY')).toBeInTheDocument();
-  expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
-  expect(post).toHaveBeenCalledWith({
-    endpoint: '/api/v1/security/api_keys/',
-    jsonPayload: { name: 'AX BI MCP' },
-  });
+  expect(await screen.findByText('No MCP key')).toBeInTheDocument();
+  expect(post).not.toHaveBeenCalled();
 });
 
-test('eye action generates a key after initialization could not load one', async () => {
+test('key action generates a key after initialization could not load one', async () => {
   jest
     .spyOn(AxBIClient, 'get')
     .mockRejectedValueOnce(new Error('Forbidden'))
@@ -113,16 +107,18 @@ test('eye action generates a key after initialization could not load one', async
 
   await userEvent.click(
     screen.getByRole('button', {
-      name: /Generate and copy a new MCP key/i,
+      name: /Generate and copy an MCP key/i,
     }),
   );
 
   await waitFor(() => expect(post).toHaveBeenCalledTimes(1));
   expect(navigator.clipboard.writeText).toHaveBeenCalledWith(newKey.key);
-  expect(await screen.findByText('sst_e5a7********khTpzMxY')).toBeInTheDocument();
+  expect(
+    await screen.findByText('sst_e5a7********khTpzMxY'),
+  ).toBeInTheDocument();
 });
 
-test('eye action generates, copies, and revokes the previous MCP key', async () => {
+test('key action generates, copies, and revokes the previous MCP key', async () => {
   jest.spyOn(AxBIClient, 'get').mockResolvedValue({
     json: { result: [oldKey] },
   } as never);
@@ -136,7 +132,7 @@ test('eye action generates, copies, and revokes the previous MCP key', async () 
   render(<McpApiKey username="akira" />, { useRedux: true, useTheme: true });
 
   const rotate = await screen.findByRole('button', {
-    name: /Generate and copy a new MCP key/i,
+    name: /Replace and copy the MCP key/i,
   });
   await userEvent.click(rotate);
 
@@ -145,6 +141,8 @@ test('eye action generates, copies, and revokes the previous MCP key', async () 
   expect(remove).toHaveBeenCalledWith({
     endpoint: '/api/v1/security/api_keys/old-key',
   });
-  expect(await screen.findByText('sst_e5a7********khTpzMxY')).toBeInTheDocument();
+  expect(
+    await screen.findByText('sst_e5a7********khTpzMxY'),
+  ).toBeInTheDocument();
   expect(screen.queryByText(newKey.key)).not.toBeInTheDocument();
 });
