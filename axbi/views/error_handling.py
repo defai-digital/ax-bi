@@ -43,7 +43,7 @@ from axbi.exceptions import (
     AxBIException,
     AxBISecurityException,
 )
-from axbi.utils import core as utils, json
+from axbi.utils import json
 from axbi.utils.log import get_logger_from_status
 from axbi.views.utils import redirect_to_login
 
@@ -82,6 +82,20 @@ def _safe_http_error_message(status: int | None) -> str:
     if status is None or status >= 500:
         return "An unexpected error occurred"
     return _HTTP_ERROR_MESSAGES.get(status, "The request could not be completed")
+
+
+def _safe_axbi_exception_message(
+    exception_type: type[AxBIException],
+    status: int | None,
+) -> str:
+    """Return an explicitly class-declared message for a client error."""
+    if status is None or status >= 500:
+        return _safe_http_error_message(status)
+
+    # AxBIException.__init__ stores constructor-supplied text on the instance.
+    # Read from the class so only source-declared public messages can be exposed.
+    class_message = getattr(exception_type, "message", "")
+    return str(class_message) if class_message else _safe_http_error_message(status)
 
 
 def json_error_response(
@@ -127,16 +141,11 @@ def handle_api_exception(
             logger.warning("AxBIErrorException", exc_info=True)
             return json_error_response([ex.error], status=ex.status)
         except AxBIException as ex:
-            # AxBIException.message is the intentional client contract for 4xx.
-            # Server-side logs keep the full message; 5xx responses stay generic.
             logger_func, _ = get_logger_from_status(ex.status)
             logger_func(ex.message, exc_info=True)
-            if ex.status >= 500:
-                return json_error_response(
-                    _safe_http_error_message(ex.status), ex.status
-                )
             return json_error_response(
-                utils.error_msg_from_exception(ex), status=ex.status
+                _safe_axbi_exception_message(type(ex), ex.status),
+                status=ex.status,
             )
         except HTTPException as ex:
             logger.exception("HTTPException")

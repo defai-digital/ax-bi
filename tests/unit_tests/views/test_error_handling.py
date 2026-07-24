@@ -82,8 +82,8 @@ def test_api_axbi_exception_redacts_5xx_details() -> None:
     assert b"secret-value" not in response.data
 
 
-def test_api_axbi_exception_preserves_4xx_public_message() -> None:
-    """4xx AxBIException messages are the intentional client contract."""
+def test_api_axbi_exception_preserves_class_declared_4xx_message() -> None:
+    """Class-declared 4xx messages are an intentional client contract."""
     app = Flask(__name__)
 
     class NotFoundError(AxBIException):
@@ -99,3 +99,22 @@ def test_api_axbi_exception_preserves_4xx_public_message() -> None:
 
     assert response.status_code == 404
     assert response.get_json()["error"] == "Cached data not found"
+
+
+def test_api_axbi_exception_redacts_constructor_supplied_4xx_message() -> None:
+    """Constructor-supplied exception details must not reach API clients."""
+    app = Flask(__name__)
+
+    class BadRequestError(AxBIException):
+        status = 400
+
+    @handle_api_exception
+    def failing_view(_: object) -> None:
+        raise BadRequestError("password=secret-value")
+
+    with app.test_request_context("/failure"):
+        response = app.make_response(failing_view(object()))
+
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Bad request"
+    assert b"secret-value" not in response.data
