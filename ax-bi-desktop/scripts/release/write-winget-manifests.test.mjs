@@ -101,10 +101,9 @@ test('write-winget-manifests generates multi-file manifests from artifact-dir', 
   assert.match(installerYaml, /Scope: user/)
   assert.match(installerYaml, /Scope: machine/)
   assert.match(installerYaml, /ReleaseDate: 2026-07-19/)
-  assert.match(
-    installerYaml,
-    new RegExp(
-      `InstallerUrl: https://github.com/defai-digital/ax-bi/releases/download/ax-bi-desktop-v0\\.1\\.0/${nsisName.replace(/\./g, '\\.')}`,
+  assert.ok(
+    installerYaml.includes(
+      `InstallerUrl: https://github.com/defai-digital/ax-bi/releases/download/ax-bi-desktop-v0.1.0/${nsisName}`,
     ),
   )
   assert.match(installerYaml, new RegExp(`InstallerSha256: ${sha256(nsisBody)}`))

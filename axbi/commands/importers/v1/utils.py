@@ -264,12 +264,10 @@ def load_configs(
                 configs[file_name] = config
             except ValidationError as exc:
                 logger.error(
-                    "Schema validation failed for %s (prefix: %s): %s",
+                    "Schema validation failed for %s (prefix: %s)",
                     file_name,
                     prefix,
-                    exc.messages,
                 )
-                logger.debug("Config content that failed validation: %s", config)
                 exc.messages = {file_name: exc.messages}
                 exceptions.append(exc)
 

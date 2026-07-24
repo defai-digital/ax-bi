@@ -18,7 +18,6 @@ from __future__ import annotations
 
 import gzip
 import io
-import re
 import sqlite3
 import tarfile
 import tempfile
@@ -45,13 +44,6 @@ from axbi.utils.core import check_is_safe_zip
 
 ROWS_TO_READ_METADATA = 100
 MAX_ARCHIVE_ENTRIES = 500
-
-_INSERT_RE = re.compile(
-    r"INSERT\s+INTO\s+([\w.\"`\[\]]+)\s*(?:\(([^)]+)\))?\s*VALUES\s*",
-    re.IGNORECASE,
-)
-_COMMENT_LINE = re.compile(r"--[^\n]*")
-_COMMENT_BLOCK = re.compile(r"/\*.*?\*/", re.DOTALL)
 
 
 class StructuredReaderOptions(ReaderOptions, total=False):
@@ -272,8 +264,7 @@ class StructuredReader(BaseDataReader):
 
     def _read_sqlite(self, file: FileStorage, nrows: int | None) -> pd.DataFrame:
         file.seek(0)
-        suffix = Path(file.filename or "upload.sqlite").suffix or ".sqlite"
-        with tempfile.NamedTemporaryFile(suffix=suffix) as tmp_file:
+        with tempfile.NamedTemporaryFile(suffix=".sqlite") as tmp_file:
             tmp_file.write(file.read())
             tmp_file.flush()
             with sqlite3.connect(tmp_file.name) as connection:
@@ -780,24 +771,196 @@ class StructuredReader(BaseDataReader):
         df = self._parse_insert_dump(text, self._options.get("sql_table"))
         return self._normalize_dataframe(df.head(nrows) if nrows else df)
 
+    @staticmethod
+    def _strip_sql_comments(text: str) -> str:  # noqa: C901
+        """Remove SQL comments in linear time while preserving quoted content."""
+        cleaned: list[str] = []
+        i = 0
+        quote: str | None = None
+        while i < len(text):
+            char = text[i]
+            if quote is not None:
+                cleaned.append(char)
+                if char == "\\" and i + 1 < len(text):
+                    cleaned.append(text[i + 1])
+                    i += 2
+                    continue
+                if char == quote:
+                    if i + 1 < len(text) and text[i + 1] == quote:
+                        cleaned.append(text[i + 1])
+                        i += 2
+                        continue
+                    quote = None
+                i += 1
+                continue
+
+            if char in {"'", '"', "`", "["}:
+                quote = "]" if char == "[" else char
+                cleaned.append(char)
+                i += 1
+                continue
+            if text.startswith("--", i):
+                i += 2
+                while i < len(text) and text[i] not in "\r\n":
+                    i += 1
+                continue
+            if text.startswith("/*", i):
+                i += 2
+                while i < len(text) and not text.startswith("*/", i):
+                    if text[i] in "\r\n":
+                        cleaned.append(text[i])
+                    i += 1
+                i = min(i + 2, len(text))
+                continue
+            cleaned.append(char)
+            i += 1
+        return "".join(cleaned)
+
+    @staticmethod
+    def _is_sql_identifier_char(char: str) -> bool:
+        """Return whether a character can continue an unquoted SQL keyword."""
+        return char == "_" or char.isalnum()
+
+    @classmethod
+    def _keyword_at(cls, text: str, index: int, keyword: str) -> bool:
+        """Return whether a standalone SQL keyword starts at ``index``."""
+        end = index + len(keyword)
+        if text[index:end].upper() != keyword:
+            return False
+        return (index == 0 or not cls._is_sql_identifier_char(text[index - 1])) and (
+            end == len(text) or not cls._is_sql_identifier_char(text[end])
+        )
+
+    @classmethod
+    def _find_sql_keyword(
+        cls,
+        text: str,
+        keyword: str,
+        start: int,
+    ) -> int | None:
+        """Find a standalone SQL keyword outside quoted strings or identifiers."""
+        i = start
+        quote: str | None = None
+        while i < len(text):
+            char = text[i]
+            if quote is not None:
+                if char == "\\" and i + 1 < len(text):
+                    i += 2
+                    continue
+                if char == quote:
+                    if i + 1 < len(text) and text[i + 1] == quote:
+                        i += 2
+                        continue
+                    quote = None
+                i += 1
+                continue
+            if char in {"'", '"', "`", "["}:
+                quote = "]" if char == "[" else char
+                i += 1
+                continue
+            if cls._keyword_at(text, i, keyword):
+                return i
+            i += 1
+        return None
+
+    @staticmethod
+    def _skip_sql_whitespace(text: str, start: int) -> int:
+        """Return the first index after SQL whitespace."""
+        i = start
+        while i < len(text) and text[i] in " \t\n\r":
+            i += 1
+        return i
+
+    @classmethod
+    def _read_parenthesized_sql(
+        cls,
+        text: str,
+        start: int,
+    ) -> tuple[str, int]:
+        """Read a balanced parenthesized SQL fragment."""
+        depth = 1
+        i = start + 1
+        quote: str | None = None
+        while i < len(text):
+            char = text[i]
+            if quote is not None:
+                if char == "\\" and i + 1 < len(text):
+                    i += 2
+                    continue
+                if char == quote:
+                    if i + 1 < len(text) and text[i + 1] == quote:
+                        i += 2
+                        continue
+                    quote = None
+                i += 1
+                continue
+            if char in {'"', "`", "["}:
+                quote = "]" if char == "[" else char
+            elif char == "(":
+                depth += 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0:
+                    return text[start + 1 : i], i + 1
+            i += 1
+        raise DatabaseUploadFailed(_("Unterminated column list in SQL dump"))
+
+    @classmethod
+    def _find_insert_statement(
+        cls,
+        text: str,
+        start: int,
+    ) -> tuple[str, str | None, int] | None:
+        """Find and parse the next ``INSERT INTO ... VALUES`` header."""
+        search_from = start
+        while (
+            insert_at := cls._find_sql_keyword(text, "INSERT", search_from)
+        ) is not None:
+            cursor = cls._skip_sql_whitespace(text, insert_at + len("INSERT"))
+            if not cls._keyword_at(text, cursor, "INTO"):
+                search_from = insert_at + len("INSERT")
+                continue
+
+            cursor = cls._skip_sql_whitespace(text, cursor + len("INTO"))
+            table_start = cursor
+            while cursor < len(text) and (
+                cls._is_sql_identifier_char(text[cursor]) or text[cursor] in '."`[]'
+            ):
+                cursor += 1
+            if cursor == table_start:
+                search_from = insert_at + len("INSERT")
+                continue
+
+            table = text[table_start:cursor].strip('`"[]')
+            cursor = cls._skip_sql_whitespace(text, cursor)
+            column_spec: str | None = None
+            if cursor < len(text) and text[cursor] == "(":
+                column_spec, cursor = cls._read_parenthesized_sql(text, cursor)
+                cursor = cls._skip_sql_whitespace(text, cursor)
+
+            if not cls._keyword_at(text, cursor, "VALUES"):
+                search_from = insert_at + len("INSERT")
+                continue
+            return table, column_spec, cursor + len("VALUES")
+        return None
+
     @classmethod
     def _parse_insert_dump(  # noqa: C901
         cls,
         text: str,
         selected_table: str | None = None,
     ) -> pd.DataFrame:
-        text = _COMMENT_BLOCK.sub("", _COMMENT_LINE.sub("", text))
+        text = cls._strip_sql_comments(text)
         tables: dict[tuple[str, tuple[str, ...]], list[list[Any]]] = {}
         i = 0
         found = False
         while i < len(text):
-            match = _INSERT_RE.search(text, i)
-            if not match:
+            statement = cls._find_insert_statement(text, i)
+            if statement is None:
                 break
             found = True
-            table = match.group(1).strip('`"[]')
-            column_spec = match.group(2)
-            rows, end = cls._parse_row_tuples(text, match.end())
+            table, column_spec, values_start = statement
+            rows, end = cls._parse_row_tuples(text, values_start)
             if not rows:
                 i = end
                 continue

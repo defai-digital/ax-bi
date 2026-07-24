@@ -664,8 +664,10 @@ class SemanticLayerRestApi(BaseAxBIApi):
         warning: str | None = None
         try:
             schema = cls.get_configuration_schema(parsed_config)
-        except Exception as ex:  # pylint: disable=broad-except
-            warning = str(ex)
+        except Exception:  # pylint: disable=broad-except
+            warning = (
+                "Could not enrich the configuration schema; showing the base schema."
+            )
             logger.exception(
                 "Error enriching semantic layer configuration schema for type %s",
                 sl_type,

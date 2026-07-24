@@ -192,10 +192,9 @@ class AxBI(BaseAxBIView):
         try:
             if query_obj := viz_obj.query_obj():
                 query = viz_obj.datasource.get_query_str(query_obj)
-        except Exception as ex:  # pylint: disable=broad-except
-            err_msg = utils.error_msg_from_exception(ex)
-            logger.exception(err_msg)
-            return json_error_response(err_msg)
+        except Exception:  # pylint: disable=broad-except
+            logger.exception("Query string generation failed")
+            return json_error_response(__("Query could not be loaded"))
 
         if not query:
             query = __("Query cannot be loaded.")
@@ -308,8 +307,11 @@ class AxBI(BaseAxBIView):
             # Let structured AxBI errors (e.g. OAuth2RedirectError) propagate
             # so the global Flask error handler serializes them.
             raise
-        except AxBIException as ex:
-            return json_error_response(utils.error_msg_from_exception(ex), 400)
+        except CacheLoadError:
+            return json_error_response(__("Cached data not found"), 404)
+        except AxBIException:
+            logger.exception("Cached chart data request failed")
+            return json_error_response(__("The request could not be completed"), 400)
 
     @api
     @has_access_api
@@ -423,8 +425,9 @@ class AxBI(BaseAxBIView):
             # Let structured AxBI errors (e.g. OAuth2RedirectError) propagate
             # so the global Flask error handler serializes them.
             raise
-        except AxBIException as ex:
-            return json_error_response(utils.error_msg_from_exception(ex), 400)
+        except AxBIException:
+            logger.exception("Chart data request failed")
+            return json_error_response(__("The request could not be completed"), 400)
 
     @staticmethod
     def get_redirect_url() -> str:

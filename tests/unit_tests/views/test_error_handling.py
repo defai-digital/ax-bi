@@ -19,6 +19,7 @@ from flask import Flask
 from flask_babel import Babel
 from sqlalchemy.exc import IntegrityError
 
+from axbi.exceptions import AxBIException
 from axbi.views.error_handling import handle_api_exception, set_app_error_handlers
 
 
@@ -62,4 +63,20 @@ def test_api_database_exception_redacts_statement_and_parameters() -> None:
 
     assert response.status_code == 422
     assert response.get_json()["error"] == "A database error occurred"
+    assert b"secret-value" not in response.data
+
+
+def test_api_axbi_exception_redacts_internal_details() -> None:
+    """Legacy application exceptions must not expose their message to clients."""
+    app = Flask(__name__)
+
+    @handle_api_exception
+    def failing_view(_: object) -> None:
+        raise AxBIException("password=secret-value")
+
+    with app.test_request_context("/failure"):
+        response = app.make_response(failing_view(object()))
+
+    assert response.status_code == 500
+    assert response.get_json()["error"] == "An unexpected error occurred"
     assert b"secret-value" not in response.data

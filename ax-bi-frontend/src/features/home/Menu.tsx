@@ -21,6 +21,7 @@ import { styled, css, useTheme } from '@ax-bi/core/theme';
 import { t } from '@ax-bi/core/translation';
 import { isFeatureEnabled, FeatureFlag } from '@ax-bi/ui-core';
 import { ensureStaticPrefix } from 'src/utils/assetUrl';
+import { navigateTo } from 'src/utils/navigationUtils';
 import { ensureAppRoot } from 'src/utils/pathUtils';
 import { getUrlParam, isUrlExternal } from 'src/utils/urlUtils';
 import { MainNav, MenuItem } from '@ax-bi/ui-core/components/Menu';
@@ -255,7 +256,7 @@ export function Menu({
       history.push(targetUrl);
       return;
     }
-    window.location.assign(ensureAppRoot(targetUrl));
+    navigateTo(targetUrl, { assign: true });
   };
 
   const buildMenuItem = ({ label, childs, url }: MenuObjectProps): MenuItem => {

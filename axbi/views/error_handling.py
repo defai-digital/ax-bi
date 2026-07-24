@@ -43,7 +43,7 @@ from axbi.exceptions import (
     AxBIException,
     AxBISecurityException,
 )
-from axbi.utils import core as utils, json
+from axbi.utils import json
 from axbi.utils.log import get_logger_from_status
 from axbi.views.utils import redirect_to_login
 
@@ -55,6 +55,17 @@ logger = logging.getLogger(__name__)
 
 JSON_MIMETYPE = "application/json; charset=utf-8"
 
+_HTTP_ERROR_MESSAGES = {
+    400: "Bad request",
+    401: "Authentication required",
+    403: "Forbidden",
+    404: "Not found",
+    405: "Method not allowed",
+    409: "Conflict",
+    413: "Request too large",
+    429: "Too many requests",
+}
+
 
 def get_error_level_from_status(
     status_code: int,
@@ -64,6 +75,13 @@ def get_error_level_from_status(
     if status_code < 500:
         return ErrorLevel.WARNING
     return ErrorLevel.ERROR
+
+
+def _safe_http_error_message(status: int | None) -> str:
+    """Return a public error message without exception implementation details."""
+    if status is None or status >= 500:
+        return "An unexpected error occurred"
+    return _HTTP_ERROR_MESSAGES.get(status, "The request could not be completed")
 
 
 def json_error_response(
@@ -110,14 +128,12 @@ def handle_api_exception(
             return json_error_response([ex.error], status=ex.status)
         except AxBIException as ex:
             logger_func, _ = get_logger_from_status(ex.status)
-            logger_func(ex.message, exc_info=True)
-            return json_error_response(
-                utils.error_msg_from_exception(ex), status=ex.status
-            )
+            logger_func("AxBIException", exc_info=True)
+            return json_error_response(_safe_http_error_message(ex.status), ex.status)
         except HTTPException as ex:
-            logger.exception(ex)
+            logger.exception("HTTPException")
             return json_error_response(
-                utils.error_msg_from_exception(ex), status=ex.code or 500
+                _safe_http_error_message(ex.code), status=ex.code or 500
             )
         except (exc.IntegrityError, exc.DatabaseError, exc.DataError) as ex:
             logger.exception(ex)
@@ -174,7 +190,7 @@ def set_app_error_handlers(app: Flask) -> None:  # noqa: C901
         return json_error_response(
             [
                 AxBIError(
-                    message=utils.error_msg_from_exception(ex),
+                    message=_safe_http_error_message(ex.code),
                     error_type=AxBIErrorType.GENERIC_BACKEND_ERROR,
                     level=ErrorLevel.ERROR,
                 ),

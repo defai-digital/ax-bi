@@ -21,6 +21,7 @@ import {
   Route,
   Routes,
 } from 'react-router-dom';
+import { sanitizeUrl } from '@braintree/sanitize-url';
 import { render, screen } from 'spec/helpers/testing-library';
 import { history, prefixHistoryTo, routerHistory } from './history';
 
@@ -37,6 +38,19 @@ test('legacy history paths receive an idempotent application root', () => {
   expect(prefixHistoryTo({ search: '?tab=results' }, prefixPath)).toEqual({
     search: '?tab=results',
   });
+  expect(prefixHistoryTo('', prefixPath)).toBe('');
+  expect(prefixHistoryTo({ pathname: '' }, prefixPath)).toEqual({
+    pathname: '',
+  });
+  expect(prefixHistoryTo(`${'java'}script:alert(1)`, prefixPath)).toBe(
+    'about:blank',
+  );
+  expect(
+    prefixHistoryTo(
+      { pathname: `${'data'}:text/html,<script>alert(1)</script>` },
+      prefixPath,
+    ),
+  ).toEqual({ pathname: 'about:blank' });
 });
 
 test('shared history renders routes beneath an application basename', () => {
@@ -63,6 +77,6 @@ test('shared history renders routes beneath an application basename', () => {
     });
   } finally {
     result.unmount();
-    history.replace(originalLocation);
+    history.replace(sanitizeUrl(originalLocation));
   }
 });

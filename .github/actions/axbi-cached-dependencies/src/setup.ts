@@ -19,12 +19,21 @@ export async function runCommand(
   cmd: string,
   extraBashlib: string,
 ): Promise<void> {
-  const bashlibCommands = [`source ${SHARED_BASHLIB}`];
-  if (extraBashlib) {
-    bashlibCommands.push(`source ${extraBashlib}`);
-  }
+  const script = [
+    'source "$1"',
+    'if [[ -n "$2" ]]; then',
+    '  source "$2"',
+    'fi',
+    cmd,
+  ].join('\n');
   try {
-    await exec('bash', ['-c', [...bashlibCommands, cmd].join('\n     ')]);
+    await exec('bash', [
+      '-c',
+      script,
+      'axbi-cached-dependencies',
+      SHARED_BASHLIB,
+      extraBashlib,
+    ]);
   } catch (error) {
     core.setFailed(error instanceof Error ? error.message : String(error));
     process.exit(1);

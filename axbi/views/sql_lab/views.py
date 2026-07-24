@@ -27,7 +27,7 @@ from axbi import db
 from axbi.axbi_typing import FlaskResponse
 from axbi.models.sql_lab import Query, TableSchema, TabState
 from axbi.utils import json
-from axbi.utils.core import error_msg_from_exception, get_user_id
+from axbi.utils.core import get_user_id
 from axbi.utils.session_lifecycle import commit_session, rollback_session
 from axbi.views.base import (
     BaseAxBIView,
@@ -57,6 +57,10 @@ _TAB_STATE_UPDATABLE_COLUMNS = frozenset(
 )
 
 
+class _InvalidExpandedValueError(ValueError):
+    """Signal an invalid SQL Lab table-schema expanded value."""
+
+
 class SavedQueryView(BaseAxBIView):
     route_base = "/savedqueryview"
     class_permission_name = "SavedQuery"
@@ -74,21 +78,19 @@ def _get_owner_id(tab_state_id: int) -> int:
 def _load_expanded_value(value: str) -> bool:
     payload = json.loads(value)
     if not isinstance(payload, bool):
-        raise ValueError("expanded must be a JSON boolean")
+        raise _InvalidExpandedValueError
     return payload
 
 
 def _handle_mutation_error(ex: Exception) -> FlaskResponse:
     """Rollback and classify legacy SQL Lab tab-state mutation failures."""
     rollback_session(db.session, context="sql_lab_view")
+    if isinstance(ex, _InvalidExpandedValueError):
+        logger.info("Invalid SQL Lab table-schema expanded value")
+        return json_error_response(__("expanded must be a JSON boolean"), 400)
     if isinstance(ex, (IntegrityError, KeyError, ValueError, json.JSONDecodeError)):
-        logger.info("Invalid SQL Lab tab-state request: %s", ex)
-        message = (
-            __("Invalid SQL Lab tab-state request")
-            if isinstance(ex, IntegrityError)
-            else error_msg_from_exception(ex)
-        )
-        return json_error_response(message, 400)
+        logger.info("Invalid SQL Lab tab-state request")
+        return json_error_response(__("Invalid SQL Lab tab-state request"), 400)
 
     logger.exception("SQL Lab tab-state mutation failed")
     return json_error_response(__("An unexpected error occurred"), 500)

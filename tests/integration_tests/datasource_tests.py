@@ -341,7 +341,9 @@ class TestDatasource(AxBITestCase):
         with db_insert_temp_object(table):
             url = f"/datasource/external_metadata/table/{table.id}/"
             resp = self.get_json_resp(url)
-            assert resp["error"] == "Only `SELECT` statements are allowed"
+            assert resp["error"] == (
+                "Virtual datasets must contain one SELECT statement"
+            )
 
     def test_external_metadata_for_multistatement_virtual_table(self):
         self.login(ADMIN_USERNAME)
@@ -355,7 +357,9 @@ class TestDatasource(AxBITestCase):
         with db_insert_temp_object(table):
             url = f"/datasource/external_metadata/table/{table.id}/"
             resp = self.get_json_resp(url)
-            assert resp["error"] == "Only single queries supported"
+            assert resp["error"] == (
+                "Virtual datasets must contain one SELECT statement"
+            )
 
     @pytest.mark.usefixtures("load_birth_names_dashboard_with_slices")
     @mock.patch("axbi.connectors.sqla.models.SqlaTable.external_metadata")

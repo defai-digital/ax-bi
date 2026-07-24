@@ -5,6 +5,8 @@ import { setInputs } from '../src/utils/inputs';
 import { InputName, DefaultInputs } from '../src/constants';
 import * as setup from '../src/setup';
 import path from 'path';
+import fs from 'fs';
+import os from 'os';
 
 const extraBashlib = path.resolve(__dirname, './fixtures/bashlib.sh');
 
@@ -66,6 +68,22 @@ describe('setup runner', () => {
 
     expect(runCommandMock).toHaveBeenCalledTimes(1);
     expect(runCommandMock).toHaveBeenCalledWith('print-cachescript-path', '');
+  });
+
+  it('should not interpolate bashlib paths into the shell script', async () => {
+    const directory = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'axbi-cached-dependencies-'),
+    );
+    const bashlib = path.join(directory, 'bashlib.sh');
+    const marker = path.join(directory, 'injected');
+    fs.writeFileSync(bashlib, 'true\n');
+
+    try {
+      await setup.runCommand('true', `${bashlib}; touch ${marker}`);
+      expect(fs.existsSync(marker)).toBe(false);
+    } finally {
+      fs.rmSync(directory, { recursive: true, force: true });
+    }
   });
 
   it('should handle single-new-line parallel commands', async () => {

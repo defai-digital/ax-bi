@@ -19,7 +19,10 @@
 import { useContext, useEffect, useMemo, useState } from 'react';
 import { UNSAFE_NavigationContext } from 'react-router-dom';
 import type { History, Path as HistoryPath } from 'history';
-import { history as historySingleton } from 'src/utils/history';
+import {
+  history as historySingleton,
+  prefixHistoryTo,
+} from 'src/utils/history';
 
 // history v5 removed LocationDescriptor/LocationState; define locally.
 type LocationState = unknown;
@@ -81,20 +84,26 @@ export function useAppHistory() {
     // history.push({ pathname, state: { requestedQuery } }) would lose payload.
     const push = (path: Path, state?: LocationState) => {
       if (typeof path === 'string') {
-        activeHistory.push(path, state);
+        activeHistory.push(prefixHistoryTo(path), state);
         return;
       }
       const { state: pathState, ...to } = path;
-      activeHistory.push(to, state !== undefined ? state : pathState);
+      activeHistory.push(
+        prefixHistoryTo(to),
+        state !== undefined ? state : pathState,
+      );
     };
 
     const replace = (path: Path, state?: LocationState) => {
       if (typeof path === 'string') {
-        activeHistory.replace(path, state);
+        activeHistory.replace(prefixHistoryTo(path), state);
         return;
       }
       const { state: pathState, ...to } = path;
-      activeHistory.replace(to, state !== undefined ? state : pathState);
+      activeHistory.replace(
+        prefixHistoryTo(to),
+        state !== undefined ? state : pathState,
+      );
     };
 
     return {

@@ -31512,12 +31512,21 @@ const SHARED_BASHLIB = path_1.default.resolve(__dirname, '../src/scripts/bashlib
  */
 function runCommand(cmd, extraBashlib) {
     return __awaiter(this, void 0, void 0, function* () {
-        const bashlibCommands = [`source ${SHARED_BASHLIB}`];
-        if (extraBashlib) {
-            bashlibCommands.push(`source ${extraBashlib}`);
-        }
+        const script = [
+            'source "$1"',
+            'if [[ -n "$2" ]]; then',
+            '  source "$2"',
+            'fi',
+            cmd,
+        ].join('\n');
         try {
-            yield (0, exec_1.exec)('bash', ['-c', [...bashlibCommands, cmd].join('\n     ')]);
+            yield (0, exec_1.exec)('bash', [
+                '-c',
+                script,
+                'axbi-cached-dependencies',
+                SHARED_BASHLIB,
+                extraBashlib,
+            ]);
         }
         catch (error) {
             core.setFailed(error instanceof Error ? error.message : String(error));

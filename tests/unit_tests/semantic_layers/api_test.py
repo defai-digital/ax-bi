@@ -1419,7 +1419,10 @@ def test_configuration_schema_enrichment_error_fallback(
 
     assert response.status_code == 200
     assert response.json["result"] == {"type": "object"}
-    assert response.json["warning"] == "connection failed"
+    assert response.json["warning"] == (
+        "Could not enrich the configuration schema; showing the base schema."
+    )
+    assert "connection failed" not in response.text
     assert mock_cls.get_configuration_schema.call_count == 2
 
 

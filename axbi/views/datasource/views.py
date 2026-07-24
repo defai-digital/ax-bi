@@ -174,8 +174,16 @@ class Datasource(BaseAxBIView):
         security_manager.raise_for_access(datasource=datasource)
         try:
             external_metadata = datasource.external_metadata()
-        except AxBIException as ex:
-            return json_error_response(str(ex), status=400)
+        except AxBISecurityException:
+            return json_error_response(
+                _("Virtual datasets must contain one SELECT statement"),
+                status=400,
+            )
+        except AxBIException:
+            return json_error_response(
+                _("The metadata request could not be completed"),
+                status=400,
+            )
         return self.json_response(external_metadata)
 
     @expose("/external_metadata_by_name/")
@@ -189,8 +197,8 @@ class Datasource(BaseAxBIView):
             params: ExternalMetadataParams = ExternalMetadataSchema().load(
                 kwargs.get("rison")
             )
-        except ValidationError as err:
-            return json_error_response(str(err), status=400)
+        except ValidationError:
+            return json_error_response(_("Invalid metadata request"), status=400)
 
         datasource = SqlaTable.get_datasource_by_name(
             database_name=params["database_name"],

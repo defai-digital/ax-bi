@@ -17,6 +17,7 @@
  * under the License.
  */
 import { createBrowserHistory, parsePath, type To } from 'history';
+import { sanitizeUrl } from '@braintree/sanitize-url';
 import type { HistoryRouterProps } from 'react-router-dom';
 import { ensureAppRoot } from './pathUtils';
 
@@ -35,12 +36,19 @@ export function prefixHistoryTo(
   prefixPath: PathPrefixer = ensureAppRoot,
 ): To {
   if (typeof to === 'string') {
-    return to.startsWith('/') ? prefixPath(to) : to;
+    const safeTo = to === '' ? to : sanitizeUrl(to);
+    return safeTo.startsWith('/') ? prefixPath(safeTo) : safeTo;
   }
-  if (!to.pathname?.startsWith('/')) {
+  if (to.pathname === undefined || to.pathname === '') {
     return to;
   }
-  return { ...to, pathname: prefixPath(to.pathname) };
+  const safePathname = sanitizeUrl(to.pathname);
+  return {
+    ...to,
+    pathname: safePathname.startsWith('/')
+      ? prefixPath(safePathname)
+      : safePathname,
+  };
 }
 
 /**

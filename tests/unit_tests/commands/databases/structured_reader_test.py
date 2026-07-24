@@ -137,6 +137,29 @@ def test_structured_reader_sql_dump_accepts_dialect_literals() -> None:
     ]
 
 
+def test_structured_reader_sql_dump_strips_comments_in_linear_scan() -> None:
+    reader = StructuredReader()
+    long_comment = b"/*" + (b"*" * 20_000) + b"/\n"
+    df = reader.file_to_dataframe(
+        make_file(
+            long_comment
+            + b"""
+            -- INSERT INTO ignored (value) VALUES ('ignored');
+            INSERT INTO messages (line_comment, block_comment) VALUES
+              ('keep -- this', 'keep /* this */ too');
+            """,
+            "comments.sql",
+        )
+    )
+
+    assert df.to_dict(orient="records") == [
+        {
+            "line_comment": "keep -- this",
+            "block_comment": "keep /* this */ too",
+        }
+    ]
+
+
 def test_structured_reader_rejects_multi_table_sql_dump() -> None:
     reader = StructuredReader()
     with pytest.raises(DatabaseUploadFailed) as ex:
