@@ -508,7 +508,6 @@ def _search_assets_semantic(  # noqa: C901
         return []
 
     try:
-        from axbi.connectors.sqla.models import SqlaTable
         from axbi.daos.dataset import DatasetDAO
         from axbi.semantic_index.service import SemanticIndexService
 
@@ -542,13 +541,13 @@ def _search_assets_semantic(  # noqa: C901
     if not dataset_ids:
         return []
 
-    model_query = db.session.query(SqlaTable)
-    model_query = DatasetDAO._apply_base_filter(model_query)  # noqa: SLF001
-    model_query = model_query.filter(cast(Any, SqlaTable.id).in_(dataset_ids))
+    # Hydrate through the public DAO API (base-filter + id lookup) rather than
+    # a raw ``db.session.query`` + private ``_apply_base_filter`` in the search
+    # (transport-adjacent) layer. ``dataset_ids`` is already bounded by limit.
+    found_datasets = DatasetDAO.find_by_ids(dataset_ids)
     if include_certified_only:
-        model_query = model_query.filter(SqlaTable.certified_by.isnot(None))
-
-    datasets = {dataset.id: dataset for dataset in model_query.all()}
+        found_datasets = [d for d in found_datasets if d.certified_by is not None]
+    datasets = {dataset.id: dataset for dataset in found_datasets}
     assets: list[AssetResult] = []
     for dataset_id in dataset_ids:
         dataset = datasets.get(dataset_id)
