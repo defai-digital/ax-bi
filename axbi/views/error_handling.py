@@ -43,7 +43,7 @@ from axbi.exceptions import (
     AxBIException,
     AxBISecurityException,
 )
-from axbi.utils import json
+from axbi.utils import core as utils, json
 from axbi.utils.log import get_logger_from_status
 from axbi.views.utils import redirect_to_login
 
@@ -127,9 +127,17 @@ def handle_api_exception(
             logger.warning("AxBIErrorException", exc_info=True)
             return json_error_response([ex.error], status=ex.status)
         except AxBIException as ex:
+            # AxBIException.message is the intentional client contract for 4xx.
+            # Server-side logs keep the full message; 5xx responses stay generic.
             logger_func, _ = get_logger_from_status(ex.status)
-            logger_func("AxBIException", exc_info=True)
-            return json_error_response(_safe_http_error_message(ex.status), ex.status)
+            logger_func(ex.message, exc_info=True)
+            if ex.status >= 500:
+                return json_error_response(
+                    _safe_http_error_message(ex.status), ex.status
+                )
+            return json_error_response(
+                utils.error_msg_from_exception(ex), status=ex.status
+            )
         except HTTPException as ex:
             logger.exception("HTTPException")
             return json_error_response(

@@ -66,8 +66,8 @@ def test_api_database_exception_redacts_statement_and_parameters() -> None:
     assert b"secret-value" not in response.data
 
 
-def test_api_axbi_exception_redacts_internal_details() -> None:
-    """Legacy application exceptions must not expose their message to clients."""
+def test_api_axbi_exception_redacts_5xx_details() -> None:
+    """5xx AxBIException responses must not expose implementation details."""
     app = Flask(__name__)
 
     @handle_api_exception
@@ -80,3 +80,22 @@ def test_api_axbi_exception_redacts_internal_details() -> None:
     assert response.status_code == 500
     assert response.get_json()["error"] == "An unexpected error occurred"
     assert b"secret-value" not in response.data
+
+
+def test_api_axbi_exception_preserves_4xx_public_message() -> None:
+    """4xx AxBIException messages are the intentional client contract."""
+    app = Flask(__name__)
+
+    class NotFoundError(AxBIException):
+        status = 404
+        message = "Cached data not found"
+
+    @handle_api_exception
+    def failing_view(_: object) -> None:
+        raise NotFoundError()
+
+    with app.test_request_context("/failure"):
+        response = app.make_response(failing_view(object()))
+
+    assert response.status_code == 404
+    assert response.get_json()["error"] == "Cached data not found"
